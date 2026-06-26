@@ -25,46 +25,49 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 {
     const auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y),
                                                static_cast<float>(width), static_cast<float>(height))
-                            .reduced(3.0f);
+                            .reduced(1.5f);
     const auto isActive = slider.isMouseOverOrDragging();
-    const auto cellBounds = bounds.reduced(1.0f, 2.0f);
-    const auto radius = juce::jmin(cellBounds.getWidth(), cellBounds.getHeight()) * 0.43f;
+    const auto cellBounds = bounds.reduced(0.5f, 1.5f);
+    const auto radius = juce::jmin(cellBounds.getWidth(), cellBounds.getHeight()) * 0.46f;
     const auto centre = cellBounds.getCentre();
     const auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     const auto knobBounds = juce::Rectangle<float>(radius * 2.0f, radius * 2.0f).withCentre(centre);
 
     g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
-    g.fillRoundedRectangle(cellBounds, 8.0f);
-    g.setColour(isActive ? juce::Colour(0xff34464b) : juce::Colour(0xff222d32));
-    g.drawRoundedRectangle(cellBounds, 8.0f, 1.0f);
+    g.fillRoundedRectangle(cellBounds, 6.0f);
+    g.setColour(isActive ? juce::Colour(0xff3e5359) : juce::Colour(0xff222d32));
+    g.drawRoundedRectangle(cellBounds, 6.0f, isActive ? 1.6f : 1.0f);
 
     g.setColour(juce::Colour(0xff080c0e));
     g.fillEllipse(knobBounds.translated(0.0f, 1.5f));
     g.setColour(isActive ? juce::Colour(0xff18262a) : juce::Colour(0xff12191c));
     g.fillEllipse(knobBounds);
 
-    g.setColour(isActive ? juce::Colour(0xff607873) : juce::Colour(0xff2d3a40));
-    g.drawEllipse(knobBounds, isActive ? 2.2f : 1.6f);
+    g.setColour(isActive ? juce::Colour(0xff6f8984) : juce::Colour(0xff2d3a40));
+    g.drawEllipse(knobBounds, isActive ? 2.4f : 1.8f);
 
     juce::Path rail;
     rail.addCentredArc(centre.x, centre.y, radius - 4.0f, radius - 4.0f, 0.0f,
                        rotaryStartAngle, rotaryEndAngle, true);
-    g.setColour(juce::Colour(0xff263035));
+    g.setColour(juce::Colour(0xff273238));
     g.strokePath(rail, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     juce::Path valueArc;
     valueArc.addCentredArc(centre.x, centre.y, radius - 4.0f, radius - 4.0f, 0.0f,
                            rotaryStartAngle, angle, true);
     g.setColour(isActive ? juce::Colour(0xffa8ffe3) : juce::Colour(0xff8ee6c9));
-    g.strokePath(valueArc, juce::PathStrokeType(isActive ? 4.2f : 3.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.strokePath(valueArc, juce::PathStrokeType(isActive ? 4.8f : 3.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     juce::Path pointer;
-    pointer.addRoundedRectangle(-1.6f, -radius + 9.0f, 3.2f, radius * 0.48f, 1.2f);
+    pointer.addRoundedRectangle(-1.9f, -radius + 8.0f, 3.8f, radius * 0.52f, 1.4f);
     pointer.applyTransform(juce::AffineTransform::rotation(angle).translated(centre));
     g.fillPath(pointer);
 
     g.setColour(isActive ? juce::Colour(0xffe9fff7) : juce::Colour(0xffd3e1df));
     g.fillEllipse(juce::Rectangle<float>(radius * 0.22f, radius * 0.22f).withCentre(centre));
+
+    g.setColour(isActive ? juce::Colour(0x338ee6c9) : juce::Colour(0x00101619));
+    g.drawEllipse(knobBounds.expanded(4.0f), 1.0f);
 }
 
 void LookAndFeel::drawButtonBackground(juce::Graphics& g,

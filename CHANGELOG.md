@@ -219,3 +219,11 @@
 - Made sample stutter retriggers reset the pitch-ramp movement naturally by restarting the source position.
 - Made `UKG Chop` randomize musical pitch-ramp movements and set a short delay throw when FX locking is off.
 - Regenerated the factory preset pack so `UKG Vocal Chop Starter` demonstrates the new pitch-ramp control.
+
+### Knob Ergonomics And Home Grouping
+
+- Switched rotary knobs to direct drag with shorter full-range movement so small sound-design moves feel less awkward.
+- Enlarged the rotary visual target and value box, strengthened the pointer/value arc, and added clearer hover emphasis.
+- Reduced HOME clutter by renaming the main areas to Source, Shape, Motion, and Library.
+- Kept HOME Shape focused on Sub, Cutoff, Drive, and Output while leaving oscillator levels, noise, resonance, and filter-envelope depth in the SYNTH panel.
+- Preserved all existing parameter IDs and preset state.

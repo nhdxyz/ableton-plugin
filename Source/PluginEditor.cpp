@@ -85,9 +85,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     updateKeyboardRangeLabel();
 
     configureSectionLabel(homeSectionLabel, "HOME");
-    configureSectionLabel(homeEngineLabel, "ENGINE");
+    configureSectionLabel(homeEngineLabel, "SOURCE");
     configureSectionLabel(homeShapeLabel, "SHAPE");
-    configureSectionLabel(homeLabLabel, "PERFORM");
+    configureSectionLabel(homeLabLabel, "MOTION");
     configureSectionLabel(homeLibraryLabel, "LIBRARY");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(randomSectionLabel, "LAB");
@@ -746,17 +746,11 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(engineArea.removeFromTop(68).withTrimmedTop(2), { &unisonVoicesSlider, &unisonSpreadSlider, &glideSlider });
 
             homeShapeLabel.setBounds(shapeArea.removeFromTop(24));
-            setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
-            setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
             setSliderVisible(subLevelSlider, subLevelLabel, true);
-            setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
             setSliderVisible(cutoffSlider, cutoffLabel, true);
-            setSliderVisible(resonanceSlider, resonanceLabel, true);
-            setSliderVisible(filterEnvSlider, filterEnvLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(shapeArea.removeFromTop(102).withTrimmedTop(4), { &osc1LevelSlider, &osc2LevelSlider, &subLevelSlider, &noiseLevelSlider });
-            layoutKnobRow(shapeArea.removeFromTop(102).withTrimmedTop(2), { &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
+            layoutKnobRow(shapeArea.removeFromTop(116).withTrimmedTop(4), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -1191,19 +1185,19 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(70);
-    slider.setVelocityBasedMode(true);
-    slider.setVelocityModeParameters(1.55, 1, 0.0, true);
+    slider.setMouseDragSensitivity(64);
+    slider.setVelocityBasedMode(false);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 68, 18);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 76, 20);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
     label.setText(labelText, juce::dontSendNotification);
+    label.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     label.setJustificationType(juce::Justification::centred);
     label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     label.attachToComponent(&slider, false);
@@ -1266,7 +1260,7 @@ juce::Rectangle<int> NateVSTAudioProcessorEditor::layoutKnobRow(juce::Rectangle<
     for (auto* component : components)
     {
         component->setVisible(true);
-        component->setBounds(area.removeFromLeft(cellWidth).reduced(6, 0));
+        component->setBounds(area.removeFromLeft(cellWidth).reduced(4, 0));
     }
 
     return area;

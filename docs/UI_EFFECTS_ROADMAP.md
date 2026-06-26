@@ -249,7 +249,7 @@ Not urgent for this instrument. It adds asset management and bigger CPU/memory q
 
 ### Interaction
 
-- Test a larger drag target per knob cell, not only the knob graphic.
+- Implemented: larger drag target per knob cell, not only the knob graphic.
 - Prefer vertical drag for rotary controls if horizontal/vertical drag still feels awkward.
 - Keep snap-to-click disabled.
 - Keep double-click reset.
@@ -259,8 +259,8 @@ Not urgent for this instrument. It adds asset management and bigger CPU/memory q
 
 ### Visual
 
-- Increase rotary knob visual diameter where space allows.
-- Make pointer position clearer at low values.
+- Implemented: increased rotary knob visual diameter where space allows.
+- Implemented: clearer pointer position, thicker value arc, stronger hover state, and larger value text box.
 - Draw a subtle value readout or mini text field in module detail views.
 - Use fewer knobs in summary views. Put only core controls in the list, and show full controls in the selected module.
 
@@ -279,12 +279,14 @@ Do not use knobs for every parameter.
 
 Groups:
 
-- Play: preset, favorite, audition.
-- Perform: macros and randomization entry points.
 - Source: oscillator/sample/noise mix highlights.
 - Shape: filter/drive/output highlights.
+- Motion: macros and randomization entry points.
+- Library: preset, favorite, and save/load workflow.
 
-HOME should have fewer permanent controls and more "jump to panel" style affordances later.
+Current HOME implementation now keeps only the fast patch-building controls visible: source selectors, mono/unison/glide, Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator level detail, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
+
+HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later.
 
 ### SYNTH
 
@@ -349,10 +351,10 @@ MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels
 
 ### Phase 3: Knob Ergonomics
 
-- Adjust the custom look-and-feel for stronger pointer/value feedback.
-- Increase effective drag target in layout cells.
-- Re-test drag sensitivity with real use in Ableton.
-- Decide whether to disable mouse-wheel edits on rotary sliders.
+- Implemented: adjusted the custom look-and-feel for stronger pointer/value feedback.
+- Implemented: increased effective drag target in layout cells.
+- Implemented: switched rotary knobs to direct drag, shorter full-range movement, disabled snap-to-click, kept double-click reset, kept value popups, and disabled mouse-wheel edits.
+- Still needs real Ableton testing and further tuning if specific controls feel too fast or too slow.
 
 ### Phase 4: Add Low-Risk Effects
 
@@ -386,6 +388,6 @@ Each effect should include:
 - FX page no longer shows every effect module at once.
 - Add FX workflow can reveal existing modules without changing parameter IDs.
 - Current modules can be selected and edited in a focused detail area.
-- Knobs feel easier to grab and read.
-- HOME feels less like a control dump.
+- Knobs feel easier to grab and read. Implemented for the current global rotary control style.
+- HOME feels less like a control dump. Implemented by limiting HOME Shape to Sub, Cutoff, Drive, and Output while keeping deeper controls on SYNTH.
 - A clear path exists for adding more FX without redesigning the page again.

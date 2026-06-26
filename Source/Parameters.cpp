@@ -17,6 +17,11 @@ juce::StringArray waveformChoices()
     return { "Sine", "Saw", "Square", "Triangle" };
 }
 
+juce::StringArray filterModeChoices()
+{
+    return { "LP", "BP", "HP" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -108,6 +113,12 @@ APVTS::ParameterLayout createLayout()
         "Filter Env Amount",
         juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
         0.15f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::filterMode,
+        "Filter Mode",
+        filterModeChoices(),
+        0));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::driveAmount,

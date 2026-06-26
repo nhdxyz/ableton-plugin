@@ -86,6 +86,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto envAmount = 0.2f;
     auto drive = 0.18f;
     auto wave = 1;
+    auto filterMode = 0;
     auto octave = 0;
     auto tune = 0.0f;
     auto mono = true;
@@ -134,6 +135,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::minimalBlip:
             wave = randomInt(0, 3);
+            filterMode = randomInt(0, 1);
             octave = randomInt(-1, 1);
             cutoff = randomFloat(900.0f, 7000.0f);
             resonance = randomFloat(0.25f, 0.95f);
@@ -160,6 +162,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::noiseFx:
             wave = randomInt(0, 3);
+            filterMode = randomInt(0, 2);
             octave = randomInt(-2, 2);
             tune = randomFloat(-7.0f, 7.0f) * chaos;
             cutoff = randomFloat(250.0f, 12000.0f);
@@ -199,6 +202,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     }
 
     setChoice(Parameters::ID::oscWave, wave);
+    setChoice(Parameters::ID::filterMode, filterMode);
     setParameter(Parameters::ID::oscOctave, static_cast<float>(octave));
     setParameter(Parameters::ID::oscTune, tune);
     setParameter(Parameters::ID::ampAttack, attack);

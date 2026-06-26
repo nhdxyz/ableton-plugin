@@ -17,6 +17,7 @@ Voice::Voice(Parameters::APVTS& state)
     filterCutoff = parameters.getRawParameterValue(Parameters::ID::filterCutoff);
     filterResonance = parameters.getRawParameterValue(Parameters::ID::filterResonance);
     filterEnvAmount = parameters.getRawParameterValue(Parameters::ID::filterEnvAmount);
+    filterMode = parameters.getRawParameterValue(Parameters::ID::filterMode);
     driveAmount = parameters.getRawParameterValue(Parameters::ID::driveAmount);
 }
 
@@ -109,6 +110,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
 
     const auto envAmount = filterEnvAmount->load();
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
+    const auto filterModeIndex = filterMode != nullptr ? static_cast<int>(filterMode->load()) : 0;
+    filter.setMode(static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex)));
     filter.setCutoffAndResonance(filterCutoff->load() * cutoffScale, filterResonance->load());
 }
 

@@ -40,6 +40,7 @@ Current UI research takeaway:
 - Browsers/libraries are central for recall, tags, favorites, and fast auditioning.
 - Short option sets should feel immediate, so segmented controls are preferred over dropdowns for choices like waveform and synced step rate.
 - Long option sets still belong in dropdowns or browser lists.
+- The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset recall, randomization, and deeper-panel navigation should all be close at hand.
 
 ### What To Learn From ZENOLOGY
 
@@ -983,6 +984,7 @@ Possible long-term tab layout:
 
 Current implemented panel layout:
 
+- HOME: engine choices, core tone shaping, randomization, and preset load/save in one dashboard.
 - SYNTH: oscillator waveform segment, mono toggle, core filter/drive/output/amp controls.
 - LAB: recipe dropdown, generate, mutate, variation, and randomization bias controls.
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
@@ -1048,6 +1050,7 @@ MVP parameters:
 - `filter_cutoff`
 - `filter_resonance`
 - `filter_env_amount`
+- `filter_mode`
 - `drive_amount`
 - `output_gain`
 - `mono_mode`

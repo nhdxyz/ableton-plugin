@@ -22,6 +22,7 @@ public:
 private:
     enum class Panel
     {
+        home,
         synth,
         lab,
         sample,
@@ -38,6 +39,11 @@ private:
     UI::LookAndFeel lookAndFeel;
 
     juce::Label titleLabel;
+    juce::Label homeSectionLabel;
+    juce::Label homeEngineLabel;
+    juce::Label homeShapeLabel;
+    juce::Label homeLabLabel;
+    juce::Label homeLibraryLabel;
     juce::Label synthSectionLabel;
     juce::Label randomSectionLabel;
     juce::Label sampleSectionLabel;
@@ -48,6 +54,7 @@ private:
     juce::Label presetStatusLabel;
 
     juce::ComboBox waveformBox;
+    juce::ComboBox filterModeBox;
     juce::ComboBox recipeBox;
     juce::ComboBox sequencerRateBox;
     juce::ComboBox presetBox;
@@ -138,6 +145,7 @@ private:
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton clearSequencerButton { "Clear" };
+    juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };
     juce::TextButton sampleTabButton { "SAMPLE" };
@@ -148,6 +156,9 @@ private:
     juce::TextButton sawWaveButton { "Saw" };
     juce::TextButton squareWaveButton { "Square" };
     juce::TextButton triangleWaveButton { "Tri" };
+    juce::TextButton lowpassFilterButton { "LP" };
+    juce::TextButton bandpassFilterButton { "BP" };
+    juce::TextButton highpassFilterButton { "HP" };
     juce::TextButton rateEighthButton { "1/8" };
     juce::TextButton rateSixteenthButton { "1/16" };
     juce::TextButton rateThirtySecondButton { "1/32" };
@@ -182,7 +193,7 @@ private:
     void saveCurrentPreset();
     void loadSelectedPreset();
 
-    Panel activePanel = Panel::synth;
+    Panel activePanel = Panel::home;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessorEditor)
 };

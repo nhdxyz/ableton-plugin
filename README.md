@@ -29,6 +29,7 @@ Planned major areas:
 
 The editor uses focused panels instead of one tall stacked page:
 
+- `HOME`
 - `SYNTH`
 - `LAB`
 - `SAMPLE`
@@ -36,7 +37,7 @@ The editor uses focused panels instead of one tall stacked page:
 - `FX`
 - `LIBRARY`
 
-Waveform and sequencer-rate controls use segmented selectors. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
+The `HOME` panel is the default dashboard for quick patch shaping, randomization, and preset recall. Waveform, filter mode, and sequencer-rate controls use segmented selectors. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
 
 User presets are stored at:
 
@@ -72,3 +73,5 @@ The generated VST3 can be copied to:
 ```text
 ~/Library/Audio/Plug-Ins/VST3
 ```
+
+See [CHANGELOG.md](./CHANGELOG.md) for detailed implementation notes by iteration.

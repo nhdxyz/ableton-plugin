@@ -18,6 +18,7 @@ inline constexpr auto ampRelease = "amp_release";
 inline constexpr auto filterCutoff = "filter_cutoff";
 inline constexpr auto filterResonance = "filter_resonance";
 inline constexpr auto filterEnvAmount = "filter_env_amount";
+inline constexpr auto filterMode = "filter_mode";
 inline constexpr auto driveAmount = "drive_amount";
 inline constexpr auto outputGain = "output_gain";
 inline constexpr auto monoMode = "mono_mode";
@@ -57,6 +58,7 @@ inline constexpr auto fxReverbMix = "fx_reverb_mix";
 }
 
 juce::StringArray waveformChoices();
+juce::StringArray filterModeChoices();
 juce::StringArray randomRecipeChoices();
 juce::StringArray sequencerRateChoices();
 APVTS::ParameterLayout createLayout();

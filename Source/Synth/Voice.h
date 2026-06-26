@@ -52,10 +52,10 @@ private:
     std::atomic<float>* filterCutoff = nullptr;
     std::atomic<float>* filterResonance = nullptr;
     std::atomic<float>* filterEnvAmount = nullptr;
+    std::atomic<float>* filterMode = nullptr;
     std::atomic<float>* driveAmount = nullptr;
 
     void updateVoiceParameters(float envelopeValue);
     float frequencyForNote(int midiNoteNumber) const;
 };
 }
-

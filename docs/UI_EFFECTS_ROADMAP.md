@@ -377,7 +377,7 @@ Each effect should include:
 
 ### Phase 5: Modulation Visibility
 
-- Add a MOD panel.
+- Add a MOD panel. Implemented first as a visible macro-routing panel.
 - Add LFO 1 and Mod Env 1.
 - Add an 8-slot matrix.
 - Add small modulation indicators to macro and destination knobs.

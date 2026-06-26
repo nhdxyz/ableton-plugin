@@ -227,3 +227,11 @@
 - Reduced HOME clutter by renaming the main areas to Source, Shape, Motion, and Library.
 - Kept HOME Shape focused on Sub, Cutoff, Drive, and Output while leaving oscillator levels, noise, resonance, and filter-envelope depth in the SYNTH panel.
 - Preserved all existing parameter IDs and preset state.
+
+### Visible MOD Workflow
+
+- Added a dedicated `MOD` tab between LAB and SAMPLE.
+- Added a source summary for the current Tone, Dirt, Motion, and Space macro behavior.
+- Added a focused macro area using the same saved APVTS macro parameters as HOME.
+- Added a routing table that shows the real fixed macro destinations and depths currently implemented in the synth and effects engines.
+- Deferred editable LFO, mod-envelope, velocity, and matrix-slot DSP to a later modulation-engine slice.

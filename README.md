@@ -32,12 +32,13 @@ The editor uses focused panels instead of one tall stacked page:
 - `HOME`
 - `SYNTH`
 - `LAB`
+- `MOD`
 - `SAMPLE`
 - `SEQ`
 - `FX`
 - `LIBRARY`
 
-The `HOME` panel is the default dashboard for quick patch shaping, source selection, core shape controls, unison/glide, performance macros, randomization, and preset recall. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. A compact top-bar output meter stays visible across panels, and a bottom piano keyboard stays available for mouse auditioning. The `LIBRARY` panel adds preset filtering for favorites, recents, user/factory source, and saved categories.
+The `HOME` panel is the default dashboard for quick patch shaping, source selection, core shape controls, unison/glide, performance macros, randomization, and preset recall. The `MOD` panel shows the current fixed macro routing so Tone, Dirt, Motion, and Space assignments are visible without crowding HOME. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. A compact top-bar output meter stays visible across panels, and a bottom piano keyboard stays available for mouse auditioning. The `LIBRARY` panel adds preset filtering for favorites, recents, user/factory source, and saved categories.
 
 User presets are stored at:
 

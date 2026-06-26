@@ -8,6 +8,8 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
+#include <array>
+
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
                                            private juce::Timer
@@ -27,6 +29,7 @@ private:
         home,
         synth,
         lab,
+        mod,
         sample,
         sequencer,
         effects,
@@ -62,6 +65,10 @@ private:
     juce::Label homeLibraryLabel;
     juce::Label synthSectionLabel;
     juce::Label randomSectionLabel;
+    juce::Label modSectionLabel;
+    juce::Label modSourceLabel;
+    juce::Label modMacroLabel;
+    juce::Label modMatrixLabel;
     juce::Label sampleSectionLabel;
     juce::Label sequencerSectionLabel;
     juce::Label futureSectionLabel;
@@ -268,6 +275,7 @@ private:
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };
+    juce::TextButton modTabButton { "MOD" };
     juce::TextButton sampleTabButton { "SAMPLE" };
     juce::TextButton sequencerTabButton { "SEQ" };
     juce::TextButton effectsTabButton { "FX" };
@@ -308,6 +316,11 @@ private:
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
     juce::Label fxRackStatusLabel;
+    std::array<juce::Label, 4> modSourceRows;
+    std::array<juce::Label, 8> modSlotRows;
+    std::array<juce::Label, 8> modSourceCells;
+    std::array<juce::Label, 8> modDestinationCells;
+    std::array<juce::Label, 8> modAmountCells;
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     juce::MidiKeyboardComponent pianoKeyboard;

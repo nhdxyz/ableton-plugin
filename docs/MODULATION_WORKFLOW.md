@@ -165,4 +165,15 @@ Implemented first slice:
 3. Save macro values in host state and `.natevstpreset` files through APVTS.
 4. Validate with build, codesign, pluginval, and Ableton scan.
 
-Do not build the full matrix until these macros are tested in Ableton and feel useful in normal patch design.
+Visible workflow slice:
+
+1. Added a dedicated MOD tab.
+2. Show the current fixed macro sources without crowding HOME.
+3. Show the current real macro routing:
+   - Tone -> filter cutoff and resonance.
+   - Dirt -> drive and output compensation.
+   - Motion -> filter envelope amount and oscillator 2 detune.
+   - Space -> delay and reverb sends.
+4. Reuse the same APVTS macro parameters, so values remain saved in Ableton state and `.natevstpreset` files.
+
+Do not build the editable LFO/mod-envelope matrix until the macro workflow is tested in Ableton and the modulation engine has saved slot parameters, smoothing, and destination safety rules.

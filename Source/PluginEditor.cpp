@@ -91,6 +91,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeLibraryLabel, "LIBRARY");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(randomSectionLabel, "LAB");
+    configureSectionLabel(modSectionLabel, "MOD");
+    configureSectionLabel(modSourceLabel, "SOURCES");
+    configureSectionLabel(modMacroLabel, "MACROS");
+    configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
@@ -113,6 +117,68 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
+
+    const std::array<juce::String, 4> modSourceTexts {
+        "Tone: cutoff + resonance",
+        "Dirt: drive + output trim",
+        "Motion: filter env + osc2 tune",
+        "Space: delay + reverb sends"
+    };
+
+    for (size_t index = 0; index < modSourceRows.size(); ++index)
+    {
+        auto& label = modSourceRows[index];
+        label.setText(modSourceTexts[index], juce::dontSendNotification);
+        label.setFont(juce::FontOptions(12.0f));
+        label.setJustificationType(juce::Justification::centredLeft);
+        label.setColour(juce::Label::textColourId, juce::Colour(0xffc7d7d4));
+        addAndMakeVisible(label);
+    }
+
+    const std::array<juce::String, 8> slotTexts { "1", "2", "3", "4", "5", "6", "7", "8" };
+    const std::array<juce::String, 8> sourceTexts { "Tone", "Tone", "Dirt", "Dirt", "Motion", "Motion", "Space", "Space" };
+    const std::array<juce::String, 8> destinationTexts {
+        "Filter Cutoff",
+        "Filter Resonance",
+        "Drive",
+        "Output Trim",
+        "Filter Env",
+        "Osc 2 Tune",
+        "Delay Mix",
+        "Reverb Mix"
+    };
+    const std::array<juce::String, 8> amountTexts {
+        "+2.5 oct",
+        "+0.22",
+        "+55%",
+        "-4.5 dB",
+        "+35%",
+        "+5 st",
+        "+28%",
+        "+35%"
+    };
+
+    for (size_t index = 0; index < modSlotRows.size(); ++index)
+    {
+        auto configureCell = [] (juce::Label& label, const juce::String& text, juce::Justification justification)
+        {
+            label.setText(text, juce::dontSendNotification);
+            label.setFont(juce::FontOptions(12.0f));
+            label.setJustificationType(justification);
+            label.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
+        };
+
+        configureCell(modSlotRows[index], slotTexts[index], juce::Justification::centred);
+        configureCell(modSourceCells[index], sourceTexts[index], juce::Justification::centredLeft);
+        configureCell(modDestinationCells[index], destinationTexts[index], juce::Justification::centredLeft);
+        configureCell(modAmountCells[index], amountTexts[index], juce::Justification::centredRight);
+
+        modSlotRows[index].setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
+        addAndMakeVisible(modSlotRows[index]);
+        addAndMakeVisible(modSourceCells[index]);
+        addAndMakeVisible(modDestinationCells[index]);
+        addAndMakeVisible(modAmountCells[index]);
+    }
 
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
     presetNameEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
@@ -452,6 +518,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
+    modTabButton.onClick = [this] { setActivePanel(Panel::mod); };
     sampleTabButton.onClick = [this] { setActivePanel(Panel::sample); };
     sequencerTabButton.onClick = [this] { setActivePanel(Panel::sequencer); };
     effectsTabButton.onClick = [this] { setActivePanel(Panel::effects); };
@@ -524,6 +591,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
     addAndMakeVisible(labTabButton);
+    addAndMakeVisible(modTabButton);
     addAndMakeVisible(sampleTabButton);
     addAndMakeVisible(sequencerTabButton);
     addAndMakeVisible(effectsTabButton);
@@ -618,6 +686,23 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         }
     }
 
+    if (activePanel == Panel::mod)
+    {
+        auto modContent = contentArea.reduced(18).withTrimmedTop(36);
+        auto topRow = modContent.removeFromTop(150);
+        auto sourceArea = topRow.removeFromLeft(300).reduced(5);
+        auto macroArea = topRow.reduced(5);
+        auto matrixArea = modContent.withTrimmedTop(16).reduced(5);
+
+        for (auto area : { sourceArea, macroArea, matrixArea })
+        {
+            g.setColour(juce::Colour(0xff101619));
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
+            g.setColour(juce::Colour(0xff2b363c));
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        }
+    }
+
     if (activePanel == Panel::effects)
     {
         auto fxContent = contentArea.reduced(18).withTrimmedTop(36);
@@ -657,6 +742,7 @@ void NateVSTAudioProcessorEditor::resized()
     placeTab(homeTabButton, 74);
     placeTab(synthTabButton, 74);
     placeTab(labTabButton, 60);
+    placeTab(modTabButton, 60);
     placeTab(sampleTabButton, 84);
     placeTab(sequencerTabButton, 62);
     placeTab(effectsTabButton, 56);
@@ -888,6 +974,57 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(driveBiasSlider, driveBiasLabel, true);
             setSliderVisible(motionBiasSlider, motionBiasLabel, true);
             layoutKnobRow(content.removeFromTop(150), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
+            break;
+        }
+
+        case Panel::mod:
+        {
+            modSectionLabel.setVisible(true);
+            modSourceLabel.setVisible(true);
+            modMacroLabel.setVisible(true);
+            modMatrixLabel.setVisible(true);
+            modSectionLabel.setBounds(content.removeFromTop(28));
+
+            for (auto& label : modSourceRows)
+                label.setVisible(true);
+
+            for (size_t index = 0; index < modSlotRows.size(); ++index)
+            {
+                modSlotRows[index].setVisible(true);
+                modSourceCells[index].setVisible(true);
+                modDestinationCells[index].setVisible(true);
+                modAmountCells[index].setVisible(true);
+            }
+
+            auto modContent = content.withTrimmedTop(8);
+            auto topRow = modContent.removeFromTop(150);
+            auto sourceArea = topRow.removeFromLeft(300).reduced(18, 12);
+            auto macroArea = topRow.reduced(18, 12);
+            auto matrixArea = modContent.withTrimmedTop(16).reduced(18, 14);
+
+            modSourceLabel.setBounds(sourceArea.removeFromTop(24));
+            for (auto& label : modSourceRows)
+                label.setBounds(sourceArea.removeFromTop(24).reduced(3, 2));
+
+            modMacroLabel.setBounds(macroArea.removeFromTop(24));
+            setSliderVisible(macroToneSlider, macroToneLabel, true);
+            setSliderVisible(macroDirtSlider, macroDirtLabel, true);
+            setSliderVisible(macroMotionSlider, macroMotionLabel, true);
+            setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
+            layoutKnobRow(macroArea.removeFromTop(104).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+
+            modMatrixLabel.setBounds(matrixArea.removeFromTop(26));
+
+            for (size_t index = 0; index < modSlotRows.size(); ++index)
+            {
+                auto row = matrixArea.removeFromTop(28).reduced(3, 2);
+                modSlotRows[index].setBounds(row.removeFromLeft(44).reduced(2, 0));
+                modSourceCells[index].setBounds(row.removeFromLeft(150).reduced(4, 0));
+                modDestinationCells[index].setBounds(row.removeFromLeft(260).reduced(4, 0));
+                modAmountCells[index].setBounds(row.removeFromLeft(110).reduced(4, 0));
+                matrixArea.removeFromTop(2);
+            }
+
             break;
         }
 
@@ -1498,6 +1635,7 @@ void NateVSTAudioProcessorEditor::updateTabButtons()
     homeTabButton.setToggleState(activePanel == Panel::home, juce::dontSendNotification);
     synthTabButton.setToggleState(activePanel == Panel::synth, juce::dontSendNotification);
     labTabButton.setToggleState(activePanel == Panel::lab, juce::dontSendNotification);
+    modTabButton.setToggleState(activePanel == Panel::mod, juce::dontSendNotification);
     sampleTabButton.setToggleState(activePanel == Panel::sample, juce::dontSendNotification);
     sequencerTabButton.setToggleState(activePanel == Panel::sequencer, juce::dontSendNotification);
     effectsTabButton.setToggleState(activePanel == Panel::effects, juce::dontSendNotification);
@@ -1514,7 +1652,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
-        &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
+        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modMatrixLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox,
@@ -1537,6 +1675,17 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &presetNameEditor, &fxRackStatusLabel,
         &sequencerGrid
     });
+
+    for (auto& label : modSourceRows)
+        label.setVisible(false);
+
+    for (size_t index = 0; index < modSlotRows.size(); ++index)
+    {
+        modSlotRows[index].setVisible(false);
+        modSourceCells[index].setVisible(false);
+        modDestinationCells[index].setVisible(false);
+        modAmountCells[index].setVisible(false);
+    }
 
     setSliderVisible(octaveSlider, octaveLabel, false);
     setSliderVisible(tuneSlider, tuneLabel, false);

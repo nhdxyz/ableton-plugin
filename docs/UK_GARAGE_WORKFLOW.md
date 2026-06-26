@@ -91,6 +91,7 @@ Research references:
 - Added the `Crush` FX module and biased the UKG recipe toward light bitcrush/downsample color when useful.
 - Added the `Pump` FX module and biased the UKG recipe toward tempo-synced ducking/pump movement.
 - Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
+- Added a compact sequencer template selector with UKG 2-step, shuffle bass, organ skank, vocal chop, and late stab patterns.
 
 ## Next UKG Features
 
@@ -118,8 +119,9 @@ Research references:
 
 4. Swing templates.
 
-- Add more sequencer presets: `2-Step`, `Shuffle Bass`, `Organ Skank`, and `Vocal Chop`.
-- Add per-template gate and probability defaults.
+- Implemented as a compact SEQ-panel template selector.
+- Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
+- Per-template rate, gate, swing, accent, probability, octave, and random amount defaults are set when applied.
 
 5. UKG factory presets.
 

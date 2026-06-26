@@ -75,6 +75,7 @@ private:
     juce::ComboBox filterModeBox;
     juce::ComboBox recipeBox;
     juce::ComboBox sequencerRateBox;
+    juce::ComboBox sequencerPatternBox;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
@@ -251,6 +252,7 @@ private:
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };
     juce::TextButton ukgPatternButton { "UKG" };
+    juce::TextButton applyPatternButton { "Apply" };
     juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };

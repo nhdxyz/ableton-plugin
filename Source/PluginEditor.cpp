@@ -141,6 +141,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
 
+    sequencerPatternBox.addItem("Bass", 1);
+    sequencerPatternBox.addItem("Stab", 2);
+    sequencerPatternBox.addItem("UKG 2-Step", 3);
+    sequencerPatternBox.addItem("Shuffle Bass", 4);
+    sequencerPatternBox.addItem("Organ Skank", 5);
+    sequencerPatternBox.addItem("Vocal Chop", 6);
+    sequencerPatternBox.addItem("Late Stab", 7);
+    sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
+    addAndMakeVisible(sequencerPatternBox);
+
     addAndMakeVisible(presetBox);
 
     presetCategoryBox.addItemList(presetCategoryChoices(), 1);
@@ -391,6 +401,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.applySequencerPatternPreset(2);
         sequencerGrid.repaint();
     };
+    applyPatternButton.onClick = [this]
+    {
+        const auto selectedId = sequencerPatternBox.getSelectedId();
+        audioProcessor.applySequencerPatternPreset(juce::jmax(1, selectedId) - 1);
+        sequencerGrid.repaint();
+    };
     copySequencerButton.onClick = [this]
     {
         audioProcessor.copySequencerFirstHalfToSecondHalf();
@@ -465,6 +481,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(bassPatternButton);
     addAndMakeVisible(stabPatternButton);
     addAndMakeVisible(ukgPatternButton);
+    addAndMakeVisible(applyPatternButton);
     addAndMakeVisible(copySequencerButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
@@ -877,9 +894,8 @@ void NateVSTAudioProcessorEditor::resized()
             rateEighthButton.setVisible(true);
             rateSixteenthButton.setVisible(true);
             rateThirtySecondButton.setVisible(true);
-            bassPatternButton.setVisible(true);
-            stabPatternButton.setVisible(true);
-            ukgPatternButton.setVisible(true);
+            sequencerPatternBox.setVisible(true);
+            applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             clearSequencerButton.setVisible(true);
@@ -892,9 +908,8 @@ void NateVSTAudioProcessorEditor::resized()
             rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
-            bassPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
-            stabPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
-            ukgPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
+            sequencerPatternBox.setBounds(actionRow.removeFromLeft(156).reduced(4));
+            applyPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
             copySequencerButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
             randomSequencerButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
             clearSequencerButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
@@ -1452,7 +1467,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -1461,7 +1476,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
         &randomCutButton, &randomSequencerButton, &clearSequencerButton,
-        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &copySequencerButton,
+        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

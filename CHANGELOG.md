@@ -169,3 +169,9 @@
 - Processed lows as mono below the crossover while applying mid/side width only to upper content.
 - Added Width to the FX Add menu, rack list, selected-module editor, FX randomization lock, and recipe randomization.
 - Biased bass recipes toward subtle width/mono-bass protection and stab/noise recipes toward wider upper content.
+
+### UKG Sequencer Templates
+
+- Replaced the fixed Bass/Stab/UKG button row in the SEQ panel with a compact template selector and Apply button.
+- Added UKG-focused templates for 2-step bass, shuffle bass, organ skank, vocal chop triggering, and late offbeat stabs.
+- Made sequencer templates set rate, gate, swing, accent, octave, probability, and random amount so each pattern starts with a distinct feel.

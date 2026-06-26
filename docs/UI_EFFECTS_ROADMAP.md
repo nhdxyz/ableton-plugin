@@ -183,7 +183,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 4. Organ/Stab recipes.
    Start with presets and randomizer recipes for organ stabs, M1-ish chords, bell plucks, and bright minor stabs before building a dedicated oscillator mode.
 5. Swing and chop sequencer templates.
-   Add templates for 2-step bass, shuffle bass, organ skank, and vocal chop triggers.
+   Implemented in the SEQ panel. Templates cover 2-step bass, shuffle bass, organ skank, vocal chop triggers, and late offbeat stabs.
 
 ### High Priority
 

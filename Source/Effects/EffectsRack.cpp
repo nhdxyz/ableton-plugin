@@ -52,6 +52,9 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxReverbSize = parameters.getRawParameterValue(Parameters::ID::fxReverbSize);
     fxReverbDamping = parameters.getRawParameterValue(Parameters::ID::fxReverbDamping);
     fxReverbMix = parameters.getRawParameterValue(Parameters::ID::fxReverbMix);
+    fxWidthEnabled = parameters.getRawParameterValue(Parameters::ID::fxWidthEnabled);
+    fxWidthAmount = parameters.getRawParameterValue(Parameters::ID::fxWidthAmount);
+    fxWidthMonoCutoff = parameters.getRawParameterValue(Parameters::ID::fxWidthMonoCutoff);
     fxToneEnabled = parameters.getRawParameterValue(Parameters::ID::fxToneEnabled);
     fxToneTilt = parameters.getRawParameterValue(Parameters::ID::fxToneTilt);
     fxToneLowCut = parameters.getRawParameterValue(Parameters::ID::fxToneLowCut);
@@ -85,6 +88,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
+    widthLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     reset();
 }
 
@@ -98,6 +102,7 @@ void EffectsRack::reset()
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
+    std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
     pumpPhase = 0.0;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
@@ -113,6 +118,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
     processChorus(buffer);
     processDelay(buffer);
     processReverb(buffer);
+    processWidth(buffer);
     applyOutputGainAndSafety(buffer, outputGainDb);
 }
 
@@ -337,6 +343,39 @@ void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
 
     if (buffer.getNumChannels() == 1)
         reverb.processMono(buffer.getWritePointer(0), buffer.getNumSamples());
+}
+
+void EffectsRack::processWidth(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxWidthEnabled, 0.0f) < 0.5f || buffer.getNumChannels() < 2 || widthLowState.size() < 2)
+        return;
+
+    const auto width = juce::jlimit(0.0f, 1.6f, readParameter(fxWidthAmount, 1.15f));
+    const auto monoCutoff = readParameter(fxWidthMonoCutoff, 120.0f);
+    const auto lowAlpha = onePoleAlpha(monoCutoff, currentSampleRate);
+    const auto sideCompensation = 1.0f / (1.0f + (juce::jmax(0.0f, width - 1.0f) * 0.18f));
+    auto& lowLeftState = widthLowState[0];
+    auto& lowRightState = widthLowState[1];
+    auto* left = buffer.getWritePointer(0);
+    auto* right = buffer.getWritePointer(1);
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        const auto inputLeft = left[sampleIndex];
+        const auto inputRight = right[sampleIndex];
+
+        lowLeftState += lowAlpha * (inputLeft - lowLeftState);
+        lowRightState += lowAlpha * (inputRight - lowRightState);
+
+        const auto monoLow = (lowLeftState + lowRightState) * 0.5f;
+        const auto highLeft = inputLeft - lowLeftState;
+        const auto highRight = inputRight - lowRightState;
+        const auto highMid = (highLeft + highRight) * 0.5f;
+        const auto highSide = (highLeft - highRight) * 0.5f * width;
+
+        left[sampleIndex] = (monoLow + highMid + highSide) * sideCompensation;
+        right[sampleIndex] = (monoLow + highMid - highSide) * sideCompensation;
+    }
 }
 
 void EffectsRack::applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, float outputGainDb)

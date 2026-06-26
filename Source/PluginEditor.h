@@ -43,6 +43,7 @@ private:
         chorus,
         delay,
         reverb,
+        width,
         guard
     };
 
@@ -89,6 +90,7 @@ private:
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
+    juce::ToggleButton fxWidthEnabledButton;
     juce::ToggleButton fxToneEnabledButton;
     juce::ToggleButton fxPhaserEnabledButton;
     juce::ToggleButton fxGuardEnabledButton;
@@ -159,6 +161,8 @@ private:
     juce::Slider fxReverbSizeSlider;
     juce::Slider fxReverbDampingSlider;
     juce::Slider fxReverbMixSlider;
+    juce::Slider fxWidthAmountSlider;
+    juce::Slider fxWidthMonoCutoffSlider;
     juce::Slider fxToneTiltSlider;
     juce::Slider fxToneLowCutSlider;
     juce::Slider fxPhaserRateSlider;
@@ -225,6 +229,8 @@ private:
     juce::Label fxReverbSizeLabel;
     juce::Label fxReverbDampingLabel;
     juce::Label fxReverbMixLabel;
+    juce::Label fxWidthAmountLabel;
+    juce::Label fxWidthMonoCutoffLabel;
     juce::Label fxToneTiltLabel;
     juce::Label fxToneLowCutLabel;
     juce::Label fxPhaserRateLabel;
@@ -282,6 +288,7 @@ private:
     juce::TextButton fxChorusSlotButton { "Chorus" };
     juce::TextButton fxDelaySlotButton { "Delay" };
     juce::TextButton fxReverbSlotButton { "Reverb" };
+    juce::TextButton fxWidthSlotButton { "Width" };
     juce::TextButton fxGuardSlotButton { "Guard" };
     juce::TextButton keyboardOctaveDownButton { "Oct -" };
     juce::TextButton keyboardOctaveUpButton { "Oct +" };

@@ -161,3 +161,11 @@
 - Aligned Pump to host PPQ position when available, with BPM-based free-run fallback when a host does not expose grid position.
 - Added Pump to the FX Add menu, rack list, selected-module editor, FX randomization lock, and recipe randomization.
 - Biased UKG, deep house, rolling tech, stab, minimal, acid, and noise recipes toward conservative-to-aggressive Pump settings where useful.
+
+### Width/Mono Bass FX
+
+- Added a late-chain `Width` FX utility for mono-safe low end and controllable stereo upper content.
+- Added stable Width parameters for bypass, width amount, and mono-bass crossover.
+- Processed lows as mono below the crossover while applying mid/side width only to upper content.
+- Added Width to the FX Add menu, rack list, selected-module editor, FX randomization lock, and recipe randomization.
+- Biased bass recipes toward subtle width/mono-bass protection and stab/noise recipes toward wider upper content.

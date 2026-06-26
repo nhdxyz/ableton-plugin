@@ -179,7 +179,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 2. Pump/Duck.
    Implemented as the Pump module. UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
 3. Width/Mono Bass.
-   Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
+   Implemented as the Width module. Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
 4. Organ/Stab recipes.
    Start with presets and randomizer recipes for organ stabs, M1-ish chords, bell plucks, and bright minor stabs before building a dedicated oscillator mode.
 5. Swing and chop sequencer templates.
@@ -203,7 +203,7 @@ Implemented as the Pump module. An internal tempo-sync pump gives sidechain-styl
 
 4. Stereo Width / Mono Bass
 
-Useful for club translation. Keep low frequencies centered while allowing upper layers, chorus, delay, and reverb to widen.
+Implemented as the Width module. Useful for club translation. Keep low frequencies centered while allowing upper layers, chorus, delay, and reverb to widen.
 
 5. Three-Band EQ
 
@@ -357,7 +357,7 @@ Add in this order:
 1. Bitcrusher/downsample. Implemented as the Crush module.
 2. Flanger.
 3. Pump/Duck. Implemented as the Pump module.
-4. Stereo Width/Mono Bass.
+4. Stereo Width/Mono Bass. Implemented as the Width module.
 5. Three-Band EQ.
 
 Each effect should include:

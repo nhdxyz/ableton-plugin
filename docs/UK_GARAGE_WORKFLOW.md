@@ -90,6 +90,7 @@ Research references:
 - Added a skippy 2-step sequencer preset with high swing, short gates, and ghost-note probability.
 - Added the `Crush` FX module and biased the UKG recipe toward light bitcrush/downsample color when useful.
 - Added the `Pump` FX module and biased the UKG recipe toward tempo-synced ducking/pump movement.
+- Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
 
 ## Next UKG Features
 
@@ -129,6 +130,7 @@ Research references:
 
 6. Width and mono-bass utility.
 
+- Implemented as the `Width` FX module.
 - Keep sub frequencies centered.
 - Add width for stabs, shakers, delays, and reverbs without weakening the bass.
 

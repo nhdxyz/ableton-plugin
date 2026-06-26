@@ -117,6 +117,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxPumpDepth = 0.35f;
     auto fxPumpShape = 0.45f;
     auto fxPumpPhase = 0.0f;
+    auto fxWidthEnabled = false;
+    auto fxWidthAmount = 1.15f;
+    auto fxWidthMonoCutoff = 120.0f;
     auto fxPhaserEnabled = false;
     auto fxPhaserRate = 0.32f;
     auto fxPhaserDepth = 0.42f;
@@ -155,6 +158,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.12f, 0.32f);
             fxPumpShape = randomFloat(0.28f, 0.62f);
             fxPumpPhase = randomFloat(0.0f, 0.12f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.1f);
+            fxWidthAmount = randomFloat(0.95f, 1.18f);
+            fxWidthMonoCutoff = randomFloat(85.0f, 135.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.0f, 0.12f);
             fxGuardCeiling = randomFloat(0.9f, 0.96f);
@@ -193,6 +199,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.12f, 0.38f);
             fxPumpShape = randomFloat(0.3f, 0.72f);
             fxPumpPhase = randomFloat(0.0f, 0.18f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.12f);
+            fxWidthAmount = randomFloat(0.95f, 1.22f);
+            fxWidthMonoCutoff = randomFloat(90.0f, 150.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.04f, 0.2f);
             fxGuardCeiling = randomFloat(0.88f, 0.94f);
@@ -228,6 +237,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.08f, 0.24f);
             fxPumpShape = randomFloat(0.35f, 0.75f);
             fxPumpPhase = randomFloat(0.0f, 0.12f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.1f);
+            fxWidthAmount = randomFloat(0.9f, 1.15f);
+            fxWidthMonoCutoff = randomFloat(80.0f, 140.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.08f, 0.26f);
             fxGuardCeiling = randomFloat(0.86f, 0.93f);
@@ -271,6 +283,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.08f, 0.36f);
             fxPumpShape = randomFloat(0.25f, 0.82f);
             fxPumpPhase = randomFloat(0.0f, 0.22f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.36f + (chaos * 0.16f);
+            fxWidthAmount = randomFloat(1.0f, 1.42f);
+            fxWidthMonoCutoff = randomFloat(100.0f, 180.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.0f, 0.16f);
             fxGuardCeiling = randomFloat(0.88f, 0.95f);
@@ -310,6 +325,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.1f, 0.34f);
             fxPumpShape = randomFloat(0.28f, 0.68f);
             fxPumpPhase = randomFloat(0.0f, 0.16f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.45f + (chaos * 0.18f);
+            fxWidthAmount = randomFloat(1.05f, 1.5f);
+            fxWidthMonoCutoff = randomFloat(110.0f, 190.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.04f, 0.22f);
             fxGuardCeiling = randomFloat(0.86f, 0.94f);
@@ -356,6 +374,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.12f, 0.55f);
             fxPumpShape = randomFloat(0.2f, 0.9f);
             fxPumpPhase = randomFloat(0.0f, 0.35f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.5f + (chaos * 0.2f);
+            fxWidthAmount = randomFloat(0.85f, 1.55f);
+            fxWidthMonoCutoff = randomFloat(120.0f, 230.0f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.1f, 0.42f);
             fxGuardCeiling = randomFloat(0.82f, 0.91f);
@@ -402,6 +423,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.16f, 0.46f);
             fxPumpShape = randomFloat(0.32f, 0.78f);
             fxPumpPhase = randomFloat(0.0f, 0.18f);
+            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.34f + (chaos * 0.16f);
+            fxWidthAmount = randomFloat(0.98f, 1.28f);
+            fxWidthMonoCutoff = randomFloat(90.0f, 150.0f);
             fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.18f);
             fxPhaserRate = randomFloat(0.08f, 0.5f);
             fxPhaserDepth = randomFloat(0.18f, 0.55f);
@@ -457,6 +481,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxPumpDepth = blend(Parameters::ID::fxPumpDepth, fxPumpDepth);
         fxPumpShape = blend(Parameters::ID::fxPumpShape, fxPumpShape);
         fxPumpPhase = blend(Parameters::ID::fxPumpPhase, fxPumpPhase);
+        fxWidthAmount = blend(Parameters::ID::fxWidthAmount, fxWidthAmount);
+        fxWidthMonoCutoff = blend(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
         fxPhaserDepth = blend(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
         fxPhaserMix = blend(Parameters::ID::fxPhaserMix, fxPhaserMix);
@@ -504,6 +530,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxPumpDepth, fxPumpDepth);
     setParameter(Parameters::ID::fxPumpShape, fxPumpShape);
     setParameter(Parameters::ID::fxPumpPhase, fxPumpPhase);
+    setParameter(Parameters::ID::fxWidthEnabled, fxWidthEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxWidthAmount, fxWidthAmount);
+    setParameter(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);
     setParameter(Parameters::ID::fxPhaserEnabled, fxPhaserEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxPhaserRate, fxPhaserRate);
     setParameter(Parameters::ID::fxPhaserDepth, fxPhaserDepth);

@@ -29,6 +29,7 @@ private:
     std::vector<float> toneTiltState;
     std::vector<float> bitcrushHeldSample;
     std::vector<int> bitcrushHoldCounter;
+    std::vector<float> widthLowState;
 
     double currentSampleRate = 44100.0;
     double pumpPhase = 0.0;
@@ -59,6 +60,9 @@ private:
     std::atomic<float>* fxReverbSize = nullptr;
     std::atomic<float>* fxReverbDamping = nullptr;
     std::atomic<float>* fxReverbMix = nullptr;
+    std::atomic<float>* fxWidthEnabled = nullptr;
+    std::atomic<float>* fxWidthAmount = nullptr;
+    std::atomic<float>* fxWidthMonoCutoff = nullptr;
     std::atomic<float>* fxToneEnabled = nullptr;
     std::atomic<float>* fxToneTilt = nullptr;
     std::atomic<float>* fxToneLowCut = nullptr;
@@ -80,6 +84,7 @@ private:
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer);
     void processReverb(juce::AudioBuffer<float>& buffer);
+    void processWidth(juce::AudioBuffer<float>& buffer);
     void applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, float outputGainDb);
     float softClip(float sample) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;

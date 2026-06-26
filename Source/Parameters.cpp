@@ -549,6 +549,24 @@ APVTS::ParameterLayout createLayout()
         0.2f));
 
     add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxWidthEnabled,
+        "FX Width Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxWidthAmount,
+        "FX Width Amount",
+        juce::NormalisableRange<float> { 0.0f, 1.6f, 0.001f },
+        1.15f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxWidthMonoCutoff,
+        "FX Width Mono Bass",
+        skewedRange(40.0f, 260.0f, 120.0f),
+        120.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterBool>(
         ID::fxToneEnabled,
         "FX Tone Enabled",
         false));

@@ -263,6 +263,22 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
 
     switch (presetIndex)
     {
+        case 2:
+            setStep(0, 0, 0.88f, 1.0f);
+            setStep(2, 7, 0.62f, 0.85f);
+            setStep(5, 3, 0.78f, 0.95f);
+            setStep(7, 10, 0.54f, 0.72f);
+            setStep(9, 0, 0.82f, 1.0f);
+            setStep(11, -5, 0.66f, 0.82f);
+            setStep(14, 7, 0.76f, 0.92f);
+            setParameterPlainValue(Parameters::ID::sequencerRate, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.34f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.42f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.58f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, -1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.93f);
+            break;
+
         case 1:
             setStep(2, 0, 0.72f, 1.0f);
             setStep(6, 7, 0.86f, 0.95f);

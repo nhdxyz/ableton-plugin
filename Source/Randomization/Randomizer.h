@@ -14,7 +14,8 @@ enum class Recipe
     acidLine,
     minimalBlip,
     darkStab,
-    noiseFx
+    noiseFx,
+    ukgTwoStepBass
 };
 
 class Randomizer
@@ -41,4 +42,3 @@ private:
     void applyOutputSafety(float drive);
 };
 }
-

@@ -30,7 +30,8 @@ juce::StringArray randomRecipeChoices()
         "Acid Line",
         "Minimal Blip",
         "Dark Stab",
-        "Noise FX"
+        "Noise FX",
+        "UKG 2-Step Bass"
     };
 }
 

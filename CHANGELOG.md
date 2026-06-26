@@ -133,3 +133,11 @@
 - Improved rotary knob rendering with a clearer panel, rail, value arc, pointer, and center cap.
 - Lowered rotary drag distance and disabled mouse-wheel edits on sliders to reduce accidental changes.
 - Documented the framework decision to stay on JUCE instead of adding a second GUI framework for this phase.
+
+### UK Garage Direction
+
+- Added `docs/UK_GARAGE_WORKFLOW.md` to capture UK garage sound targets and next feature priorities.
+- Added `UKG 2-Step Bass` as a randomization recipe while preserving existing recipe indexes.
+- Added `UKG` as a preset category and library filter option.
+- Added a `UKG` sequencer preset button with a skippy 2-step pattern, strong swing, short gates, and ghost-note probability.
+- Tuned the UKG recipe toward mono-safe sub/reese bass, short envelopes, controlled filter motion, light movement FX, and Guard output safety.

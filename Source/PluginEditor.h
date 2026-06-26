@@ -227,6 +227,7 @@ private:
     juce::TextButton clearSequencerButton { "Clear" };
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };
+    juce::TextButton ukgPatternButton { "UKG" };
     juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };

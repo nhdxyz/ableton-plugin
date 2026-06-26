@@ -1,0 +1,83 @@
+# Nate VST UK Garage Direction
+
+## Goal
+
+Nate VST should support UK garage alongside house, tech house, techno, and minimal. The focus is not only tempo or preset names. UK garage needs a different feel: shuffled 2-step rhythm, elastic bass, short chord/organ stabs, vocal chops, and tight space effects.
+
+Reference patterns reviewed:
+
+- Skippy 2-step drums with shuffled/offbeat placement.
+- Sub and reese-style basslines.
+- Organ, chord, and stab sounds.
+- Chopped vocal hooks and short sample phrases.
+- Short delay, plate/room reverb, chorus/width, and sidechain-style pump.
+
+## Sound Targets
+
+### Bass
+
+- Mono-safe sub layer.
+- Slightly detuned second oscillator for reese-style motion.
+- Short-to-medium envelopes so notes bounce with the groove.
+- Moderate filter envelope and drive.
+- Guard enabled by default for level safety.
+
+### Chords And Organ Stabs
+
+- Short attack.
+- Tight decay and release.
+- Brighter filtering than techno stabs, but not harsh.
+- Light chorus or phaser only when it helps movement.
+- Later: dedicated organ-style source or additive/drawbar-inspired mode.
+
+### Vocal Chops
+
+- The sampler is the right foundation.
+- UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
+- Later: add slice markers, transient-ish slicing, one-shot/gated modes, and per-slice pitch.
+
+### Groove
+
+- 1/16 sequencing with strong swing.
+- Offbeat and late-step note placement.
+- Short gates.
+- Some probability for ghost-note variation.
+
+## First Implemented Slice
+
+- Added `UKG 2-Step Bass` to the randomization recipe list.
+- Appended the recipe to preserve existing saved recipe indexes.
+- Added UKG as a preset category and filter option.
+- Added a `UKG` sequencer preset button.
+- Added a skippy 2-step sequencer preset with high swing, short gates, and ghost-note probability.
+
+## Next UKG Features
+
+1. Vocal chop mode for the sampler.
+
+- Add one-shot/gated playback option.
+- Add tighter random cut ranges for short phrases.
+- Add quick pitch choices such as -12, -7, 0, +7, +12.
+- Add a `UKG Chop` randomize action.
+
+2. Pump/Duck FX.
+
+- Tempo-synced volume shaper.
+- Depth, rate, shape, and phase controls.
+- Useful for UKG, house, and garage-adjacent bass movement.
+
+3. Organ/Stab source.
+
+- Start with a curated synth patch recipe.
+- Later add organ-style oscillator mix or drawbar-inspired mode.
+
+4. Swing templates.
+
+- Add more sequencer presets: `2-Step`, `Shuffle Bass`, `Organ Skank`, and `Vocal Chop`.
+
+5. UKG factory presets.
+
+- Bass: sub/reese.
+- Chords: organ stab, bright stab.
+- Sample: vocal chop starter.
+- Sequence: 2-step bass and offbeat stab patterns.

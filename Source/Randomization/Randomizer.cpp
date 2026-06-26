@@ -309,6 +309,47 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxGuardPush = randomFloat(0.1f, 0.42f);
             fxGuardCeiling = randomFloat(0.82f, 0.91f);
             break;
+
+        case Recipe::ukgTwoStepBass:
+            wave = randomInt(1, 2);
+            osc2Wave = randomInt(1, 3);
+            octave = randomInt(-2, -1);
+            osc2Octave = octave;
+            tune = randomFloat(-0.04f, 0.04f);
+            osc2Tune = randomFloat(-0.35f, 0.35f);
+            osc1Level = randomFloat(0.62f, 0.95f);
+            osc2Level = randomFloat(0.22f, 0.58f);
+            subLevel = randomFloat(0.32f, 0.78f);
+            noiseLevel = randomFloat(0.0f, 0.08f);
+            cutoff = randomFloat(520.0f, 2600.0f);
+            resonance = randomFloat(0.22f, 0.68f);
+            envAmount = randomFloat(0.12f, 0.5f);
+            attack = randomFloat(0.001f, 0.018f);
+            decay = randomFloat(0.09f, 0.32f);
+            sustain = randomFloat(0.2f, 0.55f);
+            release = randomFloat(0.035f, 0.18f);
+            drive = randomFloat(0.08f, 0.38f);
+            glide = randomFloat(0.0f, 0.09f);
+            unisonVoiceCount = randomInt(1, 3);
+            unisonDetune = randomFloat(0.0f, 0.1f);
+            unisonBlend = randomFloat(0.25f, 0.58f);
+            unisonSpread = randomFloat(0.0f, 0.28f);
+            macroTone = randomFloat(0.05f, 0.35f);
+            macroDirt = randomFloat(0.03f, 0.26f);
+            macroMotion = randomFloat(0.12f, 0.48f);
+            macroSpace = randomFloat(0.06f, 0.28f);
+            mono = true;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.08f, 0.22f);
+            fxToneLowCut = randomFloat(32.0f, 65.0f);
+            fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.18f);
+            fxPhaserRate = randomFloat(0.08f, 0.5f);
+            fxPhaserDepth = randomFloat(0.18f, 0.55f);
+            fxPhaserMix = randomFloat(0.05f, 0.18f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.02f, 0.16f);
+            fxGuardCeiling = randomFloat(0.88f, 0.95f);
+            break;
     }
 
     const auto cutoffBias = std::pow(2.0f, brightnessBias);

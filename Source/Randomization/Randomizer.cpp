@@ -108,6 +108,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxToneEnabled = false;
     auto fxToneTilt = 0.0f;
     auto fxToneLowCut = 30.0f;
+    auto fxBitcrushEnabled = false;
+    auto fxBitcrushBits = 12.0f;
+    auto fxBitcrushDownsample = 1.0f;
+    auto fxBitcrushMix = 0.25f;
     auto fxPhaserEnabled = false;
     auto fxPhaserRate = 0.32f;
     auto fxPhaserDepth = 0.42f;
@@ -170,6 +174,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxToneEnabled = true;
             fxToneTilt = randomFloat(-0.12f, 0.2f);
             fxToneLowCut = randomFloat(32.0f, 70.0f);
+            fxBitcrushEnabled = randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.12f);
+            fxBitcrushBits = randomFloat(9.0f, 14.0f);
+            fxBitcrushDownsample = randomFloat(1.0f, 5.0f);
+            fxBitcrushMix = randomFloat(0.05f, 0.18f);
             fxGuardEnabled = true;
             fxGuardPush = randomFloat(0.04f, 0.2f);
             fxGuardCeiling = randomFloat(0.88f, 0.94f);
@@ -230,6 +238,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxToneEnabled = true;
             fxToneTilt = randomFloat(-0.1f, 0.28f);
             fxToneLowCut = randomFloat(35.0f, 95.0f);
+            fxBitcrushEnabled = randomFloat(0.0f, 1.0f) < 0.35f + (chaos * 0.2f);
+            fxBitcrushBits = randomFloat(7.0f, 13.0f);
+            fxBitcrushDownsample = randomFloat(1.0f, 9.0f);
+            fxBitcrushMix = randomFloat(0.05f, 0.25f);
             fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.5f;
             fxPhaserRate = randomFloat(0.18f, 1.4f);
             fxPhaserDepth = randomFloat(0.25f, 0.82f);
@@ -301,6 +313,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxToneEnabled = true;
             fxToneTilt = randomFloat(-0.35f, 0.45f);
             fxToneLowCut = randomFloat(50.0f, 160.0f);
+            fxBitcrushEnabled = true;
+            fxBitcrushBits = randomFloat(4.0f, 10.0f);
+            fxBitcrushDownsample = randomFloat(2.0f, 18.0f);
+            fxBitcrushMix = randomFloat(0.16f, 0.55f);
             fxPhaserEnabled = true;
             fxPhaserRate = randomFloat(0.05f, 2.4f);
             fxPhaserDepth = randomFloat(0.3f, 1.0f);
@@ -342,6 +358,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxToneEnabled = true;
             fxToneTilt = randomFloat(-0.08f, 0.22f);
             fxToneLowCut = randomFloat(32.0f, 65.0f);
+            fxBitcrushEnabled = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.16f);
+            fxBitcrushBits = randomFloat(9.0f, 14.0f);
+            fxBitcrushDownsample = randomFloat(1.0f, 6.0f);
+            fxBitcrushMix = randomFloat(0.04f, 0.16f);
             fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.18f);
             fxPhaserRate = randomFloat(0.08f, 0.5f);
             fxPhaserDepth = randomFloat(0.18f, 0.55f);
@@ -391,6 +411,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroSpace = blend(Parameters::ID::macroSpace, macroSpace);
         fxToneTilt = blend(Parameters::ID::fxToneTilt, fxToneTilt);
         fxToneLowCut = blend(Parameters::ID::fxToneLowCut, fxToneLowCut);
+        fxBitcrushBits = blend(Parameters::ID::fxBitcrushBits, fxBitcrushBits);
+        fxBitcrushDownsample = blend(Parameters::ID::fxBitcrushDownsample, fxBitcrushDownsample);
+        fxBitcrushMix = blend(Parameters::ID::fxBitcrushMix, fxBitcrushMix);
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
         fxPhaserDepth = blend(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
         fxPhaserMix = blend(Parameters::ID::fxPhaserMix, fxPhaserMix);
@@ -429,6 +452,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxToneEnabled, fxToneEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxToneTilt, fxToneTilt);
     setParameter(Parameters::ID::fxToneLowCut, fxToneLowCut);
+    setParameter(Parameters::ID::fxBitcrushEnabled, fxBitcrushEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxBitcrushBits, fxBitcrushBits);
+    setParameter(Parameters::ID::fxBitcrushDownsample, fxBitcrushDownsample);
+    setParameter(Parameters::ID::fxBitcrushMix, fxBitcrushMix);
     setParameter(Parameters::ID::fxPhaserEnabled, fxPhaserEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxPhaserRate, fxPhaserRate);
     setParameter(Parameters::ID::fxPhaserDepth, fxPhaserDepth);

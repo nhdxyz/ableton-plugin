@@ -674,6 +674,10 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
         restoreParameterGroupFromState(state, {
             Parameters::ID::fxDistortionEnabled,
             Parameters::ID::fxDistortionAmount,
+            Parameters::ID::fxBitcrushEnabled,
+            Parameters::ID::fxBitcrushBits,
+            Parameters::ID::fxBitcrushDownsample,
+            Parameters::ID::fxBitcrushMix,
             Parameters::ID::fxChorusEnabled,
             Parameters::ID::fxChorusRate,
             Parameters::ID::fxChorusDepth,

@@ -26,6 +26,8 @@ private:
     juce::AudioBuffer<float> delayBuffer;
     std::vector<float> toneLowCutState;
     std::vector<float> toneTiltState;
+    std::vector<float> bitcrushHeldSample;
+    std::vector<int> bitcrushHoldCounter;
 
     double currentSampleRate = 44100.0;
     int delayWritePosition = 0;
@@ -33,6 +35,10 @@ private:
 
     std::atomic<float>* fxDistortionEnabled = nullptr;
     std::atomic<float>* fxDistortionAmount = nullptr;
+    std::atomic<float>* fxBitcrushEnabled = nullptr;
+    std::atomic<float>* fxBitcrushBits = nullptr;
+    std::atomic<float>* fxBitcrushDownsample = nullptr;
+    std::atomic<float>* fxBitcrushMix = nullptr;
     std::atomic<float>* fxChorusEnabled = nullptr;
     std::atomic<float>* fxChorusRate = nullptr;
     std::atomic<float>* fxChorusDepth = nullptr;
@@ -60,6 +66,7 @@ private:
 
     void processTone(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);
+    void processBitcrush(juce::AudioBuffer<float>& buffer);
     void processPhaser(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer);

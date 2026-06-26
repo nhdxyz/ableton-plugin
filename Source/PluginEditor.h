@@ -37,6 +37,7 @@ private:
     {
         tone = 0,
         distortion,
+        bitcrush,
         phaser,
         chorus,
         delay,
@@ -81,6 +82,7 @@ private:
     juce::ToggleButton sampleReverseButton;
     juce::ToggleButton sequencerEnabledButton;
     juce::ToggleButton fxDistortionEnabledButton;
+    juce::ToggleButton fxBitcrushEnabledButton;
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
@@ -139,6 +141,9 @@ private:
     juce::Slider sequencerProbabilitySlider;
     juce::Slider sequencerRandomSlider;
     juce::Slider fxDistortionAmountSlider;
+    juce::Slider fxBitcrushBitsSlider;
+    juce::Slider fxBitcrushDownsampleSlider;
+    juce::Slider fxBitcrushMixSlider;
     juce::Slider fxChorusRateSlider;
     juce::Slider fxChorusDepthSlider;
     juce::Slider fxChorusMixSlider;
@@ -199,6 +204,9 @@ private:
     juce::Label sequencerProbabilityLabel;
     juce::Label sequencerRandomLabel;
     juce::Label fxDistortionAmountLabel;
+    juce::Label fxBitcrushBitsLabel;
+    juce::Label fxBitcrushDownsampleLabel;
+    juce::Label fxBitcrushMixLabel;
     juce::Label fxChorusRateLabel;
     juce::Label fxChorusDepthLabel;
     juce::Label fxChorusMixLabel;
@@ -259,6 +267,7 @@ private:
     juce::TextButton fxRemoveButton { "Remove" };
     juce::TextButton fxToneSlotButton { "Tone" };
     juce::TextButton fxDistortionSlotButton { "Drive" };
+    juce::TextButton fxBitcrushSlotButton { "Crush" };
     juce::TextButton fxPhaserSlotButton { "Phaser" };
     juce::TextButton fxChorusSlotButton { "Chorus" };
     juce::TextButton fxDelaySlotButton { "Delay" };

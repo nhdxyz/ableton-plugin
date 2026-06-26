@@ -20,6 +20,10 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
 {
     fxDistortionEnabled = parameters.getRawParameterValue(Parameters::ID::fxDistortionEnabled);
     fxDistortionAmount = parameters.getRawParameterValue(Parameters::ID::fxDistortionAmount);
+    fxBitcrushEnabled = parameters.getRawParameterValue(Parameters::ID::fxBitcrushEnabled);
+    fxBitcrushBits = parameters.getRawParameterValue(Parameters::ID::fxBitcrushBits);
+    fxBitcrushDownsample = parameters.getRawParameterValue(Parameters::ID::fxBitcrushDownsample);
+    fxBitcrushMix = parameters.getRawParameterValue(Parameters::ID::fxBitcrushMix);
     fxChorusEnabled = parameters.getRawParameterValue(Parameters::ID::fxChorusEnabled);
     fxChorusRate = parameters.getRawParameterValue(Parameters::ID::fxChorusRate);
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
@@ -63,6 +67,8 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
     toneLowCutState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
     reset();
 }
 
@@ -74,6 +80,8 @@ void EffectsRack::reset()
     delayBuffer.clear();
     std::fill(toneLowCutState.begin(), toneLowCutState.end(), 0.0f);
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
+    std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
+    std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
     delayWritePosition = 0;
 }
 
@@ -81,6 +89,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb)
 {
     processTone(buffer);
     processDistortion(buffer);
+    processBitcrush(buffer);
     processPhaser(buffer);
     processChorus(buffer);
     processDelay(buffer);
@@ -137,6 +146,40 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
 
         for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
             samples[sampleIndex] = std::tanh(samples[sampleIndex] * drive) * makeup;
+    }
+}
+
+void EffectsRack::processBitcrush(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxBitcrushEnabled, 0.0f) < 0.5f || bitcrushHeldSample.empty() || bitcrushHoldCounter.empty())
+        return;
+
+    const auto bits = juce::jlimit(4, 16, static_cast<int>(std::round(readParameter(fxBitcrushBits, 12.0f))));
+    const auto holdSamples = juce::jlimit(1, 32, static_cast<int>(std::round(readParameter(fxBitcrushDownsample, 1.0f))));
+    const auto mix = juce::jlimit(0.0f, 1.0f, readParameter(fxBitcrushMix, 0.25f));
+    const auto maxQuantised = static_cast<float>((1 << (bits - 1)) - 1);
+    const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(bitcrushHeldSample.size()));
+
+    for (auto channel = 0; channel < channels; ++channel)
+    {
+        auto* samples = buffer.getWritePointer(channel);
+        auto& heldSample = bitcrushHeldSample[static_cast<size_t>(channel)];
+        auto& holdCounter = bitcrushHoldCounter[static_cast<size_t>(channel)];
+
+        for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+        {
+            const auto input = samples[sampleIndex];
+
+            if (holdCounter <= 0)
+            {
+                const auto clipped = juce::jlimit(-1.0f, 1.0f, input);
+                heldSample = std::round(clipped * maxQuantised) / maxQuantised;
+                holdCounter = holdSamples;
+            }
+
+            --holdCounter;
+            samples[sampleIndex] = (input * (1.0f - mix)) + (heldSample * mix);
+        }
     }
 }
 

@@ -424,6 +424,31 @@ APVTS::ParameterLayout createLayout()
         0.2f));
 
     add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxBitcrushEnabled,
+        "FX Bitcrush Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxBitcrushBits,
+        "FX Bitcrush Bits",
+        juce::NormalisableRange<float> { 4.0f, 16.0f, 1.0f },
+        12.0f,
+        juce::AudioParameterFloatAttributes().withLabel("bit")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxBitcrushDownsample,
+        "FX Bitcrush Downsample",
+        juce::NormalisableRange<float> { 1.0f, 32.0f, 1.0f },
+        1.0f,
+        juce::AudioParameterFloatAttributes().withLabel("x")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxBitcrushMix,
+        "FX Bitcrush Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.25f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
         ID::fxChorusEnabled,
         "FX Chorus Enabled",
         false));

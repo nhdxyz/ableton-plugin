@@ -141,3 +141,10 @@
 - Added `UKG` as a preset category and library filter option.
 - Added a `UKG` sequencer preset button with a skippy 2-step pattern, strong swing, short gates, and ghost-note probability.
 - Tuned the UKG recipe toward mono-safe sub/reese bass, short envelopes, controlled filter motion, light movement FX, and Guard output safety.
+
+### Bitcrush FX
+
+- Added a bypassable Crush FX module with bit depth, downsample, and mix controls.
+- Routed Crush after distortion and before modulation/time FX for old-sampler grit, minimal click texture, UKG vocal/bass color, and techno edge.
+- Added Crush to the Add FX menu, rack list, selected-module editor, FX randomization lock, and recipe randomization.
+- Biased Minimal Blip, Noise FX, Rolling Tech Bass, and UKG recipes toward conservative-to-aggressive Crush settings where useful.

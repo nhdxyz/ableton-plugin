@@ -339,7 +339,7 @@ MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels
 
 Add in this order:
 
-1. Bitcrusher/downsample.
+1. Bitcrusher/downsample. Implemented as the Crush module.
 2. Flanger.
 3. Pump/Duck.
 4. Stereo Width/Mono Bass.

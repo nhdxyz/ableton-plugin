@@ -996,7 +996,7 @@ Current implemented panel layout:
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
 - SEQ: sequencer enable, segmented rate selector, pattern presets, copy/random/clear, groove/performance controls, and the 16-step grid.
 - FX: bypassable Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard modules.
-- LIBRARY: preset category, preset name entry, save, previous/next, preset selector, load, refresh, and preset folder status.
+- LIBRARY: preset category, preset name entry, save, filter by favorites/recent/source/category, previous/next, preset selector, favorite toggle, load, refresh, and preset folder status.
 - TOP BAR: panel tabs plus a compact stereo output meter.
 
 Suggested first UI size:
@@ -1205,6 +1205,13 @@ Preset browser goals:
 - Include macro descriptions.
 - Include init templates for different synthesis modes.
 - Avoid requiring the browser for basic patch creation.
+
+Current browser slice:
+
+- User presets remain in `~/Library/Application Support/Nate VST/Presets`.
+- Factory presets are scanned separately from `~/Library/Application Support/Nate VST/Factory Presets`.
+- Favorites and recent presets are stored in `~/Library/Application Support/Nate VST/Library.xml`.
+- LIBRARY can filter by all presets, favorites, recent presets, user presets, factory presets, or saved category.
 
 ## Code Architecture
 

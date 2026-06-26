@@ -12,6 +12,7 @@
 #include <atomic>
 #include <initializer_list>
 #include <random>
+#include <vector>
 
 class NateVSTAudioProcessor final : public juce::AudioProcessor
 {
@@ -33,6 +34,15 @@ public:
     bool producesMidi() const override;
     bool isMidiEffect() const override;
     double getTailLengthSeconds() const override;
+
+    struct PresetInfo
+    {
+        juce::String name;
+        juce::String category;
+        juce::String source;
+        bool isFactory = false;
+        bool isFavorite = false;
+    };
 
     int getNumPrograms() override;
     int getCurrentProgram() override;
@@ -63,7 +73,13 @@ public:
     bool savePreset(const juce::String& presetName, const juce::String& category);
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
+    std::vector<PresetInfo> getPresetLibrary() const;
     juce::File getPresetDirectory() const;
+    juce::File getFactoryPresetDirectory() const;
+    bool isPresetFavorite(const juce::String& presetName) const;
+    bool setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite);
+    juce::StringArray getRecentPresetNames() const;
+    void notePresetLoaded(const juce::String& presetName);
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
 
 private:
@@ -105,7 +121,12 @@ private:
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     juce::ValueTree createPluginState();
     void restorePluginState(const juce::ValueTree& state);
+    juce::ValueTree loadLibraryState() const;
+    bool saveLibraryState(const juce::ValueTree& state) const;
+    juce::StringArray getLibraryStateNames(const juce::Identifier& childType) const;
     juce::File presetFileForName(const juce::String& presetName) const;
+    juce::File factoryPresetFileForName(const juce::String& presetName) const;
+    juce::File libraryStateFile() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessor)
 };

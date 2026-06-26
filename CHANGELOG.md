@@ -44,7 +44,7 @@
 - Added preset category selection for saved `.natevstpreset` files.
 - Saved category metadata into preset XML using the `preset_category` property.
 - Added previous and next preset buttons on HOME and LIBRARY panels.
-- Kept the deeper library work open for filtering, favorites, recent presets, and factory/user separation.
+- Left deeper filtering, favorites, recent presets, and factory/user separation for the later library pass below.
 
 ### Modulation Planning
 
@@ -102,3 +102,11 @@
 - Added a bypassable Guard module with push and ceiling controls for controlled output clipping.
 - Reworked the FX panel into a two-row module grid that keeps Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard visible.
 - Made randomization set conservative Tone, Phaser, and Guard values per recipe while preserving output safety.
+
+### Deeper Library Workflow
+
+- Added LIBRARY filtering for All, Favorites, Recent, User, Factory, and saved categories.
+- Added a `Fav` preset toggle and persistent favorite storage in `~/Library/Application Support/Nate VST/Library.xml`.
+- Added recent preset tracking when presets load.
+- Added factory preset scanning from `~/Library/Application Support/Nate VST/Factory Presets` while keeping user presets in the existing `Presets` folder.
+- Saved user preset metadata for category, author, and source.

@@ -62,6 +62,7 @@ private:
     juce::ComboBox sequencerRateBox;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
+    juce::ComboBox presetFilterBox;
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
@@ -240,6 +241,7 @@ private:
     juce::TextButton savePresetButton { "Save" };
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
+    juce::TextButton favoritePresetButton { "Fav" };
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     UI::StepSequencerGrid sequencerGrid;
@@ -271,6 +273,8 @@ private:
     void saveCurrentPreset();
     void loadSelectedPreset();
     void loadPresetByOffset(int offset);
+    void toggleFavoritePreset();
+    void updateFavoritePresetButton();
 
     Panel activePanel = Panel::home;
     float displayedPeakLeft = 0.0f;

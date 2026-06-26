@@ -1,7 +1,16 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <algorithm>
 #include <cmath>
+
+namespace
+{
+const juce::Identifier libraryStateType { "NateVSTLibrary" };
+const juce::Identifier favoritesType { "Favorites" };
+const juce::Identifier recentType { "Recent" };
+const juce::Identifier presetRefType { "Preset" };
+}
 
 NateVSTAudioProcessor::NateVSTAudioProcessor()
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
@@ -311,6 +320,8 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juc
     auto state = createPluginState();
     state.setProperty("preset_name", trimmedName, nullptr);
     state.setProperty("preset_category", category.trim().isNotEmpty() ? category.trim() : "User", nullptr);
+    state.setProperty("preset_author", "User", nullptr);
+    state.setProperty("preset_source", "User", nullptr);
 
     if (auto xml = state.createXml())
         return xml->writeTo(presetFileForName(trimmedName));
@@ -323,7 +334,10 @@ bool NateVSTAudioProcessor::loadPreset(const juce::String& presetName)
     if (presetName.trim().isEmpty())
         return false;
 
-    const auto file = presetFileForName(presetName);
+    auto file = presetFileForName(presetName);
+    if (! file.existsAsFile())
+        file = factoryPresetFileForName(presetName);
+
     if (! file.existsAsFile())
         return false;
 
@@ -333,6 +347,7 @@ bool NateVSTAudioProcessor::loadPreset(const juce::String& presetName)
         if (state.isValid() && state.hasType(parameters.state.getType()))
         {
             restorePluginState(state);
+            notePresetLoaded(file.getFileNameWithoutExtension());
             return true;
         }
     }
@@ -343,14 +358,62 @@ bool NateVSTAudioProcessor::loadPreset(const juce::String& presetName)
 juce::StringArray NateVSTAudioProcessor::getPresetNames() const
 {
     juce::StringArray names;
-    const auto directory = getPresetDirectory();
-    const auto presetFiles = directory.findChildFiles(juce::File::findFiles, false, "*.natevstpreset");
 
-    for (const auto& file : presetFiles)
-        names.add(file.getFileNameWithoutExtension());
+    for (const auto& preset : getPresetLibrary())
+        names.add(preset.name);
 
     names.sort(true);
     return names;
+}
+
+std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetLibrary() const
+{
+    std::vector<PresetInfo> presets;
+    juce::StringArray seenNames;
+    const auto favorites = getLibraryStateNames(favoritesType);
+
+    auto collectFromDirectory = [&presets, &seenNames, &favorites] (const juce::File& directory, bool isFactory)
+    {
+        const auto presetFiles = directory.findChildFiles(juce::File::findFiles, false, "*.natevstpreset");
+
+        for (const auto& file : presetFiles)
+        {
+            const auto name = file.getFileNameWithoutExtension();
+            if (seenNames.contains(name))
+                continue;
+
+            auto category = isFactory ? juce::String("Factory") : juce::String("User");
+            auto source = isFactory ? juce::String("Factory") : juce::String("User");
+
+            if (auto xml = juce::XmlDocument::parse(file))
+            {
+                const auto state = juce::ValueTree::fromXml(*xml);
+                if (state.isValid())
+                {
+                    const auto storedCategory = state.getProperty("preset_category").toString().trim();
+                    if (storedCategory.isNotEmpty())
+                        category = storedCategory;
+
+                    const auto storedSource = state.getProperty("preset_source").toString().trim();
+                    if (storedSource.isNotEmpty())
+                        source = storedSource;
+                }
+            }
+
+            presets.push_back({ name, category, source, isFactory, favorites.contains(name) });
+            seenNames.add(name);
+        }
+    };
+
+    collectFromDirectory(getPresetDirectory(), false);
+    collectFromDirectory(getFactoryPresetDirectory(), true);
+
+    std::sort(presets.begin(), presets.end(), [] (const PresetInfo& left, const PresetInfo& right)
+    {
+        return left.name.compareIgnoreCase(right.name) < 0;
+    });
+
+    return presets;
 }
 
 juce::File NateVSTAudioProcessor::getPresetDirectory() const
@@ -358,6 +421,79 @@ juce::File NateVSTAudioProcessor::getPresetDirectory() const
     return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
         .getChildFile("Nate VST")
         .getChildFile("Presets");
+}
+
+juce::File NateVSTAudioProcessor::getFactoryPresetDirectory() const
+{
+    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+        .getChildFile("Nate VST")
+        .getChildFile("Factory Presets");
+}
+
+bool NateVSTAudioProcessor::isPresetFavorite(const juce::String& presetName) const
+{
+    return getLibraryStateNames(favoritesType).contains(presetName.trim());
+}
+
+bool NateVSTAudioProcessor::setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite)
+{
+    const auto trimmedName = presetName.trim();
+    if (trimmedName.isEmpty())
+        return false;
+
+    auto state = loadLibraryState();
+    auto favorites = state.getChildWithName(favoritesType);
+    if (! favorites.isValid())
+    {
+        favorites = juce::ValueTree(favoritesType);
+        state.addChild(favorites, -1, nullptr);
+    }
+
+    for (auto index = favorites.getNumChildren(); --index >= 0;)
+        if (favorites.getChild(index).getProperty("name").toString() == trimmedName)
+            favorites.removeChild(index, nullptr);
+
+    if (shouldBeFavorite)
+    {
+        juce::ValueTree favorite(presetRefType);
+        favorite.setProperty("name", trimmedName, nullptr);
+        favorites.addChild(favorite, -1, nullptr);
+    }
+
+    return saveLibraryState(state);
+}
+
+juce::StringArray NateVSTAudioProcessor::getRecentPresetNames() const
+{
+    return getLibraryStateNames(recentType);
+}
+
+void NateVSTAudioProcessor::notePresetLoaded(const juce::String& presetName)
+{
+    const auto trimmedName = presetName.trim();
+    if (trimmedName.isEmpty())
+        return;
+
+    auto state = loadLibraryState();
+    auto recent = state.getChildWithName(recentType);
+    if (! recent.isValid())
+    {
+        recent = juce::ValueTree(recentType);
+        state.addChild(recent, -1, nullptr);
+    }
+
+    for (auto index = recent.getNumChildren(); --index >= 0;)
+        if (recent.getChild(index).getProperty("name").toString() == trimmedName)
+            recent.removeChild(index, nullptr);
+
+    juce::ValueTree item(presetRefType);
+    item.setProperty("name", trimmedName, nullptr);
+    recent.addChild(item, 0, nullptr);
+
+    while (recent.getNumChildren() > 12)
+        recent.removeChild(recent.getNumChildren() - 1, nullptr);
+
+    saveLibraryState(state);
 }
 
 void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,
@@ -702,6 +838,52 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state)
     }
 }
 
+juce::ValueTree NateVSTAudioProcessor::loadLibraryState() const
+{
+    const auto file = libraryStateFile();
+    if (file.existsAsFile())
+        if (auto xml = juce::XmlDocument::parse(file))
+            if (xml->hasTagName(libraryStateType.toString()))
+                return juce::ValueTree::fromXml(*xml);
+
+    auto state = juce::ValueTree(libraryStateType);
+    state.addChild(juce::ValueTree(favoritesType), -1, nullptr);
+    state.addChild(juce::ValueTree(recentType), -1, nullptr);
+    return state;
+}
+
+bool NateVSTAudioProcessor::saveLibraryState(const juce::ValueTree& state) const
+{
+    const auto file = libraryStateFile();
+    if (! file.getParentDirectory().createDirectory())
+        return false;
+
+    if (auto xml = state.createXml())
+        return xml->writeTo(file);
+
+    return false;
+}
+
+juce::StringArray NateVSTAudioProcessor::getLibraryStateNames(const juce::Identifier& childType) const
+{
+    juce::StringArray names;
+    const auto state = loadLibraryState();
+    const auto child = state.getChildWithName(childType);
+
+    if (child.isValid())
+    {
+        for (auto index = 0; index < child.getNumChildren(); ++index)
+        {
+            const auto name = child.getChild(index).getProperty("name").toString().trim();
+            if (name.isNotEmpty())
+                names.add(name);
+        }
+    }
+
+    names.removeDuplicates(false);
+    return names;
+}
+
 juce::File NateVSTAudioProcessor::presetFileForName(const juce::String& presetName) const
 {
     auto legalName = juce::File::createLegalFileName(presetName.trim());
@@ -709,6 +891,22 @@ juce::File NateVSTAudioProcessor::presetFileForName(const juce::String& presetNa
         legalName = "Untitled";
 
     return getPresetDirectory().getChildFile(legalName).withFileExtension(".natevstpreset");
+}
+
+juce::File NateVSTAudioProcessor::factoryPresetFileForName(const juce::String& presetName) const
+{
+    auto legalName = juce::File::createLegalFileName(presetName.trim());
+    if (legalName.isEmpty())
+        legalName = "Untitled";
+
+    return getFactoryPresetDirectory().getChildFile(legalName).withFileExtension(".natevstpreset");
+}
+
+juce::File NateVSTAudioProcessor::libraryStateFile() const
+{
+    return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+        .getChildFile("Nate VST")
+        .getChildFile("Library.xml");
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()

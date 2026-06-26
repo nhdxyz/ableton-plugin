@@ -181,7 +181,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 3. Width/Mono Bass.
    Implemented as the Width module. Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
 4. Organ/Stab recipes.
-   Start with presets and randomizer recipes for organ stabs, M1-ish chords, bell plucks, and bright minor stabs before building a dedicated oscillator mode.
+   Implemented first as randomizer recipes for organ stabs, chord stabs, and bell plucks. Factory preset files and any dedicated organ oscillator mode can come later.
 5. Swing and chop sequencer templates.
    Implemented in the SEQ panel. Templates cover 2-step bass, shuffle bass, organ skank, vocal chop triggers, and late offbeat stabs.
 

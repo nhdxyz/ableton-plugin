@@ -92,6 +92,7 @@ Research references:
 - Added the `Pump` FX module and biased the UKG recipe toward tempo-synced ducking/pump movement.
 - Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
 - Added a compact sequencer template selector with UKG 2-step, shuffle bass, organ skank, vocal chop, and late stab patterns.
+- Added UKG organ stab, chord stab, and bell pluck randomization recipes.
 
 ## Next UKG Features
 
@@ -113,9 +114,9 @@ Research references:
 
 3. Organ/Stab source.
 
-- Start with a curated synth patch recipe.
+- Implemented first as curated randomization recipes: `UKG Organ Stab`, `UKG Chord Stab`, and `UKG Bell Pluck`.
 - Later add organ-style oscillator mix or drawbar-inspired mode.
-- Add recipe/preset targets for organ stab, M1-ish chord, bell pluck, and bright minor stab.
+- Factory preset files should be added in a later preset-pack pass.
 
 4. Swing templates.
 

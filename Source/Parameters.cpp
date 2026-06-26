@@ -31,7 +31,10 @@ juce::StringArray randomRecipeChoices()
         "Minimal Blip",
         "Dark Stab",
         "Noise FX",
-        "UKG 2-Step Bass"
+        "UKG 2-Step Bass",
+        "UKG Organ Stab",
+        "UKG Chord Stab",
+        "UKG Bell Pluck"
     };
 }
 

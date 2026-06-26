@@ -15,7 +15,10 @@ enum class Recipe
     minimalBlip,
     darkStab,
     noiseFx,
-    ukgTwoStepBass
+    ukgTwoStepBass,
+    ukgOrganStab,
+    ukgChordStab,
+    ukgBellPluck
 };
 
 class Randomizer

@@ -175,3 +175,9 @@
 - Replaced the fixed Bass/Stab/UKG button row in the SEQ panel with a compact template selector and Apply button.
 - Added UKG-focused templates for 2-step bass, shuffle bass, organ skank, vocal chop triggering, and late offbeat stabs.
 - Made sequencer templates set rate, gate, swing, accent, octave, probability, and random amount so each pattern starts with a distinct feel.
+
+### UKG Stab Recipes
+
+- Added `UKG Organ Stab`, `UKG Chord Stab`, and `UKG Bell Pluck` randomization recipes.
+- Appended the new recipes after existing choices so current saved recipe indexes remain stable.
+- Tuned the recipes for short garage-style envelopes, bright but controlled filtering, sparse movement FX, Pump, Width, and Guard safety.

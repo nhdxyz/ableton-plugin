@@ -215,6 +215,40 @@ bool NateVSTAudioProcessor::randomizeSampleCut()
     return true;
 }
 
+bool NateVSTAudioProcessor::randomizeUkgVocalChop()
+{
+    if (isRandomLockEnabled(Parameters::ID::randomLockSample))
+        return false;
+
+    if (! samplePlayer.hasSample())
+        return false;
+
+    constexpr float pitchChoices[] { -12.0f, -7.0f, 0.0f, 7.0f, 12.0f };
+
+    std::uniform_real_distribution<float> startDistribution(0.0f, 0.9f);
+    std::uniform_real_distribution<float> lengthDistribution(0.018f, 0.16f);
+    std::uniform_int_distribution<int> pitchDistribution(0, 4);
+    std::uniform_real_distribution<float> gainDistribution(-10.0f, -3.0f);
+    std::uniform_real_distribution<float> mixDistribution(0.62f, 1.0f);
+    std::bernoulli_distribution reverseDistribution(0.22);
+
+    const auto start = startDistribution(sampleRandomEngine);
+    const auto end = juce::jlimit(start + 0.012f, 1.0f, start + lengthDistribution(sampleRandomEngine));
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, start);
+    setParameterPlainValue(Parameters::ID::sampleEnd, end);
+    setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleTranspose, pitchChoices[pitchDistribution(sampleRandomEngine)]);
+    setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
+    setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
+
+    if (! isRandomLockEnabled(Parameters::ID::randomLockSequencer))
+        applySequencerPatternPreset(5);
+
+    return true;
+}
+
 juce::String NateVSTAudioProcessor::getLoadedSampleName() const
 {
     return samplePlayer.getLoadedFileName();

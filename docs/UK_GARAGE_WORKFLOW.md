@@ -93,15 +93,16 @@ Research references:
 - Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
 - Added a compact sequencer template selector with UKG 2-step, shuffle bass, organ skank, vocal chop, and late stab patterns.
 - Added UKG organ stab, chord stab, and bell pluck randomization recipes.
+- Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts.
 
 ## Next UKG Features
 
 1. Vocal chop mode for the sampler.
 
+- Added a `UKG Chop` action for short chop windows, musical pitch choices, reverse variation, and automatic Vocal Chop sequencer template application.
 - Add one-shot/gated playback option.
-- Add tighter random cut ranges for short phrases.
-- Add quick pitch choices such as -12, -7, 0, +7, +12.
-- Add a `UKG Chop` randomize action.
+- Tighter random cut ranges for short phrases are implemented in `UKG Chop`.
+- Quick pitch choices such as -12, -7, 0, +7, +12 are implemented in `UKG Chop`.
 - Add retrigger/stutter timing tied to the sequencer rate.
 
 2. Pump/Duck FX.

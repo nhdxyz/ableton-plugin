@@ -181,3 +181,9 @@
 - Added `UKG Organ Stab`, `UKG Chord Stab`, and `UKG Bell Pluck` randomization recipes.
 - Appended the new recipes after existing choices so current saved recipe indexes remain stable.
 - Tuned the recipes for short garage-style envelopes, bright but controlled filtering, sparse movement FX, Pump, Width, and Guard safety.
+
+### UKG Vocal Chop Workflow
+
+- Added a `UKG Chop` action to the SAMPLE panel for loaded vocal phrases and short rhythmic samples.
+- Biased UKG chops toward short cut windows, musical pitch offsets `-12`, `-7`, `0`, `+7`, and `+12`, optional reverse, and hotter sample mix levels.
+- Made `UKG Chop` apply the Vocal Chop sequencer template when sequencer locking is not active.

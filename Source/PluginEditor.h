@@ -247,6 +247,7 @@ private:
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton randomCutButton { "Rand Cut" };
+    juce::TextButton ukgChopButton { "UKG Chop" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton clearSequencerButton { "Clear" };
     juce::TextButton bassPatternButton { "Bass" };

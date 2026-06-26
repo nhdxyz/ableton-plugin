@@ -63,6 +63,7 @@ public:
     bool loadSampleFile(const juce::File& file);
     void clearSample();
     bool randomizeSampleCut();
+    bool randomizeUkgVocalChop();
     juce::String getLoadedSampleName() const;
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);

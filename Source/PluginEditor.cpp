@@ -369,6 +369,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         setRandomStatus(audioProcessor.randomizeSampleCut() ? "Sample randomized" : "Sample skipped");
     };
+    ukgChopButton.onClick = [this]
+    {
+        if (audioProcessor.randomizeUkgVocalChop())
+        {
+            sequencerGrid.repaint();
+            setRandomStatus("UKG chop ready");
+        }
+        else
+        {
+            setRandomStatus("UKG chop skipped");
+        }
+    };
     randomSequencerButton.onClick = [this]
     {
         if (audioProcessor.randomizeSequencerPattern())
@@ -476,6 +488,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
     addAndMakeVisible(randomCutButton);
+    addAndMakeVisible(ukgChopButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(clearSequencerButton);
     addAndMakeVisible(bassPatternButton);
@@ -863,6 +876,7 @@ void NateVSTAudioProcessorEditor::resized()
             loadSampleButton.setVisible(true);
             clearSampleButton.setVisible(true);
             randomCutButton.setVisible(true);
+            ukgChopButton.setVisible(true);
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
             sampleNameLabel.setVisible(true);
@@ -871,6 +885,7 @@ void NateVSTAudioProcessorEditor::resized()
             loadSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             clearSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             randomCutButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
+            ukgChopButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
             sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleNameLabel.setBounds(actionRow.reduced(8, 4));
@@ -1475,7 +1490,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
-        &randomCutButton, &randomSequencerButton, &clearSequencerButton,
+        &randomCutButton, &ukgChopButton, &randomSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,

@@ -175,7 +175,7 @@ Do not do this until the fixed rack has been tested in Ableton.
 The general club roadmap should bias the next few effects and workflows toward UK garage as well as house/techno:
 
 1. Vocal chop sampler workflow.
-   This is the biggest genre fit. It needs one-shot/gated modes, short slice ranges, pitch offsets, reverse, retrigger/stutter, and sequencer triggering.
+   First slice implemented as the SAMPLE-panel UKG Chop action with short cut ranges, musical pitch offsets, reverse variation, and sequencer-template application. One-shot/gated modes and retrigger/stutter still need a deeper sampler pass.
 2. Pump/Duck.
    Implemented as the Pump module. UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
 3. Width/Mono Bass.

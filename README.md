@@ -51,7 +51,7 @@ Factory presets can be placed separately at:
 ~/Library/Application Support/Nate VST/Factory Presets
 ```
 
-See [PLAN.md](./PLAN.md) for the full roadmap and [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design.
+See [PLAN.md](./PLAN.md) for the full roadmap, [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design, and [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md) for the next UI grouping and FX rack direction.
 
 ## Local Development
 

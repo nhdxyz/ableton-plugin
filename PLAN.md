@@ -751,6 +751,8 @@ The effects area should be a clear tab or panel:
 - Presets should store effect state.
 - Randomization can target one effect or the whole rack.
 
+The next FX/UI direction is tracked in [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md). The important shift is to move away from a fixed grid that shows every module at once and toward an addable rack list with a focused selected-effect editor.
+
 ## Randomization Lab
 
 The plugin should have a dedicated randomization area for making new sounds quickly. This should be more useful than a single dice button. The user should be able to guide what changes, how extreme the changes are, and whether the result stays musical.

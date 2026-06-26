@@ -26,6 +26,9 @@ Voice::Voice(Parameters::APVTS& state)
     filterEnvAmount = parameters.getRawParameterValue(Parameters::ID::filterEnvAmount);
     filterMode = parameters.getRawParameterValue(Parameters::ID::filterMode);
     driveAmount = parameters.getRawParameterValue(Parameters::ID::driveAmount);
+    macroTone = parameters.getRawParameterValue(Parameters::ID::macroTone);
+    macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
+    macroMotion = parameters.getRawParameterValue(Parameters::ID::macroMotion);
 }
 
 bool Voice::canPlaySound(juce::SynthesiserSound* sound)
@@ -102,7 +105,9 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
             + (noiseSample * noiseGain * 0.45f);
         sample *= sourceCompensation;
         sample = filter.process(sample);
-        sample = distortion.process(sample, readParameter(driveAmount, 0.18f));
+        const auto dirt = readParameter(macroDirt, 0.0f);
+        const auto macroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f));
+        sample = distortion.process(sample, macroDrive);
         sample *= envelopeValue * noteVelocity * 0.28f;
 
         for (auto channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
@@ -130,7 +135,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
     oscillator2.setWaveform(static_cast<Waveform>(juce::jlimit(0, 3, osc2WaveIndex)));
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
-    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f);
+    const auto motion = readParameter(macroMotion, 0.0f);
+    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
     oscillator2.setFrequency(currentFrequencyHz * osc2PitchRatio);
     subOscillator.setFrequency(currentFrequencyHz * 0.5f);
@@ -141,11 +147,14 @@ void Voice::updateVoiceParameters(float envelopeValue)
         readParameter(ampSustain, 0.65f),
         readParameter(ampRelease, 0.22f));
 
-    const auto envAmount = readParameter(filterEnvAmount, 0.15f);
+    const auto tone = readParameter(macroTone, 0.0f);
+    const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f));
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
+    const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
+    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f));
     const auto filterModeIndex = static_cast<int>(readParameter(filterMode, 0.0f));
     filter.setMode(static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex)));
-    filter.setCutoffAndResonance(readParameter(filterCutoff, 1800.0f) * cutoffScale, readParameter(filterResonance, 0.45f));
+    filter.setCutoffAndResonance(readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale, macroResonance);
 }
 
 float Voice::frequencyForNote(int midiNoteNumber) const

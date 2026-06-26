@@ -64,6 +64,9 @@ private:
     std::atomic<float>* filterEnvAmount = nullptr;
     std::atomic<float>* filterMode = nullptr;
     std::atomic<float>* driveAmount = nullptr;
+    std::atomic<float>* macroTone = nullptr;
+    std::atomic<float>* macroDirt = nullptr;
+    std::atomic<float>* macroMotion = nullptr;
 
     void updateVoiceParameters(float envelopeValue);
     float frequencyForNote(int midiNoteNumber) const;

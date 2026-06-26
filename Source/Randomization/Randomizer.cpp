@@ -96,6 +96,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto osc2Level = 0.0f;
     auto subLevel = 0.0f;
     auto noiseLevel = 0.0f;
+    auto macroTone = 0.0f;
+    auto macroDirt = 0.0f;
+    auto macroMotion = 0.0f;
+    auto macroSpace = 0.0f;
     auto mono = true;
     auto glide = 0.0f;
 
@@ -248,6 +252,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = blend(Parameters::ID::osc2Level, osc2Level);
         subLevel = blend(Parameters::ID::subLevel, subLevel);
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
+        macroTone = blend(Parameters::ID::macroTone, macroTone);
+        macroDirt = blend(Parameters::ID::macroDirt, macroDirt);
+        macroMotion = blend(Parameters::ID::macroMotion, macroMotion);
+        macroSpace = blend(Parameters::ID::macroSpace, macroSpace);
         glide = blend(Parameters::ID::glideTime, glide);
     }
 
@@ -262,6 +270,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::osc2Level, osc2Level);
     setParameter(Parameters::ID::subLevel, subLevel);
     setParameter(Parameters::ID::noiseLevel, noiseLevel);
+    setParameter(Parameters::ID::macroTone, macroTone);
+    setParameter(Parameters::ID::macroDirt, macroDirt);
+    setParameter(Parameters::ID::macroMotion, macroMotion);
+    setParameter(Parameters::ID::macroSpace, macroSpace);
     setParameter(Parameters::ID::ampAttack, attack);
     setParameter(Parameters::ID::ampDecay, decay);
     setParameter(Parameters::ID::ampSustain, sustain);

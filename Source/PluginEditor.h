@@ -77,6 +77,10 @@ private:
     juce::Slider osc2LevelSlider;
     juce::Slider subLevelSlider;
     juce::Slider noiseLevelSlider;
+    juce::Slider macroToneSlider;
+    juce::Slider macroDirtSlider;
+    juce::Slider macroMotionSlider;
+    juce::Slider macroSpaceSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;
@@ -118,6 +122,10 @@ private:
     juce::Label osc2LevelLabel;
     juce::Label subLevelLabel;
     juce::Label noiseLevelLabel;
+    juce::Label macroToneLabel;
+    juce::Label macroDirtLabel;
+    juce::Label macroMotionLabel;
+    juce::Label macroSpaceLabel;
     juce::Label attackLabel;
     juce::Label decayLabel;
     juce::Label sustainLabel;

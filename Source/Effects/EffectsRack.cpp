@@ -21,6 +21,8 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxReverbSize = parameters.getRawParameterValue(Parameters::ID::fxReverbSize);
     fxReverbDamping = parameters.getRawParameterValue(Parameters::ID::fxReverbDamping);
     fxReverbMix = parameters.getRawParameterValue(Parameters::ID::fxReverbMix);
+    macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
+    macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
 }
 
 void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChannels)
@@ -93,13 +95,16 @@ void EffectsRack::processChorus(juce::AudioBuffer<float>& buffer)
 
 void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
 {
-    if (readParameter(fxDelayEnabled, 0.0f) < 0.5f || delayBuffer.getNumSamples() == 0)
+    const auto space = readParameter(macroSpace, 0.0f);
+    const auto isEnabled = readParameter(fxDelayEnabled, 0.0f) >= 0.5f;
+    if ((! isEnabled && space <= 0.001f) || delayBuffer.getNumSamples() == 0)
         return;
 
     const auto delaySamples = juce::jlimit(1, delayBuffer.getNumSamples() - 1,
                                           static_cast<int>(readParameter(fxDelayTime, 0.25f) * currentSampleRate));
-    const auto feedback = readParameter(fxDelayFeedback, 0.25f);
-    const auto mix = readParameter(fxDelayMix, 0.2f);
+    const auto feedback = juce::jlimit(0.0f, 0.85f, isEnabled ? readParameter(fxDelayFeedback, 0.25f) : 0.18f + (space * 0.22f));
+    const auto baseMix = isEnabled ? readParameter(fxDelayMix, 0.2f) : 0.0f;
+    const auto mix = juce::jlimit(0.0f, 0.55f, juce::jmax(baseMix, space * 0.28f));
     const auto channels = juce::jmin(buffer.getNumChannels(), delayBuffer.getNumChannels());
 
     for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
@@ -120,14 +125,17 @@ void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
 
 void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
 {
-    if (readParameter(fxReverbEnabled, 0.0f) < 0.5f)
+    const auto space = readParameter(macroSpace, 0.0f);
+    const auto isEnabled = readParameter(fxReverbEnabled, 0.0f) >= 0.5f;
+    if (! isEnabled && space <= 0.001f)
         return;
 
     juce::Reverb::Parameters reverbParameters;
-    reverbParameters.roomSize = readParameter(fxReverbSize, 0.35f);
+    reverbParameters.roomSize = juce::jlimit(0.0f, 1.0f, isEnabled ? readParameter(fxReverbSize, 0.35f) : 0.35f + (space * 0.4f));
     reverbParameters.damping = readParameter(fxReverbDamping, 0.45f);
-    reverbParameters.wetLevel = readParameter(fxReverbMix, 0.2f);
-    reverbParameters.dryLevel = 1.0f - (readParameter(fxReverbMix, 0.2f) * 0.35f);
+    const auto wetMix = juce::jlimit(0.0f, 0.65f, juce::jmax(isEnabled ? readParameter(fxReverbMix, 0.2f) : 0.0f, space * 0.35f));
+    reverbParameters.wetLevel = wetMix;
+    reverbParameters.dryLevel = 1.0f - (wetMix * 0.35f);
     reverbParameters.width = 1.0f;
     reverbParameters.freezeMode = 0.0f;
     reverb.setParameters(reverbParameters);
@@ -146,7 +154,8 @@ void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
 
 void EffectsRack::applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, float outputGainDb)
 {
-    const auto gain = juce::Decibels::decibelsToGain(outputGainDb);
+    const auto macroCompensatedOutput = outputGainDb - (readParameter(macroDirt, 0.0f) * 4.5f);
+    const auto gain = juce::Decibels::decibelsToGain(macroCompensatedOutput);
 
     for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
     {

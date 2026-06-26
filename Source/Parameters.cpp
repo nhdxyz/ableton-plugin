@@ -190,6 +190,30 @@ APVTS::ParameterLayout createLayout()
         juce::AudioParameterFloatAttributes().withLabel("s")));
 
     add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroTone,
+        "Macro 1 Tone",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroDirt,
+        "Macro 2 Dirt",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroMotion,
+        "Macro 3 Motion",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroSpace,
+        "Macro 4 Space",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
         ID::randomAmount,
         "Random Amount",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },

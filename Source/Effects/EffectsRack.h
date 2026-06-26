@@ -40,6 +40,8 @@ private:
     std::atomic<float>* fxReverbSize = nullptr;
     std::atomic<float>* fxReverbDamping = nullptr;
     std::atomic<float>* fxReverbMix = nullptr;
+    std::atomic<float>* macroDirt = nullptr;
+    std::atomic<float>* macroSpace = nullptr;
 
     void processDistortion(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);

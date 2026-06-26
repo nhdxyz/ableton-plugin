@@ -51,3 +51,13 @@
 - Added `docs/MODULATION_WORKFLOW.md` as the first modulation and performance workflow plan.
 - Defined initial modulation sources, destinations, macro controls, LFO 1 shape, matrix scope, and safety rules.
 - Recommended the first implementation slice as four HOME macros before a full modulation matrix.
+
+### HOME Performance Macros
+
+- Added automatable `macro_1` through `macro_4` parameters.
+- Added HOME macro knobs for Tone, Dirt, Motion, and Space.
+- Mapped Tone to filter cutoff and resonance offsets.
+- Mapped Dirt to synth drive with output compensation.
+- Mapped Motion to filter envelope amount and oscillator 2 detune.
+- Mapped Space to delay and reverb mix, even when the dedicated FX toggles are off.
+- Made randomization pull macros back toward neutral so generated patches stay predictable.

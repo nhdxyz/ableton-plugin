@@ -1062,6 +1062,10 @@ MVP parameters:
 - `output_gain`
 - `mono_mode`
 - `glide_time`
+- `macro_1`
+- `macro_2`
+- `macro_3`
+- `macro_4`
 
 Early randomization parameters and metadata:
 

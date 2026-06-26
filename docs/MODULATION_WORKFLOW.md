@@ -152,7 +152,7 @@ SEQ:
 
 ## First Implementation Slice
 
-Recommended next implementation:
+Implemented first slice:
 
 1. Add four macro parameters and macro knobs on HOME.
 2. Add fixed internal macro assignments for useful first behavior:
@@ -163,4 +163,4 @@ Recommended next implementation:
 3. Save macro values in host state and `.natevstpreset` files through APVTS.
 4. Validate with build, codesign, pluginval, and Ableton scan.
 
-Do not build the full matrix until macros are working and useful.
+Do not build the full matrix until these macros are tested in Ableton and feel useful in normal patch design.

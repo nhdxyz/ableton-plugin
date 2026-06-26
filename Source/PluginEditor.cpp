@@ -39,7 +39,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "ENGINE");
     configureSectionLabel(homeShapeLabel, "SHAPE");
-    configureSectionLabel(homeLabLabel, "LAB");
+    configureSectionLabel(homeLabLabel, "PERFORM");
     configureSectionLabel(homeLibraryLabel, "LIBRARY");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(randomSectionLabel, "LAB");
@@ -130,6 +130,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(osc2LevelSlider, osc2LevelLabel, "Osc 2", Parameters::ID::osc2Level);
     configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
+    configureSlider(macroToneSlider, macroToneLabel, "Tone", Parameters::ID::macroTone);
+    configureSlider(macroDirtSlider, macroDirtLabel, "Dirt", Parameters::ID::macroDirt);
+    configureSlider(macroMotionSlider, macroMotionLabel, "Motion", Parameters::ID::macroMotion);
+    configureSlider(macroSpaceSlider, macroSpaceLabel, "Space", Parameters::ID::macroSpace);
     configureSlider(attackSlider, attackLabel, "Attack", Parameters::ID::ampAttack);
     configureSlider(decaySlider, decayLabel, "Decay", Parameters::ID::ampDecay);
     configureSlider(sustainSlider, sustainLabel, "Sustain", Parameters::ID::ampSustain);
@@ -414,14 +418,16 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(shapeArea.removeFromTop(102).withTrimmedTop(2), { &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
-            recipeBox.setBounds(labArea.removeFromTop(42).reduced(3, 4));
-            auto labButtonRow = labArea.removeFromTop(38).withTrimmedTop(4);
+            setSliderVisible(macroToneSlider, macroToneLabel, true);
+            setSliderVisible(macroDirtSlider, macroDirtLabel, true);
+            setSliderVisible(macroMotionSlider, macroMotionLabel, true);
+            setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
+            layoutKnobRow(labArea.removeFromTop(95).withTrimmedTop(4), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            recipeBox.setBounds(labArea.removeFromTop(38).reduced(3, 4));
+            auto labButtonRow = labArea.removeFromTop(36).withTrimmedTop(4);
             generateButton.setBounds(labButtonRow.removeFromLeft(110).reduced(3, 4));
             mutateButton.setBounds(labButtonRow.removeFromLeft(100).reduced(3, 4));
             variationButton.setBounds(labButtonRow.removeFromLeft(112).reduced(3, 4));
-            setSliderVisible(randomAmountSlider, randomAmountLabel, true);
-            setSliderVisible(randomChaosSlider, randomChaosLabel, true);
-            layoutKnobRow(labArea.removeFromTop(90).withTrimmedTop(8), { &randomAmountSlider, &randomChaosSlider });
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
@@ -846,6 +852,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(osc2LevelSlider, osc2LevelLabel, false);
     setSliderVisible(subLevelSlider, subLevelLabel, false);
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
+    setSliderVisible(macroToneSlider, macroToneLabel, false);
+    setSliderVisible(macroDirtSlider, macroDirtLabel, false);
+    setSliderVisible(macroMotionSlider, macroMotionLabel, false);
+    setSliderVisible(macroSpaceSlider, macroSpaceLabel, false);
     setSliderVisible(attackSlider, attackLabel, false);
     setSliderVisible(decaySlider, decayLabel, false);
     setSliderVisible(sustainSlider, sustainLabel, false);

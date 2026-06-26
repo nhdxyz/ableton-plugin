@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(Floorform VERSION 0.1.0 LANGUAGES C CXX)
+project(NateVST VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,9 +20,9 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(JUCE)
 
-juce_add_plugin(Floorform
+juce_add_plugin(NateVST
     COMPANY_NAME "Nate"
-    BUNDLE_ID "com.nate.floorform"
+    BUNDLE_ID "com.nate.natevst"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
@@ -30,12 +30,12 @@ juce_add_plugin(Floorform
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE
     COPY_PLUGIN_AFTER_BUILD TRUE
     PLUGIN_MANUFACTURER_CODE Nate
-    PLUGIN_CODE Flfm
+    PLUGIN_CODE NtVs
     FORMATS VST3
-    PRODUCT_NAME "Floorform"
+    PRODUCT_NAME "Nate VST"
 )
 
-target_sources(Floorform
+target_sources(NateVST
     PRIVATE
         Source/Parameters.cpp
         Source/PluginEditor.cpp
@@ -54,14 +54,14 @@ target_sources(Floorform
         Source/UI/StepSequencerGrid.cpp
 )
 
-target_compile_definitions(Floorform
+target_compile_definitions(NateVST
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
         JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
-target_link_libraries(Floorform
+target_link_libraries(NateVST
     PRIVATE
         juce::juce_audio_utils
         juce::juce_dsp

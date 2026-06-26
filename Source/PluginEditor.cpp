@@ -18,14 +18,14 @@ juce::Colour panelColour()
 }
 }
 
-FloorformAudioProcessorEditor::FloorformAudioProcessorEditor(FloorformAudioProcessor& processorToUse)
+NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse)
 {
     setLookAndFeel(&lookAndFeel);
     setSize(editorWidth, editorHeight);
 
-    titleLabel.setText("Floorform", juce::dontSendNotification);
+    titleLabel.setText("Nate VST", juce::dontSendNotification);
     titleLabel.setFont(juce::FontOptions(24.0f, juce::Font::bold));
     titleLabel.setJustificationType(juce::Justification::centredLeft);
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
@@ -207,13 +207,13 @@ FloorformAudioProcessorEditor::FloorformAudioProcessorEditor(FloorformAudioProce
     startTimerHz(12);
 }
 
-FloorformAudioProcessorEditor::~FloorformAudioProcessorEditor()
+NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
     stopTimer();
     setLookAndFeel(nullptr);
 }
 
-void FloorformAudioProcessorEditor::paint(juce::Graphics& g)
+void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(backgroundColour());
 
@@ -249,7 +249,7 @@ void FloorformAudioProcessorEditor::paint(juce::Graphics& g)
     }
 }
 
-void FloorformAudioProcessorEditor::resized()
+void NateVSTAudioProcessorEditor::resized()
 {
     auto bounds = getLocalBounds().reduced(16);
     auto top = bounds.removeFromTop(42);
@@ -448,7 +448,7 @@ void FloorformAudioProcessorEditor::resized()
     }
 }
 
-bool FloorformAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
+bool NateVSTAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
 {
     for (const auto& filePath : files)
     {
@@ -461,7 +461,7 @@ bool FloorformAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArr
     return false;
 }
 
-void FloorformAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int)
+void NateVSTAudioProcessorEditor::filesDropped(const juce::StringArray& files, int, int)
 {
     for (const auto& filePath : files)
     {
@@ -475,7 +475,7 @@ void FloorformAudioProcessorEditor::filesDropped(const juce::StringArray& files,
     }
 }
 
-void FloorformAudioProcessorEditor::configureSlider(juce::Slider& slider,
+void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     juce::Label& label,
                                                     const juce::String& labelText,
                                                     const juce::String& parameterID)
@@ -496,7 +496,7 @@ void FloorformAudioProcessorEditor::configureSlider(juce::Slider& slider,
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
-void FloorformAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider,
+void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider,
                                                               juce::Label& label,
                                                               const juce::String& labelText,
                                                               const juce::String& parameterID)
@@ -519,7 +519,7 @@ void FloorformAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slid
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
-void FloorformAudioProcessorEditor::configureSectionLabel(juce::Label& label, const juce::String& text)
+void NateVSTAudioProcessorEditor::configureSectionLabel(juce::Label& label, const juce::String& text)
 {
     label.setText(text, juce::dontSendNotification);
     label.setFont(juce::FontOptions(13.0f, juce::Font::bold));
@@ -528,7 +528,7 @@ void FloorformAudioProcessorEditor::configureSectionLabel(juce::Label& label, co
     addAndMakeVisible(label);
 }
 
-juce::Rectangle<int> FloorformAudioProcessorEditor::layoutKnobRow(juce::Rectangle<int> area,
+juce::Rectangle<int> NateVSTAudioProcessorEditor::layoutKnobRow(juce::Rectangle<int> area,
                                                                   std::initializer_list<juce::Component*> components)
 {
     const auto count = static_cast<int>(components.size());
@@ -546,7 +546,7 @@ juce::Rectangle<int> FloorformAudioProcessorEditor::layoutKnobRow(juce::Rectangl
     return area;
 }
 
-void FloorformAudioProcessorEditor::chooseSampleFile()
+void NateVSTAudioProcessorEditor::chooseSampleFile()
 {
     fileChooser = std::make_unique<juce::FileChooser>(
         "Load sample",
@@ -562,19 +562,19 @@ void FloorformAudioProcessorEditor::chooseSampleFile()
                              });
 }
 
-void FloorformAudioProcessorEditor::loadSampleFile(const juce::File& file)
+void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
 {
     if (audioProcessor.loadSampleFile(file))
         updateSampleNameLabel();
 }
 
-void FloorformAudioProcessorEditor::updateSampleNameLabel()
+void NateVSTAudioProcessorEditor::updateSampleNameLabel()
 {
     const auto sampleName = audioProcessor.getLoadedSampleName();
     sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName : "No sample", juce::dontSendNotification);
 }
 
-void FloorformAudioProcessorEditor::setActivePanel(Panel panel)
+void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
     updatePanelVisibility();
@@ -582,13 +582,13 @@ void FloorformAudioProcessorEditor::setActivePanel(Panel panel)
     repaint();
 }
 
-void FloorformAudioProcessorEditor::updatePanelVisibility()
+void NateVSTAudioProcessorEditor::updatePanelVisibility()
 {
     hidePanelComponents();
     updateTabButtons();
 }
 
-void FloorformAudioProcessorEditor::updateTabButtons()
+void NateVSTAudioProcessorEditor::updateTabButtons()
 {
     synthTabButton.setToggleState(activePanel == Panel::synth, juce::dontSendNotification);
     labTabButton.setToggleState(activePanel == Panel::lab, juce::dontSendNotification);
@@ -598,7 +598,7 @@ void FloorformAudioProcessorEditor::updateTabButtons()
     libraryTabButton.setToggleState(activePanel == Panel::library, juce::dontSendNotification);
 }
 
-void FloorformAudioProcessorEditor::hidePanelComponents()
+void NateVSTAudioProcessorEditor::hidePanelComponents()
 {
     auto hide = [] (std::initializer_list<juce::Component*> components)
     {
@@ -656,13 +656,13 @@ void FloorformAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, false);
 }
 
-void FloorformAudioProcessorEditor::setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible)
+void NateVSTAudioProcessorEditor::setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible)
 {
     slider.setVisible(shouldBeVisible);
     label.setVisible(shouldBeVisible);
 }
 
-void FloorformAudioProcessorEditor::setChoiceParameter(const juce::String& parameterID, int choiceIndex)
+void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& parameterID, int choiceIndex)
 {
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
     {
@@ -679,7 +679,7 @@ void FloorformAudioProcessorEditor::setChoiceParameter(const juce::String& param
     updateSegmentedSelectors();
 }
 
-void FloorformAudioProcessorEditor::updateSegmentedSelectors()
+void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
 {
     auto getChoiceIndex = [this] (const juce::ComboBox& sourceBox, const juce::String& parameterID, int fallback)
     {
@@ -705,12 +705,12 @@ void FloorformAudioProcessorEditor::updateSegmentedSelectors()
     rateThirtySecondButton.setToggleState(rateIndex == 2, juce::dontSendNotification);
 }
 
-void FloorformAudioProcessorEditor::timerCallback()
+void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
 }
 
-void FloorformAudioProcessorEditor::refreshPresetList()
+void NateVSTAudioProcessorEditor::refreshPresetList()
 {
     const auto previousSelection = presetBox.getText();
     presetBox.clear(juce::dontSendNotification);
@@ -728,7 +728,7 @@ void FloorformAudioProcessorEditor::refreshPresetList()
     presetStatusLabel.setText("Presets: " + audioProcessor.getPresetDirectory().getFullPathName(), juce::dontSendNotification);
 }
 
-void FloorformAudioProcessorEditor::saveCurrentPreset()
+void NateVSTAudioProcessorEditor::saveCurrentPreset()
 {
     auto presetName = presetNameEditor.getText().trim();
     if (presetName.isEmpty())
@@ -750,7 +750,7 @@ void FloorformAudioProcessorEditor::saveCurrentPreset()
     presetStatusLabel.setText("Preset name required", juce::dontSendNotification);
 }
 
-void FloorformAudioProcessorEditor::loadSelectedPreset()
+void NateVSTAudioProcessorEditor::loadSelectedPreset()
 {
     const auto presetName = presetBox.getText().trim();
     if (audioProcessor.loadPreset(presetName))

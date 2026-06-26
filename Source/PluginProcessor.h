@@ -11,11 +11,11 @@
 
 #include <random>
 
-class FloorformAudioProcessor final : public juce::AudioProcessor
+class NateVSTAudioProcessor final : public juce::AudioProcessor
 {
 public:
-    FloorformAudioProcessor();
-    ~FloorformAudioProcessor() override = default;
+    NateVSTAudioProcessor();
+    ~NateVSTAudioProcessor() override = default;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -76,5 +76,5 @@ private:
     void restorePluginState(const juce::ValueTree& state);
     juce::File presetFileForName(const juce::String& presetName) const;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FloorformAudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessor)
 };

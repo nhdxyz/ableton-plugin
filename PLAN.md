@@ -1,8 +1,8 @@
-# Floorform VST Synth Plugin Plan
+# Nate VST Synth Plugin Plan
 
 ## Current Direction
 
-Build Floorform, a macOS-first synth plugin for Ableton Live, focused on house, tech house, techno, minimal, and related electronic styles.
+Build Nate VST, a macOS-first synth plugin for Ableton Live, focused on house, tech house, techno, minimal, and related electronic styles.
 
 The plugin should be an instrument first: it receives MIDI, generates synth sounds, and gives fast sound-design controls for shaping, distorting, modulating, and automating those sounds inside Ableton.
 
@@ -1430,7 +1430,7 @@ Optional:
 
 Still undecided. Placeholder names:
 
-- Floorform
+- Nate VST
 - PulseForge
 - Circuit Floor
 - MonoGrid

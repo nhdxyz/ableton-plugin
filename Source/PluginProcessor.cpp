@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-FloorformAudioProcessor::FloorformAudioProcessor()
+NateVSTAudioProcessor::NateVSTAudioProcessor()
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "PARAMETERS", Parameters::createLayout()),
       synthEngine(parameters),
@@ -14,7 +14,7 @@ FloorformAudioProcessor::FloorformAudioProcessor()
     outputGain = parameters.getRawParameterValue(Parameters::ID::outputGain);
 }
 
-void FloorformAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     synthEngine.prepare(sampleRate, samplesPerBlock);
     samplePlayer.prepare(sampleRate);
@@ -22,20 +22,20 @@ void FloorformAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlo
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
 }
 
-void FloorformAudioProcessor::releaseResources()
+void NateVSTAudioProcessor::releaseResources()
 {
     effectsRack.reset();
     patternSequencer.reset();
 }
 
-bool FloorformAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     const auto& mainOutput = layouts.getMainOutputChannelSet();
     return mainOutput == juce::AudioChannelSet::mono()
         || mainOutput == juce::AudioChannelSet::stereo();
 }
 
-void FloorformAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     buffer.clear();
@@ -46,98 +46,98 @@ void FloorformAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juc
     effectsRack.process(buffer, outputGain != nullptr ? outputGain->load() : -8.0f);
 }
 
-juce::AudioProcessorEditor* FloorformAudioProcessor::createEditor()
+juce::AudioProcessorEditor* NateVSTAudioProcessor::createEditor()
 {
-    return new FloorformAudioProcessorEditor(*this);
+    return new NateVSTAudioProcessorEditor(*this);
 }
 
-bool FloorformAudioProcessor::hasEditor() const
+bool NateVSTAudioProcessor::hasEditor() const
 {
     return true;
 }
 
-const juce::String FloorformAudioProcessor::getName() const
+const juce::String NateVSTAudioProcessor::getName() const
 {
     return JucePlugin_Name;
 }
 
-bool FloorformAudioProcessor::acceptsMidi() const
+bool NateVSTAudioProcessor::acceptsMidi() const
 {
     return true;
 }
 
-bool FloorformAudioProcessor::producesMidi() const
+bool NateVSTAudioProcessor::producesMidi() const
 {
     return false;
 }
 
-bool FloorformAudioProcessor::isMidiEffect() const
+bool NateVSTAudioProcessor::isMidiEffect() const
 {
     return false;
 }
 
-double FloorformAudioProcessor::getTailLengthSeconds() const
+double NateVSTAudioProcessor::getTailLengthSeconds() const
 {
     return 0.0;
 }
 
-int FloorformAudioProcessor::getNumPrograms()
+int NateVSTAudioProcessor::getNumPrograms()
 {
     return 1;
 }
 
-int FloorformAudioProcessor::getCurrentProgram()
+int NateVSTAudioProcessor::getCurrentProgram()
 {
     return 0;
 }
 
-void FloorformAudioProcessor::setCurrentProgram(int)
+void NateVSTAudioProcessor::setCurrentProgram(int)
 {
 }
 
-const juce::String FloorformAudioProcessor::getProgramName(int)
+const juce::String NateVSTAudioProcessor::getProgramName(int)
 {
     return {};
 }
 
-void FloorformAudioProcessor::changeProgramName(int, const juce::String&)
+void NateVSTAudioProcessor::changeProgramName(int, const juce::String&)
 {
 }
 
-void FloorformAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
+void NateVSTAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     if (auto xml = createPluginState().createXml())
         copyXmlToBinary(*xml, destData);
 }
 
-void FloorformAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+void NateVSTAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     if (auto xmlState = getXmlFromBinary(data, sizeInBytes))
         if (xmlState->hasTagName(parameters.state.getType()))
             restorePluginState(juce::ValueTree::fromXml(*xmlState));
 }
 
-Parameters::APVTS& FloorformAudioProcessor::getValueTreeState()
+Parameters::APVTS& NateVSTAudioProcessor::getValueTreeState()
 {
     return parameters;
 }
 
-void FloorformAudioProcessor::generateRandomPatch()
+void NateVSTAudioProcessor::generateRandomPatch()
 {
     randomizer.generate();
 }
 
-void FloorformAudioProcessor::mutateRandomPatch()
+void NateVSTAudioProcessor::mutateRandomPatch()
 {
     randomizer.mutate();
 }
 
-void FloorformAudioProcessor::createRandomVariation()
+void NateVSTAudioProcessor::createRandomVariation()
 {
     randomizer.variation();
 }
 
-bool FloorformAudioProcessor::loadSampleFile(const juce::File& file)
+bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
 {
     if (! samplePlayer.loadFile(file))
         return false;
@@ -149,14 +149,14 @@ bool FloorformAudioProcessor::loadSampleFile(const juce::File& file)
     return true;
 }
 
-void FloorformAudioProcessor::clearSample()
+void NateVSTAudioProcessor::clearSample()
 {
     loadedSamplePath.clear();
     samplePlayer.clear();
     setParameterPlainValue(Parameters::ID::sampleEnabled, 0.0f);
 }
 
-void FloorformAudioProcessor::randomizeSampleCut()
+void NateVSTAudioProcessor::randomizeSampleCut()
 {
     if (! samplePlayer.hasSample())
         return;
@@ -180,34 +180,34 @@ void FloorformAudioProcessor::randomizeSampleCut()
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
 }
 
-juce::String FloorformAudioProcessor::getLoadedSampleName() const
+juce::String NateVSTAudioProcessor::getLoadedSampleName() const
 {
     return samplePlayer.getLoadedFileName();
 }
 
-Sequencer::Step FloorformAudioProcessor::getSequencerStep(int index) const
+Sequencer::Step NateVSTAudioProcessor::getSequencerStep(int index) const
 {
     return patternSequencer.getStep(index);
 }
 
-void FloorformAudioProcessor::setSequencerStep(int index, Sequencer::Step step)
+void NateVSTAudioProcessor::setSequencerStep(int index, Sequencer::Step step)
 {
     patternSequencer.setStep(index, step);
 }
 
-void FloorformAudioProcessor::randomizeSequencerPattern()
+void NateVSTAudioProcessor::randomizeSequencerPattern()
 {
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
     patternSequencer.randomize(amount != nullptr ? amount->load() : 0.55f);
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
 }
 
-void FloorformAudioProcessor::clearSequencerPattern()
+void NateVSTAudioProcessor::clearSequencerPattern()
 {
     patternSequencer.clear();
 }
 
-bool FloorformAudioProcessor::savePreset(const juce::String& presetName)
+bool NateVSTAudioProcessor::savePreset(const juce::String& presetName)
 {
     const auto trimmedName = presetName.trim();
     if (trimmedName.isEmpty())
@@ -226,7 +226,7 @@ bool FloorformAudioProcessor::savePreset(const juce::String& presetName)
     return false;
 }
 
-bool FloorformAudioProcessor::loadPreset(const juce::String& presetName)
+bool NateVSTAudioProcessor::loadPreset(const juce::String& presetName)
 {
     if (presetName.trim().isEmpty())
         return false;
@@ -248,11 +248,11 @@ bool FloorformAudioProcessor::loadPreset(const juce::String& presetName)
     return false;
 }
 
-juce::StringArray FloorformAudioProcessor::getPresetNames() const
+juce::StringArray NateVSTAudioProcessor::getPresetNames() const
 {
     juce::StringArray names;
     const auto directory = getPresetDirectory();
-    const auto presetFiles = directory.findChildFiles(juce::File::findFiles, false, "*.floorformpreset");
+    const auto presetFiles = directory.findChildFiles(juce::File::findFiles, false, "*.natevstpreset");
 
     for (const auto& file : presetFiles)
         names.add(file.getFileNameWithoutExtension());
@@ -261,14 +261,14 @@ juce::StringArray FloorformAudioProcessor::getPresetNames() const
     return names;
 }
 
-juce::File FloorformAudioProcessor::getPresetDirectory() const
+juce::File NateVSTAudioProcessor::getPresetDirectory() const
 {
     return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-        .getChildFile("Floorform")
+        .getChildFile("Nate VST")
         .getChildFile("Presets");
 }
 
-void FloorformAudioProcessor::setParameterPlainValue(const juce::String& parameterID, float plainValue)
+void NateVSTAudioProcessor::setParameterPlainValue(const juce::String& parameterID, float plainValue)
 {
     if (auto* parameter = parameters.getParameter(parameterID))
     {
@@ -278,7 +278,7 @@ void FloorformAudioProcessor::setParameterPlainValue(const juce::String& paramet
     }
 }
 
-double FloorformAudioProcessor::getHostBpm() const
+double NateVSTAudioProcessor::getHostBpm() const
 {
     if (auto* playHead = getPlayHead())
         if (auto position = playHead->getPosition())
@@ -288,10 +288,10 @@ double FloorformAudioProcessor::getHostBpm() const
     return 124.0;
 }
 
-juce::ValueTree FloorformAudioProcessor::createPluginState()
+juce::ValueTree NateVSTAudioProcessor::createPluginState()
 {
     auto state = parameters.copyState();
-    state.setProperty("floorform_state_version", 1, nullptr);
+    state.setProperty("nate_vst_state_version", 1, nullptr);
     state.setProperty("sample_file", loadedSamplePath, nullptr);
 
     for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
@@ -306,7 +306,7 @@ juce::ValueTree FloorformAudioProcessor::createPluginState()
     return state;
 }
 
-void FloorformAudioProcessor::restorePluginState(const juce::ValueTree& state)
+void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state)
 {
     loadedSamplePath = state.getProperty("sample_file").toString();
     parameters.replaceState(state);
@@ -327,16 +327,16 @@ void FloorformAudioProcessor::restorePluginState(const juce::ValueTree& state)
     }
 }
 
-juce::File FloorformAudioProcessor::presetFileForName(const juce::String& presetName) const
+juce::File NateVSTAudioProcessor::presetFileForName(const juce::String& presetName) const
 {
     auto legalName = juce::File::createLegalFileName(presetName.trim());
     if (legalName.isEmpty())
         legalName = "Untitled";
 
-    return getPresetDirectory().getChildFile(legalName).withFileExtension(".floorformpreset");
+    return getPresetDirectory().getChildFile(legalName).withFileExtension(".natevstpreset");
 }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-    return new FloorformAudioProcessor();
+    return new NateVSTAudioProcessor();
 }

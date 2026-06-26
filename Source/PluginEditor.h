@@ -6,13 +6,13 @@
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
-class FloorformAudioProcessorEditor final : public juce::AudioProcessorEditor,
+class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
                                            private juce::Timer
 {
 public:
-    explicit FloorformAudioProcessorEditor(FloorformAudioProcessor& processor);
-    ~FloorformAudioProcessorEditor() override;
+    explicit NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processor);
+    ~NateVSTAudioProcessorEditor() override;
 
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -34,7 +34,7 @@ private:
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
 
-    FloorformAudioProcessor& audioProcessor;
+    NateVSTAudioProcessor& audioProcessor;
     UI::LookAndFeel lookAndFeel;
 
     juce::Label titleLabel;
@@ -184,5 +184,5 @@ private:
 
     Panel activePanel = Panel::synth;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(FloorformAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessorEditor)
 };

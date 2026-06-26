@@ -184,6 +184,7 @@ The general club roadmap should bias the next few effects and workflows toward U
    Implemented first as randomizer recipes for organ stabs, chord stabs, and bell plucks. Factory preset files and any dedicated organ oscillator mode can come later.
 5. Swing and chop sequencer templates.
    Implemented in the SEQ panel. Templates cover 2-step bass, shuffle bass, organ skank, vocal chop triggers, and late offbeat stabs.
+   Selective groove is now implemented with Classic, Selective, UKG Push, and Tight modes plus a per-step timing lane shown directly in the grid.
 
 ### High Priority
 

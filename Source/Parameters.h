@@ -68,6 +68,7 @@ inline constexpr auto sequencerRate = "sequencer_rate";
 inline constexpr auto sequencerRoot = "sequencer_root";
 inline constexpr auto sequencerGate = "sequencer_gate";
 inline constexpr auto sequencerSwing = "sequencer_swing";
+inline constexpr auto sequencerGrooveMode = "sequencer_groove_mode";
 inline constexpr auto sequencerAccent = "sequencer_accent";
 inline constexpr auto sequencerOctave = "sequencer_octave";
 inline constexpr auto sequencerProbability = "sequencer_probability";
@@ -114,5 +115,6 @@ juce::StringArray waveformChoices();
 juce::StringArray filterModeChoices();
 juce::StringArray randomRecipeChoices();
 juce::StringArray sequencerRateChoices();
+juce::StringArray sequencerGrooveModeChoices();
 APVTS::ParameterLayout createLayout();
 }

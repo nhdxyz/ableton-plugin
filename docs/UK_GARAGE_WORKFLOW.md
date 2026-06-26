@@ -27,7 +27,7 @@ Research references:
 
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
-- Swing should become more selective than a single global amount: ghost snares, hats, and percussive filler can push later while core kicks and some bass notes stay tighter.
+- Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
 
 ### Bass Character
@@ -81,6 +81,7 @@ Research references:
 ### Groove
 
 - 1/16 sequencing with strong swing.
+- Selective groove so anchors can stay tight while offbeats, vocal triggers, and stab hits sit later.
 - Offbeat and late-step note placement.
 - Short gates.
 - Some probability for ghost-note variation.
@@ -96,6 +97,7 @@ Research references:
 - Added the `Pump` FX module and biased the UKG recipe toward tempo-synced ducking/pump movement.
 - Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
 - Added a compact sequencer template selector with UKG 2-step, shuffle bass, organ skank, vocal chop, and late stab patterns.
+- Added sequencer Groove modes and a per-step timing lane so UKG templates can push selected offbeats without moving every step equally.
 - Added UKG organ stab, chord stab, and bell pluck randomization recipes.
 - Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts, One Shot playback, and synced stutter/retrigger.
 
@@ -127,7 +129,8 @@ Research references:
 
 - Implemented as a compact SEQ-panel template selector.
 - Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
-- Per-template rate, gate, swing, accent, probability, octave, and random amount defaults are set when applied.
+- Per-template rate, gate, swing, groove mode, per-step timing, accent, probability, octave, and random amount defaults are set when applied.
+- The grid now shows timing markers on pushed steps, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
 
 5. UKG factory presets.
 

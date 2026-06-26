@@ -191,3 +191,10 @@
 - Made the sampler process MIDI note events in block order so gated chops respond to sequencer note-offs.
 - Added tempo-synced sample stutter/retrigger with on/off, rate, and repeat controls.
 - Made `UKG Chop` use One Shot with stutter at musical 1/16 or 1/32 rates so repeats can complete after short sequencer gates.
+
+### Selective Groove Sequencer
+
+- Added a sequencer Groove mode selector with Classic, Selective, UKG Push, and Tight timing behavior.
+- Added a saved per-step timing lane, visible as amber markers in the sequencer grid.
+- Made UKG sequencer templates set groove mode and per-step timing so anchors stay tighter while offbeats, vocal triggers, and stab hits can sit later.
+- Split the SEQ panel controls into timing and pattern rows to reduce crowding.

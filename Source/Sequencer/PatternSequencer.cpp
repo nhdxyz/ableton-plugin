@@ -12,6 +12,7 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerRoot = parameters.getRawParameterValue(Parameters::ID::sequencerRoot);
     sequencerGate = parameters.getRawParameterValue(Parameters::ID::sequencerGate);
     sequencerSwing = parameters.getRawParameterValue(Parameters::ID::sequencerSwing);
+    sequencerGrooveMode = parameters.getRawParameterValue(Parameters::ID::sequencerGrooveMode);
     sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
     sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
     sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
@@ -46,7 +47,8 @@ Step PatternSequencer::getStep(int index) const
         stepEnabled[safeIndex].load() > 0,
         stepNoteOffset[safeIndex].load(),
         stepVelocity[safeIndex].load(),
-        stepProbability[safeIndex].load()
+        stepProbability[safeIndex].load(),
+        stepTiming[safeIndex].load()
     };
 }
 
@@ -55,12 +57,14 @@ void PatternSequencer::setStep(int index, Step step)
     step.noteOffset = juce::jlimit(-24, 24, step.noteOffset);
     step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity);
     step.probability = juce::jlimit(0.0f, 1.0f, step.probability);
+    step.timing = juce::jlimit(0.0f, 1.0f, step.timing);
 
     const auto safeIndex = static_cast<size_t>(juce::jlimit(0, numSteps - 1, index));
     stepEnabled[safeIndex].store(step.enabled ? 1 : 0);
     stepNoteOffset[safeIndex].store(step.noteOffset);
     stepVelocity[safeIndex].store(step.velocity);
     stepProbability[safeIndex].store(step.probability);
+    stepTiming[safeIndex].store(step.timing);
 }
 
 void PatternSequencer::clear()
@@ -71,6 +75,7 @@ void PatternSequencer::clear()
         stepNoteOffset[static_cast<size_t>(step)].store(0);
         stepVelocity[static_cast<size_t>(step)].store(0.8f);
         stepProbability[static_cast<size_t>(step)].store(1.0f);
+        stepTiming[static_cast<size_t>(step)].store(0.0f);
     }
 }
 
@@ -86,12 +91,14 @@ void PatternSequencer::randomize(float amount)
         newStep.noteOffset = juce::jlimit(minNoteOffset, maxNoteOffset, static_cast<int>(std::round((nextRandomFloat() * 2.0f - 1.0f) * static_cast<float>(range))));
         newStep.velocity = juce::jlimit(0.35f, 1.0f, 0.45f + (nextRandomFloat() * 0.55f));
         newStep.probability = juce::jlimit(0.45f, 1.0f, 0.55f + (nextRandomFloat() * 0.45f));
+        newStep.timing = (step % 4 == 0) ? 0.0f : juce::jlimit(0.0f, 1.0f, nextRandomFloat() * amount);
 
         if (step == 0 || step == 4 || step == 8 || step == 12)
         {
             newStep.enabled = true;
             newStep.noteOffset = step == 0 ? 0 : newStep.noteOffset;
             newStep.probability = 1.0f;
+            newStep.timing = 0.0f;
         }
 
         setStep(step, newStep);
@@ -186,10 +193,45 @@ int PatternSequencer::getStepLengthSamples(double bpm) const
 
 int PatternSequencer::getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const
 {
-    const auto swing = readParameter(sequencerSwing, 0.0f);
-    const auto swingOffset = static_cast<int>(static_cast<float>(baseStepLengthSamples) * swing * 0.5f);
-    const auto duration = (stepIndex % 2 == 0) ? baseStepLengthSamples + swingOffset : baseStepLengthSamples - swingOffset;
+    const auto currentDelay = getStepDelaySamples(baseStepLengthSamples, stepIndex);
+    const auto nextDelay = getStepDelaySamples(baseStepLengthSamples, (stepIndex + 1) % numSteps);
+    const auto duration = baseStepLengthSamples + nextDelay - currentDelay;
     return juce::jmax(1, duration);
+}
+
+int PatternSequencer::getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const
+{
+    const auto safeIndex = static_cast<size_t>(juce::jlimit(0, numSteps - 1, stepIndex));
+    const auto swing = juce::jlimit(0.0f, 0.65f, readParameter(sequencerSwing, 0.0f));
+    const auto maxDelay = static_cast<float>(baseStepLengthSamples) * swing * 0.5f;
+    const auto timing = juce::jlimit(0.0f, 1.0f, stepTiming[safeIndex].load());
+    const auto mode = static_cast<int>(std::round(readParameter(sequencerGrooveMode, 0.0f)));
+    const auto isAnchorStep = stepIndex == 0 || stepIndex == 4 || stepIndex == 8 || stepIndex == 12;
+    const auto isOffbeatStep = (stepIndex % 2) != 0;
+
+    auto weight = 0.0f;
+    switch (mode)
+    {
+        case 1:
+            weight = timing;
+            break;
+
+        case 2:
+            if (! isAnchorStep)
+                weight = timing > 0.0f ? timing : (isOffbeatStep ? 0.62f : 0.18f);
+            break;
+
+        case 3:
+            weight = isAnchorStep ? 0.0f : timing * 0.65f;
+            break;
+
+        case 0:
+        default:
+            weight = isOffbeatStep ? 1.0f : 0.0f;
+            break;
+    }
+
+    return static_cast<int>(std::round(maxDelay * juce::jlimit(0.0f, 1.0f, weight)));
 }
 
 float PatternSequencer::nextRandomFloat()

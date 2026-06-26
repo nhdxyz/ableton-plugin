@@ -15,6 +15,7 @@ struct Step
     int noteOffset = 0;
     float velocity = 0.8f;
     float probability = 1.0f;
+    float timing = 0.0f;
 };
 
 class PatternSequencer
@@ -42,6 +43,7 @@ private:
     std::array<std::atomic<int>, numSteps> stepNoteOffset {};
     std::array<std::atomic<float>, numSteps> stepVelocity {};
     std::array<std::atomic<float>, numSteps> stepProbability {};
+    std::array<std::atomic<float>, numSteps> stepTiming {};
     double currentSampleRate = 44100.0;
     double samplesUntilNextStep = 0.0;
     double pendingNoteOffSamples = -1.0;
@@ -54,12 +56,14 @@ private:
     std::atomic<float>* sequencerRoot = nullptr;
     std::atomic<float>* sequencerGate = nullptr;
     std::atomic<float>* sequencerSwing = nullptr;
+    std::atomic<float>* sequencerGrooveMode = nullptr;
     std::atomic<float>* sequencerAccent = nullptr;
     std::atomic<float>* sequencerOctave = nullptr;
     std::atomic<float>* sequencerProbability = nullptr;
 
     int getStepLengthSamples(double bpm) const;
     int getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const;
+    int getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const;
     float nextRandomFloat();
     bool shouldTriggerStep(const Step& step);
     float readParameter(std::atomic<float>* parameter, float fallback) const;

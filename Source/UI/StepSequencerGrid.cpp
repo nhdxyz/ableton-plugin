@@ -58,6 +58,13 @@ void StepSequencerGrid::paint(juce::Graphics& g)
             const auto alpha = juce::jlimit(0.35f, 1.0f, step.velocity);
             g.setColour(juce::Colour(0xff8ee6c9).withAlpha(alpha));
             g.fillRoundedRectangle(cell, 3.0f);
+            if (step.timing > 0.0f)
+            {
+                const auto timingWidth = juce::jmax(3.0f, cell.getWidth() * juce::jlimit(0.0f, 1.0f, step.timing));
+                auto timingMarker = cell.withY(cell.getBottom() - 3.0f).withHeight(3.0f).withWidth(timingWidth);
+                g.setColour(juce::Colour(0xffffc857).withAlpha(0.9f));
+                g.fillRoundedRectangle(timingMarker, 1.5f);
+            }
             g.setColour(juce::Colour(0xff0d1113));
             g.drawRoundedRectangle(cell, 3.0f, 1.0f);
         }
@@ -71,12 +78,27 @@ void StepSequencerGrid::mouseDown(const juce::MouseEvent& event)
 {
     lastEditedStep = -1;
     lastEditedRow = -1;
+
+    if (event.mods.isPopupMenu() || event.mods.isCommandDown())
+    {
+        cycleTimingAt(event.getPosition());
+        return;
+    }
+
     editAt(event.getPosition());
 }
 
 void StepSequencerGrid::mouseDrag(const juce::MouseEvent& event)
 {
+    if (event.mods.isPopupMenu() || event.mods.isCommandDown())
+        return;
+
     editAt(event.getPosition());
+}
+
+void StepSequencerGrid::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    nudgeTimingAt(event.getPosition(), wheel.deltaY >= 0.0f ? 0.1f : -0.1f);
 }
 
 juce::Rectangle<int> StepSequencerGrid::gridBounds() const
@@ -142,8 +164,51 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
         step.noteOffset = noteOffset;
         step.velocity = 0.85f;
         step.probability = 1.0f;
+        step.timing = (stepIndex % 2) != 0 ? 0.65f : 0.0f;
     }
 
+    setStep(stepIndex, step);
+    repaint();
+}
+
+void StepSequencerGrid::cycleTimingAt(juce::Point<int> position)
+{
+    if (! getStep || ! setStep)
+        return;
+
+    const auto stepIndex = stepForPosition(position);
+    if (stepIndex < 0)
+        return;
+
+    auto step = getStep(stepIndex);
+    if (! step.enabled)
+        return;
+
+    if (step.timing < 0.25f)
+        step.timing = 0.5f;
+    else if (step.timing < 0.75f)
+        step.timing = 1.0f;
+    else
+        step.timing = 0.0f;
+
+    setStep(stepIndex, step);
+    repaint();
+}
+
+void StepSequencerGrid::nudgeTimingAt(juce::Point<int> position, float delta)
+{
+    if (! getStep || ! setStep)
+        return;
+
+    const auto stepIndex = stepForPosition(position);
+    if (stepIndex < 0)
+        return;
+
+    auto step = getStep(stepIndex);
+    if (! step.enabled)
+        return;
+
+    step.timing = juce::jlimit(0.0f, 1.0f, step.timing + delta);
     setStep(stepIndex, step);
     repaint();
 }

@@ -33,6 +33,18 @@ Reference products:
 - Xfer Serum.
 - u-he synths such as Diva, Hive, Zebra, and Repro.
 - Korg instruments such as wavestate, modwave, opsix, MS-20, and Wavestation.
+- Arturia Pigments and similar modern hybrid instruments for sequencer/modulation organization.
+- Cableguys ShaperBox-style focused rhythmic shaping workflows.
+
+Current research references:
+
+- Roland ZENOLOGY Pro: https://www.roland.com/us/products/rc_zenology_pro/
+- Xfer Serum 2: https://xferrecords.com/products/serum-2
+- u-he Diva: https://u-he.com/products/diva/
+- Korg Collection: https://www.korg.com/us/products/software/korg_collection/
+- Arturia Pigments: https://www.arturia.com/products/software-instruments/pigments/overview
+- Cableguys ShaperBox: https://www.cableguys.com/shaperbox
+- Ableton Simpler: https://www.ableton.com/en/live-manual/12/live-instrument-reference/#simpler
 
 Current UI research takeaway:
 
@@ -40,6 +52,7 @@ Current UI research takeaway:
 - Browsers/libraries are central for recall, tags, favorites, and fast auditioning.
 - Short option sets should feel immediate, so segmented controls are preferred over dropdowns for choices like waveform and synced step rate.
 - Long option sets still belong in dropdowns or browser lists.
+- Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
 - The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset recall, randomization, and deeper-panel navigation should all be close at hand.
 
 ### What To Learn From ZENOLOGY
@@ -116,6 +129,7 @@ How this plugin should adapt those ideas:
 - Add an XY motion pad later, with recordable Ableton automation.
 - Add an intelligent randomizer that can randomize a whole preset or only one section.
 - Add motion sequencing as a focused club-production tool rather than a giant workstation feature.
+- Keep groove and timing editable per step where it directly improves UK garage, house, and tech-house patterns.
 - Consider simple patch-style routing for modulation, but do not build a full modular environment first.
 
 ## Long-Term Product Shape

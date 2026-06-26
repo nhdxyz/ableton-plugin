@@ -43,6 +43,11 @@ juce::StringArray sequencerRateChoices()
     return { "1/8", "1/16", "1/32" };
 }
 
+juce::StringArray sequencerGrooveModeChoices()
+{
+    return { "Classic", "Selective", "UKG Push", "Tight" };
+}
+
 APVTS::ParameterLayout createLayout()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
@@ -413,6 +418,12 @@ APVTS::ParameterLayout createLayout()
         "Sequencer Swing",
         juce::NormalisableRange<float> { 0.0f, 0.65f, 0.001f },
         0.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sequencerGrooveMode,
+        "Sequencer Groove Mode",
+        sequencerGrooveModeChoices(),
+        0));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::sequencerAccent,

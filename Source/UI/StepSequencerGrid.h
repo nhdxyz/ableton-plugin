@@ -19,6 +19,7 @@ public:
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
 private:
     static constexpr int numRows = 13;
@@ -33,6 +34,7 @@ private:
     int noteOffsetForRow(int row) const;
     int rowForNoteOffset(int noteOffset) const;
     void editAt(juce::Point<int> position);
+    void cycleTimingAt(juce::Point<int> position);
+    void nudgeTimingAt(juce::Point<int> position, float delta);
 };
 }
-

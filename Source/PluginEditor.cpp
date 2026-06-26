@@ -141,6 +141,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
 
+    sequencerGrooveBox.addItemList(Parameters::sequencerGrooveModeChoices(), 1);
+    sequencerGrooveBox.setTextWhenNothingSelected("Groove");
+    addAndMakeVisible(sequencerGrooveBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerGrooveMode, sequencerGrooveBox));
+
     sequencerPatternBox.addItem("Bass", 1);
     sequencerPatternBox.addItem("Stab", 2);
     sequencerPatternBox.addItem("UKG 2-Step", 3);
@@ -935,6 +940,7 @@ void NateVSTAudioProcessorEditor::resized()
             rateEighthButton.setVisible(true);
             rateSixteenthButton.setVisible(true);
             rateThirtySecondButton.setVisible(true);
+            sequencerGrooveBox.setVisible(true);
             sequencerPatternBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
@@ -942,18 +948,20 @@ void NateVSTAudioProcessorEditor::resized()
             clearSequencerButton.setVisible(true);
             sequencerGrid.setVisible(true);
             sequencerSectionLabel.setBounds(content.removeFromTop(28));
-            auto actionRow = content.removeFromTop(48);
-            sequencerEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
-            auto rateRow = actionRow.removeFromLeft(168);
+            auto timingRow = content.removeFromTop(44);
+            sequencerEnabledButton.setBounds(timingRow.removeFromLeft(70).reduced(4));
+            auto rateRow = timingRow.removeFromLeft(168);
             const auto rateButtonWidth = rateRow.getWidth() / 3;
             rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
-            sequencerPatternBox.setBounds(actionRow.removeFromLeft(156).reduced(4));
-            applyPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
-            copySequencerButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
-            randomSequencerButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
-            clearSequencerButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
+            sequencerGrooveBox.setBounds(timingRow.removeFromLeft(150).reduced(4));
+            auto patternRow = content.removeFromTop(44).withTrimmedTop(2);
+            sequencerPatternBox.setBounds(patternRow.removeFromLeft(190).reduced(4));
+            applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
+            copySequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
+            randomSequencerButton.setBounds(patternRow.removeFromLeft(104).reduced(4));
+            clearSequencerButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
@@ -1508,7 +1516,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

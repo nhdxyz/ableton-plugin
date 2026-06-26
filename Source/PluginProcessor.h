@@ -54,6 +54,8 @@ public:
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);
     bool randomizeSequencerPattern();
+    void applySequencerPatternPreset(int presetIndex);
+    void copySequencerFirstHalfToSecondHalf();
     void clearSequencerPattern();
     juce::String getActiveRandomizationLockSummary() const;
     bool savePreset(const juce::String& presetName);

@@ -79,3 +79,12 @@
 - Added LAB status text that reports the last randomization action and active locks.
 - Kept output safety active by allowing the output lock to preserve or lower gain, but not raise it above the randomized safe value.
 - Documented lock behavior in `docs/RANDOMIZATION_WORKFLOW.md`.
+
+### Sequencer Groove And Performance
+
+- Added automatable `sequencer_swing`, `sequencer_accent`, `sequencer_octave`, and `sequencer_probability` parameters.
+- Added SEQ controls for Root, Gate, Swing, Accent, Oct, Prob, and Rand in a compact knob row.
+- Added Bass and Stab pattern preset buttons plus a Copy action that duplicates steps 1-8 into 9-16.
+- Made sequencer swing alternate long and short step durations while keeping host tempo sync.
+- Added accent behavior for anchor steps and global probability scaling over per-step probability.
+- Updated `Rand Seq` to generate conservative swing, accent, octave, and probability settings with the pattern.

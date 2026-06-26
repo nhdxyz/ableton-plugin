@@ -993,7 +993,7 @@ Current implemented panel layout:
 - SYNTH: oscillator waveform segment, mono toggle, unison controls, core filter/drive/output/amp controls.
 - LAB: recipe dropdown, generate, mutate, variation, undo, section locks, status, and randomization bias controls.
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
-- SEQ: sequencer enable, segmented rate selector, random/clear, root/gate/random controls, and the 16-step grid.
+- SEQ: sequencer enable, segmented rate selector, pattern presets, copy/random/clear, groove/performance controls, and the 16-step grid.
 - FX: bypassable distortion, chorus, delay, and reverb modules.
 - LIBRARY: preset category, preset name entry, save, previous/next, preset selector, load, refresh, and preset folder status.
 
@@ -1128,6 +1128,9 @@ Long-term parameter groups:
 - Sequencer enable.
 - Sequencer rate.
 - Sequencer swing.
+- Sequencer accent.
+- Sequencer octave.
+- Sequencer probability.
 - Sequencer length.
 - Sequencer root note.
 - Sequencer scale.

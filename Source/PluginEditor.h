@@ -115,6 +115,10 @@ private:
     juce::Slider sampleMixSlider;
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
+    juce::Slider sequencerSwingSlider;
+    juce::Slider sequencerAccentSlider;
+    juce::Slider sequencerOctaveSlider;
+    juce::Slider sequencerProbabilitySlider;
     juce::Slider sequencerRandomSlider;
     juce::Slider fxDistortionAmountSlider;
     juce::Slider fxChorusRateSlider;
@@ -164,6 +168,10 @@ private:
     juce::Label sampleMixLabel;
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
+    juce::Label sequencerSwingLabel;
+    juce::Label sequencerAccentLabel;
+    juce::Label sequencerOctaveLabel;
+    juce::Label sequencerProbabilityLabel;
     juce::Label sequencerRandomLabel;
     juce::Label fxDistortionAmountLabel;
     juce::Label fxChorusRateLabel;
@@ -185,6 +193,9 @@ private:
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton clearSequencerButton { "Clear" };
+    juce::TextButton bassPatternButton { "Bass" };
+    juce::TextButton stabPatternButton { "Stab" };
+    juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };

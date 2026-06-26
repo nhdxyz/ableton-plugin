@@ -217,7 +217,68 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
     patternSequencer.randomize(amount != nullptr ? amount->load() : 0.55f);
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+
+    std::uniform_real_distribution<float> swingDistribution(0.0f, 0.32f);
+    std::uniform_real_distribution<float> accentDistribution(0.2f, 0.75f);
+    std::uniform_real_distribution<float> probabilityDistribution(0.72f, 1.0f);
+    std::uniform_int_distribution<int> octaveDistribution(-1, 1);
+    setParameterPlainValue(Parameters::ID::sequencerSwing, swingDistribution(sampleRandomEngine));
+    setParameterPlainValue(Parameters::ID::sequencerAccent, accentDistribution(sampleRandomEngine));
+    setParameterPlainValue(Parameters::ID::sequencerOctave, static_cast<float>(octaveDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sequencerProbability, probabilityDistribution(sampleRandomEngine));
     return true;
+}
+
+void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
+{
+    patternSequencer.clear();
+    setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+
+    auto setStep = [this] (int index, int noteOffset, float velocity, float probability)
+    {
+        Sequencer::Step step;
+        step.enabled = true;
+        step.noteOffset = noteOffset;
+        step.velocity = velocity;
+        step.probability = probability;
+        patternSequencer.setStep(index, step);
+    };
+
+    switch (presetIndex)
+    {
+        case 1:
+            setStep(2, 0, 0.72f, 1.0f);
+            setStep(6, 7, 0.86f, 0.95f);
+            setStep(10, 3, 0.76f, 0.9f);
+            setStep(14, 10, 0.9f, 0.85f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.36f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.18f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.48f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.94f);
+            break;
+
+        case 0:
+        default:
+            setStep(0, 0, 0.92f, 1.0f);
+            setStep(3, 0, 0.68f, 0.85f);
+            setStep(6, -5, 0.78f, 0.9f);
+            setStep(8, 0, 0.88f, 1.0f);
+            setStep(11, 3, 0.7f, 0.8f);
+            setStep(14, -2, 0.74f, 0.9f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.52f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.24f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.62f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, -1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.96f);
+            break;
+    }
+}
+
+void NateVSTAudioProcessor::copySequencerFirstHalfToSecondHalf()
+{
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps / 2; ++stepIndex)
+        patternSequencer.setStep(stepIndex + (Sequencer::PatternSequencer::numSteps / 2), patternSequencer.getStep(stepIndex));
 }
 
 void NateVSTAudioProcessor::clearSequencerPattern()
@@ -492,6 +553,10 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         Parameters::ID::sequencerRate,
         Parameters::ID::sequencerRoot,
         Parameters::ID::sequencerGate,
+        Parameters::ID::sequencerSwing,
+        Parameters::ID::sequencerAccent,
+        Parameters::ID::sequencerOctave,
+        Parameters::ID::sequencerProbability,
         Parameters::ID::sequencerRandomAmount
     });
 

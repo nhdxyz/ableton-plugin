@@ -22,7 +22,7 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 - `Sample`: sample enable, slice range, reverse, pitch, gain, mix, and loaded sample path.
 - `FX`: distortion, chorus, delay, and reverb parameters.
 - `Output`: output gain, with safety preserved.
-- `Seq`: sequencer enable/rate/root/gate/random amount and step pattern.
+- `Seq`: sequencer enable/rate/root/gate/swing/accent/octave/probability/random amount and step pattern.
 
 ## Output Safety
 

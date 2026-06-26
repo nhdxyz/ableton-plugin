@@ -381,6 +381,31 @@ APVTS::ParameterLayout createLayout()
         0.55f));
 
     add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sequencerSwing,
+        "Sequencer Swing",
+        juce::NormalisableRange<float> { 0.0f, 0.65f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sequencerAccent,
+        "Sequencer Accent",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterInt>(
+        ID::sequencerOctave,
+        "Sequencer Octave",
+        -2,
+        2,
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sequencerProbability,
+        "Sequencer Probability",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
         ID::sequencerRandomAmount,
         "Sequencer Random Amount",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },

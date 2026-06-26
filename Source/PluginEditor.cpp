@@ -194,9 +194,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sampleTransposeSlider, sampleTransposeLabel, "Pitch", Parameters::ID::sampleTranspose);
     configureSlider(sampleGainSlider, sampleGainLabel, "Gain", Parameters::ID::sampleGain);
     configureSlider(sampleMixSlider, sampleMixLabel, "Mix", Parameters::ID::sampleMix);
-    configureHorizontalSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
-    configureHorizontalSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
-    configureHorizontalSlider(sequencerRandomSlider, sequencerRandomLabel, "Rand", Parameters::ID::sequencerRandomAmount);
+    configureSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
+    configureSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
+    configureSlider(sequencerSwingSlider, sequencerSwingLabel, "Swing", Parameters::ID::sequencerSwing);
+    configureSlider(sequencerAccentSlider, sequencerAccentLabel, "Accent", Parameters::ID::sequencerAccent);
+    configureSlider(sequencerOctaveSlider, sequencerOctaveLabel, "Oct", Parameters::ID::sequencerOctave);
+    configureSlider(sequencerProbabilitySlider, sequencerProbabilityLabel, "Prob", Parameters::ID::sequencerProbability);
+    configureSlider(sequencerRandomSlider, sequencerRandomLabel, "Rand", Parameters::ID::sequencerRandomAmount);
     configureSlider(fxDistortionAmountSlider, fxDistortionAmountLabel, "Drive", Parameters::ID::fxDistortionAmount);
     configureSlider(fxChorusRateSlider, fxChorusRateLabel, "Rate", Parameters::ID::fxChorusRate);
     configureSlider(fxChorusDepthSlider, fxChorusDepthLabel, "Depth", Parameters::ID::fxChorusDepth);
@@ -256,6 +260,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.clearSequencerPattern();
         sequencerGrid.repaint();
     };
+    bassPatternButton.onClick = [this]
+    {
+        audioProcessor.applySequencerPatternPreset(0);
+        sequencerGrid.repaint();
+    };
+    stabPatternButton.onClick = [this]
+    {
+        audioProcessor.applySequencerPatternPreset(1);
+        sequencerGrid.repaint();
+    };
+    copySequencerButton.onClick = [this]
+    {
+        audioProcessor.copySequencerFirstHalfToSecondHalf();
+        sequencerGrid.repaint();
+    };
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
@@ -302,6 +321,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(randomCutButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(clearSequencerButton);
+    addAndMakeVisible(bassPatternButton);
+    addAndMakeVisible(stabPatternButton);
+    addAndMakeVisible(copySequencerButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
     addAndMakeVisible(labTabButton);
@@ -674,26 +696,41 @@ void NateVSTAudioProcessorEditor::resized()
             rateEighthButton.setVisible(true);
             rateSixteenthButton.setVisible(true);
             rateThirtySecondButton.setVisible(true);
+            bassPatternButton.setVisible(true);
+            stabPatternButton.setVisible(true);
+            copySequencerButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             clearSequencerButton.setVisible(true);
             sequencerGrid.setVisible(true);
             sequencerSectionLabel.setBounds(content.removeFromTop(28));
-            auto actionRow = content.removeFromTop(52);
+            auto actionRow = content.removeFromTop(48);
             sequencerEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             auto rateRow = actionRow.removeFromLeft(168);
             const auto rateButtonWidth = rateRow.getWidth() / 3;
             rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
-            randomSequencerButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
-            clearSequencerButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
-            const auto sequencerControlWidth = actionRow.getWidth() / 3;
+            bassPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
+            stabPatternButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
+            copySequencerButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
+            randomSequencerButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
+            clearSequencerButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
+            setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
+            setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, true);
+            setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, true);
+            setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
             setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
-            sequencerRootSlider.setBounds(actionRow.removeFromLeft(sequencerControlWidth).reduced(42, 4));
-            sequencerGateSlider.setBounds(actionRow.removeFromLeft(sequencerControlWidth).reduced(42, 4));
-            sequencerRandomSlider.setBounds(actionRow.reduced(42, 4));
+            layoutKnobRow(content.removeFromTop(98).withTrimmedTop(6), {
+                &sequencerRootSlider,
+                &sequencerGateSlider,
+                &sequencerSwingSlider,
+                &sequencerAccentSlider,
+                &sequencerOctaveSlider,
+                &sequencerProbabilitySlider,
+                &sequencerRandomSlider
+            });
             sequencerGrid.setBounds(content.reduced(4, 12));
             break;
         }
@@ -953,6 +990,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
         &randomCutButton, &randomSequencerButton, &clearSequencerButton,
+        &bassPatternButton, &stabPatternButton, &copySequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
@@ -999,6 +1037,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sampleMixSlider, sampleMixLabel, false);
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
+    setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, false);
+    setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, false);
+    setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, false);
+    setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, false);
     setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, false);
     setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, false);
     setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, false);

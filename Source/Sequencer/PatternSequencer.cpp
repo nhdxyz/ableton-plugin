@@ -11,6 +11,10 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerRate = parameters.getRawParameterValue(Parameters::ID::sequencerRate);
     sequencerRoot = parameters.getRawParameterValue(Parameters::ID::sequencerRoot);
     sequencerGate = parameters.getRawParameterValue(Parameters::ID::sequencerGate);
+    sequencerSwing = parameters.getRawParameterValue(Parameters::ID::sequencerSwing);
+    sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
+    sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
+    sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
 
     clear();
 }
@@ -113,15 +117,16 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
         }
     }
 
-    const auto stepLengthSamples = getStepLengthSamples(bpm);
-    const auto gateSamples = juce::jlimit(1, stepLengthSamples - 1,
-                                         static_cast<int>(static_cast<float>(stepLengthSamples) * readParameter(sequencerGate, 0.55f)));
+    const auto baseStepLengthSamples = getStepLengthSamples(bpm);
 
     auto nextStepOffset = samplesUntilNextStep;
 
     while (nextStepOffset < static_cast<double>(numSamples))
     {
         const auto eventOffset = juce::jlimit(0, numSamples - 1, static_cast<int>(std::round(nextStepOffset)));
+        const auto currentStepDuration = getStepDurationSamples(baseStepLengthSamples, currentStep);
+        const auto gateSamples = juce::jlimit(1, juce::jmax(1, currentStepDuration - 1),
+                                             static_cast<int>(static_cast<float>(currentStepDuration) * readParameter(sequencerGate, 0.55f)));
 
         if (activeNote >= 0)
         {
@@ -134,8 +139,14 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
         if (shouldTriggerStep(step))
         {
             const auto root = static_cast<int>(std::round(readParameter(sequencerRoot, 36.0f)));
-            activeNote = juce::jlimit(0, 127, root + step.noteOffset);
-            midi.addEvent(juce::MidiMessage::noteOn(1, activeNote, step.velocity), eventOffset);
+            const auto octaveOffset = static_cast<int>(std::round(readParameter(sequencerOctave, 0.0f))) * 12;
+            const auto accent = readParameter(sequencerAccent, 0.35f);
+            const auto isAnchorStep = currentStep == 0 || currentStep == 4 || currentStep == 8 || currentStep == 12;
+            const auto velocity = isAnchorStep
+                ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
+                : juce::jlimit(0.0f, 1.0f, step.velocity * (1.0f - (accent * 0.12f)));
+            activeNote = juce::jlimit(0, 127, root + octaveOffset + step.noteOffset);
+            midi.addEvent(juce::MidiMessage::noteOn(1, activeNote, velocity), eventOffset);
 
             const auto noteOffOffset = eventOffset + gateSamples;
             if (noteOffOffset < numSamples)
@@ -151,7 +162,7 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
         }
 
         currentStep = (currentStep + 1) % numSteps;
-        nextStepOffset += static_cast<double>(stepLengthSamples);
+        nextStepOffset += static_cast<double>(currentStepDuration);
     }
 
     samplesUntilNextStep = nextStepOffset - static_cast<double>(numSamples);
@@ -173,6 +184,14 @@ int PatternSequencer::getStepLengthSamples(double bpm) const
     }
 }
 
+int PatternSequencer::getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const
+{
+    const auto swing = readParameter(sequencerSwing, 0.0f);
+    const auto swingOffset = static_cast<int>(static_cast<float>(baseStepLengthSamples) * swing * 0.5f);
+    const auto duration = (stepIndex % 2 == 0) ? baseStepLengthSamples + swingOffset : baseStepLengthSamples - swingOffset;
+    return juce::jmax(1, duration);
+}
+
 float PatternSequencer::nextRandomFloat()
 {
     randomState = (1664525u * randomState) + 1013904223u;
@@ -181,7 +200,8 @@ float PatternSequencer::nextRandomFloat()
 
 bool PatternSequencer::shouldTriggerStep(const Step& step)
 {
-    return step.enabled && nextRandomFloat() <= step.probability;
+    const auto globalProbability = readParameter(sequencerProbability, 1.0f);
+    return step.enabled && nextRandomFloat() <= juce::jlimit(0.0f, 1.0f, step.probability * globalProbability);
 }
 
 float PatternSequencer::readParameter(std::atomic<float>* parameter, float fallback) const

@@ -52,6 +52,7 @@ private:
     juce::Label librarySectionLabel;
     juce::Label sampleNameLabel;
     juce::Label presetStatusLabel;
+    juce::Label randomStatusLabel;
 
     juce::ComboBox waveformBox;
     juce::ComboBox osc2WaveBox;
@@ -68,6 +69,14 @@ private:
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
+    juce::ToggleButton randomLockPitchButton;
+    juce::ToggleButton randomLockEnvelopeButton;
+    juce::ToggleButton randomLockFilterButton;
+    juce::ToggleButton randomLockSourceButton;
+    juce::ToggleButton randomLockSampleButton;
+    juce::ToggleButton randomLockFxButton;
+    juce::ToggleButton randomLockOutputButton;
+    juce::ToggleButton randomLockSequencerButton;
 
     juce::Slider octaveSlider;
     juce::Slider tuneSlider;
@@ -170,6 +179,7 @@ private:
     juce::TextButton generateButton { "Generate" };
     juce::TextButton mutateButton { "Mutate" };
     juce::TextButton variationButton { "Variation" };
+    juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton randomCutButton { "Rand Cut" };
@@ -217,6 +227,7 @@ private:
     void chooseSampleFile();
     void loadSampleFile(const juce::File& file);
     void updateSampleNameLabel();
+    void setRandomStatus(const juce::String& action);
     void setActivePanel(Panel panel);
     void updatePanelVisibility();
     void updateTabButtons();

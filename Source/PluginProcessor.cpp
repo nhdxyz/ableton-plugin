@@ -124,17 +124,27 @@ Parameters::APVTS& NateVSTAudioProcessor::getValueTreeState()
 
 void NateVSTAudioProcessor::generateRandomPatch()
 {
-    randomizer.generate();
+    runRandomAction(RandomAction::generate);
 }
 
 void NateVSTAudioProcessor::mutateRandomPatch()
 {
-    randomizer.mutate();
+    runRandomAction(RandomAction::mutate);
 }
 
 void NateVSTAudioProcessor::createRandomVariation()
 {
-    randomizer.variation();
+    runRandomAction(RandomAction::variation);
+}
+
+bool NateVSTAudioProcessor::undoRandomization()
+{
+    if (! hasRandomUndoState || ! randomUndoState.isValid())
+        return false;
+
+    restorePluginState(randomUndoState.createCopy());
+    hasRandomUndoState = false;
+    return true;
 }
 
 bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
@@ -156,10 +166,13 @@ void NateVSTAudioProcessor::clearSample()
     setParameterPlainValue(Parameters::ID::sampleEnabled, 0.0f);
 }
 
-void NateVSTAudioProcessor::randomizeSampleCut()
+bool NateVSTAudioProcessor::randomizeSampleCut()
 {
+    if (isRandomLockEnabled(Parameters::ID::randomLockSample))
+        return false;
+
     if (! samplePlayer.hasSample())
-        return;
+        return false;
 
     std::uniform_real_distribution<float> startDistribution(0.0f, 0.82f);
     std::uniform_real_distribution<float> lengthDistribution(0.04f, 0.45f);
@@ -178,6 +191,7 @@ void NateVSTAudioProcessor::randomizeSampleCut()
     setParameterPlainValue(Parameters::ID::sampleTranspose, transposeDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
+    return true;
 }
 
 juce::String NateVSTAudioProcessor::getLoadedSampleName() const
@@ -195,11 +209,15 @@ void NateVSTAudioProcessor::setSequencerStep(int index, Sequencer::Step step)
     patternSequencer.setStep(index, step);
 }
 
-void NateVSTAudioProcessor::randomizeSequencerPattern()
+bool NateVSTAudioProcessor::randomizeSequencerPattern()
 {
+    if (isRandomLockEnabled(Parameters::ID::randomLockSequencer))
+        return false;
+
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
     patternSequencer.randomize(amount != nullptr ? amount->load() : 0.55f);
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+    return true;
 }
 
 void NateVSTAudioProcessor::clearSequencerPattern()
@@ -272,6 +290,220 @@ juce::File NateVSTAudioProcessor::getPresetDirectory() const
     return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
         .getChildFile("Nate VST")
         .getChildFile("Presets");
+}
+
+juce::String NateVSTAudioProcessor::getActiveRandomizationLockSummary() const
+{
+    juce::StringArray locks;
+
+    auto addIfLocked = [this, &locks] (const juce::String& parameterID, const juce::String& label)
+    {
+        if (isRandomLockEnabled(parameterID))
+            locks.add(label);
+    };
+
+    addIfLocked(Parameters::ID::randomLockPitch, "Pitch");
+    addIfLocked(Parameters::ID::randomLockEnvelope, "Env");
+    addIfLocked(Parameters::ID::randomLockFilter, "Filter");
+    addIfLocked(Parameters::ID::randomLockSource, "Source");
+    addIfLocked(Parameters::ID::randomLockSample, "Sample");
+    addIfLocked(Parameters::ID::randomLockFx, "FX");
+    addIfLocked(Parameters::ID::randomLockOutput, "Output");
+    addIfLocked(Parameters::ID::randomLockSequencer, "Seq");
+
+    return locks.joinIntoString(", ");
+}
+
+void NateVSTAudioProcessor::runRandomAction(RandomAction action)
+{
+    const auto snapshot = createPluginState();
+    randomUndoState = snapshot.createCopy();
+    hasRandomUndoState = true;
+
+    switch (action)
+    {
+        case RandomAction::generate:
+            randomizer.generate();
+            break;
+        case RandomAction::mutate:
+            randomizer.mutate();
+            break;
+        case RandomAction::variation:
+            randomizer.variation();
+            break;
+    }
+
+    restoreLockedSectionsFromState(snapshot);
+}
+
+bool NateVSTAudioProcessor::isRandomLockEnabled(const juce::String& parameterID) const
+{
+    if (auto* value = parameters.getRawParameterValue(parameterID))
+        return value->load() >= 0.5f;
+
+    return false;
+}
+
+float NateVSTAudioProcessor::getParameterPlainValue(const juce::String& parameterID, float fallback) const
+{
+    if (auto* value = parameters.getRawParameterValue(parameterID))
+        return value->load();
+
+    return fallback;
+}
+
+float NateVSTAudioProcessor::getParameterPlainValueFromState(const juce::ValueTree& state,
+                                                              const juce::String& parameterID,
+                                                              float fallback) const
+{
+    const auto parameterState = state.getChildWithProperty("id", parameterID);
+    if (parameterState.isValid())
+        return static_cast<float>(parameterState.getProperty("value", fallback));
+
+    return fallback;
+}
+
+void NateVSTAudioProcessor::restoreParameterFromState(const juce::ValueTree& state, const juce::String& parameterID)
+{
+    const auto parameterState = state.getChildWithProperty("id", parameterID);
+    if (! parameterState.isValid())
+        return;
+
+    setParameterPlainValue(parameterID, static_cast<float>(parameterState.getProperty("value", getParameterPlainValue(parameterID, 0.0f))));
+}
+
+void NateVSTAudioProcessor::restoreParameterGroupFromState(const juce::ValueTree& state,
+                                                            std::initializer_list<const char*> parameterIDs)
+{
+    for (const auto* parameterID : parameterIDs)
+        restoreParameterFromState(state, parameterID);
+}
+
+void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree& state)
+{
+    if (isRandomLockEnabled(Parameters::ID::randomLockPitch))
+    {
+        restoreParameterGroupFromState(state, {
+            Parameters::ID::oscOctave,
+            Parameters::ID::oscTune,
+            Parameters::ID::osc2Octave,
+            Parameters::ID::osc2Tune,
+            Parameters::ID::monoMode,
+            Parameters::ID::glideTime
+        });
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockEnvelope))
+    {
+        restoreParameterGroupFromState(state, {
+            Parameters::ID::ampAttack,
+            Parameters::ID::ampDecay,
+            Parameters::ID::ampSustain,
+            Parameters::ID::ampRelease
+        });
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockFilter))
+    {
+        restoreParameterGroupFromState(state, {
+            Parameters::ID::filterCutoff,
+            Parameters::ID::filterResonance,
+            Parameters::ID::filterEnvAmount,
+            Parameters::ID::filterMode
+        });
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockSource))
+    {
+        restoreParameterGroupFromState(state, {
+            Parameters::ID::oscWave,
+            Parameters::ID::osc1Level,
+            Parameters::ID::osc2Wave,
+            Parameters::ID::osc2Level,
+            Parameters::ID::subLevel,
+            Parameters::ID::noiseLevel,
+            Parameters::ID::unisonVoices,
+            Parameters::ID::unisonDetune,
+            Parameters::ID::unisonBlend,
+            Parameters::ID::unisonSpread
+        });
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockSample))
+        restoreSampleFromState(state);
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockFx))
+    {
+        restoreParameterGroupFromState(state, {
+            Parameters::ID::fxDistortionEnabled,
+            Parameters::ID::fxDistortionAmount,
+            Parameters::ID::fxChorusEnabled,
+            Parameters::ID::fxChorusRate,
+            Parameters::ID::fxChorusDepth,
+            Parameters::ID::fxChorusMix,
+            Parameters::ID::fxDelayEnabled,
+            Parameters::ID::fxDelayTime,
+            Parameters::ID::fxDelayFeedback,
+            Parameters::ID::fxDelayMix,
+            Parameters::ID::fxReverbEnabled,
+            Parameters::ID::fxReverbSize,
+            Parameters::ID::fxReverbDamping,
+            Parameters::ID::fxReverbMix
+        });
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockOutput))
+    {
+        const auto previousOutput = getParameterPlainValueFromState(state,
+                                                                    Parameters::ID::outputGain,
+                                                                    getParameterPlainValue(Parameters::ID::outputGain, -8.0f));
+        const auto randomizedSafeOutput = getParameterPlainValue(Parameters::ID::outputGain, previousOutput);
+        setParameterPlainValue(Parameters::ID::outputGain, juce::jmin(previousOutput, randomizedSafeOutput));
+    }
+
+    if (isRandomLockEnabled(Parameters::ID::randomLockSequencer))
+        restoreSequencerFromState(state);
+}
+
+void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
+{
+    loadedSamplePath = state.getProperty("sample_file").toString();
+
+    if (loadedSamplePath.isNotEmpty())
+        samplePlayer.loadFile(juce::File(loadedSamplePath));
+    else
+        samplePlayer.clear();
+
+    restoreParameterGroupFromState(state, {
+        Parameters::ID::sampleEnabled,
+        Parameters::ID::sampleStart,
+        Parameters::ID::sampleEnd,
+        Parameters::ID::sampleReverse,
+        Parameters::ID::sampleTranspose,
+        Parameters::ID::sampleGain,
+        Parameters::ID::sampleMix
+    });
+}
+
+void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& state)
+{
+    restoreParameterGroupFromState(state, {
+        Parameters::ID::sequencerEnabled,
+        Parameters::ID::sequencerRate,
+        Parameters::ID::sequencerRoot,
+        Parameters::ID::sequencerGate,
+        Parameters::ID::sequencerRandomAmount
+    });
+
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+    {
+        Sequencer::Step step;
+        step.enabled = static_cast<bool>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_enabled", false));
+        step.noteOffset = static_cast<int>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_note", 0));
+        step.velocity = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_velocity", 0.8f));
+        step.probability = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_probability", 1.0f));
+        patternSequencer.setStep(stepIndex, step);
+    }
 }
 
 void NateVSTAudioProcessor::setParameterPlainValue(const juce::String& parameterID, float plainValue)

@@ -275,6 +275,46 @@ APVTS::ParameterLayout createLayout()
         1));
 
     add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockPitch,
+        "Random Lock Pitch",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockEnvelope,
+        "Random Lock Envelope",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockFilter,
+        "Random Lock Filter",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockSource,
+        "Random Lock Source",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockSample,
+        "Random Lock Sample",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockFx,
+        "Random Lock FX",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockOutput,
+        "Random Lock Output",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::randomLockSequencer,
+        "Random Lock Sequencer",
+        false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
         ID::sampleEnabled,
         "Sample Enabled",
         false));

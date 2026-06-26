@@ -69,3 +69,13 @@
 - Added per-note oscillator stacking with level compensation for safer wide stabs, leads, drones, and FX.
 - Kept the sub oscillator centered and forced unison spread to mono while `Mono` is enabled.
 - Updated randomization recipes so bass and acid patches stay conservative while stabs, blips, and FX can get controlled width.
+
+### Randomization Locks And Undo
+
+- Added LAB lock toggles for Pitch, Env, Filter, Source, Sample, FX, Output, and Seq.
+- Added one-step Undo for Generate, Mutate, and Variation actions.
+- Restored locked parameter groups after recipe generation so protected sections keep their previous values.
+- Made sample cut and sequencer randomization respect their section locks.
+- Added LAB status text that reports the last randomization action and active locks.
+- Kept output safety active by allowing the output lock to preserve or lower gain, but not raise it above the randomized safe value.
+- Documented lock behavior in `docs/RANDOMIZATION_WORKFLOW.md`.

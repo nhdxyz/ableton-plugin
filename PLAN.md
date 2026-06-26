@@ -792,17 +792,22 @@ Intensity controls:
 - Bass safety: keep low-end sounds controlled.
 - Level safety: prevent overly loud output.
 
-Section locks:
+Current section locks:
 
-- Lock oscillator.
 - Lock pitch/tuning.
-- Lock filter.
 - Lock envelopes.
+- Lock filter.
+- Lock source mix.
+- Lock sample.
+- Lock effects.
+- Lock output gain.
+- Lock sequencer.
+
+Future section locks:
+
 - Lock drive.
 - Lock modulation.
-- Lock effects.
 - Lock macros.
-- Lock output gain.
 
 Section randomize buttons:
 
@@ -986,7 +991,7 @@ Current implemented panel layout:
 
 - HOME: engine choices, core tone shaping, unison width, performance macros, randomization, and preset load/save in one dashboard.
 - SYNTH: oscillator waveform segment, mono toggle, unison controls, core filter/drive/output/amp controls.
-- LAB: recipe dropdown, generate, mutate, variation, and randomization bias controls.
+- LAB: recipe dropdown, generate, mutate, variation, undo, section locks, status, and randomization bias controls.
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
 - SEQ: sequencer enable, segmented rate selector, random/clear, root/gate/random controls, and the 16-step grid.
 - FX: bypassable distortion, chorus, delay, and reverb modules.
@@ -1079,6 +1084,14 @@ Early randomization parameters and metadata:
 - `random_drive_bias`
 - `random_motion_bias`
 - `random_recipe`
+- `random_lock_pitch`
+- `random_lock_envelope`
+- `random_lock_filter`
+- `random_lock_source`
+- `random_lock_sample`
+- `random_lock_fx`
+- `random_lock_output`
+- `random_lock_sequencer`
 - Random seed should be stored as preset metadata, not necessarily as an automatable audio parameter.
 
 V1 parameters:

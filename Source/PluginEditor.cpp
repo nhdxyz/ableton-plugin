@@ -57,6 +57,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
+    randomStatusLabel.setText("Ready", juce::dontSendNotification);
+    randomStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(randomStatusLabel);
+
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
     presetNameEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
     presetNameEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
@@ -122,6 +127,38 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxReverbEnabledButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxReverbEnabled, fxReverbEnabledButton));
 
+    randomLockPitchButton.setButtonText("Pitch");
+    addAndMakeVisible(randomLockPitchButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockPitch, randomLockPitchButton));
+
+    randomLockEnvelopeButton.setButtonText("Env");
+    addAndMakeVisible(randomLockEnvelopeButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockEnvelope, randomLockEnvelopeButton));
+
+    randomLockFilterButton.setButtonText("Filter");
+    addAndMakeVisible(randomLockFilterButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockFilter, randomLockFilterButton));
+
+    randomLockSourceButton.setButtonText("Source");
+    addAndMakeVisible(randomLockSourceButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockSource, randomLockSourceButton));
+
+    randomLockSampleButton.setButtonText("Sample");
+    addAndMakeVisible(randomLockSampleButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockSample, randomLockSampleButton));
+
+    randomLockFxButton.setButtonText("FX");
+    addAndMakeVisible(randomLockFxButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockFx, randomLockFxButton));
+
+    randomLockOutputButton.setButtonText("Output");
+    addAndMakeVisible(randomLockOutputButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockOutput, randomLockOutputButton));
+
+    randomLockSequencerButton.setButtonText("Seq");
+    addAndMakeVisible(randomLockSequencerButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockSequencer, randomLockSequencerButton));
+
     configureSlider(octaveSlider, octaveLabel, "Oct", Parameters::ID::oscOctave);
     configureSlider(tuneSlider, tuneLabel, "Tune", Parameters::ID::oscTune);
     configureSlider(osc1LevelSlider, osc1LevelLabel, "Osc 1", Parameters::ID::osc1Level);
@@ -171,20 +208,48 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxReverbDampingSlider, fxReverbDampingLabel, "Damp", Parameters::ID::fxReverbDamping);
     configureSlider(fxReverbMixSlider, fxReverbMixLabel, "Mix", Parameters::ID::fxReverbMix);
 
-    generateButton.onClick = [this] { audioProcessor.generateRandomPatch(); };
-    mutateButton.onClick = [this] { audioProcessor.mutateRandomPatch(); };
-    variationButton.onClick = [this] { audioProcessor.createRandomVariation(); };
+    generateButton.onClick = [this]
+    {
+        audioProcessor.generateRandomPatch();
+        setRandomStatus("Generated");
+    };
+    mutateButton.onClick = [this]
+    {
+        audioProcessor.mutateRandomPatch();
+        setRandomStatus("Mutated");
+    };
+    variationButton.onClick = [this]
+    {
+        audioProcessor.createRandomVariation();
+        setRandomStatus("Variation");
+    };
+    undoRandomButton.onClick = [this]
+    {
+        setRandomStatus(audioProcessor.undoRandomization() ? "Undo restored" : "Nothing to undo");
+        updateSampleNameLabel();
+        sequencerGrid.repaint();
+    };
     loadSampleButton.onClick = [this] { chooseSampleFile(); };
     clearSampleButton.onClick = [this]
     {
         audioProcessor.clearSample();
         updateSampleNameLabel();
     };
-    randomCutButton.onClick = [this] { audioProcessor.randomizeSampleCut(); };
+    randomCutButton.onClick = [this]
+    {
+        setRandomStatus(audioProcessor.randomizeSampleCut() ? "Sample randomized" : "Sample skipped");
+    };
     randomSequencerButton.onClick = [this]
     {
-        audioProcessor.randomizeSequencerPattern();
-        sequencerGrid.repaint();
+        if (audioProcessor.randomizeSequencerPattern())
+        {
+            sequencerGrid.repaint();
+            setRandomStatus("Sequence generated");
+        }
+        else
+        {
+            setRandomStatus("Sequence skipped");
+        }
     };
     clearSequencerButton.onClick = [this]
     {
@@ -218,9 +283,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
 
+    auto updateLockStatus = [this] { setRandomStatus("Locks updated"); };
+    randomLockPitchButton.onClick = updateLockStatus;
+    randomLockEnvelopeButton.onClick = updateLockStatus;
+    randomLockFilterButton.onClick = updateLockStatus;
+    randomLockSourceButton.onClick = updateLockStatus;
+    randomLockSampleButton.onClick = updateLockStatus;
+    randomLockFxButton.onClick = updateLockStatus;
+    randomLockOutputButton.onClick = updateLockStatus;
+    randomLockSequencerButton.onClick = updateLockStatus;
+
     addAndMakeVisible(generateButton);
     addAndMakeVisible(mutateButton);
     addAndMakeVisible(variationButton);
+    addAndMakeVisible(undoRandomButton);
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
     addAndMakeVisible(randomCutButton);
@@ -523,19 +599,41 @@ void NateVSTAudioProcessorEditor::resized()
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
+            undoRandomButton.setVisible(true);
+            randomLockPitchButton.setVisible(true);
+            randomLockEnvelopeButton.setVisible(true);
+            randomLockFilterButton.setVisible(true);
+            randomLockSourceButton.setVisible(true);
+            randomLockSampleButton.setVisible(true);
+            randomLockFxButton.setVisible(true);
+            randomLockOutputButton.setVisible(true);
+            randomLockSequencerButton.setVisible(true);
+            randomStatusLabel.setVisible(true);
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
             recipeBox.setBounds(actionRow.removeFromLeft(230).reduced(4));
             generateButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
             mutateButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
             variationButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
-            content.removeFromTop(28);
+            undoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
+            auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
+            const auto lockButtonWidth = lockRow.getWidth() / 8;
+            randomLockPitchButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockEnvelopeButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockFilterButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockSourceButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockSampleButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockFxButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockOutputButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
+            randomLockSequencerButton.setBounds(lockRow.reduced(4));
+            randomStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
+            content.removeFromTop(12);
             setSliderVisible(randomAmountSlider, randomAmountLabel, true);
             setSliderVisible(randomChaosSlider, randomChaosLabel, true);
             setSliderVisible(brightnessSlider, brightnessLabel, true);
             setSliderVisible(driveBiasSlider, driveBiasLabel, true);
             setSliderVisible(motionBiasSlider, motionBiasLabel, true);
-            layoutKnobRow(content.removeFromTop(170), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
+            layoutKnobRow(content.removeFromTop(150), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
             break;
         }
 
@@ -804,6 +902,13 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
     sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName : "No sample", juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
+{
+    const auto locks = audioProcessor.getActiveRandomizationLockSummary();
+    randomStatusLabel.setText(locks.isNotEmpty() ? action + " | Locked: " + locks : action + " | No locks",
+                              juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
@@ -840,11 +945,13 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
-        &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel,
+        &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
-        &generateButton, &mutateButton, &variationButton, &loadSampleButton, &clearSampleButton,
+        &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
+        &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
+        &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
         &randomCutButton, &randomSequencerButton, &clearSequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,

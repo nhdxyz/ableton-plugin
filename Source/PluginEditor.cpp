@@ -5,7 +5,8 @@
 namespace
 {
 constexpr auto editorWidth = 940;
-constexpr auto editorHeight = 640;
+constexpr auto editorHeight = 710;
+constexpr auto pianoKeyboardHeight = 58;
 
 juce::Colour backgroundColour()
 {
@@ -37,7 +38,8 @@ float smoothMeterValue(float current, float target)
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
     : AudioProcessorEditor(&processorToUse),
-      audioProcessor(processorToUse)
+      audioProcessor(processorToUse),
+      pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
     setSize(editorWidth, editorHeight);
@@ -48,6 +50,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
+
+    pianoKeyboard.setAvailableRange(24, 96);
+    pianoKeyboard.setLowestVisibleKey(36);
+    pianoKeyboard.setKeyWidth(18.0f);
+    pianoKeyboard.setScrollButtonsVisible(true);
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffd9e3df));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, juce::Colour(0xff151b1f));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, juce::Colour(0xff2a363c));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colour(0x338ee6c9));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
+    addAndMakeVisible(pianoKeyboard);
 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "ENGINE");
@@ -413,15 +427,19 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
     auto bounds = getLocalBounds().reduced(16);
     const auto topArea = bounds.removeFromTop(48);
+    const auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
+    bounds.removeFromBottom(10);
     const auto contentArea = bounds.reduced(0, 8);
 
     g.setColour(panelColour());
     g.fillRoundedRectangle(topArea.toFloat(), 7.0f);
     g.fillRoundedRectangle(contentArea.toFloat(), 7.0f);
+    g.fillRoundedRectangle(keyboardArea.toFloat(), 7.0f);
 
     g.setColour(juce::Colour(0xff293339));
     g.drawRoundedRectangle(topArea.toFloat(), 7.0f, 1.0f);
     g.drawRoundedRectangle(contentArea.toFloat(), 7.0f, 1.0f);
+    g.drawRoundedRectangle(keyboardArea.toFloat(), 7.0f, 1.0f);
 
     if (activePanel == Panel::home)
     {
@@ -488,6 +506,9 @@ void NateVSTAudioProcessorEditor::resized()
     libraryTabButton.setBounds(top.removeFromLeft(112).reduced(4));
 
     bounds.removeFromTop(14);
+    auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
+    pianoKeyboard.setBounds(keyboardArea.reduced(12, 6));
+    bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
     hidePanelComponents();
     updateTabButtons();

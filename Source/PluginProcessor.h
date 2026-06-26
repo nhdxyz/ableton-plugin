@@ -8,6 +8,7 @@
 #include "Synth/SynthEngine.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_audio_utils/juce_audio_utils.h>
 
 #include <atomic>
 #include <initializer_list>
@@ -80,6 +81,7 @@ public:
     bool setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite);
     juce::StringArray getRecentPresetNames() const;
     void notePresetLoaded(const juce::String& presetName);
+    juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
 
 private:
@@ -96,6 +98,7 @@ private:
     Sampler::SamplePlayer samplePlayer;
     Sequencer::PatternSequencer patternSequencer;
     Effects::EffectsRack effectsRack;
+    juce::MidiKeyboardState midiKeyboardState;
 
     std::atomic<float>* outputGain = nullptr;
     std::atomic<float> outputMeterPeakLeft { 0.0f };

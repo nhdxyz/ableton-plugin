@@ -55,6 +55,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     buffer.clear();
 
+    midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     patternSequencer.process(midiMessages, buffer.getNumSamples(), getHostBpm());
     synthEngine.render(buffer, midiMessages);
     samplePlayer.render(buffer, midiMessages);
@@ -494,6 +495,11 @@ void NateVSTAudioProcessor::notePresetLoaded(const juce::String& presetName)
         recent.removeChild(recent.getNumChildren() - 1, nullptr);
 
     saveLibraryState(state);
+}
+
+juce::MidiKeyboardState& NateVSTAudioProcessor::getMidiKeyboardState() noexcept
+{
+    return midiKeyboardState;
 }
 
 void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,

@@ -5,6 +5,7 @@
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
 
+#include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
@@ -244,6 +245,7 @@ private:
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
+    juce::MidiKeyboardComponent pianoKeyboard;
     UI::StepSequencerGrid sequencerGrid;
 
     std::unique_ptr<juce::FileChooser> fileChooser;

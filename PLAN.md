@@ -998,6 +998,7 @@ Current implemented panel layout:
 - FX: bypassable Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard modules.
 - LIBRARY: preset category, preset name entry, save, filter by favorites/recent/source/category, previous/next, preset selector, favorite toggle, load, refresh, and preset folder status.
 - TOP BAR: panel tabs plus a compact stereo output meter.
+- BOTTOM BAR: persistent piano keyboard for mouse auditioning patches.
 
 Suggested first UI size:
 
@@ -1018,6 +1019,7 @@ Suggested first UI size:
 - A wavetable display once wavetable synthesis exists.
 - A sample waveform display once sample import exists.
 - A compact piano-roll grid once the internal sequencer exists.
+- A persistent bottom piano keyboard for quick note auditioning.
 - An XY pad once performance macros exist.
 
 ### Visual Sections

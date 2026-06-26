@@ -110,3 +110,9 @@
 - Added recent preset tracking when presets load.
 - Added factory preset scanning from `~/Library/Application Support/Nate VST/Factory Presets` while keeping user presets in the existing `Presets` folder.
 - Saved user preset metadata for category, author, and source.
+
+### Bottom Piano Keyboard
+
+- Added a persistent bottom piano keyboard for mouse auditioning patches across editor panels.
+- Wired the keyboard through `MidiKeyboardState` so clicked notes enter the same MIDI path as host input and sequencer notes.
+- Increased the fixed editor height to keep the new keyboard from crowding existing controls.

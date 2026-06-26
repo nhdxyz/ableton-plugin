@@ -34,9 +34,12 @@ public:
 private:
     Parameters::APVTS& parameters;
     Oscillator oscillator;
+    Oscillator oscillator2;
+    Oscillator subOscillator;
     Envelope ampEnvelope;
     Filter filter;
     Distortion distortion;
+    juce::Random noiseRandom;
 
     float noteVelocity = 0.0f;
     float currentFrequencyHz = 440.0f;
@@ -45,6 +48,13 @@ private:
     std::atomic<float>* oscWave = nullptr;
     std::atomic<float>* oscOctave = nullptr;
     std::atomic<float>* oscTune = nullptr;
+    std::atomic<float>* osc1Level = nullptr;
+    std::atomic<float>* osc2Wave = nullptr;
+    std::atomic<float>* osc2Octave = nullptr;
+    std::atomic<float>* osc2Tune = nullptr;
+    std::atomic<float>* osc2Level = nullptr;
+    std::atomic<float>* subLevel = nullptr;
+    std::atomic<float>* noiseLevel = nullptr;
     std::atomic<float>* ampAttack = nullptr;
     std::atomic<float>* ampDecay = nullptr;
     std::atomic<float>* ampSustain = nullptr;
@@ -57,5 +67,6 @@ private:
 
     void updateVoiceParameters(float envelopeValue);
     float frequencyForNote(int midiNoteNumber) const;
+    float readParameter(std::atomic<float>* parameter, float fallback) const;
 };
 }

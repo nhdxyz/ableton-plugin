@@ -63,6 +63,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(waveformBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWave, waveformBox));
 
+    osc2WaveBox.addItemList(Parameters::waveformChoices(), 1);
+    addAndMakeVisible(osc2WaveBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2Wave, osc2WaveBox));
+
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     addAndMakeVisible(filterModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterMode, filterModeBox));
@@ -111,6 +115,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     configureSlider(octaveSlider, octaveLabel, "Oct", Parameters::ID::oscOctave);
     configureSlider(tuneSlider, tuneLabel, "Tune", Parameters::ID::oscTune);
+    configureSlider(osc1LevelSlider, osc1LevelLabel, "Osc 1", Parameters::ID::osc1Level);
+    configureSlider(osc2OctaveSlider, osc2OctaveLabel, "O2 Oct", Parameters::ID::osc2Octave);
+    configureSlider(osc2TuneSlider, osc2TuneLabel, "O2 Tune", Parameters::ID::osc2Tune);
+    configureSlider(osc2LevelSlider, osc2LevelLabel, "Osc 2", Parameters::ID::osc2Level);
+    configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
+    configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
     configureSlider(attackSlider, attackLabel, "Attack", Parameters::ID::ampAttack);
     configureSlider(decaySlider, decayLabel, "Decay", Parameters::ID::ampDecay);
     configureSlider(sustainSlider, sustainLabel, "Sustain", Parameters::ID::ampSustain);
@@ -175,6 +185,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 1); };
     squareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 2); };
     triangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 3); };
+    osc2SineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 0); };
+    osc2SawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 1); };
+    osc2SquareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 2); };
+    osc2TriangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 3); };
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
@@ -204,6 +218,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sawWaveButton);
     addAndMakeVisible(squareWaveButton);
     addAndMakeVisible(triangleWaveButton);
+    addAndMakeVisible(osc2SineWaveButton);
+    addAndMakeVisible(osc2SawWaveButton);
+    addAndMakeVisible(osc2SquareWaveButton);
+    addAndMakeVisible(osc2TriangleWaveButton);
     addAndMakeVisible(lowpassFilterButton);
     addAndMakeVisible(bandpassFilterButton);
     addAndMakeVisible(highpassFilterButton);
@@ -249,7 +267,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(180);
+        auto topRow = homeContent.removeFromTop(260);
         auto engineArea = topRow.removeFromLeft(360).reduced(5);
         auto shapeArea = topRow.reduced(5);
         auto bottomRow = homeContent.withTrimmedTop(16);
@@ -317,6 +335,10 @@ void NateVSTAudioProcessorEditor::resized()
             sawWaveButton.setVisible(true);
             squareWaveButton.setVisible(true);
             triangleWaveButton.setVisible(true);
+            osc2SineWaveButton.setVisible(true);
+            osc2SawWaveButton.setVisible(true);
+            osc2SquareWaveButton.setVisible(true);
+            osc2TriangleWaveButton.setVisible(true);
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
@@ -333,7 +355,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(180);
+            auto topRow = dashboard.removeFromTop(260);
             auto engineArea = topRow.removeFromLeft(360).reduced(18, 12);
             auto shapeArea = topRow.reduced(18, 12);
             auto bottomRow = dashboard.withTrimmedTop(16);
@@ -341,37 +363,49 @@ void NateVSTAudioProcessorEditor::resized()
             auto libraryArea = bottomRow.reduced(18, 12);
 
             homeEngineLabel.setBounds(engineArea.removeFromTop(24));
-            auto waveRow = engineArea.removeFromTop(42);
+            auto waveRow = engineArea.removeFromTop(36);
             const auto waveButtonWidth = waveRow.getWidth() / 4;
             sineWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             sawWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             squareWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             triangleWaveButton.setBounds(waveRow.reduced(3, 4));
 
-            auto filterRow = engineArea.removeFromTop(42).withTrimmedTop(4);
+            auto osc2Row = engineArea.removeFromTop(36).withTrimmedTop(3);
+            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 4;
+            osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2TriangleWaveButton.setBounds(osc2Row.reduced(3, 4));
+
+            auto filterRow = engineArea.removeFromTop(36).withTrimmedTop(3);
             const auto filterButtonWidth = filterRow.getWidth() / 3;
             lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             highpassFilterButton.setBounds(filterRow.reduced(3, 4));
-            monoButton.setBounds(engineArea.removeFromTop(42).reduced(3, 4));
+            monoButton.setBounds(engineArea.removeFromTop(32).reduced(3, 3));
 
             homeShapeLabel.setBounds(shapeArea.removeFromTop(24));
+            setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
+            setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
+            setSliderVisible(subLevelSlider, subLevelLabel, true);
+            setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(resonanceSlider, resonanceLabel, true);
             setSliderVisible(filterEnvSlider, filterEnvLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(shapeArea.removeFromTop(130).withTrimmedTop(4), { &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
+            layoutKnobRow(shapeArea.removeFromTop(102).withTrimmedTop(4), { &osc1LevelSlider, &osc2LevelSlider, &subLevelSlider, &noiseLevelSlider });
+            layoutKnobRow(shapeArea.removeFromTop(102).withTrimmedTop(2), { &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             recipeBox.setBounds(labArea.removeFromTop(42).reduced(3, 4));
-            auto labButtonRow = labArea.removeFromTop(42).withTrimmedTop(4);
+            auto labButtonRow = labArea.removeFromTop(38).withTrimmedTop(4);
             generateButton.setBounds(labButtonRow.removeFromLeft(110).reduced(3, 4));
             mutateButton.setBounds(labButtonRow.removeFromLeft(100).reduced(3, 4));
             variationButton.setBounds(labButtonRow.removeFromLeft(112).reduced(3, 4));
             setSliderVisible(randomAmountSlider, randomAmountLabel, true);
             setSliderVisible(randomChaosSlider, randomChaosLabel, true);
-            layoutKnobRow(labArea.removeFromTop(120).withTrimmedTop(10), { &randomAmountSlider, &randomChaosSlider });
+            layoutKnobRow(labArea.removeFromTop(90).withTrimmedTop(8), { &randomAmountSlider, &randomChaosSlider });
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
@@ -391,6 +425,10 @@ void NateVSTAudioProcessorEditor::resized()
             sawWaveButton.setVisible(true);
             squareWaveButton.setVisible(true);
             triangleWaveButton.setVisible(true);
+            osc2SineWaveButton.setVisible(true);
+            osc2SawWaveButton.setVisible(true);
+            osc2SquareWaveButton.setVisible(true);
+            osc2TriangleWaveButton.setVisible(true);
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
@@ -409,7 +447,19 @@ void NateVSTAudioProcessorEditor::resized()
             bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             highpassFilterButton.setBounds(filterRow.reduced(3, 4));
             monoButton.setBounds(selectorRow.removeFromLeft(90).reduced(4));
-            content.removeFromTop(18);
+            auto osc2Row = content.removeFromTop(44).withTrimmedTop(2);
+            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 4;
+            osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2TriangleWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            content.removeFromTop(8);
+            setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
+            setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
+            setSliderVisible(subLevelSlider, subLevelLabel, true);
+            setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
+            setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
+            setSliderVisible(osc2TuneSlider, osc2TuneLabel, true);
             setSliderVisible(octaveSlider, octaveLabel, true);
             setSliderVisible(tuneSlider, tuneLabel, true);
             setSliderVisible(cutoffSlider, cutoffLabel, true);
@@ -421,10 +471,12 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(decaySlider, decayLabel, true);
             setSliderVisible(sustainSlider, sustainLabel, true);
             setSliderVisible(releaseSlider, releaseLabel, true);
-            auto rowOne = content.removeFromTop(160);
-            layoutKnobRow(rowOne, { &octaveSlider, &tuneSlider, &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
-            auto rowTwo = content.removeFromTop(150).withTrimmedTop(20);
-            layoutKnobRow(rowTwo, { &attackSlider, &decaySlider, &sustainSlider, &releaseSlider });
+            auto rowOne = content.removeFromTop(130);
+            layoutKnobRow(rowOne, { &osc1LevelSlider, &osc2LevelSlider, &subLevelSlider, &noiseLevelSlider, &octaveSlider, &tuneSlider, &osc2OctaveSlider, &osc2TuneSlider });
+            auto rowTwo = content.removeFromTop(130).withTrimmedTop(8);
+            layoutKnobRow(rowTwo, { &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
+            auto rowThree = content.removeFromTop(125).withTrimmedTop(12);
+            layoutKnobRow(rowThree, { &attackSlider, &decaySlider, &sustainSlider, &releaseSlider });
             break;
         }
 
@@ -736,12 +788,13 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel,
-        &waveformBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
         &generateButton, &mutateButton, &variationButton, &loadSampleButton, &clearSampleButton,
         &randomCutButton, &randomSequencerButton, &clearSequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
+        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &savePresetButton, &loadPresetButton, &refreshPresetsButton, &presetNameEditor,
@@ -750,6 +803,12 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     setSliderVisible(octaveSlider, octaveLabel, false);
     setSliderVisible(tuneSlider, tuneLabel, false);
+    setSliderVisible(osc1LevelSlider, osc1LevelLabel, false);
+    setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, false);
+    setSliderVisible(osc2TuneSlider, osc2TuneLabel, false);
+    setSliderVisible(osc2LevelSlider, osc2LevelLabel, false);
+    setSliderVisible(subLevelSlider, subLevelLabel, false);
+    setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
     setSliderVisible(attackSlider, attackLabel, false);
     setSliderVisible(decaySlider, decayLabel, false);
     setSliderVisible(sustainSlider, sustainLabel, false);
@@ -801,6 +860,8 @@ void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& paramet
 
     if (parameterID == Parameters::ID::oscWave)
         waveformBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
+    else if (parameterID == Parameters::ID::osc2Wave)
+        osc2WaveBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
     else if (parameterID == Parameters::ID::filterMode)
         filterModeBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
     else if (parameterID == Parameters::ID::sequencerRate)
@@ -828,6 +889,12 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     sawWaveButton.setToggleState(waveformIndex == 1, juce::dontSendNotification);
     squareWaveButton.setToggleState(waveformIndex == 2, juce::dontSendNotification);
     triangleWaveButton.setToggleState(waveformIndex == 3, juce::dontSendNotification);
+
+    const auto osc2WaveformIndex = getChoiceIndex(osc2WaveBox, Parameters::ID::osc2Wave, 1);
+    osc2SineWaveButton.setToggleState(osc2WaveformIndex == 0, juce::dontSendNotification);
+    osc2SawWaveButton.setToggleState(osc2WaveformIndex == 1, juce::dontSendNotification);
+    osc2SquareWaveButton.setToggleState(osc2WaveformIndex == 2, juce::dontSendNotification);
+    osc2TriangleWaveButton.setToggleState(osc2WaveformIndex == 3, juce::dontSendNotification);
 
     const auto filterModeIndex = getChoiceIndex(filterModeBox, Parameters::ID::filterMode, 0);
     lowpassFilterButton.setToggleState(filterModeIndex == 0, juce::dontSendNotification);

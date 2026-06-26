@@ -69,6 +69,50 @@ APVTS::ParameterLayout createLayout()
         juce::AudioParameterFloatAttributes().withLabel("st")));
 
     add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc1Level,
+        "Osc 1 Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::osc2Wave,
+        "Osc 2 Wave",
+        waveformChoices(),
+        1));
+
+    add(std::make_unique<juce::AudioParameterInt>(
+        ID::osc2Octave,
+        "Osc 2 Octave",
+        -2,
+        2,
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc2Tune,
+        "Osc 2 Tune",
+        juce::NormalisableRange<float> { -24.0f, 24.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("st")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc2Level,
+        "Osc 2 Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::subLevel,
+        "Sub Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::noiseLevel,
+        "Noise Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
         ID::ampAttack,
         "Amp Attack",
         skewedRange(0.001f, 5.0f, 0.05f),

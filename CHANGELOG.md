@@ -19,3 +19,13 @@
 - Reduced rotary knob drag distance and enabled velocity mode so knobs respond with less physical mouse travel.
 - Added an automatable `filter_mode` parameter with low-pass, band-pass, and high-pass modes.
 - Wired randomization to use filter modes where it adds useful variation, especially minimal blips and noise FX.
+
+### Expanded Synth Source Mixer
+
+- Added oscillator 2 with independent waveform, octave, tune, and level controls.
+- Added oscillator 1, oscillator 2, sub, and noise source levels to the synth engine.
+- Added a sine sub oscillator one octave below the played note.
+- Added a white-noise source for stabs, blips, and noise FX recipes.
+- Added source-level compensation so layered patches stay closer to a safe output range.
+- Updated HOME and SYNTH panels with the new source mix controls.
+- Updated randomization recipes so basses can use sub reinforcement, stabs can use detuned oscillator 2, and noise FX can lean into the noise source.

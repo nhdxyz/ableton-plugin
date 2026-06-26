@@ -18,7 +18,7 @@ The first useful version should load in Ableton, respond to MIDI, generate sound
 
 Planned major areas:
 
-- Synth engine: oscillators, envelopes, filters, drive, modulation.
+- Synth engine: oscillator 1, oscillator 2, sub, noise, envelopes, multimode filter, drive, modulation.
 - Sound Lab: guided randomization, mutation, recipes, and safety rules.
 - Sample Lab: load audio, cut it with start/end controls, reverse/pitch/gain/mix it, and trigger it from MIDI.
 - Sequencer: internal 16-step piano-roll style pattern area for riffs, basslines, and generated ideas.
@@ -37,7 +37,7 @@ The editor uses focused panels instead of one tall stacked page:
 - `FX`
 - `LIBRARY`
 
-The `HOME` panel is the default dashboard for quick patch shaping, randomization, and preset recall. Waveform, filter mode, and sequencer-rate controls use segmented selectors. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
+The `HOME` panel is the default dashboard for quick patch shaping, source mixing, randomization, and preset recall. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
 
 User presets are stored at:
 

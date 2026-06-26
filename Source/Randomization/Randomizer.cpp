@@ -86,9 +86,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto envAmount = 0.2f;
     auto drive = 0.18f;
     auto wave = 1;
+    auto osc2Wave = 1;
     auto filterMode = 0;
     auto octave = 0;
+    auto osc2Octave = 0;
     auto tune = 0.0f;
+    auto osc2Tune = 0.0f;
+    auto osc1Level = 1.0f;
+    auto osc2Level = 0.0f;
+    auto subLevel = 0.0f;
+    auto noiseLevel = 0.0f;
     auto mono = true;
     auto glide = 0.0f;
 
@@ -96,7 +103,13 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     {
         case Recipe::deepHouseBass:
             wave = randomInt(0, 2);
+            osc2Wave = randomInt(1, 2);
             octave = randomInt(-2, -1);
+            osc2Octave = octave;
+            osc2Tune = randomFloat(-0.12f, 0.12f);
+            osc1Level = randomFloat(0.65f, 1.0f);
+            osc2Level = randomFloat(0.0f, 0.35f);
+            subLevel = randomFloat(0.35f, 0.85f);
             cutoff = randomFloat(250.0f, 1400.0f);
             resonance = randomFloat(0.18f, 0.55f);
             envAmount = randomFloat(0.05f, 0.35f);
@@ -109,7 +122,13 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::rollingTechBass:
             wave = randomInt(1, 2);
+            osc2Wave = randomInt(1, 3);
             octave = randomInt(-2, -1);
+            osc2Octave = octave;
+            osc2Tune = randomFloat(-0.18f, 0.18f);
+            osc1Level = randomFloat(0.65f, 1.0f);
+            osc2Level = randomFloat(0.18f, 0.55f);
+            subLevel = randomFloat(0.18f, 0.55f);
             cutoff = randomFloat(350.0f, 2100.0f);
             resonance = randomFloat(0.25f, 0.8f);
             envAmount = randomFloat(0.1f, 0.55f);
@@ -122,7 +141,13 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::acidLine:
             wave = randomInt(1, 2);
+            osc2Wave = randomInt(1, 2);
             octave = randomInt(-1, 0);
+            osc2Octave = octave;
+            osc2Tune = randomFloat(-0.08f, 0.08f);
+            osc1Level = randomFloat(0.75f, 1.0f);
+            osc2Level = randomFloat(0.0f, 0.3f);
+            subLevel = randomFloat(0.0f, 0.25f);
             cutoff = randomFloat(600.0f, 4200.0f);
             resonance = randomFloat(0.65f, 1.2f);
             envAmount = randomFloat(0.35f, 0.95f);
@@ -135,8 +160,14 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::minimalBlip:
             wave = randomInt(0, 3);
+            osc2Wave = randomInt(0, 3);
             filterMode = randomInt(0, 1);
             octave = randomInt(-1, 1);
+            osc2Octave = octave + randomInt(-1, 1);
+            osc2Tune = randomFloat(-7.0f, 7.0f);
+            osc1Level = randomFloat(0.55f, 1.0f);
+            osc2Level = randomFloat(0.0f, 0.5f);
+            noiseLevel = randomFloat(0.0f, 0.28f);
             cutoff = randomFloat(900.0f, 7000.0f);
             resonance = randomFloat(0.25f, 0.95f);
             envAmount = randomFloat(-0.15f, 0.45f);
@@ -149,7 +180,14 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::darkStab:
             wave = randomInt(1, 3);
+            osc2Wave = randomInt(1, 3);
             octave = randomInt(-1, 0);
+            osc2Octave = octave + randomInt(0, 1);
+            osc2Tune = randomFloat(-0.25f, 0.25f);
+            osc1Level = randomFloat(0.55f, 0.9f);
+            osc2Level = randomFloat(0.25f, 0.75f);
+            subLevel = randomFloat(0.0f, 0.25f);
+            noiseLevel = randomFloat(0.0f, 0.18f);
             cutoff = randomFloat(450.0f, 2800.0f);
             resonance = randomFloat(0.15f, 0.65f);
             envAmount = randomFloat(0.05f, 0.4f);
@@ -162,9 +200,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
         case Recipe::noiseFx:
             wave = randomInt(0, 3);
+            osc2Wave = randomInt(0, 3);
             filterMode = randomInt(0, 2);
             octave = randomInt(-2, 2);
+            osc2Octave = randomInt(-2, 2);
             tune = randomFloat(-7.0f, 7.0f) * chaos;
+            osc2Tune = randomFloat(-12.0f, 12.0f) * chaos;
+            osc1Level = randomFloat(0.0f, 0.65f);
+            osc2Level = randomFloat(0.0f, 0.65f);
+            subLevel = randomFloat(0.0f, 0.35f);
+            noiseLevel = randomFloat(0.35f, 1.0f);
             cutoff = randomFloat(250.0f, 12000.0f);
             resonance = randomFloat(0.15f, 1.15f);
             envAmount = randomFloat(-0.7f, 0.9f);
@@ -198,13 +243,25 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         envAmount = blend(Parameters::ID::filterEnvAmount, envAmount);
         drive = blend(Parameters::ID::driveAmount, drive);
         tune = blend(Parameters::ID::oscTune, tune);
+        osc2Tune = blend(Parameters::ID::osc2Tune, osc2Tune);
+        osc1Level = blend(Parameters::ID::osc1Level, osc1Level);
+        osc2Level = blend(Parameters::ID::osc2Level, osc2Level);
+        subLevel = blend(Parameters::ID::subLevel, subLevel);
+        noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
         glide = blend(Parameters::ID::glideTime, glide);
     }
 
     setChoice(Parameters::ID::oscWave, wave);
+    setChoice(Parameters::ID::osc2Wave, osc2Wave);
     setChoice(Parameters::ID::filterMode, filterMode);
     setParameter(Parameters::ID::oscOctave, static_cast<float>(octave));
     setParameter(Parameters::ID::oscTune, tune);
+    setParameter(Parameters::ID::osc1Level, osc1Level);
+    setParameter(Parameters::ID::osc2Octave, static_cast<float>(juce::jlimit(-2, 2, osc2Octave)));
+    setParameter(Parameters::ID::osc2Tune, osc2Tune);
+    setParameter(Parameters::ID::osc2Level, osc2Level);
+    setParameter(Parameters::ID::subLevel, subLevel);
+    setParameter(Parameters::ID::noiseLevel, noiseLevel);
     setParameter(Parameters::ID::ampAttack, attack);
     setParameter(Parameters::ID::ampDecay, decay);
     setParameter(Parameters::ID::ampSustain, sustain);

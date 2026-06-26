@@ -54,6 +54,7 @@ private:
     juce::Label presetStatusLabel;
 
     juce::ComboBox waveformBox;
+    juce::ComboBox osc2WaveBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox recipeBox;
     juce::ComboBox sequencerRateBox;
@@ -69,6 +70,12 @@ private:
 
     juce::Slider octaveSlider;
     juce::Slider tuneSlider;
+    juce::Slider osc1LevelSlider;
+    juce::Slider osc2OctaveSlider;
+    juce::Slider osc2TuneSlider;
+    juce::Slider osc2LevelSlider;
+    juce::Slider subLevelSlider;
+    juce::Slider noiseLevelSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;
@@ -104,6 +111,12 @@ private:
 
     juce::Label octaveLabel;
     juce::Label tuneLabel;
+    juce::Label osc1LevelLabel;
+    juce::Label osc2OctaveLabel;
+    juce::Label osc2TuneLabel;
+    juce::Label osc2LevelLabel;
+    juce::Label subLevelLabel;
+    juce::Label noiseLevelLabel;
     juce::Label attackLabel;
     juce::Label decayLabel;
     juce::Label sustainLabel;
@@ -156,6 +169,10 @@ private:
     juce::TextButton sawWaveButton { "Saw" };
     juce::TextButton squareWaveButton { "Square" };
     juce::TextButton triangleWaveButton { "Tri" };
+    juce::TextButton osc2SineWaveButton { "Sine" };
+    juce::TextButton osc2SawWaveButton { "Saw" };
+    juce::TextButton osc2SquareWaveButton { "Square" };
+    juce::TextButton osc2TriangleWaveButton { "Tri" };
     juce::TextButton lowpassFilterButton { "LP" };
     juce::TextButton bandpassFilterButton { "BP" };
     juce::TextButton highpassFilterButton { "HP" };

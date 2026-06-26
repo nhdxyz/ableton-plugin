@@ -1043,6 +1043,13 @@ MVP parameters:
 - `osc_wave`
 - `osc_octave`
 - `osc_tune`
+- `osc1_level`
+- `osc2_wave`
+- `osc2_octave`
+- `osc2_tune`
+- `osc2_level`
+- `sub_level`
+- `noise_level`
 - `amp_attack`
 - `amp_decay`
 - `amp_sustain`
@@ -1068,17 +1075,7 @@ Early randomization parameters and metadata:
 
 V1 parameters:
 
-- `osc1_wave`
-- `osc1_octave`
-- `osc1_tune`
-- `osc1_level`
-- `osc2_wave`
-- `osc2_octave`
-- `osc2_tune`
-- `osc2_level`
-- `sub_level`
-- `noise_level`
-- `filter_type`
+- Keep `osc_wave`, `osc_octave`, and `osc_tune` as oscillator 1 IDs for backward compatibility.
 - `filter_drive`
 - `lfo_rate`
 - `lfo_depth`

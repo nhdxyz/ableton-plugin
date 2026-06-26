@@ -27,3 +27,5 @@ Local macOS builds copy the generated files into:
 Preset files should not contain user-specific absolute paths. Sample-based starter presets should leave `sample_file` empty and configure sampler controls only.
 
 When adding a new parameter, update `DEFAULTS` in `tools/generate_factory_presets.py`, regenerate the pack, and verify every factory file contains the new `PARAM` node.
+
+The UKG factory presets include conservative MOD-panel defaults where useful, such as synced LFO cutoff motion on basses and Mod Env/velocity cutoff movement on stabs and plucks.

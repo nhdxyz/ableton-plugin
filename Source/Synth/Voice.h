@@ -32,9 +32,11 @@ public:
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     void prepare(double sampleRate, int maximumBlockSize);
+    void setHostBpm(double bpm) noexcept;
 
 private:
     static constexpr int maxUnisonVoices = 7;
+    static constexpr int maxModSlots = 8;
 
     struct StereoSample
     {
@@ -47,17 +49,24 @@ private:
     std::array<Oscillator, maxUnisonVoices> oscillators2;
     Oscillator subOscillator;
     Envelope ampEnvelope;
+    Envelope modEnvelope;
     Filter leftFilter;
     Filter rightFilter;
     Distortion distortion;
     juce::Random noiseRandom;
+    juce::Random modulationRandom;
 
     float noteVelocity = 0.0f;
     float currentFrequencyHz = 440.0f;
     float targetFrequencyHz = 440.0f;
     float glideStartFrequencyHz = 440.0f;
     float pitchBendSemitones = 0.0f;
+    float lfoPhase = 0.0f;
+    float lfoStepValue = 0.0f;
+    float currentOsc2LevelOffset = 0.0f;
+    float currentDriveOffset = 0.0f;
     double currentSampleRate = 44100.0;
+    double hostBpm = 124.0;
     int glideSamplesRemaining = 0;
     int glideTotalSamples = 0;
     bool hasPreviousNoteFrequency = false;
@@ -90,9 +99,27 @@ private:
     std::atomic<float>* macroTone = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;
+    std::atomic<float>* macroSpace = nullptr;
+    std::atomic<float>* lfo1Rate = nullptr;
+    std::atomic<float>* lfo1Sync = nullptr;
+    std::atomic<float>* lfo1SyncRate = nullptr;
+    std::atomic<float>* lfo1Shape = nullptr;
+    std::atomic<float>* lfo1Depth = nullptr;
+    std::atomic<float>* lfo1Phase = nullptr;
+    std::atomic<float>* lfo1Retrigger = nullptr;
+    std::atomic<float>* modEnv1Attack = nullptr;
+    std::atomic<float>* modEnv1Decay = nullptr;
+    std::atomic<float>* modEnv1Sustain = nullptr;
+    std::atomic<float>* modEnv1Release = nullptr;
+    std::atomic<float>* modEnv1Depth = nullptr;
+    std::array<std::atomic<float>*, maxModSlots> modMatrixSources {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixDestinations {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixAmounts {};
 
     void updateVoiceParameters(float envelopeValue);
     void updateGlide();
+    float processLfo();
+    float evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const;
     StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
     int getUnisonVoiceCount() const;
     float getUnisonPosition(int voiceIndex, int voiceCount) const;

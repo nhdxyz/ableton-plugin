@@ -14,6 +14,14 @@ The direction is inspired by broad patterns from larger synths:
 
 This document is a planning artifact. It does not copy UI, presets, wavetables, DSP, or proprietary behavior from those products.
 
+Reference pages checked during the editable-matrix pass:
+
+- Serum 2: https://xferrecords.com/products/serum-2
+- Pigments: https://www.arturia.com/products/software-instruments/pigments/overview
+- u-he Hive 2: https://u-he.com/products/hive/
+- Korg modwave native: https://www.korg.com/us/products/software/modwave_native/
+- Roland ZENOLOGY Pro: https://www.roland.com/us/products/rc_zenology_pro/
+
 ## Principles
 
 - Keep HOME focused on playability: macros, source mix, randomization, and preset recall.
@@ -176,4 +184,23 @@ Visible workflow slice:
    - Space -> delay and reverb sends.
 4. Reuse the same APVTS macro parameters, so values remain saved in Ableton state and `.natevstpreset` files.
 
-Do not build the editable LFO/mod-envelope matrix until the macro workflow is tested in Ableton and the modulation engine has saved slot parameters, smoothing, and destination safety rules.
+Editable engine slice:
+
+1. Added saved APVTS parameters for LFO 1, Mod Env 1, and eight matrix slots.
+2. Added per-voice LFO 1 with free/synced rates, five shapes, phase, depth, and retrigger.
+3. Added per-voice Mod Env 1 with ADSR and depth.
+4. Added editable matrix rows on the MOD panel.
+5. Implemented conservative synth destinations:
+   - Filter cutoff.
+   - Filter resonance.
+   - Filter envelope amount.
+   - Drive.
+   - Oscillator 2 tune.
+   - Oscillator 2 level.
+6. Made randomization seed safe modulation movement for bass, UKG stabs, plucks, minimal blips, and noise FX.
+
+Remaining modulation work:
+
+- Add shared sample and FX destinations after a global modulation lane exists.
+- Add visible activity indicators around key destination controls.
+- Add per-slot curves or bipolar/unipolar mode only after the simple matrix has been tested in Ableton.

@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <array>
+
 namespace Parameters
 {
 using APVTS = juce::AudioProcessorValueTreeState;
@@ -38,6 +40,48 @@ inline constexpr auto macroTone = "macro_1";
 inline constexpr auto macroDirt = "macro_2";
 inline constexpr auto macroMotion = "macro_3";
 inline constexpr auto macroSpace = "macro_4";
+inline constexpr auto lfo1Rate = "lfo1_rate";
+inline constexpr auto lfo1Sync = "lfo1_sync";
+inline constexpr auto lfo1SyncRate = "lfo1_sync_rate";
+inline constexpr auto lfo1Shape = "lfo1_shape";
+inline constexpr auto lfo1Depth = "lfo1_depth";
+inline constexpr auto lfo1Phase = "lfo1_phase";
+inline constexpr auto lfo1Retrigger = "lfo1_retrigger";
+inline constexpr auto modEnv1Attack = "mod_env1_attack";
+inline constexpr auto modEnv1Decay = "mod_env1_decay";
+inline constexpr auto modEnv1Sustain = "mod_env1_sustain";
+inline constexpr auto modEnv1Release = "mod_env1_release";
+inline constexpr auto modEnv1Depth = "mod_env1_depth";
+inline constexpr std::array<const char*, 8> modMatrixSource {
+    "mod_slot_1_source",
+    "mod_slot_2_source",
+    "mod_slot_3_source",
+    "mod_slot_4_source",
+    "mod_slot_5_source",
+    "mod_slot_6_source",
+    "mod_slot_7_source",
+    "mod_slot_8_source"
+};
+inline constexpr std::array<const char*, 8> modMatrixDestination {
+    "mod_slot_1_destination",
+    "mod_slot_2_destination",
+    "mod_slot_3_destination",
+    "mod_slot_4_destination",
+    "mod_slot_5_destination",
+    "mod_slot_6_destination",
+    "mod_slot_7_destination",
+    "mod_slot_8_destination"
+};
+inline constexpr std::array<const char*, 8> modMatrixAmount {
+    "mod_slot_1_amount",
+    "mod_slot_2_amount",
+    "mod_slot_3_amount",
+    "mod_slot_4_amount",
+    "mod_slot_5_amount",
+    "mod_slot_6_amount",
+    "mod_slot_7_amount",
+    "mod_slot_8_amount"
+};
 inline constexpr auto randomAmount = "random_amount";
 inline constexpr auto randomChaos = "random_chaos";
 inline constexpr auto randomBrightnessBias = "random_brightness_bias";
@@ -117,5 +161,9 @@ juce::StringArray filterModeChoices();
 juce::StringArray randomRecipeChoices();
 juce::StringArray sequencerRateChoices();
 juce::StringArray sequencerGrooveModeChoices();
+juce::StringArray lfoShapeChoices();
+juce::StringArray lfoSyncRateChoices();
+juce::StringArray modulationSourceChoices();
+juce::StringArray modulationDestinationChoices();
 APVTS::ParameterLayout createLayout();
 }

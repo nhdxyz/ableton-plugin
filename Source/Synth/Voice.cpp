@@ -4,6 +4,20 @@
 
 namespace Synth
 {
+namespace
+{
+double cyclesPerBeatForLfoSync(int rateIndex)
+{
+    switch (rateIndex)
+    {
+        case 1: return 2.0; // 1/8
+        case 2: return 3.0; // 1/8 triplet
+        case 3: return 4.0; // 1/16
+        default: return 1.0; // 1/4
+    }
+}
+}
+
 Voice::Voice(Parameters::APVTS& state)
     : parameters(state)
 {
@@ -35,6 +49,26 @@ Voice::Voice(Parameters::APVTS& state)
     macroTone = parameters.getRawParameterValue(Parameters::ID::macroTone);
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
     macroMotion = parameters.getRawParameterValue(Parameters::ID::macroMotion);
+    macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
+    lfo1Rate = parameters.getRawParameterValue(Parameters::ID::lfo1Rate);
+    lfo1Sync = parameters.getRawParameterValue(Parameters::ID::lfo1Sync);
+    lfo1SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo1SyncRate);
+    lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
+    lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
+    lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
+    lfo1Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo1Retrigger);
+    modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
+    modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
+    modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
+    modEnv1Release = parameters.getRawParameterValue(Parameters::ID::modEnv1Release);
+    modEnv1Depth = parameters.getRawParameterValue(Parameters::ID::modEnv1Depth);
+
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
+        modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
+        modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
+    }
 }
 
 bool Voice::canPlaySound(juce::SynthesiserSound* sound)
@@ -55,8 +89,14 @@ void Voice::prepare(double sampleRate, int maximumBlockSize)
     subOscillator.prepare(sampleRate);
     subOscillator.setWaveform(Waveform::sine);
     ampEnvelope.setSampleRate(sampleRate);
+    modEnvelope.setSampleRate(sampleRate);
     leftFilter.prepare(sampleRate, maximumBlockSize);
     rightFilter.prepare(sampleRate, maximumBlockSize);
+}
+
+void Voice::setHostBpm(double bpm) noexcept
+{
+    hostBpm = juce::jlimit(20.0, 300.0, bpm);
 }
 
 void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
@@ -95,6 +135,14 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
     rightFilter.reset();
     ampEnvelope.reset();
     ampEnvelope.noteOn();
+    modEnvelope.reset();
+    modEnvelope.noteOn();
+
+    if (readParameter(lfo1Retrigger, 1.0f) >= 0.5f)
+    {
+        lfoPhase = 0.0f;
+        lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
 }
 
 void Voice::stopNote(float, bool allowTailOff)
@@ -102,11 +150,13 @@ void Voice::stopNote(float, bool allowTailOff)
     if (allowTailOff)
     {
         ampEnvelope.noteOff();
+        modEnvelope.noteOff();
         return;
     }
 
     clearCurrentNote();
     ampEnvelope.reset();
+    modEnvelope.reset();
 }
 
 void Voice::pitchWheelMoved(int newPitchWheelValue)
@@ -130,7 +180,7 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
         updateVoiceParameters(envelopeValue);
 
         const auto osc1Gain = readParameter(osc1Level, 1.0f);
-        const auto osc2Gain = readParameter(osc2Level, 0.0f);
+        const auto osc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
         const auto subGain = readParameter(subLevel, 0.0f);
         const auto noiseGain = readParameter(noiseLevel, 0.0f);
         const auto sourceWeight = osc1Gain + osc2Gain + (subGain * 0.75f) + (noiseGain * 0.45f);
@@ -145,7 +195,7 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
         leftSample = leftFilter.process(leftSample);
         rightSample = rightFilter.process(rightSample);
         const auto dirt = readParameter(macroDirt, 0.0f);
-        const auto macroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f));
+        const auto macroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f) + currentDriveOffset);
         leftSample = distortion.process(leftSample, macroDrive);
         rightSample = distortion.process(rightSample, macroDrive);
         leftSample *= envelopeValue * noteVelocity * 0.28f;
@@ -175,6 +225,52 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
 void Voice::updateVoiceParameters(float envelopeValue)
 {
     updateGlide();
+    modEnvelope.setParameters(
+        readParameter(modEnv1Attack, 0.01f),
+        readParameter(modEnv1Decay, 0.22f),
+        readParameter(modEnv1Sustain, 0.0f),
+        readParameter(modEnv1Release, 0.12f));
+
+    const auto lfoValue = processLfo() * readParameter(lfo1Depth, 0.45f);
+    const auto modEnvelopeValue = modEnvelope.process() * readParameter(modEnv1Depth, 0.5f);
+    auto cutoffMod = 0.0f;
+    auto resonanceMod = 0.0f;
+    auto filterEnvMod = 0.0f;
+    auto driveMod = 0.0f;
+    auto osc2TuneMod = 0.0f;
+    auto osc2LevelMod = 0.0f;
+
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        const auto sourceIndex = static_cast<int>(std::round(readParameter(modMatrixSources[index], 0.0f)));
+        const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
+        const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
+
+        if (sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
+            continue;
+
+        const auto contribution = evaluateModulationSource(sourceIndex, lfoValue, modEnvelopeValue) * amount;
+
+        switch (destinationIndex)
+        {
+            case 1: cutoffMod += contribution; break;
+            case 2: resonanceMod += contribution; break;
+            case 3: filterEnvMod += contribution; break;
+            case 4: driveMod += contribution; break;
+            case 5: osc2TuneMod += contribution; break;
+            case 6: osc2LevelMod += contribution; break;
+            default: break;
+        }
+    }
+
+    cutoffMod = juce::jlimit(-1.0f, 1.0f, cutoffMod);
+    resonanceMod = juce::jlimit(-1.0f, 1.0f, resonanceMod);
+    filterEnvMod = juce::jlimit(-1.0f, 1.0f, filterEnvMod);
+    driveMod = juce::jlimit(-1.0f, 1.0f, driveMod);
+    osc2TuneMod = juce::jlimit(-1.0f, 1.0f, osc2TuneMod);
+    osc2LevelMod = juce::jlimit(-1.0f, 1.0f, osc2LevelMod);
+    currentDriveOffset = driveMod * 0.45f;
+    currentOsc2LevelOffset = osc2LevelMod * 0.75f;
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
     const auto waveform = static_cast<Waveform>(juce::jlimit(0, 3, waveIndex));
@@ -188,7 +284,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
     const auto motion = readParameter(macroMotion, 0.0f);
-    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f);
+    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (osc2TuneMod * 12.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
 
     const auto activeUnisonVoices = getUnisonVoiceCount();
@@ -211,13 +307,14 @@ void Voice::updateVoiceParameters(float envelopeValue)
         readParameter(ampRelease, 0.22f));
 
     const auto tone = readParameter(macroTone, 0.0f);
-    const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f));
+    const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f) + (filterEnvMod * 0.65f));
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
     const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
-    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f));
+    const auto matrixCutoffScale = std::pow(2.0f, cutoffMod * 4.0f);
+    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (resonanceMod * 0.45f));
     const auto filterModeIndex = static_cast<int>(readParameter(filterMode, 0.0f));
     const auto mode = static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex));
-    const auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale;
+    const auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
     leftFilter.setMode(mode);
     rightFilter.setMode(mode);
     leftFilter.setCutoffAndResonance(cutoff, macroResonance);
@@ -237,6 +334,70 @@ void Voice::updateGlide()
     const auto target = juce::jmax(1.0f, targetFrequencyHz);
     currentFrequencyHz = start * std::pow(target / start, progress);
     --glideSamplesRemaining;
+}
+
+float Voice::processLfo()
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
+    const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeatForLfoSync(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))))
+        : readParameter(lfo1Rate, 1.0f);
+    const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
+    const auto phase = std::fmod(lfoPhase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = lfoStepValue;
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = lfoPhase;
+    lfoPhase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
+
+    if (lfoPhase >= 1.0f)
+    {
+        lfoPhase -= std::floor(lfoPhase);
+        if (previousPhase < 1.0f)
+            lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value);
+}
+
+float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const
+{
+    switch (sourceIndex)
+    {
+        case 1: return lfoValue;
+        case 2: return modEnvelopeValue;
+        case 3: return noteVelocity;
+        case 4: return readParameter(macroTone, 0.0f);
+        case 5: return readParameter(macroDirt, 0.0f);
+        case 6: return readParameter(macroMotion, 0.0f);
+        case 7: return readParameter(macroSpace, 0.0f);
+        default: return 0.0f;
+    }
 }
 
 Voice::StereoSample Voice::renderUnisonStack(float osc1Gain, float osc2Gain)

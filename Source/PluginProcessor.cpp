@@ -58,7 +58,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     const auto hostBpm = getHostBpm();
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm);
-    synthEngine.render(buffer, midiMessages);
+    synthEngine.render(buffer, midiMessages, hostBpm);
     samplePlayer.render(buffer, midiMessages, hostBpm);
     effectsRack.process(buffer,
                         outputGain != nullptr ? outputGain->load() : -8.0f,

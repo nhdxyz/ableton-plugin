@@ -30,6 +30,18 @@
   <PARAM id="macro_2" value="0" />
   <PARAM id="macro_3" value="0.28" />
   <PARAM id="macro_4" value="0" />
+  <PARAM id="lfo1_rate" value="1" />
+  <PARAM id="lfo1_sync" value="1" />
+  <PARAM id="lfo1_sync_rate" value="1" />
+  <PARAM id="lfo1_shape" value="0" />
+  <PARAM id="lfo1_depth" value="0.24" />
+  <PARAM id="lfo1_phase" value="0" />
+  <PARAM id="lfo1_retrigger" value="1" />
+  <PARAM id="mod_env1_attack" value="0.01" />
+  <PARAM id="mod_env1_decay" value="0.14" />
+  <PARAM id="mod_env1_sustain" value="0" />
+  <PARAM id="mod_env1_release" value="0.12" />
+  <PARAM id="mod_env1_depth" value="0.38" />
   <PARAM id="random_amount" value="0.45" />
   <PARAM id="random_chaos" value="0.25" />
   <PARAM id="random_brightness_bias" value="0" />
@@ -102,4 +114,28 @@
   <PARAM id="fx_guard_enabled" value="1" />
   <PARAM id="fx_guard_push" value="0.07" />
   <PARAM id="fx_guard_ceiling" value="0.9" />
+  <PARAM id="mod_slot_1_source" value="1" />
+  <PARAM id="mod_slot_1_destination" value="1" />
+  <PARAM id="mod_slot_1_amount" value="0.1" />
+  <PARAM id="mod_slot_2_source" value="2" />
+  <PARAM id="mod_slot_2_destination" value="3" />
+  <PARAM id="mod_slot_2_amount" value="0.09" />
+  <PARAM id="mod_slot_3_source" value="0" />
+  <PARAM id="mod_slot_3_destination" value="0" />
+  <PARAM id="mod_slot_3_amount" value="0" />
+  <PARAM id="mod_slot_4_source" value="0" />
+  <PARAM id="mod_slot_4_destination" value="0" />
+  <PARAM id="mod_slot_4_amount" value="0" />
+  <PARAM id="mod_slot_5_source" value="0" />
+  <PARAM id="mod_slot_5_destination" value="0" />
+  <PARAM id="mod_slot_5_amount" value="0" />
+  <PARAM id="mod_slot_6_source" value="0" />
+  <PARAM id="mod_slot_6_destination" value="0" />
+  <PARAM id="mod_slot_6_amount" value="0" />
+  <PARAM id="mod_slot_7_source" value="0" />
+  <PARAM id="mod_slot_7_destination" value="0" />
+  <PARAM id="mod_slot_7_amount" value="0" />
+  <PARAM id="mod_slot_8_source" value="0" />
+  <PARAM id="mod_slot_8_destination" value="0" />
+  <PARAM id="mod_slot_8_amount" value="0" />
 </PARAMETERS>

@@ -723,6 +723,68 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
     setParameter(Parameters::ID::monoMode, mono ? 1.0f : 0.0f);
     setParameter(Parameters::ID::glideTime, glide);
+
+    for (size_t slotIndex = 0; slotIndex < Parameters::ID::modMatrixSource.size(); ++slotIndex)
+    {
+        setChoice(Parameters::ID::modMatrixSource[slotIndex], 0);
+        setChoice(Parameters::ID::modMatrixDestination[slotIndex], 0);
+        setParameter(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+    }
+
+    auto setModSlot = [this] (size_t slotIndex, int source, int destination, float slotAmount)
+    {
+        if (slotIndex >= Parameters::ID::modMatrixSource.size())
+            return;
+
+        setChoice(Parameters::ID::modMatrixSource[slotIndex], source);
+        setChoice(Parameters::ID::modMatrixDestination[slotIndex], destination);
+        setParameter(Parameters::ID::modMatrixAmount[slotIndex], juce::jlimit(-1.0f, 1.0f, slotAmount));
+    };
+
+    const auto motionScale = juce::jlimit(0.55f, 1.35f, 0.82f + (positiveMotionBias * 0.28f) + (chaos * 0.16f));
+    setParameter(Parameters::ID::lfo1Sync, 1.0f);
+    setChoice(Parameters::ID::lfo1SyncRate, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 3 : 1);
+    setChoice(Parameters::ID::lfo1Shape, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 4 : 0);
+    setParameter(Parameters::ID::lfo1Rate, randomFloat(0.6f, 2.4f));
+    setParameter(Parameters::ID::lfo1Depth, juce::jlimit(0.08f, 0.72f, randomFloat(0.16f, 0.4f) * motionScale));
+    setParameter(Parameters::ID::lfo1Phase, randomFloat(0.0f, 0.25f));
+    setParameter(Parameters::ID::lfo1Retrigger, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 0.0f : 1.0f);
+    setParameter(Parameters::ID::modEnv1Attack, randomFloat(0.002f, 0.03f));
+    setParameter(Parameters::ID::modEnv1Decay, randomFloat(0.08f, recipe == Recipe::ukgOrganStab || recipe == Recipe::ukgChordStab ? 0.34f : 0.22f));
+    setParameter(Parameters::ID::modEnv1Sustain, randomFloat(0.0f, 0.24f));
+    setParameter(Parameters::ID::modEnv1Release, randomFloat(0.04f, 0.2f));
+    setParameter(Parameters::ID::modEnv1Depth, juce::jlimit(0.08f, 0.68f, randomFloat(0.18f, 0.46f) * motionScale));
+
+    switch (recipe)
+    {
+        case Recipe::deepHouseBass:
+        case Recipe::rollingTechBass:
+        case Recipe::ukgTwoStepBass:
+            setModSlot(0, 1, 1, randomFloat(0.05f, 0.16f) * motionScale);
+            setModSlot(1, 2, 3, randomFloat(0.04f, 0.12f) * motionScale);
+            break;
+
+        case Recipe::acidLine:
+            setModSlot(0, 1, 1, randomFloat(0.08f, 0.22f) * motionScale);
+            setModSlot(1, 2, 2, randomFloat(0.04f, 0.14f) * motionScale);
+            break;
+
+        case Recipe::minimalBlip:
+        case Recipe::noiseFx:
+            setModSlot(0, 1, 1, randomFloat(0.14f, 0.3f) * motionScale);
+            setModSlot(1, 1, 4, randomFloat(0.03f, 0.1f) * motionScale);
+            break;
+
+        case Recipe::darkStab:
+        case Recipe::ukgOrganStab:
+        case Recipe::ukgChordStab:
+        case Recipe::ukgBellPluck:
+            setModSlot(0, 2, 1, randomFloat(0.08f, 0.22f) * motionScale);
+            setModSlot(1, 3, 1, randomFloat(0.03f, 0.11f) * motionScale);
+            setModSlot(2, 1, 5, randomFloat(-0.06f, 0.06f) * motionScale);
+            break;
+    }
+
     applyOutputSafety(juce::jlimit(0.0f, 1.0f, drive + (fxGuardPush * 0.35f)));
 }
 

@@ -94,6 +94,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modSectionLabel, "MOD");
     configureSectionLabel(modSourceLabel, "SOURCES");
     configureSectionLabel(modMacroLabel, "MACROS");
+    configureSectionLabel(modLfoLabel, "LFO 1");
+    configureSectionLabel(modEnvelopeLabel, "MOD ENV 1");
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
     configureSectionLabel(sequencerSectionLabel, "SEQ");
@@ -135,49 +137,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         addAndMakeVisible(label);
     }
 
-    const std::array<juce::String, 8> slotTexts { "1", "2", "3", "4", "5", "6", "7", "8" };
-    const std::array<juce::String, 8> sourceTexts { "Tone", "Tone", "Dirt", "Dirt", "Motion", "Motion", "Space", "Space" };
-    const std::array<juce::String, 8> destinationTexts {
-        "Filter Cutoff",
-        "Filter Resonance",
-        "Drive",
-        "Output Trim",
-        "Filter Env",
-        "Osc 2 Tune",
-        "Delay Mix",
-        "Reverb Mix"
-    };
-    const std::array<juce::String, 8> amountTexts {
-        "+2.5 oct",
-        "+0.22",
-        "+55%",
-        "-4.5 dB",
-        "+35%",
-        "+5 st",
-        "+28%",
-        "+35%"
-    };
-
     for (size_t index = 0; index < modSlotRows.size(); ++index)
     {
-        auto configureCell = [] (juce::Label& label, const juce::String& text, juce::Justification justification)
-        {
-            label.setText(text, juce::dontSendNotification);
-            label.setFont(juce::FontOptions(12.0f));
-            label.setJustificationType(justification);
-            label.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
-        };
-
-        configureCell(modSlotRows[index], slotTexts[index], juce::Justification::centred);
-        configureCell(modSourceCells[index], sourceTexts[index], juce::Justification::centredLeft);
-        configureCell(modDestinationCells[index], destinationTexts[index], juce::Justification::centredLeft);
-        configureCell(modAmountCells[index], amountTexts[index], juce::Justification::centredRight);
-
+        modSlotRows[index].setText(juce::String(static_cast<int>(index + 1)), juce::dontSendNotification);
+        modSlotRows[index].setFont(juce::FontOptions(12.0f, juce::Font::bold));
+        modSlotRows[index].setJustificationType(juce::Justification::centred);
         modSlotRows[index].setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
         addAndMakeVisible(modSlotRows[index]);
-        addAndMakeVisible(modSourceCells[index]);
-        addAndMakeVisible(modDestinationCells[index]);
-        addAndMakeVisible(modAmountCells[index]);
     }
 
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
@@ -265,6 +231,31 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxPumpRateBox.setTextWhenNothingSelected("Rate");
     addAndMakeVisible(fxPumpRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxPumpRate, fxPumpRateBox));
+
+    lfo1ShapeBox.addItemList(Parameters::lfoShapeChoices(), 1);
+    lfo1ShapeBox.setTextWhenNothingSelected("Shape");
+    addAndMakeVisible(lfo1ShapeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1Shape, lfo1ShapeBox));
+
+    lfo1SyncRateBox.addItemList(Parameters::lfoSyncRateChoices(), 1);
+    lfo1SyncRateBox.setTextWhenNothingSelected("Rate");
+    addAndMakeVisible(lfo1SyncRateBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1SyncRate, lfo1SyncRateBox));
+
+    for (size_t index = 0; index < modSourceBoxes.size(); ++index)
+    {
+        auto& sourceBox = modSourceBoxes[index];
+        sourceBox.addItemList(Parameters::modulationSourceChoices(), 1);
+        sourceBox.setTextWhenNothingSelected("Source");
+        addAndMakeVisible(sourceBox);
+        comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::modMatrixSource[index], sourceBox));
+
+        auto& destinationBox = modDestinationBoxes[index];
+        destinationBox.addItemList(Parameters::modulationDestinationChoices(), 1);
+        destinationBox.setTextWhenNothingSelected("Destination");
+        addAndMakeVisible(destinationBox);
+        comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::modMatrixDestination[index], destinationBox));
+    }
 
     monoButton.setButtonText("Mono");
     addAndMakeVisible(monoButton);
@@ -358,6 +349,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(randomLockSequencerButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomLockSequencer, randomLockSequencerButton));
 
+    lfo1SyncButton.setButtonText("Sync");
+    addAndMakeVisible(lfo1SyncButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1Sync, lfo1SyncButton));
+
+    lfo1RetriggerButton.setButtonText("Retrig");
+    addAndMakeVisible(lfo1RetriggerButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1Retrigger, lfo1RetriggerButton));
+
     configureSlider(octaveSlider, octaveLabel, "Oct", Parameters::ID::oscOctave);
     configureSlider(tuneSlider, tuneLabel, "Tune", Parameters::ID::oscTune);
     configureSlider(osc1LevelSlider, osc1LevelLabel, "Osc 1", Parameters::ID::osc1Level);
@@ -375,6 +374,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(macroDirtSlider, macroDirtLabel, "Dirt", Parameters::ID::macroDirt);
     configureSlider(macroMotionSlider, macroMotionLabel, "Motion", Parameters::ID::macroMotion);
     configureSlider(macroSpaceSlider, macroSpaceLabel, "Space", Parameters::ID::macroSpace);
+    configureSlider(lfo1RateSlider, lfo1RateLabel, "Rate", Parameters::ID::lfo1Rate);
+    configureSlider(lfo1DepthSlider, lfo1DepthLabel, "Depth", Parameters::ID::lfo1Depth);
+    configureSlider(lfo1PhaseSlider, lfo1PhaseLabel, "Phase", Parameters::ID::lfo1Phase);
+    configureSlider(modEnv1AttackSlider, modEnv1AttackLabel, "Attack", Parameters::ID::modEnv1Attack);
+    configureSlider(modEnv1DecaySlider, modEnv1DecayLabel, "Decay", Parameters::ID::modEnv1Decay);
+    configureSlider(modEnv1SustainSlider, modEnv1SustainLabel, "Sustain", Parameters::ID::modEnv1Sustain);
+    configureSlider(modEnv1ReleaseSlider, modEnv1ReleaseLabel, "Release", Parameters::ID::modEnv1Release);
+    configureSlider(modEnv1DepthSlider, modEnv1DepthLabel, "Depth", Parameters::ID::modEnv1Depth);
+
+    for (size_t index = 0; index < modAmountSliders.size(); ++index)
+        configureHorizontalSlider(modAmountSliders[index],
+                                  modAmountLabels[index],
+                                  "Amt " + juce::String(static_cast<int>(index + 1)),
+                                  Parameters::ID::modMatrixAmount[index]);
+
     configureSlider(attackSlider, attackLabel, "Attack", Parameters::ID::ampAttack);
     configureSlider(decaySlider, decayLabel, "Decay", Parameters::ID::ampDecay);
     configureSlider(sustainSlider, sustainLabel, "Sustain", Parameters::ID::ampSustain);
@@ -689,12 +703,15 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(150);
+        auto topRow = modContent.removeFromTop(132);
         auto sourceArea = topRow.removeFromLeft(300).reduced(5);
         auto macroArea = topRow.reduced(5);
-        auto matrixArea = modContent.withTrimmedTop(16).reduced(5);
+        auto controlsRow = modContent.withTrimmedTop(12).removeFromTop(138);
+        auto lfoArea = controlsRow.removeFromLeft(410).reduced(5);
+        auto envelopeArea = controlsRow.reduced(5);
+        auto matrixArea = modContent.withTrimmedTop(164).reduced(5);
 
-        for (auto area : { sourceArea, macroArea, matrixArea })
+        for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
         {
             g.setColour(juce::Colour(0xff101619));
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -982,7 +999,13 @@ void NateVSTAudioProcessorEditor::resized()
             modSectionLabel.setVisible(true);
             modSourceLabel.setVisible(true);
             modMacroLabel.setVisible(true);
+            modLfoLabel.setVisible(true);
+            modEnvelopeLabel.setVisible(true);
             modMatrixLabel.setVisible(true);
+            lfo1ShapeBox.setVisible(true);
+            lfo1SyncRateBox.setVisible(true);
+            lfo1SyncButton.setVisible(true);
+            lfo1RetriggerButton.setVisible(true);
             modSectionLabel.setBounds(content.removeFromTop(28));
 
             for (auto& label : modSourceRows)
@@ -991,16 +1014,16 @@ void NateVSTAudioProcessorEditor::resized()
             for (size_t index = 0; index < modSlotRows.size(); ++index)
             {
                 modSlotRows[index].setVisible(true);
-                modSourceCells[index].setVisible(true);
-                modDestinationCells[index].setVisible(true);
-                modAmountCells[index].setVisible(true);
+                modSourceBoxes[index].setVisible(true);
+                modDestinationBoxes[index].setVisible(true);
+                modAmountSliders[index].setVisible(true);
+                modAmountLabels[index].setVisible(false);
             }
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(150);
+            auto topRow = modContent.removeFromTop(132);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 12);
             auto macroArea = topRow.reduced(18, 12);
-            auto matrixArea = modContent.withTrimmedTop(16).reduced(18, 14);
 
             modSourceLabel.setBounds(sourceArea.removeFromTop(24));
             for (auto& label : modSourceRows)
@@ -1011,18 +1034,49 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(104).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(92).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
 
+            modContent.removeFromTop(12);
+            auto generatorRow = modContent.removeFromTop(138);
+            auto lfoArea = generatorRow.removeFromLeft(410).reduced(18, 12);
+            auto envelopeArea = generatorRow.reduced(18, 12);
+
+            modLfoLabel.setBounds(lfoArea.removeFromTop(24));
+            auto lfoModeRow = lfoArea.removeFromTop(36).withTrimmedTop(3);
+            lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(118).reduced(3, 4));
+            lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
+            lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
+            lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
+            setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
+            setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
+            setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
+            layoutKnobRow(lfoArea.removeFromTop(72).withTrimmedTop(4), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+
+            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(24));
+            setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
+            setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
+            setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
+            setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
+            setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
+            layoutKnobRow(envelopeArea.removeFromTop(102).withTrimmedTop(6), {
+                &modEnv1AttackSlider,
+                &modEnv1DecaySlider,
+                &modEnv1SustainSlider,
+                &modEnv1ReleaseSlider,
+                &modEnv1DepthSlider
+            });
+
+            modContent.removeFromTop(12);
+            auto matrixArea = modContent.reduced(18, 10);
             modMatrixLabel.setBounds(matrixArea.removeFromTop(26));
 
             for (size_t index = 0; index < modSlotRows.size(); ++index)
             {
-                auto row = matrixArea.removeFromTop(28).reduced(3, 2);
-                modSlotRows[index].setBounds(row.removeFromLeft(44).reduced(2, 0));
-                modSourceCells[index].setBounds(row.removeFromLeft(150).reduced(4, 0));
-                modDestinationCells[index].setBounds(row.removeFromLeft(260).reduced(4, 0));
-                modAmountCells[index].setBounds(row.removeFromLeft(110).reduced(4, 0));
-                matrixArea.removeFromTop(2);
+                auto row = matrixArea.removeFromTop(25).reduced(3, 1);
+                modSlotRows[index].setBounds(row.removeFromLeft(32).reduced(2, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(142).reduced(3, 1));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(190).reduced(3, 1));
+                modAmountSliders[index].setBounds(row.removeFromLeft(260).reduced(3, 1));
             }
 
             break;
@@ -1652,15 +1706,16 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
-        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modMatrixLabel, &sampleSectionLabel, &sequencerSectionLabel,
+        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &fxAddBox, &fxPumpRateBox,
+        &presetFilterBox, &fxAddBox, &fxPumpRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
+        &lfo1SyncButton, &lfo1RetriggerButton,
         &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
@@ -1682,9 +1737,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     for (size_t index = 0; index < modSlotRows.size(); ++index)
     {
         modSlotRows[index].setVisible(false);
-        modSourceCells[index].setVisible(false);
-        modDestinationCells[index].setVisible(false);
-        modAmountCells[index].setVisible(false);
+        modSourceBoxes[index].setVisible(false);
+        modDestinationBoxes[index].setVisible(false);
+        setSliderVisible(modAmountSliders[index], modAmountLabels[index], false);
     }
 
     setSliderVisible(octaveSlider, octaveLabel, false);
@@ -1704,6 +1759,14 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(macroDirtSlider, macroDirtLabel, false);
     setSliderVisible(macroMotionSlider, macroMotionLabel, false);
     setSliderVisible(macroSpaceSlider, macroSpaceLabel, false);
+    setSliderVisible(lfo1RateSlider, lfo1RateLabel, false);
+    setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, false);
+    setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, false);
+    setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, false);
+    setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, false);
+    setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, false);
+    setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, false);
+    setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, false);
     setSliderVisible(attackSlider, attackLabel, false);
     setSliderVisible(decaySlider, decayLabel, false);
     setSliderVisible(sustainSlider, sustainLabel, false);

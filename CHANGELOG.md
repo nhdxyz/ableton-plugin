@@ -235,3 +235,13 @@
 - Added a focused macro area using the same saved APVTS macro parameters as HOME.
 - Added a routing table that shows the real fixed macro destinations and depths currently implemented in the synth and effects engines.
 - Deferred editable LFO, mod-envelope, velocity, and matrix-slot DSP to a later modulation-engine slice.
+
+### Editable Modulation Engine Slice
+
+- Added saved APVTS parameters for LFO 1, Mod Env 1, and eight modulation matrix slots.
+- Added per-voice LFO 1 with free or host-synced rates, sine/triangle/saw/square/step shapes, phase, depth, and retrigger behavior.
+- Added per-voice Mod Env 1 with ADSR and depth controls.
+- Added editable MOD-panel matrix rows with source, synth destination, and bipolar amount controls.
+- Implemented safe synth destinations for filter cutoff, resonance, filter envelope amount, drive, oscillator 2 tune, and oscillator 2 level.
+- Made randomization seed conservative LFO/envelope assignments for bass, UKG stabs, plucks, minimal blips, and noise FX.
+- Regenerated the UKG factory preset pack with modulation defaults.

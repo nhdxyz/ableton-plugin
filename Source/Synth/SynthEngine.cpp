@@ -20,8 +20,12 @@ void SynthEngine::prepare(double sampleRate, int maximumBlockSize)
             voice->prepare(sampleRate, maximumBlockSize);
 }
 
-void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi, double bpm)
 {
+    for (auto voiceIndex = 0; voiceIndex < synthesiser.getNumVoices(); ++voiceIndex)
+        if (auto* voice = dynamic_cast<Voice*>(synthesiser.getVoice(voiceIndex)))
+            voice->setHostBpm(bpm);
+
     if (monoMode != nullptr && monoMode->load() > 0.5f)
     {
         auto monoMidi = enforceMonoIfNeeded(midi);

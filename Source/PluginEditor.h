@@ -68,6 +68,8 @@ private:
     juce::Label modSectionLabel;
     juce::Label modSourceLabel;
     juce::Label modMacroLabel;
+    juce::Label modLfoLabel;
+    juce::Label modEnvelopeLabel;
     juce::Label modMatrixLabel;
     juce::Label sampleSectionLabel;
     juce::Label sequencerSectionLabel;
@@ -91,6 +93,10 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPumpRateBox;
+    juce::ComboBox lfo1ShapeBox;
+    juce::ComboBox lfo1SyncRateBox;
+    std::array<juce::ComboBox, 8> modSourceBoxes;
+    std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
@@ -114,6 +120,8 @@ private:
     juce::ToggleButton randomLockFxButton;
     juce::ToggleButton randomLockOutputButton;
     juce::ToggleButton randomLockSequencerButton;
+    juce::ToggleButton lfo1SyncButton;
+    juce::ToggleButton lfo1RetriggerButton;
 
     juce::Slider octaveSlider;
     juce::Slider tuneSlider;
@@ -132,6 +140,15 @@ private:
     juce::Slider macroDirtSlider;
     juce::Slider macroMotionSlider;
     juce::Slider macroSpaceSlider;
+    juce::Slider lfo1RateSlider;
+    juce::Slider lfo1DepthSlider;
+    juce::Slider lfo1PhaseSlider;
+    juce::Slider modEnv1AttackSlider;
+    juce::Slider modEnv1DecaySlider;
+    juce::Slider modEnv1SustainSlider;
+    juce::Slider modEnv1ReleaseSlider;
+    juce::Slider modEnv1DepthSlider;
+    std::array<juce::Slider, 8> modAmountSliders;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;
@@ -203,6 +220,15 @@ private:
     juce::Label macroDirtLabel;
     juce::Label macroMotionLabel;
     juce::Label macroSpaceLabel;
+    juce::Label lfo1RateLabel;
+    juce::Label lfo1DepthLabel;
+    juce::Label lfo1PhaseLabel;
+    juce::Label modEnv1AttackLabel;
+    juce::Label modEnv1DecayLabel;
+    juce::Label modEnv1SustainLabel;
+    juce::Label modEnv1ReleaseLabel;
+    juce::Label modEnv1DepthLabel;
+    std::array<juce::Label, 8> modAmountLabels;
     juce::Label attackLabel;
     juce::Label decayLabel;
     juce::Label sustainLabel;
@@ -318,9 +344,6 @@ private:
     juce::Label fxRackStatusLabel;
     std::array<juce::Label, 4> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
-    std::array<juce::Label, 8> modSourceCells;
-    std::array<juce::Label, 8> modDestinationCells;
-    std::array<juce::Label, 8> modAmountCells;
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     juce::MidiKeyboardComponent pianoKeyboard;

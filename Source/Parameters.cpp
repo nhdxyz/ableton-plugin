@@ -48,6 +48,26 @@ juce::StringArray sequencerGrooveModeChoices()
     return { "Classic", "Selective", "UKG Push", "Tight" };
 }
 
+juce::StringArray lfoShapeChoices()
+{
+    return { "Sine", "Triangle", "Saw", "Square", "Step" };
+}
+
+juce::StringArray lfoSyncRateChoices()
+{
+    return { "1/4", "1/8", "1/8T", "1/16" };
+}
+
+juce::StringArray modulationSourceChoices()
+{
+    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space" };
+}
+
+juce::StringArray modulationDestinationChoices()
+{
+    return { "Off", "Filter Cutoff", "Filter Res", "Filter Env", "Drive", "Osc 2 Tune", "Osc 2 Level" };
+}
+
 APVTS::ParameterLayout createLayout()
 {
     std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
@@ -246,6 +266,101 @@ APVTS::ParameterLayout createLayout()
         "Macro 4 Space",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo1Rate,
+        "LFO 1 Rate",
+        skewedRange(0.05f, 20.0f, 1.0f),
+        1.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::lfo1Sync,
+        "LFO 1 Sync",
+        true));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::lfo1SyncRate,
+        "LFO 1 Sync Rate",
+        lfoSyncRateChoices(),
+        1));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::lfo1Shape,
+        "LFO 1 Shape",
+        lfoShapeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo1Depth,
+        "LFO 1 Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.45f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo1Phase,
+        "LFO 1 Phase",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::lfo1Retrigger,
+        "LFO 1 Retrigger",
+        true));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::modEnv1Attack,
+        "Mod Env 1 Attack",
+        skewedRange(0.001f, 5.0f, 0.03f),
+        0.01f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::modEnv1Decay,
+        "Mod Env 1 Decay",
+        skewedRange(0.001f, 5.0f, 0.2f),
+        0.22f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::modEnv1Sustain,
+        "Mod Env 1 Sustain",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::modEnv1Release,
+        "Mod Env 1 Release",
+        skewedRange(0.001f, 8.0f, 0.2f),
+        0.12f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::modEnv1Depth,
+        "Mod Env 1 Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.5f));
+
+    for (size_t index = 0; index < ID::modMatrixSource.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterChoice>(
+            ID::modMatrixSource[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Source",
+            modulationSourceChoices(),
+            0));
+
+        add(std::make_unique<juce::AudioParameterChoice>(
+            ID::modMatrixDestination[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Destination",
+            modulationDestinationChoices(),
+            0));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::modMatrixAmount[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Amount",
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+            0.0f));
+    }
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::randomAmount,

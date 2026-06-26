@@ -51,6 +51,7 @@ target_sources(NateVST
         Source/Sequencer/PatternSequencer.cpp
         Source/Effects/EffectsRack.cpp
         Source/UI/LookAndFeel.cpp
+        Source/UI/OutputMeter.cpp
         Source/UI/StepSequencerGrid.cpp
 )
 

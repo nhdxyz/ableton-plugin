@@ -21,6 +21,13 @@ juce::StringArray presetCategoryChoices()
 {
     return { "User", "Bass", "Stab", "Lead", "FX", "Sequence", "Sample" };
 }
+
+float smoothMeterValue(float current, float target)
+{
+    target = juce::jlimit(0.0f, 2.0f, target);
+    const auto coefficient = target > current ? 0.65f : 0.18f;
+    return current + ((target - current) * coefficient);
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -35,6 +42,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setJustificationType(juce::Justification::centredLeft);
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
+    addAndMakeVisible(outputMeter);
 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "ENGINE");
@@ -427,6 +435,7 @@ void NateVSTAudioProcessorEditor::resized()
     auto bounds = getLocalBounds().reduced(16);
     auto top = bounds.removeFromTop(42);
 
+    outputMeter.setBounds(top.removeFromRight(168).reduced(6, 5));
     titleLabel.setBounds(top.removeFromLeft(150).reduced(8, 0));
     homeTabButton.setBounds(top.removeFromLeft(82).reduced(4));
     synthTabButton.setBounds(top.removeFromLeft(82).reduced(4));
@@ -1118,9 +1127,25 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     rateThirtySecondButton.setToggleState(rateIndex == 2, juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::updateOutputMeter()
+{
+    auto peakLeft = 0.0f;
+    auto peakRight = 0.0f;
+    auto rmsLeft = 0.0f;
+    auto rmsRight = 0.0f;
+    audioProcessor.getOutputMeterLevels(peakLeft, peakRight, rmsLeft, rmsRight);
+
+    displayedPeakLeft = smoothMeterValue(displayedPeakLeft, peakLeft);
+    displayedPeakRight = smoothMeterValue(displayedPeakRight, peakRight);
+    displayedRmsLeft = smoothMeterValue(displayedRmsLeft, rmsLeft);
+    displayedRmsRight = smoothMeterValue(displayedRmsRight, rmsRight);
+    outputMeter.setLevels(displayedPeakLeft, displayedPeakRight, displayedRmsLeft, displayedRmsRight);
+}
+
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
+    updateOutputMeter();
 }
 
 void NateVSTAudioProcessorEditor::refreshPresetList()

@@ -88,3 +88,9 @@
 - Made sequencer swing alternate long and short step durations while keeping host tempo sync.
 - Added accent behavior for anchor steps and global probability scaling over per-step probability.
 - Updated `Rand Seq` to generate conservative swing, accent, octave, and probability settings with the pattern.
+
+### Visual Feedback And Metering
+
+- Added a compact stereo output meter to the top bar so output level stays visible across panels.
+- Measured output peak and RMS after the FX rack using relaxed atomics for UI reads.
+- Kept meter smoothing and repainting on the editor timer instead of the audio thread.

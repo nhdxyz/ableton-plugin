@@ -37,7 +37,7 @@ The editor uses focused panels instead of one tall stacked page:
 - `FX`
 - `LIBRARY`
 
-The `HOME` panel is the default dashboard for quick patch shaping, source mixing, unison width, performance macros, randomization, and preset recall. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
+The `HOME` panel is the default dashboard for quick patch shaping, source mixing, unison width, performance macros, randomization, and preset recall. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. A compact top-bar output meter stays visible across panels. Longer lists, such as recipes and presets, stay as browser-style dropdowns for now.
 
 User presets are stored at:
 

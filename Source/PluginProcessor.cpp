@@ -1,6 +1,8 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include <cmath>
+
 NateVSTAudioProcessor::NateVSTAudioProcessor()
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "PARAMETERS", Parameters::createLayout()),
@@ -20,6 +22,10 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
+    outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
+    outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
+    outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
 }
 
 void NateVSTAudioProcessor::releaseResources()
@@ -44,6 +50,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     synthEngine.render(buffer, midiMessages);
     samplePlayer.render(buffer, midiMessages);
     effectsRack.process(buffer, outputGain != nullptr ? outputGain->load() : -8.0f);
+    updateOutputMeters(buffer);
 }
 
 juce::AudioProcessorEditor* NateVSTAudioProcessor::createEditor()
@@ -353,6 +360,17 @@ juce::File NateVSTAudioProcessor::getPresetDirectory() const
         .getChildFile("Presets");
 }
 
+void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,
+                                                 float& peakRight,
+                                                 float& rmsLeft,
+                                                 float& rmsRight) const noexcept
+{
+    peakLeft = outputMeterPeakLeft.load(std::memory_order_relaxed);
+    peakRight = outputMeterPeakRight.load(std::memory_order_relaxed);
+    rmsLeft = outputMeterRmsLeft.load(std::memory_order_relaxed);
+    rmsRight = outputMeterRmsRight.load(std::memory_order_relaxed);
+}
+
 juce::String NateVSTAudioProcessor::getActiveRandomizationLockSummary() const
 {
     juce::StringArray locks;
@@ -589,6 +607,50 @@ double NateVSTAudioProcessor::getHostBpm() const
                 return *bpm;
 
     return 124.0;
+}
+
+void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept
+{
+    const auto numChannels = buffer.getNumChannels();
+    const auto numSamples = buffer.getNumSamples();
+
+    if (numChannels <= 0 || numSamples <= 0)
+    {
+        outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
+        outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
+        outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
+        outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
+        return;
+    }
+
+    auto measureChannel = [numSamples] (const float* samples, float& peak, float& rms) noexcept
+    {
+        auto localPeak = 0.0f;
+        auto sumSquares = 0.0;
+
+        for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+        {
+            const auto sample = samples[sampleIndex];
+            localPeak = juce::jmax(localPeak, std::abs(sample));
+            sumSquares += static_cast<double>(sample) * static_cast<double>(sample);
+        }
+
+        peak = localPeak;
+        rms = static_cast<float>(std::sqrt(sumSquares / static_cast<double>(numSamples)));
+    };
+
+    auto peakLeft = 0.0f;
+    auto peakRight = 0.0f;
+    auto rmsLeft = 0.0f;
+    auto rmsRight = 0.0f;
+
+    measureChannel(buffer.getReadPointer(0), peakLeft, rmsLeft);
+    measureChannel(buffer.getReadPointer(numChannels > 1 ? 1 : 0), peakRight, rmsRight);
+
+    outputMeterPeakLeft.store(peakLeft, std::memory_order_relaxed);
+    outputMeterPeakRight.store(peakRight, std::memory_order_relaxed);
+    outputMeterRmsLeft.store(rmsLeft, std::memory_order_relaxed);
+    outputMeterRmsRight.store(rmsRight, std::memory_order_relaxed);
 }
 
 juce::ValueTree NateVSTAudioProcessor::createPluginState()

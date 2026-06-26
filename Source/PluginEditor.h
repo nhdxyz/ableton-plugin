@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "UI/LookAndFeel.h"
+#include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
 
 #include <juce_gui_extra/juce_gui_extra.h>
@@ -223,6 +224,7 @@ private:
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextEditor presetNameEditor;
+    UI::OutputMeter outputMeter;
     UI::StepSequencerGrid sequencerGrid;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
@@ -246,6 +248,7 @@ private:
     void setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible);
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);
     void updateSegmentedSelectors();
+    void updateOutputMeter();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();
@@ -253,6 +256,10 @@ private:
     void loadPresetByOffset(int offset);
 
     Panel activePanel = Panel::home;
+    float displayedPeakLeft = 0.0f;
+    float displayedPeakRight = 0.0f;
+    float displayedRmsLeft = 0.0f;
+    float displayedRmsRight = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessorEditor)
 };

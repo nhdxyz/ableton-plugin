@@ -9,6 +9,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <atomic>
 #include <initializer_list>
 #include <random>
 
@@ -63,6 +64,7 @@ public:
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     juce::File getPresetDirectory() const;
+    void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
 
 private:
     enum class RandomAction
@@ -80,6 +82,10 @@ private:
     Effects::EffectsRack effectsRack;
 
     std::atomic<float>* outputGain = nullptr;
+    std::atomic<float> outputMeterPeakLeft { 0.0f };
+    std::atomic<float> outputMeterPeakRight { 0.0f };
+    std::atomic<float> outputMeterRmsLeft { 0.0f };
+    std::atomic<float> outputMeterRmsRight { 0.0f };
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
@@ -96,6 +102,7 @@ private:
     void restoreSequencerFromState(const juce::ValueTree& state);
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     double getHostBpm() const;
+    void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     juce::ValueTree createPluginState();
     void restorePluginState(const juce::ValueTree& state);
     juce::File presetFileForName(const juce::String& presetName) const;

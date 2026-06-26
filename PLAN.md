@@ -996,6 +996,7 @@ Current implemented panel layout:
 - SEQ: sequencer enable, segmented rate selector, pattern presets, copy/random/clear, groove/performance controls, and the 16-step grid.
 - FX: bypassable distortion, chorus, delay, and reverb modules.
 - LIBRARY: preset category, preset name entry, save, previous/next, preset selector, load, refresh, and preset folder status.
+- TOP BAR: panel tabs plus a compact stereo output meter.
 
 Suggested first UI size:
 
@@ -1009,7 +1010,7 @@ Suggested first UI size:
 - Sliders or compact envelope widgets for ADSR.
 - Segmented controls for waveform and filter type.
 - Toggle buttons for mono/poly, sync, retrigger, and tempo sync.
-- Small meters for output level.
+- Compact output metering in the top bar.
 - Clear numeric readouts where exact values matter.
 - Modulation rings or overlays around controls later.
 - A small oscilloscope or waveform display later.

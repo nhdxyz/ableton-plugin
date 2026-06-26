@@ -45,7 +45,7 @@ User presets are stored at:
 ~/Library/Application Support/Nate VST/Presets
 ```
 
-See [PLAN.md](./PLAN.md) for the full roadmap.
+See [PLAN.md](./PLAN.md) for the full roadmap and [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design.
 
 ## Local Development
 

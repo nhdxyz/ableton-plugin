@@ -45,3 +45,9 @@
 - Saved category metadata into preset XML using the `preset_category` property.
 - Added previous and next preset buttons on HOME and LIBRARY panels.
 - Kept the deeper library work open for filtering, favorites, recent presets, and factory/user separation.
+
+### Modulation Planning
+
+- Added `docs/MODULATION_WORKFLOW.md` as the first modulation and performance workflow plan.
+- Defined initial modulation sources, destinations, macro controls, LFO 1 shape, matrix scope, and safety rules.
+- Recommended the first implementation slice as four HOME macros before a full modulation matrix.

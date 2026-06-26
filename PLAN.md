@@ -1274,6 +1274,7 @@ Recommended architecture direction:
 - Keep preset serialization versioned from the beginning.
 - Keep randomization operating on parameter snapshots, not directly on DSP objects.
 - Treat UI controls as views over parameters, not as owners of synth state.
+- Use `docs/MODULATION_WORKFLOW.md` as the working design for the first macro, LFO, and modulation-matrix pass.
 
 ### Engineering Rules
 

@@ -178,6 +178,7 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
     setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePitchRamp, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
     return true;
 }
@@ -212,6 +213,7 @@ bool NateVSTAudioProcessor::randomizeSampleCut()
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePitchRamp, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleTranspose, transposeDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
@@ -228,14 +230,19 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
         return false;
 
     constexpr float pitchChoices[] { -12.0f, -7.0f, 0.0f, 7.0f, 12.0f };
+    constexpr float rampChoices[] { -12.0f, -7.0f, -5.0f, 5.0f, 7.0f, 12.0f };
 
     std::uniform_real_distribution<float> startDistribution(0.0f, 0.9f);
     std::uniform_real_distribution<float> lengthDistribution(0.018f, 0.16f);
     std::uniform_int_distribution<int> pitchDistribution(0, 4);
+    std::uniform_int_distribution<int> rampDistribution(0, 5);
     std::uniform_int_distribution<int> stutterRateDistribution(1, 2);
     std::uniform_int_distribution<int> stutterRepeatsDistribution(2, 5);
     std::uniform_real_distribution<float> gainDistribution(-10.0f, -3.0f);
     std::uniform_real_distribution<float> mixDistribution(0.62f, 1.0f);
+    std::uniform_real_distribution<float> delayTimeDistribution(0.11f, 0.26f);
+    std::uniform_real_distribution<float> delayFeedbackDistribution(0.12f, 0.32f);
+    std::uniform_real_distribution<float> delayMixDistribution(0.08f, 0.18f);
     std::bernoulli_distribution reverseDistribution(0.22);
 
     const auto start = startDistribution(sampleRandomEngine);
@@ -250,8 +257,17 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     setParameterPlainValue(Parameters::ID::sampleStutterRate, static_cast<float>(stutterRateDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sampleStutterRepeats, static_cast<float>(stutterRepeatsDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sampleTranspose, pitchChoices[pitchDistribution(sampleRandomEngine)]);
+    setParameterPlainValue(Parameters::ID::samplePitchRamp, rampChoices[rampDistribution(sampleRandomEngine)]);
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
+
+    if (! isRandomLockEnabled(Parameters::ID::randomLockFx))
+    {
+        setParameterPlainValue(Parameters::ID::fxDelayEnabled, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxDelayTime, delayTimeDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::fxDelayFeedback, delayFeedbackDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::fxDelayMix, delayMixDistribution(sampleRandomEngine));
+    }
 
     if (! isRandomLockEnabled(Parameters::ID::randomLockSequencer))
         applySequencerPatternPreset(5);
@@ -866,6 +882,7 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         Parameters::ID::sampleReverse,
         Parameters::ID::samplePlaybackMode,
         Parameters::ID::sampleTranspose,
+        Parameters::ID::samplePitchRamp,
         Parameters::ID::sampleGain,
         Parameters::ID::sampleMix,
         Parameters::ID::sampleStutterEnabled,

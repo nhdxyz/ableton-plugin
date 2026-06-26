@@ -36,6 +36,7 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleReverse = parameters.getRawParameterValue(Parameters::ID::sampleReverse);
     samplePlaybackMode = parameters.getRawParameterValue(Parameters::ID::samplePlaybackMode);
     sampleTranspose = parameters.getRawParameterValue(Parameters::ID::sampleTranspose);
+    samplePitchRamp = parameters.getRawParameterValue(Parameters::ID::samplePitchRamp);
     sampleGain = parameters.getRawParameterValue(Parameters::ID::sampleGain);
     sampleMix = parameters.getRawParameterValue(Parameters::ID::sampleMix);
     sampleStutterEnabled = parameters.getRawParameterValue(Parameters::ID::sampleStutterEnabled);
@@ -176,6 +177,9 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->reverse = reverse;
     voiceToUse->gated = readParameter(samplePlaybackMode, 1.0f) < 0.5f;
     voiceToUse->velocity = velocity;
+    voiceToUse->sourceRatio = sourceRatio;
+    voiceToUse->baseTransposeSemitones = transpose;
+    voiceToUse->pitchRampSemitones = readParameter(samplePitchRamp, 0.0f);
     voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
@@ -268,6 +272,7 @@ void SamplePlayer::renderVoice(Voice& voice,
         if (voice.fadeInSamplesRemaining > 0)
             --voice.fadeInSamplesRemaining;
 
+        voice.increment = incrementForVoice(voice);
         voice.position += voice.increment;
         if (voice.stutterEnabled)
             voice.samplesUntilStutter -= 1.0;
@@ -290,6 +295,23 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data) const
     currentRegion.gain = juce::Decibels::decibelsToGain(readParameter(sampleGain, -6.0f));
     currentRegion.transposeSemitones = readParameter(sampleTranspose, 0.0f);
     return currentRegion;
+}
+
+double SamplePlayer::incrementForVoice(const Voice& voice) const
+{
+    const auto rampedTranspose = voice.baseTransposeSemitones
+        + (voice.pitchRampSemitones * static_cast<float>(rampProgressForVoice(voice)));
+    const auto pitchRatio = std::pow(2.0, static_cast<double>(rampedTranspose) / 12.0);
+    return voice.sourceRatio * pitchRatio * (voice.reverse ? -1.0 : 1.0);
+}
+
+double SamplePlayer::rampProgressForVoice(const Voice& voice) const
+{
+    const auto sourceSpan = juce::jmax(1.0, static_cast<double>(voice.endSample - voice.startSample));
+    const auto distance = voice.reverse
+        ? static_cast<double>(voice.endSample - 1) - voice.position
+        : voice.position - static_cast<double>(voice.startSample);
+    return juce::jlimit(0.0, 1.0, distance / sourceSpan);
 }
 
 float SamplePlayer::readParameter(std::atomic<float>* parameter, float fallback) const

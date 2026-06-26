@@ -326,6 +326,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureHorizontalSlider(sampleStartSlider, sampleStartLabel, "Start", Parameters::ID::sampleStart);
     configureHorizontalSlider(sampleEndSlider, sampleEndLabel, "End", Parameters::ID::sampleEnd);
     configureSlider(sampleTransposeSlider, sampleTransposeLabel, "Pitch", Parameters::ID::sampleTranspose);
+    configureSlider(samplePitchRampSlider, samplePitchRampLabel, "Ramp", Parameters::ID::samplePitchRamp);
     configureSlider(sampleGainSlider, sampleGainLabel, "Gain", Parameters::ID::sampleGain);
     configureSlider(sampleMixSlider, sampleMixLabel, "Mix", Parameters::ID::sampleMix);
     configureSlider(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, "Repeat", Parameters::ID::sampleStutterRepeats);
@@ -929,10 +930,12 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
             content.removeFromTop(20);
             setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
+            setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
             setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            layoutKnobRow(content.removeFromTop(170), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider, &sampleStutterRepeatsSlider });
+            layoutKnobRow(content.removeFromTop(105), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(content.removeFromTop(105).withTrimmedTop(8), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -1575,6 +1578,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sampleStartSlider, sampleStartLabel, false);
     setSliderVisible(sampleEndSlider, sampleEndLabel, false);
     setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, false);
+    setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, false);
     setSliderVisible(sampleGainSlider, sampleGainLabel, false);
     setSliderVisible(sampleMixSlider, sampleMixLabel, false);
     setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);

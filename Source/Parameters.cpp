@@ -359,6 +359,13 @@ APVTS::ParameterLayout createLayout()
         juce::AudioParameterFloatAttributes().withLabel("st")));
 
     add(std::make_unique<juce::AudioParameterFloat>(
+        ID::samplePitchRamp,
+        "Sample Pitch Ramp",
+        juce::NormalisableRange<float> { -24.0f, 24.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("st")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
         ID::sampleGain,
         "Sample Gain",
         juce::NormalisableRange<float> { -24.0f, 12.0f, 0.01f },

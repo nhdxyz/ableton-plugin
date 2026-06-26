@@ -58,6 +58,7 @@ inline constexpr auto sampleEnd = "sample_end";
 inline constexpr auto sampleReverse = "sample_reverse";
 inline constexpr auto samplePlaybackMode = "sample_playback_mode";
 inline constexpr auto sampleTranspose = "sample_transpose";
+inline constexpr auto samplePitchRamp = "sample_pitch_ramp";
 inline constexpr auto sampleGain = "sample_gain";
 inline constexpr auto sampleMix = "sample_mix";
 inline constexpr auto sampleStutterEnabled = "sample_stutter_enabled";

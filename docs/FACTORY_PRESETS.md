@@ -25,3 +25,5 @@ Local macOS builds copy the generated files into:
 `~/Library/Application Support/Nate VST/Factory Presets`
 
 Preset files should not contain user-specific absolute paths. Sample-based starter presets should leave `sample_file` empty and configure sampler controls only.
+
+When adding a new parameter, update `DEFAULTS` in `tools/generate_factory_presets.py`, regenerate the pack, and verify every factory file contains the new `PARAM` node.

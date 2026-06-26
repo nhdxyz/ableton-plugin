@@ -142,6 +142,7 @@ private:
     juce::Slider sampleStartSlider;
     juce::Slider sampleEndSlider;
     juce::Slider sampleTransposeSlider;
+    juce::Slider samplePitchRampSlider;
     juce::Slider sampleGainSlider;
     juce::Slider sampleMixSlider;
     juce::Slider sampleStutterRepeatsSlider;
@@ -212,6 +213,7 @@ private:
     juce::Label sampleStartLabel;
     juce::Label sampleEndLabel;
     juce::Label sampleTransposeLabel;
+    juce::Label samplePitchRampLabel;
     juce::Label sampleGainLabel;
     juce::Label sampleMixLabel;
     juce::Label sampleStutterRepeatsLabel;

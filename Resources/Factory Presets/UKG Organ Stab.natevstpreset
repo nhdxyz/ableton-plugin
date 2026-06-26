@@ -50,6 +50,7 @@
   <PARAM id="sample_reverse" value="0" />
   <PARAM id="sample_playback_mode" value="1" />
   <PARAM id="sample_transpose" value="0" />
+  <PARAM id="sample_pitch_ramp" value="0" />
   <PARAM id="sample_gain" value="-6" />
   <PARAM id="sample_mix" value="0.75" />
   <PARAM id="sample_stutter_enabled" value="0" />

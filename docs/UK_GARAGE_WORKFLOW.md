@@ -47,8 +47,9 @@ Research references:
 ### Vocal And Sample Behavior
 
 - Chopped vocal hooks are central enough that the sampler needs a dedicated UKG chop workflow, not just generic sample playback.
-- Required controls: one-shot vs gated, quick slice/cut ranges, pitch offsets, reverse, stutter/retrigger, and sequencer-lane triggering.
+- Required controls: one-shot vs gated, quick slice/cut ranges, pitch offsets, pitch ramps, reverse, stutter/retrigger, delay throws, and sequencer-lane triggering.
 - Randomized chops should prefer short, rhythmic fragments and avoid huge unpredictable pitch sweeps unless chaos is high.
+- True formant-preserving pitch movement should remain future work because it needs a dedicated time-stretch/formant engine; the current lightweight performance pass uses pitch-ramped playback instead.
 
 ### FX Flavor
 
@@ -103,6 +104,7 @@ Research references:
 - Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts, One Shot playback, and synced stutter/retrigger.
 - Added UKG bass guardrails: audible mono glide, restrained sub/octave choices, limited detune/spread, Width mono-bass protection, and Guard safety.
 - Added a first UKG factory preset pack with bass, stab, bell, vocal chop starter, and sequence-focused patches.
+- Added a sampler Pitch Ramp control and made `UKG Chop` create pitch-ramped vocal cuts with delay throws when FX locking allows it.
 
 ## Next UKG Features
 
@@ -113,6 +115,8 @@ Research references:
 - Tighter random cut ranges for short phrases are implemented in `UKG Chop`.
 - Quick pitch choices such as -12, -7, 0, +7, +12 are implemented in `UKG Chop`.
 - Retrigger/stutter timing is implemented as synced sample stutter controls with 1/8, 1/16, and 1/32 rates plus repeat count.
+- Pitch-ramped chop movement is implemented with the SAMPLE-panel `Ramp` control.
+- UKG Chop now sets a short delay throw when FX locking is off.
 
 2. Pump/Duck FX.
 

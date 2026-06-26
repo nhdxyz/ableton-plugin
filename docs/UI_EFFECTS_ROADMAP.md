@@ -176,6 +176,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 
 1. Vocal chop sampler workflow.
    Implemented as the SAMPLE-panel UKG Chop action with short cut ranges, musical pitch offsets, reverse variation, One Shot/Gate mode selection, synced stutter/retrigger controls, and sequencer-template application.
+   Pitch-ramped chop movement and short delay throws are now implemented; formant-preserving pitch movement remains a later sampler-engine decision.
 2. Pump/Duck.
    Implemented as the Pump module. UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
 3. Width/Mono Bass.

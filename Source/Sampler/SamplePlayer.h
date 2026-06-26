@@ -51,6 +51,9 @@ private:
         float velocity = 0.0f;
         bool reverse = false;
         bool gated = false;
+        double sourceRatio = 1.0;
+        float baseTransposeSemitones = 0.0f;
+        float pitchRampSemitones = 0.0f;
         bool stutterEnabled = false;
         int stutterRepeatsRemaining = 0;
         int fadeInSamplesRemaining = 0;
@@ -72,6 +75,7 @@ private:
     std::atomic<float>* sampleReverse = nullptr;
     std::atomic<float>* samplePlaybackMode = nullptr;
     std::atomic<float>* sampleTranspose = nullptr;
+    std::atomic<float>* samplePitchRamp = nullptr;
     std::atomic<float>* sampleGain = nullptr;
     std::atomic<float>* sampleMix = nullptr;
     std::atomic<float>* sampleStutterEnabled = nullptr;
@@ -83,6 +87,8 @@ private:
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     SampleRegion currentRegionFor(const SampleData& data) const;
+    double incrementForVoice(const Voice& voice) const;
+    double rampProgressForVoice(const Voice& voice) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;
 };
 }

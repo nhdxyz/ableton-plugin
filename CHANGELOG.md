@@ -212,3 +212,10 @@
 - Added factory presets for 2-step bass, shuffle bass, organ stab, chord stab, bell pluck, vocal chop starter, and late stab workflows.
 - Added `tools/generate_factory_presets.py` to regenerate `.natevstpreset` XML files from documented preset definitions.
 - Made local macOS builds copy factory presets into `~/Library/Application Support/Nate VST/Factory Presets`.
+
+### UKG Vocal Chop Performance
+
+- Added a SAMPLE-panel `Ramp` control for pitch-ramped sample playback across a chop window.
+- Made sample stutter retriggers reset the pitch-ramp movement naturally by restarting the source position.
+- Made `UKG Chop` randomize musical pitch-ramp movements and set a short delay throw when FX locking is off.
+- Regenerated the factory preset pack so `UKG Vocal Chop Starter` demonstrates the new pitch-ramp control.

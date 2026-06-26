@@ -198,3 +198,10 @@
 - Added a saved per-step timing lane, visible as amber markers in the sequencer grid.
 - Made UKG sequencer templates set groove mode and per-step timing so anchors stay tighter while offbeats, vocal triggers, and stab hits can sit later.
 - Split the SEQ panel controls into timing and pattern rows to reduce crowding.
+
+### UKG Bass Guardrails
+
+- Made the existing Glide parameter audible in mono bass patches with sample-rate-aware pitch smoothing.
+- Added a visible Glide knob to the HOME and SYNTH panels.
+- Tightened the `UKG 2-Step Bass` recipe around a mono-safe tuned sub layer, restrained oscillator detune, limited stereo spread, protected low-cut, Width mono-bass, and Guard output safety.
+- Applied UKG bass guardrails after mutation/variation blending so locked-in bass patches do not drift into unstable low-end ranges.

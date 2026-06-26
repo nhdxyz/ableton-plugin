@@ -385,14 +385,14 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         case Recipe::ukgTwoStepBass:
             wave = randomInt(1, 2);
             osc2Wave = randomInt(1, 3);
-            octave = randomInt(-2, -1);
+            octave = -1;
             osc2Octave = octave;
-            tune = randomFloat(-0.04f, 0.04f);
-            osc2Tune = randomFloat(-0.35f, 0.35f);
-            osc1Level = randomFloat(0.62f, 0.95f);
-            osc2Level = randomFloat(0.22f, 0.58f);
-            subLevel = randomFloat(0.32f, 0.78f);
-            noiseLevel = randomFloat(0.0f, 0.08f);
+            tune = randomFloat(-0.02f, 0.02f);
+            osc2Tune = randomFloat(-0.18f, 0.18f);
+            osc1Level = randomFloat(0.68f, 0.96f);
+            osc2Level = randomFloat(0.18f, 0.46f);
+            subLevel = randomFloat(0.46f, 0.72f);
+            noiseLevel = randomFloat(0.0f, 0.06f);
             cutoff = randomFloat(520.0f, 2600.0f);
             resonance = randomFloat(0.22f, 0.68f);
             envAmount = randomFloat(0.12f, 0.5f);
@@ -401,19 +401,19 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             sustain = randomFloat(0.2f, 0.55f);
             release = randomFloat(0.035f, 0.18f);
             drive = randomFloat(0.08f, 0.38f);
-            glide = randomFloat(0.0f, 0.09f);
-            unisonVoiceCount = randomInt(1, 3);
-            unisonDetune = randomFloat(0.0f, 0.1f);
-            unisonBlend = randomFloat(0.25f, 0.58f);
-            unisonSpread = randomFloat(0.0f, 0.28f);
+            glide = randomFloat(0.025f, 0.11f);
+            unisonVoiceCount = randomInt(1, 2);
+            unisonDetune = randomFloat(0.0f, 0.055f);
+            unisonBlend = randomFloat(0.25f, 0.5f);
+            unisonSpread = randomFloat(0.0f, 0.08f);
             macroTone = randomFloat(0.05f, 0.35f);
             macroDirt = randomFloat(0.03f, 0.26f);
-            macroMotion = randomFloat(0.12f, 0.48f);
+            macroMotion = randomFloat(0.08f, 0.32f);
             macroSpace = randomFloat(0.06f, 0.28f);
             mono = true;
             fxToneEnabled = true;
             fxToneTilt = randomFloat(-0.08f, 0.22f);
-            fxToneLowCut = randomFloat(32.0f, 65.0f);
+            fxToneLowCut = randomFloat(28.0f, 45.0f);
             fxBitcrushEnabled = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.16f);
             fxBitcrushBits = randomFloat(9.0f, 14.0f);
             fxBitcrushDownsample = randomFloat(1.0f, 6.0f);
@@ -423,16 +423,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxPumpDepth = randomFloat(0.16f, 0.46f);
             fxPumpShape = randomFloat(0.32f, 0.78f);
             fxPumpPhase = randomFloat(0.0f, 0.18f);
-            fxWidthEnabled = randomFloat(0.0f, 1.0f) < 0.34f + (chaos * 0.16f);
-            fxWidthAmount = randomFloat(0.98f, 1.28f);
-            fxWidthMonoCutoff = randomFloat(90.0f, 150.0f);
+            fxWidthEnabled = true;
+            fxWidthAmount = randomFloat(0.96f, 1.08f);
+            fxWidthMonoCutoff = randomFloat(130.0f, 185.0f);
             fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.18f);
             fxPhaserRate = randomFloat(0.08f, 0.5f);
             fxPhaserDepth = randomFloat(0.18f, 0.55f);
             fxPhaserMix = randomFloat(0.05f, 0.18f);
             fxGuardEnabled = true;
-            fxGuardPush = randomFloat(0.02f, 0.16f);
-            fxGuardCeiling = randomFloat(0.88f, 0.95f);
+            fxGuardPush = randomFloat(0.02f, 0.12f);
+            fxGuardCeiling = randomFloat(0.88f, 0.93f);
             break;
 
         case Recipe::ukgOrganStab:
@@ -644,6 +644,32 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxGuardPush = blend(Parameters::ID::fxGuardPush, fxGuardPush);
         fxGuardCeiling = blend(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
         glide = blend(Parameters::ID::glideTime, glide);
+    }
+
+    if (recipe == Recipe::ukgTwoStepBass)
+    {
+        octave = -1;
+        osc2Octave = -1;
+        tune = juce::jlimit(-0.03f, 0.03f, tune);
+        osc2Tune = juce::jlimit(-0.22f, 0.22f, osc2Tune);
+        osc1Level = juce::jlimit(0.62f, 1.0f, osc1Level);
+        osc2Level = juce::jlimit(0.12f, 0.48f, osc2Level);
+        subLevel = juce::jlimit(0.42f, 0.74f, subLevel);
+        noiseLevel = juce::jlimit(0.0f, 0.06f, noiseLevel);
+        unisonVoiceCount = juce::jlimit(1, 2, unisonVoiceCount);
+        unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
+        unisonSpread = juce::jlimit(0.0f, 0.08f, unisonSpread);
+        macroMotion = juce::jlimit(0.0f, 0.34f, macroMotion);
+        fxToneEnabled = true;
+        fxToneLowCut = juce::jlimit(24.0f, 48.0f, fxToneLowCut);
+        fxWidthEnabled = true;
+        fxWidthAmount = juce::jlimit(0.94f, 1.1f, fxWidthAmount);
+        fxWidthMonoCutoff = juce::jlimit(125.0f, 190.0f, fxWidthMonoCutoff);
+        fxGuardEnabled = true;
+        fxGuardPush = juce::jlimit(0.0f, 0.13f, fxGuardPush);
+        fxGuardCeiling = juce::jlimit(0.87f, 0.93f, fxGuardCeiling);
+        mono = true;
+        glide = juce::jlimit(0.02f, 0.12f, glide);
     }
 
     setChoice(Parameters::ID::oscWave, wave);

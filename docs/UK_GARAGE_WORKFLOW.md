@@ -35,6 +35,7 @@ Research references:
 - Core bass targets: mono sub, Reese movement, Dred/reverse-filter movement, and short rubbery plucks.
 - Useful controls: filter envelope amount, filter envelope attack, glide, mono/legato, drive, Crush mix, and output Guard.
 - Bass randomization should include tuned-sub guardrails, with practical club notes called out when preset authors build sub-focused patches.
+- Sub-focused preset authoring should keep the fundamental in a useful club range, roughly 40 to 80 Hz, and avoid relying on stereo detune for the weight of the bass.
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 
 ### Stabs, Keys, And Leads
@@ -100,6 +101,7 @@ Research references:
 - Added sequencer Groove modes and a per-step timing lane so UKG templates can push selected offbeats without moving every step equally.
 - Added UKG organ stab, chord stab, and bell pluck randomization recipes.
 - Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts, One Shot playback, and synced stutter/retrigger.
+- Added UKG bass guardrails: audible mono glide, restrained sub/octave choices, limited detune/spread, Width mono-bass protection, and Guard safety.
 
 ## Next UKG Features
 
@@ -138,6 +140,7 @@ Research references:
 - Chords: organ stab, bright stab.
 - Sample: vocal chop starter.
 - Sequence: 2-step bass and offbeat stab patterns.
+- Bass presets should use the UKG guardrails as defaults: mono enabled, Glide audible but short, sub stable, upper-bass movement separated from the centered low end, and Width/Guard active.
 
 6. Width and mono-bass utility.
 

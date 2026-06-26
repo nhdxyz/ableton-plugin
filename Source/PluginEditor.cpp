@@ -304,6 +304,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(unisonDetuneSlider, unisonDetuneLabel, "Detune", Parameters::ID::unisonDetune);
     configureSlider(unisonBlendSlider, unisonBlendLabel, "Blend", Parameters::ID::unisonBlend);
     configureSlider(unisonSpreadSlider, unisonSpreadLabel, "Spread", Parameters::ID::unisonSpread);
+    configureSlider(glideSlider, glideLabel, "Glide", Parameters::ID::glideTime);
     configureSlider(macroToneSlider, macroToneLabel, "Tone", Parameters::ID::macroTone);
     configureSlider(macroDirtSlider, macroDirtLabel, "Dirt", Parameters::ID::macroDirt);
     configureSlider(macroMotionSlider, macroMotionLabel, "Motion", Parameters::ID::macroMotion);
@@ -696,6 +697,7 @@ void NateVSTAudioProcessorEditor::resized()
             monoButton.setVisible(true);
             setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, true);
             setSliderVisible(unisonSpreadSlider, unisonSpreadLabel, true);
+            setSliderVisible(glideSlider, glideLabel, true);
             recipeBox.setVisible(true);
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
@@ -740,7 +742,7 @@ void NateVSTAudioProcessorEditor::resized()
             bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             highpassFilterButton.setBounds(filterRow.reduced(3, 4));
             monoButton.setBounds(engineArea.removeFromTop(32).reduced(3, 3));
-            layoutKnobRow(engineArea.removeFromTop(68).withTrimmedTop(2), { &unisonVoicesSlider, &unisonSpreadSlider });
+            layoutKnobRow(engineArea.removeFromTop(68).withTrimmedTop(2), { &unisonVoicesSlider, &unisonSpreadSlider, &glideSlider });
 
             homeShapeLabel.setBounds(shapeArea.removeFromTop(24));
             setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
@@ -830,6 +832,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(unisonDetuneSlider, unisonDetuneLabel, true);
             setSliderVisible(unisonBlendSlider, unisonBlendLabel, true);
             setSliderVisible(unisonSpreadSlider, unisonSpreadLabel, true);
+            setSliderVisible(glideSlider, glideLabel, true);
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(resonanceSlider, resonanceLabel, true);
             setSliderVisible(filterEnvSlider, filterEnvLabel, true);
@@ -844,7 +847,7 @@ void NateVSTAudioProcessorEditor::resized()
             auto rowTwo = content.removeFromTop(130).withTrimmedTop(8);
             layoutKnobRow(rowTwo, { &unisonVoicesSlider, &unisonDetuneSlider, &unisonBlendSlider, &unisonSpreadSlider, &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
             auto rowThree = content.removeFromTop(125).withTrimmedTop(12);
-            layoutKnobRow(rowThree, { &attackSlider, &decaySlider, &sustainSlider, &releaseSlider });
+            layoutKnobRow(rowThree, { &glideSlider, &attackSlider, &decaySlider, &sustainSlider, &releaseSlider });
             break;
         }
 
@@ -1550,6 +1553,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(unisonDetuneSlider, unisonDetuneLabel, false);
     setSliderVisible(unisonBlendSlider, unisonBlendLabel, false);
     setSliderVisible(unisonSpreadSlider, unisonSpreadLabel, false);
+    setSliderVisible(glideSlider, glideLabel, false);
     setSliderVisible(macroToneSlider, macroToneLabel, false);
     setSliderVisible(macroDirtSlider, macroDirtLabel, false);
     setSliderVisible(macroMotionSlider, macroMotionLabel, false);

@@ -54,7 +54,13 @@ private:
 
     float noteVelocity = 0.0f;
     float currentFrequencyHz = 440.0f;
+    float targetFrequencyHz = 440.0f;
+    float glideStartFrequencyHz = 440.0f;
     float pitchBendSemitones = 0.0f;
+    double currentSampleRate = 44100.0;
+    int glideSamplesRemaining = 0;
+    int glideTotalSamples = 0;
+    bool hasPreviousNoteFrequency = false;
 
     std::atomic<float>* oscWave = nullptr;
     std::atomic<float>* oscOctave = nullptr;
@@ -76,6 +82,7 @@ private:
     std::atomic<float>* filterMode = nullptr;
     std::atomic<float>* driveAmount = nullptr;
     std::atomic<float>* monoMode = nullptr;
+    std::atomic<float>* glideTime = nullptr;
     std::atomic<float>* unisonVoices = nullptr;
     std::atomic<float>* unisonDetune = nullptr;
     std::atomic<float>* unisonBlend = nullptr;
@@ -85,6 +92,7 @@ private:
     std::atomic<float>* macroMotion = nullptr;
 
     void updateVoiceParameters(float envelopeValue);
+    void updateGlide();
     StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
     int getUnisonVoiceCount() const;
     float getUnisonPosition(int voiceIndex, int voiceCount) const;

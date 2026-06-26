@@ -180,6 +180,7 @@ The general club roadmap should bias the next few effects and workflows toward U
    Implemented as the Pump module. UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
 3. Width/Mono Bass.
    Implemented as the Width module. Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
+   UKG bass guardrails now force the UKG bass recipe toward mono, restrained detune/spread, protected low-cut, Width mono-bass, Guard safety, and short audible glide.
 4. Organ/Stab recipes.
    Implemented first as randomizer recipes for organ stabs, chord stabs, and bell plucks. Factory preset files and any dedicated organ oscillator mode can come later.
 5. Swing and chop sequencer templates.

@@ -27,6 +27,7 @@ Voice::Voice(Parameters::APVTS& state)
     filterMode = parameters.getRawParameterValue(Parameters::ID::filterMode);
     driveAmount = parameters.getRawParameterValue(Parameters::ID::driveAmount);
     monoMode = parameters.getRawParameterValue(Parameters::ID::monoMode);
+    glideTime = parameters.getRawParameterValue(Parameters::ID::glideTime);
     unisonVoices = parameters.getRawParameterValue(Parameters::ID::unisonVoices);
     unisonDetune = parameters.getRawParameterValue(Parameters::ID::unisonDetune);
     unisonBlend = parameters.getRawParameterValue(Parameters::ID::unisonBlend);
@@ -43,6 +44,8 @@ bool Voice::canPlaySound(juce::SynthesiserSound* sound)
 
 void Voice::prepare(double sampleRate, int maximumBlockSize)
 {
+    currentSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
+
     for (auto& oscillator : oscillators)
         oscillator.prepare(sampleRate);
 
@@ -60,7 +63,27 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
 {
     noteVelocity = velocity;
     pitchWheelMoved(currentPitchWheelPosition);
-    currentFrequencyHz = frequencyForNote(midiNoteNumber);
+    targetFrequencyHz = frequencyForNote(midiNoteNumber);
+    const auto glideSeconds = readParameter(glideTime, 0.0f);
+    const auto shouldGlide = hasPreviousNoteFrequency
+        && readParameter(monoMode, 0.0f) >= 0.5f
+        && glideSeconds > 0.001f;
+
+    if (shouldGlide)
+    {
+        glideStartFrequencyHz = juce::jmax(1.0f, currentFrequencyHz);
+        glideTotalSamples = juce::jmax(1, static_cast<int>(std::round(glideSeconds * currentSampleRate)));
+        glideSamplesRemaining = glideTotalSamples;
+    }
+    else
+    {
+        currentFrequencyHz = targetFrequencyHz;
+        glideSamplesRemaining = 0;
+        glideTotalSamples = 0;
+    }
+
+    hasPreviousNoteFrequency = true;
+
     for (auto& oscillator : oscillators)
         oscillator.reset();
 
@@ -151,6 +174,8 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
 
 void Voice::updateVoiceParameters(float envelopeValue)
 {
+    updateGlide();
+
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
     const auto waveform = static_cast<Waveform>(juce::jlimit(0, 3, waveIndex));
 
@@ -197,6 +222,21 @@ void Voice::updateVoiceParameters(float envelopeValue)
     rightFilter.setMode(mode);
     leftFilter.setCutoffAndResonance(cutoff, macroResonance);
     rightFilter.setCutoffAndResonance(cutoff, macroResonance);
+}
+
+void Voice::updateGlide()
+{
+    if (glideSamplesRemaining <= 0 || glideTotalSamples <= 0)
+    {
+        currentFrequencyHz = targetFrequencyHz;
+        return;
+    }
+
+    const auto progress = 1.0f - (static_cast<float>(glideSamplesRemaining) / static_cast<float>(glideTotalSamples));
+    const auto start = juce::jmax(1.0f, glideStartFrequencyHz);
+    const auto target = juce::jmax(1.0f, targetFrequencyHz);
+    currentFrequencyHz = start * std::pow(target / start, progress);
+    --glideSamplesRemaining;
 }
 
 Voice::StereoSample Voice::renderUnisonStack(float osc1Gain, float osc2Gain)

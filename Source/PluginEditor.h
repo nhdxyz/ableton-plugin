@@ -120,6 +120,7 @@ private:
     juce::Slider unisonDetuneSlider;
     juce::Slider unisonBlendSlider;
     juce::Slider unisonSpreadSlider;
+    juce::Slider glideSlider;
     juce::Slider macroToneSlider;
     juce::Slider macroDirtSlider;
     juce::Slider macroMotionSlider;
@@ -189,6 +190,7 @@ private:
     juce::Label unisonDetuneLabel;
     juce::Label unisonBlendLabel;
     juce::Label unisonSpreadLabel;
+    juce::Label glideLabel;
     juce::Label macroToneLabel;
     juce::Label macroDirtLabel;
     juce::Label macroMotionLabel;

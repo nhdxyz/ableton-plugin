@@ -82,6 +82,16 @@ inline constexpr auto fxReverbEnabled = "fx_reverb_enabled";
 inline constexpr auto fxReverbSize = "fx_reverb_size";
 inline constexpr auto fxReverbDamping = "fx_reverb_damping";
 inline constexpr auto fxReverbMix = "fx_reverb_mix";
+inline constexpr auto fxToneEnabled = "fx_tone_enabled";
+inline constexpr auto fxToneTilt = "fx_tone_tilt";
+inline constexpr auto fxToneLowCut = "fx_tone_low_cut";
+inline constexpr auto fxPhaserEnabled = "fx_phaser_enabled";
+inline constexpr auto fxPhaserRate = "fx_phaser_rate";
+inline constexpr auto fxPhaserDepth = "fx_phaser_depth";
+inline constexpr auto fxPhaserMix = "fx_phaser_mix";
+inline constexpr auto fxGuardEnabled = "fx_guard_enabled";
+inline constexpr auto fxGuardPush = "fx_guard_push";
+inline constexpr auto fxGuardCeiling = "fx_guard_ceiling";
 }
 
 juce::StringArray waveformChoices();

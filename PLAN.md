@@ -718,20 +718,21 @@ The plugin should have a dedicated effects area for shaping synth and sample sou
 
 ### First Effects Scope
 
+- Tone cleanup with tilt and low cut.
 - Distortion/saturation.
-- Filter/tone.
+- Phaser.
 - Chorus.
 - Delay.
 - Reverb.
 - Output trim.
-- Output safety clipper or limiter.
+- Guard output safety clipper.
 
 ### Later Effects Scope
 
 - Reorderable effects rack.
 - Per-effect dry/wet.
 - Per-effect bypass.
-- Phaser/flanger.
+- Flanger.
 - Compressor.
 - EQ.
 - Bitcrush/downsample.
@@ -994,7 +995,7 @@ Current implemented panel layout:
 - LAB: recipe dropdown, generate, mutate, variation, undo, section locks, status, and randomization bias controls.
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
 - SEQ: sequencer enable, segmented rate selector, pattern presets, copy/random/clear, groove/performance controls, and the 16-step grid.
-- FX: bypassable distortion, chorus, delay, and reverb modules.
+- FX: bypassable Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard modules.
 - LIBRARY: preset category, preset name entry, save, previous/next, preset selector, load, refresh, and preset folder status.
 - TOP BAR: panel tabs plus a compact stereo output meter.
 

@@ -493,6 +493,65 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.2f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxToneEnabled,
+        "FX Tone Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxToneTilt,
+        "FX Tone Tilt",
+        juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxToneLowCut,
+        "FX Tone Low Cut",
+        skewedRange(20.0f, 250.0f, 45.0f),
+        30.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxPhaserEnabled,
+        "FX Phaser Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPhaserRate,
+        "FX Phaser Rate",
+        skewedRange(0.05f, 8.0f, 0.45f),
+        0.32f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPhaserDepth,
+        "FX Phaser Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.42f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPhaserMix,
+        "FX Phaser Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.22f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxGuardEnabled,
+        "FX Guard Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxGuardPush,
+        "FX Guard Push",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxGuardCeiling,
+        "FX Guard Ceiling",
+        juce::NormalisableRange<float> { 0.65f, 0.98f, 0.001f },
+        0.92f));
+
     return { params.begin(), params.end() };
 }
 }

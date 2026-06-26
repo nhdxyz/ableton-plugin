@@ -70,6 +70,9 @@ private:
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
+    juce::ToggleButton fxToneEnabledButton;
+    juce::ToggleButton fxPhaserEnabledButton;
+    juce::ToggleButton fxGuardEnabledButton;
     juce::ToggleButton randomLockPitchButton;
     juce::ToggleButton randomLockEnvelopeButton;
     juce::ToggleButton randomLockFilterButton;
@@ -131,6 +134,13 @@ private:
     juce::Slider fxReverbSizeSlider;
     juce::Slider fxReverbDampingSlider;
     juce::Slider fxReverbMixSlider;
+    juce::Slider fxToneTiltSlider;
+    juce::Slider fxToneLowCutSlider;
+    juce::Slider fxPhaserRateSlider;
+    juce::Slider fxPhaserDepthSlider;
+    juce::Slider fxPhaserMixSlider;
+    juce::Slider fxGuardPushSlider;
+    juce::Slider fxGuardCeilingSlider;
 
     juce::Label octaveLabel;
     juce::Label tuneLabel;
@@ -184,6 +194,13 @@ private:
     juce::Label fxReverbSizeLabel;
     juce::Label fxReverbDampingLabel;
     juce::Label fxReverbMixLabel;
+    juce::Label fxToneTiltLabel;
+    juce::Label fxToneLowCutLabel;
+    juce::Label fxPhaserRateLabel;
+    juce::Label fxPhaserDepthLabel;
+    juce::Label fxPhaserMixLabel;
+    juce::Label fxGuardPushLabel;
+    juce::Label fxGuardCeilingLabel;
 
     juce::TextButton generateButton { "Generate" };
     juce::TextButton mutateButton { "Mutate" };

@@ -105,6 +105,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto macroDirt = 0.0f;
     auto macroMotion = 0.0f;
     auto macroSpace = 0.0f;
+    auto fxToneEnabled = false;
+    auto fxToneTilt = 0.0f;
+    auto fxToneLowCut = 30.0f;
+    auto fxPhaserEnabled = false;
+    auto fxPhaserRate = 0.32f;
+    auto fxPhaserDepth = 0.42f;
+    auto fxPhaserMix = 0.22f;
+    auto fxGuardEnabled = false;
+    auto fxGuardPush = 0.0f;
+    auto fxGuardCeiling = 0.92f;
     auto mono = true;
     auto glide = 0.0f;
 
@@ -128,6 +138,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.05f, 0.32f);
             glide = randomFloat(0.0f, 0.08f);
             unisonVoiceCount = 1;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.25f, 0.05f);
+            fxToneLowCut = randomFloat(25.0f, 45.0f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.0f, 0.12f);
+            fxGuardCeiling = randomFloat(0.9f, 0.96f);
             break;
 
         case Recipe::rollingTechBass:
@@ -151,6 +167,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             unisonDetune = randomFloat(0.0f, 0.06f);
             unisonBlend = randomFloat(0.25f, 0.5f);
             unisonSpread = randomFloat(0.0f, 0.18f);
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.12f, 0.2f);
+            fxToneLowCut = randomFloat(32.0f, 70.0f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.04f, 0.2f);
+            fxGuardCeiling = randomFloat(0.88f, 0.94f);
             break;
 
         case Recipe::acidLine:
@@ -171,6 +193,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.28f, 0.72f);
             glide = randomFloat(0.03f, 0.22f);
             unisonVoiceCount = 1;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(0.04f, 0.35f);
+            fxToneLowCut = randomFloat(35.0f, 80.0f);
+            fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.35f + (chaos * 0.25f);
+            fxPhaserRate = randomFloat(0.12f, 0.7f);
+            fxPhaserDepth = randomFloat(0.25f, 0.7f);
+            fxPhaserMix = randomFloat(0.08f, 0.28f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.08f, 0.26f);
+            fxGuardCeiling = randomFloat(0.86f, 0.93f);
             break;
 
         case Recipe::minimalBlip:
@@ -195,6 +227,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             unisonBlend = randomFloat(0.3f, 0.65f);
             unisonSpread = randomFloat(0.15f, 0.55f);
             mono = false;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.1f, 0.28f);
+            fxToneLowCut = randomFloat(35.0f, 95.0f);
+            fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.5f;
+            fxPhaserRate = randomFloat(0.18f, 1.4f);
+            fxPhaserDepth = randomFloat(0.25f, 0.82f);
+            fxPhaserMix = randomFloat(0.08f, 0.35f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.0f, 0.16f);
+            fxGuardCeiling = randomFloat(0.88f, 0.95f);
             break;
 
         case Recipe::darkStab:
@@ -219,6 +261,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             unisonBlend = randomFloat(0.45f, 0.85f);
             unisonSpread = randomFloat(0.35f, 0.8f);
             mono = false;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.45f, -0.05f);
+            fxToneLowCut = randomFloat(45.0f, 110.0f);
+            fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.35f;
+            fxPhaserRate = randomFloat(0.08f, 0.55f);
+            fxPhaserDepth = randomFloat(0.35f, 0.85f);
+            fxPhaserMix = randomFloat(0.08f, 0.3f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.04f, 0.22f);
+            fxGuardCeiling = randomFloat(0.86f, 0.94f);
             break;
 
         case Recipe::noiseFx:
@@ -246,6 +298,16 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             unisonBlend = randomFloat(0.35f, 1.0f);
             unisonSpread = randomFloat(0.35f, 1.0f);
             mono = false;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.35f, 0.45f);
+            fxToneLowCut = randomFloat(50.0f, 160.0f);
+            fxPhaserEnabled = true;
+            fxPhaserRate = randomFloat(0.05f, 2.4f);
+            fxPhaserDepth = randomFloat(0.3f, 1.0f);
+            fxPhaserMix = randomFloat(0.12f, 0.45f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.1f, 0.42f);
+            fxGuardCeiling = randomFloat(0.82f, 0.91f);
             break;
     }
 
@@ -286,6 +348,13 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroDirt = blend(Parameters::ID::macroDirt, macroDirt);
         macroMotion = blend(Parameters::ID::macroMotion, macroMotion);
         macroSpace = blend(Parameters::ID::macroSpace, macroSpace);
+        fxToneTilt = blend(Parameters::ID::fxToneTilt, fxToneTilt);
+        fxToneLowCut = blend(Parameters::ID::fxToneLowCut, fxToneLowCut);
+        fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
+        fxPhaserDepth = blend(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
+        fxPhaserMix = blend(Parameters::ID::fxPhaserMix, fxPhaserMix);
+        fxGuardPush = blend(Parameters::ID::fxGuardPush, fxGuardPush);
+        fxGuardCeiling = blend(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
         glide = blend(Parameters::ID::glideTime, glide);
     }
 
@@ -316,9 +385,19 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::filterResonance, resonance);
     setParameter(Parameters::ID::filterEnvAmount, envAmount);
     setParameter(Parameters::ID::driveAmount, drive);
+    setParameter(Parameters::ID::fxToneEnabled, fxToneEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxToneTilt, fxToneTilt);
+    setParameter(Parameters::ID::fxToneLowCut, fxToneLowCut);
+    setParameter(Parameters::ID::fxPhaserEnabled, fxPhaserEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxPhaserRate, fxPhaserRate);
+    setParameter(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
+    setParameter(Parameters::ID::fxPhaserMix, fxPhaserMix);
+    setParameter(Parameters::ID::fxGuardEnabled, fxGuardEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxGuardPush, fxGuardPush);
+    setParameter(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
     setParameter(Parameters::ID::monoMode, mono ? 1.0f : 0.0f);
     setParameter(Parameters::ID::glideTime, glide);
-    applyOutputSafety(drive);
+    applyOutputSafety(juce::jlimit(0.0f, 1.0f, drive + (fxGuardPush * 0.35f)));
 }
 
 void Randomizer::applyOutputSafety(float drive)

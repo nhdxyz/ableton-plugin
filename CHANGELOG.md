@@ -94,3 +94,11 @@
 - Added a compact stereo output meter to the top bar so output level stays visible across panels.
 - Measured output peak and RMS after the FX rack using relaxed atomics for UI reads.
 - Kept meter smoothing and repainting on the editor timer instead of the audio thread.
+
+### FX Rack Expansion
+
+- Added a bypassable Tone module with tilt and low-cut controls for quick mix cleanup.
+- Added a bypassable Phaser module with rate, depth, and mix controls.
+- Added a bypassable Guard module with push and ceiling controls for controlled output clipping.
+- Reworked the FX panel into a two-row module grid that keeps Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard visible.
+- Made randomization set conservative Tone, Phaser, and Guard values per recipe while preserving output safety.

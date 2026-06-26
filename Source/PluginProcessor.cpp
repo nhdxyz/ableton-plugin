@@ -527,7 +527,17 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxReverbEnabled,
             Parameters::ID::fxReverbSize,
             Parameters::ID::fxReverbDamping,
-            Parameters::ID::fxReverbMix
+            Parameters::ID::fxReverbMix,
+            Parameters::ID::fxToneEnabled,
+            Parameters::ID::fxToneTilt,
+            Parameters::ID::fxToneLowCut,
+            Parameters::ID::fxPhaserEnabled,
+            Parameters::ID::fxPhaserRate,
+            Parameters::ID::fxPhaserDepth,
+            Parameters::ID::fxPhaserMix,
+            Parameters::ID::fxGuardEnabled,
+            Parameters::ID::fxGuardPush,
+            Parameters::ID::fxGuardCeiling
         });
     }
 

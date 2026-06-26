@@ -5,6 +5,8 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 
+#include <vector>
+
 namespace Effects
 {
 class EffectsRack
@@ -18,9 +20,12 @@ public:
 
 private:
     Parameters::APVTS& parameters;
+    juce::dsp::Phaser<float> phaser;
     juce::dsp::Chorus<float> chorus;
     juce::Reverb reverb;
     juce::AudioBuffer<float> delayBuffer;
+    std::vector<float> toneLowCutState;
+    std::vector<float> toneTiltState;
 
     double currentSampleRate = 44100.0;
     int delayWritePosition = 0;
@@ -40,10 +45,22 @@ private:
     std::atomic<float>* fxReverbSize = nullptr;
     std::atomic<float>* fxReverbDamping = nullptr;
     std::atomic<float>* fxReverbMix = nullptr;
+    std::atomic<float>* fxToneEnabled = nullptr;
+    std::atomic<float>* fxToneTilt = nullptr;
+    std::atomic<float>* fxToneLowCut = nullptr;
+    std::atomic<float>* fxPhaserEnabled = nullptr;
+    std::atomic<float>* fxPhaserRate = nullptr;
+    std::atomic<float>* fxPhaserDepth = nullptr;
+    std::atomic<float>* fxPhaserMix = nullptr;
+    std::atomic<float>* fxGuardEnabled = nullptr;
+    std::atomic<float>* fxGuardPush = nullptr;
+    std::atomic<float>* fxGuardCeiling = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroSpace = nullptr;
 
+    void processTone(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);
+    void processPhaser(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer);
     void processReverb(juce::AudioBuffer<float>& buffer);

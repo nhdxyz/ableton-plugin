@@ -154,13 +154,22 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxAddBox.addItem("Tone", 1);
     fxAddBox.addItem("Drive", 2);
     fxAddBox.addItem("Crush", 3);
-    fxAddBox.addItem("Phaser", 4);
-    fxAddBox.addItem("Chorus", 5);
-    fxAddBox.addItem("Delay", 6);
-    fxAddBox.addItem("Reverb", 7);
-    fxAddBox.addItem("Guard", 8);
+    fxAddBox.addItem("Pump", 4);
+    fxAddBox.addItem("Phaser", 5);
+    fxAddBox.addItem("Chorus", 6);
+    fxAddBox.addItem("Delay", 7);
+    fxAddBox.addItem("Reverb", 8);
+    fxAddBox.addItem("Guard", 9);
     fxAddBox.setTextWhenNothingSelected("Add FX");
     addAndMakeVisible(fxAddBox);
+
+    fxPumpRateBox.addItem("1/4", 1);
+    fxPumpRateBox.addItem("1/8", 2);
+    fxPumpRateBox.addItem("1/8T", 3);
+    fxPumpRateBox.addItem("1/16", 4);
+    fxPumpRateBox.setTextWhenNothingSelected("Rate");
+    addAndMakeVisible(fxPumpRateBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxPumpRate, fxPumpRateBox));
 
     monoButton.setButtonText("Mono");
     addAndMakeVisible(monoButton);
@@ -185,6 +194,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxBitcrushEnabledButton.setButtonText("Crush");
     addAndMakeVisible(fxBitcrushEnabledButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxBitcrushEnabled, fxBitcrushEnabledButton));
+
+    fxPumpEnabledButton.setButtonText("Pump");
+    addAndMakeVisible(fxPumpEnabledButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxPumpEnabled, fxPumpEnabledButton));
 
     fxChorusEnabledButton.setButtonText("Chorus");
     addAndMakeVisible(fxChorusEnabledButton);
@@ -288,6 +301,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxBitcrushBitsSlider, fxBitcrushBitsLabel, "Bits", Parameters::ID::fxBitcrushBits);
     configureSlider(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, "Down", Parameters::ID::fxBitcrushDownsample);
     configureSlider(fxBitcrushMixSlider, fxBitcrushMixLabel, "Mix", Parameters::ID::fxBitcrushMix);
+    configureSlider(fxPumpDepthSlider, fxPumpDepthLabel, "Depth", Parameters::ID::fxPumpDepth);
+    configureSlider(fxPumpShapeSlider, fxPumpShapeLabel, "Shape", Parameters::ID::fxPumpShape);
+    configureSlider(fxPumpPhaseSlider, fxPumpPhaseLabel, "Phase", Parameters::ID::fxPumpPhase);
     configureSlider(fxChorusRateSlider, fxChorusRateLabel, "Rate", Parameters::ID::fxChorusRate);
     configureSlider(fxChorusDepthSlider, fxChorusDepthLabel, "Depth", Parameters::ID::fxChorusDepth);
     configureSlider(fxChorusMixSlider, fxChorusMixLabel, "Mix", Parameters::ID::fxChorusMix);
@@ -412,6 +428,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
     fxBitcrushSlotButton.onClick = [this] { selectFxModule(FxModule::bitcrush); };
+    fxPumpSlotButton.onClick = [this] { selectFxModule(FxModule::pump); };
     fxPhaserSlotButton.onClick = [this] { selectFxModule(FxModule::phaser); };
     fxChorusSlotButton.onClick = [this] { selectFxModule(FxModule::chorus); };
     fxDelaySlotButton.onClick = [this] { selectFxModule(FxModule::delay); };
@@ -472,6 +489,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
     addAndMakeVisible(fxBitcrushSlotButton);
+    addAndMakeVisible(fxPumpSlotButton);
     addAndMakeVisible(fxPhaserSlotButton);
     addAndMakeVisible(fxChorusSlotButton);
     addAndMakeVisible(fxDelaySlotButton);
@@ -914,6 +932,7 @@ void NateVSTAudioProcessorEditor::resized()
             for (auto module : { FxModule::tone,
                                  FxModule::distortion,
                                  FxModule::bitcrush,
+                                 FxModule::pump,
                                  FxModule::phaser,
                                  FxModule::chorus,
                                  FxModule::delay,
@@ -958,6 +977,17 @@ void NateVSTAudioProcessorEditor::resized()
                     setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, true);
                     setSliderVisible(fxBitcrushMixSlider, fxBitcrushMixLabel, true);
                     layoutKnobRow(controlsArea.removeFromTop(150), { &fxBitcrushBitsSlider, &fxBitcrushDownsampleSlider, &fxBitcrushMixSlider });
+                    break;
+
+                case FxModule::pump:
+                    fxPumpEnabledButton.setVisible(true);
+                    fxPumpRateBox.setVisible(true);
+                    fxPumpEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    fxPumpRateBox.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxPumpDepthSlider, fxPumpDepthLabel, true);
+                    setSliderVisible(fxPumpShapeSlider, fxPumpShapeLabel, true);
+                    setSliderVisible(fxPumpPhaseSlider, fxPumpPhaseLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxPumpDepthSlider, &fxPumpShapeSlider, &fxPumpPhaseSlider });
                     break;
 
                 case FxModule::phaser:
@@ -1250,6 +1280,7 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
     for (auto module : { FxModule::tone,
                          FxModule::distortion,
                          FxModule::bitcrush,
+                         FxModule::pump,
                          FxModule::phaser,
                          FxModule::chorus,
                          FxModule::delay,
@@ -1286,6 +1317,7 @@ juce::String NateVSTAudioProcessorEditor::fxEnabledParameterID(FxModule module) 
         case FxModule::tone: return Parameters::ID::fxToneEnabled;
         case FxModule::distortion: return Parameters::ID::fxDistortionEnabled;
         case FxModule::bitcrush: return Parameters::ID::fxBitcrushEnabled;
+        case FxModule::pump: return Parameters::ID::fxPumpEnabled;
         case FxModule::phaser: return Parameters::ID::fxPhaserEnabled;
         case FxModule::chorus: return Parameters::ID::fxChorusEnabled;
         case FxModule::delay: return Parameters::ID::fxDelayEnabled;
@@ -1303,6 +1335,7 @@ juce::String NateVSTAudioProcessorEditor::fxModuleName(FxModule module) const
         case FxModule::tone: return "Tone";
         case FxModule::distortion: return "Drive";
         case FxModule::bitcrush: return "Crush";
+        case FxModule::pump: return "Pump";
         case FxModule::phaser: return "Phaser";
         case FxModule::chorus: return "Chorus";
         case FxModule::delay: return "Delay";
@@ -1320,6 +1353,7 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::tone: return "tilt and low cut";
         case FxModule::distortion: return "saturation amount";
         case FxModule::bitcrush: return "bits downsample mix";
+        case FxModule::pump: return "sync depth shape";
         case FxModule::phaser: return "rate depth mix";
         case FxModule::chorus: return "rate depth mix";
         case FxModule::delay: return "time feedback mix";
@@ -1337,6 +1371,7 @@ juce::TextButton& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
         case FxModule::tone: return fxToneSlotButton;
         case FxModule::distortion: return fxDistortionSlotButton;
         case FxModule::bitcrush: return fxBitcrushSlotButton;
+        case FxModule::pump: return fxPumpSlotButton;
         case FxModule::phaser: return fxPhaserSlotButton;
         case FxModule::chorus: return fxChorusSlotButton;
         case FxModule::delay: return fxDelaySlotButton;
@@ -1395,9 +1430,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &fxAddBox,
+        &presetFilterBox, &fxAddBox, &fxPumpRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
-        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
+        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
         &fxToneEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
@@ -1410,7 +1445,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton,
-        &fxRemoveButton, &fxToneSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPhaserSlotButton, &fxChorusSlotButton,
+        &fxRemoveButton, &fxToneSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxPhaserSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,
         &sequencerGrid
@@ -1462,6 +1497,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(fxBitcrushBitsSlider, fxBitcrushBitsLabel, false);
     setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, false);
     setSliderVisible(fxBitcrushMixSlider, fxBitcrushMixLabel, false);
+    setSliderVisible(fxPumpDepthSlider, fxPumpDepthLabel, false);
+    setSliderVisible(fxPumpShapeSlider, fxPumpShapeLabel, false);
+    setSliderVisible(fxPumpPhaseSlider, fxPumpPhaseLabel, false);
     setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, false);
     setSliderVisible(fxChorusDepthSlider, fxChorusDepthLabel, false);
     setSliderVisible(fxChorusMixSlider, fxChorusMixLabel, false);

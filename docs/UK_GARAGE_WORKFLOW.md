@@ -89,6 +89,7 @@ Research references:
 - Added a `UKG` sequencer preset button.
 - Added a skippy 2-step sequencer preset with high swing, short gates, and ghost-note probability.
 - Added the `Crush` FX module and biased the UKG recipe toward light bitcrush/downsample color when useful.
+- Added the `Pump` FX module and biased the UKG recipe toward tempo-synced ducking/pump movement.
 
 ## Next UKG Features
 
@@ -102,10 +103,11 @@ Research references:
 
 2. Pump/Duck FX.
 
+- Implemented as the `Pump` FX module.
 - Tempo-synced volume shaper.
 - Depth, rate, shape, and phase controls.
 - Useful for UKG, house, and garage-adjacent bass movement.
-- Should be available as an FX rack module and as a simple macro target.
+- Available as an FX rack module. Simple macro/mod assignment should come through the future MOD workflow.
 
 3. Organ/Stab source.
 

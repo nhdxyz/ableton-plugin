@@ -5,6 +5,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 
+#include <optional>
 #include <vector>
 
 namespace Effects
@@ -16,7 +17,7 @@ public:
 
     void prepare(double sampleRate, int maximumBlockSize, int numChannels);
     void reset();
-    void process(juce::AudioBuffer<float>& buffer, float outputGainDb);
+    void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
 
 private:
     Parameters::APVTS& parameters;
@@ -30,6 +31,8 @@ private:
     std::vector<int> bitcrushHoldCounter;
 
     double currentSampleRate = 44100.0;
+    double pumpPhase = 0.0;
+    float pumpSmoothedGain = 1.0f;
     int delayWritePosition = 0;
     int preparedChannels = 2;
 
@@ -39,6 +42,11 @@ private:
     std::atomic<float>* fxBitcrushBits = nullptr;
     std::atomic<float>* fxBitcrushDownsample = nullptr;
     std::atomic<float>* fxBitcrushMix = nullptr;
+    std::atomic<float>* fxPumpEnabled = nullptr;
+    std::atomic<float>* fxPumpRate = nullptr;
+    std::atomic<float>* fxPumpDepth = nullptr;
+    std::atomic<float>* fxPumpShape = nullptr;
+    std::atomic<float>* fxPumpPhase = nullptr;
     std::atomic<float>* fxChorusEnabled = nullptr;
     std::atomic<float>* fxChorusRate = nullptr;
     std::atomic<float>* fxChorusDepth = nullptr;
@@ -67,6 +75,7 @@ private:
     void processTone(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);
     void processBitcrush(juce::AudioBuffer<float>& buffer);
+    void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processPhaser(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer);

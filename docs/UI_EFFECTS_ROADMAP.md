@@ -177,7 +177,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 1. Vocal chop sampler workflow.
    This is the biggest genre fit. It needs one-shot/gated modes, short slice ranges, pitch offsets, reverse, retrigger/stutter, and sequencer triggering.
 2. Pump/Duck.
-   UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
+   Implemented as the Pump module. UKG bass and chords benefit from tempo-locked movement even when the DAW is not routing a real sidechain into the instrument.
 3. Width/Mono Bass.
    Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
 4. Organ/Stab recipes.
@@ -199,7 +199,7 @@ Good for minimal clicks, rough digital texture, old sampler color, and aggressiv
 
 3. Pump / Duck
 
-An internal tempo-sync pump gives sidechain-style movement without requiring external sidechain routing. Start with a synced envelope amount/rate/shape. Real external sidechain can come much later.
+Implemented as the Pump module. An internal tempo-sync pump gives sidechain-style movement without requiring external sidechain routing. The first version uses synced rate, depth, shape, phase, host PPQ alignment when available, and a BPM-based fallback. Real external sidechain can come much later.
 
 4. Stereo Width / Mono Bass
 
@@ -356,7 +356,7 @@ Add in this order:
 
 1. Bitcrusher/downsample. Implemented as the Crush module.
 2. Flanger.
-3. Pump/Duck.
+3. Pump/Duck. Implemented as the Pump module.
 4. Stereo Width/Mono Bass.
 5. Three-Band EQ.
 

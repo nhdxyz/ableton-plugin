@@ -12,6 +12,7 @@
 
 #include <atomic>
 #include <initializer_list>
+#include <optional>
 #include <random>
 #include <vector>
 
@@ -121,6 +122,7 @@ private:
     void restoreSequencerFromState(const juce::ValueTree& state);
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     double getHostBpm() const;
+    std::optional<double> getHostPpqPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     juce::ValueTree createPluginState();
     void restorePluginState(const juce::ValueTree& state);

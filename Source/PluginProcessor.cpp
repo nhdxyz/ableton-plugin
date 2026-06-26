@@ -56,10 +56,14 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     buffer.clear();
 
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
-    patternSequencer.process(midiMessages, buffer.getNumSamples(), getHostBpm());
+    const auto hostBpm = getHostBpm();
+    patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm);
     synthEngine.render(buffer, midiMessages);
     samplePlayer.render(buffer, midiMessages);
-    effectsRack.process(buffer, outputGain != nullptr ? outputGain->load() : -8.0f);
+    effectsRack.process(buffer,
+                        outputGain != nullptr ? outputGain->load() : -8.0f,
+                        hostBpm,
+                        getHostPpqPosition());
     updateOutputMeters(buffer);
 }
 
@@ -678,6 +682,11 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxBitcrushBits,
             Parameters::ID::fxBitcrushDownsample,
             Parameters::ID::fxBitcrushMix,
+            Parameters::ID::fxPumpEnabled,
+            Parameters::ID::fxPumpRate,
+            Parameters::ID::fxPumpDepth,
+            Parameters::ID::fxPumpShape,
+            Parameters::ID::fxPumpPhase,
             Parameters::ID::fxChorusEnabled,
             Parameters::ID::fxChorusRate,
             Parameters::ID::fxChorusDepth,
@@ -779,6 +788,16 @@ double NateVSTAudioProcessor::getHostBpm() const
                 return *bpm;
 
     return 124.0;
+}
+
+std::optional<double> NateVSTAudioProcessor::getHostPpqPosition() const
+{
+    if (auto* playHead = getPlayHead())
+        if (auto position = playHead->getPosition())
+            if (auto ppqPosition = position->getPpqPosition())
+                return *ppqPosition;
+
+    return std::nullopt;
 }
 
 void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept

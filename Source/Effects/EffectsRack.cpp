@@ -11,6 +11,17 @@ float onePoleAlpha(float frequency, double sampleRate)
     const auto safeSampleRate = juce::jmax(1.0, sampleRate);
     return 1.0f - std::exp((-juce::MathConstants<float>::twoPi * safeFrequency) / static_cast<float>(safeSampleRate));
 }
+
+double pumpCyclesPerBeat(int rateIndex)
+{
+    switch (rateIndex)
+    {
+        case 1: return 2.0; // 1/8
+        case 2: return 3.0; // 1/8 triplet
+        case 3: return 4.0; // 1/16
+        default: return 1.0; // 1/4
+    }
+}
 }
 
 namespace Effects
@@ -24,6 +35,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxBitcrushBits = parameters.getRawParameterValue(Parameters::ID::fxBitcrushBits);
     fxBitcrushDownsample = parameters.getRawParameterValue(Parameters::ID::fxBitcrushDownsample);
     fxBitcrushMix = parameters.getRawParameterValue(Parameters::ID::fxBitcrushMix);
+    fxPumpEnabled = parameters.getRawParameterValue(Parameters::ID::fxPumpEnabled);
+    fxPumpRate = parameters.getRawParameterValue(Parameters::ID::fxPumpRate);
+    fxPumpDepth = parameters.getRawParameterValue(Parameters::ID::fxPumpDepth);
+    fxPumpShape = parameters.getRawParameterValue(Parameters::ID::fxPumpShape);
+    fxPumpPhase = parameters.getRawParameterValue(Parameters::ID::fxPumpPhase);
     fxChorusEnabled = parameters.getRawParameterValue(Parameters::ID::fxChorusEnabled);
     fxChorusRate = parameters.getRawParameterValue(Parameters::ID::fxChorusRate);
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
@@ -82,14 +98,17 @@ void EffectsRack::reset()
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
+    pumpPhase = 0.0;
+    pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
 }
 
-void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb)
+void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
 {
     processTone(buffer);
     processDistortion(buffer);
     processBitcrush(buffer);
+    processPump(buffer, bpm, ppqPosition);
     processPhaser(buffer);
     processChorus(buffer);
     processDelay(buffer);
@@ -180,6 +199,52 @@ void EffectsRack::processBitcrush(juce::AudioBuffer<float>& buffer)
             --holdCounter;
             samples[sampleIndex] = (input * (1.0f - mix)) + (heldSample * mix);
         }
+    }
+}
+
+void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition)
+{
+    if (readParameter(fxPumpEnabled, 0.0f) < 0.5f)
+    {
+        pumpSmoothedGain = 1.0f;
+        return;
+    }
+
+    const auto safeSampleRate = juce::jmax(1.0, currentSampleRate);
+    const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
+    const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(readParameter(fxPumpRate, 0.0f))));
+    const auto cyclesPerBeat = pumpCyclesPerBeat(rateIndex);
+    const auto phaseIncrement = (safeBpm / 60.0) * cyclesPerBeat / safeSampleRate;
+    const auto depth = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpDepth, 0.35f));
+    const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f));
+    const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpPhase, 0.0f));
+    const auto curve = juce::jmap(shape, 0.35f, 4.5f);
+    const auto smoothing = 1.0f - std::exp(-1.0f / static_cast<float>(safeSampleRate * 0.0025));
+
+    if (ppqPosition.has_value())
+    {
+        pumpPhase = std::fmod(*ppqPosition * cyclesPerBeat, 1.0);
+        if (pumpPhase < 0.0)
+            pumpPhase += 1.0;
+    }
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        auto shapedPhase = std::fmod(pumpPhase + static_cast<double>(phaseOffset), 1.0);
+        if (shapedPhase < 0.0)
+            shapedPhase += 1.0;
+
+        const auto recovery = static_cast<float>(shapedPhase);
+        const auto duckAmount = std::pow(1.0f - recovery, curve);
+        const auto targetGain = juce::jlimit(0.0f, 1.0f, 1.0f - (depth * duckAmount));
+        pumpSmoothedGain += (targetGain - pumpSmoothedGain) * smoothing;
+
+        for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+            buffer.setSample(channel, sampleIndex, buffer.getSample(channel, sampleIndex) * pumpSmoothedGain);
+
+        pumpPhase += phaseIncrement;
+        while (pumpPhase >= 1.0)
+            pumpPhase -= 1.0;
     }
 }
 

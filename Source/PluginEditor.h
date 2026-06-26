@@ -38,6 +38,7 @@ private:
         tone = 0,
         distortion,
         bitcrush,
+        pump,
         phaser,
         chorus,
         delay,
@@ -77,12 +78,14 @@ private:
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox fxAddBox;
+    juce::ComboBox fxPumpRateBox;
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
     juce::ToggleButton sequencerEnabledButton;
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;
+    juce::ToggleButton fxPumpEnabledButton;
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
@@ -144,6 +147,9 @@ private:
     juce::Slider fxBitcrushBitsSlider;
     juce::Slider fxBitcrushDownsampleSlider;
     juce::Slider fxBitcrushMixSlider;
+    juce::Slider fxPumpDepthSlider;
+    juce::Slider fxPumpShapeSlider;
+    juce::Slider fxPumpPhaseSlider;
     juce::Slider fxChorusRateSlider;
     juce::Slider fxChorusDepthSlider;
     juce::Slider fxChorusMixSlider;
@@ -207,6 +213,9 @@ private:
     juce::Label fxBitcrushBitsLabel;
     juce::Label fxBitcrushDownsampleLabel;
     juce::Label fxBitcrushMixLabel;
+    juce::Label fxPumpDepthLabel;
+    juce::Label fxPumpShapeLabel;
+    juce::Label fxPumpPhaseLabel;
     juce::Label fxChorusRateLabel;
     juce::Label fxChorusDepthLabel;
     juce::Label fxChorusMixLabel;
@@ -268,6 +277,7 @@ private:
     juce::TextButton fxToneSlotButton { "Tone" };
     juce::TextButton fxDistortionSlotButton { "Drive" };
     juce::TextButton fxBitcrushSlotButton { "Crush" };
+    juce::TextButton fxPumpSlotButton { "Pump" };
     juce::TextButton fxPhaserSlotButton { "Phaser" };
     juce::TextButton fxChorusSlotButton { "Chorus" };
     juce::TextButton fxDelaySlotButton { "Delay" };

@@ -449,6 +449,35 @@ APVTS::ParameterLayout createLayout()
         0.25f));
 
     add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxPumpEnabled,
+        "FX Pump Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::fxPumpRate,
+        "FX Pump Rate",
+        juce::StringArray { "1/4", "1/8", "1/8T", "1/16" },
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPumpDepth,
+        "FX Pump Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPumpShape,
+        "FX Pump Shape",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.45f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxPumpPhase,
+        "FX Pump Phase",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
         ID::fxChorusEnabled,
         "FX Chorus Enabled",
         false));

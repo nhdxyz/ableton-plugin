@@ -153,3 +153,11 @@
 
 - Expanded `docs/UK_GARAGE_WORKFLOW.md` with researched UKG sound targets for groove, bass, stabs, vocal chops, and FX flavor.
 - Added UKG-specific priorities to `docs/UI_EFFECTS_ROADMAP.md` so upcoming FX and UI work favors vocal chops, pump/duck, mono-safe width, organ/stab recipes, and swing templates.
+
+### Pump/Duck FX
+
+- Added a tempo-synced `Pump` FX module inspired by common sidechain/volume-shaper workflows for house and UK garage.
+- Added stable Pump parameters for bypass, synced rate, depth, shape, and phase.
+- Aligned Pump to host PPQ position when available, with BPM-based free-run fallback when a host does not expose grid position.
+- Added Pump to the FX Add menu, rack list, selected-module editor, FX randomization lock, and recipe randomization.
+- Biased UKG, deep house, rolling tech, stab, minimal, acid, and noise recipes toward conservative-to-aggressive Pump settings where useful.

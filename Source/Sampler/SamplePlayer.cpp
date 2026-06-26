@@ -13,6 +13,7 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleStart = parameters.getRawParameterValue(Parameters::ID::sampleStart);
     sampleEnd = parameters.getRawParameterValue(Parameters::ID::sampleEnd);
     sampleReverse = parameters.getRawParameterValue(Parameters::ID::sampleReverse);
+    samplePlaybackMode = parameters.getRawParameterValue(Parameters::ID::samplePlaybackMode);
     sampleTranspose = parameters.getRawParameterValue(Parameters::ID::sampleTranspose);
     sampleGain = parameters.getRawParameterValue(Parameters::ID::sampleGain);
     sampleMix = parameters.getRawParameterValue(Parameters::ID::sampleMix);
@@ -102,16 +103,27 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
     if (! lock.isLocked() || sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return;
 
+    auto cursor = 0;
+
     for (const auto metadata : midi)
     {
         const auto message = metadata.getMessage();
+        const auto eventPosition = juce::jlimit(0, outputBuffer.getNumSamples(), metadata.samplePosition);
+
+        if (eventPosition > cursor)
+        {
+            renderActiveVoices(*sampleData, outputBuffer, cursor, eventPosition - cursor);
+            cursor = eventPosition;
+        }
+
         if (message.isNoteOn())
             startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity());
+        else if (message.isNoteOff())
+            stopVoicesForNote(message.getNoteNumber());
     }
 
-    for (auto& voice : voices)
-        if (voice.active)
-            renderVoice(voice, *sampleData, outputBuffer, 0, outputBuffer.getNumSamples());
+    if (cursor < outputBuffer.getNumSamples())
+        renderActiveVoices(*sampleData, outputBuffer, cursor, outputBuffer.getNumSamples() - cursor);
 }
 
 void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity)
@@ -136,11 +148,33 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->active = true;
     voiceToUse->startSample = currentRegion.startSample;
     voiceToUse->endSample = currentRegion.endSample;
+    voiceToUse->midiNoteNumber = midiNoteNumber;
     voiceToUse->reverse = reverse;
+    voiceToUse->gated = readParameter(samplePlaybackMode, 1.0f) < 0.5f;
     voiceToUse->velocity = velocity;
     voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
+}
+
+void SamplePlayer::stopVoicesForNote(int midiNoteNumber)
+{
+    for (auto& voice : voices)
+        if (voice.active && voice.gated && voice.midiNoteNumber == midiNoteNumber)
+            voice.active = false;
+}
+
+void SamplePlayer::renderActiveVoices(const SampleData& data,
+                                      juce::AudioBuffer<float>& outputBuffer,
+                                      int startSampleInBlock,
+                                      int numSamples)
+{
+    if (numSamples <= 0)
+        return;
+
+    for (auto& voice : voices)
+        if (voice.active)
+            renderVoice(voice, data, outputBuffer, startSampleInBlock, numSamples);
 }
 
 void SamplePlayer::renderVoice(Voice& voice,

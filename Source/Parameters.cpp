@@ -340,6 +340,12 @@ APVTS::ParameterLayout createLayout()
         "Sample Reverse",
         false));
 
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::samplePlaybackMode,
+        "Sample Playback Mode",
+        juce::StringArray { "Gate", "One Shot" },
+        1));
+
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::sampleTranspose,
         "Sample Transpose",

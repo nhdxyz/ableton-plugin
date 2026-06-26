@@ -76,6 +76,7 @@ private:
     juce::ComboBox recipeBox;
     juce::ComboBox sequencerRateBox;
     juce::ComboBox sequencerPatternBox;
+    juce::ComboBox sampleModeBox;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;

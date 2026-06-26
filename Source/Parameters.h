@@ -56,6 +56,7 @@ inline constexpr auto sampleEnabled = "sample_enabled";
 inline constexpr auto sampleStart = "sample_start";
 inline constexpr auto sampleEnd = "sample_end";
 inline constexpr auto sampleReverse = "sample_reverse";
+inline constexpr auto samplePlaybackMode = "sample_playback_mode";
 inline constexpr auto sampleTranspose = "sample_transpose";
 inline constexpr auto sampleGain = "sample_gain";
 inline constexpr auto sampleMix = "sample_mix";

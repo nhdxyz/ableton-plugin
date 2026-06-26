@@ -151,6 +151,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
     addAndMakeVisible(sequencerPatternBox);
 
+    sampleModeBox.addItem("Gate", 1);
+    sampleModeBox.addItem("One Shot", 2);
+    sampleModeBox.setTextWhenNothingSelected("Mode");
+    addAndMakeVisible(sampleModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
+
     addAndMakeVisible(presetBox);
 
     presetCategoryBox.addItemList(presetCategoryChoices(), 1);
@@ -879,6 +885,7 @@ void NateVSTAudioProcessorEditor::resized()
             ukgChopButton.setVisible(true);
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
+            sampleModeBox.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
@@ -888,6 +895,7 @@ void NateVSTAudioProcessorEditor::resized()
             ukgChopButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
             sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
+            sampleModeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
             sampleNameLabel.setBounds(actionRow.reduced(8, 4));
             auto cutRow = content.removeFromTop(70).withTrimmedTop(18);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
@@ -1482,7 +1490,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &sampleModeBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

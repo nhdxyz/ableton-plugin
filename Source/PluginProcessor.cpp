@@ -177,6 +177,7 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
     setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
     setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
     return true;
 }
 
@@ -209,6 +210,7 @@ bool NateVSTAudioProcessor::randomizeSampleCut()
     setParameterPlainValue(Parameters::ID::sampleStart, start);
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
     setParameterPlainValue(Parameters::ID::sampleTranspose, transposeDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
@@ -239,6 +241,7 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     setParameterPlainValue(Parameters::ID::sampleStart, start);
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleTranspose, pitchChoices[pitchDistribution(sampleRandomEngine)]);
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
@@ -844,6 +847,7 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         Parameters::ID::sampleStart,
         Parameters::ID::sampleEnd,
         Parameters::ID::sampleReverse,
+        Parameters::ID::samplePlaybackMode,
         Parameters::ID::sampleTranspose,
         Parameters::ID::sampleGain,
         Parameters::ID::sampleMix

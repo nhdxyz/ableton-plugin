@@ -99,8 +99,8 @@ Research references:
 
 1. Vocal chop mode for the sampler.
 
-- Added a `UKG Chop` action for short chop windows, musical pitch choices, reverse variation, and automatic Vocal Chop sequencer template application.
-- Add one-shot/gated playback option.
+- Added a `UKG Chop` action for short chop windows, musical pitch choices, reverse variation, Gate playback, and automatic Vocal Chop sequencer template application.
+- Added one-shot/gated playback option.
 - Tighter random cut ranges for short phrases are implemented in `UKG Chop`.
 - Quick pitch choices such as -12, -7, 0, +7, +12 are implemented in `UKG Chop`.
 - Add retrigger/stutter timing tied to the sequencer rate.

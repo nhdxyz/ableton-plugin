@@ -47,8 +47,10 @@ private:
         double increment = 1.0;
         int startSample = 0;
         int endSample = 0;
+        int midiNoteNumber = -1;
         float velocity = 0.0f;
         bool reverse = false;
+        bool gated = false;
     };
 
     Parameters::APVTS& parameters;
@@ -63,11 +65,14 @@ private:
     std::atomic<float>* sampleStart = nullptr;
     std::atomic<float>* sampleEnd = nullptr;
     std::atomic<float>* sampleReverse = nullptr;
+    std::atomic<float>* samplePlaybackMode = nullptr;
     std::atomic<float>* sampleTranspose = nullptr;
     std::atomic<float>* sampleGain = nullptr;
     std::atomic<float>* sampleMix = nullptr;
 
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity);
+    void stopVoicesForNote(int midiNoteNumber);
+    void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     SampleRegion currentRegionFor(const SampleData& data) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;

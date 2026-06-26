@@ -123,6 +123,11 @@ DEFAULTS = {
     "fx_guard_enabled": 0,
     "fx_guard_push": 0.0,
     "fx_guard_ceiling": 0.92,
+    "fx_flanger_enabled": 0,
+    "fx_flanger_rate": 0.22,
+    "fx_flanger_depth": 0.32,
+    "fx_flanger_feedback": 0.18,
+    "fx_flanger_mix": 0.18,
 }
 
 for slot_index in range(1, 9):

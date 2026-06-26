@@ -245,3 +245,10 @@
 - Implemented safe synth destinations for filter cutoff, resonance, filter envelope amount, drive, oscillator 2 tune, and oscillator 2 level.
 - Made randomization seed conservative LFO/envelope assignments for bass, UKG stabs, plucks, minimal blips, and noise FX.
 - Regenerated the UKG factory preset pack with modulation defaults.
+
+### Flanger FX
+
+- Added a bypassable Flanger module to the focused FX rack.
+- Added stable Flanger parameters for rate, depth, feedback, and mix.
+- Processed Flanger after Phaser and before Chorus for short-delay metallic movement.
+- Added Flanger to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.

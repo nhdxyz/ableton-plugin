@@ -22,6 +22,7 @@ public:
 private:
     Parameters::APVTS& parameters;
     juce::dsp::Phaser<float> phaser;
+    juce::dsp::Chorus<float> flanger;
     juce::dsp::Chorus<float> chorus;
     juce::Reverb reverb;
     juce::AudioBuffer<float> delayBuffer;
@@ -73,6 +74,11 @@ private:
     std::atomic<float>* fxGuardEnabled = nullptr;
     std::atomic<float>* fxGuardPush = nullptr;
     std::atomic<float>* fxGuardCeiling = nullptr;
+    std::atomic<float>* fxFlangerEnabled = nullptr;
+    std::atomic<float>* fxFlangerRate = nullptr;
+    std::atomic<float>* fxFlangerDepth = nullptr;
+    std::atomic<float>* fxFlangerFeedback = nullptr;
+    std::atomic<float>* fxFlangerMix = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroSpace = nullptr;
 
@@ -81,6 +87,7 @@ private:
     void processBitcrush(juce::AudioBuffer<float>& buffer);
     void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processPhaser(juce::AudioBuffer<float>& buffer);
+    void processFlanger(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer);
     void processReverb(juce::AudioBuffer<float>& buffer);

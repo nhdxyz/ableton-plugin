@@ -785,6 +785,36 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.65f, 0.98f, 0.001f },
         0.92f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxFlangerEnabled,
+        "FX Flanger Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxFlangerRate,
+        "FX Flanger Rate",
+        skewedRange(0.03f, 6.0f, 0.35f),
+        0.22f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxFlangerDepth,
+        "FX Flanger Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.32f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxFlangerFeedback,
+        "FX Flanger Feedback",
+        juce::NormalisableRange<float> { -0.85f, 0.85f, 0.001f },
+        0.18f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxFlangerMix,
+        "FX Flanger Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.18f));
+
     return { params.begin(), params.end() };
 }
 }

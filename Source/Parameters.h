@@ -154,6 +154,11 @@ inline constexpr auto fxPhaserMix = "fx_phaser_mix";
 inline constexpr auto fxGuardEnabled = "fx_guard_enabled";
 inline constexpr auto fxGuardPush = "fx_guard_push";
 inline constexpr auto fxGuardCeiling = "fx_guard_ceiling";
+inline constexpr auto fxFlangerEnabled = "fx_flanger_enabled";
+inline constexpr auto fxFlangerRate = "fx_flanger_rate";
+inline constexpr auto fxFlangerDepth = "fx_flanger_depth";
+inline constexpr auto fxFlangerFeedback = "fx_flanger_feedback";
+inline constexpr auto fxFlangerMix = "fx_flanger_mix";
 }
 
 juce::StringArray waveformChoices();

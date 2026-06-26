@@ -65,6 +65,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxGuardEnabled = parameters.getRawParameterValue(Parameters::ID::fxGuardEnabled);
     fxGuardPush = parameters.getRawParameterValue(Parameters::ID::fxGuardPush);
     fxGuardCeiling = parameters.getRawParameterValue(Parameters::ID::fxGuardCeiling);
+    fxFlangerEnabled = parameters.getRawParameterValue(Parameters::ID::fxFlangerEnabled);
+    fxFlangerRate = parameters.getRawParameterValue(Parameters::ID::fxFlangerRate);
+    fxFlangerDepth = parameters.getRawParameterValue(Parameters::ID::fxFlangerDepth);
+    fxFlangerFeedback = parameters.getRawParameterValue(Parameters::ID::fxFlangerFeedback);
+    fxFlangerMix = parameters.getRawParameterValue(Parameters::ID::fxFlangerMix);
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
     macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
 }
@@ -81,6 +86,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     };
 
     phaser.prepare(spec);
+    flanger.prepare(spec);
     chorus.prepare(spec);
     reverb.setSampleRate(currentSampleRate);
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
@@ -95,6 +101,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
 void EffectsRack::reset()
 {
     phaser.reset();
+    flanger.reset();
     chorus.reset();
     reverb.reset();
     delayBuffer.clear();
@@ -115,6 +122,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
     processBitcrush(buffer);
     processPump(buffer, bpm, ppqPosition);
     processPhaser(buffer);
+    processFlanger(buffer);
     processChorus(buffer);
     processDelay(buffer);
     processReverb(buffer);
@@ -284,6 +292,22 @@ void EffectsRack::processChorus(juce::AudioBuffer<float>& buffer)
     juce::dsp::AudioBlock<float> block(buffer);
     juce::dsp::ProcessContextReplacing<float> context(block);
     chorus.process(context);
+}
+
+void EffectsRack::processFlanger(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxFlangerEnabled, 0.0f) < 0.5f)
+        return;
+
+    flanger.setRate(readParameter(fxFlangerRate, 0.22f));
+    flanger.setDepth(readParameter(fxFlangerDepth, 0.32f));
+    flanger.setCentreDelay(2.4f);
+    flanger.setFeedback(readParameter(fxFlangerFeedback, 0.18f));
+    flanger.setMix(readParameter(fxFlangerMix, 0.18f));
+
+    juce::dsp::AudioBlock<float> block(buffer);
+    juce::dsp::ProcessContextReplacing<float> context(block);
+    flanger.process(context);
 }
 
 void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)

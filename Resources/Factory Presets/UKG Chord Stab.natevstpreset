@@ -114,6 +114,11 @@
   <PARAM id="fx_guard_enabled" value="1" />
   <PARAM id="fx_guard_push" value="0" />
   <PARAM id="fx_guard_ceiling" value="0.92" />
+  <PARAM id="fx_flanger_enabled" value="0" />
+  <PARAM id="fx_flanger_rate" value="0.22" />
+  <PARAM id="fx_flanger_depth" value="0.32" />
+  <PARAM id="fx_flanger_feedback" value="0.18" />
+  <PARAM id="fx_flanger_mix" value="0.18" />
   <PARAM id="mod_slot_1_source" value="2" />
   <PARAM id="mod_slot_1_destination" value="1" />
   <PARAM id="mod_slot_1_amount" value="0.14" />

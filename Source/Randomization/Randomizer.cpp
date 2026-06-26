@@ -124,6 +124,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxPhaserRate = 0.32f;
     auto fxPhaserDepth = 0.42f;
     auto fxPhaserMix = 0.22f;
+    auto fxFlangerEnabled = false;
+    auto fxFlangerRate = 0.22f;
+    auto fxFlangerDepth = 0.32f;
+    auto fxFlangerFeedback = 0.18f;
+    auto fxFlangerMix = 0.18f;
     auto fxGuardEnabled = false;
     auto fxGuardPush = 0.0f;
     auto fxGuardCeiling = 0.92f;
@@ -591,6 +596,40 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
     }
 
+    switch (recipe)
+    {
+        case Recipe::minimalBlip:
+        case Recipe::noiseFx:
+            fxFlangerEnabled = true;
+            fxFlangerRate = randomFloat(0.08f, 1.2f);
+            fxFlangerDepth = randomFloat(0.35f, 0.78f);
+            fxFlangerFeedback = randomFloat(-0.32f, 0.5f);
+            fxFlangerMix = randomFloat(0.08f, 0.32f);
+            break;
+
+        case Recipe::acidLine:
+        case Recipe::darkStab:
+        case Recipe::ukgOrganStab:
+        case Recipe::ukgChordStab:
+        case Recipe::ukgBellPluck:
+            fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.2f + (chaos * 0.12f);
+            fxFlangerRate = randomFloat(0.05f, 0.48f);
+            fxFlangerDepth = randomFloat(0.16f, 0.52f);
+            fxFlangerFeedback = randomFloat(0.02f, 0.26f);
+            fxFlangerMix = randomFloat(0.03f, 0.16f);
+            break;
+
+        case Recipe::deepHouseBass:
+        case Recipe::rollingTechBass:
+        case Recipe::ukgTwoStepBass:
+            fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.12f + (chaos * 0.08f);
+            fxFlangerRate = randomFloat(0.05f, 0.32f);
+            fxFlangerDepth = randomFloat(0.12f, 0.34f);
+            fxFlangerFeedback = randomFloat(0.02f, 0.16f);
+            fxFlangerMix = randomFloat(0.02f, 0.09f);
+            break;
+    }
+
     const auto cutoffBias = std::pow(2.0f, brightnessBias);
     cutoff = juce::jlimit(35.0f, 18000.0f, cutoff * cutoffBias);
     drive = juce::jlimit(0.0f, 0.95f, drive + (driveBias * 0.24f));
@@ -641,6 +680,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
         fxPhaserDepth = blend(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
         fxPhaserMix = blend(Parameters::ID::fxPhaserMix, fxPhaserMix);
+        fxFlangerRate = blend(Parameters::ID::fxFlangerRate, fxFlangerRate);
+        fxFlangerDepth = blend(Parameters::ID::fxFlangerDepth, fxFlangerDepth);
+        fxFlangerFeedback = blend(Parameters::ID::fxFlangerFeedback, fxFlangerFeedback);
+        fxFlangerMix = blend(Parameters::ID::fxFlangerMix, fxFlangerMix);
         fxGuardPush = blend(Parameters::ID::fxGuardPush, fxGuardPush);
         fxGuardCeiling = blend(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
         glide = blend(Parameters::ID::glideTime, glide);
@@ -718,6 +761,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxPhaserRate, fxPhaserRate);
     setParameter(Parameters::ID::fxPhaserDepth, fxPhaserDepth);
     setParameter(Parameters::ID::fxPhaserMix, fxPhaserMix);
+    setParameter(Parameters::ID::fxFlangerEnabled, fxFlangerEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxFlangerRate, fxFlangerRate);
+    setParameter(Parameters::ID::fxFlangerDepth, fxFlangerDepth);
+    setParameter(Parameters::ID::fxFlangerFeedback, fxFlangerFeedback);
+    setParameter(Parameters::ID::fxFlangerMix, fxFlangerMix);
     setParameter(Parameters::ID::fxGuardEnabled, fxGuardEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxGuardPush, fxGuardPush);
     setParameter(Parameters::ID::fxGuardCeiling, fxGuardCeiling);

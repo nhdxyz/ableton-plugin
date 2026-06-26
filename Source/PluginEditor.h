@@ -43,6 +43,7 @@ private:
         bitcrush,
         pump,
         phaser,
+        flanger,
         chorus,
         delay,
         reverb,
@@ -111,6 +112,7 @@ private:
     juce::ToggleButton fxWidthEnabledButton;
     juce::ToggleButton fxToneEnabledButton;
     juce::ToggleButton fxPhaserEnabledButton;
+    juce::ToggleButton fxFlangerEnabledButton;
     juce::ToggleButton fxGuardEnabledButton;
     juce::ToggleButton randomLockPitchButton;
     juce::ToggleButton randomLockEnvelopeButton;
@@ -200,6 +202,10 @@ private:
     juce::Slider fxPhaserRateSlider;
     juce::Slider fxPhaserDepthSlider;
     juce::Slider fxPhaserMixSlider;
+    juce::Slider fxFlangerRateSlider;
+    juce::Slider fxFlangerDepthSlider;
+    juce::Slider fxFlangerFeedbackSlider;
+    juce::Slider fxFlangerMixSlider;
     juce::Slider fxGuardPushSlider;
     juce::Slider fxGuardCeilingSlider;
 
@@ -280,6 +286,10 @@ private:
     juce::Label fxPhaserRateLabel;
     juce::Label fxPhaserDepthLabel;
     juce::Label fxPhaserMixLabel;
+    juce::Label fxFlangerRateLabel;
+    juce::Label fxFlangerDepthLabel;
+    juce::Label fxFlangerFeedbackLabel;
+    juce::Label fxFlangerMixLabel;
     juce::Label fxGuardPushLabel;
     juce::Label fxGuardCeilingLabel;
 
@@ -332,6 +342,7 @@ private:
     juce::TextButton fxBitcrushSlotButton { "Crush" };
     juce::TextButton fxPumpSlotButton { "Pump" };
     juce::TextButton fxPhaserSlotButton { "Phaser" };
+    juce::TextButton fxFlangerSlotButton { "Flanger" };
     juce::TextButton fxChorusSlotButton { "Chorus" };
     juce::TextButton fxDelaySlotButton { "Delay" };
     juce::TextButton fxReverbSlotButton { "Reverb" };

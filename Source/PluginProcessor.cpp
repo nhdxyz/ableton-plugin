@@ -849,7 +849,12 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxPhaserMix,
             Parameters::ID::fxGuardEnabled,
             Parameters::ID::fxGuardPush,
-            Parameters::ID::fxGuardCeiling
+            Parameters::ID::fxGuardCeiling,
+            Parameters::ID::fxFlangerEnabled,
+            Parameters::ID::fxFlangerRate,
+            Parameters::ID::fxFlangerDepth,
+            Parameters::ID::fxFlangerFeedback,
+            Parameters::ID::fxFlangerMix
         });
     }
 

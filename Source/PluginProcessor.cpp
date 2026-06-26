@@ -59,7 +59,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     const auto hostBpm = getHostBpm();
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm);
     synthEngine.render(buffer, midiMessages);
-    samplePlayer.render(buffer, midiMessages);
+    samplePlayer.render(buffer, midiMessages, hostBpm);
     effectsRack.process(buffer,
                         outputGain != nullptr ? outputGain->load() : -8.0f,
                         hostBpm,
@@ -178,6 +178,7 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
     setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
     return true;
 }
 
@@ -211,6 +212,7 @@ bool NateVSTAudioProcessor::randomizeSampleCut()
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleTranspose, transposeDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
@@ -230,6 +232,8 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     std::uniform_real_distribution<float> startDistribution(0.0f, 0.9f);
     std::uniform_real_distribution<float> lengthDistribution(0.018f, 0.16f);
     std::uniform_int_distribution<int> pitchDistribution(0, 4);
+    std::uniform_int_distribution<int> stutterRateDistribution(1, 2);
+    std::uniform_int_distribution<int> stutterRepeatsDistribution(2, 5);
     std::uniform_real_distribution<float> gainDistribution(-10.0f, -3.0f);
     std::uniform_real_distribution<float> mixDistribution(0.62f, 1.0f);
     std::bernoulli_distribution reverseDistribution(0.22);
@@ -241,7 +245,10 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     setParameterPlainValue(Parameters::ID::sampleStart, start);
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
-    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 0.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterRate, static_cast<float>(stutterRateDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sampleStutterRepeats, static_cast<float>(stutterRepeatsDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sampleTranspose, pitchChoices[pitchDistribution(sampleRandomEngine)]);
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
@@ -850,7 +857,10 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         Parameters::ID::samplePlaybackMode,
         Parameters::ID::sampleTranspose,
         Parameters::ID::sampleGain,
-        Parameters::ID::sampleMix
+        Parameters::ID::sampleMix,
+        Parameters::ID::sampleStutterEnabled,
+        Parameters::ID::sampleStutterRate,
+        Parameters::ID::sampleStutterRepeats
     });
 }
 

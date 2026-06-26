@@ -187,5 +187,7 @@
 - Added a `UKG Chop` action to the SAMPLE panel for loaded vocal phrases and short rhythmic samples.
 - Biased UKG chops toward short cut windows, musical pitch offsets `-12`, `-7`, `0`, `+7`, and `+12`, optional reverse, and hotter sample mix levels.
 - Made `UKG Chop` apply the Vocal Chop sequencer template when sequencer locking is not active.
-- Added a Gate/One Shot sample playback mode selector, preserving One Shot as the default and using Gate for `UKG Chop`.
+- Added a Gate/One Shot sample playback mode selector, preserving One Shot as the default and leaving Gate available for tight note-off chopping.
 - Made the sampler process MIDI note events in block order so gated chops respond to sequencer note-offs.
+- Added tempo-synced sample stutter/retrigger with on/off, rate, and repeat controls.
+- Made `UKG Chop` use One Shot with stutter at musical 1/16 or 1/32 rates so repeats can complete after short sequencer gates.

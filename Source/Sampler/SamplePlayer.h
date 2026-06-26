@@ -37,7 +37,7 @@ public:
     juce::String getLoadedFileName() const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
-    void render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi);
+    void render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm);
 
 private:
     struct Voice
@@ -51,6 +51,11 @@ private:
         float velocity = 0.0f;
         bool reverse = false;
         bool gated = false;
+        bool stutterEnabled = false;
+        int stutterRepeatsRemaining = 0;
+        int fadeInSamplesRemaining = 0;
+        double stutterIntervalSamples = 1.0;
+        double samplesUntilStutter = 0.0;
     };
 
     Parameters::APVTS& parameters;
@@ -69,8 +74,11 @@ private:
     std::atomic<float>* sampleTranspose = nullptr;
     std::atomic<float>* sampleGain = nullptr;
     std::atomic<float>* sampleMix = nullptr;
+    std::atomic<float>* sampleStutterEnabled = nullptr;
+    std::atomic<float>* sampleStutterRate = nullptr;
+    std::atomic<float>* sampleStutterRepeats = nullptr;
 
-    void startVoice(const SampleData& data, int midiNoteNumber, float velocity);
+    void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm);
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);

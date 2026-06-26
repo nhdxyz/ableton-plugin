@@ -17,6 +17,8 @@ Research references:
 - Native Instruments UK garage guide: https://blog.native-instruments.com/uk-garage-music/
 - Attack Magazine UK garage beat breakdown: https://www.attackmagazine.com/technique/beat-dissected/uk-garage/
 - Attack Magazine modern garage/Overmono-style breakdown: https://www.attackmagazine.com/technique/tutorials/how-to-make-banging-modern-garage-in-style-of-overmono-so-u-kno/
+- MusicRadar Silva Bumpa production interview: https://www.musicradar.com/music-tech/sometimes-swinging-all-the-elements-of-the-drums-doesnt-make-it-groove-better-breakout-producer-silva-bumpa-on-the-secret-to-creating-sub-bass-and-ukg-rhythms
+- NITELIFE UK garage vocal cuts guide: https://nitelifeaudio.com/classic-techniques-uk-garage-vocal-cuts/
 - Splice speed garage sound notes: https://splice.com/sounds/genres/speed-garage/samples
 
 ## Researched Sound Map
@@ -25,12 +27,14 @@ Research references:
 
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
+- Swing should become more selective than a single global amount: ghost snares, hats, and percussive filler can push later while core kicks and some bass notes stay tighter.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
 
 ### Bass Character
 
 - Core bass targets: mono sub, Reese movement, Dred/reverse-filter movement, and short rubbery plucks.
 - Useful controls: filter envelope amount, filter envelope attack, glide, mono/legato, drive, Crush mix, and output Guard.
+- Bass randomization should include tuned-sub guardrails, with practical club notes called out when preset authors build sub-focused patches.
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 
 ### Stabs, Keys, And Leads
@@ -93,17 +97,17 @@ Research references:
 - Added the `Width` FX module for mono-safe bass and controlled stereo upper content.
 - Added a compact sequencer template selector with UKG 2-step, shuffle bass, organ skank, vocal chop, and late stab patterns.
 - Added UKG organ stab, chord stab, and bell pluck randomization recipes.
-- Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts.
+- Added a SAMPLE-panel `UKG Chop` action for short musical vocal/sample cuts, One Shot playback, and synced stutter/retrigger.
 
 ## Next UKG Features
 
 1. Vocal chop mode for the sampler.
 
-- Added a `UKG Chop` action for short chop windows, musical pitch choices, reverse variation, Gate playback, and automatic Vocal Chop sequencer template application.
+- Added a `UKG Chop` action for short chop windows, musical pitch choices, reverse variation, One Shot playback, synced stutter/retrigger, and automatic Vocal Chop sequencer template application.
 - Added one-shot/gated playback option.
 - Tighter random cut ranges for short phrases are implemented in `UKG Chop`.
 - Quick pitch choices such as -12, -7, 0, +7, +12 are implemented in `UKG Chop`.
-- Add retrigger/stutter timing tied to the sequencer rate.
+- Retrigger/stutter timing is implemented as synced sample stutter controls with 1/8, 1/16, and 1/32 rates plus repeat count.
 
 2. Pump/Duck FX.
 

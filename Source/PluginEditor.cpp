@@ -157,6 +157,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
 
+    sampleStutterRateBox.addItem("1/8", 1);
+    sampleStutterRateBox.addItem("1/16", 2);
+    sampleStutterRateBox.addItem("1/32", 3);
+    sampleStutterRateBox.setTextWhenNothingSelected("Rate");
+    addAndMakeVisible(sampleStutterRateBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleStutterRate, sampleStutterRateBox));
+
     addAndMakeVisible(presetBox);
 
     presetCategoryBox.addItemList(presetCategoryChoices(), 1);
@@ -199,6 +206,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleReverseButton.setButtonText("Rev");
     addAndMakeVisible(sampleReverseButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleReverse, sampleReverseButton));
+
+    sampleStutterEnabledButton.setButtonText("Stutter");
+    addAndMakeVisible(sampleStutterEnabledButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleStutterEnabled, sampleStutterEnabledButton));
 
     sequencerEnabledButton.setButtonText("On");
     addAndMakeVisible(sequencerEnabledButton);
@@ -311,6 +322,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sampleTransposeSlider, sampleTransposeLabel, "Pitch", Parameters::ID::sampleTranspose);
     configureSlider(sampleGainSlider, sampleGainLabel, "Gain", Parameters::ID::sampleGain);
     configureSlider(sampleMixSlider, sampleMixLabel, "Mix", Parameters::ID::sampleMix);
+    configureSlider(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, "Repeat", Parameters::ID::sampleStutterRepeats);
     configureSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
     configureSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
     configureSlider(sequencerSwingSlider, sequencerSwingLabel, "Swing", Parameters::ID::sequencerSwing);
@@ -886,6 +898,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
             sampleModeBox.setVisible(true);
+            sampleStutterEnabledButton.setVisible(true);
+            sampleStutterRateBox.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
@@ -896,7 +910,10 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleModeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            sampleNameLabel.setBounds(actionRow.reduced(8, 4));
+            auto stutterRow = content.removeFromTop(42).withTrimmedTop(4);
+            sampleNameLabel.setBounds(stutterRow.removeFromLeft(430).reduced(8, 4));
+            sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
+            sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
             auto cutRow = content.removeFromTop(70).withTrimmedTop(18);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -906,7 +923,8 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
-            layoutKnobRow(content.removeFromTop(170), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
+            layoutKnobRow(content.removeFromTop(170), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -1490,9 +1508,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &sampleModeBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox,
-        &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
+        &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
@@ -1547,6 +1565,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, false);
     setSliderVisible(sampleGainSlider, sampleGainLabel, false);
     setSliderVisible(sampleMixSlider, sampleMixLabel, false);
+    setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
     setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, false);

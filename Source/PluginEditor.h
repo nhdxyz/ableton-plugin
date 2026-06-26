@@ -77,6 +77,7 @@ private:
     juce::ComboBox sequencerRateBox;
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sampleModeBox;
+    juce::ComboBox sampleStutterRateBox;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
@@ -85,6 +86,7 @@ private:
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
+    juce::ToggleButton sampleStutterEnabledButton;
     juce::ToggleButton sequencerEnabledButton;
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;
@@ -140,6 +142,7 @@ private:
     juce::Slider sampleTransposeSlider;
     juce::Slider sampleGainSlider;
     juce::Slider sampleMixSlider;
+    juce::Slider sampleStutterRepeatsSlider;
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
     juce::Slider sequencerSwingSlider;
@@ -208,6 +211,7 @@ private:
     juce::Label sampleTransposeLabel;
     juce::Label sampleGainLabel;
     juce::Label sampleMixLabel;
+    juce::Label sampleStutterRepeatsLabel;
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
     juce::Label sequencerSwingLabel;

@@ -367,6 +367,24 @@ APVTS::ParameterLayout createLayout()
         0.75f));
 
     add(std::make_unique<juce::AudioParameterBool>(
+        ID::sampleStutterEnabled,
+        "Sample Stutter Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleStutterRate,
+        "Sample Stutter Rate",
+        juce::StringArray { "1/8", "1/16", "1/32" },
+        1));
+
+    add(std::make_unique<juce::AudioParameterInt>(
+        ID::sampleStutterRepeats,
+        "Sample Stutter Repeats",
+        1,
+        8,
+        3));
+
+    add(std::make_unique<juce::AudioParameterBool>(
         ID::sequencerEnabled,
         "Sequencer Enabled",
         false));

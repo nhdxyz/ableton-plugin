@@ -3,6 +3,27 @@
 #include <algorithm>
 #include <cmath>
 
+namespace
+{
+constexpr auto stutterFadeSamples = 48;
+
+double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRate)
+{
+    const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
+    const auto safeSampleRate = juce::jmax(1.0, sampleRate);
+    const auto quarterNoteSamples = (60.0 / safeBpm) * safeSampleRate;
+
+    switch (rateIndex)
+    {
+        case 0: return quarterNoteSamples / 2.0; // 1/8
+        case 2: return quarterNoteSamples / 8.0; // 1/32
+        case 1:
+        default:
+            return quarterNoteSamples / 4.0; // 1/16
+    }
+}
+}
+
 namespace Sampler
 {
 SamplePlayer::SamplePlayer(Parameters::APVTS& state)
@@ -17,6 +38,9 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleTranspose = parameters.getRawParameterValue(Parameters::ID::sampleTranspose);
     sampleGain = parameters.getRawParameterValue(Parameters::ID::sampleGain);
     sampleMix = parameters.getRawParameterValue(Parameters::ID::sampleMix);
+    sampleStutterEnabled = parameters.getRawParameterValue(Parameters::ID::sampleStutterEnabled);
+    sampleStutterRate = parameters.getRawParameterValue(Parameters::ID::sampleStutterRate);
+    sampleStutterRepeats = parameters.getRawParameterValue(Parameters::ID::sampleStutterRepeats);
 }
 
 void SamplePlayer::prepare(double sampleRate)
@@ -94,7 +118,7 @@ void SamplePlayer::setRegion(SampleRegion newRegion)
     region = newRegion;
 }
 
-void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi)
+void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm)
 {
     if (readParameter(sampleEnabled, 0.0f) < 0.5f)
         return;
@@ -117,7 +141,7 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
         }
 
         if (message.isNoteOn())
-            startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity());
+            startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity(), bpm);
         else if (message.isNoteOff())
             stopVoicesForNote(message.getNoteNumber());
     }
@@ -126,7 +150,7 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
         renderActiveVoices(*sampleData, outputBuffer, cursor, outputBuffer.getNumSamples() - cursor);
 }
 
-void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity)
+void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm)
 {
     auto* voiceToUse = std::find_if(voices.begin(), voices.end(), [] (const Voice& voice)
     {
@@ -155,6 +179,16 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
+    voiceToUse->stutterEnabled = readParameter(sampleStutterEnabled, 0.0f) >= 0.5f;
+    voiceToUse->stutterRepeatsRemaining = voiceToUse->stutterEnabled
+        ? juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleStutterRepeats, 3.0f))))
+        : 0;
+    voiceToUse->stutterIntervalSamples = stutterIntervalSamplesForRate(
+        juce::jlimit(0, 2, static_cast<int>(std::round(readParameter(sampleStutterRate, 1.0f)))),
+        bpm,
+        playbackSampleRate);
+    voiceToUse->samplesUntilStutter = voiceToUse->stutterIntervalSamples;
+    voiceToUse->fadeInSamplesRemaining = stutterFadeSamples;
 }
 
 void SamplePlayer::stopVoicesForNote(int midiNoteNumber)
@@ -197,6 +231,15 @@ void SamplePlayer::renderVoice(Voice& voice,
 
     for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
+        if (voice.stutterEnabled && voice.stutterRepeatsRemaining > 0 && voice.samplesUntilStutter <= 0.0)
+        {
+            voice.position = voice.reverse ? static_cast<double>(voice.endSample - 1)
+                                           : static_cast<double>(voice.startSample);
+            voice.fadeInSamplesRemaining = stutterFadeSamples;
+            --voice.stutterRepeatsRemaining;
+            voice.samplesUntilStutter += voice.stutterIntervalSamples;
+        }
+
         const auto floorPosition = static_cast<int>(std::floor(voice.position));
 
         if ((! voice.reverse && floorPosition >= voice.endSample - 1)
@@ -215,10 +258,19 @@ void SamplePlayer::renderVoice(Voice& voice,
             const auto nextIndex = juce::jlimit(voice.startSample, voice.endSample - 1, floorPosition + (voice.reverse ? -1 : 1));
             const auto next = data.buffer.getSample(sourceChannel, nextIndex);
             const auto sample = current + ((next - current) * fraction);
-            outputBuffer.addSample(channel, startSampleInBlock + sampleIndex, sample * gain);
+            auto fadeGain = 1.0f;
+            if (voice.fadeInSamplesRemaining > 0)
+                fadeGain = 1.0f - (static_cast<float>(voice.fadeInSamplesRemaining) / static_cast<float>(stutterFadeSamples));
+
+            outputBuffer.addSample(channel, startSampleInBlock + sampleIndex, sample * gain * fadeGain);
         }
 
+        if (voice.fadeInSamplesRemaining > 0)
+            --voice.fadeInSamplesRemaining;
+
         voice.position += voice.increment;
+        if (voice.stutterEnabled)
+            voice.samplesUntilStutter -= 1.0;
     }
 }
 

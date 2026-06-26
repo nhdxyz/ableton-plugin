@@ -19,7 +19,7 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 - `Env`: amp attack, decay, sustain, and release.
 - `Filter`: filter mode, cutoff, resonance, and filter envelope amount.
 - `Source`: oscillator waveforms, oscillator/sub/noise levels, and unison settings.
-- `Sample`: sample enable, slice range, reverse, playback mode, pitch, gain, mix, and loaded sample path.
+- `Sample`: sample enable, slice range, reverse, playback mode, stutter, pitch, gain, mix, and loaded sample path.
 - `FX`: tone, distortion, phaser, chorus, delay, reverb, and Guard parameters.
 - `Output`: output gain, with safety preserved.
 - `Seq`: sequencer enable/rate/root/gate/swing/accent/octave/probability/random amount and step pattern.

@@ -209,6 +209,11 @@ void NateVSTAudioProcessor::clearSequencerPattern()
 
 bool NateVSTAudioProcessor::savePreset(const juce::String& presetName)
 {
+    return savePreset(presetName, "User");
+}
+
+bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juce::String& category)
+{
     const auto trimmedName = presetName.trim();
     if (trimmedName.isEmpty())
         return false;
@@ -219,6 +224,7 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName)
 
     auto state = createPluginState();
     state.setProperty("preset_name", trimmedName, nullptr);
+    state.setProperty("preset_category", category.trim().isNotEmpty() ? category.trim() : "User", nullptr);
 
     if (auto xml = state.createXml())
         return xml->writeTo(presetFileForName(trimmedName));

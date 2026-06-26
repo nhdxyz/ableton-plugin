@@ -38,3 +38,10 @@
 - Added double-click reset for every slider using the parameter default value.
 - Added clearer hover, pressed, and selected states for text buttons and segmented selectors.
 - Added hover emphasis to rotary knob rings.
+
+### Preset Browser Workflow
+
+- Added preset category selection for saved `.natevstpreset` files.
+- Saved category metadata into preset XML using the `preset_category` property.
+- Added previous and next preset buttons on HOME and LIBRARY panels.
+- Kept the deeper library work open for filtering, favorites, recent presets, and factory/user separation.

@@ -16,6 +16,11 @@ juce::Colour panelColour()
 {
     return juce::Colour(0xff141a1d);
 }
+
+juce::StringArray presetCategoryChoices()
+{
+    return { "User", "Bass", "Stab", "Lead", "FX", "Sequence", "Sample" };
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -80,6 +85,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
 
     addAndMakeVisible(presetBox);
+
+    presetCategoryBox.addItemList(presetCategoryChoices(), 1);
+    presetCategoryBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    addAndMakeVisible(presetCategoryBox);
 
     monoButton.setButtonText("Mono");
     addAndMakeVisible(monoButton);
@@ -195,6 +204,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     rateEighthButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 0); };
     rateSixteenthButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 1); };
     rateThirtySecondButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 2); };
+    previousPresetButton.onClick = [this] { loadPresetByOffset(-1); };
+    nextPresetButton.onClick = [this] { loadPresetByOffset(1); };
     savePresetButton.onClick = [this] { saveCurrentPreset(); };
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
@@ -228,6 +239,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(rateEighthButton);
     addAndMakeVisible(rateSixteenthButton);
     addAndMakeVisible(rateThirtySecondButton);
+    addAndMakeVisible(previousPresetButton);
+    addAndMakeVisible(nextPresetButton);
     addAndMakeVisible(savePresetButton);
     addAndMakeVisible(loadPresetButton);
     addAndMakeVisible(refreshPresetsButton);
@@ -348,6 +361,9 @@ void NateVSTAudioProcessorEditor::resized()
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
             presetBox.setVisible(true);
+            presetCategoryBox.setVisible(true);
+            previousPresetButton.setVisible(true);
+            nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
             presetNameEditor.setVisible(true);
             savePresetButton.setVisible(true);
@@ -409,10 +425,13 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
-            presetBox.setBounds(loadRow.removeFromLeft(300).reduced(3, 4));
+            previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
+            presetBox.setBounds(loadRow.removeFromLeft(258).reduced(3, 4));
+            nextPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
             loadPresetButton.setBounds(loadRow.removeFromLeft(90).reduced(3, 4));
             auto saveRow = libraryArea.removeFromTop(42).withTrimmedTop(4);
-            presetNameEditor.setBounds(saveRow.removeFromLeft(300).reduced(3, 4));
+            presetCategoryBox.setBounds(saveRow.removeFromLeft(130).reduced(3, 4));
+            presetNameEditor.setBounds(saveRow.removeFromLeft(212).reduced(3, 4));
             savePresetButton.setBounds(saveRow.removeFromLeft(90).reduced(3, 4));
             presetStatusLabel.setBounds(libraryArea.removeFromTop(34).reduced(5, 4));
             break;
@@ -603,17 +622,23 @@ void NateVSTAudioProcessorEditor::resized()
         {
             librarySectionLabel.setVisible(true);
             presetNameEditor.setVisible(true);
+            presetCategoryBox.setVisible(true);
             savePresetButton.setVisible(true);
             presetBox.setVisible(true);
+            previousPresetButton.setVisible(true);
+            nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
             refreshPresetsButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
             auto saveRow = content.removeFromTop(48);
+            presetCategoryBox.setBounds(saveRow.removeFromLeft(140).reduced(4));
             presetNameEditor.setBounds(saveRow.removeFromLeft(300).reduced(4));
             savePresetButton.setBounds(saveRow.removeFromLeft(90).reduced(4));
             auto loadRow = content.removeFromTop(54).withTrimmedTop(10);
+            previousPresetButton.setBounds(loadRow.removeFromLeft(44).reduced(4));
             presetBox.setBounds(loadRow.removeFromLeft(300).reduced(4));
+            nextPresetButton.setBounds(loadRow.removeFromLeft(44).reduced(4));
             loadPresetButton.setBounds(loadRow.removeFromLeft(90).reduced(4));
             refreshPresetsButton.setBounds(loadRow.removeFromLeft(100).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(36).reduced(6, 4));
@@ -799,7 +824,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
         &generateButton, &mutateButton, &variationButton, &loadSampleButton, &clearSampleButton,
@@ -808,6 +833,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
+        &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &refreshPresetsButton, &presetNameEditor,
         &sequencerGrid
     });
@@ -947,7 +973,8 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     if (presetName.isEmpty())
         presetName = presetBox.getText().trim();
 
-    if (audioProcessor.savePreset(presetName))
+    const auto category = presetCategoryBox.getText().trim();
+    if (audioProcessor.savePreset(presetName, category))
     {
         auto storedName = juce::File::createLegalFileName(presetName);
         if (storedName.isEmpty())
@@ -976,4 +1003,23 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
     }
 
     presetStatusLabel.setText("Select a preset to load", juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::loadPresetByOffset(int offset)
+{
+    const auto presetCount = presetBox.getNumItems();
+    if (presetCount == 0)
+    {
+        presetStatusLabel.setText("No presets saved", juce::dontSendNotification);
+        return;
+    }
+
+    auto selectedIndex = presetBox.getSelectedItemIndex();
+    if (selectedIndex < 0)
+        selectedIndex = 0;
+    else
+        selectedIndex = (selectedIndex + offset + presetCount) % presetCount;
+
+    presetBox.setSelectedItemIndex(selectedIndex, juce::dontSendNotification);
+    loadSelectedPreset();
 }

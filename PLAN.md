@@ -990,7 +990,7 @@ Current implemented panel layout:
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
 - SEQ: sequencer enable, segmented rate selector, random/clear, root/gate/random controls, and the 16-step grid.
 - FX: bypassable distortion, chorus, delay, and reverb modules.
-- LIBRARY: preset name entry, save, preset selector, load, refresh, and preset folder status.
+- LIBRARY: preset category, preset name entry, save, previous/next, preset selector, load, refresh, and preset folder status.
 
 Suggested first UI size:
 

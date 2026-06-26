@@ -59,6 +59,7 @@ private:
     juce::ComboBox recipeBox;
     juce::ComboBox sequencerRateBox;
     juce::ComboBox presetBox;
+    juce::ComboBox presetCategoryBox;
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
@@ -179,6 +180,8 @@ private:
     juce::TextButton rateEighthButton { "1/8" };
     juce::TextButton rateSixteenthButton { "1/16" };
     juce::TextButton rateThirtySecondButton { "1/32" };
+    juce::TextButton previousPresetButton { "<" };
+    juce::TextButton nextPresetButton { ">" };
     juce::TextButton savePresetButton { "Save" };
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
@@ -209,6 +212,7 @@ private:
     void refreshPresetList();
     void saveCurrentPreset();
     void loadSelectedPreset();
+    void loadPresetByOffset(int offset);
 
     Panel activePanel = Panel::home;
 

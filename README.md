@@ -23,7 +23,7 @@ Planned major areas:
 - Sample Lab: load audio, cut it with start/end controls, reverse/pitch/gain/mix it, and trigger it from MIDI.
 - Sequencer: internal 16-step piano-roll style pattern area for riffs, basslines, and generated ideas.
 - FX: post-synth/post-sample distortion, chorus, delay, reverb, output trim, and safety clipping.
-- Library: save and load `.natevstpreset` files from the user preset folder.
+- Library: save and load categorized `.natevstpreset` files from the user preset folder.
 
 ## Interface
 

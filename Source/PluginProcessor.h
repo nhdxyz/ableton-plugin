@@ -54,6 +54,7 @@ public:
     void randomizeSequencerPattern();
     void clearSequencerPattern();
     bool savePreset(const juce::String& presetName);
+    bool savePreset(const juce::String& presetName, const juce::String& category);
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     juce::File getPresetDirectory() const;

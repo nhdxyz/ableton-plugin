@@ -75,6 +75,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 {
     const auto brightnessBias = readFloat(Parameters::ID::randomBrightnessBias);
     const auto driveBias = readFloat(Parameters::ID::randomDriveBias);
+    const auto motionBias = readFloat(Parameters::ID::randomMotionBias);
     const auto wildness = juce::jlimit(0.0f, 1.0f, (amount * 0.75f) + (chaos * 0.25f));
 
     auto attack = 0.004f;
@@ -96,6 +97,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto osc2Level = 0.0f;
     auto subLevel = 0.0f;
     auto noiseLevel = 0.0f;
+    auto unisonVoiceCount = 1;
+    auto unisonDetune = 0.0f;
+    auto unisonBlend = 0.65f;
+    auto unisonSpread = 0.0f;
     auto macroTone = 0.0f;
     auto macroDirt = 0.0f;
     auto macroMotion = 0.0f;
@@ -122,6 +127,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.08f, 0.28f);
             drive = randomFloat(0.05f, 0.32f);
             glide = randomFloat(0.0f, 0.08f);
+            unisonVoiceCount = 1;
             break;
 
         case Recipe::rollingTechBass:
@@ -141,6 +147,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.035f, 0.2f);
             drive = randomFloat(0.18f, 0.55f);
             glide = randomFloat(0.0f, 0.12f);
+            unisonVoiceCount = randomInt(1, 2);
+            unisonDetune = randomFloat(0.0f, 0.06f);
+            unisonBlend = randomFloat(0.25f, 0.5f);
+            unisonSpread = randomFloat(0.0f, 0.18f);
             break;
 
         case Recipe::acidLine:
@@ -160,6 +170,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.03f, 0.16f);
             drive = randomFloat(0.28f, 0.72f);
             glide = randomFloat(0.03f, 0.22f);
+            unisonVoiceCount = 1;
             break;
 
         case Recipe::minimalBlip:
@@ -179,6 +190,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             sustain = randomFloat(0.0f, 0.18f);
             release = randomFloat(0.01f, 0.12f);
             drive = randomFloat(0.02f, 0.38f);
+            unisonVoiceCount = randomInt(1, 3);
+            unisonDetune = randomFloat(0.0f, 0.12f);
+            unisonBlend = randomFloat(0.3f, 0.65f);
+            unisonSpread = randomFloat(0.15f, 0.55f);
             mono = false;
             break;
 
@@ -199,6 +214,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             sustain = randomFloat(0.25f, 0.75f);
             release = randomFloat(0.12f, 0.8f);
             drive = randomFloat(0.15f, 0.62f);
+            unisonVoiceCount = randomInt(2, 5);
+            unisonDetune = randomFloat(0.04f, 0.18f);
+            unisonBlend = randomFloat(0.45f, 0.85f);
+            unisonSpread = randomFloat(0.35f, 0.8f);
             mono = false;
             break;
 
@@ -222,6 +241,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             sustain = randomFloat(0.0f, 0.85f);
             release = randomFloat(0.03f, 2.0f);
             drive = randomFloat(0.1f, 0.9f);
+            unisonVoiceCount = randomInt(1, 7);
+            unisonDetune = randomFloat(0.05f, 0.4f);
+            unisonBlend = randomFloat(0.35f, 1.0f);
+            unisonSpread = randomFloat(0.35f, 1.0f);
             mono = false;
             break;
     }
@@ -229,6 +252,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     const auto cutoffBias = std::pow(2.0f, brightnessBias);
     cutoff = juce::jlimit(35.0f, 18000.0f, cutoff * cutoffBias);
     drive = juce::jlimit(0.0f, 0.95f, drive + (driveBias * 0.24f));
+    const auto positiveMotionBias = juce::jmax(0.0f, motionBias);
+    unisonDetune = juce::jlimit(0.0f, 1.0f, unisonDetune + (positiveMotionBias * 0.08f));
+    unisonSpread = juce::jlimit(0.0f, 1.0f, unisonSpread + (positiveMotionBias * 0.16f));
 
     if (subtle)
     {
@@ -252,6 +278,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = blend(Parameters::ID::osc2Level, osc2Level);
         subLevel = blend(Parameters::ID::subLevel, subLevel);
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
+        unisonVoiceCount = static_cast<int>(std::round(blend(Parameters::ID::unisonVoices, static_cast<float>(unisonVoiceCount))));
+        unisonDetune = blend(Parameters::ID::unisonDetune, unisonDetune);
+        unisonBlend = blend(Parameters::ID::unisonBlend, unisonBlend);
+        unisonSpread = blend(Parameters::ID::unisonSpread, unisonSpread);
         macroTone = blend(Parameters::ID::macroTone, macroTone);
         macroDirt = blend(Parameters::ID::macroDirt, macroDirt);
         macroMotion = blend(Parameters::ID::macroMotion, macroMotion);
@@ -270,6 +300,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::osc2Level, osc2Level);
     setParameter(Parameters::ID::subLevel, subLevel);
     setParameter(Parameters::ID::noiseLevel, noiseLevel);
+    setParameter(Parameters::ID::unisonVoices, static_cast<float>(juce::jlimit(1, 7, unisonVoiceCount)));
+    setParameter(Parameters::ID::unisonDetune, unisonDetune);
+    setParameter(Parameters::ID::unisonBlend, unisonBlend);
+    setParameter(Parameters::ID::unisonSpread, unisonSpread);
     setParameter(Parameters::ID::macroTone, macroTone);
     setParameter(Parameters::ID::macroDirt, macroDirt);
     setParameter(Parameters::ID::macroMotion, macroMotion);

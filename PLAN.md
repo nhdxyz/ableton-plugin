@@ -344,7 +344,7 @@ Do not build these first, but keep the architecture open for them:
 - FM or phase modulation.
 - Oscillator sync.
 - Ring modulation.
-- Unison and stereo spread.
+- Advanced unison modes and supersaw-style spread.
 - Layer or partial system.
 - Per-layer filters and envelopes.
 - Chord memory.
@@ -984,8 +984,8 @@ Possible long-term tab layout:
 
 Current implemented panel layout:
 
-- HOME: engine choices, core tone shaping, randomization, and preset load/save in one dashboard.
-- SYNTH: oscillator waveform segment, mono toggle, core filter/drive/output/amp controls.
+- HOME: engine choices, core tone shaping, unison width, performance macros, randomization, and preset load/save in one dashboard.
+- SYNTH: oscillator waveform segment, mono toggle, unison controls, core filter/drive/output/amp controls.
 - LAB: recipe dropdown, generate, mutate, variation, and randomization bias controls.
 - SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
 - SEQ: sequencer enable, segmented rate selector, random/clear, root/gate/random controls, and the 16-step grid.
@@ -1062,6 +1062,10 @@ MVP parameters:
 - `output_gain`
 - `mono_mode`
 - `glide_time`
+- `unison_voices`
+- `unison_detune`
+- `unison_blend`
+- `unison_spread`
 - `macro_1`
 - `macro_2`
 - `macro_3`
@@ -1096,9 +1100,7 @@ Long-term parameter groups:
 - Wavetable position.
 - Wavetable warp amount.
 - Wavetable warp mode.
-- Unison voices.
-- Unison detune.
-- Unison spread.
+- Advanced unison modes.
 - FM amount.
 - FM ratio.
 - Sample slot enable.

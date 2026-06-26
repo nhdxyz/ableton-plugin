@@ -189,6 +189,31 @@ APVTS::ParameterLayout createLayout()
         0.0f,
         juce::AudioParameterFloatAttributes().withLabel("s")));
 
+    add(std::make_unique<juce::AudioParameterInt>(
+        ID::unisonVoices,
+        "Unison Voices",
+        1,
+        7,
+        1));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::unisonDetune,
+        "Unison Detune",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::unisonBlend,
+        "Unison Blend",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.65f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::unisonSpread,
+        "Unison Spread",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::macroTone,
         "Macro 1 Tone",

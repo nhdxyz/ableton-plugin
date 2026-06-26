@@ -122,13 +122,14 @@ Start with 8 slots. This is enough to be useful without becoming hard to validat
 HOME:
 
 - Show four macro knobs.
+- Keep fast unison width controls available without hiding source mix or preset recall.
 - Show a small moving indicator when macro/LFO modulation is active.
 - Keep source mix and preset controls visible.
 
 SYNTH:
 
 - Show modulation amount rings around key tone controls later.
-- Keep detailed oscillator and filter controls here.
+- Keep detailed oscillator, unison, and filter controls here.
 
 MOD:
 
@@ -148,6 +149,7 @@ SEQ:
 - Smooth destination changes that affect audio.
 - Do not allocate or lock on the audio thread.
 - Keep output gain safety active after randomization.
+- Keep sub content centered, and force spread-safe behavior when mono mode is active.
 - Avoid random assignments that produce silent patches unless the user explicitly asks for extreme chaos.
 
 ## First Implementation Slice

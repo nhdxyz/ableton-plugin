@@ -61,3 +61,11 @@
 - Mapped Motion to filter envelope amount and oscillator 2 detune.
 - Mapped Space to delay and reverb mix, even when the dedicated FX toggles are off.
 - Made randomization pull macros back toward neutral so generated patches stay predictable.
+
+### Unison And Stereo Spread
+
+- Added automatable `unison_voices`, `unison_detune`, `unison_blend`, and `unison_spread` parameters.
+- Added Voices and Spread controls to HOME, with the full unison control set on SYNTH.
+- Added per-note oscillator stacking with level compensation for safer wide stabs, leads, drones, and FX.
+- Kept the sub oscillator centered and forced unison spread to mono while `Mono` is enabled.
+- Updated randomization recipes so bass and acid patches stay conservative while stabs, blips, and FX can get controlled width.

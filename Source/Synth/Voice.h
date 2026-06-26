@@ -8,6 +8,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <array>
+
 namespace Synth
 {
 class Sound final : public juce::SynthesiserSound
@@ -32,12 +34,21 @@ public:
     void prepare(double sampleRate, int maximumBlockSize);
 
 private:
+    static constexpr int maxUnisonVoices = 7;
+
+    struct StereoSample
+    {
+        float left = 0.0f;
+        float right = 0.0f;
+    };
+
     Parameters::APVTS& parameters;
-    Oscillator oscillator;
-    Oscillator oscillator2;
+    std::array<Oscillator, maxUnisonVoices> oscillators;
+    std::array<Oscillator, maxUnisonVoices> oscillators2;
     Oscillator subOscillator;
     Envelope ampEnvelope;
-    Filter filter;
+    Filter leftFilter;
+    Filter rightFilter;
     Distortion distortion;
     juce::Random noiseRandom;
 
@@ -64,11 +75,19 @@ private:
     std::atomic<float>* filterEnvAmount = nullptr;
     std::atomic<float>* filterMode = nullptr;
     std::atomic<float>* driveAmount = nullptr;
+    std::atomic<float>* monoMode = nullptr;
+    std::atomic<float>* unisonVoices = nullptr;
+    std::atomic<float>* unisonDetune = nullptr;
+    std::atomic<float>* unisonBlend = nullptr;
+    std::atomic<float>* unisonSpread = nullptr;
     std::atomic<float>* macroTone = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;
 
     void updateVoiceParameters(float envelopeValue);
+    StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
+    int getUnisonVoiceCount() const;
+    float getUnisonPosition(int voiceIndex, int voiceCount) const;
     float frequencyForNote(int midiNoteNumber) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;
 };

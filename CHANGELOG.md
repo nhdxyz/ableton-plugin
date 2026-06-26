@@ -123,3 +123,13 @@
 - Defined a scalable FX direction using an Add FX menu, rack list, and focused selected-effect editor instead of a fixed grid that shows every module at once.
 - Identified the next best effect candidates for house, tech house, techno, and minimal workflows: bitcrusher/downsample, flanger, pump/duck, stereo width/mono bass, and three-band EQ.
 - Captured the parameter-stability constraint for Ableton: the first Add FX pass should hide, reveal, and bypass fixed modules before attempting true dynamic effect instances.
+
+### Focused FX Rack UI And Knob Polish
+
+- Replaced the FX page's full module grid with an Add FX menu, compact rack list, and focused selected-module editor.
+- Kept existing FX parameter IDs stable so Ableton automation and saved sets remain compatible.
+- Made Remove behave as a safe bypass/hide action instead of deleting host parameters.
+- Kept Guard pinned as the final output safety module.
+- Improved rotary knob rendering with a clearer panel, rail, value arc, pointer, and center cap.
+- Lowered rotary drag distance and disabled mouse-wheel edits on sliders to reduce accidental changes.
+- Documented the framework decision to stay on JUCE instead of adding a second GUI framework for this phase.

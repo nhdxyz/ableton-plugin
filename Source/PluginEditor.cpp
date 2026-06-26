@@ -1,7 +1,5 @@
 #include "PluginEditor.h"
 
-#include <array>
-
 namespace
 {
 constexpr auto editorWidth = 940;
@@ -112,6 +110,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(randomStatusLabel);
 
+    fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(fxRackStatusLabel);
+
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
     presetNameEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
     presetNameEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
@@ -148,6 +150,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetFilterBox.addItemList(presetFilterChoices(), 1);
     presetFilterBox.setSelectedItemIndex(0, juce::dontSendNotification);
     addAndMakeVisible(presetFilterBox);
+
+    fxAddBox.addItem("Tone", 1);
+    fxAddBox.addItem("Drive", 2);
+    fxAddBox.addItem("Phaser", 3);
+    fxAddBox.addItem("Chorus", 4);
+    fxAddBox.addItem("Delay", 5);
+    fxAddBox.addItem("Reverb", 6);
+    fxAddBox.addItem("Guard", 7);
+    fxAddBox.setTextWhenNothingSelected("Add FX");
+    addAndMakeVisible(fxAddBox);
 
     monoButton.setButtonText("Mono");
     addAndMakeVisible(monoButton);
@@ -377,6 +389,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     favoritePresetButton.onClick = [this] { toggleFavoritePreset(); };
     presetFilterBox.onChange = [this] { refreshPresetList(); };
     presetBox.onChange = [this] { updateFavoritePresetButton(); };
+    fxAddBox.onChange = [this]
+    {
+        const auto selectedId = fxAddBox.getSelectedId();
+        if (selectedId > 0)
+            addFxModule(static_cast<FxModule>(selectedId - 1));
+    };
+    fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
+    fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
+    fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
+    fxPhaserSlotButton.onClick = [this] { selectFxModule(FxModule::phaser); };
+    fxChorusSlotButton.onClick = [this] { selectFxModule(FxModule::chorus); };
+    fxDelaySlotButton.onClick = [this] { selectFxModule(FxModule::delay); };
+    fxReverbSlotButton.onClick = [this] { selectFxModule(FxModule::reverb); };
+    fxGuardSlotButton.onClick = [this] { selectFxModule(FxModule::guard); };
 
     auto updateLockStatus = [this] { setRandomStatus("Locks updated"); };
     randomLockPitchButton.onClick = updateLockStatus;
@@ -427,6 +453,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(loadPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
+    addAndMakeVisible(fxRemoveButton);
+    addAndMakeVisible(fxToneSlotButton);
+    addAndMakeVisible(fxDistortionSlotButton);
+    addAndMakeVisible(fxPhaserSlotButton);
+    addAndMakeVisible(fxChorusSlotButton);
+    addAndMakeVisible(fxDelaySlotButton);
+    addAndMakeVisible(fxReverbSlotButton);
+    addAndMakeVisible(fxGuardSlotButton);
 
     sequencerGrid.setCallbacks(
         [this] (int index) { return audioProcessor.getSequencerStep(index); },
@@ -489,30 +523,23 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::effects)
     {
         auto fxContent = contentArea.reduced(18).withTrimmedTop(36);
-        constexpr auto columns = 4;
-        constexpr auto rows = 2;
-        const auto moduleWidth = fxContent.getWidth() / columns;
-        const auto moduleHeight = fxContent.getHeight() / rows;
-        const std::array<juce::String, 7> fxModules { "TONE", "DIST", "PHASER", "CHORUS", "DELAY", "REVERB", "GUARD" };
+        fxContent.removeFromTop(48);
+        fxContent.removeFromTop(10);
+        auto rackArea = fxContent.removeFromLeft(220).reduced(5);
+        auto detailArea = fxContent.reduced(5);
 
-        for (auto moduleIndex = 0; moduleIndex < static_cast<int>(fxModules.size()); ++moduleIndex)
+        for (auto area : { rackArea, detailArea })
         {
-            const auto column = moduleIndex % columns;
-            const auto row = moduleIndex / columns;
-            const auto x = fxContent.getX() + (column * moduleWidth);
-            const auto y = fxContent.getY() + (row * moduleHeight);
-            const auto right = column == columns - 1 ? fxContent.getRight() : x + moduleWidth;
-            const auto bottom = row == rows - 1 ? fxContent.getBottom() : y + moduleHeight;
-            auto moduleArea = juce::Rectangle<int>(x, y, right - x, bottom - y).reduced(5);
-
             g.setColour(juce::Colour(0xff101619));
-            g.fillRoundedRectangle(moduleArea.toFloat(), 6.0f);
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
             g.setColour(juce::Colour(0xff2b363c));
-            g.drawRoundedRectangle(moduleArea.toFloat(), 6.0f, 1.0f);
-            g.setColour(juce::Colour(0xff879299));
-            g.setFont(12.0f);
-            g.drawText(fxModules[static_cast<size_t>(moduleIndex)], moduleArea.removeFromTop(22), juce::Justification::centred);
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
+
+        g.setColour(juce::Colour(0xff879299));
+        g.setFont(12.0f);
+        g.drawText("RACK", rackArea.removeFromTop(24).reduced(12, 0), juce::Justification::centredLeft);
+        g.drawText(fxModuleName(selectedFxModule).toUpperCase(), detailArea.removeFromTop(24).reduced(14, 0), juce::Justification::centredLeft);
     }
 }
 
@@ -850,67 +877,105 @@ void NateVSTAudioProcessorEditor::resized()
         {
             futureSectionLabel.setVisible(true);
             futureSectionLabel.setBounds(content.removeFromTop(28));
-            content.removeFromTop(14);
-            auto moduleAreaForIndex = [content] (int moduleIndex)
-            {
-                constexpr auto columns = 4;
-                constexpr auto rows = 2;
-                const auto moduleWidth = content.getWidth() / columns;
-                const auto moduleHeight = content.getHeight() / rows;
-                const auto column = moduleIndex % columns;
-                const auto row = moduleIndex / columns;
-                const auto x = content.getX() + (column * moduleWidth);
-                const auto y = content.getY() + (row * moduleHeight);
-                const auto right = column == columns - 1 ? content.getRight() : x + moduleWidth;
-                const auto bottom = row == rows - 1 ? content.getBottom() : y + moduleHeight;
-                return juce::Rectangle<int>(x, y, right - x, bottom - y).reduced(12, 6);
-            };
+            updateFxRackControls();
 
-            auto toneArea = moduleAreaForIndex(0);
-            auto distortionArea = moduleAreaForIndex(1);
-            auto phaserArea = moduleAreaForIndex(2);
-            auto chorusArea = moduleAreaForIndex(3);
-            auto delayArea = moduleAreaForIndex(4);
-            auto reverbArea = moduleAreaForIndex(5);
-            auto guardArea = moduleAreaForIndex(6);
-            fxToneEnabledButton.setVisible(true);
-            fxDistortionEnabledButton.setVisible(true);
-            fxPhaserEnabledButton.setVisible(true);
-            fxChorusEnabledButton.setVisible(true);
-            fxDelayEnabledButton.setVisible(true);
-            fxReverbEnabledButton.setVisible(true);
-            fxGuardEnabledButton.setVisible(true);
-            fxToneEnabledButton.setBounds(toneArea.removeFromTop(34).reduced(2));
-            fxDistortionEnabledButton.setBounds(distortionArea.removeFromTop(34).reduced(2));
-            fxPhaserEnabledButton.setBounds(phaserArea.removeFromTop(34).reduced(2));
-            fxChorusEnabledButton.setBounds(chorusArea.removeFromTop(34).reduced(2));
-            fxDelayEnabledButton.setBounds(delayArea.removeFromTop(34).reduced(2));
-            fxReverbEnabledButton.setBounds(reverbArea.removeFromTop(34).reduced(2));
-            fxGuardEnabledButton.setBounds(guardArea.removeFromTop(34).reduced(2));
-            setSliderVisible(fxToneTiltSlider, fxToneTiltLabel, true);
-            setSliderVisible(fxToneLowCutSlider, fxToneLowCutLabel, true);
-            setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, true);
-            setSliderVisible(fxPhaserRateSlider, fxPhaserRateLabel, true);
-            setSliderVisible(fxPhaserDepthSlider, fxPhaserDepthLabel, true);
-            setSliderVisible(fxPhaserMixSlider, fxPhaserMixLabel, true);
-            setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, true);
-            setSliderVisible(fxChorusDepthSlider, fxChorusDepthLabel, true);
-            setSliderVisible(fxChorusMixSlider, fxChorusMixLabel, true);
-            setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, true);
-            setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, true);
-            setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, true);
-            setSliderVisible(fxReverbSizeSlider, fxReverbSizeLabel, true);
-            setSliderVisible(fxReverbDampingSlider, fxReverbDampingLabel, true);
-            setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, true);
-            setSliderVisible(fxGuardPushSlider, fxGuardPushLabel, true);
-            setSliderVisible(fxGuardCeilingSlider, fxGuardCeilingLabel, true);
-            layoutKnobRow(toneArea.withTrimmedTop(22), { &fxToneTiltSlider, &fxToneLowCutSlider });
-            layoutKnobRow(distortionArea.withTrimmedTop(22), { &fxDistortionAmountSlider });
-            layoutKnobRow(phaserArea.withTrimmedTop(22), { &fxPhaserRateSlider, &fxPhaserDepthSlider, &fxPhaserMixSlider });
-            layoutKnobRow(chorusArea.withTrimmedTop(22), { &fxChorusRateSlider, &fxChorusDepthSlider, &fxChorusMixSlider });
-            layoutKnobRow(delayArea.withTrimmedTop(22), { &fxDelayTimeSlider, &fxDelayFeedbackSlider, &fxDelayMixSlider });
-            layoutKnobRow(reverbArea.withTrimmedTop(22), { &fxReverbSizeSlider, &fxReverbDampingSlider, &fxReverbMixSlider });
-            layoutKnobRow(guardArea.withTrimmedTop(22), { &fxGuardPushSlider, &fxGuardCeilingSlider });
+            auto actionRow = content.removeFromTop(48);
+            fxAddBox.setVisible(true);
+            fxRemoveButton.setVisible(true);
+            fxRackStatusLabel.setVisible(true);
+            fxAddBox.setBounds(actionRow.removeFromLeft(170).reduced(4));
+            fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
+            fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
+
+            content.removeFromTop(10);
+            auto rackArea = content.removeFromLeft(220).reduced(18, 16);
+            rackArea.removeFromTop(26);
+            auto detailArea = content.reduced(24, 18);
+            detailArea.removeFromTop(30);
+
+            for (auto module : { FxModule::tone,
+                                 FxModule::distortion,
+                                 FxModule::phaser,
+                                 FxModule::chorus,
+                                 FxModule::delay,
+                                 FxModule::reverb,
+                                 FxModule::guard })
+            {
+                auto& slotButton = fxSlotButton(module);
+                const auto isVisible = shouldShowFxModule(module);
+                slotButton.setVisible(isVisible);
+
+                if (isVisible)
+                {
+                    slotButton.setBounds(rackArea.removeFromTop(36).reduced(0, 3));
+                    rackArea.removeFromTop(2);
+                }
+            }
+
+            auto detailHeader = detailArea.removeFromTop(38);
+            auto controlsArea = detailArea.withTrimmedTop(16);
+
+            switch (selectedFxModule)
+            {
+                case FxModule::tone:
+                    fxToneEnabledButton.setVisible(true);
+                    fxToneEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxToneTiltSlider, fxToneTiltLabel, true);
+                    setSliderVisible(fxToneLowCutSlider, fxToneLowCutLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxToneTiltSlider, &fxToneLowCutSlider });
+                    break;
+
+                case FxModule::distortion:
+                    fxDistortionEnabledButton.setVisible(true);
+                    fxDistortionEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDistortionAmountSlider });
+                    break;
+
+                case FxModule::phaser:
+                    fxPhaserEnabledButton.setVisible(true);
+                    fxPhaserEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxPhaserRateSlider, fxPhaserRateLabel, true);
+                    setSliderVisible(fxPhaserDepthSlider, fxPhaserDepthLabel, true);
+                    setSliderVisible(fxPhaserMixSlider, fxPhaserMixLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxPhaserRateSlider, &fxPhaserDepthSlider, &fxPhaserMixSlider });
+                    break;
+
+                case FxModule::chorus:
+                    fxChorusEnabledButton.setVisible(true);
+                    fxChorusEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, true);
+                    setSliderVisible(fxChorusDepthSlider, fxChorusDepthLabel, true);
+                    setSliderVisible(fxChorusMixSlider, fxChorusMixLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxChorusRateSlider, &fxChorusDepthSlider, &fxChorusMixSlider });
+                    break;
+
+                case FxModule::delay:
+                    fxDelayEnabledButton.setVisible(true);
+                    fxDelayEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, true);
+                    setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, true);
+                    setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDelayTimeSlider, &fxDelayFeedbackSlider, &fxDelayMixSlider });
+                    break;
+
+                case FxModule::reverb:
+                    fxReverbEnabledButton.setVisible(true);
+                    fxReverbEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxReverbSizeSlider, fxReverbSizeLabel, true);
+                    setSliderVisible(fxReverbDampingSlider, fxReverbDampingLabel, true);
+                    setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxReverbSizeSlider, &fxReverbDampingSlider, &fxReverbMixSlider });
+                    break;
+
+                case FxModule::guard:
+                    fxGuardEnabledButton.setVisible(true);
+                    fxGuardEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxGuardPushSlider, fxGuardPushLabel, true);
+                    setSliderVisible(fxGuardCeilingSlider, fxGuardCeilingLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxGuardPushSlider, &fxGuardCeilingSlider });
+                    break;
+            }
             break;
         }
 
@@ -980,10 +1045,11 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(90);
+    slider.setMouseDragSensitivity(70);
     slider.setVelocityBasedMode(true);
     slider.setVelocityModeParameters(1.55, 1, 0.0, true);
     slider.setSliderSnapsToMousePosition(false);
+    slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 68, 18);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
@@ -1011,6 +1077,7 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
     slider.setMouseDragSensitivity(180);
     slider.setSliderSnapsToMousePosition(false);
+    slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
@@ -1117,6 +1184,146 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
     keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
 }
 
+void NateVSTAudioProcessorEditor::addFxModule(FxModule module)
+{
+    setPlainParameterValue(fxEnabledParameterID(module), 1.0f);
+    selectedFxModule = module;
+    fxAddBox.setSelectedId(0, juce::dontSendNotification);
+    updateFxRackControls();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::removeSelectedFxModule()
+{
+    setPlainParameterValue(fxEnabledParameterID(selectedFxModule), 0.0f);
+
+    if (selectedFxModule != FxModule::guard)
+        selectedFxModule = FxModule::guard;
+
+    updateFxRackControls();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::selectFxModule(FxModule module)
+{
+    selectedFxModule = module;
+    updateFxRackControls();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::updateFxRackControls()
+{
+    if (! shouldShowFxModule(selectedFxModule))
+        selectedFxModule = FxModule::guard;
+
+    for (auto module : { FxModule::tone,
+                         FxModule::distortion,
+                         FxModule::phaser,
+                         FxModule::chorus,
+                         FxModule::delay,
+                         FxModule::reverb,
+                         FxModule::guard })
+    {
+        auto& button = fxSlotButton(module);
+        const auto isEnabled = isFxModuleEnabled(module);
+        button.setButtonText(juce::String(isEnabled ? "On " : "Off ") + fxModuleName(module));
+        button.setToggleState(module == selectedFxModule, juce::dontSendNotification);
+    }
+
+    fxRackStatusLabel.setText(fxModuleName(selectedFxModule) + " | " + fxModuleSummary(selectedFxModule),
+                              juce::dontSendNotification);
+}
+
+bool NateVSTAudioProcessorEditor::isFxModuleEnabled(FxModule module) const
+{
+    if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(fxEnabledParameterID(module)))
+        return value->load() >= 0.5f;
+
+    return false;
+}
+
+bool NateVSTAudioProcessorEditor::shouldShowFxModule(FxModule module) const
+{
+    return module == FxModule::guard || module == selectedFxModule || isFxModuleEnabled(module);
+}
+
+juce::String NateVSTAudioProcessorEditor::fxEnabledParameterID(FxModule module) const
+{
+    switch (module)
+    {
+        case FxModule::tone: return Parameters::ID::fxToneEnabled;
+        case FxModule::distortion: return Parameters::ID::fxDistortionEnabled;
+        case FxModule::phaser: return Parameters::ID::fxPhaserEnabled;
+        case FxModule::chorus: return Parameters::ID::fxChorusEnabled;
+        case FxModule::delay: return Parameters::ID::fxDelayEnabled;
+        case FxModule::reverb: return Parameters::ID::fxReverbEnabled;
+        case FxModule::guard: return Parameters::ID::fxGuardEnabled;
+    }
+
+    return {};
+}
+
+juce::String NateVSTAudioProcessorEditor::fxModuleName(FxModule module) const
+{
+    switch (module)
+    {
+        case FxModule::tone: return "Tone";
+        case FxModule::distortion: return "Drive";
+        case FxModule::phaser: return "Phaser";
+        case FxModule::chorus: return "Chorus";
+        case FxModule::delay: return "Delay";
+        case FxModule::reverb: return "Reverb";
+        case FxModule::guard: return "Guard";
+    }
+
+    return {};
+}
+
+juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
+{
+    switch (module)
+    {
+        case FxModule::tone: return "tilt and low cut";
+        case FxModule::distortion: return "saturation amount";
+        case FxModule::phaser: return "rate depth mix";
+        case FxModule::chorus: return "rate depth mix";
+        case FxModule::delay: return "time feedback mix";
+        case FxModule::reverb: return "size damping mix";
+        case FxModule::guard: return "push and ceiling";
+    }
+
+    return {};
+}
+
+juce::TextButton& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
+{
+    switch (module)
+    {
+        case FxModule::tone: return fxToneSlotButton;
+        case FxModule::distortion: return fxDistortionSlotButton;
+        case FxModule::phaser: return fxPhaserSlotButton;
+        case FxModule::chorus: return fxChorusSlotButton;
+        case FxModule::delay: return fxDelaySlotButton;
+        case FxModule::reverb: return fxReverbSlotButton;
+        case FxModule::guard: return fxGuardSlotButton;
+    }
+
+    return fxGuardSlotButton;
+}
+
+void NateVSTAudioProcessorEditor::setPlainParameterValue(const juce::String& parameterID, float plainValue)
+{
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+    {
+        parameter->beginChangeGesture();
+        parameter->setValueNotifyingHost(parameter->convertTo0to1(plainValue));
+        parameter->endChangeGesture();
+    }
+}
+
 void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
@@ -1155,7 +1362,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &synthSectionLabel, &randomSectionLabel, &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox,
+        &presetFilterBox, &fxAddBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton,
         &fxToneEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -1169,7 +1376,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton, &presetNameEditor,
+        &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &fxRemoveButton, &fxToneSlotButton, &fxDistortionSlotButton, &fxPhaserSlotButton, &fxChorusSlotButton,
+        &fxDelaySlotButton, &fxReverbSlotButton, &fxGuardSlotButton,
+        &presetNameEditor, &fxRackStatusLabel,
         &sequencerGrid
     });
 
@@ -1318,6 +1528,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSegmentedSelectors();
     updateOutputMeter();
     updateKeyboardRangeLabel();
+    updateFxRackControls();
 }
 
 void NateVSTAudioProcessorEditor::refreshPresetList()

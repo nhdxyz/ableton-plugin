@@ -33,6 +33,17 @@ private:
         library
     };
 
+    enum class FxModule
+    {
+        tone = 0,
+        distortion,
+        phaser,
+        chorus,
+        delay,
+        reverb,
+        guard
+    };
+
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -64,6 +75,7 @@ private:
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
+    juce::ComboBox fxAddBox;
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
@@ -243,10 +255,19 @@ private:
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton fxRemoveButton { "Remove" };
+    juce::TextButton fxToneSlotButton { "Tone" };
+    juce::TextButton fxDistortionSlotButton { "Drive" };
+    juce::TextButton fxPhaserSlotButton { "Phaser" };
+    juce::TextButton fxChorusSlotButton { "Chorus" };
+    juce::TextButton fxDelaySlotButton { "Delay" };
+    juce::TextButton fxReverbSlotButton { "Reverb" };
+    juce::TextButton fxGuardSlotButton { "Guard" };
     juce::TextButton keyboardOctaveDownButton { "Oct -" };
     juce::TextButton keyboardOctaveUpButton { "Oct +" };
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
+    juce::Label fxRackStatusLabel;
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     juce::MidiKeyboardComponent pianoKeyboard;
@@ -283,8 +304,20 @@ private:
     void updateFavoritePresetButton();
     void shiftKeyboardOctave(int semitones);
     void updateKeyboardRangeLabel();
+    void addFxModule(FxModule module);
+    void removeSelectedFxModule();
+    void selectFxModule(FxModule module);
+    void updateFxRackControls();
+    bool isFxModuleEnabled(FxModule module) const;
+    bool shouldShowFxModule(FxModule module) const;
+    juce::String fxEnabledParameterID(FxModule module) const;
+    juce::String fxModuleName(FxModule module) const;
+    juce::String fxModuleSummary(FxModule module) const;
+    juce::TextButton& fxSlotButton(FxModule module);
+    void setPlainParameterValue(const juce::String& parameterID, float plainValue);
 
     Panel activePanel = Panel::home;
+    FxModule selectedFxModule = FxModule::guard;
     float displayedPeakLeft = 0.0f;
     float displayedPeakRight = 0.0f;
     float displayedRmsLeft = 0.0f;

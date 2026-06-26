@@ -14,6 +14,18 @@ Reference products reviewed:
 - Korg modwave: https://www.korg.com/us/products/synthesizers/modwave/
 - Roland ZENOLOGY: https://www.roland.com/us/products/rc_zenology/
 
+## Framework Decision
+
+Stay on JUCE for the production plugin UI for now.
+
+Do not add iPlug2, HISE, Dear ImGui, React/WebView, or another UI framework in this phase. The plugin already depends on JUCE for the VST3 wrapper, editor lifecycle, APVTS automation, CMake integration, plugin copy step, and pluginval validation path. Adding a second UI framework would increase build complexity, binary/signing risk, and host validation risk without solving the immediate problem.
+
+Instead, improve the internal UI system:
+
+- Build better JUCE components for rack lists, selected-module editors, meters, segmented controls, and modulation indicators.
+- Keep parameters in APVTS so Ableton automation and saved sets remain stable.
+- Add external libraries only when they solve a specific DSP or rendering problem that JUCE does not handle well.
+
 ## Current Problems
 
 ### FX Shows Too Much

@@ -182,6 +182,7 @@ The general club roadmap should bias the next few effects and workflows toward U
 3. Width/Mono Bass.
    Implemented as the Width module. Keep sub and Reese fundamentals centered while widening stabs, delays, reverbs, and upper harmonics.
    UKG bass guardrails now force the UKG bass recipe toward mono, restrained detune/spread, protected low-cut, Width mono-bass, Guard safety, and short audible glide.
+   `UKG Dred Bass` now extends this into reverse-filter/Reese-style bass movement with a centered sub and slower filter modulation.
 4. Organ/Stab recipes.
    Implemented first as randomizer recipes for organ stabs, chord stabs, and bell plucks. Factory preset files and any dedicated organ oscillator mode can come later.
    The first UKG factory pack now includes organ stab, chord stab, bell pluck, late stab, vocal chop starter, and bass presets generated from repo-managed XML definitions.

@@ -18,7 +18,8 @@ enum class Recipe
     ukgTwoStepBass,
     ukgOrganStab,
     ukgChordStab,
-    ukgBellPluck
+    ukgBellPluck,
+    ukgDredBass
 };
 
 class Randomizer

@@ -34,7 +34,8 @@ juce::StringArray randomRecipeChoices()
         "UKG 2-Step Bass",
         "UKG Organ Stab",
         "UKG Chord Stab",
-        "UKG Bell Pluck"
+        "UKG Bell Pluck",
+        "UKG Dred Bass"
     };
 }
 

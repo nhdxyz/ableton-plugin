@@ -440,6 +440,59 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxGuardCeiling = randomFloat(0.88f, 0.93f);
             break;
 
+        case Recipe::ukgDredBass:
+            wave = randomInt(1, 2);
+            osc2Wave = randomInt(1, 2);
+            octave = -1;
+            osc2Octave = -1;
+            tune = randomFloat(-0.015f, 0.015f);
+            osc2Tune = randomFloat(-0.16f, 0.16f);
+            osc1Level = randomFloat(0.72f, 0.98f);
+            osc2Level = randomFloat(0.28f, 0.58f);
+            subLevel = randomFloat(0.48f, 0.76f);
+            noiseLevel = randomFloat(0.0f, 0.04f);
+            cutoff = randomFloat(260.0f, 980.0f);
+            resonance = randomFloat(0.36f, 0.78f);
+            envAmount = randomFloat(0.24f, 0.58f);
+            attack = randomFloat(0.003f, 0.02f);
+            decay = randomFloat(0.18f, 0.48f);
+            sustain = randomFloat(0.18f, 0.52f);
+            release = randomFloat(0.06f, 0.22f);
+            drive = randomFloat(0.16f, 0.44f);
+            glide = randomFloat(0.035f, 0.13f);
+            unisonVoiceCount = randomInt(1, 2);
+            unisonDetune = randomFloat(0.02f, 0.08f);
+            unisonBlend = randomFloat(0.3f, 0.55f);
+            unisonSpread = randomFloat(0.0f, 0.1f);
+            macroTone = randomFloat(0.0f, 0.28f);
+            macroDirt = randomFloat(0.08f, 0.3f);
+            macroMotion = randomFloat(0.2f, 0.48f);
+            macroSpace = randomFloat(0.03f, 0.18f);
+            mono = true;
+            fxToneEnabled = true;
+            fxToneTilt = randomFloat(-0.22f, 0.08f);
+            fxToneLowCut = randomFloat(28.0f, 48.0f);
+            fxBitcrushEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.18f);
+            fxBitcrushBits = randomFloat(10.0f, 14.0f);
+            fxBitcrushDownsample = randomFloat(1.0f, 5.0f);
+            fxBitcrushMix = randomFloat(0.04f, 0.14f);
+            fxPumpEnabled = true;
+            fxPumpRate = randomInt(0, 2);
+            fxPumpDepth = randomFloat(0.18f, 0.42f);
+            fxPumpShape = randomFloat(0.35f, 0.78f);
+            fxPumpPhase = randomFloat(0.0f, 0.16f);
+            fxWidthEnabled = true;
+            fxWidthAmount = randomFloat(0.96f, 1.08f);
+            fxWidthMonoCutoff = randomFloat(135.0f, 190.0f);
+            fxPhaserEnabled = randomFloat(0.0f, 1.0f) < 0.34f + (chaos * 0.14f);
+            fxPhaserRate = randomFloat(0.05f, 0.32f);
+            fxPhaserDepth = randomFloat(0.22f, 0.58f);
+            fxPhaserMix = randomFloat(0.05f, 0.16f);
+            fxGuardEnabled = true;
+            fxGuardPush = randomFloat(0.04f, 0.14f);
+            fxGuardCeiling = randomFloat(0.88f, 0.93f);
+            break;
+
         case Recipe::ukgOrganStab:
             wave = randomInt(2, 3);
             osc2Wave = randomInt(0, 2);
@@ -622,6 +675,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         case Recipe::deepHouseBass:
         case Recipe::rollingTechBass:
         case Recipe::ukgTwoStepBass:
+        case Recipe::ukgDredBass:
             fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.12f + (chaos * 0.08f);
             fxFlangerRate = randomFloat(0.05f, 0.32f);
             fxFlangerDepth = randomFloat(0.12f, 0.34f);
@@ -689,7 +743,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         glide = blend(Parameters::ID::glideTime, glide);
     }
 
-    if (recipe == Recipe::ukgTwoStepBass)
+    if (recipe == Recipe::ukgTwoStepBass || recipe == Recipe::ukgDredBass)
     {
         octave = -1;
         osc2Octave = -1;
@@ -797,8 +851,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::lfo1Depth, juce::jlimit(0.08f, 0.72f, randomFloat(0.16f, 0.4f) * motionScale));
     setParameter(Parameters::ID::lfo1Phase, randomFloat(0.0f, 0.25f));
     setParameter(Parameters::ID::lfo1Retrigger, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 0.0f : 1.0f);
-    setParameter(Parameters::ID::modEnv1Attack, randomFloat(0.002f, 0.03f));
-    setParameter(Parameters::ID::modEnv1Decay, randomFloat(0.08f, recipe == Recipe::ukgOrganStab || recipe == Recipe::ukgChordStab ? 0.34f : 0.22f));
+    const auto dredModEnv = recipe == Recipe::ukgDredBass;
+    setParameter(Parameters::ID::modEnv1Attack, dredModEnv ? randomFloat(0.045f, 0.14f) : randomFloat(0.002f, 0.03f));
+    setParameter(Parameters::ID::modEnv1Decay, dredModEnv ? randomFloat(0.18f, 0.46f) : randomFloat(0.08f, recipe == Recipe::ukgOrganStab || recipe == Recipe::ukgChordStab ? 0.34f : 0.22f));
     setParameter(Parameters::ID::modEnv1Sustain, randomFloat(0.0f, 0.24f));
     setParameter(Parameters::ID::modEnv1Release, randomFloat(0.04f, 0.2f));
     setParameter(Parameters::ID::modEnv1Depth, juce::jlimit(0.08f, 0.68f, randomFloat(0.18f, 0.46f) * motionScale));
@@ -810,6 +865,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         case Recipe::ukgTwoStepBass:
             setModSlot(0, 1, 1, randomFloat(0.05f, 0.16f) * motionScale);
             setModSlot(1, 2, 3, randomFloat(0.04f, 0.12f) * motionScale);
+            break;
+
+        case Recipe::ukgDredBass:
+            setModSlot(0, 2, 1, randomFloat(0.16f, 0.32f) * motionScale);
+            setModSlot(1, 1, 1, randomFloat(0.05f, 0.14f) * motionScale);
+            setModSlot(2, 2, 3, randomFloat(0.08f, 0.18f) * motionScale);
             break;
 
         case Recipe::acidLine:

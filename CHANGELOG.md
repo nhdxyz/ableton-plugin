@@ -252,3 +252,10 @@
 - Added stable Flanger parameters for rate, depth, feedback, and mix.
 - Processed Flanger after Phaser and before Chorus for short-delay metallic movement.
 - Added Flanger to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
+
+### UKG Dred Bass
+
+- Added `UKG Dred Bass` as a new randomization recipe without changing existing recipe indexes.
+- Tuned the recipe for mono-safe sub, restrained Reese detune, slower filter-opening modulation, short glide, Pump, Width, subtle movement FX, and Guard safety.
+- Added a matching repo-managed factory preset and regenerated the UKG preset pack.
+- Updated UK garage workflow docs and factory preset notes.

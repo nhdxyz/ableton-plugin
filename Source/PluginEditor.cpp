@@ -655,9 +655,11 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(130);
+    slider.setMouseDragSensitivity(90);
     slider.setVelocityBasedMode(true);
-    slider.setVelocityModeParameters(1.25, 1, 0.0, true);
+    slider.setVelocityModeParameters(1.55, 1, 0.0, true);
+    slider.setSliderSnapsToMousePosition(false);
+    slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 68, 18);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
@@ -670,6 +672,9 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     label.attachToComponent(&slider, false);
     addAndMakeVisible(label);
 
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+        slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -679,6 +684,9 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
                                                               const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setMouseDragSensitivity(180);
+    slider.setSliderSnapsToMousePosition(false);
+    slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
     slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
@@ -692,6 +700,9 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     label.attachToComponent(&slider, true);
     addAndMakeVisible(label);
+
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+        slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }

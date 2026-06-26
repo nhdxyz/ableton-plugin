@@ -21,7 +21,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
                                    float sliderPos,
                                    float rotaryStartAngle,
                                    float rotaryEndAngle,
-                                   juce::Slider&)
+                                   juce::Slider& slider)
 {
     const auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y),
                                                static_cast<float>(width), static_cast<float>(height))
@@ -31,22 +31,57 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     const auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     const auto knobBounds = juce::Rectangle<float>(radius * 2.0f, radius * 2.0f).withCentre(centre);
 
-    g.setColour(juce::Colour(0xff111619));
+    const auto isActive = slider.isMouseOverOrDragging();
+
+    g.setColour(isActive ? juce::Colour(0xff162225) : juce::Colour(0xff111619));
     g.fillEllipse(knobBounds);
 
-    g.setColour(juce::Colour(0xff303c42));
-    g.drawEllipse(knobBounds, 1.5f);
+    g.setColour(isActive ? juce::Colour(0xff5f736f) : juce::Colour(0xff303c42));
+    g.drawEllipse(knobBounds, isActive ? 2.0f : 1.5f);
 
     juce::Path arc;
     arc.addCentredArc(centre.x, centre.y, radius - 4.0f, radius - 4.0f, 0.0f,
                       rotaryStartAngle, angle, true);
-    g.setColour(juce::Colour(0xff8ee6c9));
-    g.strokePath(arc, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour(isActive ? juce::Colour(0xffa8ffe3) : juce::Colour(0xff8ee6c9));
+    g.strokePath(arc, juce::PathStrokeType(isActive ? 3.8f : 3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     juce::Path pointer;
     pointer.addRectangle(-1.4f, -radius + 9.0f, 2.8f, radius * 0.45f);
     pointer.applyTransform(juce::AffineTransform::rotation(angle).translated(centre));
     g.fillPath(pointer);
 }
+
+void LookAndFeel::drawButtonBackground(juce::Graphics& g,
+                                       juce::Button& button,
+                                       const juce::Colour& backgroundColour,
+                                       bool shouldDrawButtonAsHighlighted,
+                                       bool shouldDrawButtonAsDown)
+{
+    auto bounds = button.getLocalBounds().toFloat().reduced(0.5f);
+    const auto isOn = button.getToggleState();
+    auto fill = backgroundColour;
+
+    if (isOn)
+        fill = juce::Colour(0xff315b52);
+    else if (shouldDrawButtonAsDown)
+        fill = juce::Colour(0xff26373d);
+    else if (shouldDrawButtonAsHighlighted)
+        fill = juce::Colour(0xff243136);
+
+    g.setColour(fill);
+    g.fillRoundedRectangle(bounds, 5.0f);
+
+    g.setColour(isOn ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff39484e));
+    g.drawRoundedRectangle(bounds, 5.0f, isOn ? 1.4f : 1.0f);
 }
 
+void LookAndFeel::drawButtonText(juce::Graphics& g,
+                                 juce::TextButton& button,
+                                 bool,
+                                 bool)
+{
+    g.setFont(juce::FontOptions(12.0f, button.getToggleState() ? juce::Font::bold : juce::Font::plain));
+    g.setColour(button.getToggleState() ? juce::Colour(0xffedf7f4) : juce::Colour(0xffb7c5c7));
+    g.drawFittedText(button.getButtonText(), button.getLocalBounds().reduced(4, 2), juce::Justification::centred, 1);
+}
+}

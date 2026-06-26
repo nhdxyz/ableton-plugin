@@ -29,3 +29,12 @@
 - Added source-level compensation so layered patches stay closer to a safe output range.
 - Updated HOME and SYNTH panels with the new source mix controls.
 - Updated randomization recipes so basses can use sub reinforcement, stabs can use detuned oscillator 2, and noise FX can lean into the noise source.
+
+### Control Ergonomics Pass
+
+- Reduced rotary drag distance again so knobs respond with less mouse travel.
+- Added drag/hover value popups for rotary and horizontal sliders.
+- Disabled snap-to-click behavior so controls do not jump unexpectedly.
+- Added double-click reset for every slider using the parameter default value.
+- Added clearer hover, pressed, and selected states for text buttons and segmented selectors.
+- Added hover emphasis to rotary knob rings.

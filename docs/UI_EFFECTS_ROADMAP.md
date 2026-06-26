@@ -183,6 +183,7 @@ The general club roadmap should bias the next few effects and workflows toward U
    UKG bass guardrails now force the UKG bass recipe toward mono, restrained detune/spread, protected low-cut, Width mono-bass, Guard safety, and short audible glide.
 4. Organ/Stab recipes.
    Implemented first as randomizer recipes for organ stabs, chord stabs, and bell plucks. Factory preset files and any dedicated organ oscillator mode can come later.
+   The first UKG factory pack now includes organ stab, chord stab, bell pluck, late stab, vocal chop starter, and bass presets generated from repo-managed XML definitions.
 5. Swing and chop sequencer templates.
    Implemented in the SEQ panel. Templates cover 2-step bass, shuffle bass, organ skank, vocal chop triggers, and late offbeat stabs.
    Selective groove is now implemented with Classic, Selective, UKG Push, and Tight modes plus a per-step timing lane shown directly in the grid.

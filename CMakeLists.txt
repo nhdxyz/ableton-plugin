@@ -71,3 +71,14 @@ target_link_libraries(NateVST
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
+set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")
+
+if(EXISTS "${NATE_VST_FACTORY_PRESETS_SOURCE}")
+    add_custom_command(TARGET NateVST POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${NATE_VST_FACTORY_PRESETS_DEST}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory "${NATE_VST_FACTORY_PRESETS_SOURCE}" "${NATE_VST_FACTORY_PRESETS_DEST}"
+        COMMENT "Installing Nate VST factory presets"
+    )
+endif()

@@ -205,3 +205,10 @@
 - Added a visible Glide knob to the HOME and SYNTH panels.
 - Tightened the `UKG 2-Step Bass` recipe around a mono-safe tuned sub layer, restrained oscillator detune, limited stereo spread, protected low-cut, Width mono-bass, and Guard output safety.
 - Applied UKG bass guardrails after mutation/variation blending so locked-in bass patches do not drift into unstable low-end ranges.
+
+### UKG Factory Presets
+
+- Added a repo-managed UKG factory preset pack under `Resources/Factory Presets`.
+- Added factory presets for 2-step bass, shuffle bass, organ stab, chord stab, bell pluck, vocal chop starter, and late stab workflows.
+- Added `tools/generate_factory_presets.py` to regenerate `.natevstpreset` XML files from documented preset definitions.
+- Made local macOS builds copy factory presets into `~/Library/Application Support/Nate VST/Factory Presets`.

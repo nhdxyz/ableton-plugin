@@ -1,0 +1,191 @@
+#include "PatternSequencer.h"
+
+#include <cmath>
+
+namespace Sequencer
+{
+PatternSequencer::PatternSequencer(Parameters::APVTS& state)
+    : parameters(state)
+{
+    sequencerEnabled = parameters.getRawParameterValue(Parameters::ID::sequencerEnabled);
+    sequencerRate = parameters.getRawParameterValue(Parameters::ID::sequencerRate);
+    sequencerRoot = parameters.getRawParameterValue(Parameters::ID::sequencerRoot);
+    sequencerGate = parameters.getRawParameterValue(Parameters::ID::sequencerGate);
+
+    clear();
+}
+
+void PatternSequencer::prepare(double sampleRate)
+{
+    currentSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
+    reset();
+}
+
+void PatternSequencer::reset()
+{
+    samplesUntilNextStep = 0.0;
+    pendingNoteOffSamples = -1.0;
+    currentStep = 0;
+    activeNote = -1;
+}
+
+bool PatternSequencer::isEnabled() const
+{
+    return readParameter(sequencerEnabled, 0.0f) > 0.5f;
+}
+
+Step PatternSequencer::getStep(int index) const
+{
+    const auto safeIndex = static_cast<size_t>(juce::jlimit(0, numSteps - 1, index));
+
+    return {
+        stepEnabled[safeIndex].load() > 0,
+        stepNoteOffset[safeIndex].load(),
+        stepVelocity[safeIndex].load(),
+        stepProbability[safeIndex].load()
+    };
+}
+
+void PatternSequencer::setStep(int index, Step step)
+{
+    step.noteOffset = juce::jlimit(-24, 24, step.noteOffset);
+    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity);
+    step.probability = juce::jlimit(0.0f, 1.0f, step.probability);
+
+    const auto safeIndex = static_cast<size_t>(juce::jlimit(0, numSteps - 1, index));
+    stepEnabled[safeIndex].store(step.enabled ? 1 : 0);
+    stepNoteOffset[safeIndex].store(step.noteOffset);
+    stepVelocity[safeIndex].store(step.velocity);
+    stepProbability[safeIndex].store(step.probability);
+}
+
+void PatternSequencer::clear()
+{
+    for (auto step = 0; step < numSteps; ++step)
+    {
+        stepEnabled[static_cast<size_t>(step)].store(0);
+        stepNoteOffset[static_cast<size_t>(step)].store(0);
+        stepVelocity[static_cast<size_t>(step)].store(0.8f);
+        stepProbability[static_cast<size_t>(step)].store(1.0f);
+    }
+}
+
+void PatternSequencer::randomize(float amount)
+{
+    const auto density = juce::jlimit(0.15f, 0.95f, 0.25f + (amount * 0.65f));
+    const auto range = juce::jlimit(3, 12, static_cast<int>(3.0f + (amount * 10.0f)));
+
+    for (auto step = 0; step < numSteps; ++step)
+    {
+        Step newStep;
+        newStep.enabled = nextRandomFloat() < density;
+        newStep.noteOffset = juce::jlimit(minNoteOffset, maxNoteOffset, static_cast<int>(std::round((nextRandomFloat() * 2.0f - 1.0f) * static_cast<float>(range))));
+        newStep.velocity = juce::jlimit(0.35f, 1.0f, 0.45f + (nextRandomFloat() * 0.55f));
+        newStep.probability = juce::jlimit(0.45f, 1.0f, 0.55f + (nextRandomFloat() * 0.45f));
+
+        if (step == 0 || step == 4 || step == 8 || step == 12)
+        {
+            newStep.enabled = true;
+            newStep.noteOffset = step == 0 ? 0 : newStep.noteOffset;
+            newStep.probability = 1.0f;
+        }
+
+        setStep(step, newStep);
+    }
+}
+
+void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bpm)
+{
+    if (! isEnabled() || numSamples <= 0)
+        return;
+
+    if (activeNote >= 0 && pendingNoteOffSamples >= 0.0)
+    {
+        if (pendingNoteOffSamples < static_cast<double>(numSamples))
+        {
+            midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), static_cast<int>(pendingNoteOffSamples));
+            activeNote = -1;
+            pendingNoteOffSamples = -1.0;
+        }
+        else
+        {
+            pendingNoteOffSamples -= static_cast<double>(numSamples);
+        }
+    }
+
+    const auto stepLengthSamples = getStepLengthSamples(bpm);
+    const auto gateSamples = juce::jlimit(1, stepLengthSamples - 1,
+                                         static_cast<int>(static_cast<float>(stepLengthSamples) * readParameter(sequencerGate, 0.55f)));
+
+    auto nextStepOffset = samplesUntilNextStep;
+
+    while (nextStepOffset < static_cast<double>(numSamples))
+    {
+        const auto eventOffset = juce::jlimit(0, numSamples - 1, static_cast<int>(std::round(nextStepOffset)));
+
+        if (activeNote >= 0)
+        {
+            midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), eventOffset);
+            activeNote = -1;
+            pendingNoteOffSamples = -1.0;
+        }
+
+        const auto step = getStep(currentStep);
+        if (shouldTriggerStep(step))
+        {
+            const auto root = static_cast<int>(std::round(readParameter(sequencerRoot, 36.0f)));
+            activeNote = juce::jlimit(0, 127, root + step.noteOffset);
+            midi.addEvent(juce::MidiMessage::noteOn(1, activeNote, step.velocity), eventOffset);
+
+            const auto noteOffOffset = eventOffset + gateSamples;
+            if (noteOffOffset < numSamples)
+            {
+                midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), noteOffOffset);
+                activeNote = -1;
+                pendingNoteOffSamples = -1.0;
+            }
+            else
+            {
+                pendingNoteOffSamples = static_cast<double>(noteOffOffset - numSamples);
+            }
+        }
+
+        currentStep = (currentStep + 1) % numSteps;
+        nextStepOffset += static_cast<double>(stepLengthSamples);
+    }
+
+    samplesUntilNextStep = nextStepOffset - static_cast<double>(numSamples);
+}
+
+int PatternSequencer::getStepLengthSamples(double bpm) const
+{
+    const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
+    const auto quarterNoteSamples = (60.0 / safeBpm) * currentSampleRate;
+    const auto rateIndex = static_cast<int>(std::round(readParameter(sequencerRate, 1.0f)));
+
+    switch (rateIndex)
+    {
+        case 0: return juce::jmax(1, static_cast<int>(quarterNoteSamples / 2.0));
+        case 2: return juce::jmax(1, static_cast<int>(quarterNoteSamples / 8.0));
+        case 1:
+        default:
+            return juce::jmax(1, static_cast<int>(quarterNoteSamples / 4.0));
+    }
+}
+
+float PatternSequencer::nextRandomFloat()
+{
+    randomState = (1664525u * randomState) + 1013904223u;
+    return static_cast<float>(randomState & 0x00ffffffu) / static_cast<float>(0x01000000u);
+}
+
+bool PatternSequencer::shouldTriggerStep(const Step& step)
+{
+    return step.enabled && nextRandomFloat() <= step.probability;
+}
+
+float PatternSequencer::readParameter(std::atomic<float>* parameter, float fallback) const
+{
+    return parameter != nullptr ? parameter->load() : fallback;
+}
+}

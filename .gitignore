@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+build/
+cmake-build-*/
+Builds/
+DerivedData/
+out/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# JUCE/plugin artifacts
+*.vst3
+*.component
+*.appex
+*.app
+*.dSYM/
+*.jucer
+
+# Audio/render scratch
+Renders/
+Exports/
+*.wav
+*.aif
+*.aiff
+*.mp3
+*.flac
+
+# Keep intentional source audio assets if they are added later.
+!Resources/Audio/.gitkeep
+

@@ -1,0 +1,222 @@
+#include "Randomizer.h"
+
+#include <cmath>
+
+namespace Randomization
+{
+Randomizer::Randomizer(Parameters::APVTS& state)
+    : parameters(state),
+      rng(std::random_device{}())
+{
+}
+
+void Randomizer::generate()
+{
+    const auto amount = readFloat(Parameters::ID::randomAmount);
+    const auto chaos = readFloat(Parameters::ID::randomChaos);
+    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, false);
+}
+
+void Randomizer::mutate()
+{
+    const auto amount = juce::jlimit(0.05f, 1.0f, readFloat(Parameters::ID::randomAmount) * 0.65f);
+    const auto chaos = readFloat(Parameters::ID::randomChaos);
+    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, true);
+}
+
+void Randomizer::variation()
+{
+    const auto amount = juce::jlimit(0.02f, 0.35f, readFloat(Parameters::ID::randomAmount) * 0.25f);
+    const auto chaos = readFloat(Parameters::ID::randomChaos) * 0.35f;
+    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, true);
+}
+
+float Randomizer::randomFloat(float min, float max)
+{
+    std::uniform_real_distribution<float> distribution(min, max);
+    return distribution(rng);
+}
+
+int Randomizer::randomInt(int min, int max)
+{
+    std::uniform_int_distribution<int> distribution(min, max);
+    return distribution(rng);
+}
+
+float Randomizer::readFloat(const juce::String& parameterID) const
+{
+    if (auto* value = parameters.getRawParameterValue(parameterID))
+        return value->load();
+
+    return 0.0f;
+}
+
+int Randomizer::readChoice(const juce::String& parameterID) const
+{
+    return static_cast<int>(std::round(readFloat(parameterID)));
+}
+
+void Randomizer::setParameter(const juce::String& parameterID, float plainValue)
+{
+    if (auto* parameter = parameters.getParameter(parameterID))
+    {
+        parameter->beginChangeGesture();
+        parameter->setValueNotifyingHost(parameter->convertTo0to1(plainValue));
+        parameter->endChangeGesture();
+    }
+}
+
+void Randomizer::setChoice(const juce::String& parameterID, int choiceIndex)
+{
+    setParameter(parameterID, static_cast<float>(choiceIndex));
+}
+
+void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bool subtle)
+{
+    const auto brightnessBias = readFloat(Parameters::ID::randomBrightnessBias);
+    const auto driveBias = readFloat(Parameters::ID::randomDriveBias);
+    const auto wildness = juce::jlimit(0.0f, 1.0f, (amount * 0.75f) + (chaos * 0.25f));
+
+    auto attack = 0.004f;
+    auto decay = 0.18f;
+    auto sustain = 0.55f;
+    auto release = 0.18f;
+    auto cutoff = 1200.0f;
+    auto resonance = 0.45f;
+    auto envAmount = 0.2f;
+    auto drive = 0.18f;
+    auto wave = 1;
+    auto octave = 0;
+    auto tune = 0.0f;
+    auto mono = true;
+    auto glide = 0.0f;
+
+    switch (recipe)
+    {
+        case Recipe::deepHouseBass:
+            wave = randomInt(0, 2);
+            octave = randomInt(-2, -1);
+            cutoff = randomFloat(250.0f, 1400.0f);
+            resonance = randomFloat(0.18f, 0.55f);
+            envAmount = randomFloat(0.05f, 0.35f);
+            decay = randomFloat(0.16f, 0.55f);
+            sustain = randomFloat(0.35f, 0.8f);
+            release = randomFloat(0.08f, 0.28f);
+            drive = randomFloat(0.05f, 0.32f);
+            glide = randomFloat(0.0f, 0.08f);
+            break;
+
+        case Recipe::rollingTechBass:
+            wave = randomInt(1, 2);
+            octave = randomInt(-2, -1);
+            cutoff = randomFloat(350.0f, 2100.0f);
+            resonance = randomFloat(0.25f, 0.8f);
+            envAmount = randomFloat(0.1f, 0.55f);
+            decay = randomFloat(0.08f, 0.32f);
+            sustain = randomFloat(0.15f, 0.58f);
+            release = randomFloat(0.035f, 0.2f);
+            drive = randomFloat(0.18f, 0.55f);
+            glide = randomFloat(0.0f, 0.12f);
+            break;
+
+        case Recipe::acidLine:
+            wave = randomInt(1, 2);
+            octave = randomInt(-1, 0);
+            cutoff = randomFloat(600.0f, 4200.0f);
+            resonance = randomFloat(0.65f, 1.2f);
+            envAmount = randomFloat(0.35f, 0.95f);
+            decay = randomFloat(0.06f, 0.22f);
+            sustain = randomFloat(0.0f, 0.28f);
+            release = randomFloat(0.03f, 0.16f);
+            drive = randomFloat(0.28f, 0.72f);
+            glide = randomFloat(0.03f, 0.22f);
+            break;
+
+        case Recipe::minimalBlip:
+            wave = randomInt(0, 3);
+            octave = randomInt(-1, 1);
+            cutoff = randomFloat(900.0f, 7000.0f);
+            resonance = randomFloat(0.25f, 0.95f);
+            envAmount = randomFloat(-0.15f, 0.45f);
+            decay = randomFloat(0.025f, 0.16f);
+            sustain = randomFloat(0.0f, 0.18f);
+            release = randomFloat(0.01f, 0.12f);
+            drive = randomFloat(0.02f, 0.38f);
+            mono = false;
+            break;
+
+        case Recipe::darkStab:
+            wave = randomInt(1, 3);
+            octave = randomInt(-1, 0);
+            cutoff = randomFloat(450.0f, 2800.0f);
+            resonance = randomFloat(0.15f, 0.65f);
+            envAmount = randomFloat(0.05f, 0.4f);
+            decay = randomFloat(0.18f, 0.75f);
+            sustain = randomFloat(0.25f, 0.75f);
+            release = randomFloat(0.12f, 0.8f);
+            drive = randomFloat(0.15f, 0.62f);
+            mono = false;
+            break;
+
+        case Recipe::noiseFx:
+            wave = randomInt(0, 3);
+            octave = randomInt(-2, 2);
+            tune = randomFloat(-7.0f, 7.0f) * chaos;
+            cutoff = randomFloat(250.0f, 12000.0f);
+            resonance = randomFloat(0.15f, 1.15f);
+            envAmount = randomFloat(-0.7f, 0.9f);
+            attack = randomFloat(0.001f, 0.45f * wildness + 0.02f);
+            decay = randomFloat(0.04f, 1.5f);
+            sustain = randomFloat(0.0f, 0.85f);
+            release = randomFloat(0.03f, 2.0f);
+            drive = randomFloat(0.1f, 0.9f);
+            mono = false;
+            break;
+    }
+
+    const auto cutoffBias = std::pow(2.0f, brightnessBias);
+    cutoff = juce::jlimit(35.0f, 18000.0f, cutoff * cutoffBias);
+    drive = juce::jlimit(0.0f, 0.95f, drive + (driveBias * 0.24f));
+
+    if (subtle)
+    {
+        auto blend = [this, amount] (const juce::String& id, float target)
+        {
+            const auto current = readFloat(id);
+            return current + ((target - current) * amount);
+        };
+
+        attack = blend(Parameters::ID::ampAttack, attack);
+        decay = blend(Parameters::ID::ampDecay, decay);
+        sustain = blend(Parameters::ID::ampSustain, sustain);
+        release = blend(Parameters::ID::ampRelease, release);
+        cutoff = blend(Parameters::ID::filterCutoff, cutoff);
+        resonance = blend(Parameters::ID::filterResonance, resonance);
+        envAmount = blend(Parameters::ID::filterEnvAmount, envAmount);
+        drive = blend(Parameters::ID::driveAmount, drive);
+        tune = blend(Parameters::ID::oscTune, tune);
+        glide = blend(Parameters::ID::glideTime, glide);
+    }
+
+    setChoice(Parameters::ID::oscWave, wave);
+    setParameter(Parameters::ID::oscOctave, static_cast<float>(octave));
+    setParameter(Parameters::ID::oscTune, tune);
+    setParameter(Parameters::ID::ampAttack, attack);
+    setParameter(Parameters::ID::ampDecay, decay);
+    setParameter(Parameters::ID::ampSustain, sustain);
+    setParameter(Parameters::ID::ampRelease, release);
+    setParameter(Parameters::ID::filterCutoff, cutoff);
+    setParameter(Parameters::ID::filterResonance, resonance);
+    setParameter(Parameters::ID::filterEnvAmount, envAmount);
+    setParameter(Parameters::ID::driveAmount, drive);
+    setParameter(Parameters::ID::monoMode, mono ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::glideTime, glide);
+    applyOutputSafety(drive);
+}
+
+void Randomizer::applyOutputSafety(float drive)
+{
+    const auto safeGain = juce::jmap(drive, 0.0f, 1.0f, -7.0f, -14.0f);
+    setParameter(Parameters::ID::outputGain, safeGain);
+}
+}

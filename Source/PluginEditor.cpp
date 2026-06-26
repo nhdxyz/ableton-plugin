@@ -7,6 +7,11 @@ namespace
 constexpr auto editorWidth = 940;
 constexpr auto editorHeight = 710;
 constexpr auto pianoKeyboardHeight = 58;
+constexpr auto keyboardControlsWidth = 214;
+constexpr auto keyboardLowestNote = 24;
+constexpr auto keyboardHighestNote = 96;
+constexpr auto keyboardInitialLowestNote = 36;
+constexpr auto keyboardMaxLowestVisibleNote = 84;
 
 juce::Colour backgroundColour()
 {
@@ -51,8 +56,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
 
-    pianoKeyboard.setAvailableRange(24, 96);
-    pianoKeyboard.setLowestVisibleKey(36);
+    pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
+    pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
     pianoKeyboard.setKeyWidth(18.0f);
     pianoKeyboard.setScrollButtonsVisible(true);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffd9e3df));
@@ -62,6 +67,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
     addAndMakeVisible(pianoKeyboard);
+
+    keyboardOctaveDownButton.setTooltip("Shift the audition keyboard down one octave");
+    keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
+    addAndMakeVisible(keyboardOctaveDownButton);
+
+    keyboardOctaveUpButton.setTooltip("Shift the audition keyboard up one octave");
+    keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
+    addAndMakeVisible(keyboardOctaveUpButton);
+
+    keyboardPanicButton.setTooltip("Release all audition notes");
+    keyboardPanicButton.onClick = [this] { audioProcessor.getMidiKeyboardState().allNotesOff(0); };
+    addAndMakeVisible(keyboardPanicButton);
+
+    keyboardRangeLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    keyboardRangeLabel.setJustificationType(juce::Justification::centred);
+    keyboardRangeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
+    addAndMakeVisible(keyboardRangeLabel);
+    updateKeyboardRangeLabel();
 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "ENGINE");
@@ -440,6 +463,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     g.drawRoundedRectangle(topArea.toFloat(), 7.0f, 1.0f);
     g.drawRoundedRectangle(contentArea.toFloat(), 7.0f, 1.0f);
     g.drawRoundedRectangle(keyboardArea.toFloat(), 7.0f, 1.0f);
+    g.drawVerticalLine(keyboardArea.getX() + keyboardControlsWidth,
+                       static_cast<float>(keyboardArea.getY() + 9),
+                       static_cast<float>(keyboardArea.getBottom() - 9));
 
     if (activePanel == Panel::home)
     {
@@ -495,19 +521,30 @@ void NateVSTAudioProcessorEditor::resized()
     auto bounds = getLocalBounds().reduced(16);
     auto top = bounds.removeFromTop(42);
 
-    outputMeter.setBounds(top.removeFromRight(168).reduced(6, 5));
-    titleLabel.setBounds(top.removeFromLeft(150).reduced(8, 0));
-    homeTabButton.setBounds(top.removeFromLeft(82).reduced(4));
-    synthTabButton.setBounds(top.removeFromLeft(82).reduced(4));
-    labTabButton.setBounds(top.removeFromLeft(72).reduced(4));
-    sampleTabButton.setBounds(top.removeFromLeft(96).reduced(4));
-    sequencerTabButton.setBounds(top.removeFromLeft(72).reduced(4));
-    effectsTabButton.setBounds(top.removeFromLeft(68).reduced(4));
-    libraryTabButton.setBounds(top.removeFromLeft(112).reduced(4));
+    outputMeter.setBounds(top.removeFromRight(156).reduced(6, 5));
+    titleLabel.setBounds(top.removeFromLeft(132).reduced(8, 0));
+
+    auto placeTab = [&top] (juce::TextButton& button, int width)
+    {
+        button.setBounds(top.removeFromLeft(width).reduced(3, 4));
+    };
+
+    placeTab(homeTabButton, 74);
+    placeTab(synthTabButton, 74);
+    placeTab(labTabButton, 60);
+    placeTab(sampleTabButton, 84);
+    placeTab(sequencerTabButton, 62);
+    placeTab(effectsTabButton, 56);
+    placeTab(libraryTabButton, 96);
 
     bounds.removeFromTop(14);
     auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
-    pianoKeyboard.setBounds(keyboardArea.reduced(12, 6));
+    auto keyboardControlArea = keyboardArea.removeFromLeft(keyboardControlsWidth).reduced(8, 6);
+    keyboardOctaveDownButton.setBounds(keyboardControlArea.removeFromLeft(42).reduced(2, 3));
+    keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(52).reduced(2, 3));
+    keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(42).reduced(2, 3));
+    keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(62).reduced(2, 3));
+    pianoKeyboard.setBounds(keyboardArea.reduced(8, 6));
     bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
     hidePanelComponents();
@@ -1057,6 +1094,29 @@ void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
                               juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
+{
+    const auto currentLowestNote = pianoKeyboard.getLowestVisibleKey();
+    const auto nextLowestNote = juce::jlimit(keyboardLowestNote,
+                                            keyboardMaxLowestVisibleNote,
+                                            currentLowestNote + semitones);
+
+    pianoKeyboard.setLowestVisibleKey(nextLowestNote);
+    updateKeyboardRangeLabel();
+}
+
+void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
+{
+    const auto lowestVisibleNote = pianoKeyboard.getLowestVisibleKey();
+    const auto noteName = juce::MidiMessage::getMidiNoteName(lowestVisibleNote, true, true, 3);
+
+    if (keyboardRangeLabel.getText() != noteName)
+        keyboardRangeLabel.setText(noteName, juce::dontSendNotification);
+
+    keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardLowestNote);
+    keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
+}
+
 void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
@@ -1257,6 +1317,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
     updateOutputMeter();
+    updateKeyboardRangeLabel();
 }
 
 void NateVSTAudioProcessorEditor::refreshPresetList()

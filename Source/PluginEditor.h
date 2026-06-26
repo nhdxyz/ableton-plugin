@@ -243,6 +243,10 @@ private:
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton keyboardOctaveDownButton { "Oct -" };
+    juce::TextButton keyboardOctaveUpButton { "Oct +" };
+    juce::TextButton keyboardPanicButton { "Panic" };
+    juce::Label keyboardRangeLabel;
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     juce::MidiKeyboardComponent pianoKeyboard;
@@ -277,6 +281,8 @@ private:
     void loadPresetByOffset(int offset);
     void toggleFavoritePreset();
     void updateFavoritePresetButton();
+    void shiftKeyboardOctave(int semitones);
+    void updateKeyboardRangeLabel();
 
     Panel activePanel = Panel::home;
     float displayedPeakLeft = 0.0f;

@@ -84,6 +84,7 @@ Research references:
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
 - Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Reverse chop playback now uses corrected continuous-position interpolation, so Garage slice style and reversed/pitch-ramped phrase auditions stay cleaner.
 - Later: add transient-ish slicing, per-slice pitch/reverse/gain/stutter, choke groups, and sequencer-triggered slice lanes.
 
 ### Groove
@@ -124,6 +125,8 @@ Research references:
 - Set `UKG Vocal Chop Starter` to Garage slice style and tightened the SAMPLE panel grouping so vocal-chop source, phrase slicing, and shape controls stay visually separate.
 - Added FX `Module Preset` choices for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, controlled drive, resonator color, and Guard safety.
 - Added a MOD destination inspector so UKG bass/stab movement can be checked and created by destination, with route slots, source depths, summed depth, source-to-destination Add, and one-click destination clearing.
+- Reworked the MOD route list into two four-slot banks so source, destination, and amount controls remain usable while assigning UKG bass, stab, and chop movement.
+- Regenerated factory presets with explicit chord-memory and FX-order state so UKG patches restore their performance and rack layout consistently.
 
 ## Next UKG Features
 

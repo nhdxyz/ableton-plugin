@@ -407,16 +407,19 @@ void SamplePlayer::renderVoice(Voice& voice,
             voice.samplesUntilStutter += voice.stutterIntervalSamples;
         }
 
-        const auto floorPosition = static_cast<int>(std::floor(voice.position));
-
-        if ((! voice.reverse && floorPosition >= voice.endSample - 1)
-            || (voice.reverse && floorPosition <= voice.startSample))
+        if ((! voice.reverse && voice.position >= static_cast<double>(voice.endSample - 1))
+            || (voice.reverse && voice.position <= static_cast<double>(voice.startSample)))
         {
             voice.active = false;
             return;
         }
 
-        const auto fraction = static_cast<float>(voice.position - static_cast<double>(floorPosition));
+        const auto floorPosition = juce::jlimit(voice.startSample,
+                                                voice.endSample - 1,
+                                                static_cast<int>(std::floor(voice.position)));
+        const auto fraction = juce::jlimit(0.0f,
+                                           1.0f,
+                                           static_cast<float>(voice.position - static_cast<double>(floorPosition)));
         const auto incrementMagnitude = juce::jmax(0.0001, std::abs(voice.increment));
         const auto sourceSamplesUntilEnd = voice.reverse
             ? juce::jmax(0.0, voice.position - static_cast<double>(voice.startSample))
@@ -431,7 +434,7 @@ void SamplePlayer::renderVoice(Voice& voice,
         {
             const auto sourceChannel = juce::jmin(channel, sourceChannels - 1);
             const auto current = data.buffer.getSample(sourceChannel, floorPosition);
-            const auto nextIndex = juce::jlimit(voice.startSample, voice.endSample - 1, floorPosition + (voice.reverse ? -1 : 1));
+            const auto nextIndex = juce::jlimit(voice.startSample, voice.endSample - 1, floorPosition + 1);
             const auto next = data.buffer.getSample(sourceChannel, nextIndex);
             const auto sample = current + ((next - current) * fraction);
             auto fadeGain = 1.0f;

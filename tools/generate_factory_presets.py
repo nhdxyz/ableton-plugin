@@ -100,6 +100,7 @@ DEFAULTS = {
     "sequencer_chord_mode": 0,
     "sequencer_chord_voicing": 0,
     "sequencer_chord_strum": 0.0,
+    "sequencer_chord_memory": 0,
     "sequencer_accent": 0.35,
     "sequencer_octave": 0,
     "sequencer_probability": 1.0,
@@ -172,6 +173,9 @@ for slot_index in range(1, 9):
     DEFAULTS[f"mod_slot_{slot_index}_source"] = 0
     DEFAULTS[f"mod_slot_{slot_index}_destination"] = 0
     DEFAULTS[f"mod_slot_{slot_index}_amount"] = 0.0
+
+for slot_index in range(1, 16):
+    DEFAULTS[f"fx_order_{slot_index}"] = slot_index - 1
 
 
 def step(index, note, velocity, probability, timing=0.0):

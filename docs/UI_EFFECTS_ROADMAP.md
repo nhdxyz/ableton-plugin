@@ -46,6 +46,8 @@ The four macros are useful, but their assignments are mostly invisible. A user c
 
 The next modulation pass should avoid putting the whole matrix on HOME. HOME should stay fast. The deeper assignment workflow belongs in a focused MOD area.
 
+Implemented since the first pass: MOD now includes a destination inspector and a two-bank eight-slot routing matrix, so route rows remain readable while creating or clearing house/UKG movement destinations. Remaining work is deeper route editing, macro assignment editing, and more destination types.
+
 ### Knobs Still Feel Too Small
 
 The current rotary sliders have better drag settings than the first version, but the visual hit area still feels compact. There is no large interaction target, no clear fine-drag affordance, and too many rows depend on identical small knobs.
@@ -74,6 +76,8 @@ Modern synths and club tools are converging around a few product expectations th
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
 - Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
+- Timing lock: the internal sequencer should eventually follow host PPQ/play-state so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning.
+- Audio quality: oscillator and drive stages need a bandlimiting/oversampling pass before the synth can compete with polished commercial dance plugins at bright high-note settings.
 
 These are product directions, not framework reasons to leave JUCE. The best next framework work is still custom JUCE components for modulation rings, rack rows, curve editors, waveform/slice views, and browser lists.
 

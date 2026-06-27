@@ -2,6 +2,26 @@
 
 ## 2026-06-27
 
+### Synth Page Grouping Pass
+
+- Reworked the SYNTH panel into task-focused Source Mix, Pitch + Voice, Filter Drive, and Amp + Output groups so house basses, stabs, plucks, and UKG patches are faster to scan.
+- Removed the old 8-knob and 9-knob rows from the SYNTH page, reducing visual clutter without changing any parameter IDs, presets, or Ableton automation mappings.
+- Shortened rotary drag travel again and made the shared knob-row helper use tighter padding in narrow rows so controls feel less resistant and crowding is less likely as pages evolve.
+- Reclaimed MOD-panel space for routing by compressing the source/macro and generator groups, then split the eight matrix slots into two readable four-slot banks with duplicated headers.
+- Tightened the LAB action row so Generate, Vary, Mutate, Wild, Undo, and Redo no longer overflow the available width.
+
+### Sampler And Preset Correctness
+
+- Fixed reverse sample interpolation so pitched/reversed UKG chop styles interpolate from the continuous source position instead of smearing toward the previous sample.
+- Added `sequencer_chord_memory` and all 15 `fx_order` slots to the factory-preset generator defaults.
+- Regenerated factory presets so chord-memory and FX rack ordering state are explicit in every factory patch.
+
+### House/UKG Review Delta
+
+- Ran another reference pass across Serum 2, Pigments, Hive 2, ZENOLOGY Pro, Korg-style motion instruments, and UK garage production references.
+- Confirmed Nate VST now covers the first layer of house/UKG workflow: fast macros, low-end guidance, randomization scopes, pattern tools, slice auditioning, FX throws, module presets, and modulation inspection.
+- Added the next missing product gaps to the roadmap: deeper oscillator/source engines, more visible modulation feedback, per-slice sampler lanes, FX modulation destinations, and a stronger preset/construction-kit browser.
+
 ### Modulation Inspector
 
 - Added a MOD routing inspector that focuses one modulation destination at a time and summarizes every active source, slot, depth, and summed depth for that destination.

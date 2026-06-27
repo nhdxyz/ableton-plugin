@@ -91,6 +91,10 @@ private:
     juce::Label homeLabLabel;
     juce::Label homeLibraryLabel;
     juce::Label synthSectionLabel;
+    juce::Label synthSourceLabel;
+    juce::Label synthVoiceLabel;
+    juce::Label synthFilterLabel;
+    juce::Label synthAmpLabel;
     juce::Label randomSectionLabel;
     juce::Label modSectionLabel;
     juce::Label modSourceLabel;
@@ -104,6 +108,9 @@ private:
     juce::Label modMatrixSourceHeader;
     juce::Label modMatrixDestinationHeader;
     juce::Label modMatrixAmountHeader;
+    juce::Label modMatrixSourceHeaderB;
+    juce::Label modMatrixDestinationHeaderB;
+    juce::Label modMatrixAmountHeaderB;
     juce::Label sampleSectionLabel;
     juce::Label sampleSourceLabel;
     juce::Label sampleChopLabel;

@@ -12,6 +12,9 @@ constexpr auto keyboardLowestNote = 24;
 constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 84;
+constexpr auto modTopRowHeight = 148;
+constexpr auto modGeneratorRowHeight = 150;
+constexpr auto modPanelGap = 6;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
@@ -109,7 +112,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxWidthMonoCutoff,
             Parameters::ID::fxToneLowCut
         }))
-        return 118;
+        return 104;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::filterResonance,
@@ -126,7 +129,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxEqTrim,
             Parameters::ID::fxGuardCeiling
         }))
-        return 88;
+        return 78;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::macroTone,
@@ -143,9 +146,9 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 84;
+        return 72;
 
-    return 72;
+    return 62;
 }
 
 juce::String modSourceSummaryText(size_t index)
@@ -227,6 +230,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeLabLabel, "RANDOM LAB");
     configureSectionLabel(homeLibraryLabel, "LIBRARY");
     configureSectionLabel(synthSectionLabel, "SYNTH");
+    configureSectionLabel(synthSourceLabel, "SOURCE MIX");
+    configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
+    configureSectionLabel(synthFilterLabel, "FILTER DRIVE");
+    configureSectionLabel(synthAmpLabel, "AMP + OUTPUT");
     configureSectionLabel(randomSectionLabel, "LAB");
     configureSectionLabel(modSectionLabel, "MOD");
     configureSectionLabel(modSourceLabel, "SOURCES");
@@ -272,6 +279,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureMatrixHeader(modMatrixSourceHeader, "SOURCE");
     configureMatrixHeader(modMatrixDestinationHeader, "DESTINATION");
     configureMatrixHeader(modMatrixAmountHeader, "AMOUNT");
+    configureMatrixHeader(modMatrixSourceHeaderB, "SOURCE");
+    configureMatrixHeader(modMatrixDestinationHeaderB, "DESTINATION");
+    configureMatrixHeader(modMatrixAmountHeaderB, "AMOUNT");
     configureMatrixHeader(modInspectorLabel, "INSPECT");
 
     modInspectorStatusLabel.setJustificationType(juce::Justification::centredLeft);
@@ -1248,17 +1258,41 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         }
     }
 
+    if (activePanel == Panel::synth)
+    {
+        auto synthContent = contentArea.reduced(18).withTrimmedTop(36);
+        synthContent.removeFromTop(44);
+        synthContent.removeFromTop(44);
+        synthContent.removeFromTop(8);
+
+        auto topCards = synthContent.removeFromTop((synthContent.getHeight() - 10) / 2);
+        synthContent.removeFromTop(10);
+        auto bottomCards = synthContent;
+        auto sourceArea = topCards.removeFromLeft(330).reduced(5);
+        auto voiceArea = topCards.reduced(5);
+        auto filterArea = bottomCards.removeFromLeft(330).reduced(5);
+        auto ampArea = bottomCards.reduced(5);
+
+        for (auto area : { sourceArea, voiceArea, filterArea, ampArea })
+        {
+            g.setColour(juce::Colour(0xff101619));
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
+            g.setColour(juce::Colour(0xff2b363c));
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        }
+    }
+
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(188);
+        auto topRow = modContent.removeFromTop(modTopRowHeight);
         auto sourceArea = topRow.removeFromLeft(300).reduced(5);
         auto macroArea = topRow.reduced(5);
-        modContent.removeFromTop(6);
-        auto controlsRow = modContent.removeFromTop(190);
+        modContent.removeFromTop(modPanelGap);
+        auto controlsRow = modContent.removeFromTop(modGeneratorRowHeight);
         auto lfoArea = controlsRow.removeFromLeft(450).reduced(5);
         auto envelopeArea = controlsRow.reduced(5);
-        modContent.removeFromTop(6);
+        modContent.removeFromTop(modPanelGap);
         auto matrixArea = modContent.reduced(5);
 
         for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
@@ -1472,6 +1506,10 @@ void NateVSTAudioProcessorEditor::resized()
         case Panel::synth:
         {
             synthSectionLabel.setVisible(true);
+            synthSourceLabel.setVisible(true);
+            synthVoiceLabel.setVisible(true);
+            synthFilterLabel.setVisible(true);
+            synthAmpLabel.setVisible(true);
             sineWaveButton.setVisible(true);
             sawWaveButton.setVisible(true);
             squareWaveButton.setVisible(true);
@@ -1527,12 +1565,55 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(decaySlider, decayLabel, true);
             setSliderVisible(sustainSlider, sustainLabel, true);
             setSliderVisible(releaseSlider, releaseLabel, true);
-            auto rowOne = content.removeFromTop(130);
-            layoutKnobRow(rowOne, { &osc1LevelSlider, &osc2LevelSlider, &subLevelSlider, &noiseLevelSlider, &octaveSlider, &tuneSlider, &osc2OctaveSlider, &osc2TuneSlider });
-            auto rowTwo = content.removeFromTop(130).withTrimmedTop(8);
-            layoutKnobRow(rowTwo, { &unisonVoicesSlider, &unisonDetuneSlider, &unisonBlendSlider, &unisonSpreadSlider, &cutoffSlider, &resonanceSlider, &filterEnvSlider, &driveSlider, &outputSlider });
-            auto rowThree = content.removeFromTop(125).withTrimmedTop(12);
-            layoutKnobRow(rowThree, { &glideSlider, &attackSlider, &decaySlider, &sustainSlider, &releaseSlider });
+            auto cards = content;
+            auto topCards = cards.removeFromTop((cards.getHeight() - 10) / 2);
+            cards.removeFromTop(10);
+            auto bottomCards = cards;
+
+            auto sourceArea = topCards.removeFromLeft(330).reduced(18, 10);
+            auto voiceArea = topCards.reduced(18, 10);
+            auto filterArea = bottomCards.removeFromLeft(330).reduced(18, 10);
+            auto ampArea = bottomCards.reduced(18, 10);
+
+            synthSourceLabel.setBounds(sourceArea.removeFromTop(22));
+            layoutKnobRow(sourceArea.removeFromTop(104).withTrimmedTop(5), {
+                &osc1LevelSlider,
+                &osc2LevelSlider,
+                &subLevelSlider,
+                &noiseLevelSlider
+            });
+
+            synthVoiceLabel.setBounds(voiceArea.removeFromTop(22));
+            layoutKnobRow(voiceArea.removeFromTop(72).withTrimmedTop(3), {
+                &octaveSlider,
+                &tuneSlider,
+                &osc2OctaveSlider,
+                &osc2TuneSlider,
+                &glideSlider
+            });
+            layoutKnobRow(voiceArea.removeFromTop(72).withTrimmedTop(5), {
+                &unisonVoicesSlider,
+                &unisonDetuneSlider,
+                &unisonBlendSlider,
+                &unisonSpreadSlider
+            });
+
+            synthFilterLabel.setBounds(filterArea.removeFromTop(22));
+            layoutKnobRow(filterArea.removeFromTop(104).withTrimmedTop(5), {
+                &cutoffSlider,
+                &resonanceSlider,
+                &filterEnvSlider,
+                &driveSlider
+            });
+
+            synthAmpLabel.setBounds(ampArea.removeFromTop(22));
+            layoutKnobRow(ampArea.removeFromTop(104).withTrimmedTop(5), {
+                &attackSlider,
+                &decaySlider,
+                &sustainSlider,
+                &releaseSlider,
+                &outputSlider
+            });
             break;
         }
 
@@ -1560,12 +1641,12 @@ void NateVSTAudioProcessorEditor::resized()
             auto actionRow = content.removeFromTop(48);
             recipeBox.setBounds(actionRow.removeFromLeft(210).reduced(4));
             randomScopeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            generateButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
-            mutateButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
-            variationButton.setBounds(actionRow.removeFromLeft(88).reduced(4));
-            wildMutateButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
-            undoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
-            redoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
+            generateButton.setBounds(actionRow.removeFromLeft(96).reduced(4));
+            mutateButton.setBounds(actionRow.removeFromLeft(96).reduced(4));
+            variationButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
+            wildMutateButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
+            undoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
+            redoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
             auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
             const auto lockButtonWidth = lockRow.getWidth() / 8;
             randomLockPitchButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
@@ -1625,17 +1706,28 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixSourceHeader.setVisible(true);
             modMatrixDestinationHeader.setVisible(true);
             modMatrixAmountHeader.setVisible(true);
+            modMatrixSourceHeaderB.setVisible(true);
+            modMatrixDestinationHeaderB.setVisible(true);
+            modMatrixAmountHeaderB.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(188);
+            auto topRow = modContent.removeFromTop(modTopRowHeight);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
-            modSourceLabel.setBounds(sourceArea.removeFromTop(20));
-            for (auto& label : modSourceRows)
-                label.setBounds(sourceArea.removeFromTop(12).reduced(3, 0));
+            modSourceLabel.setBounds(sourceArea.removeFromTop(18));
+            auto sourceListArea = sourceArea.withTrimmedTop(2);
+            auto leftSources = sourceListArea.removeFromLeft(sourceListArea.getWidth() / 2);
+            auto rightSources = sourceListArea;
+            constexpr auto sourceColumnRows = 6;
+            const auto sourceRowHeight = juce::jmax(12, sourceListArea.getHeight() / sourceColumnRows);
+            for (size_t index = 0; index < modSourceRows.size(); ++index)
+            {
+                auto& column = index < sourceColumnRows ? leftSources : rightSources;
+                modSourceRows[index].setBounds(column.removeFromTop(sourceRowHeight).reduced(3, 1));
+            }
 
-            modMacroLabel.setBounds(macroArea.removeFromTop(20));
+            modMacroLabel.setBounds(macroArea.removeFromTop(18));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
@@ -1644,34 +1736,34 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroBounceSlider, macroBounceLabel, true);
             setSliderVisible(macroWarpSlider, macroWarpLabel, true);
             setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(74).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
-            layoutKnobRow(macroArea.removeFromTop(74).withTrimmedTop(2), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
+            layoutKnobRow(macroArea.removeFromTop(56).withTrimmedTop(1), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(56).withTrimmedTop(1), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
 
-            modContent.removeFromTop(6);
-            auto generatorRow = modContent.removeFromTop(190);
+            modContent.removeFromTop(modPanelGap);
+            auto generatorRow = modContent.removeFromTop(modGeneratorRowHeight);
             auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
             auto envelopeArea = generatorRow.reduced(18, 8);
 
-            modLfoLabel.setBounds(lfoArea.removeFromTop(20));
-            auto lfoModeRow = lfoArea.removeFromTop(26).withTrimmedTop(1);
+            modLfoLabel.setBounds(lfoArea.removeFromTop(18));
+            auto lfoModeRow = lfoArea.removeFromTop(24);
             lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(118).reduced(3, 4));
             lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(56).withTrimmedTop(2));
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(42).withTrimmedTop(2));
 
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(72).withTrimmedTop(3), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(50).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
-            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
+            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(18));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
             setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
             setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
             setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
             setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-            layoutKnobRow(envelopeArea.removeFromTop(84).withTrimmedTop(3), {
+            layoutKnobRow(envelopeArea.removeFromTop(78).withTrimmedTop(2), {
                 &modEnv1AttackSlider,
                 &modEnv1DecaySlider,
                 &modEnv1SustainSlider,
@@ -1679,36 +1771,58 @@ void NateVSTAudioProcessorEditor::resized()
                 &modEnv1DepthSlider
             });
 
-            modContent.removeFromTop(6);
+            modContent.removeFromTop(modPanelGap);
             auto matrixArea = modContent.reduced(18, 0);
-            auto matrixTitleRow = matrixArea.removeFromTop(34);
-            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(56).withTrimmedTop(7));
-            modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(112).reduced(3, 7));
-            modInspectorLabel.setBounds(matrixTitleRow.removeFromLeft(56).withTrimmedTop(7));
-            modInspectorDestinationBox.setBounds(matrixTitleRow.removeFromLeft(128).reduced(3, 4));
-            modInspectorSourceBox.setBounds(matrixTitleRow.removeFromLeft(120).reduced(3, 4));
-            modInspectorAddButton.setBounds(matrixTitleRow.removeFromLeft(48).reduced(3, 4));
-            modInspectorClearButton.setBounds(matrixTitleRow.removeFromLeft(58).reduced(3, 4));
-            modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 4));
+            auto matrixTitleRow = matrixArea.removeFromTop(28);
+            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(5));
+            modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(150).reduced(3, 5));
+            modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 5));
+
+            auto inspectorRow = matrixArea.removeFromTop(30);
+            modInspectorLabel.setBounds(inspectorRow.removeFromLeft(62).withTrimmedTop(6));
+            modInspectorDestinationBox.setBounds(inspectorRow.removeFromLeft(150).reduced(3, 4));
+            modInspectorSourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
+            modInspectorAddButton.setBounds(inspectorRow.removeFromLeft(58).reduced(3, 4));
+            modInspectorClearButton.setBounds(inspectorRow.removeFromLeft(66).reduced(3, 4));
 
             auto matrixHeaderRow = matrixArea.removeFromTop(18).reduced(3, 1);
-            matrixHeaderRow.removeFromLeft(30);
-            modMatrixSourceHeader.setBounds(matrixHeaderRow.removeFromLeft(138).reduced(5, 0));
-            modMatrixDestinationHeader.setBounds(matrixHeaderRow.removeFromLeft(184).reduced(5, 0));
-            modMatrixAmountHeader.setBounds(matrixHeaderRow.reduced(5, 0));
-
-            for (size_t index = 0; index < modSlotRows.size(); ++index)
+            auto leftHeader = matrixHeaderRow.removeFromLeft((matrixHeaderRow.getWidth() - 10) / 2);
+            matrixHeaderRow.removeFromLeft(10);
+            auto rightHeader = matrixHeaderRow;
+            auto placeHeader = [] (juce::Rectangle<int> header,
+                                   juce::Label& source,
+                                   juce::Label& destination,
+                                   juce::Label& amount)
             {
-                const auto rowHeight = matrixArea.getHeight() / static_cast<int>(modSlotRows.size() - index);
-                auto rowBounds = matrixArea.removeFromTop(rowHeight).reduced(3, 1);
+                header.removeFromLeft(26);
+                source.setBounds(header.removeFromLeft(108).reduced(5, 0));
+                destination.setBounds(header.removeFromLeft(136).reduced(5, 0));
+                amount.setBounds(header.reduced(5, 0));
+            };
+            placeHeader(leftHeader, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
+            placeHeader(rightHeader, modMatrixSourceHeaderB, modMatrixDestinationHeaderB, modMatrixAmountHeaderB);
+
+            auto leftBank = matrixArea.removeFromLeft((matrixArea.getWidth() - 10) / 2);
+            matrixArea.removeFromLeft(10);
+            auto rightBank = matrixArea;
+            auto placeRouteRow = [this] (size_t index, juce::Rectangle<int>& bank, int rowsRemaining)
+            {
+                const auto rowHeight = juce::jmax(22, bank.getHeight() / rowsRemaining);
+                auto rowBounds = bank.removeFromTop(rowHeight).reduced(3, 1);
                 modMatrixRows[index].setBounds(rowBounds);
 
                 auto row = rowBounds.reduced(2, 2);
-                modSlotRows[index].setBounds(row.removeFromLeft(30).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(138).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(184).reduced(3, 0));
+                modSlotRows[index].setBounds(row.removeFromLeft(26).reduced(2, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(108).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(136).reduced(3, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
-            }
+            };
+
+            for (size_t index = 0; index < 4; ++index)
+                placeRouteRow(index, leftBank, static_cast<int>(4 - index));
+
+            for (size_t index = 4; index < modSlotRows.size(); ++index)
+                placeRouteRow(index, rightBank, static_cast<int>(modSlotRows.size() - index));
 
             break;
         }
@@ -2258,12 +2372,13 @@ juce::Rectangle<int> NateVSTAudioProcessorEditor::layoutKnobRow(juce::Rectangle<
     if (count == 0)
         return area;
 
-    const auto cellWidth = area.getWidth() / count;
+    const auto cellWidth = juce::jmax(1, area.getWidth() / count);
+    const auto horizontalPadding = cellWidth < 64 ? 2 : 4;
 
     for (auto* component : components)
     {
         component->setVisible(true);
-        component->setBounds(area.removeFromLeft(cellWidth).reduced(4, 0));
+        component->setBounds(area.removeFromLeft(cellWidth).reduced(horizontalPadding, 0));
     }
 
     return area;
@@ -3498,8 +3613,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
-        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
+        &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
+        &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
+        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,

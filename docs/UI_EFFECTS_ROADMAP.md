@@ -436,6 +436,7 @@ Build the next larger slices in this order:
    First macro-bank pass implemented as a two-row MOD macro area and expanded modulation source list for the eight performance macros.
    First source-visibility pass implemented as live MOD source rows for LFO 1, Mod Env 1, Velocity, and the eight macros, with active route count and summed depth/polarity.
    First panel-alignment pass realigned MOD paint grouping, compacted SAMPLE source/chop/shape regions, and reduced the FX command/performance header footprint.
+   First inspector pass implemented as a MOD destination inspector with focused route summaries, summed depth, drag-to-focus for existing destinations, and a destination clear action.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.

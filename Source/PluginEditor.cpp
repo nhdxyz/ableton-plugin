@@ -272,6 +272,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureMatrixHeader(modMatrixSourceHeader, "SOURCE");
     configureMatrixHeader(modMatrixDestinationHeader, "DESTINATION");
     configureMatrixHeader(modMatrixAmountHeader, "AMOUNT");
+    configureMatrixHeader(modInspectorLabel, "INSPECT");
+
+    modInspectorStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    modInspectorStatusLabel.setFont(juce::FontOptions(11.0f));
+    modInspectorStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(modInspectorStatusLabel);
 
     performanceStatusLabel.setJustificationType(juce::Justification::centredLeft);
     performanceStatusLabel.setFont(juce::FontOptions(11.0f));
@@ -483,6 +489,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxTremoloRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxTremoloRate, fxTremoloRateBox));
 
+    const auto modDestinationChoices = Parameters::modulationDestinationChoices();
+    for (auto index = 1; index < modDestinationChoices.size(); ++index)
+        modInspectorDestinationBox.addItem(modDestinationChoices[index], index + 1);
+    modInspectorDestinationBox.setSelectedId(2, juce::dontSendNotification);
+    modInspectorDestinationBox.setTextWhenNothingSelected("Destination");
+    modInspectorDestinationBox.setTooltip("Inspect active modulation routes for one destination");
+    addAndMakeVisible(modInspectorDestinationBox);
+
     lfo1ShapeBox.addItemList(Parameters::lfoShapeChoices(), 1);
     lfo1ShapeBox.setTextWhenNothingSelected("Shape");
     addAndMakeVisible(lfo1ShapeBox);
@@ -688,6 +702,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(filterEnvSlider, filterEnvLabel, "F Env", Parameters::ID::filterEnvAmount);
     configureSlider(driveSlider, driveLabel, "Drive", Parameters::ID::driveAmount);
     configureSlider(outputSlider, outputLabel, "Output", Parameters::ID::outputGain);
+    cutoffSlider.onDragStart = [this] { setModInspectorDestination(1); };
+    resonanceSlider.onDragStart = [this] { setModInspectorDestination(2); };
+    filterEnvSlider.onDragStart = [this] { setModInspectorDestination(3); };
+    driveSlider.onDragStart = [this] { setModInspectorDestination(4); };
+    osc2TuneSlider.onDragStart = [this] { setModInspectorDestination(5); };
+    osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
     configureSlider(randomAmountSlider, randomAmountLabel, "Amount", Parameters::ID::randomAmount);
     configureSlider(randomChaosSlider, randomChaosLabel, "Chaos", Parameters::ID::randomChaos);
     configureSlider(brightnessSlider, brightnessLabel, "Bright", Parameters::ID::randomBrightnessBias);
@@ -1000,6 +1020,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             addFxModule(static_cast<FxModule>(selectedId - 1));
     };
     fxPresetBox.onChange = [this] { applySelectedFxPreset(); };
+    modInspectorDestinationBox.onChange = [this] { updateModInspectorStatus(); };
     fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
@@ -1042,6 +1063,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     fxApplyPresetButton.setTooltip("Reload the selected FX module preset");
     fxApplyPresetButton.onClick = [this] { applySelectedFxPreset(); };
+    modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
+    modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -1137,6 +1160,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxHoldPumpButton);
     addAndMakeVisible(fxMuteDropButton);
     addAndMakeVisible(fxApplyPresetButton);
+    addAndMakeVisible(modInspectorClearButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -1581,6 +1605,10 @@ void NateVSTAudioProcessorEditor::resized()
                 modMatrixRows[index].setVisible(true);
             }
             modMatrixStatusLabel.setVisible(true);
+            modInspectorLabel.setVisible(true);
+            modInspectorDestinationBox.setVisible(true);
+            modInspectorStatusLabel.setVisible(true);
+            modInspectorClearButton.setVisible(true);
             modMatrixSourceHeader.setVisible(true);
             modMatrixDestinationHeader.setVisible(true);
             modMatrixAmountHeader.setVisible(true);
@@ -1640,9 +1668,13 @@ void NateVSTAudioProcessorEditor::resized()
 
             modContent.removeFromTop(6);
             auto matrixArea = modContent.reduced(18, 0);
-            auto matrixTitleRow = matrixArea.removeFromTop(18);
-            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(92));
-            modMatrixStatusLabel.setBounds(matrixTitleRow.reduced(4, 0));
+            auto matrixTitleRow = matrixArea.removeFromTop(34);
+            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(7));
+            modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(136).reduced(3, 7));
+            modInspectorLabel.setBounds(matrixTitleRow.removeFromLeft(64).withTrimmedTop(7));
+            modInspectorDestinationBox.setBounds(matrixTitleRow.removeFromLeft(156).reduced(3, 4));
+            modInspectorClearButton.setBounds(matrixTitleRow.removeFromLeft(66).reduced(3, 4));
+            modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 4));
 
             auto matrixHeaderRow = matrixArea.removeFromTop(18).reduced(3, 1);
             matrixHeaderRow.removeFromLeft(30);
@@ -3452,11 +3484,11 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
-        &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
+        &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
+        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxPumpRateBox, &fxTremoloRateBox, &modInspectorDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -3479,7 +3511,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
-        &fxApplyPresetButton,
+        &fxApplyPresetButton, &modInspectorClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,
@@ -3780,6 +3812,108 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
     }
 }
 
+void NateVSTAudioProcessorEditor::updateModInspectorStatus()
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto selectedDestination = juce::jlimit(1,
+                                                 destinationChoices.size() - 1,
+                                                 modInspectorDestinationBox.getSelectedId() - 1);
+    const auto destinationName = destinationChoices[selectedDestination];
+    juce::StringArray routes;
+    auto summedDepth = 0.0f;
+
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = juce::jlimit(0,
+                                             sourceChoices.size() - 1,
+                                             static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixSource[index], 0.0f))));
+        const auto destinationIndex = juce::jlimit(0,
+                                                  destinationChoices.size() - 1,
+                                                  static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f))));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+
+        if (sourceIndex <= 0 || destinationIndex != selectedDestination || std::abs(amount) <= 0.001f)
+            continue;
+
+        summedDepth += amount;
+        const auto percent = juce::roundToInt(amount * 100.0f);
+        routes.add("S" + juce::String(static_cast<int>(index + 1)) + " "
+                   + sourceChoices[sourceIndex] + " "
+                   + (percent >= 0 ? "+" : "") + juce::String(percent) + "%");
+    }
+
+    if (routes.isEmpty())
+    {
+        modInspectorStatusLabel.setText(destinationName + ": no active routes", juce::dontSendNotification);
+        modInspectorStatusLabel.setTooltip("No modulation routes currently target " + destinationName);
+        modInspectorClearButton.setEnabled(false);
+        return;
+    }
+
+    const auto summedPercent = juce::roundToInt(juce::jlimit(-1.0f, 1.0f, summedDepth) * 100.0f);
+    const auto summary = destinationName + " | " + routes.joinIntoString(" | ")
+        + " | Sum " + (summedPercent >= 0 ? "+" : "") + juce::String(summedPercent) + "%";
+    modInspectorStatusLabel.setText(summary, juce::dontSendNotification);
+    modInspectorStatusLabel.setTooltip(summary);
+    modInspectorClearButton.setEnabled(true);
+}
+
+void NateVSTAudioProcessorEditor::setModInspectorDestination(int destinationIndex)
+{
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    destinationIndex = juce::jlimit(1, destinationChoices.size() - 1, destinationIndex);
+    modInspectorDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+    updateModInspectorStatus();
+}
+
+void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
+{
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto selectedDestination = juce::jlimit(1,
+                                                 destinationChoices.size() - 1,
+                                                 modInspectorDestinationBox.getSelectedId() - 1);
+    auto clearedCount = 0;
+
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto destinationIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f)));
+        if (destinationIndex != selectedDestination)
+            continue;
+
+        setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        ++clearedCount;
+    }
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+
+    if (clearedCount > 0)
+        modMatrixStatusLabel.setText("Cleared " + juce::String(clearedCount)
+                                         + " route" + (clearedCount == 1 ? "" : "s")
+                                         + " to " + destinationChoices[selectedDestination],
+                                     juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
     std::array<float, 7> destinationDepths {};
@@ -3972,6 +4106,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updateModMatrixRows();
+    updateModInspectorStatus();
     updateModDestinationIndicators();
     updateOutputMeter();
     updateLowEndAssistant();

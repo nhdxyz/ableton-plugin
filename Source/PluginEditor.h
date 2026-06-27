@@ -99,6 +99,8 @@ private:
     juce::Label modEnvelopeLabel;
     juce::Label modMatrixLabel;
     juce::Label modMatrixStatusLabel;
+    juce::Label modInspectorLabel;
+    juce::Label modInspectorStatusLabel;
     juce::Label modMatrixSourceHeader;
     juce::Label modMatrixDestinationHeader;
     juce::Label modMatrixAmountHeader;
@@ -137,6 +139,7 @@ private:
     juce::ComboBox fxPresetBox;
     juce::ComboBox fxPumpRateBox;
     juce::ComboBox fxTremoloRateBox;
+    juce::ComboBox modInspectorDestinationBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
@@ -454,6 +457,7 @@ private:
     juce::TextButton fxHoldPumpButton { "Hold Pump" };
     juce::TextButton fxMuteDropButton { "Mute Drop" };
     juce::TextButton fxApplyPresetButton { "Load" };
+    juce::TextButton modInspectorClearButton { "Clear" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
     UI::FxRackRow fxDistortionSlotButton { "Drive" };
@@ -519,6 +523,7 @@ private:
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
     void updateModMatrixRows();
+    void updateModInspectorStatus();
     void updateModDestinationIndicators();
     void updateOutputMeter();
     void updateLowEndAssistant();
@@ -555,6 +560,8 @@ private:
     void updateFxPresetBox(bool force = false);
     void applySelectedFxPreset();
     void applyFxModulePreset(FxModule module, int presetId);
+    void setModInspectorDestination(int destinationIndex);
+    void clearInspectedModRoutes();
     FxMomentarySnapshot captureFxMomentarySnapshot() const;
     void restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot);
     void setFxRackStatusOverride(const juce::String& message);

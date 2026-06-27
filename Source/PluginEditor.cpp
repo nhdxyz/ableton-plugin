@@ -294,6 +294,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerPatternBox.addItem("Organ Skank", 5);
     sequencerPatternBox.addItem("Vocal Chop", 6);
     sequencerPatternBox.addItem("Late Stab", 7);
+    sequencerPatternBox.addItem("House Chord", 8);
+    sequencerPatternBox.addItem("Tech Bass", 9);
+    sequencerPatternBox.addItem("Minimal Pluck", 10);
+    sequencerPatternBox.addItem("Techno Pulse", 11);
     sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
     addAndMakeVisible(sequencerPatternBox);
 

@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+### House And Tech Sequencer Templates
+
+- Added `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates to the SEQ pattern selector for faster house, tech-house, techno, and minimal starts.
+- Tuned the new templates with genre-specific gate, swing, groove, scale, accent, probability, octave, chord, voicing, and strum defaults.
+
 ### Sequencer Utility Undo
 
 - Added a SEQ-panel `Undo` action for restoring the previous sequencer utility state after pattern generation, variation, template apply, copy, rotate, or clear.

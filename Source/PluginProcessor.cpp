@@ -444,6 +444,81 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
 
     switch (presetIndex)
     {
+        case 10:
+            setStep(0, 0, 0.94f, 1.0f);
+            setStep(2, 0, 0.52f, 0.72f, 0.08f);
+            setStep(4, 0, 0.86f, 1.0f);
+            setStep(6, 7, 0.5f, 0.68f, 0.08f);
+            setStep(8, 0, 0.9f, 1.0f);
+            setStep(10, -5, 0.54f, 0.74f, 0.08f);
+            setStep(12, 0, 0.88f, 1.0f);
+            setStep(14, 3, 0.5f, 0.68f, 0.08f);
+            setParameterPlainValue(Parameters::ID::sequencerRate, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.38f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.08f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 3.0f);
+            setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.72f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, -1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.96f);
+            setParameterPlainValue(Parameters::ID::sequencerRandomAmount, 0.28f);
+            break;
+
+        case 9:
+            setStep(0, 0, 0.82f, 0.95f);
+            setStep(5, 3, 0.58f, 0.72f, 0.5f);
+            setStep(10, 7, 0.74f, 0.82f, 0.24f);
+            setStep(15, 10, 0.5f, 0.58f, 0.72f);
+            setParameterPlainValue(Parameters::ID::sequencerRate, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.16f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.3f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.42f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.82f);
+            setParameterPlainValue(Parameters::ID::sequencerRandomAmount, 0.56f);
+            break;
+
+        case 8:
+            setStep(0, 0, 0.92f, 1.0f);
+            setStep(3, 0, 0.64f, 0.78f, 0.56f);
+            setStep(5, -5, 0.78f, 0.88f, 0.18f);
+            setStep(7, 0, 0.58f, 0.66f, 0.32f);
+            setStep(10, 3, 0.74f, 0.84f, 0.18f);
+            setStep(12, 0, 0.88f, 0.96f);
+            setStep(14, -2, 0.68f, 0.78f, 0.24f);
+            setStep(15, 0, 0.56f, 0.62f, 0.48f);
+            setParameterPlainValue(Parameters::ID::sequencerRate, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.42f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.18f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerScale, 2.0f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.64f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, -1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.94f);
+            setParameterPlainValue(Parameters::ID::sequencerRandomAmount, 0.44f);
+            break;
+
+        case 7:
+            setStep(2, 0, 0.78f, 1.0f, 0.12f);
+            setStep(6, 3, 0.86f, 0.94f, 0.2f);
+            setStep(10, 7, 0.74f, 0.9f, 0.14f);
+            setStep(14, 10, 0.84f, 0.86f, 0.24f);
+            setParameterPlainValue(Parameters::ID::sequencerRate, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate, 0.32f);
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.18f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerScale, 3.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordMode, 3.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordVoicing, 4.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.18f);
+            setParameterPlainValue(Parameters::ID::sequencerAccent, 0.5f);
+            setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability, 0.9f);
+            setParameterPlainValue(Parameters::ID::sequencerRandomAmount, 0.34f);
+            break;
+
         case 6:
             setStep(3, 0, 0.76f, 1.0f, 0.82f);
             setStep(7, 7, 0.86f, 0.92f, 1.0f);

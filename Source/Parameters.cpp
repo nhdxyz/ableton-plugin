@@ -96,7 +96,20 @@ juce::StringArray modulationSourceChoices()
 
 juce::StringArray modulationDestinationChoices()
 {
-    return { "Off", "Filter Cutoff", "Filter Res", "Filter Env", "Drive", "Osc 2 Tune", "Osc 2 Level" };
+    return {
+        "Off",
+        "Filter Cutoff",
+        "Filter Res",
+        "Filter Env",
+        "Drive",
+        "Osc 2 Tune",
+        "Osc 2 Level",
+        "FX Pump Depth",
+        "FX Delay Mix",
+        "FX Reverb Mix",
+        "FX Width",
+        "FX Drive"
+    };
 }
 
 APVTS::ParameterLayout createLayout()

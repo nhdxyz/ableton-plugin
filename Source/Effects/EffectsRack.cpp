@@ -24,6 +24,17 @@ double pumpCyclesPerBeat(int rateIndex)
     }
 }
 
+double lfoCyclesPerBeat(int rateIndex)
+{
+    switch (rateIndex)
+    {
+        case 1: return 2.0; // 1/8
+        case 2: return 3.0; // 1/8 triplet
+        case 3: return 4.0; // 1/16
+        default: return 1.0; // 1/4
+    }
+}
+
 double delaySecondsForRate(int rateIndex, double bpm)
 {
     const auto quarterNoteSeconds = 60.0 / juce::jlimit(20.0, 300.0, bpm);
@@ -177,10 +188,29 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxFlangerMix = parameters.getRawParameterValue(Parameters::ID::fxFlangerMix);
     for (size_t index = 0; index < fxOrder.size(); ++index)
         fxOrder[index] = parameters.getRawParameterValue(Parameters::ID::fxOrder[index]);
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
+        modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
+        modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
+    }
+    for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
+        lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
+
+    macroTone = parameters.getRawParameterValue(Parameters::ID::macroTone);
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
+    macroMotion = parameters.getRawParameterValue(Parameters::ID::macroMotion);
     macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
+    macroWeight = parameters.getRawParameterValue(Parameters::ID::macroWeight);
     macroBounce = parameters.getRawParameterValue(Parameters::ID::macroBounce);
+    macroWarp = parameters.getRawParameterValue(Parameters::ID::macroWarp);
     macroThrow = parameters.getRawParameterValue(Parameters::ID::macroThrow);
+    lfo1Rate = parameters.getRawParameterValue(Parameters::ID::lfo1Rate);
+    lfo1Sync = parameters.getRawParameterValue(Parameters::ID::lfo1Sync);
+    lfo1SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo1SyncRate);
+    lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
+    lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
+    lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
 }
 
 void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChannels)
@@ -230,6 +260,8 @@ void EffectsRack::reset()
     pumpPhase = 0.0;
     tremoloPhase = 0.0;
     ringPhase = 0.0;
+    fxModLfoPhase = 0.0f;
+    fxModLfoStepValue = 0.0f;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
@@ -237,11 +269,139 @@ void EffectsRack::reset()
 
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
 {
+    updateFxModulation(buffer.getNumSamples(), bpm, ppqPosition);
+
     const auto moduleOrder = orderedModuleIndices();
     for (const auto moduleIndex : moduleOrder)
         processModule(moduleIndex, buffer, bpm, ppqPosition);
 
     applyOutputGainAndSafety(buffer, outputGainDb);
+}
+
+void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    fxModulation = {};
+
+    const auto lfoValue = processFxModulationLfo(numSamples, bpm, ppqPosition);
+
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        const auto sourceIndex = static_cast<int>(std::round(readParameter(modMatrixSources[index], 0.0f)));
+        const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
+        const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
+
+        if (sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
+            continue;
+
+        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue) * amount;
+
+        switch (destinationIndex)
+        {
+            case 7: fxModulation.pumpDepth += contribution; break;
+            case 8: fxModulation.delayMix += contribution; break;
+            case 9: fxModulation.reverbMix += contribution; break;
+            case 10: fxModulation.width += contribution; break;
+            case 11: fxModulation.drive += contribution; break;
+            default: break;
+        }
+    }
+
+    fxModulation.drive = juce::jlimit(-1.0f, 1.0f, fxModulation.drive);
+    fxModulation.pumpDepth = juce::jlimit(-1.0f, 1.0f, fxModulation.pumpDepth);
+    fxModulation.delayMix = juce::jlimit(-1.0f, 1.0f, fxModulation.delayMix);
+    fxModulation.reverbMix = juce::jlimit(-1.0f, 1.0f, fxModulation.reverbMix);
+    fxModulation.width = juce::jlimit(-1.0f, 1.0f, fxModulation.width);
+}
+
+float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
+    const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))))
+        : readParameter(lfo1Rate, 1.0f);
+    const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
+
+    if (syncEnabled && ppqPosition.has_value())
+    {
+        fxModLfoPhase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))), 1.0));
+        if (fxModLfoPhase < 0.0f)
+            fxModLfoPhase += 1.0f;
+    }
+
+    auto phase = std::fmod(fxModLfoPhase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = fxModLfoStepValue;
+            break;
+
+        case 5:
+            value = evaluateFxLfoCurve(phase);
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = fxModLfoPhase;
+    fxModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
+
+    if (fxModLfoPhase >= 1.0f)
+    {
+        fxModLfoPhase -= std::floor(fxModLfoPhase);
+        if (previousPhase < 1.0f)
+            fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
+}
+
+float EffectsRack::evaluateFxLfoCurve(float phase) const
+{
+    constexpr auto pointCount = 8;
+    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
+    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
+    const auto rightIndex = (leftIndex + 1) % pointCount;
+    const auto fraction = scaledPhase - std::floor(scaledPhase);
+    const auto leftValue = readParameter(lfo1CurvePoints[static_cast<size_t>(leftIndex)], 0.0f);
+    const auto rightValue = readParameter(lfo1CurvePoints[static_cast<size_t>(rightIndex)], 0.0f);
+
+    return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
+}
+
+float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) const
+{
+    switch (sourceIndex)
+    {
+        case 1: return lfoValue;
+        case 4: return readParameter(macroTone, 0.0f);
+        case 5: return readParameter(macroDirt, 0.0f);
+        case 6: return readParameter(macroMotion, 0.0f);
+        case 7: return readParameter(macroSpace, 0.0f);
+        case 8: return readParameter(macroWeight, 0.0f);
+        case 9: return readParameter(macroBounce, 0.0f);
+        case 10: return readParameter(macroWarp, 0.0f);
+        case 11: return readParameter(macroThrow, 0.0f);
+        default: return 0.0f;
+    }
 }
 
 std::array<int, EffectsRack::fxModuleCount> EffectsRack::orderedModuleIndices() const
@@ -376,7 +536,7 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
     if (readParameter(fxDistortionEnabled, 0.0f) < 0.5f)
         return;
 
-    const auto amount = readParameter(fxDistortionAmount, 0.2f);
+    const auto amount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionAmount, 0.2f) + (fxModulation.drive * 0.45f));
     const auto drive = juce::jmap(juce::jlimit(0.0f, 1.0f, amount), 1.0f, 24.0f);
     const auto makeup = 1.0f / std::sqrt(drive);
 
@@ -446,7 +606,7 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
     for (size_t index = 0; index < customCurve.size(); ++index)
         customCurve[index] = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpCustomCurve[index], customCurve[index]));
 
-    const auto depth = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f));
+    const auto depth = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f) + (fxModulation.pumpDepth * 0.5f));
     const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f) + (bounce * 0.16f));
     const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpPhase, 0.0f));
     const auto smoothing = 1.0f - std::exp(-1.0f / static_cast<float>(safeSampleRate * 0.0025));
@@ -678,7 +838,7 @@ void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer, double bpm)
                                           static_cast<int>(delaySeconds * currentSampleRate));
     const auto fallbackFeedback = 0.18f + (space * 0.22f) + (throwAmount * 0.42f);
     const auto feedback = juce::jlimit(0.0f, 0.85f, (isEnabled ? readParameter(fxDelayFeedback, 0.25f) : fallbackFeedback) + (throwAmount * 0.18f));
-    const auto baseMix = isEnabled ? readParameter(fxDelayMix, 0.2f) : 0.0f;
+    const auto baseMix = isEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxDelayMix, 0.2f) + (fxModulation.delayMix * 0.42f)) : 0.0f;
     const auto mix = juce::jlimit(0.0f, 0.55f, juce::jmax(baseMix, juce::jmax(space * 0.28f, throwAmount * 0.48f)));
     const auto channels = juce::jmin(buffer.getNumChannels(), delayBuffer.getNumChannels());
 
@@ -709,7 +869,8 @@ void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
     juce::Reverb::Parameters reverbParameters;
     reverbParameters.roomSize = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxReverbSize, 0.35f) : 0.35f + (space * 0.4f)) + (throwAmount * 0.18f));
     reverbParameters.damping = readParameter(fxReverbDamping, 0.45f);
-    const auto wetMix = juce::jlimit(0.0f, 0.65f, juce::jmax(isEnabled ? readParameter(fxReverbMix, 0.2f) : 0.0f,
+    const auto baseReverbMix = isEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxReverbMix, 0.2f) + (fxModulation.reverbMix * 0.42f)) : 0.0f;
+    const auto wetMix = juce::jlimit(0.0f, 0.65f, juce::jmax(baseReverbMix,
                                                              juce::jmax(space * 0.35f, throwAmount * 0.46f)));
     reverbParameters.wetLevel = wetMix;
     reverbParameters.dryLevel = 1.0f - (wetMix * 0.35f);
@@ -734,7 +895,7 @@ void EffectsRack::processWidth(juce::AudioBuffer<float>& buffer)
     if (readParameter(fxWidthEnabled, 0.0f) < 0.5f || buffer.getNumChannels() < 2 || widthLowState.size() < 2)
         return;
 
-    const auto width = juce::jlimit(0.0f, 1.6f, readParameter(fxWidthAmount, 1.15f));
+    const auto width = juce::jlimit(0.0f, 1.6f, readParameter(fxWidthAmount, 1.15f) + (fxModulation.width * 0.5f));
     const auto monoCutoff = readParameter(fxWidthMonoCutoff, 120.0f);
     const auto lowAlpha = onePoleAlpha(monoCutoff, currentSampleRate);
     const auto sideCompensation = 1.0f / (1.0f + (juce::jmax(0.0f, width - 1.0f) * 0.18f));

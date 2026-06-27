@@ -138,8 +138,8 @@ Research references:
 Reference-backed next passes:
 
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
-- Expand FX presets into user-saveable module presets and direct modulation destinations for FX mix/depth controls.
-- Expand the modulation inspector into per-route bypass/delete editing and add sample/FX destinations.
+- Expand FX presets into user-saveable module presets.
+- Expand the modulation inspector into per-route bypass/delete editing and add sample destinations.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
 
 1. Vocal chop mode for the sampler.
@@ -160,10 +160,11 @@ Reference-backed next passes:
 - Tempo-synced volume shaper.
 - Depth, rate, shape, and phase controls.
 - Editable Custom curve with eight automatable points for hand-drawn 2-step/house duck movement.
+- MOD matrix routes can now target Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive for LFO/macro-driven garage movement.
 - Useful for UKG, house, and garage-adjacent bass movement.
 - Bass presets now use the MOD-panel curve LFO for garage-style push/pull cutoff movement where a basic sine felt too even.
 - HOME now includes a compact club low-end assistant so UKG bass patches expose root Hz, sub energy, low-side stereo risk, Width mono-below status, Guard/headroom state, phase-reset status, and root-range suggestions while designing.
-- Available as an FX rack module. Simple macro/mod assignment should come through the future MOD workflow.
+- Available as an FX rack module, with first-pass MOD routing for global LFO and macro sources.
 
 3. Organ/Stab source.
 

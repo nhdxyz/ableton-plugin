@@ -4154,12 +4154,17 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
 {
     const auto sourceChoices = Parameters::modulationSourceChoices();
     const auto destinationChoices = Parameters::modulationDestinationChoices();
-    const auto sourceIndex = juce::jlimit(1,
-                                         sourceChoices.size() - 1,
-                                         modInspectorSourceBox.getSelectedId() - 1);
+    auto sourceIndex = juce::jlimit(1,
+                                    sourceChoices.size() - 1,
+                                    modInspectorSourceBox.getSelectedId() - 1);
     const auto destinationIndex = juce::jlimit(1,
                                               destinationChoices.size() - 1,
                                               modInspectorDestinationBox.getSelectedId() - 1);
+    if (destinationIndex >= 7 && (sourceIndex == 2 || sourceIndex == 3))
+    {
+        sourceIndex = 1;
+        modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+    }
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
@@ -4190,7 +4195,9 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     }
 
     auto defaultAmount = 0.28f;
-    if (sourceIndex == 1 || sourceIndex == 2)
+    if (destinationIndex >= 7)
+        defaultAmount = 0.24f;
+    else if (sourceIndex == 1 || sourceIndex == 2)
         defaultAmount = 0.35f;
     else if (sourceIndex == 3)
         defaultAmount = 0.20f;
@@ -4254,7 +4261,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 7> destinationDepths {};
+    std::array<float, 12> destinationDepths {};
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
@@ -4295,6 +4302,11 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(driveSlider, destinationDepths[4]);
     setIndicator(osc2TuneSlider, destinationDepths[5]);
     setIndicator(osc2LevelSlider, destinationDepths[6]);
+    setIndicator(fxPumpDepthSlider, destinationDepths[7]);
+    setIndicator(fxDelayMixSlider, destinationDepths[8]);
+    setIndicator(fxReverbMixSlider, destinationDepths[9]);
+    setIndicator(fxWidthAmountSlider, destinationDepths[10]);
+    setIndicator(fxDistortionAmountSlider, destinationDepths[11]);
 }
 
 void NateVSTAudioProcessorEditor::updateOutputMeter()

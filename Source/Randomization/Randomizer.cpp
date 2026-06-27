@@ -1152,12 +1152,14 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         case Recipe::ukgTwoStepBass:
             setModSlot(0, 1, 1, randomFloat(0.05f, 0.16f) * motionScale);
             setModSlot(1, 2, 3, randomFloat(0.04f, 0.12f) * motionScale);
+            setModSlot(2, 9, 7, randomFloat(0.10f, 0.22f));
             break;
 
         case Recipe::ukgDredBass:
             setModSlot(0, 2, 1, randomFloat(0.16f, 0.32f) * motionScale);
             setModSlot(1, 1, 1, randomFloat(0.05f, 0.14f) * motionScale);
             setModSlot(2, 2, 3, randomFloat(0.08f, 0.18f) * motionScale);
+            setModSlot(3, 9, 7, randomFloat(0.12f, 0.24f));
             break;
 
         case Recipe::acidLine:
@@ -1169,6 +1171,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         case Recipe::noiseFx:
             setModSlot(0, 1, 1, randomFloat(0.14f, 0.3f) * motionScale);
             setModSlot(1, 1, 4, randomFloat(0.03f, 0.1f) * motionScale);
+            setModSlot(2, 1, 11, randomFloat(0.05f, 0.13f) * motionScale);
             break;
 
         case Recipe::darkStab:
@@ -1178,6 +1181,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             setModSlot(0, 2, 1, randomFloat(0.08f, 0.22f) * motionScale);
             setModSlot(1, 3, 1, randomFloat(0.03f, 0.11f) * motionScale);
             setModSlot(2, 1, 5, randomFloat(-0.06f, 0.06f) * motionScale);
+            setModSlot(3, 11, 8, randomFloat(0.08f, 0.20f));
+            setModSlot(4, 11, 9, randomFloat(0.06f, 0.16f));
             break;
     }
 

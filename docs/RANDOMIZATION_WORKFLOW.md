@@ -30,6 +30,8 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 
 The LAB and HOME `Scope` selector can limit Generate, Vary, Mutate, or Wild to a single section. `All` keeps the full recipe behavior. `Source`, `Env`, `Filter`, `Sample`, `FX`, `Seq`, and `Macros` restore every other section from the pre-randomization snapshot after the recipe runs. Scoped actions also restore modulation and output gain so focused edits do not quietly change hidden routing or level.
 
+Recipe generation can seed visible MOD routes for both synth and FX movement. Current FX destinations cover Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive using global LFO 1 or macro sources, so generated house/UKG patches can expose their ducking, throw, space, and drive motion directly in the matrix.
+
 ## Output Safety
 
 Output safety remains active even when `Output` is locked. If a recipe lowers output gain for safety, the lock will not raise it back above that safer value.

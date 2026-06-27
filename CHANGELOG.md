@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### FX Modulation Destinations
+
+- Added MOD matrix destinations for FX Pump Depth, FX Delay Mix, FX Reverb Mix, FX Width, and FX Drive so house/UKG movement can reach the effects rack directly.
+- Wired FX matrix modulation through the audio DSP using LFO 1 and the eight macros as global sources; per-voice Mod Env and Velocity remain synth-only until a proper global modulation bus exists.
+- Added modulation-ring feedback to the matching FX sliders and made the MOD inspector avoid dead Mod Env/Velocity routes when adding global FX targets.
+- Seeded recipe randomization with practical FX routes such as Bounce to Pump Depth, LFO 1 to FX Drive, and Throw to Delay/Reverb Mix.
+
 ### Rhythmic Pump Shaper
 
 - Added an automatable Pump Curve selector with Smooth, Tight, Garage, Stutter, and Gate shapes for more precise house, tech-house, minimal, techno, and UKG ducking.

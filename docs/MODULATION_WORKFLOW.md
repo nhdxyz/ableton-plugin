@@ -152,9 +152,10 @@ MOD:
 
 - LFO controls.
 - Mod envelope controls.
+- Source rows for LFO 1, Mod Env 1, Velocity, and the eight macro sources.
 - Matrix rows.
 - Assignment amount controls.
-- Current implementation includes active route rows, route tooltips, matrix status text, and direct dragging on LFO curve points.
+- Current implementation includes active route rows, route tooltips, source route counts/depth summaries, matrix status text, destination rings, and direct dragging on LFO curve points.
 
 SEQ:
 

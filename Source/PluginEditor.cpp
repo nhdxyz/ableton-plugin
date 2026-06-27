@@ -147,6 +147,28 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
 
     return 125;
 }
+
+juce::String modSourceSummaryText(size_t index)
+{
+    static const std::array<const char*, 11> sourceTexts {
+        "LFO 1: synced shape source",
+        "Mod Env: assignable ADSR",
+        "Velocity: note force",
+        "Tone: cutoff + resonance",
+        "Dirt: drive + output trim",
+        "Motion: filter env + osc2 tune",
+        "Space: delay + reverb sends",
+        "Weight: sub + low-end support",
+        "Bounce: pump depth + groove",
+        "Warp: osc2 bend + filter edge",
+        "Throw: delay + reverb push"
+    };
+
+    if (index < sourceTexts.size())
+        return sourceTexts[index];
+
+    return {};
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -264,24 +286,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
 
-    const std::array<juce::String, 8> modSourceTexts {
-        "Tone: cutoff + resonance",
-        "Dirt: drive + output trim",
-        "Motion: filter env + osc2 tune",
-        "Space: delay + reverb sends",
-        "Weight: sub + low-end support",
-        "Bounce: pump depth + groove",
-        "Warp: osc2 bend + filter edge",
-        "Throw: delay + reverb push"
-    };
-
     for (size_t index = 0; index < modSourceRows.size(); ++index)
     {
         auto& label = modSourceRows[index];
-        label.setText(modSourceTexts[index], juce::dontSendNotification);
-        label.setFont(juce::FontOptions(12.0f));
+        label.setText(modSourceSummaryText(index), juce::dontSendNotification);
+        label.setFont(juce::FontOptions(10.5f));
         label.setJustificationType(juce::Justification::centredLeft);
         label.setColour(juce::Label::textColourId, juce::Colour(0xffc7d7d4));
+        label.setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
         addAndMakeVisible(label);
     }
 
@@ -1431,13 +1443,13 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixAmountHeader.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(166);
+            auto topRow = modContent.removeFromTop(176);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
             modSourceLabel.setBounds(sourceArea.removeFromTop(20));
             for (auto& label : modSourceRows)
-                label.setBounds(sourceArea.removeFromTop(16).reduced(3, 1));
+                label.setBounds(sourceArea.removeFromTop(12).reduced(3, 0));
 
             modMacroLabel.setBounds(macroArea.removeFromTop(20));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -2975,6 +2987,8 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
 {
     const auto sourceChoices = Parameters::modulationSourceChoices();
     const auto destinationChoices = Parameters::modulationDestinationChoices();
+    std::array<int, 12> sourceRouteCounts {};
+    std::array<float, 12> sourceDepths {};
     auto activeRouteCount = 0;
     juce::String firstActiveRoute;
 
@@ -3012,6 +3026,10 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         if (isActiveRoute)
         {
             ++activeRouteCount;
+            sourceRouteCounts[static_cast<size_t>(sourceIndex)] += 1;
+            sourceDepths[static_cast<size_t>(sourceIndex)] = juce::jlimit(-1.0f,
+                                                                          1.0f,
+                                                                          sourceDepths[static_cast<size_t>(sourceIndex)] + amount);
 
             if (firstActiveRoute.isEmpty())
             {
@@ -3026,6 +3044,36 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         ? juce::String("No active routes")
         : juce::String(activeRouteCount) + " active | " + firstActiveRoute;
     modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
+
+    for (size_t rowIndex = 0; rowIndex < modSourceRows.size(); ++rowIndex)
+    {
+        const auto sourceIndex = rowIndex + 1;
+        const auto routeCount = sourceRouteCounts[sourceIndex];
+        const auto depth = sourceDepths[sourceIndex];
+        auto text = modSourceSummaryText(rowIndex);
+
+        if (routeCount > 0)
+        {
+            const auto percent = juce::roundToInt(depth * 100.0f);
+            text += " | " + juce::String(routeCount) + " route" + (routeCount == 1 ? "" : "s")
+                + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
+        }
+
+        auto& label = modSourceRows[rowIndex];
+        label.setText(text, juce::dontSendNotification);
+        label.setColour(juce::Label::textColourId,
+                        routeCount > 0
+                            ? (depth < 0.0f ? juce::Colour(0xffffc29a) : juce::Colour(0xffd9fff1))
+                            : juce::Colour(0xffc7d7d4));
+        label.setColour(juce::Label::backgroundColourId,
+                        routeCount > 0
+                            ? (depth < 0.0f ? juce::Colour(0x22ff8a4d) : juce::Colour(0x223bcfa7))
+                            : juce::Colours::transparentBlack);
+        label.setTooltip(routeCount > 0
+                             ? sourceChoices[static_cast<int>(sourceIndex)] + ": " + juce::String(routeCount)
+                                + " active route" + (routeCount == 1 ? "" : "s")
+                             : sourceChoices[static_cast<int>(sourceIndex)] + ": no active routes");
+    }
 }
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()

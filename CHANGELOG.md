@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Mod Source Route Summaries
+
+- Expanded the MOD `SOURCES` list to include LFO 1, Mod Env 1, Velocity, and all eight performance macros.
+- Added live route summaries to each source row, showing active route count and summed modulation depth/polarity.
+- Highlighted active source rows with polarity-aware color so generated and hand-built matrix routing is easier to scan.
+
 ### Eight Macro Performance Bank
 
 - Added automatable `macro_5` through `macro_8` controls named Weight, Bounce, Warp, and Throw.

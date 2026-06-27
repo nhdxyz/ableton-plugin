@@ -430,6 +430,7 @@ Build the next larger slices in this order:
    First control-feel pass implemented as direct rotary dragging, parameter-aware drag ranges, and a larger visible LFO curve editor.
    Second control-feel pass reduced rotary drag travel and enabled wheel adjustment on slider controls for faster in-session sound design.
    First macro-bank pass implemented as a two-row MOD macro area and expanded modulation source list for the eight performance macros.
+   First source-visibility pass implemented as live MOD source rows for LFO 1, Mod Env 1, Velocity, and the eight macros, with active route count and summed depth/polarity.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.

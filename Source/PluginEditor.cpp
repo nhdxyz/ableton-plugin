@@ -235,6 +235,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modEnvelopeLabel, "MOD ENV 1");
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
+    configureSectionLabel(sampleSourceLabel, "SOURCE");
+    configureSectionLabel(sampleChopLabel, "CHOP");
+    configureSectionLabel(sampleShapeLabel, "SHAPE");
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
     configureSectionLabel(librarySectionLabel, "LIBRARY");
@@ -1542,6 +1545,9 @@ void NateVSTAudioProcessorEditor::resized()
         case Panel::sample:
         {
             sampleSectionLabel.setVisible(true);
+            sampleSourceLabel.setVisible(true);
+            sampleChopLabel.setVisible(true);
+            sampleShapeLabel.setVisible(true);
             loadSampleButton.setVisible(true);
             clearSampleButton.setVisible(true);
             randomCutButton.setVisible(true);
@@ -1556,7 +1562,8 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
-            auto actionRow = content.removeFromTop(48);
+            sampleSourceLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
+            auto actionRow = content.removeFromTop(42);
             loadSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             clearSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             randomCutButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
@@ -1564,28 +1571,29 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleModeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            auto stutterRow = content.removeFromTop(42).withTrimmedTop(4);
+            auto stutterRow = content.removeFromTop(38).withTrimmedTop(2);
             sampleNameLabel.setBounds(stutterRow.removeFromLeft(430).reduced(8, 4));
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
             sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
-            sampleWaveformDisplay.setBounds(content.removeFromTop(116).reduced(4, 8));
-            auto sliceRow = content.removeFromTop(42).withTrimmedTop(4);
+            sampleChopLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
+            sampleWaveformDisplay.setBounds(content.removeFromTop(108).reduced(4, 6));
+            auto sliceRow = content.removeFromTop(38).withTrimmedTop(2);
             const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
             for (auto& button : sampleSliceButtons)
                 button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-            auto cutRow = content.removeFromTop(54).withTrimmedTop(8);
+            auto cutRow = content.removeFromTop(46).withTrimmedTop(4);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
             sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
-            content.removeFromTop(8);
+            sampleShapeLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
             setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
             setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
             setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            layoutKnobRow(content.removeFromTop(92), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(content.removeFromTop(92).withTrimmedTop(6), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+            layoutKnobRow(content.removeFromTop(84), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(content.removeFromTop(84).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -2799,7 +2807,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
-        &sampleSectionLabel, &sequencerSectionLabel,
+        &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,

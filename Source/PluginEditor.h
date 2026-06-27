@@ -103,6 +103,9 @@ private:
     juce::Label modMatrixDestinationHeader;
     juce::Label modMatrixAmountHeader;
     juce::Label sampleSectionLabel;
+    juce::Label sampleSourceLabel;
+    juce::Label sampleChopLabel;
+    juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;

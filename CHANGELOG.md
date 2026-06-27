@@ -8,6 +8,11 @@
 - Drew the active chop window, start/end handles, duration/selection readout, and eight phrase markers directly over the waveform.
 - Made the waveform draggable: pull the start/end handles for fine trims or drag across the display to set a new chop region that writes the existing automatable sample start/end parameters.
 
+### Sample Panel Grouping
+
+- Split the SAMPLE panel into Source, Chop, and Shape groups so load/actions, waveform/slice editing, and pitch/gain/stutter controls scan separately.
+- Rebalanced the SAMPLE panel spacing after adding the waveform so house and UKG chop work keeps a clear top-to-bottom flow.
+
 ### Mod Source Route Summaries
 
 - Expanded the MOD `SOURCES` list to include LFO 1, Mod Env 1, Velocity, and all eight performance macros.

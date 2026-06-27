@@ -79,6 +79,11 @@ juce::StringArray lfoSyncRateChoices()
     return { "1/4", "1/8", "1/8T", "1/16" };
 }
 
+juce::StringArray delayRateChoices()
+{
+    return { "1/4", "1/8", "1/8D", "1/8T", "1/16", "1/16D" };
+}
+
 juce::StringArray modulationSourceChoices()
 {
     return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw" };
@@ -758,6 +763,17 @@ APVTS::ParameterLayout createLayout()
         ID::fxDelayEnabled,
         "FX Delay Enabled",
         false));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxDelaySync,
+        "FX Delay Sync",
+        false));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::fxDelayRate,
+        "FX Delay Rate",
+        delayRateChoices(),
+        1));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::fxDelayTime,

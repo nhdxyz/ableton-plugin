@@ -6,6 +6,7 @@
 
 #include <array>
 #include <atomic>
+#include <optional>
 
 namespace Sequencer
 {
@@ -16,6 +17,13 @@ struct Step
     float velocity = 0.8f;
     float probability = 1.0f;
     float timing = 0.0f;
+};
+
+struct HostPosition
+{
+    bool isAvailable = false;
+    bool isPlaying = false;
+    std::optional<double> ppqPosition;
 };
 
 class PatternSequencer
@@ -41,7 +49,7 @@ public:
     void clear();
     void randomize(float amount);
 
-    void process(juce::MidiBuffer& midi, int numSamples, double bpm);
+    void process(juce::MidiBuffer& midi, int numSamples, double bpm, HostPosition hostPosition);
 
 private:
     Parameters::APVTS& parameters;
@@ -56,6 +64,8 @@ private:
     int currentStep = 0;
     ChordNoteArray activeNotes {};
     int activeNoteCount = 0;
+    std::optional<double> lastHostPpqPosition;
+    bool wasHostPlaying = false;
     juce::uint32 randomState = 0x1234abcd;
 
     std::atomic<float>* sequencerEnabled = nullptr;
@@ -73,6 +83,7 @@ private:
     std::atomic<float>* sequencerProbability = nullptr;
 
     int getStepLengthSamples(double bpm) const;
+    double getStepLengthPpq() const;
     int getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const;
     int getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const;
     int quantizeNoteOffset(int noteOffset) const;
@@ -82,6 +93,7 @@ private:
     void addNoteOffsForActiveNotes(juce::MidiBuffer& midi, int samplePosition);
     float nextRandomFloat();
     bool shouldTriggerStep(const Step& step);
+    void alignToHostPosition(juce::MidiBuffer& midi, HostPosition hostPosition, int baseStepLengthSamples, int numSamples, double bpm);
     float readParameter(std::atomic<float>* parameter, float fallback) const;
 };
 }

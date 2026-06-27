@@ -137,6 +137,8 @@ DEFAULTS = {
     "fx_chorus_depth": 0.35,
     "fx_chorus_mix": 0.25,
     "fx_delay_enabled": 0,
+    "fx_delay_sync": 0,
+    "fx_delay_rate": 1,
     "fx_delay_time": 0.25,
     "fx_delay_feedback": 0.25,
     "fx_delay_mix": 0.2,
@@ -731,6 +733,7 @@ PRESETS = [
             "fx_eq_high_gain": 1.8,
             "fx_eq_trim": -0.9,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 3,
             "fx_delay_time": 0.18,
             "fx_delay_feedback": 0.22,
             "fx_delay_mix": 0.16,
@@ -800,6 +803,7 @@ PRESETS = [
             "fx_eq_high_gain": 1.4,
             "fx_eq_trim": -0.8,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 2,
             "fx_delay_time": 0.16,
             "fx_delay_feedback": 0.18,
             "fx_delay_mix": 0.12,
@@ -967,6 +971,7 @@ PRESETS = [
             "fx_chorus_depth": 0.28,
             "fx_chorus_mix": 0.16,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 2,
             "fx_delay_time": 0.22,
             "fx_delay_feedback": 0.18,
             "fx_delay_mix": 0.11,
@@ -1213,6 +1218,7 @@ PRESETS = [
             "fx_ring_depth": 0.16,
             "fx_ring_mix": 0.06,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 4,
             "fx_delay_time": 0.14,
             "fx_delay_feedback": 0.16,
             "fx_delay_mix": 0.1,
@@ -1286,6 +1292,7 @@ PRESETS = [
             "fx_comb_damping": 0.52,
             "fx_comb_mix": 0.08,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 5,
             "fx_delay_time": 0.12,
             "fx_delay_feedback": 0.12,
             "fx_delay_mix": 0.08,
@@ -1513,6 +1520,7 @@ PRESETS = [
             "fx_phaser_depth": 0.44,
             "fx_phaser_mix": 0.16,
             "fx_delay_enabled": 1,
+            "fx_delay_rate": 1,
             "fx_delay_time": 0.2,
             "fx_delay_feedback": 0.24,
             "fx_delay_mix": 0.12,
@@ -1581,6 +1589,9 @@ def derive_performance_macros(params, explicit_params):
 
 def write_preset(preset):
     params = DEFAULTS | preset["params"]
+    if params.get("fx_delay_enabled", 0) and "fx_delay_sync" not in preset["params"]:
+        params["fx_delay_sync"] = 1
+        params["fx_delay_rate"] = preset["params"].get("fx_delay_rate", 1)
     params = derive_performance_macros(params, preset["params"])
     root = ElementTree.Element(
         "PARAMETERS",

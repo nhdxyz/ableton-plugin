@@ -28,6 +28,7 @@ Research references:
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
 - Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
+- The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
 
 ### Bass Character
@@ -59,6 +60,7 @@ Research references:
 - The newly added Crush module fits this by giving old-sampler grit without requiring a full sample editor yet.
 - The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
+- Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
 
 ## Sound Targets
 
@@ -127,6 +129,7 @@ Research references:
 - Added a MOD destination inspector so UKG bass/stab movement can be checked and created by destination, with route slots, source depths, summed depth, source-to-destination Add, and one-click destination clearing.
 - Reworked the MOD route list into two four-slot banks so source, destination, and amount controls remain usable while assigning UKG bass, stab, and chop movement.
 - Regenerated factory presets with explicit chord-memory and FX-order state so UKG patches restore their performance and rack layout consistently.
+- Added synced Delay rate state to presets and UKG randomization so garage chop starters and throw presets open with musical delay timing.
 
 ## Next UKG Features
 
@@ -135,6 +138,7 @@ Reference-backed next passes:
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets and direct modulation destinations for FX mix/depth controls.
 - Expand the modulation inspector into per-route bypass/delete editing and add sample/FX destinations.
+- Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
 
 1. Vocal chop mode for the sampler.
 

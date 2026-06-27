@@ -68,13 +68,14 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
     applyChordMemoryToMidi(midiMessages);
     const auto hostBpm = getHostBpm();
-    patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm);
+    const auto hostPosition = getHostPosition();
+    patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     synthEngine.render(buffer, midiMessages, hostBpm);
     samplePlayer.render(buffer, midiMessages, hostBpm);
     effectsRack.process(buffer,
                         outputGain != nullptr ? outputGain->load() : -8.0f,
                         hostBpm,
-                        getHostPpqPosition());
+                        hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
     updateOutputMeters(buffer);
 }
 
@@ -445,6 +446,8 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     if (! isRandomLockEnabled(Parameters::ID::randomLockFx))
     {
         setParameterPlainValue(Parameters::ID::fxDelayEnabled, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxDelaySync, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxDelayRate, 3.0f);
         setParameterPlainValue(Parameters::ID::fxDelayTime, delayTimeDistribution(sampleRandomEngine));
         setParameterPlainValue(Parameters::ID::fxDelayFeedback, delayFeedbackDistribution(sampleRandomEngine));
         setParameterPlainValue(Parameters::ID::fxDelayMix, delayMixDistribution(sampleRandomEngine));
@@ -481,6 +484,7 @@ Sequencer::Step NateVSTAudioProcessor::getSequencerStep(int index) const
 
 void NateVSTAudioProcessor::setSequencerStep(int index, Sequencer::Step step)
 {
+    captureSequencerUndoState();
     patternSequencer.setStep(index, step);
 }
 
@@ -1627,6 +1631,8 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::fxChorusDepth,
                 Parameters::ID::fxChorusMix,
                 Parameters::ID::fxDelayEnabled,
+                Parameters::ID::fxDelaySync,
+                Parameters::ID::fxDelayRate,
                 Parameters::ID::fxDelayTime,
                 Parameters::ID::fxDelayFeedback,
                 Parameters::ID::fxDelayMix,
@@ -1809,6 +1815,8 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxChorusDepth,
             Parameters::ID::fxChorusMix,
             Parameters::ID::fxDelayEnabled,
+            Parameters::ID::fxDelaySync,
+            Parameters::ID::fxDelayRate,
             Parameters::ID::fxDelayTime,
             Parameters::ID::fxDelayFeedback,
             Parameters::ID::fxDelayMix,
@@ -1956,14 +1964,22 @@ double NateVSTAudioProcessor::getHostBpm() const
     return 124.0;
 }
 
-std::optional<double> NateVSTAudioProcessor::getHostPpqPosition() const
+Sequencer::HostPosition NateVSTAudioProcessor::getHostPosition() const
 {
-    if (auto* playHead = getPlayHead())
-        if (auto position = playHead->getPosition())
-            if (auto ppqPosition = position->getPpqPosition())
-                return *ppqPosition;
+    Sequencer::HostPosition hostPosition;
 
-    return std::nullopt;
+    if (auto* playHead = getPlayHead())
+    {
+        if (auto position = playHead->getPosition())
+        {
+            hostPosition.isAvailable = true;
+            hostPosition.isPlaying = position->getIsPlaying();
+            if (auto ppqPosition = position->getPpqPosition())
+                hostPosition.ppqPosition = *ppqPosition;
+        }
+    }
+
+    return hostPosition;
 }
 
 void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept

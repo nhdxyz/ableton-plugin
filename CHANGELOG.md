@@ -2,6 +2,16 @@
 
 ## 2026-06-27
 
+### Tempo-Synced Delay And Host Phase
+
+- Added Delay Sync and Delay Rate controls so FX throws, Space macros, and UKG vocal-chop presets can lock delay timing to musical divisions instead of only milliseconds.
+- Made the internal SEQ engine read host play state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton transport starts, loop jumps, and repositioning.
+- Stopped the internal SEQ engine from free-running while a host transport is stopped, flushed active sequencer notes on disable/stop, and aligned host jumps against per-step groove delay.
+- Expanded the SEQ piano-roll grid to the full two-octave sequencer note range and routed direct grid edits through the sequencer undo stack.
+- Kept stopped-host FX auditioning smoother by only applying PPQ phase resets to Pump/Tremolo while the host is playing.
+- Made the FX rack stay as a readable single compact lane and made Move Up/Down skip hidden disabled modules.
+- Updated FX rack summaries, momentary throws, module presets, UKG randomization, and factory-preset generation to prefer synced delay divisions where rhythmic delay is expected.
+
 ### Synth Page Grouping Pass
 
 - Reworked the SYNTH panel into task-focused Source Mix, Pitch + Voice, Filter Drive, and Amp + Output groups so house basses, stabs, plucks, and UKG patches are faster to scan.

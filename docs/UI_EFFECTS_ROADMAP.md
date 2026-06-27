@@ -76,7 +76,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
 - Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
-- Timing lock: the internal sequencer should eventually follow host PPQ/play-state so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning.
+- Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. Remaining work is deeper per-lane modulation sync and clearer transport-state feedback in the UI.
 - Audio quality: oscillator and drive stages need a bandlimiting/oversampling pass before the synth can compete with polished commercial dance plugins at bright high-note settings.
 
 These are product directions, not framework reasons to leave JUCE. The best next framework work is still custom JUCE components for modulation rings, rack rows, curve editors, waveform/slice views, and browser lists.
@@ -142,8 +142,10 @@ First implementation:
 - Implemented: use Add FX to enable and reveal fixed modules.
 - Implemented: show one selected effect editor at a time.
 - Implemented: keep Guard available as the output safety module.
-- Implemented: compact the list into two columns when many modules are visible and group Add FX by role.
+- Implemented: keep the rack as a single compact lane when many modules are visible and group Add FX by role.
 - Implemented: replace text-only rack buttons with a dedicated rack-row component that separates selected state, enabled/bypassed state, module name, summary, and Guard safety status.
+- Implemented: Delay now has Sync and Rate controls for 1/4, 1/8, dotted, triplet, and 1/16 club throws.
+- Implemented: the rack now stays in one compact readable lane when many modules are active, and Move Up/Down skips hidden disabled modules.
 
 Suggested FX page layout:
 
@@ -161,7 +163,7 @@ Rack:
 
 Selected module:
   Delay
-  Time | Feedback | Mix | Sync later
+  Sync | Rate | Time | Feedback | Mix
 ```
 
 ### Later UI Step: Slot-Based Rack
@@ -484,6 +486,7 @@ Build the next larger slices in this order:
 - Add FX workflow can reveal existing modules without changing parameter IDs and is grouped by production task.
 - Current modules can be selected and edited in a focused detail area.
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
+- Remaining UI polish: direct grid gestures should eventually edit velocity/probability as well as timing, and dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
 - A clear path exists for adding more FX without redesigning the page again.

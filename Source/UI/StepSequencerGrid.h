@@ -25,7 +25,9 @@ public:
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
 private:
-    static constexpr int numRows = 13;
+    static constexpr int numRows = Sequencer::PatternSequencer::maxNoteOffset
+                                 - Sequencer::PatternSequencer::minNoteOffset
+                                 + 1;
     enum class DragMode
     {
         none,

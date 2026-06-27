@@ -183,7 +183,7 @@ private:
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;
-    std::optional<double> getHostPpqPosition() const;
+    Sequencer::HostPosition getHostPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     juce::ValueTree createPluginState();
     juce::ValueTree createPluginState(bool includePerformanceSnapshots);

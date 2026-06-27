@@ -128,6 +128,8 @@
   <PARAM id="fx_chorus_depth" value="0.35" />
   <PARAM id="fx_chorus_mix" value="0.25" />
   <PARAM id="fx_delay_enabled" value="1" />
+  <PARAM id="fx_delay_sync" value="1" />
+  <PARAM id="fx_delay_rate" value="1" />
   <PARAM id="fx_delay_time" value="0.2" />
   <PARAM id="fx_delay_feedback" value="0.24" />
   <PARAM id="fx_delay_mix" value="0.12" />

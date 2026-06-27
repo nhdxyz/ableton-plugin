@@ -80,6 +80,8 @@ private:
     std::atomic<float>* fxChorusDepth = nullptr;
     std::atomic<float>* fxChorusMix = nullptr;
     std::atomic<float>* fxDelayEnabled = nullptr;
+    std::atomic<float>* fxDelaySync = nullptr;
+    std::atomic<float>* fxDelayRate = nullptr;
     std::atomic<float>* fxDelayTime = nullptr;
     std::atomic<float>* fxDelayFeedback = nullptr;
     std::atomic<float>* fxDelayMix = nullptr;
@@ -132,7 +134,7 @@ private:
     void processPhaser(juce::AudioBuffer<float>& buffer);
     void processFlanger(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);
-    void processDelay(juce::AudioBuffer<float>& buffer);
+    void processDelay(juce::AudioBuffer<float>& buffer, double bpm);
     void processReverb(juce::AudioBuffer<float>& buffer);
     void processWidth(juce::AudioBuffer<float>& buffer);
     void applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, float outputGainDb);

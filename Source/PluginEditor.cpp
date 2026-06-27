@@ -18,8 +18,10 @@ constexpr auto modPanelGap = 6;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
-constexpr std::array<const char*, 20> momentaryFxParameterIDs {
+constexpr std::array<const char*, 22> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
+    Parameters::ID::fxDelaySync,
+    Parameters::ID::fxDelayRate,
     Parameters::ID::fxDelayTime,
     Parameters::ID::fxDelayFeedback,
     Parameters::ID::fxDelayMix,
@@ -483,6 +485,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxPresetBox.setTooltip("Load a focused preset for the selected FX module");
     addAndMakeVisible(fxPresetBox);
 
+    fxDelayRateBox.addItemList(Parameters::delayRateChoices(), 1);
+    fxDelayRateBox.setTextWhenNothingSelected("Rate");
+    fxDelayRateBox.setTooltip("Choose the tempo-synced delay division");
+    addAndMakeVisible(fxDelayRateBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxDelayRate, fxDelayRateBox));
+
     fxPumpRateBox.addItem("1/4", 1);
     fxPumpRateBox.addItem("1/8", 2);
     fxPumpRateBox.addItem("1/8T", 3);
@@ -596,6 +604,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxDelayEnabledButton.setButtonText("Delay");
     addAndMakeVisible(fxDelayEnabledButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxDelayEnabled, fxDelayEnabledButton));
+
+    fxDelaySyncButton.setButtonText("Sync");
+    fxDelaySyncButton.setTooltip("Lock delay time to the host tempo division");
+    addAndMakeVisible(fxDelaySyncButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxDelaySync, fxDelaySyncButton));
 
     fxReverbEnabledButton.setButtonText("Reverb");
     addAndMakeVisible(fxReverbEnabledButton);
@@ -2018,16 +2031,18 @@ void NateVSTAudioProcessorEditor::resized()
                     visibleFxSlots[static_cast<size_t>(visibleFxSlotCount++)] = &slotButton;
             }
 
-            const auto slotColumns = visibleFxSlotCount > 8 ? 2 : 1;
-            const auto slotGap = 6;
-            const auto slotHeight = slotColumns == 2 ? 30 : 34;
-            const auto slotWidth = (rackArea.getWidth() - ((slotColumns - 1) * slotGap)) / slotColumns;
+            const auto slotGap = visibleFxSlotCount > 10 ? 4 : 6;
+            const auto slotHeight = visibleFxSlotCount > 0
+                ? juce::jlimit(24,
+                               34,
+                               (rackArea.getHeight() - ((visibleFxSlotCount - 1) * slotGap)) / visibleFxSlotCount)
+                : 34;
+            const auto slotWidth = rackArea.getWidth();
 
             for (auto index = 0; index < visibleFxSlotCount; ++index)
             {
-                const auto column = index % slotColumns;
-                const auto row = index / slotColumns;
-                const auto x = rackArea.getX() + (column * (slotWidth + slotGap));
+                const auto row = index;
+                const auto x = rackArea.getX();
                 const auto y = rackArea.getY() + (row * (slotHeight + slotGap));
                 visibleFxSlots[static_cast<size_t>(index)]->setBounds(x, y, slotWidth, slotHeight);
             }
@@ -2171,7 +2186,11 @@ void NateVSTAudioProcessorEditor::resized()
 
                 case FxModule::delay:
                     fxDelayEnabledButton.setVisible(true);
-                    fxDelayEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    fxDelaySyncButton.setVisible(true);
+                    fxDelayRateBox.setVisible(true);
+                    fxDelayEnabledButton.setBounds(detailHeader.removeFromLeft(96).reduced(3, 4));
+                    fxDelaySyncButton.setBounds(detailHeader.removeFromLeft(72).reduced(3, 4));
+                    fxDelayRateBox.setBounds(detailHeader.removeFromLeft(104).reduced(3, 4));
                     setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, true);
                     setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, true);
                     setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, true);
@@ -2653,10 +2672,22 @@ void NateVSTAudioProcessorEditor::moveSelectedFxModule(int direction)
 
     auto order = fxModuleOrder();
     const auto position = fxOrderPosition(selectedFxModule) - 1;
-    const auto targetPosition = position + (direction < 0 ? -1 : 1);
     const auto lastMovablePosition = static_cast<int>(order.size()) - 2;
 
-    if (position < 0 || targetPosition < 0 || targetPosition > lastMovablePosition)
+    if (position < 0)
+        return;
+
+    const auto step = direction < 0 ? -1 : 1;
+    auto targetPosition = position + step;
+
+    while (targetPosition >= 0
+           && targetPosition <= lastMovablePosition
+           && ! shouldShowFxModule(order[static_cast<size_t>(targetPosition)]))
+    {
+        targetPosition += step;
+    }
+
+    if (targetPosition < 0 || targetPosition > lastMovablePosition)
         return;
 
     std::swap(order[static_cast<size_t>(position)], order[static_cast<size_t>(targetPosition)]);
@@ -2677,6 +2708,8 @@ void NateVSTAudioProcessorEditor::resetFxModuleOrder()
 void NateVSTAudioProcessorEditor::applyDelayThrow()
 {
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelayRate, 2.0f);
     setPlainParameterValue(Parameters::ID::fxDelayTime, 0.31f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.58f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.42f);
@@ -2694,12 +2727,14 @@ void NateVSTAudioProcessorEditor::applyDelayThrow()
     selectedFxModule = FxModule::delay;
     resized();
     repaint();
-    setFxRackStatusOverride("Delay throw armed | 310 ms, high feedback, club safety on");
+    setFxRackStatusOverride("Delay throw armed | synced 1/8D, high feedback, club safety on");
 }
 
 void NateVSTAudioProcessorEditor::applySpaceThrow()
 {
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayTime, 0.42f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.46f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.26f);
@@ -2744,6 +2779,7 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
 void NateVSTAudioProcessorEditor::clearFxThrows()
 {
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxDelaySync, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.18f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.0f);
     setPlainParameterValue(Parameters::ID::fxReverbEnabled, 0.0f);
@@ -3189,18 +3225,24 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
         case FxModule::delay:
             if (presetId == 1)
             {
+                set(Parameters::ID::fxDelaySync, 1.0f);
+                set(Parameters::ID::fxDelayRate, 2.0f);
                 set(Parameters::ID::fxDelayTime, 0.31f);
                 set(Parameters::ID::fxDelayFeedback, 0.54f);
                 set(Parameters::ID::fxDelayMix, 0.34f);
             }
             else if (presetId == 2)
             {
+                set(Parameters::ID::fxDelaySync, 1.0f);
+                set(Parameters::ID::fxDelayRate, 4.0f);
                 set(Parameters::ID::fxDelayTime, 0.11f);
                 set(Parameters::ID::fxDelayFeedback, 0.20f);
                 set(Parameters::ID::fxDelayMix, 0.16f);
             }
             else
             {
+                set(Parameters::ID::fxDelaySync, 1.0f);
+                set(Parameters::ID::fxDelayRate, 0.0f);
                 set(Parameters::ID::fxDelayTime, 0.42f);
                 set(Parameters::ID::fxDelayFeedback, 0.62f);
                 set(Parameters::ID::fxDelayMix, 0.28f);
@@ -3291,7 +3333,8 @@ void NateVSTAudioProcessorEditor::restoreFxMomentarySnapshot(const FxMomentarySn
     for (size_t index = 0; index < momentaryFxParameterIDs.size(); ++index)
         setPlainParameterValue(momentaryFxParameterIDs[index], snapshot.values[index]);
 
-    fxPumpRateBox.setSelectedItemIndex(juce::roundToInt(snapshot.values[9]), juce::dontSendNotification);
+    fxDelayRateBox.setSelectedItemIndex(juce::roundToInt(readPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f)), juce::dontSendNotification);
+    fxPumpRateBox.setSelectedItemIndex(juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)), juce::dontSendNotification);
     selectedFxModule = snapshot.selectedModule;
 }
 
@@ -3526,7 +3569,19 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::phaser: return "rate depth mix";
         case FxModule::flanger: return "short delay feedback";
         case FxModule::chorus: return "rate depth mix";
-        case FxModule::delay: return "time feedback mix";
+        case FxModule::delay:
+        {
+            if (readPlainParameterValue(Parameters::ID::fxDelaySync, 0.0f) >= 0.5f)
+            {
+                const auto choices = Parameters::delayRateChoices();
+                const auto rateIndex = juce::jlimit(0,
+                                                     choices.size() - 1,
+                                                     juce::roundToInt(readPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f)));
+                return "sync " + choices[rateIndex] + " feedback mix";
+            }
+
+            return "time feedback mix";
+        }
         case FxModule::reverb: return "size damping mix";
         case FxModule::width: return "mono bass width";
         case FxModule::guard: return "push and ceiling";
@@ -3620,9 +3675,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxPumpRateBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
+        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
-        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
+        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &fxFlangerEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,

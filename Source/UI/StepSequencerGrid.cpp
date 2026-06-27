@@ -70,8 +70,10 @@ void StepSequencerGrid::paint(juce::Graphics& g)
                                                 static_cast<float>(noteLabels.getWidth()),
                                                 cellHeight - 1.0f).reduced(4.0f, 0.0f);
         const auto noteName = juce::MidiMessage::getMidiNoteName(juce::jlimit(0, 127, rootNote + noteOffset), true, true, 3);
+        const auto labelFontSize = juce::jlimit(6.0f, 9.5f, cellHeight - 2.0f);
         g.setColour(noteOffset == 0 ? juce::Colour(0xff8ee6c9) : inScale ? juce::Colour(0xffa8b6b8) : juce::Colour(0xff536066));
-        g.setFont(juce::FontOptions(noteOffset == 0 ? 9.5f : 9.0f, noteOffset == 0 ? juce::Font::bold : juce::Font::plain));
+        g.setFont(juce::FontOptions(noteOffset == 0 ? labelFontSize : juce::jmin(9.0f, labelFontSize),
+                                    noteOffset == 0 ? juce::Font::bold : juce::Font::plain));
         g.drawFittedText(noteName, labelArea.toNearestInt(), juce::Justification::centredRight, 1);
     }
 
@@ -105,7 +107,8 @@ void StepSequencerGrid::paint(juce::Graphics& g)
                 bounds.getX() + (static_cast<float>(stepIndex) * cellWidth),
                 bounds.getY() + (static_cast<float>(row) * cellHeight),
                 cellWidth,
-                cellHeight).reduced(3.0f);
+                cellHeight).reduced(cellWidth > 24.0f ? 3.0f : 2.0f,
+                                    cellHeight > 12.0f ? 2.0f : 1.0f);
 
             const auto alpha = juce::jlimit(0.35f, 1.0f, step.velocity);
             g.setColour(juce::Colour(0xff8ee6c9).withAlpha(alpha));
@@ -215,12 +218,17 @@ int StepSequencerGrid::rowForPosition(juce::Point<int> position) const
 
 int StepSequencerGrid::noteOffsetForRow(int row) const
 {
-    return 6 - juce::jlimit(0, numRows - 1, row);
+    return Sequencer::PatternSequencer::maxNoteOffset - juce::jlimit(0, numRows - 1, row);
 }
 
 int StepSequencerGrid::rowForNoteOffset(int noteOffset) const
 {
-    return juce::jlimit(0, numRows - 1, 6 - juce::jlimit(-6, 6, noteOffset));
+    return juce::jlimit(0,
+                        numRows - 1,
+                        Sequencer::PatternSequencer::maxNoteOffset
+                            - juce::jlimit(Sequencer::PatternSequencer::minNoteOffset,
+                                           Sequencer::PatternSequencer::maxNoteOffset,
+                                           noteOffset));
 }
 
 bool StepSequencerGrid::isOffsetInScale(int noteOffset) const

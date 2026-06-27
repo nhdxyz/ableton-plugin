@@ -39,6 +39,8 @@ void PatternSequencer::reset()
     currentStep = 0;
     activeNotes.fill(-1);
     activeNoteCount = 0;
+    lastHostPpqPosition = std::nullopt;
+    wasHostPlaying = false;
 }
 
 bool PatternSequencer::isEnabled() const
@@ -61,7 +63,7 @@ Step PatternSequencer::getStep(int index) const
 
 void PatternSequencer::setStep(int index, Step step)
 {
-    step.noteOffset = quantizeNoteOffset(juce::jlimit(-24, 24, step.noteOffset));
+    step.noteOffset = quantizeNoteOffset(juce::jlimit(minNoteOffset, maxNoteOffset, step.noteOffset));
     step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity);
     step.probability = juce::jlimit(0.0f, 1.0f, step.probability);
     step.timing = juce::jlimit(0.0f, 1.0f, step.timing);
@@ -76,7 +78,7 @@ void PatternSequencer::setStep(int index, Step step)
 
 int PatternSequencer::getQuantizedNoteOffset(int noteOffset) const
 {
-    return quantizeNoteOffset(juce::jlimit(-24, 24, noteOffset));
+    return quantizeNoteOffset(juce::jlimit(minNoteOffset, maxNoteOffset, noteOffset));
 }
 
 PatternSequencer::ChordNoteArray PatternSequencer::getChordNotes(int rootNote, int octaveOffset, int noteOffset, int& noteCount) const
@@ -259,10 +261,41 @@ void PatternSequencer::randomize(float amount)
     }
 }
 
-void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bpm)
+void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bpm, HostPosition hostPosition)
 {
-    if (! isEnabled() || numSamples <= 0)
+    if (numSamples <= 0)
+    {
+        lastHostPpqPosition = hostPosition.ppqPosition;
+        wasHostPlaying = hostPosition.isPlaying;
         return;
+    }
+
+    if (! isEnabled())
+    {
+        if (activeNoteCount > 0)
+            addNoteOffsForActiveNotes(midi, 0);
+
+        pendingNoteOffSamples = -1.0;
+        samplesUntilNextStep = 0.0;
+        lastHostPpqPosition = std::nullopt;
+        wasHostPlaying = false;
+        return;
+    }
+
+    if (hostPosition.isAvailable && ! hostPosition.isPlaying)
+    {
+        if (activeNoteCount > 0)
+            addNoteOffsForActiveNotes(midi, 0);
+
+        pendingNoteOffSamples = -1.0;
+        samplesUntilNextStep = 0.0;
+        lastHostPpqPosition = hostPosition.ppqPosition;
+        wasHostPlaying = false;
+        return;
+    }
+
+    const auto baseStepLengthSamples = getStepLengthSamples(bpm);
+    alignToHostPosition(midi, hostPosition, baseStepLengthSamples, numSamples, bpm);
 
     if (activeNoteCount > 0 && pendingNoteOffSamples >= 0.0)
     {
@@ -276,8 +309,6 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
             pendingNoteOffSamples -= static_cast<double>(numSamples);
         }
     }
-
-    const auto baseStepLengthSamples = getStepLengthSamples(bpm);
 
     auto nextStepOffset = samplesUntilNextStep;
 
@@ -338,6 +369,8 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
     }
 
     samplesUntilNextStep = nextStepOffset - static_cast<double>(numSamples);
+    lastHostPpqPosition = hostPosition.ppqPosition;
+    wasHostPlaying = hostPosition.isPlaying;
 }
 
 int PatternSequencer::getStepLengthSamples(double bpm) const
@@ -353,6 +386,20 @@ int PatternSequencer::getStepLengthSamples(double bpm) const
         case 1:
         default:
             return juce::jmax(1, static_cast<int>(quarterNoteSamples / 4.0));
+    }
+}
+
+double PatternSequencer::getStepLengthPpq() const
+{
+    const auto rateIndex = static_cast<int>(std::round(readParameter(sequencerRate, 1.0f)));
+
+    switch (rateIndex)
+    {
+        case 0: return 0.5;   // 1/8
+        case 2: return 0.125; // 1/32
+        case 1:
+        default:
+            return 0.25;      // 1/16
     }
 }
 
@@ -470,6 +517,64 @@ bool PatternSequencer::shouldTriggerStep(const Step& step)
 {
     const auto globalProbability = readParameter(sequencerProbability, 1.0f);
     return step.enabled && nextRandomFloat() <= juce::jlimit(0.0f, 1.0f, step.probability * globalProbability);
+}
+
+void PatternSequencer::alignToHostPosition(juce::MidiBuffer& midi,
+                                           HostPosition hostPosition,
+                                           int baseStepLengthSamples,
+                                           int numSamples,
+                                           double bpm)
+{
+    if (! hostPosition.ppqPosition)
+    {
+        lastHostPpqPosition = hostPosition.ppqPosition;
+        wasHostPlaying = hostPosition.isPlaying;
+        return;
+    }
+
+    const auto stepLengthPpq = getStepLengthPpq();
+    if (stepLengthPpq <= 0.0)
+        return;
+
+    auto shouldRealign = ! wasHostPlaying || ! lastHostPpqPosition;
+
+    if (lastHostPpqPosition)
+    {
+        const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
+        const auto expectedPpqAdvance = (static_cast<double>(numSamples) / juce::jmax(1.0, currentSampleRate))
+                                      * (safeBpm / 60.0);
+        const auto actualPpqAdvance = *hostPosition.ppqPosition - *lastHostPpqPosition;
+        shouldRealign = shouldRealign
+            || std::abs(actualPpqAdvance - expectedPpqAdvance) > juce::jmax(stepLengthPpq * 0.5, expectedPpqAdvance * 3.0);
+    }
+
+    if (! shouldRealign)
+        return;
+
+    if (activeNoteCount > 0)
+        addNoteOffsForActiveNotes(midi, 0);
+
+    pendingNoteOffSamples = -1.0;
+
+    const auto continuousStep = *hostPosition.ppqPosition / stepLengthPpq;
+    const auto stepFloor = std::floor(continuousStep);
+    const auto fraction = juce::jlimit(0.0, 1.0, continuousStep - stepFloor);
+    const auto hostStepIndex = ((static_cast<int>(stepFloor) % numSteps) + numSteps) % numSteps;
+    const auto samplePositionInStep = fraction * static_cast<double>(baseStepLengthSamples);
+    const auto currentStepDelay = static_cast<double>(getStepDelaySamples(baseStepLengthSamples, hostStepIndex));
+
+    if (samplePositionInStep <= currentStepDelay)
+    {
+        currentStep = hostStepIndex;
+        samplesUntilNextStep = juce::jmax(0.0, currentStepDelay - samplePositionInStep);
+    }
+    else
+    {
+        const auto nextStep = (hostStepIndex + 1) % numSteps;
+        currentStep = nextStep;
+        samplesUntilNextStep = ((1.0 - fraction) * static_cast<double>(baseStepLengthSamples))
+                             + static_cast<double>(getStepDelaySamples(baseStepLengthSamples, nextStep));
+    }
 }
 
 float PatternSequencer::readParameter(std::atomic<float>* parameter, float fallback) const

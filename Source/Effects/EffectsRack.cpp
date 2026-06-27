@@ -22,6 +22,23 @@ double pumpCyclesPerBeat(int rateIndex)
         default: return 1.0; // 1/4
     }
 }
+
+double delaySecondsForRate(int rateIndex, double bpm)
+{
+    const auto quarterNoteSeconds = 60.0 / juce::jlimit(20.0, 300.0, bpm);
+
+    switch (rateIndex)
+    {
+        case 0: return quarterNoteSeconds;          // 1/4
+        case 2: return quarterNoteSeconds * 0.75;   // 1/8 dotted
+        case 3: return quarterNoteSeconds / 3.0;    // 1/8 triplet
+        case 4: return quarterNoteSeconds * 0.25;   // 1/16
+        case 5: return quarterNoteSeconds * 0.375;  // 1/16 dotted
+        case 1:
+        default:
+            return quarterNoteSeconds * 0.5;        // 1/8
+    }
+}
 }
 
 namespace Effects
@@ -61,6 +78,8 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
     fxChorusMix = parameters.getRawParameterValue(Parameters::ID::fxChorusMix);
     fxDelayEnabled = parameters.getRawParameterValue(Parameters::ID::fxDelayEnabled);
+    fxDelaySync = parameters.getRawParameterValue(Parameters::ID::fxDelaySync);
+    fxDelayRate = parameters.getRawParameterValue(Parameters::ID::fxDelayRate);
     fxDelayTime = parameters.getRawParameterValue(Parameters::ID::fxDelayTime);
     fxDelayFeedback = parameters.getRawParameterValue(Parameters::ID::fxDelayFeedback);
     fxDelayMix = parameters.getRawParameterValue(Parameters::ID::fxDelayMix);
@@ -212,7 +231,7 @@ void EffectsRack::processModule(int moduleIndex,
         case 8: processPhaser(buffer); break;
         case 9: processFlanger(buffer); break;
         case 10: processChorus(buffer); break;
-        case 11: processDelay(buffer); break;
+        case 11: processDelay(buffer, bpm); break;
         case 12: processReverb(buffer); break;
         case 13: processWidth(buffer); break;
         default: break;
@@ -571,7 +590,7 @@ void EffectsRack::processFlanger(juce::AudioBuffer<float>& buffer)
     flanger.process(context);
 }
 
-void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
+void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer, double bpm)
 {
     const auto space = readParameter(macroSpace, 0.0f);
     const auto throwAmount = readParameter(macroThrow, 0.0f);
@@ -579,8 +598,12 @@ void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
     if ((! isEnabled && space <= 0.001f && throwAmount <= 0.001f) || delayBuffer.getNumSamples() == 0)
         return;
 
+    const auto syncEnabled = readParameter(fxDelaySync, 0.0f) >= 0.5f;
+    const auto delaySeconds = syncEnabled
+        ? delaySecondsForRate(static_cast<int>(std::round(readParameter(fxDelayRate, 1.0f))), bpm)
+        : static_cast<double>(readParameter(fxDelayTime, 0.25f));
     const auto delaySamples = juce::jlimit(1, delayBuffer.getNumSamples() - 1,
-                                          static_cast<int>(readParameter(fxDelayTime, 0.25f) * currentSampleRate));
+                                          static_cast<int>(delaySeconds * currentSampleRate));
     const auto fallbackFeedback = 0.18f + (space * 0.22f) + (throwAmount * 0.42f);
     const auto feedback = juce::jlimit(0.0f, 0.85f, (isEnabled ? readParameter(fxDelayFeedback, 0.25f) : fallbackFeedback) + (throwAmount * 0.18f));
     const auto baseMix = isEnabled ? readParameter(fxDelayMix, 0.2f) : 0.0f;

@@ -475,6 +475,8 @@ private:
     juce::TextButton fxApplyPresetButton { "Load" };
     juce::TextButton modInspectorAddButton { "Add" };
     juce::TextButton modInspectorClearButton { "Clear" };
+    std::array<juce::ToggleButton, 8> modSlotEnabledButtons;
+    std::array<juce::TextButton, 8> modSlotDeleteButtons;
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
     UI::FxRackRow fxDistortionSlotButton { "Drive" };
@@ -581,6 +583,7 @@ private:
     void applyFxModulePreset(FxModule module, int presetId);
     void setModInspectorDestination(int destinationIndex);
     void addInspectedModRoute();
+    void deleteModRoute(size_t slotIndex);
     void clearInspectedModRoutes();
     FxMomentarySnapshot captureFxMomentarySnapshot() const;
     void restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot);

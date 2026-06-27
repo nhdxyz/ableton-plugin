@@ -1125,6 +1125,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         setChoice(Parameters::ID::modMatrixSource[slotIndex], 0);
         setChoice(Parameters::ID::modMatrixDestination[slotIndex], 0);
         setParameter(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+        setParameter(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
     }
 
     auto setModSlot = [this] (size_t slotIndex, int source, int destination, float slotAmount)
@@ -1135,6 +1136,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         setChoice(Parameters::ID::modMatrixSource[slotIndex], source);
         setChoice(Parameters::ID::modMatrixDestination[slotIndex], destination);
         setParameter(Parameters::ID::modMatrixAmount[slotIndex], juce::jlimit(-1.0f, 1.0f, slotAmount));
+        setParameter(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
     };
 
     auto setLfoCurve = [this] (const std::array<float, 8>& curve)

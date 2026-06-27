@@ -99,6 +99,16 @@ inline constexpr std::array<const char*, 8> modMatrixAmount {
     "mod_slot_7_amount",
     "mod_slot_8_amount"
 };
+inline constexpr std::array<const char*, 8> modMatrixEnabled {
+    "mod_slot_1_enabled",
+    "mod_slot_2_enabled",
+    "mod_slot_3_enabled",
+    "mod_slot_4_enabled",
+    "mod_slot_5_enabled",
+    "mod_slot_6_enabled",
+    "mod_slot_7_enabled",
+    "mod_slot_8_enabled"
+};
 inline constexpr auto randomAmount = "random_amount";
 inline constexpr auto randomChaos = "random_chaos";
 inline constexpr auto randomBrightnessBias = "random_brightness_bias";

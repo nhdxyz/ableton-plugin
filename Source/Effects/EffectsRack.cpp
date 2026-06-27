@@ -193,6 +193,7 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
         modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
         modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
         modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
+        modMatrixEnabled[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixEnabled[index]);
     }
     for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
         lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
@@ -289,8 +290,9 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         const auto sourceIndex = static_cast<int>(std::round(readParameter(modMatrixSources[index], 0.0f)));
         const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
+        const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
+        if (! enabled || sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
             continue;
 
         const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue) * amount;

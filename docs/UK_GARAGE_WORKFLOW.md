@@ -149,7 +149,7 @@ Reference-backed next passes:
 
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
-- Expand the modulation inspector into per-route bypass/delete editing.
+- Expand the modulation inspector beyond the implemented per-route bypass/delete controls into richer route editing and macro assignment views.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
 - Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.
 

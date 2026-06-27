@@ -460,6 +460,7 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
             setParameterPlainValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
             setParameterPlainValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
             setParameterPlainValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
+            setParameterPlainValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
             return;
         }
     };
@@ -1762,6 +1763,9 @@ void NateVSTAudioProcessor::restoreModulationFromState(const juce::ValueTree& st
 
     for (const auto* parameterID : Parameters::ID::modMatrixAmount)
         restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixEnabled)
+        restoreParameterFromState(state, parameterID);
 }
 
 void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree& state)
@@ -2147,6 +2151,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
+    const auto hasModMatrixEnabled = stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixEnabled[0]).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -2169,6 +2174,9 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::filterSlope, 0.0f);
     if (! hasOscWarp)
         setParameterPlainValue(Parameters::ID::oscWarp, 0.0f);
+    if (! hasModMatrixEnabled)
+        for (const auto* parameterID : Parameters::ID::modMatrixEnabled)
+            setParameterPlainValue(parameterID, 1.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

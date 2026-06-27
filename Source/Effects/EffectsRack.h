@@ -133,6 +133,7 @@ private:
     std::array<std::atomic<float>*, 8> modMatrixSources {};
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
     std::array<std::atomic<float>*, 8> modMatrixAmounts {};
+    std::array<std::atomic<float>*, 8> modMatrixEnabled {};
     std::atomic<float>* macroTone = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;

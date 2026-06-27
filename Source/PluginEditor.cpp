@@ -578,6 +578,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         destinationBox.setTextWhenNothingSelected("Destination");
         addAndMakeVisible(destinationBox);
         comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::modMatrixDestination[index], destinationBox));
+
+        auto& enabledButton = modSlotEnabledButtons[index];
+        enabledButton.setButtonText("On");
+        enabledButton.setTooltip("Bypass or enable modulation slot " + juce::String(static_cast<int>(index + 1)));
+        addAndMakeVisible(enabledButton);
+        buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::modMatrixEnabled[index], enabledButton));
+
+        auto& deleteButton = modSlotDeleteButtons[index];
+        deleteButton.setButtonText("X");
+        deleteButton.setTooltip("Delete modulation slot " + juce::String(static_cast<int>(index + 1)));
+        deleteButton.onClick = [this, index] { deleteModRoute(index); };
+        addAndMakeVisible(deleteButton);
     }
 
     monoButton.setButtonText("Mono");
@@ -1762,6 +1774,8 @@ void NateVSTAudioProcessorEditor::resized()
                 modAmountSliders[index].setVisible(true);
                 modAmountLabels[index].setVisible(false);
                 modMatrixRows[index].setVisible(true);
+                modSlotEnabledButtons[index].setVisible(true);
+                modSlotDeleteButtons[index].setVisible(true);
             }
             modMatrixStatusLabel.setVisible(true);
             modInspectorLabel.setVisible(true);
@@ -1862,8 +1876,9 @@ void NateVSTAudioProcessorEditor::resized()
                                    juce::Label& amount)
             {
                 header.removeFromLeft(26);
+                header.removeFromRight(52);
                 source.setBounds(header.removeFromLeft(100).reduced(5, 0));
-                destination.setBounds(header.removeFromLeft(150).reduced(5, 0));
+                destination.setBounds(header.removeFromLeft(138).reduced(5, 0));
                 amount.setBounds(header.reduced(5, 0));
             };
             placeHeader(leftHeader, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
@@ -1881,7 +1896,10 @@ void NateVSTAudioProcessorEditor::resized()
                 auto row = rowBounds.reduced(2, 2);
                 modSlotRows[index].setBounds(row.removeFromLeft(26).reduced(2, 0));
                 modSourceBoxes[index].setBounds(row.removeFromLeft(100).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(150).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(138).reduced(3, 0));
+                auto actionArea = row.removeFromRight(52);
+                modSlotEnabledButtons[index].setBounds(actionArea.removeFromLeft(31).reduced(1, 0));
+                modSlotDeleteButtons[index].setBounds(actionArea.reduced(1, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
             };
 
@@ -3819,6 +3837,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         modSlotRows[index].setVisible(false);
         modSourceBoxes[index].setVisible(false);
         modDestinationBoxes[index].setVisible(false);
+        modSlotEnabledButtons[index].setVisible(false);
+        modSlotDeleteButtons[index].setVisible(false);
         setSliderVisible(modAmountSliders[index], modAmountLabels[index], false);
     }
 
@@ -4059,11 +4079,16 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
                                                   destinationChoices.size() - 1,
                                                   static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f))));
         const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
         const auto sourceText = choiceName(sourceChoices, sourceIndex);
         const auto destinationText = choiceName(destinationChoices, destinationIndex);
-        const auto isActiveRoute = sourceIndex > 0 && destinationIndex > 0 && std::abs(amount) > 0.001f;
+        const auto isConfiguredRoute = sourceIndex > 0 && destinationIndex > 0 && std::abs(amount) > 0.001f;
+        const auto isActiveRoute = enabled && isConfiguredRoute;
 
-        modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount);
+        modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount, enabled);
+        modSlotEnabledButtons[index].setButtonText(enabled ? "On" : "Off");
+        modSlotEnabledButtons[index].setEnabled(isConfiguredRoute);
+        modSlotDeleteButtons[index].setEnabled(isConfiguredRoute);
 
         if (isActiveRoute)
         {
@@ -4146,15 +4171,19 @@ void NateVSTAudioProcessorEditor::updateModInspectorStatus()
                                                   destinationChoices.size() - 1,
                                                   static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f))));
         const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
 
         if (sourceIndex <= 0 || destinationIndex != selectedDestination || std::abs(amount) <= 0.001f)
             continue;
 
-        summedDepth += amount;
+        if (enabled)
+            summedDepth += amount;
+
         const auto percent = juce::roundToInt(amount * 100.0f);
         routes.add("S" + juce::String(static_cast<int>(index + 1)) + " "
                    + sourceChoices[sourceIndex] + " "
-                   + (percent >= 0 ? "+" : "") + juce::String(percent) + "%");
+                   + (percent >= 0 ? "+" : "") + juce::String(percent) + "%"
+                   + (enabled ? "" : " off"));
     }
 
     if (routes.isEmpty())
@@ -4239,6 +4268,7 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], defaultAmount);
+    setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
 
     updateModMatrixRows();
     updateModDestinationIndicators();
@@ -4248,6 +4278,24 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     modMatrixStatusLabel.setText("Added S" + juce::String(targetSlot + 1) + " "
                                      + sourceChoices[sourceIndex] + " -> " + destinationChoices[destinationIndex]
                                      + " +" + juce::String(percent) + "%",
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::deleteModRoute(size_t slotIndex)
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return;
+
+    setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+
+    modMatrixStatusLabel.setText("Deleted S" + juce::String(static_cast<int>(slotIndex + 1)),
                                  juce::dontSendNotification);
 }
 
@@ -4276,6 +4324,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
         setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
         ++clearedCount;
     }
 
@@ -4307,8 +4356,9 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
         const auto sourceIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixSource[index], 0.0f)));
         const auto destinationIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f)));
         const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (sourceIndex <= 0 || destinationIndex <= 0 || destinationIndex >= static_cast<int>(destinationDepths.size()))
+        if (! enabled || sourceIndex <= 0 || destinationIndex <= 0 || destinationIndex >= static_cast<int>(destinationDepths.size()))
             continue;
 
         destinationDepths[static_cast<size_t>(destinationIndex)] += amount;

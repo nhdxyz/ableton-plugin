@@ -475,6 +475,11 @@ APVTS::ParameterLayout createLayout()
             "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Amount",
             juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
             0.0f));
+
+        add(std::make_unique<juce::AudioParameterBool>(
+            ID::modMatrixEnabled[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Enabled",
+            true));
     }
 
     add(std::make_unique<juce::AudioParameterFloat>(

@@ -13,7 +13,8 @@ public:
     void setState(int newSlotNumber,
                   const juce::String& newSourceText,
                   const juce::String& newDestinationText,
-                  float newAmount);
+                  float newAmount,
+                  bool newEnabled);
     juce::String getTooltip() override;
     void paint(juce::Graphics& g) override;
 
@@ -22,8 +23,10 @@ private:
     juce::String sourceText { "Off" };
     juce::String destinationText { "Off" };
     float amount = 0.0f;
+    bool enabled = true;
 
     bool isActive() const noexcept;
+    bool isConfigured() const noexcept;
     juce::Colour accentColour() const noexcept;
 };
 }

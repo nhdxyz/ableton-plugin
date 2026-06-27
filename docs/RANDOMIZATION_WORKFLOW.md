@@ -30,7 +30,7 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 
 The LAB and HOME `Scope` selector can limit Generate, Vary, Mutate, or Wild to a single section. `All` keeps the full recipe behavior. `Source`, `Env`, `Filter`, `Sample`, `FX`, `Seq`, and `Macros` restore every other section from the pre-randomization snapshot after the recipe runs. Scoped actions also restore modulation and output gain so focused edits do not quietly change hidden routing or level.
 
-Recipe generation can seed visible MOD routes for synth, FX, and sample movement. Current synth destinations include Osc Warp for source-level harmonic motion. Current FX destinations cover Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. Current sample destinations cover Start, Mix, Pitch, Ramp, and Stutter. These use LFO 1 or macro sources where the target supports them, so generated house/UKG patches can expose source grit, ducking, throw, space, drive, and chop motion directly in the matrix.
+Recipe generation can seed visible MOD routes for synth, FX, and sample movement. Current synth destinations include Osc Warp for source-level harmonic motion. Current FX destinations cover Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. Current sample destinations cover Start, Mix, Pitch, Ramp, and Stutter. These use LFO 1 or macro sources where the target supports them, so generated house/UKG patches can expose source grit, ducking, throw, space, drive, and chop motion directly in the matrix. Generated routes are enabled by default, while the MOD panel can bypass individual slots later without deleting their settings.
 
 ## Output Safety
 

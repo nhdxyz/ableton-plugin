@@ -149,7 +149,7 @@ HOME:
 
 SYNTH:
 
-- Show modulation amount rings around key tone controls. Current implementation covers the six matrix destinations: Cutoff, Resonance, Filter Env, Drive, Osc 2 Tune, and Osc 2 Level.
+- Show modulation amount rings around key tone controls. Current implementation covers synth destinations, the first sample chop destinations, and the first FX movement destinations.
 - Keep detailed oscillator, unison, and filter controls here.
 
 MOD:
@@ -159,7 +159,7 @@ MOD:
 - Source rows for LFO 1, Mod Env 1, Velocity, and the eight macro sources.
 - Matrix rows.
 - Assignment amount controls.
-- Current implementation includes active route rows, route tooltips, source route counts/depth summaries, matrix status text, destination rings, and direct dragging on LFO curve points.
+- Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, and direct dragging on LFO curve points.
 
 SEQ:
 
@@ -222,9 +222,9 @@ Editable engine slice:
 8. Added the first FX curve-shaper slice: Pump Custom curve points with a draggable FX-panel editor, matching DSP interpolation, and recipe randomization support.
 9. Added the first global FX modulation destinations: Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. LFO 1 and macro sources drive these in the effects rack; Mod Env and Velocity remain per-voice synth-only sources.
 10. Added the first global sample modulation destinations: Sample Start, Mix, Pitch, Ramp, and Stutter. UKG Chop seeds empty routes for start and pitch/ramp movement when a sample workflow is active.
+11. Added saved per-slot route enable flags plus compact bypass/delete controls. Disabled routes keep their source/destination/amount for comparison but no longer affect synth, sample, FX, rings, or depth summaries.
 
 Remaining modulation work:
 
 - Add a real global Mod Env/Velocity aggregation strategy before allowing those sources to drive sample or FX targets.
-- Add visible activity indicators around key destination controls.
 - Expand draggable curve editing into reusable curve presets, per-slot curve modulation, and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.

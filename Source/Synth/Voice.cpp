@@ -78,6 +78,7 @@ Voice::Voice(Parameters::APVTS& state)
         modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
         modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
         modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
+        modMatrixEnabled[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixEnabled[index]);
     }
 }
 
@@ -257,8 +258,9 @@ void Voice::updateVoiceParameters(float envelopeValue)
         const auto sourceIndex = static_cast<int>(std::round(readParameter(modMatrixSources[index], 0.0f)));
         const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
+        const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
+        if (! enabled || sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
             continue;
 
         const auto contribution = evaluateModulationSource(sourceIndex, lfoValue, modEnvelopeValue) * amount;

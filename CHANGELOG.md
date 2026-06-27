@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Mod Route Bypass And Delete
+
+- Added saved per-slot MOD route enable flags so individual matrix routes can be bypassed without losing their source, destination, or amount.
+- Added compact `On` and `X` controls to each MOD routing row for fast route bypass/delete while keeping the two-bank matrix layout intact.
+- Made synth, sample, and FX modulation engines ignore bypassed routes, and made destination rings, source summaries, and inspector summed depth only count enabled routes.
+- Updated preset migration, randomization, UKG Chop route seeding, and factory presets so existing routes remain enabled by default.
+
 ### Oscillator Warp Pass
 
 - Added an automatable Osc Warp control that shapes oscillator harmonics before the filter, giving basses, stabs, plucks, and UKG Dred-style patches more source movement without needing another effect.

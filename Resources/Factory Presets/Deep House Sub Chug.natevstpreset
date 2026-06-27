@@ -57,6 +57,14 @@
   <PARAM id="mod_env1_sustain" value="0" />
   <PARAM id="mod_env1_release" value="0.12" />
   <PARAM id="mod_env1_depth" value="0.3" />
+  <PARAM id="mod_slot_1_enabled" value="1" />
+  <PARAM id="mod_slot_2_enabled" value="1" />
+  <PARAM id="mod_slot_3_enabled" value="1" />
+  <PARAM id="mod_slot_4_enabled" value="1" />
+  <PARAM id="mod_slot_5_enabled" value="1" />
+  <PARAM id="mod_slot_6_enabled" value="1" />
+  <PARAM id="mod_slot_7_enabled" value="1" />
+  <PARAM id="mod_slot_8_enabled" value="1" />
   <PARAM id="random_amount" value="0.45" />
   <PARAM id="random_chaos" value="0.25" />
   <PARAM id="random_brightness_bias" value="0" />

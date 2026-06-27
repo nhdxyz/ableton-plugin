@@ -123,6 +123,7 @@ private:
     std::array<std::atomic<float>*, maxModSlots> modMatrixSources {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixDestinations {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixAmounts {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixEnabled {};
 
     void updateVoiceParameters(float envelopeValue);
     void updateGlide();

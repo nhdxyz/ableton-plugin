@@ -424,6 +424,7 @@ Build the next larger slices in this order:
 1. Modulation visibility: destination rings, source activity, assignment summaries, direct curve dragging, and more destinations for sample and FX parameters.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
+   First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
 4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.

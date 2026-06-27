@@ -49,6 +49,11 @@ juce::StringArray sequencerGrooveModeChoices()
     return { "Classic", "Selective", "UKG Push", "Tight" };
 }
 
+juce::StringArray sequencerScaleChoices()
+{
+    return { "Off", "Major", "Minor", "Dorian", "Minor Pent" };
+}
+
 juce::StringArray lfoShapeChoices()
 {
     return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
@@ -559,6 +564,12 @@ APVTS::ParameterLayout createLayout()
         ID::sequencerGrooveMode,
         "Sequencer Groove Mode",
         sequencerGrooveModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sequencerScale,
+        "Sequencer Scale",
+        sequencerScaleChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterFloat>(

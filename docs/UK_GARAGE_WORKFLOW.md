@@ -144,8 +144,9 @@ Research references:
 
 - Implemented as a compact SEQ-panel template selector.
 - Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
-- Per-template rate, gate, swing, groove mode, per-step timing, accent, probability, octave, and random amount defaults are set when applied.
+- Per-template rate, gate, swing, groove mode, scale mode, per-step timing, accent, probability, octave, and random amount defaults are set when applied.
 - The grid now shows timing markers on pushed steps, probability bars, anchor-step dots, beat-group dividers, and root-aware note rows, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
+- The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 
 5. UKG factory presets.
 

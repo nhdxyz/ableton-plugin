@@ -303,6 +303,10 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
         return false;
 
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
+    const auto scale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
+    if (scale == nullptr || scale->load() <= 0.5f)
+        setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+
     patternSequencer.randomize(amount != nullptr ? amount->load() : 0.55f);
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
 
@@ -323,6 +327,10 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
 {
     patternSequencer.clear();
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+    const auto scaleMode = presetIndex == 1 ? 2.0f
+        : presetIndex == 4 || presetIndex == 6 ? 2.0f
+        : 4.0f;
+    setParameterPlainValue(Parameters::ID::sequencerScale, scaleMode);
 
     auto setStep = [this] (int index, int noteOffset, float velocity, float probability, float timing = 0.0f)
     {
@@ -961,6 +969,9 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
 
 void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& state)
 {
+    if (! state.getChildWithProperty("id", Parameters::ID::sequencerScale).isValid())
+        setParameterPlainValue(Parameters::ID::sequencerScale, 0.0f);
+
     restoreParameterGroupFromState(state, {
         Parameters::ID::sequencerEnabled,
         Parameters::ID::sequencerRate,
@@ -968,6 +979,7 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         Parameters::ID::sequencerGate,
         Parameters::ID::sequencerSwing,
         Parameters::ID::sequencerGrooveMode,
+        Parameters::ID::sequencerScale,
         Parameters::ID::sequencerAccent,
         Parameters::ID::sequencerOctave,
         Parameters::ID::sequencerProbability,

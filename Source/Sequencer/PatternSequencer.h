@@ -57,6 +57,7 @@ private:
     std::atomic<float>* sequencerGate = nullptr;
     std::atomic<float>* sequencerSwing = nullptr;
     std::atomic<float>* sequencerGrooveMode = nullptr;
+    std::atomic<float>* sequencerScale = nullptr;
     std::atomic<float>* sequencerAccent = nullptr;
     std::atomic<float>* sequencerOctave = nullptr;
     std::atomic<float>* sequencerProbability = nullptr;
@@ -64,6 +65,8 @@ private:
     int getStepLengthSamples(double bpm) const;
     int getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const;
     int getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const;
+    int quantizeNoteOffset(int noteOffset) const;
+    bool isOffsetInScale(int noteOffset, int scaleMode) const;
     float nextRandomFloat();
     bool shouldTriggerStep(const Step& step);
     float readParameter(std::atomic<float>* parameter, float fallback) const;

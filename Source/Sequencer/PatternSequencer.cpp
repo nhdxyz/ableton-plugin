@@ -1,6 +1,7 @@
 #include "PatternSequencer.h"
 
 #include <cmath>
+#include <initializer_list>
 
 namespace Sequencer
 {
@@ -13,6 +14,7 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerGate = parameters.getRawParameterValue(Parameters::ID::sequencerGate);
     sequencerSwing = parameters.getRawParameterValue(Parameters::ID::sequencerSwing);
     sequencerGrooveMode = parameters.getRawParameterValue(Parameters::ID::sequencerGrooveMode);
+    sequencerScale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
     sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
     sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
@@ -54,7 +56,7 @@ Step PatternSequencer::getStep(int index) const
 
 void PatternSequencer::setStep(int index, Step step)
 {
-    step.noteOffset = juce::jlimit(-24, 24, step.noteOffset);
+    step.noteOffset = quantizeNoteOffset(juce::jlimit(-24, 24, step.noteOffset));
     step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity);
     step.probability = juce::jlimit(0.0f, 1.0f, step.probability);
     step.timing = juce::jlimit(0.0f, 1.0f, step.timing);
@@ -152,7 +154,7 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
             const auto velocity = isAnchorStep
                 ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
                 : juce::jlimit(0.0f, 1.0f, step.velocity * (1.0f - (accent * 0.12f)));
-            activeNote = juce::jlimit(0, 127, root + octaveOffset + step.noteOffset);
+            activeNote = juce::jlimit(0, 127, root + octaveOffset + quantizeNoteOffset(step.noteOffset));
             midi.addEvent(juce::MidiMessage::noteOn(1, activeNote, velocity), eventOffset);
 
             const auto noteOffOffset = eventOffset + gateSamples;
@@ -232,6 +234,54 @@ int PatternSequencer::getStepDelaySamples(int baseStepLengthSamples, int stepInd
     }
 
     return static_cast<int>(std::round(maxDelay * juce::jlimit(0.0f, 1.0f, weight)));
+}
+
+int PatternSequencer::quantizeNoteOffset(int noteOffset) const
+{
+    const auto scaleMode = static_cast<int>(std::round(readParameter(sequencerScale, 0.0f)));
+    if (scaleMode <= 0)
+        return noteOffset;
+
+    auto bestOffset = noteOffset;
+    auto bestDistance = 128;
+
+    for (auto candidate = -24; candidate <= 24; ++candidate)
+    {
+        if (! isOffsetInScale(candidate, scaleMode))
+            continue;
+
+        const auto distance = std::abs(candidate - noteOffset);
+        if (distance < bestDistance || (distance == bestDistance && std::abs(candidate) < std::abs(bestOffset)))
+        {
+            bestOffset = candidate;
+            bestDistance = distance;
+        }
+    }
+
+    return bestOffset;
+}
+
+bool PatternSequencer::isOffsetInScale(int noteOffset, int scaleMode) const
+{
+    const auto pitchClass = ((noteOffset % 12) + 12) % 12;
+
+    auto contains = [pitchClass] (std::initializer_list<int> scale)
+    {
+        for (const auto degree : scale)
+            if (pitchClass == degree)
+                return true;
+
+        return false;
+    };
+
+    switch (scaleMode)
+    {
+        case 1: return contains({ 0, 2, 4, 5, 7, 9, 11 });
+        case 2: return contains({ 0, 2, 3, 5, 7, 8, 10 });
+        case 3: return contains({ 0, 2, 3, 5, 7, 9, 10 });
+        case 4: return contains({ 0, 3, 5, 7, 10 });
+        default: return true;
+    }
 }
 
 float PatternSequencer::nextRandomFloat()

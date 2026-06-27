@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Scale Helper
+
+- Added a saved `Sequencer Scale` mode with Off, Major, Minor, Dorian, and Minor Pent choices.
+- Quantized edited, generated, and played sequencer notes when a scale mode is active while leaving Off as the default compatibility mode.
+- Added a SEQ-panel scale selector and dimmed out-of-scale grid rows so garage, house, and techno bass/stab patterns are easier to keep musical.
+
 ### Sequencer Grid Orientation
 
 - Added beat-group headers and stronger four-beat column dividers to the SEQ grid so 16-step house and UKG patterns scan in musical bars.

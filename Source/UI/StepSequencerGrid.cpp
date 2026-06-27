@@ -1,6 +1,7 @@
 #include "StepSequencerGrid.h"
 
 #include <cmath>
+#include <initializer_list>
 
 namespace UI
 {
@@ -17,6 +18,16 @@ void StepSequencerGrid::setRootNote(int newRootNote)
         return;
 
     rootNote = newRootNote;
+    repaint();
+}
+
+void StepSequencerGrid::setScaleMode(int newScaleMode)
+{
+    newScaleMode = juce::jlimit(0, 4, newScaleMode);
+    if (scaleMode == newScaleMode)
+        return;
+
+    scaleMode = newScaleMode;
     repaint();
 }
 
@@ -48,7 +59,10 @@ void StepSequencerGrid::paint(juce::Graphics& g)
     {
         const auto y = bounds.getY() + (static_cast<float>(row) * cellHeight);
         const auto noteOffset = noteOffsetForRow(row);
-        g.setColour(noteOffset == 0 ? juce::Colour(0xff223038) : (row % 2 == 0 ? juce::Colour(0xff182126) : juce::Colour(0xff151e22)));
+        const auto inScale = isOffsetInScale(noteOffset);
+        g.setColour(noteOffset == 0 ? juce::Colour(0xff223038)
+                                    : inScale ? (row % 2 == 0 ? juce::Colour(0xff182126) : juce::Colour(0xff151e22))
+                                              : juce::Colour(0xff11171a));
         g.fillRect(juce::Rectangle<float>(static_cast<float>(bounds.getX()), y, static_cast<float>(bounds.getWidth()), cellHeight - 1.0f));
 
         auto labelArea = juce::Rectangle<float>(static_cast<float>(noteLabels.getX()),
@@ -56,7 +70,7 @@ void StepSequencerGrid::paint(juce::Graphics& g)
                                                 static_cast<float>(noteLabels.getWidth()),
                                                 cellHeight - 1.0f).reduced(4.0f, 0.0f);
         const auto noteName = juce::MidiMessage::getMidiNoteName(juce::jlimit(0, 127, rootNote + noteOffset), true, true, 3);
-        g.setColour(noteOffset == 0 ? juce::Colour(0xff8ee6c9) : juce::Colour(0xffa8b6b8));
+        g.setColour(noteOffset == 0 ? juce::Colour(0xff8ee6c9) : inScale ? juce::Colour(0xffa8b6b8) : juce::Colour(0xff536066));
         g.setFont(juce::FontOptions(noteOffset == 0 ? 9.5f : 9.0f, noteOffset == 0 ? juce::Font::bold : juce::Font::plain));
         g.drawFittedText(noteName, labelArea.toNearestInt(), juce::Justification::centredRight, 1);
     }
@@ -205,6 +219,32 @@ int StepSequencerGrid::noteOffsetForRow(int row) const
 int StepSequencerGrid::rowForNoteOffset(int noteOffset) const
 {
     return juce::jlimit(0, numRows - 1, 6 - juce::jlimit(-6, 6, noteOffset));
+}
+
+bool StepSequencerGrid::isOffsetInScale(int noteOffset) const
+{
+    if (scaleMode <= 0)
+        return true;
+
+    const auto pitchClass = ((noteOffset % 12) + 12) % 12;
+
+    auto contains = [pitchClass] (std::initializer_list<int> scale)
+    {
+        for (const auto degree : scale)
+            if (pitchClass == degree)
+                return true;
+
+        return false;
+    };
+
+    switch (scaleMode)
+    {
+        case 1: return contains({ 0, 2, 4, 5, 7, 9, 11 });
+        case 2: return contains({ 0, 2, 3, 5, 7, 8, 10 });
+        case 3: return contains({ 0, 2, 3, 5, 7, 9, 10 });
+        case 4: return contains({ 0, 3, 5, 7, 10 });
+        default: return true;
+    }
 }
 
 void StepSequencerGrid::editAt(juce::Point<int> position)

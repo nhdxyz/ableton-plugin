@@ -216,6 +216,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerGrooveBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerGrooveMode, sequencerGrooveBox));
 
+    sequencerScaleBox.addItemList(Parameters::sequencerScaleChoices(), 1);
+    sequencerScaleBox.setTextWhenNothingSelected("Scale");
+    addAndMakeVisible(sequencerScaleBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerScale, sequencerScaleBox));
+
     sequencerPatternBox.addItem("Bass", 1);
     sequencerPatternBox.addItem("Stab", 2);
     sequencerPatternBox.addItem("UKG 2-Step", 3);
@@ -1303,6 +1308,7 @@ void NateVSTAudioProcessorEditor::resized()
             rateSixteenthButton.setVisible(true);
             rateThirtySecondButton.setVisible(true);
             sequencerGrooveBox.setVisible(true);
+            sequencerScaleBox.setVisible(true);
             sequencerPatternBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
@@ -1321,6 +1327,7 @@ void NateVSTAudioProcessorEditor::resized()
             rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
             sequencerGrooveBox.setBounds(timingRow.removeFromLeft(150).reduced(4));
+            sequencerScaleBox.setBounds(timingRow.removeFromLeft(132).reduced(4));
             auto patternRow = content.removeFromTop(44).withTrimmedTop(2);
             sequencerPatternBox.setBounds(patternRow.removeFromLeft(190).reduced(4));
             applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
@@ -2041,7 +2048,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -2447,7 +2454,9 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
 
     const auto root = juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 36.0f));
     const auto octaveOffset = juce::roundToInt(readParameter(Parameters::ID::sequencerOctave, 0.0f)) * 12;
+    const auto scaleMode = juce::roundToInt(readParameter(Parameters::ID::sequencerScale, 0.0f));
     sequencerGrid.setRootNote(juce::jlimit(0, 127, root + octaveOffset));
+    sequencerGrid.setScaleMode(scaleMode);
 }
 
 void NateVSTAudioProcessorEditor::timerCallback()

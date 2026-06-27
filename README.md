@@ -21,7 +21,7 @@ Planned major areas:
 - Synth engine: oscillator 1, oscillator 2, sub, noise, unison/spread, envelopes, multimode filter, drive, modulation.
 - Sound Lab: guided randomization, mutation, recipes, section locks, undo, and safety rules.
 - Sample Lab: load audio, cut it with start/end controls, reverse/pitch/gain/mix it, and trigger it from MIDI.
-- Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, beat grouping, groove cues, and quick pattern tools for riffs, basslines, and generated ideas.
+- Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, scale helper, beat grouping, groove cues, and quick pattern tools for riffs, basslines, and generated ideas.
 - FX: post-synth/post-sample tone cleanup, three-band EQ, distortion, pump, tremolo/auto pan, ring modulation, comb resonance, phaser, flanger, chorus, delay, reverb, output trim, and Guard safety clipping.
 - Library: save and load categorized `.natevstpreset` files from the user preset folder.
 

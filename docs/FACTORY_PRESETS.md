@@ -42,3 +42,5 @@ The UKG factory presets include conservative MOD-panel defaults where useful, su
 The house, tech-house, minimal, and techno factory presets use the newer SEQ template direction with saved groove, scale, probability, chord/voicing, strum, and step timing defaults. Bass presets keep mono-safe low-end, Width mono-below protection, Pump movement, and Guard enabled where needed; pluck and stab presets lean on Comb, Ring Mod, Delay, Reverb, Width, and EQ for club-ready texture.
 
 Factory presets also include deterministic `preset_tags` metadata generated from their category, role, sequencer usage, mono-safety, and FX choices. The Library tag filter uses those tags for quick browsing by role and production need, such as `Bass`, `Chord`, `Pluck`, `Stab`, `Sequenced`, `Mono Safe`, `Pump`, `Wide`, `FX`, `Vocal Chop`, and genre tags.
+
+All factory presets seed the eight performance macros. The generator derives Weight from sub/mono settings, Bounce from Pump depth, Warp from oscillator 2 tuning and unison movement, and Throw from the Space macro unless a preset overrides those values directly.

@@ -39,6 +39,10 @@ DEFAULTS = {
     "macro_2": 0.0,
     "macro_3": 0.0,
     "macro_4": 0.0,
+    "macro_5": 0.0,
+    "macro_6": 0.0,
+    "macro_7": 0.0,
+    "macro_8": 0.0,
     "lfo1_rate": 1.0,
     "lfo1_sync": 1,
     "lfo1_sync_rate": 1,
@@ -1545,8 +1549,33 @@ def value_string(value):
     return str(value)
 
 
+def clamp(value, minimum, maximum):
+    return max(minimum, min(maximum, value))
+
+
+def derive_performance_macros(params, explicit_params):
+    derived = dict(params)
+
+    if "macro_5" not in explicit_params:
+        derived["macro_5"] = clamp((params.get("sub_level", 0.0) * 0.45) + (0.12 if params.get("mono_mode", 0) else 0.0), 0.0, 0.8)
+
+    if "macro_6" not in explicit_params:
+        derived["macro_6"] = clamp(params.get("fx_pump_depth", 0.0) + 0.08 if params.get("fx_pump_enabled", 0) else 0.0, 0.0, 0.7)
+
+    if "macro_7" not in explicit_params:
+        derived["macro_7"] = clamp((abs(params.get("osc2_tune", 0.0)) / 12.0)
+                                   + (params.get("macro_3", 0.0) * 0.4)
+                                   + (params.get("unison_detune", 0.0) * 1.8), 0.0, 0.7)
+
+    if "macro_8" not in explicit_params:
+        derived["macro_8"] = clamp(params.get("macro_4", 0.0) * 0.82, 0.0, 0.75)
+
+    return derived
+
+
 def write_preset(preset):
     params = DEFAULTS | preset["params"]
+    params = derive_performance_macros(params, preset["params"])
     root = ElementTree.Element(
         "PARAMETERS",
         {

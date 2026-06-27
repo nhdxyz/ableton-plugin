@@ -181,6 +181,10 @@ private:
     juce::Slider macroDirtSlider;
     juce::Slider macroMotionSlider;
     juce::Slider macroSpaceSlider;
+    juce::Slider macroWeightSlider;
+    juce::Slider macroBounceSlider;
+    juce::Slider macroWarpSlider;
+    juce::Slider macroThrowSlider;
     juce::Slider lfo1RateSlider;
     juce::Slider lfo1DepthSlider;
     juce::Slider lfo1PhaseSlider;
@@ -283,6 +287,10 @@ private:
     juce::Label macroDirtLabel;
     juce::Label macroMotionLabel;
     juce::Label macroSpaceLabel;
+    juce::Label macroWeightLabel;
+    juce::Label macroBounceLabel;
+    juce::Label macroWarpLabel;
+    juce::Label macroThrowLabel;
     juce::Label lfo1RateLabel;
     juce::Label lfo1DepthLabel;
     juce::Label lfo1PhaseLabel;
@@ -453,7 +461,7 @@ private:
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
     juce::Label fxRackStatusLabel;
-    std::array<juce::Label, 4> modSourceRows;
+    std::array<juce::Label, 8> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;

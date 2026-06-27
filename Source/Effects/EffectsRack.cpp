@@ -95,6 +95,8 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
         fxOrder[index] = parameters.getRawParameterValue(Parameters::ID::fxOrder[index]);
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
     macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
+    macroBounce = parameters.getRawParameterValue(Parameters::ID::macroBounce);
+    macroThrow = parameters.getRawParameterValue(Parameters::ID::macroThrow);
 }
 
 void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChannels)
@@ -339,7 +341,9 @@ void EffectsRack::processBitcrush(juce::AudioBuffer<float>& buffer)
 
 void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition)
 {
-    if (readParameter(fxPumpEnabled, 0.0f) < 0.5f)
+    const auto bounce = readParameter(macroBounce, 0.0f);
+    const auto isEnabled = readParameter(fxPumpEnabled, 0.0f) >= 0.5f;
+    if (! isEnabled && bounce <= 0.001f)
     {
         pumpSmoothedGain = 1.0f;
         return;
@@ -347,11 +351,11 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
 
     const auto safeSampleRate = juce::jmax(1.0, currentSampleRate);
     const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
-    const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(readParameter(fxPumpRate, 0.0f))));
+    const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(isEnabled ? readParameter(fxPumpRate, 0.0f) : 1.0f)));
     const auto cyclesPerBeat = pumpCyclesPerBeat(rateIndex);
     const auto phaseIncrement = (safeBpm / 60.0) * cyclesPerBeat / safeSampleRate;
-    const auto depth = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpDepth, 0.35f));
-    const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f));
+    const auto depth = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f));
+    const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f) + (bounce * 0.16f));
     const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpPhase, 0.0f));
     const auto curve = juce::jmap(shape, 0.35f, 4.5f);
     const auto smoothing = 1.0f - std::exp(-1.0f / static_cast<float>(safeSampleRate * 0.0025));
@@ -570,15 +574,17 @@ void EffectsRack::processFlanger(juce::AudioBuffer<float>& buffer)
 void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
 {
     const auto space = readParameter(macroSpace, 0.0f);
+    const auto throwAmount = readParameter(macroThrow, 0.0f);
     const auto isEnabled = readParameter(fxDelayEnabled, 0.0f) >= 0.5f;
-    if ((! isEnabled && space <= 0.001f) || delayBuffer.getNumSamples() == 0)
+    if ((! isEnabled && space <= 0.001f && throwAmount <= 0.001f) || delayBuffer.getNumSamples() == 0)
         return;
 
     const auto delaySamples = juce::jlimit(1, delayBuffer.getNumSamples() - 1,
                                           static_cast<int>(readParameter(fxDelayTime, 0.25f) * currentSampleRate));
-    const auto feedback = juce::jlimit(0.0f, 0.85f, isEnabled ? readParameter(fxDelayFeedback, 0.25f) : 0.18f + (space * 0.22f));
+    const auto fallbackFeedback = 0.18f + (space * 0.22f) + (throwAmount * 0.42f);
+    const auto feedback = juce::jlimit(0.0f, 0.85f, (isEnabled ? readParameter(fxDelayFeedback, 0.25f) : fallbackFeedback) + (throwAmount * 0.18f));
     const auto baseMix = isEnabled ? readParameter(fxDelayMix, 0.2f) : 0.0f;
-    const auto mix = juce::jlimit(0.0f, 0.55f, juce::jmax(baseMix, space * 0.28f));
+    const auto mix = juce::jlimit(0.0f, 0.55f, juce::jmax(baseMix, juce::jmax(space * 0.28f, throwAmount * 0.48f)));
     const auto channels = juce::jmin(buffer.getNumChannels(), delayBuffer.getNumChannels());
 
     for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
@@ -600,14 +606,16 @@ void EffectsRack::processDelay(juce::AudioBuffer<float>& buffer)
 void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
 {
     const auto space = readParameter(macroSpace, 0.0f);
+    const auto throwAmount = readParameter(macroThrow, 0.0f);
     const auto isEnabled = readParameter(fxReverbEnabled, 0.0f) >= 0.5f;
-    if (! isEnabled && space <= 0.001f)
+    if (! isEnabled && space <= 0.001f && throwAmount <= 0.001f)
         return;
 
     juce::Reverb::Parameters reverbParameters;
-    reverbParameters.roomSize = juce::jlimit(0.0f, 1.0f, isEnabled ? readParameter(fxReverbSize, 0.35f) : 0.35f + (space * 0.4f));
+    reverbParameters.roomSize = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxReverbSize, 0.35f) : 0.35f + (space * 0.4f)) + (throwAmount * 0.18f));
     reverbParameters.damping = readParameter(fxReverbDamping, 0.45f);
-    const auto wetMix = juce::jlimit(0.0f, 0.65f, juce::jmax(isEnabled ? readParameter(fxReverbMix, 0.2f) : 0.0f, space * 0.35f));
+    const auto wetMix = juce::jlimit(0.0f, 0.65f, juce::jmax(isEnabled ? readParameter(fxReverbMix, 0.2f) : 0.0f,
+                                                             juce::jmax(space * 0.35f, throwAmount * 0.46f)));
     reverbParameters.wetLevel = wetMix;
     reverbParameters.dryLevel = 1.0f - (wetMix * 0.35f);
     reverbParameters.width = 1.0f;

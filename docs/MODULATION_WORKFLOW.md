@@ -38,7 +38,7 @@ Start with a small set:
 - `lfo1`: tempo-syncable low-frequency oscillator.
 - `mod_env1`: assignable envelope separate from amp envelope.
 - `velocity`: note velocity as a performance source.
-- `macro_1` through `macro_4`: Ableton-friendly performance controls.
+- `macro_1` through `macro_8`: Ableton-friendly performance controls.
 - `seq_lane_1`: a later per-step modulation lane tied to the existing sequencer.
 
 Avoid adding every possible source at once. More sources can follow after the matrix and UI prove stable.
@@ -63,12 +63,16 @@ Avoid modulating parameters that can easily create unstable or silent patches un
 
 ## Macro Controls
 
-Start with four macros on HOME:
+Start with four macros on HOME, then expose the full eight-macro bank on MOD:
 
 - `Macro 1: Tone`
 - `Macro 2: Dirt`
 - `Macro 3: Motion`
 - `Macro 4: Space`
+- `Macro 5: Weight`
+- `Macro 6: Bounce`
+- `Macro 7: Warp`
+- `Macro 8: Throw`
 
 Initial macro behavior should be explicit and simple:
 
@@ -83,6 +87,10 @@ Possible parameter IDs:
 - `macro_2`
 - `macro_3`
 - `macro_4`
+- `macro_5`
+- `macro_6`
+- `macro_7`
+- `macro_8`
 - `macro_1_name`
 - `macro_2_name`
 - `macro_3_name`
@@ -184,7 +192,12 @@ Visible workflow slice:
    - Dirt -> drive and output compensation.
    - Motion -> filter envelope amount and oscillator 2 detune.
    - Space -> delay and reverb sends.
+   - Weight -> sub and low-end support.
+   - Bounce -> pump depth and groove movement.
+   - Warp -> oscillator 2 bend and filter edge.
+   - Throw -> delay and reverb push.
 4. Reuse the same APVTS macro parameters, so values remain saved in Ableton state and `.natevstpreset` files.
+5. Keep HOME focused on the first four fast controls and show all eight macro sources in the deeper MOD workflow.
 
 Editable engine slice:
 

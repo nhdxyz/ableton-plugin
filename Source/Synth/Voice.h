@@ -100,6 +100,10 @@ private:
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;
     std::atomic<float>* macroSpace = nullptr;
+    std::atomic<float>* macroWeight = nullptr;
+    std::atomic<float>* macroBounce = nullptr;
+    std::atomic<float>* macroWarp = nullptr;
+    std::atomic<float>* macroThrow = nullptr;
     std::atomic<float>* lfo1Rate = nullptr;
     std::atomic<float>* lfo1Sync = nullptr;
     std::atomic<float>* lfo1SyncRate = nullptr;

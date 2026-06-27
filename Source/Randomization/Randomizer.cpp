@@ -105,6 +105,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto macroDirt = 0.0f;
     auto macroMotion = 0.0f;
     auto macroSpace = 0.0f;
+    auto macroWeight = 0.0f;
+    auto macroBounce = 0.0f;
+    auto macroWarp = 0.0f;
+    auto macroThrow = 0.0f;
     auto fxToneEnabled = false;
     auto fxToneTilt = 0.0f;
     auto fxToneLowCut = 30.0f;
@@ -802,6 +806,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     const auto positiveMotionBias = juce::jmax(0.0f, motionBias);
     unisonDetune = juce::jlimit(0.0f, 1.0f, unisonDetune + (positiveMotionBias * 0.08f));
     unisonSpread = juce::jlimit(0.0f, 1.0f, unisonSpread + (positiveMotionBias * 0.16f));
+    macroWeight = juce::jlimit(0.0f, 0.8f, (subLevel * 0.45f) + (mono ? 0.12f : 0.0f));
+    macroBounce = fxPumpEnabled ? juce::jlimit(0.0f, 0.7f, fxPumpDepth + 0.08f) : juce::jlimit(0.0f, 0.34f, chaos * 0.18f);
+    macroWarp = juce::jlimit(0.0f, 0.7f, (std::abs(osc2Tune) / 12.0f) + (macroMotion * 0.4f) + (unisonDetune * 1.8f));
+    macroThrow = juce::jlimit(0.0f, 0.75f, macroSpace * 0.82f);
 
     if (subtle)
     {
@@ -833,6 +841,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroDirt = blend(Parameters::ID::macroDirt, macroDirt);
         macroMotion = blend(Parameters::ID::macroMotion, macroMotion);
         macroSpace = blend(Parameters::ID::macroSpace, macroSpace);
+        macroWeight = blend(Parameters::ID::macroWeight, macroWeight);
+        macroBounce = blend(Parameters::ID::macroBounce, macroBounce);
+        macroWarp = blend(Parameters::ID::macroWarp, macroWarp);
+        macroThrow = blend(Parameters::ID::macroThrow, macroThrow);
         fxToneTilt = blend(Parameters::ID::fxToneTilt, fxToneTilt);
         fxToneLowCut = blend(Parameters::ID::fxToneLowCut, fxToneLowCut);
         fxEqLowGain = blend(Parameters::ID::fxEqLowGain, fxEqLowGain);
@@ -885,6 +897,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
         unisonSpread = juce::jlimit(0.0f, 0.08f, unisonSpread);
         macroMotion = juce::jlimit(0.0f, 0.34f, macroMotion);
+        macroWeight = juce::jlimit(0.18f, 0.6f, macroWeight);
+        macroBounce = juce::jlimit(0.08f, 0.48f, macroBounce);
+        macroWarp = juce::jlimit(0.0f, 0.42f, macroWarp);
+        macroThrow = juce::jlimit(0.0f, 0.25f, macroThrow);
         fxToneEnabled = true;
         fxToneLowCut = juce::jlimit(24.0f, 48.0f, fxToneLowCut);
         fxWidthEnabled = true;
@@ -916,6 +932,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::macroDirt, macroDirt);
     setParameter(Parameters::ID::macroMotion, macroMotion);
     setParameter(Parameters::ID::macroSpace, macroSpace);
+    setParameter(Parameters::ID::macroWeight, macroWeight);
+    setParameter(Parameters::ID::macroBounce, macroBounce);
+    setParameter(Parameters::ID::macroWarp, macroWarp);
+    setParameter(Parameters::ID::macroThrow, macroThrow);
     setParameter(Parameters::ID::ampAttack, attack);
     setParameter(Parameters::ID::ampDecay, decay);
     setParameter(Parameters::ID::ampSustain, sustain);

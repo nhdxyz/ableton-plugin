@@ -30,6 +30,10 @@
   <PARAM id="macro_2" value="0.2" />
   <PARAM id="macro_3" value="0.36" />
   <PARAM id="macro_4" value="0" />
+  <PARAM id="macro_5" value="0.417" />
+  <PARAM id="macro_6" value="0.4" />
+  <PARAM id="macro_7" value="0.2325" />
+  <PARAM id="macro_8" value="0" />
   <PARAM id="lfo1_rate" value="1" />
   <PARAM id="lfo1_sync" value="1" />
   <PARAM id="lfo1_sync_rate" value="1" />

@@ -76,7 +76,7 @@ juce::StringArray lfoSyncRateChoices()
 
 juce::StringArray modulationSourceChoices()
 {
-    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space" };
+    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw" };
 }
 
 juce::StringArray modulationDestinationChoices()
@@ -280,6 +280,30 @@ APVTS::ParameterLayout createLayout()
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::macroSpace,
         "Macro 4 Space",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroWeight,
+        "Macro 5 Weight",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroBounce,
+        "Macro 6 Bounce",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroWarp,
+        "Macro 7 Warp",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::macroThrow,
+        "Macro 8 Throw",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 

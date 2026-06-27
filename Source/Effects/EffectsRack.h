@@ -113,6 +113,8 @@ private:
     std::array<std::atomic<float>*, fxModuleCount> fxOrder {};
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroSpace = nullptr;
+    std::atomic<float>* macroBounce = nullptr;
+    std::atomic<float>* macroThrow = nullptr;
 
     std::array<int, fxModuleCount> orderedModuleIndices() const;
     void processModule(int moduleIndex,

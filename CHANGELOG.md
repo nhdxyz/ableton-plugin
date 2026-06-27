@@ -2,6 +2,14 @@
 
 ## 2026-06-27
 
+### Eight Macro Performance Bank
+
+- Added automatable `macro_5` through `macro_8` controls named Weight, Bounce, Warp, and Throw.
+- Mapped Weight to low-end reinforcement, Bounce to tempo pump movement, Warp to oscillator/filter edge, and Throw to delay/reverb push.
+- Expanded MOD to show the full eight-macro bank in two grouped rows while keeping HOME focused on the first four macros and the Motion/Space XY pad.
+- Added Weight, Bounce, Warp, and Throw as modulation matrix sources and seeded all factory presets with deterministic eight-macro values.
+- Increased macro/random rotary drag travel for smoother knob movement after the prior fast-drag pass.
+
 ### Momentary FX Holds
 
 - Added FX-panel hold buttons for temporary Delay, Space, Pump, and Mute Drop performance moves.

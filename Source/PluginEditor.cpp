@@ -133,13 +133,17 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::macroDirt,
             Parameters::ID::macroMotion,
             Parameters::ID::macroSpace,
+            Parameters::ID::macroWeight,
+            Parameters::ID::macroBounce,
+            Parameters::ID::macroWarp,
+            Parameters::ID::macroThrow,
             Parameters::ID::randomAmount,
             Parameters::ID::randomChaos,
             Parameters::ID::randomBrightnessBias,
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 100;
+        return 145;
 
     return 125;
 }
@@ -260,11 +264,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
 
-    const std::array<juce::String, 4> modSourceTexts {
+    const std::array<juce::String, 8> modSourceTexts {
         "Tone: cutoff + resonance",
         "Dirt: drive + output trim",
         "Motion: filter env + osc2 tune",
-        "Space: delay + reverb sends"
+        "Space: delay + reverb sends",
+        "Weight: sub + low-end support",
+        "Bounce: pump depth + groove",
+        "Warp: osc2 bend + filter edge",
+        "Throw: delay + reverb push"
     };
 
     for (size_t index = 0; index < modSourceRows.size(); ++index)
@@ -587,6 +595,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(macroDirtSlider, macroDirtLabel, "Dirt", Parameters::ID::macroDirt);
     configureSlider(macroMotionSlider, macroMotionLabel, "Motion", Parameters::ID::macroMotion);
     configureSlider(macroSpaceSlider, macroSpaceLabel, "Space", Parameters::ID::macroSpace);
+    configureSlider(macroWeightSlider, macroWeightLabel, "Weight", Parameters::ID::macroWeight);
+    configureSlider(macroBounceSlider, macroBounceLabel, "Bounce", Parameters::ID::macroBounce);
+    configureSlider(macroWarpSlider, macroWarpLabel, "Warp", Parameters::ID::macroWarp);
+    configureSlider(macroThrowSlider, macroThrowLabel, "Throw", Parameters::ID::macroThrow);
     configureSlider(lfo1RateSlider, lfo1RateLabel, "Rate", Parameters::ID::lfo1Rate);
     configureSlider(lfo1DepthSlider, lfo1DepthLabel, "Depth", Parameters::ID::lfo1Depth);
     configureSlider(lfo1PhaseSlider, lfo1PhaseLabel, "Phase", Parameters::ID::lfo1Phase);
@@ -1238,7 +1250,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
             auto macroControlArea = macroArea.removeFromTop(112).withTrimmedTop(6);
-            performanceXYPad.setBounds(macroControlArea.removeFromRight(160).reduced(4, 0));
+            performanceXYPad.setBounds(macroControlArea.removeFromRight(136).reduced(4, 0));
             layoutKnobRow(macroControlArea, { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
             auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
             performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(156).reduced(4, 4));
@@ -1419,20 +1431,25 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixAmountHeader.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(104);
+            auto topRow = modContent.removeFromTop(166);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
             modSourceLabel.setBounds(sourceArea.removeFromTop(20));
             for (auto& label : modSourceRows)
-                label.setBounds(sourceArea.removeFromTop(15).reduced(3, 1));
+                label.setBounds(sourceArea.removeFromTop(16).reduced(3, 1));
 
             modMacroLabel.setBounds(macroArea.removeFromTop(20));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(66).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            setSliderVisible(macroWeightSlider, macroWeightLabel, true);
+            setSliderVisible(macroBounceSlider, macroBounceLabel, true);
+            setSliderVisible(macroWarpSlider, macroWarpLabel, true);
+            setSliderVisible(macroThrowSlider, macroThrowLabel, true);
+            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
 
             modContent.removeFromTop(6);
             auto generatorRow = modContent.removeFromTop(190);
@@ -2788,6 +2805,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(macroDirtSlider, macroDirtLabel, false);
     setSliderVisible(macroMotionSlider, macroMotionLabel, false);
     setSliderVisible(macroSpaceSlider, macroSpaceLabel, false);
+    setSliderVisible(macroWeightSlider, macroWeightLabel, false);
+    setSliderVisible(macroBounceSlider, macroBounceLabel, false);
+    setSliderVisible(macroWarpSlider, macroWarpLabel, false);
+    setSliderVisible(macroThrowSlider, macroThrowLabel, false);
     setSliderVisible(lfo1RateSlider, lfo1RateLabel, false);
     setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, false);
     setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, false);

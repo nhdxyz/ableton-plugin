@@ -50,6 +50,10 @@ Voice::Voice(Parameters::APVTS& state)
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
     macroMotion = parameters.getRawParameterValue(Parameters::ID::macroMotion);
     macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
+    macroWeight = parameters.getRawParameterValue(Parameters::ID::macroWeight);
+    macroBounce = parameters.getRawParameterValue(Parameters::ID::macroBounce);
+    macroWarp = parameters.getRawParameterValue(Parameters::ID::macroWarp);
+    macroThrow = parameters.getRawParameterValue(Parameters::ID::macroThrow);
     lfo1Rate = parameters.getRawParameterValue(Parameters::ID::lfo1Rate);
     lfo1Sync = parameters.getRawParameterValue(Parameters::ID::lfo1Sync);
     lfo1SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo1SyncRate);
@@ -184,7 +188,8 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
 
         const auto osc1Gain = readParameter(osc1Level, 1.0f);
         const auto osc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
-        const auto subGain = readParameter(subLevel, 0.0f);
+        const auto weight = readParameter(macroWeight, 0.0f);
+        const auto subGain = juce::jlimit(0.0f, 1.15f, readParameter(subLevel, 0.0f) + (weight * 0.32f));
         const auto noiseGain = readParameter(noiseLevel, 0.0f);
         const auto sourceWeight = osc1Gain + osc2Gain + (subGain * 0.75f) + (noiseGain * 0.45f);
         const auto sourceCompensation = 1.0f / juce::jmax(1.0f, sourceWeight);
@@ -287,7 +292,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
     const auto motion = readParameter(macroMotion, 0.0f);
-    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (osc2TuneMod * 12.0f);
+    const auto warp = readParameter(macroWarp, 0.0f);
+    const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (warp * 7.0f) + (osc2TuneMod * 12.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
 
     const auto activeUnisonVoices = getUnisonVoiceCount();
@@ -310,11 +316,11 @@ void Voice::updateVoiceParameters(float envelopeValue)
         readParameter(ampRelease, 0.22f));
 
     const auto tone = readParameter(macroTone, 0.0f);
-    const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f) + (filterEnvMod * 0.65f));
+    const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f) + (warp * 0.18f) + (filterEnvMod * 0.65f));
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
     const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
     const auto matrixCutoffScale = std::pow(2.0f, cutoffMod * 4.0f);
-    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (resonanceMod * 0.45f));
+    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (warp * 0.14f) + (resonanceMod * 0.45f));
     const auto filterModeIndex = static_cast<int>(readParameter(filterMode, 0.0f));
     const auto mode = static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex));
     const auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
@@ -416,6 +422,10 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float mod
         case 5: return readParameter(macroDirt, 0.0f);
         case 6: return readParameter(macroMotion, 0.0f);
         case 7: return readParameter(macroSpace, 0.0f);
+        case 8: return readParameter(macroWeight, 0.0f);
+        case 9: return readParameter(macroBounce, 0.0f);
+        case 10: return readParameter(macroWarp, 0.0f);
+        case 11: return readParameter(macroThrow, 0.0f);
         default: return 0.0f;
     }
 }

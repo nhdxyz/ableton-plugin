@@ -299,7 +299,7 @@ Groups:
 
 Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
 
-HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later.
+HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the first four fast controls plus the Motion/Space XY pad.
 
 ### SYNTH
 
@@ -418,6 +418,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
    Second performance slice implemented as a HOME XY pad for one-gesture Motion and Space macro control.
    Third performance slice implemented as one-click FX-panel delay, space, pump, and throw-off commands for arrangement fills and breakdowns.
    Fourth performance slice implemented as hold-to-restore Delay, Space, Pump, and Mute Drop buttons with snapshot/restore cleanup on release.
+   Fifth performance slice implemented as the eight-macro bank: Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw, with MOD grouping, modulation-source access, randomizer support, and factory preset values.
 
 ### Reference-Audit Build Order
 
@@ -428,6 +429,7 @@ Build the next larger slices in this order:
 1. Modulation visibility: destination rings, source activity, assignment summaries, direct curve dragging, and more destinations for sample and FX parameters.
    First control-feel pass implemented as direct rotary dragging, parameter-aware drag ranges, and a larger visible LFO curve editor.
    Second control-feel pass reduced rotary drag travel and enabled wheel adjustment on slider controls for faster in-session sound design.
+   First macro-bank pass implemented as a two-row MOD macro area and expanded modulation source list for the eight performance macros.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.

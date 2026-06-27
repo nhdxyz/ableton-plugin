@@ -54,6 +54,7 @@ target_sources(NateVST
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp
         Source/UI/ModCurveDisplay.cpp
+        Source/UI/ModMatrixRow.cpp
         Source/UI/OutputMeter.cpp
         Source/UI/StepSequencerGrid.cpp
         Source/UI/XYMacroPad.cpp

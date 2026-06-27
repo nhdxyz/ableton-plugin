@@ -119,6 +119,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(randomStatusLabel);
 
+    modMatrixStatusLabel.setJustificationType(juce::Justification::centredRight);
+    modMatrixStatusLabel.setFont(juce::FontOptions(11.0f));
+    modMatrixStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(modMatrixStatusLabel);
+
+    auto configureMatrixHeader = [this] (juce::Label& label, const juce::String& text)
+    {
+        label.setText(text, juce::dontSendNotification);
+        label.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+        label.setJustificationType(juce::Justification::centredLeft);
+        label.setColour(juce::Label::textColourId, juce::Colour(0xff617078));
+        addAndMakeVisible(label);
+    };
+    configureMatrixHeader(modMatrixSourceHeader, "SOURCE");
+    configureMatrixHeader(modMatrixDestinationHeader, "DESTINATION");
+    configureMatrixHeader(modMatrixAmountHeader, "AMOUNT");
+
     performanceStatusLabel.setJustificationType(juce::Justification::centredLeft);
     performanceStatusLabel.setFont(juce::FontOptions(11.0f));
     performanceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -159,6 +176,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         modSlotRows[index].setJustificationType(juce::Justification::centred);
         modSlotRows[index].setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
         addAndMakeVisible(modSlotRows[index]);
+    }
+
+    for (auto& row : modMatrixRows)
+    {
+        addAndMakeVisible(row);
+        row.toBack();
     }
 
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
@@ -429,6 +452,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(lfo1RateSlider, lfo1RateLabel, "Rate", Parameters::ID::lfo1Rate);
     configureSlider(lfo1DepthSlider, lfo1DepthLabel, "Depth", Parameters::ID::lfo1Depth);
     configureSlider(lfo1PhaseSlider, lfo1PhaseLabel, "Phase", Parameters::ID::lfo1Phase);
+    lfoCurveDisplay.onPointChange = [this] (size_t index, float value)
+    {
+        if (index < Parameters::ID::lfo1Curve.size())
+            setPlainParameterValue(Parameters::ID::lfo1Curve[index], value);
+    };
     addAndMakeVisible(lfoCurveDisplay);
 
     for (size_t index = 0; index < lfoCurveSliders.size(); ++index)
@@ -826,11 +854,11 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(108);
+        auto topRow = modContent.removeFromTop(100);
         auto sourceArea = topRow.removeFromLeft(300).reduced(5);
         auto macroArea = topRow.reduced(5);
-        modContent.removeFromTop(8);
-        auto controlsRow = modContent.removeFromTop(198);
+        modContent.removeFromTop(6);
+        auto controlsRow = modContent.removeFromTop(186);
         auto lfoArea = controlsRow.removeFromLeft(450).reduced(5);
         auto envelopeArea = controlsRow.reduced(5);
         modContent.removeFromTop(6);
@@ -1132,38 +1160,43 @@ void NateVSTAudioProcessorEditor::resized()
                 modDestinationBoxes[index].setVisible(true);
                 modAmountSliders[index].setVisible(true);
                 modAmountLabels[index].setVisible(false);
+                modMatrixRows[index].setVisible(true);
             }
+            modMatrixStatusLabel.setVisible(true);
+            modMatrixSourceHeader.setVisible(true);
+            modMatrixDestinationHeader.setVisible(true);
+            modMatrixAmountHeader.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(108);
+            auto topRow = modContent.removeFromTop(100);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
-            modSourceLabel.setBounds(sourceArea.removeFromTop(22));
+            modSourceLabel.setBounds(sourceArea.removeFromTop(20));
             for (auto& label : modSourceRows)
-                label.setBounds(sourceArea.removeFromTop(17).reduced(3, 1));
+                label.setBounds(sourceArea.removeFromTop(15).reduced(3, 1));
 
-            modMacroLabel.setBounds(macroArea.removeFromTop(22));
+            modMacroLabel.setBounds(macroArea.removeFromTop(20));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(70).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
 
-            modContent.removeFromTop(8);
-            auto generatorRow = modContent.removeFromTop(198);
+            modContent.removeFromTop(6);
+            auto generatorRow = modContent.removeFromTop(186);
             auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
             auto envelopeArea = generatorRow.reduced(18, 8);
 
             modLfoLabel.setBounds(lfoArea.removeFromTop(20));
-            auto lfoModeRow = lfoArea.removeFromTop(28).withTrimmedTop(2);
+            auto lfoModeRow = lfoArea.removeFromTop(26).withTrimmedTop(1);
             lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(118).reduced(3, 4));
             lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(36).withTrimmedTop(2));
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(34).withTrimmedTop(1));
 
-            auto curveGrid = lfoArea.removeFromTop(38).withTrimmedTop(2);
+            auto curveGrid = lfoArea.removeFromTop(34).withTrimmedTop(1);
             auto layoutCurveRow = [] (juce::Rectangle<int> row, std::array<juce::Slider, 8>& sliders, size_t startIndex)
             {
                 const auto cellWidth = row.getWidth() / 4;
@@ -1176,7 +1209,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(58).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(52).withTrimmedTop(1), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
             modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
@@ -1184,7 +1217,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
             setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
             setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-            layoutKnobRow(envelopeArea.removeFromTop(92).withTrimmedTop(4), {
+            layoutKnobRow(envelopeArea.removeFromTop(84).withTrimmedTop(3), {
                 &modEnv1AttackSlider,
                 &modEnv1DecaySlider,
                 &modEnv1SustainSlider,
@@ -1194,14 +1227,26 @@ void NateVSTAudioProcessorEditor::resized()
 
             modContent.removeFromTop(6);
             auto matrixArea = modContent.reduced(18, 0);
-            modMatrixLabel.setBounds(matrixArea.removeFromTop(18));
+            auto matrixTitleRow = matrixArea.removeFromTop(18);
+            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(92));
+            modMatrixStatusLabel.setBounds(matrixTitleRow.reduced(4, 0));
+
+            auto matrixHeaderRow = matrixArea.removeFromTop(18).reduced(3, 1);
+            matrixHeaderRow.removeFromLeft(30);
+            modMatrixSourceHeader.setBounds(matrixHeaderRow.removeFromLeft(138).reduced(5, 0));
+            modMatrixDestinationHeader.setBounds(matrixHeaderRow.removeFromLeft(184).reduced(5, 0));
+            modMatrixAmountHeader.setBounds(matrixHeaderRow.reduced(5, 0));
 
             for (size_t index = 0; index < modSlotRows.size(); ++index)
             {
-                auto row = matrixArea.removeFromTop(18).reduced(3, 1);
+                const auto rowHeight = matrixArea.getHeight() / static_cast<int>(modSlotRows.size() - index);
+                auto rowBounds = matrixArea.removeFromTop(rowHeight).reduced(3, 1);
+                modMatrixRows[index].setBounds(rowBounds);
+
+                auto row = rowBounds.reduced(2, 2);
                 modSlotRows[index].setBounds(row.removeFromLeft(30).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(134).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(178).reduced(3, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(138).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(184).reduced(3, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
             }
 
@@ -1992,7 +2037,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
-        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel, &sampleSectionLabel, &sequencerSectionLabel,
+        &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
+        &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
+        &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
@@ -2028,6 +2075,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     for (size_t index = 0; index < modSlotRows.size(); ++index)
     {
+        modMatrixRows[index].setVisible(false);
         modSlotRows[index].setVisible(false);
         modSourceBoxes[index].setVisible(false);
         modDestinationBoxes[index].setVisible(false);
@@ -2212,6 +2260,63 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
     lfoCurveDisplay.setValues(values, shapeIndex == 5);
 }
 
+void NateVSTAudioProcessorEditor::updateModMatrixRows()
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    auto activeRouteCount = 0;
+    juce::String firstActiveRoute;
+
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    auto choiceName = [] (const juce::StringArray& choices, int index)
+    {
+        if (juce::isPositiveAndBelow(index, choices.size()))
+            return choices[index];
+
+        return juce::String("Off");
+    };
+
+    for (size_t index = 0; index < modMatrixRows.size(); ++index)
+    {
+        const auto sourceIndex = juce::jlimit(0,
+                                             sourceChoices.size() - 1,
+                                             static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixSource[index], 0.0f))));
+        const auto destinationIndex = juce::jlimit(0,
+                                                  destinationChoices.size() - 1,
+                                                  static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f))));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto sourceText = choiceName(sourceChoices, sourceIndex);
+        const auto destinationText = choiceName(destinationChoices, destinationIndex);
+        const auto isActiveRoute = sourceIndex > 0 && destinationIndex > 0 && std::abs(amount) > 0.001f;
+
+        modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount);
+
+        if (isActiveRoute)
+        {
+            ++activeRouteCount;
+
+            if (firstActiveRoute.isEmpty())
+            {
+                const auto percent = juce::roundToInt(amount * 100.0f);
+                firstActiveRoute = sourceText + " -> " + destinationText
+                    + " " + (percent >= 0 ? "+" : "") + juce::String(percent);
+            }
+        }
+    }
+
+    const auto statusText = activeRouteCount == 0
+        ? juce::String("No active routes")
+        : juce::String(activeRouteCount) + " active | " + firstActiveRoute;
+    modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::updateOutputMeter()
 {
     auto peakLeft = 0.0f;
@@ -2289,6 +2394,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
+    updateModMatrixRows();
     updateOutputMeter();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();

@@ -397,6 +397,7 @@ Each effect should include:
 - Add a MOD panel. Implemented first as a visible macro-routing panel.
 - Add LFO 1 and Mod Env 1. Implemented for per-voice synth modulation.
 - Add an 8-slot matrix. Implemented for safe synth destinations.
+- First modulation-visibility pass implemented as active route rows, matrix headers/status, route tooltips, and draggable LFO curve points.
 - Add small modulation indicators to macro and destination knobs.
 - Keep HOME focused on performance, not assignment editing.
 

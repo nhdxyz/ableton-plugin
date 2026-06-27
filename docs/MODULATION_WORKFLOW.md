@@ -146,6 +146,7 @@ MOD:
 - Mod envelope controls.
 - Matrix rows.
 - Assignment amount controls.
+- Current implementation includes active route rows, route tooltips, matrix status text, and direct dragging on LFO curve points.
 
 SEQ:
 

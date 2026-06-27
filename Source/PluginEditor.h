@@ -5,6 +5,7 @@
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
+#include "UI/ModMatrixRow.h"
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/XYMacroPad.h"
@@ -80,6 +81,10 @@ private:
     juce::Label modLfoLabel;
     juce::Label modEnvelopeLabel;
     juce::Label modMatrixLabel;
+    juce::Label modMatrixStatusLabel;
+    juce::Label modMatrixSourceHeader;
+    juce::Label modMatrixDestinationHeader;
+    juce::Label modMatrixAmountHeader;
     juce::Label sampleSectionLabel;
     juce::Label sequencerSectionLabel;
     juce::Label futureSectionLabel;
@@ -417,6 +422,7 @@ private:
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::StepSequencerGrid sequencerGrid;
     UI::XYMacroPad performanceXYPad;
+    std::array<UI::ModMatrixRow, 8> modMatrixRows;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -441,6 +447,7 @@ private:
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
+    void updateModMatrixRows();
     void updateOutputMeter();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();

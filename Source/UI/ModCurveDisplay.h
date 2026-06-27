@@ -3,17 +3,33 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include <array>
+#include <functional>
 
 namespace UI
 {
 class ModCurveDisplay final : public juce::Component
 {
 public:
+    std::function<void(size_t, float)> onPointChange;
+
+    ModCurveDisplay();
+
     void setValues(const std::array<float, 8>& newValues, bool shouldHighlight);
     void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void mouseMove(const juce::MouseEvent& event) override;
+    void mouseExit(const juce::MouseEvent& event) override;
 
 private:
     std::array<float, 8> values { 0.0f, 0.58f, 1.0f, 0.42f, -0.18f, -0.72f, -1.0f, -0.36f };
     bool highlighted = false;
+    int draggedIndex = -1;
+    int hoveredIndex = -1;
+
+    juce::Rectangle<float> getPlotBounds() const;
+    size_t pointIndexForX(float xPosition) const;
+    void updatePointFromPosition(juce::Point<float> position);
 };
 }

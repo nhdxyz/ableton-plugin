@@ -15,6 +15,7 @@ public:
     using StepSetter = std::function<void(int, Sequencer::Step)>;
 
     void setCallbacks(StepGetter getter, StepSetter setter);
+    void setRootNote(int newRootNote);
 
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -27,8 +28,11 @@ private:
     StepSetter setStep;
     int lastEditedStep = -1;
     int lastEditedRow = -1;
+    int rootNote = 36;
 
     juce::Rectangle<int> gridBounds() const;
+    juce::Rectangle<int> noteLabelBounds() const;
+    juce::Rectangle<int> stepHeaderBounds() const;
     int stepForPosition(juce::Point<int> position) const;
     int rowForPosition(juce::Point<int> position) const;
     int noteOffsetForRow(int row) const;

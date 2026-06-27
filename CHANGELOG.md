@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Grid Orientation
+
+- Added beat-group headers and stronger four-beat column dividers to the SEQ grid so 16-step house and UKG patterns scan in musical bars.
+- Added root-aware row labels that follow the sequencer Root and Octave controls.
+- Added anchor-step dots and visible probability bars alongside the existing velocity and timing cues.
+
 ### Modulation Visibility Pass
 
 - Added a visual MOD matrix row component that highlights active routes, shows polarity/amount as a small bar, and exposes route summaries through tooltips.

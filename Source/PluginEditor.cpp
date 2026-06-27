@@ -2435,6 +2435,21 @@ void NateVSTAudioProcessorEditor::updatePerformanceXYPad()
                                readParameter(Parameters::ID::macroSpace));
 }
 
+void NateVSTAudioProcessorEditor::updateSequencerGridContext()
+{
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    const auto root = juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 36.0f));
+    const auto octaveOffset = juce::roundToInt(readParameter(Parameters::ID::sequencerOctave, 0.0f)) * 12;
+    sequencerGrid.setRootNote(juce::jlimit(0, 127, root + octaveOffset));
+}
+
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
@@ -2445,6 +2460,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
+    updateSequencerGridContext();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

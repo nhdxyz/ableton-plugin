@@ -10,30 +10,68 @@ void StepSequencerGrid::setCallbacks(StepGetter getter, StepSetter setter)
     setStep = std::move(setter);
 }
 
+void StepSequencerGrid::setRootNote(int newRootNote)
+{
+    newRootNote = juce::jlimit(0, 127, newRootNote);
+    if (rootNote == newRootNote)
+        return;
+
+    rootNote = newRootNote;
+    repaint();
+}
+
 void StepSequencerGrid::paint(juce::Graphics& g)
 {
     const auto bounds = gridBounds();
+    const auto noteLabels = noteLabelBounds();
+    const auto header = stepHeaderBounds();
     const auto cellWidth = static_cast<float>(bounds.getWidth()) / static_cast<float>(Sequencer::PatternSequencer::numSteps);
     const auto cellHeight = static_cast<float>(bounds.getHeight()) / static_cast<float>(numRows);
 
     g.setColour(juce::Colour(0xff101619));
     g.fillRoundedRectangle(bounds.toFloat(), 6.0f);
+    g.fillRoundedRectangle(noteLabels.toFloat(), 5.0f);
+    g.fillRoundedRectangle(header.toFloat(), 5.0f);
+
+    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
+    for (auto step = 0; step < Sequencer::PatternSequencer::numSteps; ++step)
+    {
+        const auto x = bounds.getX() + (static_cast<float>(step) * cellWidth);
+        const auto isBeatStart = (step % 4) == 0;
+        auto stepArea = juce::Rectangle<float>(x, static_cast<float>(header.getY()), cellWidth, static_cast<float>(header.getHeight())).reduced(1.0f);
+        g.setColour(isBeatStart ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff617078));
+        const auto text = isBeatStart ? juce::String((step / 4) + 1) : juce::String((step % 4) + 1);
+        g.drawFittedText(text, stepArea.toNearestInt(), juce::Justification::centred, 1);
+    }
 
     for (auto row = 0; row < numRows; ++row)
     {
         const auto y = bounds.getY() + (static_cast<float>(row) * cellHeight);
         const auto noteOffset = noteOffsetForRow(row);
-        g.setColour(noteOffset == 0 ? juce::Colour(0xff223038) : juce::Colour(0xff182126));
+        g.setColour(noteOffset == 0 ? juce::Colour(0xff223038) : (row % 2 == 0 ? juce::Colour(0xff182126) : juce::Colour(0xff151e22)));
         g.fillRect(juce::Rectangle<float>(static_cast<float>(bounds.getX()), y, static_cast<float>(bounds.getWidth()), cellHeight - 1.0f));
+
+        auto labelArea = juce::Rectangle<float>(static_cast<float>(noteLabels.getX()),
+                                                y,
+                                                static_cast<float>(noteLabels.getWidth()),
+                                                cellHeight - 1.0f).reduced(4.0f, 0.0f);
+        const auto noteName = juce::MidiMessage::getMidiNoteName(juce::jlimit(0, 127, rootNote + noteOffset), true, true, 3);
+        g.setColour(noteOffset == 0 ? juce::Colour(0xff8ee6c9) : juce::Colour(0xffa8b6b8));
+        g.setFont(juce::FontOptions(noteOffset == 0 ? 9.5f : 9.0f, noteOffset == 0 ? juce::Font::bold : juce::Font::plain));
+        g.drawFittedText(noteName, labelArea.toNearestInt(), juce::Justification::centredRight, 1);
     }
 
-    g.setColour(juce::Colour(0xff293339));
     for (auto step = 0; step <= Sequencer::PatternSequencer::numSteps; ++step)
     {
         const auto x = bounds.getX() + (static_cast<float>(step) * cellWidth);
+        const auto isBeatLine = (step % 4) == 0;
+        g.setColour(isBeatLine ? juce::Colour(0xff4b5c62) : juce::Colour(0xff293339));
         g.drawVerticalLine(static_cast<int>(std::round(x)), static_cast<float>(bounds.getY()), static_cast<float>(bounds.getBottom()));
+        if (isBeatLine && step < Sequencer::PatternSequencer::numSteps)
+            g.drawVerticalLine(static_cast<int>(std::round(x + 1.0f)), static_cast<float>(bounds.getY()), static_cast<float>(bounds.getBottom()));
     }
 
+    g.setColour(juce::Colour(0xff293339));
     for (auto row = 0; row <= numRows; ++row)
     {
         const auto y = bounds.getY() + (static_cast<float>(row) * cellHeight);
@@ -65,6 +103,19 @@ void StepSequencerGrid::paint(juce::Graphics& g)
                 g.setColour(juce::Colour(0xffffc857).withAlpha(0.9f));
                 g.fillRoundedRectangle(timingMarker, 1.5f);
             }
+            if (step.probability < 0.995f)
+            {
+                const auto probabilityWidth = juce::jmax(3.0f, cell.getWidth() * juce::jlimit(0.0f, 1.0f, step.probability));
+                auto probabilityMarker = cell.withHeight(3.0f).withWidth(probabilityWidth);
+                g.setColour(juce::Colour(0xffb7a4ff).withAlpha(0.9f));
+                g.fillRoundedRectangle(probabilityMarker, 1.5f);
+            }
+            if ((stepIndex % 4) == 0)
+            {
+                auto anchorDot = cell;
+                g.setColour(juce::Colour(0xffedf7f4).withAlpha(0.58f));
+                g.fillEllipse(anchorDot.removeFromTop(8.0f).removeFromRight(8.0f).reduced(2.0f));
+            }
             g.setColour(juce::Colour(0xff0d1113));
             g.drawRoundedRectangle(cell, 3.0f, 1.0f);
         }
@@ -72,6 +123,8 @@ void StepSequencerGrid::paint(juce::Graphics& g)
 
     g.setColour(juce::Colour(0xff344047));
     g.drawRoundedRectangle(bounds.toFloat(), 6.0f, 1.0f);
+    g.drawRoundedRectangle(noteLabels.toFloat(), 5.0f, 1.0f);
+    g.drawRoundedRectangle(header.toFloat(), 5.0f, 1.0f);
 }
 
 void StepSequencerGrid::mouseDown(const juce::MouseEvent& event)
@@ -103,7 +156,24 @@ void StepSequencerGrid::mouseWheelMove(const juce::MouseEvent& event, const juce
 
 juce::Rectangle<int> StepSequencerGrid::gridBounds() const
 {
-    return getLocalBounds().reduced(2);
+    auto bounds = getLocalBounds().reduced(2);
+    bounds.removeFromTop(18);
+    bounds.removeFromLeft(44);
+    return bounds;
+}
+
+juce::Rectangle<int> StepSequencerGrid::noteLabelBounds() const
+{
+    auto bounds = getLocalBounds().reduced(2);
+    bounds.removeFromTop(18);
+    return bounds.removeFromLeft(40);
+}
+
+juce::Rectangle<int> StepSequencerGrid::stepHeaderBounds() const
+{
+    auto bounds = getLocalBounds().reduced(2);
+    bounds.removeFromLeft(44);
+    return bounds.removeFromTop(16);
 }
 
 int StepSequencerGrid::stepForPosition(juce::Point<int> position) const

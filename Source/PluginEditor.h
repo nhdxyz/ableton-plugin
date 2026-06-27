@@ -453,6 +453,7 @@ private:
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
+    void updateSequencerGridContext();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

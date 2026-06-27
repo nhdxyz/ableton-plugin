@@ -65,6 +65,7 @@ private:
     std::atomic<float>* sequencerGrooveMode = nullptr;
     std::atomic<float>* sequencerScale = nullptr;
     std::atomic<float>* sequencerChordMode = nullptr;
+    std::atomic<float>* sequencerChordVoicing = nullptr;
     std::atomic<float>* sequencerAccent = nullptr;
     std::atomic<float>* sequencerOctave = nullptr;
     std::atomic<float>* sequencerProbability = nullptr;
@@ -73,6 +74,8 @@ private:
     int getStepDurationSamples(int baseStepLengthSamples, int stepIndex) const;
     int getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const;
     int quantizeNoteOffset(int noteOffset) const;
+    int getChordIntervalCount(std::array<int, maxChordNotes>& intervals) const;
+    void applyChordVoicing(std::array<int, maxChordNotes>& intervals, int& intervalCount) const;
     bool isOffsetInScale(int noteOffset, int scaleMode) const;
     void addNoteOffsForActiveNotes(juce::MidiBuffer& midi, int samplePosition);
     float nextRandomFloat();

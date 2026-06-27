@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Chord Voicing
+
+- Added a saved SEQ `Voice` selector with Close, Inv 1, Inv 2, Open, and Drop 2 voicings for less blocky house and UKG chord stabs.
+- Changed chord construction so scale mode quantizes the step/root first, then chord quality and voicing shape the notes from that root.
+- Updated stab-oriented templates and UKG factory presets with explicit voicing metadata while bass and vocal chop presets stay close/mono.
+
 ### Sequencer Chord Mode
 
 - Added a saved SEQ `Chord` mode with Off, 5th, Minor, Minor 7, Major, and Minor 9 options for quick house and UKG stab patterns.

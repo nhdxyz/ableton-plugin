@@ -1,5 +1,6 @@
 #include "PatternSequencer.h"
 
+#include <algorithm>
 #include <cmath>
 #include <initializer_list>
 
@@ -16,6 +17,7 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerGrooveMode = parameters.getRawParameterValue(Parameters::ID::sequencerGrooveMode);
     sequencerScale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     sequencerChordMode = parameters.getRawParameterValue(Parameters::ID::sequencerChordMode);
+    sequencerChordVoicing = parameters.getRawParameterValue(Parameters::ID::sequencerChordVoicing);
     sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
     sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
     sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
@@ -81,13 +83,17 @@ PatternSequencer::ChordNoteArray PatternSequencer::getChordNotes(int rootNote, i
     ChordNoteArray notes {};
     notes.fill(-1);
     noteCount = 0;
+    std::array<int, maxChordNotes> intervals {};
+    auto intervalCount = getChordIntervalCount(intervals);
+    applyChordVoicing(intervals, intervalCount);
+    const auto baseNoteNumber = rootNote + octaveOffset + quantizeNoteOffset(noteOffset);
 
-    auto addInterval = [&notes, &noteCount, rootNote, octaveOffset, noteOffset, this] (int interval)
+    auto addInterval = [&notes, &noteCount, baseNoteNumber] (int interval)
     {
         if (noteCount >= maxChordNotes)
             return;
 
-        const auto noteNumber = juce::jlimit(0, 127, rootNote + octaveOffset + quantizeNoteOffset(noteOffset + interval));
+        const auto noteNumber = juce::jlimit(0, 127, baseNoteNumber + interval);
         for (auto noteIndex = 0; noteIndex < noteCount; ++noteIndex)
             if (notes[static_cast<size_t>(noteIndex)] == noteNumber)
                 return;
@@ -95,47 +101,100 @@ PatternSequencer::ChordNoteArray PatternSequencer::getChordNotes(int rootNote, i
         notes[static_cast<size_t>(noteCount++)] = noteNumber;
     };
 
+    for (auto intervalIndex = 0; intervalIndex < intervalCount; ++intervalIndex)
+        addInterval(intervals[static_cast<size_t>(intervalIndex)]);
+
+    return notes;
+}
+
+int PatternSequencer::getChordIntervalCount(std::array<int, maxChordNotes>& intervals) const
+{
+    intervals.fill(0);
+
     switch (static_cast<int>(std::round(readParameter(sequencerChordMode, 0.0f))))
     {
         case 1:
-            addInterval(0);
-            addInterval(7);
-            break;
+            intervals = { 0, 7, 0, 0, 0 };
+            return 2;
 
         case 2:
-            addInterval(0);
-            addInterval(3);
-            addInterval(7);
-            break;
+            intervals = { 0, 3, 7, 0, 0 };
+            return 3;
 
         case 3:
-            addInterval(0);
-            addInterval(3);
-            addInterval(7);
-            addInterval(10);
-            break;
+            intervals = { 0, 3, 7, 10, 0 };
+            return 4;
 
         case 4:
-            addInterval(0);
-            addInterval(4);
-            addInterval(7);
-            break;
+            intervals = { 0, 4, 7, 0, 0 };
+            return 3;
 
         case 5:
-            addInterval(0);
-            addInterval(3);
-            addInterval(7);
-            addInterval(10);
-            addInterval(14);
-            break;
+            intervals = { 0, 3, 7, 10, 14 };
+            return 5;
 
         case 0:
         default:
-            addInterval(0);
+            intervals = { 0, 0, 0, 0, 0 };
+            return 1;
+    }
+}
+
+void PatternSequencer::applyChordVoicing(std::array<int, maxChordNotes>& intervals, int& intervalCount) const
+{
+    if (intervalCount <= 1)
+        return;
+
+    switch (static_cast<int>(std::round(readParameter(sequencerChordVoicing, 0.0f))))
+    {
+        case 1:
+        {
+            const auto first = intervals[0] + 12;
+            for (auto index = 0; index < intervalCount - 1; ++index)
+                intervals[static_cast<size_t>(index)] = intervals[static_cast<size_t>(index + 1)];
+            intervals[static_cast<size_t>(intervalCount - 1)] = first;
+            break;
+        }
+
+        case 2:
+        {
+            const auto moveCount = juce::jmin(2, intervalCount - 1);
+            std::array<int, maxChordNotes> voiced {};
+            auto writeIndex = 0;
+
+            for (auto index = moveCount; index < intervalCount; ++index)
+                voiced[static_cast<size_t>(writeIndex++)] = intervals[static_cast<size_t>(index)];
+
+            for (auto index = 0; index < moveCount; ++index)
+                voiced[static_cast<size_t>(writeIndex++)] = intervals[static_cast<size_t>(index)] + 12;
+
+            intervals = voiced;
+            break;
+        }
+
+        case 3:
+        {
+            for (auto index = 1; index < intervalCount; index += 2)
+                intervals[static_cast<size_t>(index)] += 12;
+
+            std::sort(intervals.begin(), intervals.begin() + intervalCount);
+            break;
+        }
+
+        case 4:
+        {
+            if (intervalCount >= 3)
+            {
+                intervals[static_cast<size_t>(intervalCount - 2)] -= 12;
+                std::sort(intervals.begin(), intervals.begin() + intervalCount);
+            }
+            break;
+        }
+
+        case 0:
+        default:
             break;
     }
-
-    return notes;
 }
 
 float PatternSequencer::getChordNoteVelocity(float velocity, int noteIndex) const

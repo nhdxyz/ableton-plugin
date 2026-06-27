@@ -2,10 +2,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace
 {
+constexpr auto chopFadeSamples = 64;
 constexpr auto stutterFadeSamples = 48;
+constexpr auto zeroCrossSearchSamples = 256;
 
 double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRate)
 {
@@ -21,6 +24,104 @@ double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRat
         default:
             return quarterNoteSamples / 4.0; // 1/16
     }
+}
+
+int boundaryFadeSamplesForSpan(int sourceSpan)
+{
+    return juce::jlimit(8, chopFadeSamples, juce::jmax(1, sourceSpan / 4));
+}
+
+float mixedSampleAt(const juce::AudioBuffer<float>& buffer, int sampleIndex)
+{
+    const auto channelCount = buffer.getNumChannels();
+    if (channelCount <= 0 || buffer.getNumSamples() <= 0)
+        return 0.0f;
+
+    sampleIndex = juce::jlimit(0, buffer.getNumSamples() - 1, sampleIndex);
+
+    auto mixedSample = 0.0f;
+    for (auto channel = 0; channel < channelCount; ++channel)
+        mixedSample += buffer.getSample(channel, sampleIndex);
+
+    return mixedSample / static_cast<float>(channelCount);
+}
+
+bool crossesZero(float previous, float current)
+{
+    return (previous <= 0.0f && current >= 0.0f)
+        || (previous >= 0.0f && current <= 0.0f);
+}
+
+int findNearestCleanBoundary(const juce::AudioBuffer<float>& buffer, int targetSample, int minimumSample, int maximumSample)
+{
+    if (buffer.getNumSamples() <= 1)
+        return targetSample;
+
+    minimumSample = juce::jlimit(0, buffer.getNumSamples() - 1, minimumSample);
+    maximumSample = juce::jlimit(minimumSample, buffer.getNumSamples() - 1, maximumSample);
+    if (maximumSample <= minimumSample)
+        return minimumSample;
+
+    targetSample = juce::jlimit(minimumSample, maximumSample, targetSample);
+
+    const auto searchStart = juce::jmax(minimumSample, targetSample - zeroCrossSearchSamples);
+    const auto searchEnd = juce::jmin(maximumSample, targetSample + zeroCrossSearchSamples);
+    auto bestSample = targetSample;
+    auto bestScore = std::numeric_limits<float>::max();
+
+    for (auto sampleIndex = searchStart; sampleIndex <= searchEnd; ++sampleIndex)
+    {
+        const auto current = mixedSampleAt(buffer, sampleIndex);
+        const auto previous = mixedSampleAt(buffer, juce::jmax(minimumSample, sampleIndex - 1));
+        const auto distance = static_cast<float>(std::abs(sampleIndex - targetSample));
+        const auto crossingPenalty = crossesZero(previous, current) ? 0.0f : 5.0f;
+        const auto score = crossingPenalty + (std::abs(current) * 80.0f) + (distance * 0.012f);
+
+        if (score < bestScore)
+        {
+            bestScore = score;
+            bestSample = sampleIndex;
+        }
+    }
+
+    return bestSample;
+}
+
+Sampler::SampleRegion snapRegionToCleanBoundaries(const juce::AudioBuffer<float>& buffer, Sampler::SampleRegion region)
+{
+    const auto numSamples = buffer.getNumSamples();
+    if (numSamples <= 1)
+        return region;
+
+    const auto minimumWindow = juce::jmin(numSamples, 64);
+    const auto originalStart = region.startSample;
+    const auto originalEnd = region.endSample;
+
+    if (region.startSample > 0)
+        region.startSample = findNearestCleanBoundary(buffer,
+                                                      region.startSample,
+                                                      0,
+                                                      juce::jmax(0, region.endSample - minimumWindow));
+
+    if (region.endSample < numSamples)
+    {
+        const auto targetEndBoundary = juce::jlimit(region.startSample + minimumWindow - 1,
+                                                   numSamples - 1,
+                                                   region.endSample - 1);
+        const auto snappedEndBoundary = findNearestCleanBoundary(buffer,
+                                                                 targetEndBoundary,
+                                                                 region.startSample + minimumWindow - 1,
+                                                                 numSamples - 1);
+        region.endSample = snappedEndBoundary + 1;
+    }
+
+    if (region.endSample <= region.startSample + 1)
+    {
+        region.startSample = originalStart;
+        region.endSample = originalEnd;
+    }
+
+    return region;
 }
 }
 
@@ -252,7 +353,8 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
         bpm,
         playbackSampleRate);
     voiceToUse->samplesUntilStutter = voiceToUse->stutterIntervalSamples;
-    voiceToUse->fadeInSamplesRemaining = stutterFadeSamples;
+    voiceToUse->fadeInTotalSamples = boundaryFadeSamplesForSpan(currentRegion.endSample - currentRegion.startSample);
+    voiceToUse->fadeInSamplesRemaining = voiceToUse->fadeInTotalSamples;
 }
 
 void SamplePlayer::stopVoicesForNote(int midiNoteNumber)
@@ -299,7 +401,8 @@ void SamplePlayer::renderVoice(Voice& voice,
         {
             voice.position = voice.reverse ? static_cast<double>(voice.endSample - 1)
                                            : static_cast<double>(voice.startSample);
-            voice.fadeInSamplesRemaining = stutterFadeSamples;
+            voice.fadeInTotalSamples = juce::jmin(stutterFadeSamples, boundaryFadeSamplesForSpan(voice.endSample - voice.startSample));
+            voice.fadeInSamplesRemaining = voice.fadeInTotalSamples;
             --voice.stutterRepeatsRemaining;
             voice.samplesUntilStutter += voice.stutterIntervalSamples;
         }
@@ -314,6 +417,15 @@ void SamplePlayer::renderVoice(Voice& voice,
         }
 
         const auto fraction = static_cast<float>(voice.position - static_cast<double>(floorPosition));
+        const auto incrementMagnitude = juce::jmax(0.0001, std::abs(voice.increment));
+        const auto sourceSamplesUntilEnd = voice.reverse
+            ? juce::jmax(0.0, voice.position - static_cast<double>(voice.startSample))
+            : juce::jmax(0.0, static_cast<double>(voice.endSample - 1) - voice.position);
+        const auto boundaryFadeSamples = boundaryFadeSamplesForSpan(voice.endSample - voice.startSample);
+        const auto fadeOutGain = juce::jlimit(0.0f,
+                                              1.0f,
+                                              static_cast<float>((sourceSamplesUntilEnd / incrementMagnitude)
+                                                                 / static_cast<double>(boundaryFadeSamples)));
 
         for (auto channel = 0; channel < outputChannels; ++channel)
         {
@@ -324,9 +436,10 @@ void SamplePlayer::renderVoice(Voice& voice,
             const auto sample = current + ((next - current) * fraction);
             auto fadeGain = 1.0f;
             if (voice.fadeInSamplesRemaining > 0)
-                fadeGain = 1.0f - (static_cast<float>(voice.fadeInSamplesRemaining) / static_cast<float>(stutterFadeSamples));
+                fadeGain = 1.0f - (static_cast<float>(voice.fadeInSamplesRemaining)
+                                    / static_cast<float>(juce::jmax(1, voice.fadeInTotalSamples)));
 
-            outputBuffer.addSample(channel, startSampleInBlock + sampleIndex, sample * gain * fadeGain);
+            outputBuffer.addSample(channel, startSampleInBlock + sampleIndex, sample * gain * fadeGain * fadeOutGain);
         }
 
         if (voice.fadeInSamplesRemaining > 0)
@@ -354,7 +467,7 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data) const
     currentRegion.reverse = readParameter(sampleReverse, 0.0f) > 0.5f;
     currentRegion.gain = juce::Decibels::decibelsToGain(readParameter(sampleGain, -6.0f));
     currentRegion.transposeSemitones = readParameter(sampleTranspose, 0.0f);
-    return currentRegion;
+    return snapRegionToCleanBoundaries(data.buffer, currentRegion);
 }
 
 double SamplePlayer::incrementForVoice(const Voice& voice) const

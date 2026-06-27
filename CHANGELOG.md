@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sample Chop Click Guards
+
+- Added non-destructive zero-cross/low-energy snapping for internal sample chop playback boundaries so UKG vocal cuts and slice pads are less click-prone.
+- Added adaptive fade-in and fade-out guards to sample voice playback, including stutter restarts, while keeping short chops punchy.
+- Kept `sample_start` and `sample_end` automation/preset values unchanged; the sampler only nudges effective playback boundaries internally.
+
 ### Chord Memory And Sequencer UI Pass
 
 - Added a saved SEQ `Memory` toggle that expands live played MIDI notes through the selected SEQ chord mode and voicing for one-finger house and UKG stabs.

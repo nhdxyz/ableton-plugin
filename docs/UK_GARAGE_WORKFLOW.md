@@ -83,7 +83,7 @@ Research references:
 
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
-- Current pass: waveform display, draggable chop window, phrase markers, slice pads, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
 - Later: add transient-ish slicing, per-slice pitch/reverse/gain/stutter, choke groups, and sequencer-triggered slice lanes.
 
 ### Groove
@@ -118,12 +118,12 @@ Research references:
 - Added a focused Comb module and seeded select UKG pluck, chop, and late-stab presets with tuned resonance.
 - Added SEQ chord memory for turning the selected chord mode and voicing into one-finger played stabs while keeping it default-off for old presets.
 - Cleaned up the SEQ panel so chord/groove controls, random/variation actions, and the grid are grouped more clearly for pattern building.
+- Added non-destructive zero-cross/low-energy boundary snapping and adaptive fade guards for SAMPLE playback so short vocal cuts and slice-pad auditions click less.
 
 ## Next UKG Features
 
 Reference-backed next passes:
 
-- Add zero-cross snap and tiny fade guards to sample chops so vocal cuts stay tight without clicks.
 - Add selective groove transforms such as straight anchors, swung ghosts, late stabs, and vocal push instead of only global swing.
 - Add per-slice pitch, reverse, gain, stutter, and choke behavior once the waveform and pad workflow are stable.
 - Add FX module presets for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, and controlled drive.

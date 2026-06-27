@@ -74,6 +74,7 @@ private:
         bool stutterEnabled = false;
         int stutterRepeatsRemaining = 0;
         int fadeInSamplesRemaining = 0;
+        int fadeInTotalSamples = 0;
         double stutterIntervalSamples = 1.0;
         double samplesUntilStutter = 0.0;
     };

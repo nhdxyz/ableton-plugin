@@ -1572,8 +1572,8 @@ These can all be reconsidered later. They are distractions before the synth make
 ## Immediate Next Steps
 
 1. Validate the current SEQ chord-memory and UI declutter pass in Ableton with house, UKG, tech-house, minimal, and techno preset workflows.
-2. Add UKG chop tightening: zero-cross snap, tiny fade guards, and per-slice audition polish.
-3. Add selective groove transforms for straight anchors, swung ghosts, late stabs, and vocal push.
+2. Add selective groove transforms for straight anchors, swung ghosts, late stabs, and vocal push.
+3. Add per-slice sample controls for pitch, reverse, gain, stutter, and choke behavior after the click-safe chop playback pass.
 4. Add a per-control modulation inspector so users can see source, depth, polarity, bypass, and delete actions without scanning the full matrix.
 5. Add FX module presets and clearer per-module preset/reorder affordances.
 6. Expand browser metadata and audition workflow with richer tags, ratings/favorites polish, and macro preview values.

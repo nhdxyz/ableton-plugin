@@ -426,7 +426,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 
 Recent reference checks against Serum 2, ZENOLOGY Pro, u-he Hive/Diva/Zebra, and Korg Collection/wavestate/modwave point to the same product direction: fast sound browsing, visible modulation, playable macros/XY, motion sequencing, serious FX, and genre-specific generators.
 
-Low-risk additions from the latest audit: per-control modulation inspector, richer preset metadata/ratings/audition, zero-cross/fade guards for UKG chops, selective groove transforms, editable macro assignment lists, FX module presets, and genre-specific init buttons. Larger tracks remain wavetable import/warp, layered partials, motion sequencing lanes, advanced sampler slicing, character filters/drives, FM/operator modes, and vector morphing.
+Low-risk additions from the latest audit: per-control modulation inspector, richer preset metadata/ratings/audition, selective groove transforms, editable macro assignment lists, FX module presets, and genre-specific init buttons. Larger tracks remain wavetable import/warp, layered partials, motion sequencing lanes, advanced sampler slicing, character filters/drives, FM/operator modes, and vector morphing.
 
 Build the next larger slices in this order:
 
@@ -451,6 +451,7 @@ Build the next larger slices in this order:
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.
+   First click-safety pass implemented as internal zero-cross/low-energy boundary snapping plus adaptive fade-in/fade-out guards for chop playback and stutter restarts.
 4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.
    First browser-search pass implemented as token-based Library text search across preset name, category, source, user/factory status, and favorite state.

@@ -5,6 +5,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 
 #include <array>
+#include <vector>
 
 namespace Sampler
 {
@@ -24,6 +25,20 @@ struct SampleRegion
     float transposeSemitones = 0.0f;
 };
 
+struct SamplePeakOverview
+{
+    std::vector<float> minimums;
+    std::vector<float> maximums;
+    juce::String fileName;
+    int totalSamples = 0;
+    double sourceSampleRate = 44100.0;
+
+    bool isValid() const noexcept
+    {
+        return totalSamples > 0 && ! minimums.empty() && minimums.size() == maximums.size();
+    }
+};
+
 class SamplePlayer
 {
 public:
@@ -35,6 +50,7 @@ public:
     bool loadFile(const juce::File& file);
     bool hasSample() const;
     juce::String getLoadedFileName() const;
+    SamplePeakOverview createPeakOverview(int pointCount) const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
     bool triggerAudition(int midiNoteNumber, float velocity, double bpm);

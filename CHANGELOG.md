@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sample Waveform Display
+
+- Added a SAMPLE-panel waveform overview for loaded audio so vocal chops and phrase cuts can be edited visually instead of only by start/end numbers.
+- Drew the active chop window, start/end handles, duration/selection readout, and eight phrase markers directly over the waveform.
+- Made the waveform draggable: pull the start/end handles for fine trims or drag across the display to set a new chop region that writes the existing automatable sample start/end parameters.
+
 ### Mod Source Route Summaries
 
 - Expanded the MOD `SOURCES` list to include LFO 1, Mod Env 1, Velocity, and all eight performance macros.

@@ -68,6 +68,7 @@ public:
     bool randomizeUkgVocalChop();
     bool triggerSampleAudition();
     juce::String getLoadedSampleName() const;
+    Sampler::SamplePeakOverview createSamplePeakOverview(int pointCount) const;
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);
     bool randomizeSequencerPattern();

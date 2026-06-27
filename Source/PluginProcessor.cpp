@@ -295,6 +295,11 @@ juce::String NateVSTAudioProcessor::getLoadedSampleName() const
     return samplePlayer.getLoadedFileName();
 }
 
+Sampler::SamplePeakOverview NateVSTAudioProcessor::createSamplePeakOverview(int pointCount) const
+{
+    return samplePlayer.createPeakOverview(pointCount);
+}
+
 Sequencer::Step NateVSTAudioProcessor::getSequencerStep(int index) const
 {
     return patternSequencer.getStep(index);

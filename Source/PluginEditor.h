@@ -7,6 +7,7 @@
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
 #include "UI/OutputMeter.h"
+#include "UI/SampleWaveformDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/XYMacroPad.h"
 
@@ -469,6 +470,7 @@ private:
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
+    UI::SampleWaveformDisplay sampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
     UI::XYMacroPad performanceXYPad;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
@@ -476,6 +478,7 @@ private:
     double presetAuditionNoteOffMs = 0.0;
     juce::String fxRackStatusOverride;
     double fxRackStatusOverrideUntilMs = 0.0;
+    juce::String sampleWaveformKey;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
 
@@ -512,6 +515,7 @@ private:
     void updateSequencerGridContext();
     void selectSampleSlice(size_t sliceIndex);
     void updateSampleSliceButtons();
+    void updateSampleWaveformDisplay();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

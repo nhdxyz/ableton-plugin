@@ -101,6 +101,55 @@ juce::String SamplePlayer::getLoadedFileName() const
     return sampleData != nullptr ? sampleData->fileName : juce::String {};
 }
 
+SamplePeakOverview SamplePlayer::createPeakOverview(int pointCount) const
+{
+    pointCount = juce::jlimit(32, 512, pointCount);
+
+    std::shared_ptr<SampleData> data;
+    {
+        const juce::SpinLock::ScopedLockType lock(sampleLock);
+        data = sampleData;
+    }
+
+    SamplePeakOverview overview;
+    if (data == nullptr || data->buffer.getNumSamples() <= 0 || data->buffer.getNumChannels() <= 0)
+        return overview;
+
+    overview.fileName = data->fileName;
+    overview.totalSamples = data->buffer.getNumSamples();
+    overview.sourceSampleRate = data->sourceSampleRate;
+    overview.minimums.assign(static_cast<size_t>(pointCount), 0.0f);
+    overview.maximums.assign(static_cast<size_t>(pointCount), 0.0f);
+
+    const auto channelCount = data->buffer.getNumChannels();
+    const auto totalSamples = data->buffer.getNumSamples();
+
+    for (auto pointIndex = 0; pointIndex < pointCount; ++pointIndex)
+    {
+        const auto startSample = static_cast<int>((static_cast<int64_t>(pointIndex) * totalSamples) / pointCount);
+        const auto endSample = juce::jmax(startSample + 1,
+                                          static_cast<int>((static_cast<int64_t>(pointIndex + 1) * totalSamples) / pointCount));
+        auto minimum = 0.0f;
+        auto maximum = 0.0f;
+
+        for (auto sampleIndex = startSample; sampleIndex < juce::jmin(endSample, totalSamples); ++sampleIndex)
+        {
+            auto mixedSample = 0.0f;
+            for (auto channel = 0; channel < channelCount; ++channel)
+                mixedSample += data->buffer.getSample(channel, sampleIndex);
+
+            mixedSample /= static_cast<float>(channelCount);
+            minimum = juce::jmin(minimum, mixedSample);
+            maximum = juce::jmax(maximum, mixedSample);
+        }
+
+        overview.minimums[static_cast<size_t>(pointIndex)] = juce::jlimit(-1.0f, 1.0f, minimum);
+        overview.maximums[static_cast<size_t>(pointIndex)] = juce::jlimit(-1.0f, 1.0f, maximum);
+    }
+
+    return overview;
+}
+
 SampleRegion SamplePlayer::getRegion() const
 {
     const juce::SpinLock::ScopedLockType lock(sampleLock);

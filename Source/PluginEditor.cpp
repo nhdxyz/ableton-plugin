@@ -282,6 +282,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(performanceXYPad);
 
+    sampleWaveformDisplay.onRangeChange = [this] (float start, float end)
+    {
+        setPlainParameterValue(Parameters::ID::sampleStart, start);
+        setPlainParameterValue(Parameters::ID::sampleEnd, end);
+        setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
+        updateSampleSliceButtons();
+    };
+    addAndMakeVisible(sampleWaveformDisplay);
+
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
@@ -730,6 +739,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         setRandomStatus(audioProcessor.undoRandomization() ? "Undo restored" : "Nothing to undo");
         updateSampleNameLabel();
+        updateSampleWaveformDisplay();
         sequencerGrid.repaint();
     };
     recallSnapshotAButton.setTooltip("Recall performance snapshot A");
@@ -738,6 +748,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         if (audioProcessor.recallPerformanceSnapshot(0))
         {
             updateSampleNameLabel();
+            updateSampleWaveformDisplay();
             sequencerGrid.repaint();
             updatePerformanceSnapshotButtons();
         }
@@ -754,6 +765,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         if (audioProcessor.recallPerformanceSnapshot(1))
         {
             updateSampleNameLabel();
+            updateSampleWaveformDisplay();
             sequencerGrid.repaint();
             updatePerformanceSnapshotButtons();
         }
@@ -768,17 +780,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     clearSampleButton.onClick = [this]
     {
         audioProcessor.clearSample();
+        sampleWaveformKey = "cleared";
         updateSampleNameLabel();
+        updateSampleWaveformDisplay();
     };
     randomCutButton.onClick = [this]
     {
         setRandomStatus(audioProcessor.randomizeSampleCut() ? "Sample randomized" : "Sample skipped");
+        updateSampleWaveformDisplay();
     };
     ukgChopButton.onClick = [this]
     {
         if (audioProcessor.randomizeUkgVocalChop())
         {
             sequencerGrid.repaint();
+            updateSampleWaveformDisplay();
             setRandomStatus("UKG chop ready");
         }
         else
@@ -1535,6 +1551,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleModeBox.setVisible(true);
             sampleStutterEnabledButton.setVisible(true);
             sampleStutterRateBox.setVisible(true);
+            sampleWaveformDisplay.setVisible(true);
             for (auto& button : sampleSliceButtons)
                 button.setVisible(true);
             sampleNameLabel.setVisible(true);
@@ -1551,23 +1568,24 @@ void NateVSTAudioProcessorEditor::resized()
             sampleNameLabel.setBounds(stutterRow.removeFromLeft(430).reduced(8, 4));
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
             sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
+            sampleWaveformDisplay.setBounds(content.removeFromTop(116).reduced(4, 8));
             auto sliceRow = content.removeFromTop(42).withTrimmedTop(4);
             const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
             for (auto& button : sampleSliceButtons)
                 button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-            auto cutRow = content.removeFromTop(70).withTrimmedTop(18);
+            auto cutRow = content.removeFromTop(54).withTrimmedTop(8);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
             sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
-            content.removeFromTop(20);
+            content.removeFromTop(8);
             setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
             setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
             setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            layoutKnobRow(content.removeFromTop(105), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(content.removeFromTop(105).withTrimmedTop(8), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+            layoutKnobRow(content.removeFromTop(92), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(content.removeFromTop(92).withTrimmedTop(6), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -2112,7 +2130,11 @@ void NateVSTAudioProcessorEditor::exportSequencerMidiClip()
 void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
 {
     if (audioProcessor.loadSampleFile(file))
+    {
+        sampleWaveformKey.clear();
         updateSampleNameLabel();
+        updateSampleWaveformDisplay();
+    }
 }
 
 void NateVSTAudioProcessorEditor::updateSampleNameLabel()
@@ -2137,6 +2159,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     const auto didAudition = audioProcessor.triggerSampleAudition();
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : " selected"));
     updateSampleSliceButtons();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
@@ -2163,6 +2186,32 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
             && std::abs(orderedEnd - sliceEnd) < 0.005f;
         sampleSliceButtons[index].setToggleState(isSelected, juce::dontSendNotification);
     }
+}
+
+void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
+{
+    const auto sampleName = audioProcessor.getLoadedSampleName();
+    if (sampleName.isEmpty())
+    {
+        if (sampleWaveformKey.isNotEmpty())
+        {
+            sampleWaveformDisplay.setOverview({});
+            sampleWaveformKey.clear();
+        }
+
+        sampleWaveformDisplay.setRange(0.0f, 1.0f);
+        return;
+    }
+
+    if (sampleWaveformKey != sampleName)
+    {
+        sampleWaveformDisplay.setOverview(audioProcessor.createSamplePeakOverview(256));
+        sampleWaveformKey = sampleName;
+    }
+
+    const auto start = readPlainParameterValue(Parameters::ID::sampleStart, 0.0f);
+    const auto end = readPlainParameterValue(Parameters::ID::sampleEnd, 1.0f);
+    sampleWaveformDisplay.setRange(start, end);
 }
 
 void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
@@ -2779,7 +2828,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,
-        &lowEndAssistant, &performanceXYPad, &lfoCurveDisplay, &sequencerGrid
+        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &lfoCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -3229,6 +3278,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updatePerformanceXYPad();
     updateSequencerGridContext();
     updateSampleSliceButtons();
+    updateSampleWaveformDisplay();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

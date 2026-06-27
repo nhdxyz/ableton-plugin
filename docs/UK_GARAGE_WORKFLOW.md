@@ -81,7 +81,8 @@ Research references:
 
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
-- Later: add slice markers, transient-ish slicing, one-shot/gated modes, and per-slice pitch.
+- Current pass: waveform display, draggable chop window, phrase markers, slice pads, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Later: add transient-ish slicing, per-slice pitch/reverse/gain/stutter, choke groups, and sequencer-triggered slice lanes.
 
 ### Groove
 
@@ -126,6 +127,7 @@ Research references:
 - Pitch-ramped chop movement is implemented with the SAMPLE-panel `Ramp` control.
 - UKG Chop now sets a short delay throw when FX locking is off.
 - The SAMPLE panel now includes eight numbered slice pads for jumping and auditioning a loaded phrase in equal chop windows before applying stutter, reverse, pitch, ramp, or sequencer triggering.
+- The SAMPLE panel now includes a waveform display with draggable start/end handles, visible phrase markers, and selection readout for faster vocal chop trimming.
 
 2. Pump/Duck FX.
 

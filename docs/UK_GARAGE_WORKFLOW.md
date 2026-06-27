@@ -56,6 +56,7 @@ Research references:
 
 - Useful UKG FX are tight and rhythmic: three-band EQ for low-mid cleanup and presence, short room/plate, short delay throws, pump/duck, tremolo/auto-pan movement, restrained ring modulation and comb resonance for chop/pluck edge, stereo width above the bass, subtle chorus/phaser/flanger, bitcrush/downsample for sampler color, and reverse/rewind-style transitions.
 - The newly added Crush module fits this by giving old-sampler grit without requiring a full sample editor yet.
+- The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
 
 ## Sound Targets
 
@@ -171,4 +172,5 @@ Research references:
 
 7. Transition and rewind FX.
 
-- Add short reverse, downer, delay throw, and rewind-style one-shot workflows after the sampler is stronger.
+- First delay/space/pump throw actions are implemented in the FX panel.
+- Add short reverse, downer, and rewind-style one-shot workflows after the sampler is stronger.

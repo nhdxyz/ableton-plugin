@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### FX Throw Performance Buttons
+
+- Added FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions for fast house, UKG, tech-house, and minimal arrangement moves.
+- Made the throw actions write existing Delay, Reverb, Pump, Width, and Guard parameters instead of adding new plugin state.
+- Added a short-lived FX rack status override so the selected throw feedback stays visible while the rack continues refreshing.
+
 ### Library Audition And Control Feel
 
 - Added an `Audition` action to HOME and LIBRARY preset rows so selected sounds can be loaded and briefly played without reaching for the bottom keyboard.

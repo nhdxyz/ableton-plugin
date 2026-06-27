@@ -14,6 +14,7 @@ constexpr auto keyboardInitialLowestNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 84;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
+constexpr auto fxRackStatusOverrideMs = 2200.0;
 
 juce::Colour backgroundColour()
 {
@@ -876,6 +877,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
     fxResetOrderButton.onClick = [this] { resetFxModuleOrder(); };
+    fxThrowDelayButton.onClick = [this] { applyDelayThrow(); };
+    fxThrowSpaceButton.onClick = [this] { applySpaceThrow(); };
+    fxThrowPumpButton.onClick = [this] { applyPumpDrop(); };
+    fxThrowDryButton.onClick = [this] { clearFxThrows(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -959,6 +964,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxMoveDownButton);
     addAndMakeVisible(fxResetOrderButton);
     addAndMakeVisible(fxRemoveButton);
+    addAndMakeVisible(fxThrowDelayButton);
+    addAndMakeVisible(fxThrowSpaceButton);
+    addAndMakeVisible(fxThrowPumpButton);
+    addAndMakeVisible(fxThrowDryButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -1560,6 +1569,10 @@ void NateVSTAudioProcessorEditor::resized()
             fxMoveDownButton.setVisible(true);
             fxResetOrderButton.setVisible(true);
             fxRemoveButton.setVisible(true);
+            fxThrowDelayButton.setVisible(true);
+            fxThrowSpaceButton.setVisible(true);
+            fxThrowPumpButton.setVisible(true);
+            fxThrowDryButton.setVisible(true);
             fxRackStatusLabel.setVisible(true);
             fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
             fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
@@ -1568,7 +1581,13 @@ void NateVSTAudioProcessorEditor::resized()
             fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
             fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
 
-            content.removeFromTop(10);
+            auto throwRow = content.removeFromTop(38).withTrimmedTop(2);
+            fxThrowDelayButton.setBounds(throwRow.removeFromLeft(112).reduced(4));
+            fxThrowSpaceButton.setBounds(throwRow.removeFromLeft(116).reduced(4));
+            fxThrowPumpButton.setBounds(throwRow.removeFromLeft(104).reduced(4));
+            fxThrowDryButton.setBounds(throwRow.removeFromLeft(96).reduced(4));
+
+            content.removeFromTop(8);
             auto rackArea = content.removeFromLeft(260).reduced(18, 16);
             rackArea.removeFromTop(26);
             auto detailArea = content.reduced(24, 18);
@@ -2144,6 +2163,99 @@ void NateVSTAudioProcessorEditor::resetFxModuleOrder()
     repaint();
 }
 
+void NateVSTAudioProcessorEditor::applyDelayThrow()
+{
+    setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelayTime, 0.31f);
+    setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.58f);
+    setPlainParameterValue(Parameters::ID::fxDelayMix, 0.42f);
+    setPlainParameterValue(Parameters::ID::fxReverbEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxReverbSize, 0.28f);
+    setPlainParameterValue(Parameters::ID::fxReverbDamping, 0.50f);
+    setPlainParameterValue(Parameters::ID::fxReverbMix, 0.14f);
+    setPlainParameterValue(Parameters::ID::fxWidthEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxWidthAmount, 1.18f);
+    setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 140.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPush, 0.08f);
+    setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
+
+    selectedFxModule = FxModule::delay;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Delay throw armed | 310 ms, high feedback, club safety on");
+}
+
+void NateVSTAudioProcessorEditor::applySpaceThrow()
+{
+    setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxDelayTime, 0.42f);
+    setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.46f);
+    setPlainParameterValue(Parameters::ID::fxDelayMix, 0.26f);
+    setPlainParameterValue(Parameters::ID::fxReverbEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxReverbSize, 0.72f);
+    setPlainParameterValue(Parameters::ID::fxReverbDamping, 0.38f);
+    setPlainParameterValue(Parameters::ID::fxReverbMix, 0.38f);
+    setPlainParameterValue(Parameters::ID::fxWidthEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxWidthAmount, 1.36f);
+    setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 145.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPush, 0.05f);
+    setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
+
+    selectedFxModule = FxModule::reverb;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Space throw armed | wide delay into larger reverb");
+}
+
+void NateVSTAudioProcessorEditor::applyPumpDrop()
+{
+    setPlainParameterValue(Parameters::ID::fxPumpEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxPumpRate, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxPumpDepth, 0.58f);
+    setPlainParameterValue(Parameters::ID::fxPumpShape, 0.68f);
+    setPlainParameterValue(Parameters::ID::fxPumpPhase, 0.08f);
+    setPlainParameterValue(Parameters::ID::fxWidthEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxWidthAmount, 1.08f);
+    setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 135.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPush, 0.10f);
+    setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
+    fxPumpRateBox.setSelectedItemIndex(1, juce::dontSendNotification);
+
+    selectedFxModule = FxModule::pump;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Pump drop armed | 1/8 ducking with Guard safety");
+}
+
+void NateVSTAudioProcessorEditor::clearFxThrows()
+{
+    setPlainParameterValue(Parameters::ID::fxDelayEnabled, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.18f);
+    setPlainParameterValue(Parameters::ID::fxDelayMix, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxReverbEnabled, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxReverbMix, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxPumpDepth, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPush, 0.04f);
+    setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.92f);
+
+    selectedFxModule = FxModule::guard;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Throws cleared | Guard remains on");
+}
+
+void NateVSTAudioProcessorEditor::setFxRackStatusOverride(const juce::String& message)
+{
+    fxRackStatusOverride = message;
+    fxRackStatusOverrideUntilMs = juce::Time::getMillisecondCounterHiRes() + fxRackStatusOverrideMs;
+    fxRackStatusLabel.setText(fxRackStatusOverride, juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::updateFxRackControls()
 {
     if (! shouldShowFxModule(selectedFxModule))
@@ -2162,10 +2274,19 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
                         module == FxModule::guard);
     }
 
-    fxRackStatusLabel.setText("#" + juce::String(fxOrderPosition(selectedFxModule)).paddedLeft('0', 2)
-                                  + " " + fxModuleName(selectedFxModule)
-                                  + " | " + fxModuleSummary(selectedFxModule),
-                              juce::dontSendNotification);
+    if (fxRackStatusOverride.isNotEmpty()
+        && juce::Time::getMillisecondCounterHiRes() < fxRackStatusOverrideUntilMs)
+    {
+        fxRackStatusLabel.setText(fxRackStatusOverride, juce::dontSendNotification);
+    }
+    else
+    {
+        fxRackStatusOverride.clear();
+        fxRackStatusLabel.setText("#" + juce::String(fxOrderPosition(selectedFxModule)).paddedLeft('0', 2)
+                                      + " " + fxModuleName(selectedFxModule)
+                                      + " | " + fxModuleSummary(selectedFxModule),
+                                  juce::dontSendNotification);
+    }
     const auto selectedPosition = fxOrderPosition(selectedFxModule);
     const auto canMoveSelected = selectedFxModule != FxModule::guard;
     fxMoveUpButton.setEnabled(canMoveSelected && selectedPosition > 1);
@@ -2463,6 +2584,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
+        &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,

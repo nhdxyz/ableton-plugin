@@ -409,6 +409,10 @@ private:
     juce::TextButton fxMoveDownButton { "Down" };
     juce::TextButton fxResetOrderButton { "Reset" };
     juce::TextButton fxRemoveButton { "Remove" };
+    juce::TextButton fxThrowDelayButton { "Delay Throw" };
+    juce::TextButton fxThrowSpaceButton { "Space Throw" };
+    juce::TextButton fxThrowPumpButton { "Pump Drop" };
+    juce::TextButton fxThrowDryButton { "Throw Off" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
     UI::FxRackRow fxDistortionSlotButton { "Drive" };
@@ -442,6 +446,8 @@ private:
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
     double presetAuditionNoteOffMs = 0.0;
+    juce::String fxRackStatusOverride;
+    double fxRackStatusOverrideUntilMs = 0.0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -492,6 +498,11 @@ private:
     void selectFxModule(FxModule module);
     void moveSelectedFxModule(int direction);
     void resetFxModuleOrder();
+    void applyDelayThrow();
+    void applySpaceThrow();
+    void applyPumpDrop();
+    void clearFxThrows();
+    void setFxRackStatusOverride(const juce::String& message);
     void updateFxRackControls();
     std::array<FxModule, 15> fxDefaultModuleOrder() const;
     std::array<FxModule, 15> fxModuleOrder() const;

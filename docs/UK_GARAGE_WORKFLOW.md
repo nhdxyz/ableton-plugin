@@ -52,6 +52,7 @@ Research references:
 - Chopped vocal hooks are central enough that the sampler needs a dedicated UKG chop workflow, not just generic sample playback.
 - Required controls: one-shot vs gated, quick slice/cut ranges, pitch offsets, pitch ramps, reverse, stutter/retrigger, delay throws, and sequencer-lane triggering.
 - MOD matrix routes can now target sample start, mix, pitch, ramp, and stutter amount for LFO/macro-driven vocal chop motion.
+- Core saw, square, and triangle oscillators now use a first bandlimited quality pass, which keeps bright organ/chord stabs and upper bass harmonics cleaner before UKG delay, pump, and drive processing.
 - Randomized chops should prefer short, rhythmic fragments and avoid huge unpredictable pitch sweeps unless chaos is high.
 - True formant-preserving pitch movement should remain future work because it needs a dedicated time-stretch/formant engine; the current lightweight performance pass uses pitch-ramped playback instead.
 
@@ -143,6 +144,7 @@ Reference-backed next passes:
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector into per-route bypass/delete editing.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
+- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator quality pass is in place.
 
 1. Vocal chop mode for the sampler.
 
@@ -174,6 +176,7 @@ Reference-backed next passes:
 - Implemented first as curated randomization recipes: `UKG Organ Stab`, `UKG Chord Stab`, and `UKG Bell Pluck`.
 - Later add organ-style oscillator mix or drawbar-inspired mode.
 - Factory preset files should be added in a later preset-pack pass.
+- The first oscillator quality pass now reduces aliasing in the existing saw/square/triangle sources; the next source pass should add more distinct UKG organ, bell, and Reese character rather than only more filtering.
 
 4. Swing templates.
 

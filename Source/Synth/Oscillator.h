@@ -28,9 +28,9 @@ private:
     float frequencyHz = 440.0f;
     float phase = 0.0f;
     float phaseDelta = 0.0f;
+    float triangleState = -1.0f;
     Waveform waveform = Waveform::saw;
 
     void updatePhaseDelta();
 };
 }
-

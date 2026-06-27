@@ -77,7 +77,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
 - Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
 - Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. Remaining work is deeper per-lane modulation sync and clearer transport-state feedback in the UI.
-- Audio quality: oscillator and drive stages need a bandlimiting/oversampling pass before the synth can compete with polished commercial dance plugins at bright high-note settings.
+- Audio quality: oscillator and drive stages need bandlimiting/oversampling attention before the synth can compete with polished commercial dance plugins at bright high-note settings. The first oscillator pass is implemented with polyBLEP saw/square generation, an integrated bandlimited triangle, and safer upper-register phase increments.
 
 These are product directions, not framework reasons to leave JUCE. The best next framework work is still custom JUCE components for modulation rings, rack rows, curve editors, waveform/slice views, and browser lists.
 
@@ -420,6 +420,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
    Second safety readout implemented as phase/reset and club-range guidance: phase reset status, Mono spread-lock status, low-side protection suggestions, root-range warnings, and Guard/headroom prompts.
 2. Vocal chop and stab sampler: slice grid, audition pads, choke behavior, reverse/stutter, delay throws, and formant/time-stretch investigation.
 3. Wavetable and character filter pass: wavetable position/warp first, then filter slopes/drive/flavors before deeper spectral or granular work.
+   First oscillator-quality pass implemented as polyBLEP saw/square generation, integrated bandlimited triangle playback, and phase-delta limiting while preserving waveform parameters and presets.
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
 5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
 6. House performance tools: A/B snapshots, eight consistent performance macros, XY movement, delay throws, mute drops, chord/scale helpers, and low-end metering for club translation.
@@ -448,6 +449,7 @@ Build the next larger slices in this order:
    First Pump curve-edit pass implemented as an FX-panel custom curve editor with eight saved points, matching DSP interpolation, Bounce-aware preview, and recipe randomization seeds.
    First FX-destination pass implemented as MOD matrix targets for Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive, with LFO/macro DSP support and modulation-ring feedback on the matching FX controls.
    First sample-destination pass implemented as MOD matrix targets for Sample Start, Mix, Pitch, Ramp, and Stutter, with UKG Chop seeding empty slots for start and pitch/ramp motion.
+   Current UI audit pass tightened the FX module-preset header and widened MOD destination boxes so Pump controls and long FX/sample destinations have more room.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
@@ -475,6 +477,7 @@ Build the next larger slices in this order:
    First smart-tag pass implemented as generated `preset_tags` metadata plus a Library tag filter for role, safety, FX, sequencing, and genre tags.
    First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
+   First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.

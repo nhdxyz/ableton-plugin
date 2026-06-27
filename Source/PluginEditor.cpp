@@ -1837,8 +1837,8 @@ void NateVSTAudioProcessorEditor::resized()
                                    juce::Label& amount)
             {
                 header.removeFromLeft(26);
-                source.setBounds(header.removeFromLeft(108).reduced(5, 0));
-                destination.setBounds(header.removeFromLeft(136).reduced(5, 0));
+                source.setBounds(header.removeFromLeft(100).reduced(5, 0));
+                destination.setBounds(header.removeFromLeft(150).reduced(5, 0));
                 amount.setBounds(header.reduced(5, 0));
             };
             placeHeader(leftHeader, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
@@ -1855,8 +1855,8 @@ void NateVSTAudioProcessorEditor::resized()
 
                 auto row = rowBounds.reduced(2, 2);
                 modSlotRows[index].setBounds(row.removeFromLeft(26).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(108).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(136).reduced(3, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(100).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(150).reduced(3, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
             };
 
@@ -2084,8 +2084,8 @@ void NateVSTAudioProcessorEditor::resized()
             }
 
             auto detailHeader = detailArea.removeFromTop(38);
-            fxApplyPresetButton.setBounds(detailHeader.removeFromRight(68).reduced(3, 4));
-            fxPresetBox.setBounds(detailHeader.removeFromRight(188).reduced(3, 4));
+            fxApplyPresetButton.setBounds(detailHeader.removeFromRight(62).reduced(3, 4));
+            fxPresetBox.setBounds(detailHeader.removeFromRight(156).reduced(3, 4));
             auto controlsArea = detailArea.withTrimmedTop(16);
 
             switch (selectedFxModule)

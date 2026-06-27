@@ -18,7 +18,7 @@ The first useful version should load in Ableton, respond to MIDI, generate sound
 
 Planned major areas:
 
-- Synth engine: oscillator 1, oscillator 2, sub, noise, unison/spread, envelopes, multimode filter, drive, modulation, and eight stable performance macros for club-ready tone, dirt, motion, space, weight, bounce, warp, and throw moves.
+- Synth engine: oscillator 1, oscillator 2, sub, noise, unison/spread, envelopes, multimode filter, drive, modulation, and eight stable performance macros for club-ready tone, dirt, motion, space, weight, bounce, warp, and throw moves. Saw, square, and triangle sources include a first bandlimited quality pass for cleaner bright stabs and bass harmonics.
 - Sound Lab: guided randomization, Vary/Mutate/Wild mutation strengths, section-scoped changes, recipes, section locks, undo/redo, and safety rules.
 - Sample Lab: load audio, view the waveform, jump and audition phrase slices with eight pads, drag chop windows with visible handles, reverse/pitch/gain/mix it, and trigger it from MIDI.
 - Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, scale helper, chord/stab modes, voicing and strum controls, beat grouping, groove cues, rotate, variation, undo, MIDI export, and quick pattern tools for house chords, tech-house basslines, techno pulses, minimal plucks, UKG riffs, and generated ideas.
@@ -54,7 +54,7 @@ Factory presets can be placed separately at:
 
 See [PLAN.md](./PLAN.md) for the full roadmap, [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design, [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md) for the next UI grouping and FX rack direction, and [docs/UK_GARAGE_WORKFLOW.md](./docs/UK_GARAGE_WORKFLOW.md) for the UK garage sound direction.
 
-Current house/UKG workflow focus: HOME performance macros and club low-end guidance, MOD destination inspection, SEQ chord/voicing/strum plus one-finger Memory and selective groove transforms, waveform-based sample chopping with click guards and slice styles, section-scoped randomization, and an addable FX rack with throw controls and module presets.
+Current house/UKG workflow focus: cleaner oscillator sources for bright stabs and bass harmonics, HOME performance macros and club low-end guidance, MOD destination inspection, SEQ chord/voicing/strum plus one-finger Memory and selective groove transforms, waveform-based sample chopping with click guards and slice styles, section-scoped randomization, and an addable FX rack with throw controls and module presets.
 
 ## Local Development
 

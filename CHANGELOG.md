@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Oscillator Quality Pass
+
+- Reworked saw and square oscillators with polyBLEP discontinuity correction so bright house stabs, tech-house basses, techno pulses, and UKG chord tones alias less at higher notes.
+- Rebuilt triangle from an integrated bandlimited square core while preserving the existing waveform enum, parameter IDs, factory presets, and Ableton automation mappings.
+- Clamped oscillator phase increments below Nyquist to avoid unstable upper-register playback on 44.1 kHz sessions.
+- Tightened the FX detail header and widened MOD destination selectors after the UI audit flagged crowded Pump controls and long sample/FX destination names.
+
 ### Sample Modulation Destinations
 
 - Added MOD matrix destinations for Sample Start, Sample Mix, Sample Pitch, Sample Ramp, and Sample Stutter so UKG vocal chops can move from the same routing workflow as synth and FX motion.

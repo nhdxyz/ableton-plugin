@@ -1614,6 +1614,7 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::filterResonance,
                 Parameters::ID::filterEnvAmount,
                 Parameters::ID::filterMode,
+                Parameters::ID::filterCharacter,
                 Parameters::ID::driveAmount
             });
             break;
@@ -1791,7 +1792,9 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::filterCutoff,
             Parameters::ID::filterResonance,
             Parameters::ID::filterEnvAmount,
-            Parameters::ID::filterMode
+            Parameters::ID::filterMode,
+            Parameters::ID::filterCharacter,
+            Parameters::ID::driveAmount
         });
     }
 
@@ -2137,6 +2140,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordStrum = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid();
     const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
     const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
+    const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -2153,6 +2157,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::sequencerChordMemory, 0.0f);
     if (! hasSampleSliceStyle)
         setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
+    if (! hasFilterCharacter)
+        setParameterPlainValue(Parameters::ID::filterCharacter, 0.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

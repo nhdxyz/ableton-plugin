@@ -27,6 +27,7 @@ DEFAULTS = {
     "filter_resonance": 0.45,
     "filter_env_amount": 0.15,
     "filter_mode": 0,
+    "filter_character": 0,
     "drive_amount": 0.18,
     "output_gain": -8.0,
     "mono_mode": 0,
@@ -187,6 +188,26 @@ for slot_index in range(1, 9):
 
 for slot_index in range(1, 16):
     DEFAULTS[f"fx_order_{slot_index}"] = slot_index - 1
+
+
+FILTER_CHARACTER_BY_PRESET = {
+    "UKG 2-Step Bass": 1,
+    "UKG Shuffle Bass": 1,
+    "UKG Dred Bass": 3,
+    "UKG Organ Stab": 1,
+    "UKG Chord Stab": 1,
+    "UKG Bell Pluck": 0,
+    "UKG Vocal Chop Starter": 1,
+    "UKG Late Stab": 1,
+    "House Chord Memory": 1,
+    "Deep House Sub Chug": 1,
+    "Tech House Rubber Bass": 2,
+    "Tech House Perc Pluck": 1,
+    "Minimal Click Pluck": 0,
+    "Minimal Sub Pulse": 1,
+    "Techno Pulse Bass": 2,
+    "Techno Warehouse Stab": 3,
+}
 
 
 def step(index, note, velocity, probability, timing=0.0):
@@ -1598,6 +1619,8 @@ def derive_performance_macros(params, explicit_params):
 
 def write_preset(preset):
     params = DEFAULTS | preset["params"]
+    if "filter_character" not in preset["params"]:
+        params["filter_character"] = FILTER_CHARACTER_BY_PRESET.get(preset["name"], 0)
     if params.get("fx_pump_enabled", 0) and "fx_pump_curve" not in preset["params"]:
         category = preset.get("category", "UKG")
         params["fx_pump_curve"] = {

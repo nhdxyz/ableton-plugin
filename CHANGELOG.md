@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Filter Character Pass
+
+- Added an automatable Filter Character selector with Clean, Warm, Acid, and Dirty modes for faster house bass, tech-house rubber, techno stab, and UKG organ/chord coloration.
+- Wired character modes into the synth filter DSP with per-mode drive behavior while keeping Clean as the default for older presets and sessions.
+- Added the character selector to the SYNTH page, made old presets migrate to Clean, and included the new parameter in filter-scoped randomization locks.
+- Seeded randomization recipes and all factory presets with practical character defaults such as Warm for UKG/house weight, Acid for rubber/pulse basses, and Dirty for warehouse/dred tones.
+
 ### Oscillator Quality Pass
 
 - Reworked saw and square oscillators with polyBLEP discontinuity correction so bright house stabs, tech-house basses, techno pulses, and UKG chord tones alias less at higher notes.

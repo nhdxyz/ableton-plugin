@@ -377,6 +377,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(filterModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterMode, filterModeBox));
 
+    filterCharacterBox.addItemList(Parameters::filterCharacterChoices(), 1);
+    filterCharacterBox.setTextWhenNothingSelected("Character");
+    filterCharacterBox.setTooltip("Choose the filter drive character");
+    addAndMakeVisible(filterCharacterBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterCharacter, filterCharacterBox));
+
     recipeBox.addItemList(Parameters::randomRecipeChoices(), 1);
     addAndMakeVisible(recipeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomRecipe, recipeBox));
@@ -1563,6 +1569,7 @@ void NateVSTAudioProcessorEditor::resized()
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
+            filterCharacterBox.setVisible(true);
             monoButton.setVisible(true);
             synthSectionLabel.setBounds(content.removeFromTop(28));
             auto selectorRow = content.removeFromTop(44);
@@ -1577,6 +1584,7 @@ void NateVSTAudioProcessorEditor::resized()
             lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
             highpassFilterButton.setBounds(filterRow.reduced(3, 4));
+            filterCharacterBox.setBounds(selectorRow.removeFromLeft(126).reduced(4));
             monoButton.setBounds(selectorRow.removeFromLeft(90).reduced(4));
             auto osc2Row = content.removeFromTop(44).withTrimmedTop(2);
             const auto osc2WaveButtonWidth = osc2Row.getWidth() / 4;
@@ -3748,7 +3756,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

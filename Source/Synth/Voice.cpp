@@ -39,6 +39,7 @@ Voice::Voice(Parameters::APVTS& state)
     filterResonance = parameters.getRawParameterValue(Parameters::ID::filterResonance);
     filterEnvAmount = parameters.getRawParameterValue(Parameters::ID::filterEnvAmount);
     filterMode = parameters.getRawParameterValue(Parameters::ID::filterMode);
+    filterCharacter = parameters.getRawParameterValue(Parameters::ID::filterCharacter);
     driveAmount = parameters.getRawParameterValue(Parameters::ID::driveAmount);
     monoMode = parameters.getRawParameterValue(Parameters::ID::monoMode);
     glideTime = parameters.getRawParameterValue(Parameters::ID::glideTime);
@@ -320,12 +321,40 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
     const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
     const auto matrixCutoffScale = std::pow(2.0f, cutoffMod * 4.0f);
-    const auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (warp * 0.14f) + (resonanceMod * 0.45f));
+    auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (warp * 0.14f) + (resonanceMod * 0.45f));
     const auto filterModeIndex = static_cast<int>(readParameter(filterMode, 0.0f));
     const auto mode = static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex));
-    const auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
+    const auto filterCharacterIndex = static_cast<int>(readParameter(filterCharacter, 0.0f));
+    const auto character = static_cast<Filter::Character>(juce::jlimit(0, 3, filterCharacterIndex));
+    auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
+    const auto baseDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + currentDriveOffset);
+
+    switch (character)
+    {
+        case Filter::Character::clean:
+            break;
+
+        case Filter::Character::warm:
+            cutoff *= 0.94f;
+            macroResonance *= 0.94f;
+            break;
+
+        case Filter::Character::acid:
+            cutoff *= 1.08f;
+            macroResonance += 0.22f + (baseDrive * 0.12f);
+            break;
+
+        case Filter::Character::dirty:
+            cutoff *= 0.88f;
+            macroResonance *= 0.82f;
+            break;
+    }
+
+    macroResonance = juce::jlimit(0.1f, 1.6f, macroResonance);
     leftFilter.setMode(mode);
     rightFilter.setMode(mode);
+    leftFilter.setCharacter(character, baseDrive);
+    rightFilter.setCharacter(character, baseDrive);
     leftFilter.setCutoffAndResonance(cutoff, macroResonance);
     rightFilter.setCutoffAndResonance(cutoff, macroResonance);
 }

@@ -89,6 +89,7 @@ private:
     std::atomic<float>* filterResonance = nullptr;
     std::atomic<float>* filterEnvAmount = nullptr;
     std::atomic<float>* filterMode = nullptr;
+    std::atomic<float>* filterCharacter = nullptr;
     std::atomic<float>* driveAmount = nullptr;
     std::atomic<float>* monoMode = nullptr;
     std::atomic<float>* glideTime = nullptr;

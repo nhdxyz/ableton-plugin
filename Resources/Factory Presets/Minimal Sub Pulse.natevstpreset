@@ -18,6 +18,7 @@
   <PARAM id="filter_resonance" value="0.38" />
   <PARAM id="filter_env_amount" value="0.24" />
   <PARAM id="filter_mode" value="0" />
+  <PARAM id="filter_character" value="1" />
   <PARAM id="drive_amount" value="0.16" />
   <PARAM id="output_gain" value="-10.5" />
   <PARAM id="mono_mode" value="1" />

@@ -71,7 +71,7 @@ The UI should use these groupings more consistently.
 Modern synths and club tools are converging around a few product expectations that Nate VST only partially covers today:
 
 - Oscillator engines: wavetable position/warp, sample/granular style sources, and stronger FM/phase movement are common in Serum 2, Pigments, Phase Plant, Current, and modwave.
-- Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments.
+- Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments. The first character pass is implemented as Clean, Warm, Acid, and Dirty filter-drive modes.
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
@@ -421,6 +421,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 2. Vocal chop and stab sampler: slice grid, audition pads, choke behavior, reverse/stutter, delay throws, and formant/time-stretch investigation.
 3. Wavetable and character filter pass: wavetable position/warp first, then filter slopes/drive/flavors before deeper spectral or granular work.
    First oscillator-quality pass implemented as polyBLEP saw/square generation, integrated bandlimited triangle playback, and phase-delta limiting while preserving waveform parameters and presets.
+   First filter-character pass implemented as a saved Filter Character selector with Clean, Warm, Acid, and Dirty modes, recipe seeds, and factory-preset defaults.
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
 5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
 6. House performance tools: A/B snapshots, eight consistent performance macros, XY movement, delay throws, mute drops, chord/scale helpers, and low-end metering for club translation.
@@ -478,6 +479,7 @@ Build the next larger slices in this order:
    First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
+   First character pass implemented in the existing filter lane with Clean, Warm, Acid, and Dirty drive behaviors for house basses, UKG stabs, rubber tech-house lines, and dirty techno tones. Remaining work is slopes, more modeled filter types, and drive oversampling.
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.

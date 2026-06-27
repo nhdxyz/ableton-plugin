@@ -40,12 +40,14 @@ Research references:
 - The HOME `CLUB` assistant now turns this into live patch guidance by flagging root-range issues, low-side stereo risk, Mono spread-lock behavior, Guard/headroom risk, and phase-reset status.
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 - Dred/reverse-filter bass should use a centered sub, a restrained Reese layer, a slower modulation envelope opening the filter, and short glide so it feels like a garage bass phrase without making the amp envelope sluggish.
+- Filter Character now gives UKG basses and stabs a first tone layer: Warm for rounded sub/stab weight, Acid for rubbery moving basslines, and Dirty for darker Dred or warehouse-style pressure.
 
 ### Stabs, Keys, And Leads
 
 - Common colors to support: organ stabs, M1-ish house chords, short bell/pluck phrases, bright minor chord stabs, and simple repeating lead hooks.
 - These need short envelopes, cleaner transients than techno stabs, optional chorus/width, and a quick low-cut/tone path.
 - A future organ/stab source should start as recipes and presets before adding a dedicated drawbar-style oscillator mode.
+- Current recipes and factory presets now seed Filter Character so organ/chord patches open warmer while bell/pluck patches can stay cleaner.
 
 ### Vocal And Sample Behavior
 
@@ -144,7 +146,7 @@ Reference-backed next passes:
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector into per-route bypass/delete editing.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
-- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator quality pass is in place.
+- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator and first filter-character passes are in place.
 
 1. Vocal chop mode for the sampler.
 
@@ -177,6 +179,7 @@ Reference-backed next passes:
 - Later add organ-style oscillator mix or drawbar-inspired mode.
 - Factory preset files should be added in a later preset-pack pass.
 - The first oscillator quality pass now reduces aliasing in the existing saw/square/triangle sources; the next source pass should add more distinct UKG organ, bell, and Reese character rather than only more filtering.
+- The first Filter Character pass adds Warm defaults to UKG organ/chord presets, but a dedicated organ/drawbar source is still the better long-term answer for convincing garage keys.
 
 4. Swing templates.
 

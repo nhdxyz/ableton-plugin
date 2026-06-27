@@ -22,6 +22,11 @@ juce::StringArray filterModeChoices()
     return { "LP", "BP", "HP" };
 }
 
+juce::StringArray filterCharacterChoices()
+{
+    return { "Clean", "Warm", "Acid", "Dirty" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -240,6 +245,12 @@ APVTS::ParameterLayout createLayout()
         ID::filterMode,
         "Filter Mode",
         filterModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::filterCharacter,
+        "Filter Character",
+        filterCharacterChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterFloat>(

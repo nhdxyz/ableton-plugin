@@ -127,6 +127,7 @@ private:
     juce::ComboBox waveformBox;
     juce::ComboBox osc2WaveBox;
     juce::ComboBox filterModeBox;
+    juce::ComboBox filterCharacterBox;
     juce::ComboBox recipeBox;
     juce::ComboBox randomScopeBox;
     juce::ComboBox sequencerRateBox;

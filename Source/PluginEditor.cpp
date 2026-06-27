@@ -569,6 +569,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
     configureSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
     configureSlider(sequencerSwingSlider, sequencerSwingLabel, "Swing", Parameters::ID::sequencerSwing);
+    configureSlider(sequencerChordStrumSlider, sequencerChordStrumLabel, "Strum", Parameters::ID::sequencerChordStrum);
     configureSlider(sequencerAccentSlider, sequencerAccentLabel, "Accent", Parameters::ID::sequencerAccent);
     configureSlider(sequencerOctaveSlider, sequencerOctaveLabel, "Oct", Parameters::ID::sequencerOctave);
     configureSlider(sequencerProbabilitySlider, sequencerProbabilityLabel, "Prob", Parameters::ID::sequencerProbability);
@@ -1444,6 +1445,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
+            setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, true);
             setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, true);
             setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, true);
             setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
@@ -1452,6 +1454,7 @@ void NateVSTAudioProcessorEditor::resized()
                 &sequencerRootSlider,
                 &sequencerGateSlider,
                 &sequencerSwingSlider,
+                &sequencerChordStrumSlider,
                 &sequencerAccentSlider,
                 &sequencerOctaveSlider,
                 &sequencerProbabilitySlider,
@@ -2442,6 +2445,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
     setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, false);
+    setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, false);
     setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, false);
     setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, false);
     setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, false);

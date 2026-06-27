@@ -198,6 +198,7 @@ private:
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
     juce::Slider sequencerSwingSlider;
+    juce::Slider sequencerChordStrumSlider;
     juce::Slider sequencerAccentSlider;
     juce::Slider sequencerOctaveSlider;
     juce::Slider sequencerProbabilitySlider;
@@ -298,6 +299,7 @@ private:
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
     juce::Label sequencerSwingLabel;
+    juce::Label sequencerChordStrumLabel;
     juce::Label sequencerAccentLabel;
     juce::Label sequencerOctaveLabel;
     juce::Label sequencerProbabilityLabel;

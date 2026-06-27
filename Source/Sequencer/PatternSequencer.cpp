@@ -18,6 +18,7 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerScale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     sequencerChordMode = parameters.getRawParameterValue(Parameters::ID::sequencerChordMode);
     sequencerChordVoicing = parameters.getRawParameterValue(Parameters::ID::sequencerChordVoicing);
+    sequencerChordStrum = parameters.getRawParameterValue(Parameters::ID::sequencerChordStrum);
     sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
     sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
     sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
@@ -206,6 +207,20 @@ float PatternSequencer::getChordNoteVelocity(float velocity, int noteIndex) cons
     return juce::jlimit(0.0f, 1.0f, velocity * juce::jmax(0.72f, trim));
 }
 
+int PatternSequencer::getChordStrumOffset(int stepLength, int noteIndex, int noteCount) const
+{
+    if (noteIndex <= 0 || noteCount <= 1 || stepLength <= 1)
+        return 0;
+
+    const auto strumAmount = juce::jlimit(0.0f, 1.0f, readParameter(sequencerChordStrum, 0.0f));
+    if (strumAmount <= 0.0f)
+        return 0;
+
+    const auto maxSpread = static_cast<float>(stepLength) * 0.18f * strumAmount;
+    const auto notePosition = static_cast<float>(noteIndex) / static_cast<float>(juce::jmax(1, noteCount - 1));
+    return juce::roundToInt(maxSpread * notePosition);
+}
+
 void PatternSequencer::clear()
 {
     for (auto step = 0; step < numSteps; ++step)
@@ -293,14 +308,20 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
             const auto notes = getChordNotes(root, octaveOffset, step.noteOffset, noteCount);
             activeNoteCount = noteCount;
             activeNotes = notes;
+            const auto noteOffOffset = eventOffset + gateSamples;
 
             for (auto noteIndex = 0; noteIndex < noteCount; ++noteIndex)
             {
                 const auto noteVelocity = getChordNoteVelocity(velocity, noteIndex);
-                midi.addEvent(juce::MidiMessage::noteOn(1, notes[static_cast<size_t>(noteIndex)], noteVelocity), eventOffset);
+                const auto maxNoteOnOffset = noteOffOffset < numSamples
+                    ? juce::jmax(eventOffset, noteOffOffset - 1)
+                    : numSamples - 1;
+                const auto noteOnOffset = juce::jlimit(eventOffset,
+                                                       maxNoteOnOffset,
+                                                       eventOffset + getChordStrumOffset(currentStepDuration, noteIndex, noteCount));
+                midi.addEvent(juce::MidiMessage::noteOn(1, notes[static_cast<size_t>(noteIndex)], noteVelocity), noteOnOffset);
             }
 
-            const auto noteOffOffset = eventOffset + gateSamples;
             if (noteOffOffset < numSamples)
             {
                 addNoteOffsForActiveNotes(midi, noteOffOffset);

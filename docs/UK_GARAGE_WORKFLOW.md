@@ -150,6 +150,7 @@ Research references:
 - The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 - The SEQ panel includes chord modes for fast 5th, minor, minor 7, major, and minor 9 stabs; Organ Skank, UKG Chord Stab, and Late Stab templates now use those modes by default.
 - The SEQ panel includes Close, Inv 1, Inv 2, Open, and Drop 2 voicings so short organ, chord, and late-stab patterns can sit in different registers without redrawing the grid.
+- The SEQ panel includes a Strum control for subtle flam/spread on chord stabs; chord-focused factory presets use it lightly while bass and vocal chop patterns stay tight.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.
 - The SEQ panel includes MIDI export so generated UKG basslines, skanks, and vocal trigger patterns can be saved as `.mid` clips and edited directly in Ableton.
 

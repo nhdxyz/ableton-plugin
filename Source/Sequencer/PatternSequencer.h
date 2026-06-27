@@ -37,6 +37,7 @@ public:
     int getQuantizedNoteOffset(int noteOffset) const;
     ChordNoteArray getChordNotes(int rootNote, int octaveOffset, int noteOffset, int& noteCount) const;
     float getChordNoteVelocity(float velocity, int noteIndex) const;
+    int getChordStrumOffset(int stepLength, int noteIndex, int noteCount) const;
     void clear();
     void randomize(float amount);
 
@@ -66,6 +67,7 @@ private:
     std::atomic<float>* sequencerScale = nullptr;
     std::atomic<float>* sequencerChordMode = nullptr;
     std::atomic<float>* sequencerChordVoicing = nullptr;
+    std::atomic<float>* sequencerChordStrum = nullptr;
     std::atomic<float>* sequencerAccent = nullptr;
     std::atomic<float>* sequencerOctave = nullptr;
     std::atomic<float>* sequencerProbability = nullptr;

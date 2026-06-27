@@ -85,6 +85,7 @@
   <PARAM id="sequencer_scale" value="4" />
   <PARAM id="sequencer_chord_mode" value="0" />
   <PARAM id="sequencer_chord_voicing" value="0" />
+  <PARAM id="sequencer_chord_strum" value="0" />
   <PARAM id="sequencer_accent" value="0.62" />
   <PARAM id="sequencer_octave" value="-1" />
   <PARAM id="sequencer_probability" value="0.9" />

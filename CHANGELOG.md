@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Chord Strum
+
+- Added a saved SEQ `Strum` amount that spreads chord note-ons for softer house chords and less rigid UKG stabs.
+- Made live sequencer playback and MIDI export use the same strum timing, while preserving shared gate behavior.
+- Updated chord-focused templates and UKG factory presets with subtle strum defaults while bass and vocal chop presets remain unstrummed.
+
 ### Sequencer Chord Voicing
 
 - Added a saved SEQ `Voice` selector with Close, Inv 1, Inv 2, Open, and Drop 2 voicings for less blocky house and UKG chord stabs.

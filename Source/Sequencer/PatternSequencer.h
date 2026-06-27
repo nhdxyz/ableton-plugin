@@ -32,6 +32,7 @@ public:
     bool isEnabled() const;
     Step getStep(int index) const;
     void setStep(int index, Step step);
+    int getQuantizedNoteOffset(int noteOffset) const;
     void clear();
     void randomize(float amount);
 

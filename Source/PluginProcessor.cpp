@@ -500,6 +500,105 @@ void NateVSTAudioProcessor::rotateSequencerPattern(int stepOffset)
     }
 }
 
+bool NateVSTAudioProcessor::exportSequencerMidiFile(const juce::File& destination) const
+{
+    if (destination == juce::File{})
+        return false;
+
+    auto outputFile = destination.hasFileExtension(".mid;.midi") ? destination : destination.withFileExtension(".mid");
+    if (! outputFile.getParentDirectory().createDirectory())
+        return false;
+
+    constexpr auto ticksPerQuarterNote = 960;
+    constexpr auto stepCount = Sequencer::PatternSequencer::numSteps;
+    const auto rateIndex = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerRate, 1.0f));
+    const auto stepTicks = rateIndex == 0 ? ticksPerQuarterNote / 2
+        : rateIndex == 2 ? ticksPerQuarterNote / 8
+        : ticksPerQuarterNote / 4;
+    const auto root = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerRoot, 36.0f));
+    const auto octaveOffset = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f)) * 12;
+    const auto gate = juce::jlimit(0.05f, 0.95f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f));
+    const auto swing = juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f));
+    const auto grooveMode = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerGrooveMode, 0.0f));
+    const auto accent = juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f));
+
+    auto stepDelayTicks = [this, stepTicks, swing, grooveMode] (int stepIndex)
+    {
+        const auto safeIndex = juce::jlimit(0, Sequencer::PatternSequencer::numSteps - 1, stepIndex);
+        const auto step = patternSequencer.getStep(safeIndex);
+        const auto maxDelay = static_cast<float>(stepTicks) * swing * 0.5f;
+        const auto isAnchorStep = safeIndex == 0 || safeIndex == 4 || safeIndex == 8 || safeIndex == 12;
+        const auto isOffbeatStep = (safeIndex % 2) != 0;
+
+        auto weight = 0.0f;
+        switch (grooveMode)
+        {
+            case 1:
+                weight = step.timing;
+                break;
+
+            case 2:
+                if (! isAnchorStep)
+                    weight = step.timing > 0.0f ? step.timing : (isOffbeatStep ? 0.62f : 0.18f);
+                break;
+
+            case 3:
+                weight = isAnchorStep ? 0.0f : step.timing * 0.65f;
+                break;
+
+            case 0:
+            default:
+                weight = isOffbeatStep ? 1.0f : 0.0f;
+                break;
+        }
+
+        return juce::roundToInt(maxDelay * juce::jlimit(0.0f, 1.0f, weight));
+    };
+
+    juce::MidiMessageSequence sequence;
+    auto exportedNotes = 0;
+
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+    {
+        const auto step = patternSequencer.getStep(stepIndex);
+        if (! step.enabled)
+            continue;
+
+        const auto delayTicks = stepDelayTicks(stepIndex);
+        const auto nextDelayTicks = stepDelayTicks((stepIndex + 1) % stepCount);
+        const auto durationTicks = juce::jmax(1, stepTicks + nextDelayTicks - delayTicks);
+        const auto gateTicks = juce::jlimit(1, juce::jmax(1, durationTicks - 1),
+                                           juce::roundToInt(static_cast<float>(durationTicks) * gate));
+        const auto isAnchorStep = stepIndex == 0 || stepIndex == 4 || stepIndex == 8 || stepIndex == 12;
+        const auto velocity = isAnchorStep
+            ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
+            : juce::jlimit(0.0f, 1.0f, step.velocity * (1.0f - (accent * 0.12f)));
+        const auto noteNumber = juce::jlimit(0, 127, root + octaveOffset + patternSequencer.getQuantizedNoteOffset(step.noteOffset));
+        const auto startTicks = (stepIndex * stepTicks) + delayTicks;
+
+        sequence.addEvent(juce::MidiMessage::noteOn(1, noteNumber, velocity), static_cast<double>(startTicks));
+        sequence.addEvent(juce::MidiMessage::noteOff(1, noteNumber), static_cast<double>(startTicks + gateTicks));
+        ++exportedNotes;
+    }
+
+    if (exportedNotes == 0)
+        return false;
+
+    sequence.updateMatchedPairs();
+
+    juce::MidiFile midiFile;
+    midiFile.setTicksPerQuarterNote(ticksPerQuarterNote);
+    midiFile.addTrack(sequence);
+
+    auto output = outputFile.createOutputStream();
+    if (output == nullptr || output->failedToOpen())
+        return false;
+
+    output->setPosition(0);
+    output->truncate();
+    return midiFile.writeTo(*output);
+}
+
 void NateVSTAudioProcessor::clearSequencerPattern()
 {
     patternSequencer.clear();

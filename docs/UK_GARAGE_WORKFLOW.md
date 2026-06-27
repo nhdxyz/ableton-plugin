@@ -149,6 +149,7 @@ Research references:
 - The grid now shows timing markers on pushed steps, probability bars, anchor-step dots, beat-group dividers, and root-aware note rows, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
 - The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.
+- The SEQ panel includes MIDI export so generated UKG basslines, skanks, and vocal trigger patterns can be saved as `.mid` clips and edited directly in Ableton.
 
 5. UKG factory presets.
 

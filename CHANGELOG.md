@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer MIDI Export
+
+- Added a SEQ-panel `MIDI` export action that writes the current 16-step pattern as a `.mid` clip for Ableton arrangement and editing.
+- Exported clips follow the sequencer's root, octave, rate, gate, swing/groove timing, per-step timing, scale quantization, velocity, and accent settings.
+- Split SEQ pattern controls and utility controls into separate rows so template selection, rotate/copy, export, randomize, and clear are easier to scan.
+
 ### Sequencer Rotate Utilities
 
 - Added `Rot <` and `Rot >` controls to shift the whole 16-step SEQ pattern earlier or later without redrawing it.

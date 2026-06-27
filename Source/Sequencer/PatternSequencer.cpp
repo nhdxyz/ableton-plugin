@@ -69,6 +69,11 @@ void PatternSequencer::setStep(int index, Step step)
     stepTiming[safeIndex].store(step.timing);
 }
 
+int PatternSequencer::getQuantizedNoteOffset(int noteOffset) const
+{
+    return quantizeNoteOffset(juce::jlimit(-24, 24, noteOffset));
+}
+
 void PatternSequencer::clear()
 {
     for (auto step = 0; step < numSteps; ++step)

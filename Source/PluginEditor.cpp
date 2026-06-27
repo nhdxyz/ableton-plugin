@@ -749,6 +749,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         sequencerGrid.repaint();
         setRandomStatus("Sequence rotated right");
     };
+    exportSequencerMidiButton.setTooltip("Export the current sequencer pattern as a MIDI clip");
+    exportSequencerMidiButton.onClick = [this] { exportSequencerMidiClip(); };
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
@@ -836,6 +838,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(copySequencerButton);
     addAndMakeVisible(rotateSequencerLeftButton);
     addAndMakeVisible(rotateSequencerRightButton);
+    addAndMakeVisible(exportSequencerMidiButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
     addAndMakeVisible(labTabButton);
@@ -1394,6 +1397,7 @@ void NateVSTAudioProcessorEditor::resized()
             copySequencerButton.setVisible(true);
             rotateSequencerLeftButton.setVisible(true);
             rotateSequencerRightButton.setVisible(true);
+            exportSequencerMidiButton.setVisible(true);
             bassPatternButton.setVisible(true);
             stabPatternButton.setVisible(true);
             ukgPatternButton.setVisible(true);
@@ -1410,17 +1414,19 @@ void NateVSTAudioProcessorEditor::resized()
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
             sequencerGrooveBox.setBounds(timingRow.removeFromLeft(150).reduced(4));
             sequencerScaleBox.setBounds(timingRow.removeFromLeft(132).reduced(4));
-            auto patternRow = content.removeFromTop(44).withTrimmedTop(2);
-            sequencerPatternBox.setBounds(patternRow.removeFromLeft(184).reduced(4));
-            applyPatternButton.setBounds(patternRow.removeFromLeft(68).reduced(4));
-            copySequencerButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
-            rotateSequencerLeftButton.setBounds(patternRow.removeFromLeft(58).reduced(4));
-            rotateSequencerRightButton.setBounds(patternRow.removeFromLeft(58).reduced(4));
-            bassPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
-            stabPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
-            ukgPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
-            randomSequencerButton.setBounds(patternRow.removeFromLeft(94).reduced(4));
-            clearSequencerButton.setBounds(patternRow.removeFromLeft(72).reduced(4));
+            auto patternRow = content.removeFromTop(38).withTrimmedTop(2);
+            sequencerPatternBox.setBounds(patternRow.removeFromLeft(202).reduced(4));
+            applyPatternButton.setBounds(patternRow.removeFromLeft(72).reduced(4));
+            bassPatternButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
+            stabPatternButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
+            ukgPatternButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
+            auto utilityRow = content.removeFromTop(38).withTrimmedTop(2);
+            copySequencerButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(62).reduced(4));
+            rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(62).reduced(4));
+            exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            randomSequencerButton.setBounds(utilityRow.removeFromLeft(102).reduced(4));
+            clearSequencerButton.setBounds(utilityRow.removeFromLeft(76).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
@@ -1428,7 +1434,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, true);
             setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
             setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
-            layoutKnobRow(content.removeFromTop(98).withTrimmedTop(6), {
+            layoutKnobRow(content.removeFromTop(92).withTrimmedTop(6), {
                 &sequencerRootSlider,
                 &sequencerGateSlider,
                 &sequencerSwingSlider,
@@ -1850,6 +1856,31 @@ void NateVSTAudioProcessorEditor::chooseSampleFile()
                                  const auto file = chooser.getResult();
                                  if (file.existsAsFile())
                                      loadSampleFile(file);
+                             });
+}
+
+void NateVSTAudioProcessorEditor::exportSequencerMidiClip()
+{
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Export sequencer MIDI",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory).getChildFile("Nate VST Sequence.mid"),
+        "*.mid;*.midi");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
+                                 | juce::FileBrowserComponent::canSelectFiles
+                                 | juce::FileBrowserComponent::warnAboutOverwriting,
+                             [this] (const juce::FileChooser& chooser)
+                             {
+                                 auto file = chooser.getResult();
+                                 if (file == juce::File{})
+                                     return;
+
+                                 if (! file.hasFileExtension(".mid;.midi"))
+                                     file = file.withFileExtension(".mid");
+
+                                 setRandomStatus(audioProcessor.exportSequencerMidiFile(file)
+                                                     ? "MIDI exported"
+                                                     : "MIDI export skipped");
                              });
 }
 
@@ -2316,7 +2347,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

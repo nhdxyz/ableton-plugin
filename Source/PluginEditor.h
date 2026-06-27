@@ -368,6 +368,7 @@ private:
     juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton rotateSequencerLeftButton { "Rot <" };
     juce::TextButton rotateSequencerRightButton { "Rot >" };
+    juce::TextButton exportSequencerMidiButton { "MIDI" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };
@@ -443,6 +444,7 @@ private:
     void configureSectionLabel(juce::Label& label, const juce::String& text);
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);
     void chooseSampleFile();
+    void exportSequencerMidiClip();
     void loadSampleFile(const juce::File& file);
     void updateSampleNameLabel();
     void setRandomStatus(const juce::String& action);

@@ -73,6 +73,7 @@ public:
     void applySequencerPatternPreset(int presetIndex);
     void copySequencerFirstHalfToSecondHalf();
     void rotateSequencerPattern(int stepOffset);
+    bool exportSequencerMidiFile(const juce::File& destination) const;
     void clearSequencerPattern();
     juce::String getActiveRandomizationLockSummary() const;
     bool savePreset(const juce::String& presetName);

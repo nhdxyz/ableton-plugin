@@ -20,6 +20,12 @@
 - Kept the mutation ladder explicit: `Vary` for subtle changes, `Mutate` for medium movement, and `Wild` for bigger house/UKG idea jumps.
 - Integrated Wild with the existing Undo/Redo randomization history so status labels and restore behavior remain consistent.
 
+### Section-Scoped Randomization
+
+- Added a LAB/HOME `Scope` selector for limiting Generate, Vary, Mutate, and Wild to All, Source, Env, Filter, Sample, FX, Seq, or Macros.
+- Made scoped randomization restore every unselected section from the pre-randomization snapshot while still applying explicit randomization locks afterward.
+- Restored modulation and output state during scoped runs so focused edits do not quietly change hidden LFO, matrix, or output-gain behavior.
+
 ### Sample Waveform Display
 
 - Added a SAMPLE-panel waveform overview for loaded audio so vocal chops and phrase cuts can be edited visually instead of only by start/end numbers.

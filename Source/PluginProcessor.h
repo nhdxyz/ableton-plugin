@@ -59,9 +59,13 @@ public:
 
     Parameters::APVTS& getValueTreeState();
     void generateRandomPatch();
+    void generateRandomPatch(int mutationScopeIndex);
     void mutateRandomPatch();
+    void mutateRandomPatch(int mutationScopeIndex);
     void wildMutateRandomPatch();
+    void wildMutateRandomPatch(int mutationScopeIndex);
     void createRandomVariation();
+    void createRandomVariation(int mutationScopeIndex);
     bool undoRandomization();
     bool redoRandomization();
     bool loadSampleFile(const juce::File& file);
@@ -110,6 +114,18 @@ private:
         variation
     };
 
+    enum class RandomMutationScope
+    {
+        all = 0,
+        source,
+        envelope,
+        filter,
+        sample,
+        effects,
+        sequencer,
+        macros
+    };
+
     Parameters::APVTS parameters;
     Synth::SynthEngine synthEngine;
     Randomization::Randomizer randomizer;
@@ -141,13 +157,18 @@ private:
     bool hasRandomRedoState = false;
     bool hasSequencerUndoState = false;
 
-    void runRandomAction(RandomAction action);
+    void runRandomAction(RandomAction action, int mutationScopeIndex = 0);
     static juce::String randomActionLabel(RandomAction action);
+    static RandomMutationScope randomMutationScopeFromIndex(int mutationScopeIndex);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
     float getParameterPlainValue(const juce::String& parameterID, float fallback) const;
     float getParameterPlainValueFromState(const juce::ValueTree& state, const juce::String& parameterID, float fallback) const;
     void restoreParameterFromState(const juce::ValueTree& state, const juce::String& parameterID);
     void restoreParameterGroupFromState(const juce::ValueTree& state, std::initializer_list<const char*> parameterIDs);
+    void restoreSectionsOutsideMutationScope(const juce::ValueTree& state, RandomMutationScope mutationScope);
+    void restoreMutationScopeFromState(const juce::ValueTree& state, RandomMutationScope mutationScope);
+    void restoreModulationFromState(const juce::ValueTree& state);
+    void restoreOutputFromState(const juce::ValueTree& state);
     void restoreLockedSectionsFromState(const juce::ValueTree& state);
     void restoreSampleFromState(const juce::ValueTree& state);
     void restoreSequencerFromState(const juce::ValueTree& state);

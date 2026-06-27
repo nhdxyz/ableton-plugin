@@ -118,6 +118,7 @@ private:
     juce::ComboBox osc2WaveBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox recipeBox;
+    juce::ComboBox randomScopeBox;
     juce::ComboBox sequencerRateBox;
     juce::ComboBox sequencerGrooveBox;
     juce::ComboBox sequencerScaleBox;
@@ -525,6 +526,7 @@ private:
     void refreshPresetList();
     void saveCurrentPreset();
     void loadSelectedPreset();
+    int selectedRandomMutationScope() const;
     void loadPresetByOffset(int offset);
     void auditionSelectedPreset();
     void releasePresetAuditionNote();

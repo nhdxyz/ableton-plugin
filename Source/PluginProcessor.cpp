@@ -152,22 +152,42 @@ Parameters::APVTS& NateVSTAudioProcessor::getValueTreeState()
 
 void NateVSTAudioProcessor::generateRandomPatch()
 {
-    runRandomAction(RandomAction::generate);
+    generateRandomPatch(0);
+}
+
+void NateVSTAudioProcessor::generateRandomPatch(int mutationScopeIndex)
+{
+    runRandomAction(RandomAction::generate, mutationScopeIndex);
 }
 
 void NateVSTAudioProcessor::mutateRandomPatch()
 {
-    runRandomAction(RandomAction::mutate);
+    mutateRandomPatch(0);
+}
+
+void NateVSTAudioProcessor::mutateRandomPatch(int mutationScopeIndex)
+{
+    runRandomAction(RandomAction::mutate, mutationScopeIndex);
 }
 
 void NateVSTAudioProcessor::wildMutateRandomPatch()
 {
-    runRandomAction(RandomAction::wild);
+    wildMutateRandomPatch(0);
+}
+
+void NateVSTAudioProcessor::wildMutateRandomPatch(int mutationScopeIndex)
+{
+    runRandomAction(RandomAction::wild, mutationScopeIndex);
 }
 
 void NateVSTAudioProcessor::createRandomVariation()
 {
-    runRandomAction(RandomAction::variation);
+    createRandomVariation(0);
+}
+
+void NateVSTAudioProcessor::createRandomVariation(int mutationScopeIndex)
+{
+    runRandomAction(RandomAction::variation, mutationScopeIndex);
 }
 
 bool NateVSTAudioProcessor::undoRandomization()
@@ -1109,9 +1129,10 @@ juce::String NateVSTAudioProcessor::getRandomHistorySummary() const
     return history.joinIntoString(" / ");
 }
 
-void NateVSTAudioProcessor::runRandomAction(RandomAction action)
+void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationScopeIndex)
 {
     const auto snapshot = createPluginState();
+    const auto mutationScope = randomMutationScopeFromIndex(mutationScopeIndex);
     randomUndoState = snapshot.createCopy();
     randomUndoLabel = randomActionLabel(action);
     hasRandomUndoState = true;
@@ -1135,6 +1156,15 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action)
             break;
     }
 
+    if (mutationScope == RandomMutationScope::sample)
+    {
+        if (action == RandomAction::wild)
+            randomizeUkgVocalChop();
+        else
+            randomizeSampleCut();
+    }
+
+    restoreSectionsOutsideMutationScope(snapshot, mutationScope);
     restoreLockedSectionsFromState(snapshot);
 }
 
@@ -1149,6 +1179,21 @@ juce::String NateVSTAudioProcessor::randomActionLabel(RandomAction action)
     }
 
     return "Random";
+}
+
+NateVSTAudioProcessor::RandomMutationScope NateVSTAudioProcessor::randomMutationScopeFromIndex(int mutationScopeIndex)
+{
+    switch (mutationScopeIndex)
+    {
+        case 1: return RandomMutationScope::source;
+        case 2: return RandomMutationScope::envelope;
+        case 3: return RandomMutationScope::filter;
+        case 4: return RandomMutationScope::sample;
+        case 5: return RandomMutationScope::effects;
+        case 6: return RandomMutationScope::sequencer;
+        case 7: return RandomMutationScope::macros;
+        default: return RandomMutationScope::all;
+    }
 }
 
 bool NateVSTAudioProcessor::isRandomLockEnabled(const juce::String& parameterID) const
@@ -1191,6 +1236,198 @@ void NateVSTAudioProcessor::restoreParameterGroupFromState(const juce::ValueTree
                                                             std::initializer_list<const char*> parameterIDs)
 {
     for (const auto* parameterID : parameterIDs)
+        restoreParameterFromState(state, parameterID);
+}
+
+void NateVSTAudioProcessor::restoreSectionsOutsideMutationScope(const juce::ValueTree& state, RandomMutationScope mutationScope)
+{
+    if (mutationScope == RandomMutationScope::all)
+        return;
+
+    for (auto scopeIndex = 1; scopeIndex <= 7; ++scopeIndex)
+    {
+        const auto candidate = randomMutationScopeFromIndex(scopeIndex);
+        if (candidate != mutationScope)
+            restoreMutationScopeFromState(state, candidate);
+    }
+
+    restoreModulationFromState(state);
+    restoreOutputFromState(state);
+}
+
+void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree& state, RandomMutationScope mutationScope)
+{
+    switch (mutationScope)
+    {
+        case RandomMutationScope::source:
+            restoreParameterGroupFromState(state, {
+                Parameters::ID::oscOctave,
+                Parameters::ID::oscTune,
+                Parameters::ID::oscWave,
+                Parameters::ID::osc1Level,
+                Parameters::ID::osc2Octave,
+                Parameters::ID::osc2Tune,
+                Parameters::ID::osc2Wave,
+                Parameters::ID::osc2Level,
+                Parameters::ID::subLevel,
+                Parameters::ID::noiseLevel,
+                Parameters::ID::monoMode,
+                Parameters::ID::glideTime,
+                Parameters::ID::unisonVoices,
+                Parameters::ID::unisonDetune,
+                Parameters::ID::unisonBlend,
+                Parameters::ID::unisonSpread
+            });
+            break;
+
+        case RandomMutationScope::envelope:
+            restoreParameterGroupFromState(state, {
+                Parameters::ID::ampAttack,
+                Parameters::ID::ampDecay,
+                Parameters::ID::ampSustain,
+                Parameters::ID::ampRelease
+            });
+            break;
+
+        case RandomMutationScope::filter:
+            restoreParameterGroupFromState(state, {
+                Parameters::ID::filterCutoff,
+                Parameters::ID::filterResonance,
+                Parameters::ID::filterEnvAmount,
+                Parameters::ID::filterMode,
+                Parameters::ID::driveAmount
+            });
+            break;
+
+        case RandomMutationScope::sample:
+            restoreSampleFromState(state);
+            break;
+
+        case RandomMutationScope::effects:
+            restoreParameterGroupFromState(state, {
+                Parameters::ID::fxDistortionEnabled,
+                Parameters::ID::fxDistortionAmount,
+                Parameters::ID::fxBitcrushEnabled,
+                Parameters::ID::fxBitcrushBits,
+                Parameters::ID::fxBitcrushDownsample,
+                Parameters::ID::fxBitcrushMix,
+                Parameters::ID::fxPumpEnabled,
+                Parameters::ID::fxPumpRate,
+                Parameters::ID::fxPumpDepth,
+                Parameters::ID::fxPumpShape,
+                Parameters::ID::fxPumpPhase,
+                Parameters::ID::fxTremoloEnabled,
+                Parameters::ID::fxTremoloRate,
+                Parameters::ID::fxTremoloDepth,
+                Parameters::ID::fxTremoloPan,
+                Parameters::ID::fxTremoloShape,
+                Parameters::ID::fxTremoloPhase,
+                Parameters::ID::fxRingEnabled,
+                Parameters::ID::fxRingFrequency,
+                Parameters::ID::fxRingDepth,
+                Parameters::ID::fxRingMix,
+                Parameters::ID::fxRingBias,
+                Parameters::ID::fxCombEnabled,
+                Parameters::ID::fxCombFrequency,
+                Parameters::ID::fxCombFeedback,
+                Parameters::ID::fxCombDamping,
+                Parameters::ID::fxCombMix,
+                Parameters::ID::fxChorusEnabled,
+                Parameters::ID::fxChorusRate,
+                Parameters::ID::fxChorusDepth,
+                Parameters::ID::fxChorusMix,
+                Parameters::ID::fxDelayEnabled,
+                Parameters::ID::fxDelayTime,
+                Parameters::ID::fxDelayFeedback,
+                Parameters::ID::fxDelayMix,
+                Parameters::ID::fxReverbEnabled,
+                Parameters::ID::fxReverbSize,
+                Parameters::ID::fxReverbDamping,
+                Parameters::ID::fxReverbMix,
+                Parameters::ID::fxWidthEnabled,
+                Parameters::ID::fxWidthAmount,
+                Parameters::ID::fxWidthMonoCutoff,
+                Parameters::ID::fxToneEnabled,
+                Parameters::ID::fxToneTilt,
+                Parameters::ID::fxToneLowCut,
+                Parameters::ID::fxEqEnabled,
+                Parameters::ID::fxEqLowGain,
+                Parameters::ID::fxEqMidGain,
+                Parameters::ID::fxEqHighGain,
+                Parameters::ID::fxEqTrim,
+                Parameters::ID::fxPhaserEnabled,
+                Parameters::ID::fxPhaserRate,
+                Parameters::ID::fxPhaserDepth,
+                Parameters::ID::fxPhaserMix,
+                Parameters::ID::fxGuardEnabled,
+                Parameters::ID::fxGuardPush,
+                Parameters::ID::fxGuardCeiling,
+                Parameters::ID::fxFlangerEnabled,
+                Parameters::ID::fxFlangerRate,
+                Parameters::ID::fxFlangerDepth,
+                Parameters::ID::fxFlangerFeedback,
+                Parameters::ID::fxFlangerMix
+            });
+
+            for (const auto* parameterID : Parameters::ID::fxOrder)
+                restoreParameterFromState(state, parameterID);
+
+            break;
+
+        case RandomMutationScope::sequencer:
+            restoreSequencerFromState(state);
+            break;
+
+        case RandomMutationScope::macros:
+            restoreParameterGroupFromState(state, {
+                Parameters::ID::macroTone,
+                Parameters::ID::macroDirt,
+                Parameters::ID::macroMotion,
+                Parameters::ID::macroSpace,
+                Parameters::ID::macroWeight,
+                Parameters::ID::macroBounce,
+                Parameters::ID::macroWarp,
+                Parameters::ID::macroThrow
+            });
+            break;
+
+        case RandomMutationScope::all:
+            break;
+    }
+}
+
+void NateVSTAudioProcessor::restoreOutputFromState(const juce::ValueTree& state)
+{
+    restoreParameterFromState(state, Parameters::ID::outputGain);
+}
+
+void NateVSTAudioProcessor::restoreModulationFromState(const juce::ValueTree& state)
+{
+    restoreParameterGroupFromState(state, {
+        Parameters::ID::lfo1Rate,
+        Parameters::ID::lfo1Sync,
+        Parameters::ID::lfo1SyncRate,
+        Parameters::ID::lfo1Shape,
+        Parameters::ID::lfo1Depth,
+        Parameters::ID::lfo1Phase,
+        Parameters::ID::lfo1Retrigger,
+        Parameters::ID::modEnv1Attack,
+        Parameters::ID::modEnv1Decay,
+        Parameters::ID::modEnv1Sustain,
+        Parameters::ID::modEnv1Release,
+        Parameters::ID::modEnv1Depth
+    });
+
+    for (const auto* parameterID : Parameters::ID::lfo1Curve)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixSource)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixDestination)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixAmount)
         restoreParameterFromState(state, parameterID);
 }
 

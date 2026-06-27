@@ -354,6 +354,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(recipeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomRecipe, recipeBox));
 
+    randomScopeBox.addItemList({ "All", "Source", "Env", "Filter", "Sample", "FX", "Seq", "Macros" }, 1);
+    randomScopeBox.setSelectedId(1, juce::dontSendNotification);
+    randomScopeBox.setTextWhenNothingSelected("Scope");
+    randomScopeBox.setTooltip("Limit Generate, Vary, Mutate, and Wild to one patch section");
+    addAndMakeVisible(randomScopeBox);
+
     sequencerRateBox.addItemList(Parameters::sequencerRateChoices(), 1);
     addAndMakeVisible(sequencerRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
@@ -725,23 +731,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     generateButton.onClick = [this]
     {
-        audioProcessor.generateRandomPatch();
+        audioProcessor.generateRandomPatch(selectedRandomMutationScope());
         setRandomStatus("Generated");
     };
     mutateButton.onClick = [this]
     {
-        audioProcessor.mutateRandomPatch();
+        audioProcessor.mutateRandomPatch(selectedRandomMutationScope());
         setRandomStatus("Mutated");
     };
     variationButton.onClick = [this]
     {
-        audioProcessor.createRandomVariation();
+        audioProcessor.createRandomVariation(selectedRandomMutationScope());
         setRandomStatus("Variation");
     };
     wildMutateButton.setTooltip("Make a stronger recipe-aware mutation while respecting active locks");
     wildMutateButton.onClick = [this]
     {
-        audioProcessor.wildMutateRandomPatch();
+        audioProcessor.wildMutateRandomPatch(selectedRandomMutationScope());
         setRandomStatus("Wild");
     };
     undoRandomButton.onClick = [this]
@@ -1251,6 +1257,7 @@ void NateVSTAudioProcessorEditor::resized()
             homeLabLabel.setVisible(true);
             homeLibraryLabel.setVisible(true);
             recipeBox.setVisible(true);
+            randomScopeBox.setVisible(true);
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
@@ -1309,7 +1316,9 @@ void NateVSTAudioProcessorEditor::resized()
             captureSnapshotBButton.setBounds(snapshotRow.removeFromLeft(72).reduced(3, 4));
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
-            recipeBox.setBounds(labArea.removeFromTop(38).reduced(3, 4));
+            auto randomSelectRow = labArea.removeFromTop(38);
+            recipeBox.setBounds(randomSelectRow.removeFromLeft(176).reduced(3, 4));
+            randomScopeBox.setBounds(randomSelectRow.reduced(3, 4));
             auto labButtonRow = labArea.removeFromTop(36).withTrimmedTop(4);
             generateButton.setBounds(labButtonRow.removeFromLeft(82).reduced(3, 4));
             mutateButton.setBounds(labButtonRow.removeFromLeft(74).reduced(3, 4));
@@ -1407,6 +1416,7 @@ void NateVSTAudioProcessorEditor::resized()
         {
             randomSectionLabel.setVisible(true);
             recipeBox.setVisible(true);
+            randomScopeBox.setVisible(true);
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
@@ -1424,11 +1434,12 @@ void NateVSTAudioProcessorEditor::resized()
             randomStatusLabel.setVisible(true);
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
-            recipeBox.setBounds(actionRow.removeFromLeft(230).reduced(4));
-            generateButton.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            mutateButton.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            variationButton.setBounds(actionRow.removeFromLeft(108).reduced(4));
-            wildMutateButton.setBounds(actionRow.removeFromLeft(88).reduced(4));
+            recipeBox.setBounds(actionRow.removeFromLeft(210).reduced(4));
+            randomScopeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
+            generateButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
+            mutateButton.setBounds(actionRow.removeFromLeft(104).reduced(4));
+            variationButton.setBounds(actionRow.removeFromLeft(88).reduced(4));
+            wildMutateButton.setBounds(actionRow.removeFromLeft(76).reduced(4));
             undoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
             redoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
             auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
@@ -2246,6 +2257,11 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
     sampleWaveformDisplay.setRange(start, end);
 }
 
+int NateVSTAudioProcessorEditor::selectedRandomMutationScope() const
+{
+    return juce::jmax(0, randomScopeBox.getSelectedId() - 1);
+}
+
 void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 {
     const auto locks = audioProcessor.getActiveRandomizationLockSummary();
@@ -2253,6 +2269,8 @@ void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
     juce::StringArray details;
     if (history.isNotEmpty())
         details.add(history);
+    if (randomScopeBox.getSelectedId() > 1)
+        details.add("Scope: " + randomScopeBox.getText());
     details.add(locks.isNotEmpty() ? "Locked: " + locks : "No locks");
     randomStatusLabel.setText(action + " | " + details.joinIntoString(" | "), juce::dontSendNotification);
 }
@@ -2837,7 +2855,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

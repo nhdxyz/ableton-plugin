@@ -459,6 +459,7 @@ Build the next larger slices in this order:
 7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
    First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.
+   First section-scope pass implemented as a HOME/LAB `Scope` selector for All, Source, Env, Filter, Sample, FX, Seq, and Macros, restoring unselected sections plus hidden modulation/output state after recipe generation.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

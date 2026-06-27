@@ -80,6 +80,7 @@
   <PARAM id="sample_stutter_enabled" value="0" />
   <PARAM id="sample_stutter_rate" value="1" />
   <PARAM id="sample_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_style" value="0" />
   <PARAM id="sequencer_enabled" value="0" />
   <PARAM id="sequencer_rate" value="1" />
   <PARAM id="sequencer_root" value="36" />

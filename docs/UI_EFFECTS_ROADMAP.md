@@ -432,9 +432,10 @@ Build the next larger slices in this order:
 
 1. Modulation visibility: destination rings, source activity, assignment summaries, direct curve dragging, and more destinations for sample and FX parameters.
    First control-feel pass implemented as direct rotary dragging, parameter-aware drag ranges, and a larger visible LFO curve editor.
-   Second control-feel pass reduced rotary drag travel and enabled wheel adjustment on slider controls for faster in-session sound design.
+   Second control-feel pass reduced rotary drag travel and disabled wheel adjustment on slider controls to prevent accidental changes during in-session sound design.
    First macro-bank pass implemented as a two-row MOD macro area and expanded modulation source list for the eight performance macros.
    First source-visibility pass implemented as live MOD source rows for LFO 1, Mod Env 1, Velocity, and the eight macros, with active route count and summed depth/polarity.
+   First panel-alignment pass realigned MOD paint grouping, compacted SAMPLE source/chop/shape regions, and reduced the FX command/performance header footprint.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
@@ -453,6 +454,8 @@ Build the next larger slices in this order:
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.
    First click-safety pass implemented as internal zero-cross/low-energy boundary snapping plus adaptive fade-in/fade-out guards for chop playback and stutter restarts.
+   First slice-style pass implemented as a saved SAMPLE `Slice Style` selector that lets pads apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behaviors.
+   `UKG Vocal Chop Starter` now opens with Garage slice style selected in the factory pack.
 4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.
    First browser-search pass implemented as token-based Library text search across preset name, category, source, user/factory status, and favorite state.
@@ -463,6 +466,7 @@ Build the next larger slices in this order:
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.
    First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
+   First FX declutter pass combined the throw and momentary actions into a single performance row under the add/reorder strip.
 7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
    First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.

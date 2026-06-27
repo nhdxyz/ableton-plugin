@@ -64,6 +64,11 @@ juce::StringArray sequencerChordVoicingChoices()
     return { "Close", "Inv 1", "Inv 2", "Open", "Drop 2" };
 }
 
+juce::StringArray sampleSliceStyleChoices()
+{
+    return { "Clean", "Pitch", "Reverse", "Stutter", "Garage" };
+}
+
 juce::StringArray lfoShapeChoices()
 {
     return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
@@ -563,6 +568,12 @@ APVTS::ParameterLayout createLayout()
         1,
         8,
         3));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleSliceStyle,
+        "Sample Slice Style",
+        sampleSliceStyleChoices(),
+        0));
 
     add(std::make_unique<juce::AudioParameterBool>(
         ID::sequencerEnabled,

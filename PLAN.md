@@ -1572,7 +1572,7 @@ These can all be reconsidered later. They are distractions before the synth make
 ## Immediate Next Steps
 
 1. Validate the current SEQ chord-memory and UI declutter pass in Ableton with house, UKG, tech-house, minimal, and techno preset workflows.
-2. Add per-slice sample controls for pitch, reverse, gain, stutter, and choke behavior after the click-safe chop playback pass.
+2. Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 3. Add a per-control modulation inspector so users can see source, depth, polarity, bypass, and delete actions without scanning the full matrix.
 4. Add FX module presets and clearer per-module preset/reorder affordances.
 5. Expand browser metadata and audition workflow with richer tags, ratings/favorites polish, and macro preview values.

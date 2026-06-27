@@ -83,7 +83,7 @@ Research references:
 
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
-- Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, pitch ramp, reverse, stutter, and rhythmic triggering.
 - Later: add transient-ish slicing, per-slice pitch/reverse/gain/stutter, choke groups, and sequencer-triggered slice lanes.
 
 ### Groove
@@ -120,12 +120,14 @@ Research references:
 - Cleaned up the SEQ panel so chord/groove controls, random/variation actions, and the grid are grouped more clearly for pattern building.
 - Added non-destructive zero-cross/low-energy boundary snapping and adaptive fade guards for SAMPLE playback so short vocal cuts and slice-pad auditions click less.
 - Added SEQ `Shape` transforms for tightening anchors, swinging ghost notes, pushing late stabs, nudging vocal-trigger timing, and adding light human feel without replacing the notes.
+- Added SAMPLE `Slice Style` modes so numbered pads can apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behavior while auditioning phrase sections.
+- Set `UKG Vocal Chop Starter` to Garage slice style and tightened the SAMPLE panel grouping so vocal-chop source, phrase slicing, and shape controls stay visually separate.
 
 ## Next UKG Features
 
 Reference-backed next passes:
 
-- Add per-slice pitch, reverse, gain, stutter, and choke behavior once the waveform and pad workflow are stable.
+- Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Add FX module presets for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, and controlled drive.
 - Add a per-control modulation inspector so UKG bass movement and stab macro routing can be understood without opening the full matrix.
 

@@ -109,7 +109,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxWidthMonoCutoff,
             Parameters::ID::fxToneLowCut
         }))
-        return 155;
+        return 118;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::filterResonance,
@@ -126,7 +126,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxEqTrim,
             Parameters::ID::fxGuardCeiling
         }))
-        return 118;
+        return 88;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::macroTone,
@@ -143,9 +143,9 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 112;
+        return 84;
 
-    return 96;
+    return 72;
 }
 
 juce::String modSourceSummaryText(size_t index)
@@ -413,6 +413,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleModeBox.setTextWhenNothingSelected("Mode");
     addAndMakeVisible(sampleModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
+
+    sampleSliceStyleBox.addItemList(Parameters::sampleSliceStyleChoices(), 1);
+    sampleSliceStyleBox.setTextWhenNothingSelected("Slice Style");
+    sampleSliceStyleBox.setTooltip("Choose how the numbered slice pads set pitch, reverse, and stutter behavior");
+    addAndMakeVisible(sampleSliceStyleBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleSliceStyle, sampleSliceStyleBox));
 
     sampleStutterRateBox.addItem("1/8", 1);
     sampleStutterRateBox.addItem("1/16", 2);
@@ -1202,17 +1208,34 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(100);
+        auto topRow = modContent.removeFromTop(188);
         auto sourceArea = topRow.removeFromLeft(300).reduced(5);
         auto macroArea = topRow.reduced(5);
         modContent.removeFromTop(6);
-        auto controlsRow = modContent.removeFromTop(186);
+        auto controlsRow = modContent.removeFromTop(190);
         auto lfoArea = controlsRow.removeFromLeft(450).reduced(5);
         auto envelopeArea = controlsRow.reduced(5);
         modContent.removeFromTop(6);
         auto matrixArea = modContent.reduced(5);
 
         for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
+        {
+            g.setColour(juce::Colour(0xff101619));
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
+            g.setColour(juce::Colour(0xff2b363c));
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        }
+    }
+
+    if (activePanel == Panel::sample)
+    {
+        auto sampleContent = contentArea.reduced(18);
+        sampleContent.removeFromTop(28);
+        auto sourceArea = sampleContent.removeFromTop(88).reduced(5);
+        auto chopArea = sampleContent.removeFromTop(192).reduced(5);
+        auto shapeArea = sampleContent.reduced(5);
+
+        for (auto area : { sourceArea, chopArea, shapeArea })
         {
             g.setColour(juce::Colour(0xff101619));
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -1238,13 +1261,15 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
     if (activePanel == Panel::effects)
     {
-        auto fxContent = contentArea.reduced(18).withTrimmedTop(36);
-        fxContent.removeFromTop(48);
-        fxContent.removeFromTop(10);
+        auto fxContent = contentArea.reduced(18);
+        fxContent.removeFromTop(28);
+        auto commandArea = fxContent.removeFromTop(44).reduced(5);
+        auto performArea = fxContent.removeFromTop(42).reduced(5);
+        fxContent.removeFromTop(8);
         auto rackArea = fxContent.removeFromLeft(260).reduced(5);
         auto detailArea = fxContent.reduced(5);
 
-        for (auto area : { rackArea, detailArea })
+        for (auto area : { commandArea, performArea, rackArea, detailArea })
         {
             g.setColour(juce::Colour(0xff101619));
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -1553,7 +1578,7 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixAmountHeader.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(176);
+            auto topRow = modContent.removeFromTop(188);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
@@ -1570,8 +1595,8 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroBounceSlider, macroBounceLabel, true);
             setSliderVisible(macroWarpSlider, macroWarpLabel, true);
             setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
-            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
+            layoutKnobRow(macroArea.removeFromTop(74).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(74).withTrimmedTop(2), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
 
             modContent.removeFromTop(6);
             auto generatorRow = modContent.removeFromTop(190);
@@ -1584,12 +1609,12 @@ void NateVSTAudioProcessorEditor::resized()
             lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(66).withTrimmedTop(2));
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(56).withTrimmedTop(2));
 
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(60).withTrimmedTop(3), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(72).withTrimmedTop(3), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
             modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
@@ -1646,6 +1671,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
             sampleModeBox.setVisible(true);
+            sampleSliceStyleBox.setVisible(true);
             sampleStutterEnabledButton.setVisible(true);
             sampleStutterRateBox.setVisible(true);
             sampleWaveformDisplay.setVisible(true);
@@ -1653,8 +1679,8 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
-            sampleSourceLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
-            auto actionRow = content.removeFromTop(42);
+            sampleSourceLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
+            auto actionRow = content.removeFromTop(38);
             loadSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             clearSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
             randomCutButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
@@ -1662,29 +1688,30 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
             sampleModeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            auto stutterRow = content.removeFromTop(38).withTrimmedTop(2);
-            sampleNameLabel.setBounds(stutterRow.removeFromLeft(430).reduced(8, 4));
+            auto stutterRow = content.removeFromTop(34).withTrimmedTop(2);
+            sampleNameLabel.setBounds(stutterRow.removeFromLeft(330).reduced(8, 4));
+            sampleSliceStyleBox.setBounds(stutterRow.removeFromLeft(142).reduced(4));
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
             sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
-            sampleChopLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
-            sampleWaveformDisplay.setBounds(content.removeFromTop(108).reduced(4, 6));
-            auto sliceRow = content.removeFromTop(38).withTrimmedTop(2);
+            sampleChopLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
+            sampleWaveformDisplay.setBounds(content.removeFromTop(100).reduced(4, 6));
+            auto sliceRow = content.removeFromTop(34).withTrimmedTop(2);
             const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
             for (auto& button : sampleSliceButtons)
                 button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-            auto cutRow = content.removeFromTop(46).withTrimmedTop(4);
+            auto cutRow = content.removeFromTop(42).withTrimmedTop(4);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
             sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
-            sampleShapeLabel.setBounds(content.removeFromTop(18).withTrimmedLeft(4));
+            sampleShapeLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
             setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
             setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
             setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            layoutKnobRow(content.removeFromTop(84), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(content.removeFromTop(84).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+            layoutKnobRow(content.removeFromTop(78), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(content.removeFromTop(78).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -1768,7 +1795,7 @@ void NateVSTAudioProcessorEditor::resized()
             futureSectionLabel.setBounds(content.removeFromTop(28));
             updateFxRackControls();
 
-            auto actionRow = content.removeFromTop(48);
+            auto actionRow = content.removeFromTop(44);
             fxAddBox.setVisible(true);
             fxMoveUpButton.setVisible(true);
             fxMoveDownButton.setVisible(true);
@@ -1790,22 +1817,20 @@ void NateVSTAudioProcessorEditor::resized()
             fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
             fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
 
-            auto throwRow = content.removeFromTop(38).withTrimmedTop(2);
-            fxThrowDelayButton.setBounds(throwRow.removeFromLeft(112).reduced(4));
-            fxThrowSpaceButton.setBounds(throwRow.removeFromLeft(116).reduced(4));
-            fxThrowPumpButton.setBounds(throwRow.removeFromLeft(104).reduced(4));
-            fxThrowDryButton.setBounds(throwRow.removeFromLeft(96).reduced(4));
+            auto performRow = content.removeFromTop(42).withTrimmedTop(2);
+            fxThrowDelayButton.setBounds(performRow.removeFromLeft(102).reduced(4));
+            fxThrowSpaceButton.setBounds(performRow.removeFromLeft(106).reduced(4));
+            fxThrowPumpButton.setBounds(performRow.removeFromLeft(96).reduced(4));
+            fxThrowDryButton.setBounds(performRow.removeFromLeft(88).reduced(4));
+            fxHoldDelayButton.setBounds(performRow.removeFromLeft(84).reduced(4));
+            fxHoldSpaceButton.setBounds(performRow.removeFromLeft(84).reduced(4));
+            fxHoldPumpButton.setBounds(performRow.removeFromLeft(92).reduced(4));
+            fxMuteDropButton.setBounds(performRow.removeFromLeft(90).reduced(4));
 
-            auto holdRow = content.removeFromTop(34).withTrimmedTop(1);
-            fxHoldDelayButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
-            fxHoldSpaceButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
-            fxHoldPumpButton.setBounds(holdRow.removeFromLeft(100).reduced(4));
-            fxMuteDropButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
-
-            content.removeFromTop(6);
-            auto rackArea = content.removeFromLeft(260).reduced(18, 16);
+            content.removeFromTop(8);
+            auto rackArea = content.removeFromLeft(260).reduced(18, 14);
             rackArea.removeFromTop(26);
-            auto detailArea = content.reduced(24, 18);
+            auto detailArea = content.reduced(24, 16);
             detailArea.removeFromTop(30);
 
             std::array<UI::FxRackRow*, 15> visibleFxSlots {};
@@ -2084,7 +2109,7 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     slider.setMouseDragSensitivity(rotaryDragSensitivityForParameter(parameterID));
     slider.setVelocityBasedMode(false);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(true);
+    slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
@@ -2111,9 +2136,9 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
                                                               const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
-    slider.setMouseDragSensitivity(180);
+    slider.setMouseDragSensitivity(150);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(true);
+    slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
@@ -2139,9 +2164,9 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
                                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
-    slider.setMouseDragSensitivity(130);
+    slider.setMouseDragSensitivity(110);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(true);
+    slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
     slider.setNumDecimalPlacesToDisplay(2);
@@ -2251,12 +2276,67 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
     const auto start = static_cast<float>(safeIndex) / sliceCount;
     const auto end = static_cast<float>(safeIndex + 1) / sliceCount;
+    const auto styleIndex = juce::jlimit(0, 4, sampleSliceStyleBox.getSelectedItemIndex());
+    const auto slicePosition = static_cast<int>(safeIndex);
+    const std::array<float, 8> pitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
+    const std::array<float, 8> garagePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
+    const std::array<float, 8> garageRamp { 7.0f, 0.0f, -5.0f, 12.0f, 0.0f, -7.0f, 5.0f, -12.0f };
 
     setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::sampleStart, start);
     setPlainParameterValue(Parameters::ID::sampleEnd, end);
+    setPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f);
+
+    switch (styleIndex)
+    {
+        case 1: // Pitch
+            setPlainParameterValue(Parameters::ID::sampleReverse, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleTranspose, pitchLadder[safeIndex]);
+            setPlainParameterValue(Parameters::ID::samplePitchRamp, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleGain, -7.0f + static_cast<float>(slicePosition % 3));
+            setPlainParameterValue(Parameters::ID::sampleStutterEnabled, 0.0f);
+            break;
+
+        case 2: // Reverse
+            setPlainParameterValue(Parameters::ID::sampleReverse, (slicePosition % 2) == 0 ? 0.0f : 1.0f);
+            setPlainParameterValue(Parameters::ID::sampleTranspose, pitchLadder[static_cast<size_t>((slicePosition + 2) % 8)]);
+            setPlainParameterValue(Parameters::ID::samplePitchRamp, (slicePosition % 3) == 0 ? -7.0f : 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleGain, -7.5f);
+            setPlainParameterValue(Parameters::ID::sampleStutterEnabled, 0.0f);
+            break;
+
+        case 3: // Stutter
+            setPlainParameterValue(Parameters::ID::sampleReverse, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleTranspose, garagePitch[static_cast<size_t>((slicePosition + 1) % 8)] * 0.5f);
+            setPlainParameterValue(Parameters::ID::samplePitchRamp, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleGain, -8.0f);
+            setPlainParameterValue(Parameters::ID::sampleStutterEnabled, 1.0f);
+            setPlainParameterValue(Parameters::ID::sampleStutterRate, static_cast<float>((slicePosition % 2) + 1));
+            setPlainParameterValue(Parameters::ID::sampleStutterRepeats, static_cast<float>(2 + (slicePosition % 4)));
+            break;
+
+        case 4: // Garage
+            setPlainParameterValue(Parameters::ID::sampleReverse, (slicePosition == 2 || slicePosition == 6) ? 1.0f : 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleTranspose, garagePitch[safeIndex]);
+            setPlainParameterValue(Parameters::ID::samplePitchRamp, garageRamp[safeIndex]);
+            setPlainParameterValue(Parameters::ID::sampleGain, -8.5f + static_cast<float>(slicePosition % 4) * 0.8f);
+            setPlainParameterValue(Parameters::ID::sampleStutterEnabled, (slicePosition == 3 || slicePosition == 7) ? 1.0f : 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleStutterRate, (slicePosition == 7) ? 2.0f : 1.0f);
+            setPlainParameterValue(Parameters::ID::sampleStutterRepeats, (slicePosition == 7) ? 5.0f : 3.0f);
+            break;
+
+        case 0: // Clean
+        default:
+            setPlainParameterValue(Parameters::ID::sampleReverse, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleTranspose, 0.0f);
+            setPlainParameterValue(Parameters::ID::samplePitchRamp, 0.0f);
+            setPlainParameterValue(Parameters::ID::sampleGain, -6.0f);
+            setPlainParameterValue(Parameters::ID::sampleStutterEnabled, 0.0f);
+            break;
+    }
+
     const auto didAudition = audioProcessor.triggerSampleAudition();
-    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : " selected"));
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + " " + sampleSliceStyleBox.getText() + (didAudition ? " auditioned" : " selected"));
     updateSampleSliceButtons();
     updateSampleWaveformDisplay();
 }
@@ -2911,7 +2991,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

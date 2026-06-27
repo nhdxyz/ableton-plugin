@@ -2,6 +2,20 @@
 
 ## 2026-06-27
 
+### Sample Slice Styles
+
+- Added a saved SAMPLE `Slice Style` selector with Clean, Pitch, Reverse, Stutter, and Garage modes for the numbered slice pads.
+- Made slice-pad selection apply style-aware pitch, reverse, pitch-ramp, gain, and stutter settings using the existing automatable sample controls.
+- Set `UKG Vocal Chop Starter` to Garage slice style so the factory preset opens ready for pitched/reversed/stuttered phrase auditioning.
+- Kept the first pass preset-compatible by adding only one style choice parameter while leaving deeper stored per-slice lanes for a later sampler pass.
+
+### UI Grouping And Control Feel
+
+- Made rotary and horizontal controls easier to move with shorter drag travel, while disabling mouse-wheel edits to avoid accidental parameter jumps inside Ableton.
+- Realigned MOD panel background grouping to the actual source, macro, LFO, envelope, and routing layout.
+- Added SAMPLE source/chop/shape grouping and compacted its rows so waveform, slice pads, cut controls, and shape knobs no longer compete for vertical space.
+- Condensed the FX performance controls into one row under the add/order strip, leaving more room for the focused rack and selected module editor.
+
 ### Selective Groove Transforms
 
 - Added a SEQ groove transform dropdown with Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize options.

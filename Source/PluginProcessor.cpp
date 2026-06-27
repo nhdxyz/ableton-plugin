@@ -1867,6 +1867,9 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
     else
         samplePlayer.clear();
 
+    if (! state.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid())
+        setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
+
     restoreParameterGroupFromState(state, {
         Parameters::ID::sampleEnabled,
         Parameters::ID::sampleStart,
@@ -1879,7 +1882,8 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         Parameters::ID::sampleMix,
         Parameters::ID::sampleStutterEnabled,
         Parameters::ID::sampleStutterRate,
-        Parameters::ID::sampleStutterRepeats
+        Parameters::ID::sampleStutterRepeats,
+        Parameters::ID::sampleSliceStyle
     });
 }
 
@@ -2073,6 +2077,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordVoicing = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordVoicing).isValid();
     const auto hasSequencerChordStrum = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid();
     const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
+    const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -2087,6 +2092,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f);
     if (! hasSequencerChordMemory)
         setParameterPlainValue(Parameters::ID::sequencerChordMemory, 0.0f);
+    if (! hasSampleSliceStyle)
+        setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

@@ -18,7 +18,7 @@ constexpr auto modPanelGap = 6;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
-constexpr std::array<const char*, 22> momentaryFxParameterIDs {
+constexpr std::array<const char*, 23> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
     Parameters::ID::fxDelaySync,
     Parameters::ID::fxDelayRate,
@@ -31,6 +31,7 @@ constexpr std::array<const char*, 22> momentaryFxParameterIDs {
     Parameters::ID::fxReverbMix,
     Parameters::ID::fxPumpEnabled,
     Parameters::ID::fxPumpRate,
+    Parameters::ID::fxPumpCurve,
     Parameters::ID::fxPumpDepth,
     Parameters::ID::fxPumpShape,
     Parameters::ID::fxPumpPhase,
@@ -498,6 +499,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxPumpRateBox.setTextWhenNothingSelected("Rate");
     addAndMakeVisible(fxPumpRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxPumpRate, fxPumpRateBox));
+
+    fxPumpCurveBox.addItemList(Parameters::pumpCurveChoices(), 1);
+    fxPumpCurveBox.setTextWhenNothingSelected("Curve");
+    fxPumpCurveBox.setTooltip("Choose the pump/duck envelope shape");
+    addAndMakeVisible(fxPumpCurveBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxPumpCurve, fxPumpCurveBox));
 
     fxTremoloRateBox.addItem("1/4", 1);
     fxTremoloRateBox.addItem("1/8", 2);
@@ -2096,8 +2103,10 @@ void NateVSTAudioProcessorEditor::resized()
                 case FxModule::pump:
                     fxPumpEnabledButton.setVisible(true);
                     fxPumpRateBox.setVisible(true);
+                    fxPumpCurveBox.setVisible(true);
                     fxPumpEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    fxPumpRateBox.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    fxPumpRateBox.setBounds(detailHeader.removeFromLeft(96).reduced(3, 4));
+                    fxPumpCurveBox.setBounds(detailHeader.removeFromLeft(118).reduced(3, 4));
                     setSliderVisible(fxPumpDepthSlider, fxPumpDepthLabel, true);
                     setSliderVisible(fxPumpShapeSlider, fxPumpShapeLabel, true);
                     setSliderVisible(fxPumpPhaseSlider, fxPumpPhaseLabel, true);
@@ -2759,6 +2768,7 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
 {
     setPlainParameterValue(Parameters::ID::fxPumpEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxPumpRate, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxPumpCurve, 2.0f);
     setPlainParameterValue(Parameters::ID::fxPumpDepth, 0.58f);
     setPlainParameterValue(Parameters::ID::fxPumpShape, 0.68f);
     setPlainParameterValue(Parameters::ID::fxPumpPhase, 0.08f);
@@ -2769,6 +2779,7 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.10f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
     fxPumpRateBox.setSelectedItemIndex(1, juce::dontSendNotification);
+    fxPumpCurveBox.setSelectedItemIndex(2, juce::dontSendNotification);
 
     selectedFxModule = FxModule::pump;
     resized();
@@ -3061,6 +3072,7 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
             if (presetId == 1)
             {
                 set(Parameters::ID::fxPumpRate, 0.0f);
+                set(Parameters::ID::fxPumpCurve, 0.0f);
                 set(Parameters::ID::fxPumpDepth, 0.44f);
                 set(Parameters::ID::fxPumpShape, 0.56f);
                 set(Parameters::ID::fxPumpPhase, 0.0f);
@@ -3068,6 +3080,7 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
             else if (presetId == 2)
             {
                 set(Parameters::ID::fxPumpRate, 1.0f);
+                set(Parameters::ID::fxPumpCurve, 2.0f);
                 set(Parameters::ID::fxPumpDepth, 0.34f);
                 set(Parameters::ID::fxPumpShape, 0.64f);
                 set(Parameters::ID::fxPumpPhase, 0.08f);
@@ -3075,6 +3088,7 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
             else
             {
                 set(Parameters::ID::fxPumpRate, 3.0f);
+                set(Parameters::ID::fxPumpCurve, 4.0f);
                 set(Parameters::ID::fxPumpDepth, 0.26f);
                 set(Parameters::ID::fxPumpShape, 0.48f);
                 set(Parameters::ID::fxPumpPhase, 0.0f);
@@ -3335,6 +3349,7 @@ void NateVSTAudioProcessorEditor::restoreFxMomentarySnapshot(const FxMomentarySn
 
     fxDelayRateBox.setSelectedItemIndex(juce::roundToInt(readPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f)), juce::dontSendNotification);
     fxPumpRateBox.setSelectedItemIndex(juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)), juce::dontSendNotification);
+    fxPumpCurveBox.setSelectedItemIndex(juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpCurve, 0.0f)), juce::dontSendNotification);
     selectedFxModule = snapshot.selectedModule;
 }
 
@@ -3562,7 +3577,14 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::eq: return "low mid high trim";
         case FxModule::distortion: return "saturation amount";
         case FxModule::bitcrush: return "bits downsample mix";
-        case FxModule::pump: return "sync depth shape";
+        case FxModule::pump:
+        {
+            const auto choices = Parameters::pumpCurveChoices();
+            const auto curveIndex = juce::jlimit(0,
+                                                 choices.size() - 1,
+                                                 juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpCurve, 0.0f)));
+            return "sync " + choices[curveIndex] + " duck";
+        }
         case FxModule::tremolo: return "sync trem pan";
         case FxModule::ring: return "metallic sidebands";
         case FxModule::comb: return "tuned resonance";
@@ -3675,7 +3697,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
+        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,

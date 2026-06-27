@@ -84,6 +84,11 @@ juce::StringArray delayRateChoices()
     return { "1/4", "1/8", "1/8D", "1/8T", "1/16", "1/16D" };
 }
 
+juce::StringArray pumpCurveChoices()
+{
+    return { "Smooth", "Tight", "Garage", "Stutter", "Gate" };
+}
+
 juce::StringArray modulationSourceChoices()
 {
     return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw" };
@@ -715,6 +720,12 @@ APVTS::ParameterLayout createLayout()
         ID::fxPumpRate,
         "FX Pump Rate",
         juce::StringArray { "1/4", "1/8", "1/8T", "1/16" },
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::fxPumpCurve,
+        "FX Pump Curve",
+        pumpCurveChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterFloat>(

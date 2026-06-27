@@ -39,6 +39,53 @@ double delaySecondsForRate(int rateIndex, double bpm)
             return quarterNoteSeconds * 0.5;        // 1/8
     }
 }
+
+float pumpDuckAmount(float recovery, float shape, int curveIndex)
+{
+    const auto safeRecovery = juce::jlimit(0.0f, 1.0f, recovery);
+    const auto safeShape = juce::jlimit(0.0f, 1.0f, shape);
+    const auto inverseRecovery = 1.0f - safeRecovery;
+
+    switch (curveIndex)
+    {
+        case 1: // Tight
+            return std::pow(inverseRecovery, juce::jmap(safeShape, 2.2f, 8.0f));
+
+        case 2: // Garage
+        {
+            const auto hold = juce::jmap(safeShape, 0.10f, 0.28f);
+            if (safeRecovery <= hold)
+                return 1.0f;
+
+            const auto release = juce::jlimit(0.0f, 1.0f, (safeRecovery - hold) / juce::jmax(0.001f, 1.0f - hold));
+            return std::pow(1.0f - release, juce::jmap(safeShape, 1.1f, 4.0f));
+        }
+
+        case 3: // Stutter
+        {
+            const auto pulsePhase = std::fmod(safeRecovery * 4.0f, 1.0f);
+            const auto pulseDuck = pulsePhase < 0.32f
+                ? 1.0f
+                : std::pow(1.0f - ((pulsePhase - 0.32f) / 0.68f), juce::jmap(safeShape, 1.0f, 6.0f));
+            const auto baseDuck = std::pow(inverseRecovery, juce::jmap(safeShape, 0.6f, 2.0f));
+            return juce::jlimit(0.0f, 1.0f, juce::jmax(baseDuck * 0.45f, pulseDuck * 0.7f));
+        }
+
+        case 4: // Gate
+        {
+            const auto gateLength = juce::jmap(safeShape, 0.22f, 0.58f);
+            if (safeRecovery <= gateLength)
+                return 1.0f;
+
+            const auto tail = juce::jlimit(0.0f, 1.0f, (safeRecovery - gateLength) / juce::jmax(0.001f, 1.0f - gateLength));
+            return std::pow(1.0f - tail, 8.0f);
+        }
+
+        case 0:
+        default:
+            return std::pow(inverseRecovery, juce::jmap(safeShape, 0.35f, 4.5f));
+    }
+}
 }
 
 namespace Effects
@@ -54,6 +101,7 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxBitcrushMix = parameters.getRawParameterValue(Parameters::ID::fxBitcrushMix);
     fxPumpEnabled = parameters.getRawParameterValue(Parameters::ID::fxPumpEnabled);
     fxPumpRate = parameters.getRawParameterValue(Parameters::ID::fxPumpRate);
+    fxPumpCurve = parameters.getRawParameterValue(Parameters::ID::fxPumpCurve);
     fxPumpDepth = parameters.getRawParameterValue(Parameters::ID::fxPumpDepth);
     fxPumpShape = parameters.getRawParameterValue(Parameters::ID::fxPumpShape);
     fxPumpPhase = parameters.getRawParameterValue(Parameters::ID::fxPumpPhase);
@@ -373,10 +421,10 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
     const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(isEnabled ? readParameter(fxPumpRate, 0.0f) : 1.0f)));
     const auto cyclesPerBeat = pumpCyclesPerBeat(rateIndex);
     const auto phaseIncrement = (safeBpm / 60.0) * cyclesPerBeat / safeSampleRate;
+    const auto curveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(readParameter(fxPumpCurve, 0.0f))));
     const auto depth = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f));
     const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f) + (bounce * 0.16f));
     const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpPhase, 0.0f));
-    const auto curve = juce::jmap(shape, 0.35f, 4.5f);
     const auto smoothing = 1.0f - std::exp(-1.0f / static_cast<float>(safeSampleRate * 0.0025));
 
     if (ppqPosition.has_value())
@@ -393,7 +441,7 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
             shapedPhase += 1.0;
 
         const auto recovery = static_cast<float>(shapedPhase);
-        const auto duckAmount = std::pow(1.0f - recovery, curve);
+        const auto duckAmount = pumpDuckAmount(recovery, shape, curveIndex);
         const auto targetGain = juce::jlimit(0.0f, 1.0f, 1.0f - (depth * duckAmount));
         pumpSmoothedGain += (targetGain - pumpSmoothedGain) * smoothing;
 

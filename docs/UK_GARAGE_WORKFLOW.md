@@ -61,6 +61,7 @@ Research references:
 - The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
 - Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
+- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits.
 
 ## Sound Targets
 
@@ -130,6 +131,7 @@ Research references:
 - Reworked the MOD route list into two four-slot banks so source, destination, and amount controls remain usable while assigning UKG bass, stab, and chop movement.
 - Regenerated factory presets with explicit chord-memory and FX-order state so UKG patches restore their performance and rack layout consistently.
 - Added synced Delay rate state to presets and UKG randomization so garage chop starters and throw presets open with musical delay timing.
+- Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve instead of a generic sidechain shape.
 
 ## Next UKG Features
 

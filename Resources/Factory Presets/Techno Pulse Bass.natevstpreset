@@ -104,6 +104,7 @@
   <PARAM id="fx_bitcrush_mix" value="0.12" />
   <PARAM id="fx_pump_enabled" value="1" />
   <PARAM id="fx_pump_rate" value="1" />
+  <PARAM id="fx_pump_curve" value="1" />
   <PARAM id="fx_pump_depth" value="0.22" />
   <PARAM id="fx_pump_shape" value="0.45" />
   <PARAM id="fx_pump_phase" value="0" />

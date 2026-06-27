@@ -113,6 +113,7 @@ DEFAULTS = {
     "fx_bitcrush_mix": 0.25,
     "fx_pump_enabled": 0,
     "fx_pump_rate": 0,
+    "fx_pump_curve": 0,
     "fx_pump_depth": 0.35,
     "fx_pump_shape": 0.45,
     "fx_pump_phase": 0.0,
@@ -1589,6 +1590,15 @@ def derive_performance_macros(params, explicit_params):
 
 def write_preset(preset):
     params = DEFAULTS | preset["params"]
+    if params.get("fx_pump_enabled", 0) and "fx_pump_curve" not in preset["params"]:
+        category = preset.get("category", "UKG")
+        params["fx_pump_curve"] = {
+            "UKG": 2,
+            "Minimal": 4,
+            "Tech House": 1,
+            "Techno": 1,
+            "House": 0,
+        }.get(category, 0)
     if params.get("fx_delay_enabled", 0) and "fx_delay_sync" not in preset["params"]:
         params["fx_delay_sync"] = 1
         params["fx_delay_rate"] = preset["params"].get("fx_delay_rate", 1)

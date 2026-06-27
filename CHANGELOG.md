@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Rhythmic Pump Shaper
+
+- Added an automatable Pump Curve selector with Smooth, Tight, Garage, Stutter, and Gate shapes for more precise house, tech-house, minimal, techno, and UKG ducking.
+- Updated Pump DSP so each curve changes the gain envelope while preserving the old Smooth behavior as the default.
+- Wired Pump Curve into the FX detail UI, rack summaries, momentary Pump Drop restore path, module presets, randomization recipes, and factory-preset generation.
+
 ### Tempo-Synced Delay And Host Phase
 
 - Added Delay Sync and Delay Rate controls so FX throws, Space macros, and UKG vocal-chop presets can lock delay timing to musical divisions instead of only milliseconds.

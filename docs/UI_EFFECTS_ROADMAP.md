@@ -221,7 +221,9 @@ Good for minimal clicks, rough digital texture, old sampler color, and aggressiv
 
 3. Pump / Duck
 
-Implemented as the Pump module. An internal tempo-sync pump gives sidechain-style movement without requiring external sidechain routing. The first version uses synced rate, depth, shape, phase, host PPQ alignment when available, and a BPM-based fallback. Real external sidechain can come much later.
+Implemented as the Pump module. An internal tempo-sync pump gives sidechain-style movement without requiring external sidechain routing. The current version uses synced rate, curve type, depth, shape, phase, host PPQ alignment when available, and a BPM-based fallback. Real external sidechain can come much later.
+
+The first rhythmic-shaper curve pass is implemented with Smooth, Tight, Garage, Stutter, and Gate curves. This does not replace a future drawable curve editor, but it gives house and UKG patches useful production shapes now while keeping the parameter model stable.
 
 4. Stereo Width / Mono Bass
 
@@ -384,7 +386,7 @@ Add in this order:
 
 1. Bitcrusher/downsample. Implemented as the Crush module.
 2. Flanger. Implemented as the Flanger module.
-3. Pump/Duck. Implemented as the Pump module.
+3. Pump/Duck. Implemented as the Pump module, now with selectable curve types for smooth ducking, tight house pump, garage hold, stutter pulses, and gated minimal movement.
 4. Stereo Width/Mono Bass. Implemented as the Width module.
 5. Three-Band EQ. Implemented as the EQ module.
 6. Tremolo / Auto Pan. Implemented as the Tremolo module.

@@ -56,6 +56,7 @@ private:
     std::atomic<float>* fxBitcrushMix = nullptr;
     std::atomic<float>* fxPumpEnabled = nullptr;
     std::atomic<float>* fxPumpRate = nullptr;
+    std::atomic<float>* fxPumpCurve = nullptr;
     std::atomic<float>* fxPumpDepth = nullptr;
     std::atomic<float>* fxPumpShape = nullptr;
     std::atomic<float>* fxPumpPhase = nullptr;

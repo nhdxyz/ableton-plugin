@@ -130,6 +130,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxBitcrushMix = 0.25f;
     auto fxPumpEnabled = false;
     auto fxPumpRate = 0;
+    auto fxPumpCurve = 0;
     auto fxPumpDepth = 0.35f;
     auto fxPumpShape = 0.45f;
     auto fxPumpPhase = 0.0f;
@@ -807,6 +808,41 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
     }
 
+    if (fxPumpEnabled)
+    {
+        switch (recipe)
+        {
+            case Recipe::deepHouseBass:
+                fxPumpCurve = randomInt(0, 1);
+                break;
+
+            case Recipe::rollingTechBass:
+            case Recipe::acidLine:
+                fxPumpCurve = 1;
+                break;
+
+            case Recipe::minimalBlip:
+            case Recipe::noiseFx:
+                fxPumpCurve = randomInt(3, 4);
+                break;
+
+            case Recipe::ukgTwoStepBass:
+            case Recipe::ukgDredBass:
+            case Recipe::ukgOrganStab:
+            case Recipe::ukgChordStab:
+                fxPumpCurve = 2;
+                break;
+
+            case Recipe::darkStab:
+                fxPumpCurve = randomInt(1, 2);
+                break;
+
+            case Recipe::ukgBellPluck:
+                fxPumpCurve = randomInt(2, 3);
+                break;
+        }
+    }
+
     const auto cutoffBias = std::pow(2.0f, brightnessBias);
     cutoff = juce::jlimit(35.0f, 18000.0f, cutoff * cutoffBias);
     drive = juce::jlimit(0.0f, 0.95f, drive + (driveBias * 0.24f));
@@ -965,6 +1001,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxBitcrushMix, fxBitcrushMix);
     setParameter(Parameters::ID::fxPumpEnabled, fxPumpEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxPumpRate, static_cast<float>(juce::jlimit(0, 3, fxPumpRate)));
+    setParameter(Parameters::ID::fxPumpCurve, static_cast<float>(juce::jlimit(0, 4, fxPumpCurve)));
     setParameter(Parameters::ID::fxPumpDepth, fxPumpDepth);
     setParameter(Parameters::ID::fxPumpShape, fxPumpShape);
     setParameter(Parameters::ID::fxPumpPhase, fxPumpPhase);

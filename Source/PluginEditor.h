@@ -72,7 +72,7 @@ private:
 
     struct FxMomentarySnapshot
     {
-        std::array<float, 22> values {};
+        std::array<float, 23> values {};
         FxModule selectedModule = FxModule::guard;
         bool valid = false;
     };
@@ -146,6 +146,7 @@ private:
     juce::ComboBox fxPresetBox;
     juce::ComboBox fxDelayRateBox;
     juce::ComboBox fxPumpRateBox;
+    juce::ComboBox fxPumpCurveBox;
     juce::ComboBox fxTremoloRateBox;
     juce::ComboBox modInspectorDestinationBox;
     juce::ComboBox modInspectorSourceBox;

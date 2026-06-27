@@ -481,6 +481,7 @@ Build the next larger slices in this order:
    First smart-tag pass implemented as generated `preset_tags` metadata plus a Library tag filter for role, safety, FX, sequencing, and genre tags.
    First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
    First rating/organization pass implemented 1-5 star ratings in `Library.xml`, sort modes, rated/star filters, recursive preset scanning, and category subfolder saves for user presets.
+   First pack/key/tempo metadata pass implemented author, pack, key, and BPM preset XML fields, LIBRARY save controls, metadata search, pack/BPM filters, and sort modes for pack, BPM, key, and author.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
    First source-warp pass implemented as a saved Osc Warp control with macro and MOD matrix routing for pre-filter harmonic movement on house basses, UKG Dred/Reese patches, stabs, and techno pulses.

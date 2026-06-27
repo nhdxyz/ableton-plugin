@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Library Pack Key And Tempo Metadata
+
+- Added preset metadata fields for author, pack, musical key, and target BPM, with user saves writing those values into `.natevstpreset` files.
+- Added LIBRARY-panel metadata controls plus search, filter, and sort support for pack, BPM range, key, and author.
+- Updated factory preset generation so the bundled UKG, house, tech-house, minimal, and techno presets carry pack/key/BPM metadata.
+- Kept old presets compatible by falling back to `User Pack`, `Factory Pack`, `Any Key`, and no BPM when metadata is missing.
+
 ### Library Ratings And Category Folders
 
 - Added persistent 0-5 star preset ratings in `Library.xml`, so user and factory presets can be ranked without modifying factory preset files.

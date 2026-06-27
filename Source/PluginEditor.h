@@ -148,6 +148,9 @@ private:
     juce::ComboBox presetTagBox;
     juce::ComboBox presetSortBox;
     juce::ComboBox presetRatingBox;
+    juce::ComboBox presetPackBox;
+    juce::ComboBox presetKeyBox;
+    juce::ComboBox presetBpmBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPresetBox;
     juce::ComboBox fxDelayRateBox;
@@ -504,6 +507,7 @@ private:
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
+    juce::TextEditor presetAuthorEditor;
     UI::OutputMeter outputMeter;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;

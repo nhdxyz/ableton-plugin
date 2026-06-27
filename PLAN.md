@@ -1235,8 +1235,9 @@ Current browser slice:
 - Factory presets are scanned separately from `~/Library/Application Support/Nate VST/Factory Presets`.
 - New user saves can be written into category subfolders such as `Presets/UKG/Bass` or `Presets/House/Chords`; older flat presets remain loadable.
 - Favorites, ratings, and recent presets are stored in `~/Library/Application Support/Nate VST/Library.xml`.
-- LIBRARY can filter by all presets, favorites, recent presets, rated presets, user presets, factory presets, star thresholds, or saved category.
-- LIBRARY can sort by name, rating, newest modified file, category, or source.
+- User and factory presets can carry author, pack, key, and target-BPM metadata in the preset XML.
+- LIBRARY can filter by all presets, favorites, recent presets, rated presets, user presets, factory presets, star thresholds, saved category, pack, or BPM range.
+- LIBRARY can sort by name, rating, newest modified file, category, pack, BPM, key, author, or source.
 
 ## Code Architecture
 
@@ -1580,5 +1581,5 @@ These can all be reconsidered later. They are distractions before the synth make
 2. Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 3. Expand the first modulation inspector beyond implemented per-route bypass/delete and sample/FX destinations into richer route editing, macro assignment views, and eventually sequencer modulation lanes.
 4. Expand FX presets into user-saveable module presets, per-module randomize/compare actions, and direct modulation access to FX mix/depth controls.
-5. Expand browser metadata and audition workflow with macro preview values, per-pack construction kits, and richer author/BPM/key metadata now that ratings, sort modes, favorites, recursive folders, and category subfolder saves are in place.
+5. Expand browser metadata and audition workflow with macro preview values and per-pack construction kits now that ratings, sort modes, favorites, recursive folders, category subfolder saves, and author/pack/key/BPM metadata are in place.
 6. Start larger engine work only after the current subtractive/source-warp/sampler/SEQ/FX workflow feels strong in real sessions.

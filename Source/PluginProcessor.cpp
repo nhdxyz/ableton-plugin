@@ -34,6 +34,17 @@ juce::StringArray presetCategoryPathSegments(const juce::String& category)
 
     return segments;
 }
+
+juce::String presetTextOrFallback(const juce::String& text, const juce::String& fallback)
+{
+    const auto trimmed = text.trim();
+    return trimmed.isNotEmpty() ? trimmed : fallback;
+}
+
+int normalisePresetBpm(int bpm)
+{
+    return bpm >= 20 && bpm <= 300 ? bpm : 0;
+}
 }
 
 NateVSTAudioProcessor::NateVSTAudioProcessor()
@@ -1205,11 +1216,22 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName)
 
 bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juce::String& category)
 {
+    PresetSaveOptions options;
+    options.category = category;
+    return savePreset(presetName, options);
+}
+
+bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const PresetSaveOptions& options)
+{
     const auto trimmedName = presetName.trim();
     if (trimmedName.isEmpty())
         return false;
 
-    const auto storedCategory = category.trim().isNotEmpty() ? category.trim() : juce::String("User");
+    const auto storedCategory = presetTextOrFallback(options.category, "User");
+    const auto storedAuthor = presetTextOrFallback(options.author, "User");
+    const auto storedPack = presetTextOrFallback(options.pack, "User Pack");
+    const auto storedKey = presetTextOrFallback(options.key, "Any Key");
+    const auto storedBpm = normalisePresetBpm(options.bpm);
     const auto directory = presetDirectoryForCategory(storedCategory);
     if (! directory.createDirectory())
         return false;
@@ -1217,9 +1239,12 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juc
     auto state = createPluginState();
     state.setProperty("preset_name", trimmedName, nullptr);
     state.setProperty("preset_category", storedCategory, nullptr);
-    state.setProperty("preset_author", "User", nullptr);
+    state.setProperty("preset_author", storedAuthor, nullptr);
     state.setProperty("preset_source", "User", nullptr);
-    state.setProperty("preset_tags", storedCategory, nullptr);
+    state.setProperty("preset_pack", storedPack, nullptr);
+    state.setProperty("preset_key", storedKey, nullptr);
+    state.setProperty("preset_bpm", storedBpm, nullptr);
+    state.setProperty("preset_tags", storedPack.equalsIgnoreCase(storedCategory) ? storedCategory : storedCategory + ", " + storedPack, nullptr);
     state.setProperty("preset_folder", presetCategoryPathSegments(storedCategory).joinIntoString("/"), nullptr);
 
     if (auto xml = state.createXml())
@@ -1314,6 +1339,10 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
 
             auto category = isFactory ? juce::String("Factory") : juce::String("User");
             auto source = isFactory ? juce::String("Factory") : juce::String("User");
+            auto author = isFactory ? juce::String("Nate") : juce::String("User");
+            auto pack = isFactory ? juce::String("Factory Pack") : juce::String("User Pack");
+            auto key = juce::String("Any Key");
+            auto bpm = 0;
             juce::String tags;
             juce::String folder;
             const auto parentPath = file.getParentDirectory().getFullPathName();
@@ -1338,6 +1367,20 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                     if (storedSource.isNotEmpty())
                         source = storedSource;
 
+                    const auto storedAuthor = state.getProperty("preset_author").toString().trim();
+                    if (storedAuthor.isNotEmpty())
+                        author = storedAuthor;
+
+                    const auto storedPack = state.getProperty("preset_pack").toString().trim();
+                    if (storedPack.isNotEmpty())
+                        pack = storedPack;
+
+                    const auto storedKey = state.getProperty("preset_key").toString().trim();
+                    if (storedKey.isNotEmpty())
+                        key = storedKey;
+
+                    bpm = normalisePresetBpm(static_cast<int>(state.getProperty("preset_bpm", 0)));
+
                     const auto storedTags = state.getProperty("preset_tags").toString().trim();
                     if (storedTags.isNotEmpty())
                         tags = storedTags;
@@ -1356,6 +1399,10 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                                 source,
                                 tags,
                                 folder,
+                                author,
+                                pack,
+                                key,
+                                bpm,
                                 ratingForPreset(name),
                                 file.getLastModificationTime().toMilliseconds(),
                                 isFactory,

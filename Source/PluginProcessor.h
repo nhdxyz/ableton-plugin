@@ -45,10 +45,23 @@ public:
         juce::String source;
         juce::String tags;
         juce::String folder;
+        juce::String author;
+        juce::String pack;
+        juce::String key;
+        int bpm = 0;
         int rating = 0;
         juce::int64 lastModifiedMs = 0;
         bool isFactory = false;
         bool isFavorite = false;
+    };
+
+    struct PresetSaveOptions
+    {
+        juce::String category;
+        juce::String author;
+        juce::String pack;
+        juce::String key;
+        int bpm = 0;
     };
 
     int getNumPrograms() override;
@@ -93,6 +106,7 @@ public:
     juce::String getRandomHistorySummary() const;
     bool savePreset(const juce::String& presetName);
     bool savePreset(const juce::String& presetName, const juce::String& category);
+    bool savePreset(const juce::String& presetName, const PresetSaveOptions& options);
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     std::vector<PresetInfo> getPresetLibrary() const;

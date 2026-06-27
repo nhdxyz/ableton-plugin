@@ -260,6 +260,26 @@ OSC_WARP_BY_PRESET = {
 }
 
 
+FACTORY_METADATA = {
+    "UKG 2-Step Bass": {"pack": "UKG Essentials", "key": "D Min", "bpm": 132},
+    "UKG Shuffle Bass": {"pack": "UKG Essentials", "key": "C Min", "bpm": 134},
+    "UKG Dred Bass": {"pack": "UKG Basslines", "key": "C# Min", "bpm": 132},
+    "UKG Organ Stab": {"pack": "UKG Essentials", "key": "F Min", "bpm": 132},
+    "UKG Chord Stab": {"pack": "UKG Essentials", "key": "G Min", "bpm": 130},
+    "UKG Bell Pluck": {"pack": "UKG Essentials", "key": "C Min", "bpm": 132},
+    "UKG Vocal Chop Starter": {"pack": "Garage Chops", "key": "A Min", "bpm": 134},
+    "UKG Late Stab": {"pack": "UKG Essentials", "key": "F Min", "bpm": 132},
+    "House Chord Memory": {"pack": "House Tools", "key": "C Min", "bpm": 124},
+    "Deep House Sub Chug": {"pack": "House Tools", "key": "F Min", "bpm": 124},
+    "Tech House Rubber Bass": {"pack": "Tech House Tools", "key": "F# Min", "bpm": 126},
+    "Tech House Perc Pluck": {"pack": "Tech House Tools", "key": "A Min", "bpm": 126},
+    "Minimal Click Pluck": {"pack": "Minimal Tools", "key": "D Min", "bpm": 126},
+    "Minimal Sub Pulse": {"pack": "Minimal Tools", "key": "E Min", "bpm": 126},
+    "Techno Pulse Bass": {"pack": "Techno Tools", "key": "F Min", "bpm": 132},
+    "Techno Warehouse Stab": {"pack": "Techno Tools", "key": "C Min", "bpm": 132},
+}
+
+
 def step(index, note, velocity, probability, timing=0.0):
     return {
         f"seq_step_{index}_enabled": "1",
@@ -1669,6 +1689,7 @@ def derive_performance_macros(params, explicit_params):
 
 def write_preset(preset):
     params = DEFAULTS | preset["params"]
+    metadata = FACTORY_METADATA.get(preset["name"], {})
     if "filter_character" not in preset["params"]:
         params["filter_character"] = FILTER_CHARACTER_BY_PRESET.get(preset["name"], 0)
     if "filter_slope" not in preset["params"]:
@@ -1697,6 +1718,9 @@ def write_preset(preset):
             "preset_category": preset.get("category", "UKG"),
             "preset_author": "Nate",
             "preset_source": "Factory",
+            "preset_pack": preset.get("pack", metadata.get("pack", "Factory Pack")),
+            "preset_key": preset.get("key", metadata.get("key", "Any Key")),
+            "preset_bpm": str(preset.get("bpm", metadata.get("bpm", 0))),
             "preset_tags": preset.get("tags", preset_tags(preset, params)),
             **preset["steps"],
         },

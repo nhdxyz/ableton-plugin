@@ -31,6 +31,7 @@ Voice::Voice(Parameters::APVTS& state)
     osc2Level = parameters.getRawParameterValue(Parameters::ID::osc2Level);
     subLevel = parameters.getRawParameterValue(Parameters::ID::subLevel);
     noiseLevel = parameters.getRawParameterValue(Parameters::ID::noiseLevel);
+    oscWarp = parameters.getRawParameterValue(Parameters::ID::oscWarp);
     ampAttack = parameters.getRawParameterValue(Parameters::ID::ampAttack);
     ampDecay = parameters.getRawParameterValue(Parameters::ID::ampDecay);
     ampSustain = parameters.getRawParameterValue(Parameters::ID::ampSustain);
@@ -249,6 +250,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     auto driveMod = 0.0f;
     auto osc2TuneMod = 0.0f;
     auto osc2LevelMod = 0.0f;
+    auto oscWarpMod = 0.0f;
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -269,6 +271,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
             case 4: driveMod += contribution; break;
             case 5: osc2TuneMod += contribution; break;
             case 6: osc2LevelMod += contribution; break;
+            case 17: oscWarpMod += contribution; break;
             default: break;
         }
     }
@@ -279,6 +282,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     driveMod = juce::jlimit(-1.0f, 1.0f, driveMod);
     osc2TuneMod = juce::jlimit(-1.0f, 1.0f, osc2TuneMod);
     osc2LevelMod = juce::jlimit(-1.0f, 1.0f, osc2LevelMod);
+    oscWarpMod = juce::jlimit(-1.0f, 1.0f, oscWarpMod);
     currentDriveOffset = driveMod * 0.45f;
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
 
@@ -297,6 +301,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto warp = readParameter(macroWarp, 0.0f);
     const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (warp * 7.0f) + (osc2TuneMod * 12.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
+    const auto oscillatorWarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(oscWarp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f));
 
     const auto activeUnisonVoices = getUnisonVoiceCount();
     const auto detuneCents = readParameter(unisonDetune, 0.0f) * 24.0f;
@@ -304,8 +309,10 @@ void Voice::updateVoiceParameters(float envelopeValue)
     {
         const auto detuneRatio = std::pow(2.0f, (getUnisonPosition(voiceIndex, activeUnisonVoices) * detuneCents) / 1200.0f);
         oscillators[static_cast<size_t>(voiceIndex)].setWaveform(waveform);
+        oscillators[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
         oscillators[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * pitchRatio * detuneRatio);
         oscillators2[static_cast<size_t>(voiceIndex)].setWaveform(osc2Waveform);
+        oscillators2[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
         oscillators2[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * osc2PitchRatio * detuneRatio);
     }
 

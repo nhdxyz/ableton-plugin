@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Oscillator Warp Pass
+
+- Added an automatable Osc Warp control that shapes oscillator harmonics before the filter, giving basses, stabs, plucks, and UKG Dred-style patches more source movement without needing another effect.
+- Routed the existing Warp macro and the MOD matrix into Osc Warp, including destination-ring feedback and drag-to-focus support from the SYNTH page.
+- Seeded recipe randomization and factory presets with conservative Osc Warp values, keeping basses and techno/warehouse stabs more animated while leaving bells, vocal chop starters, and cleaner chords restrained.
+- Moved Osc Warp into the wider SYNTH voice group after the UI review so the source-mix row stays readable and the new knob has enough room.
+
 ### Filter Slope Pass
 
 - Added an automatable Filter Slope selector with 12 dB and 24 dB options so house/UKG patches can choose open movement or tighter club filtering.

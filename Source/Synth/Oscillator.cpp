@@ -48,6 +48,21 @@ float bandlimitedSquare(float phase, float phaseDelta)
     sample -= polyBlep(wrapUnitPhase(phase + 0.5f), phaseDelta);
     return sample;
 }
+
+float harmonicWarp(float sample, float amount)
+{
+    amount = juce::jlimit(0.0f, 1.0f, amount);
+
+    if (amount <= 0.0001f)
+        return sample;
+
+    const auto drive = 1.0f + (amount * 3.4f);
+    const auto saturated = std::tanh(sample * drive) / std::tanh(drive);
+    const auto folded = std::sin(sample * juce::MathConstants<float>::halfPi * (1.0f + (amount * 1.65f)));
+    const auto foldedMix = amount * 0.42f;
+
+    return juce::jlimit(-1.0f, 1.0f, saturated + ((folded - saturated) * foldedMix));
+}
 }
 
 void Oscillator::prepare(double newSampleRate)
@@ -77,6 +92,11 @@ void Oscillator::setWaveform(Waveform newWaveform)
 
     if (waveform == Waveform::triangle)
         triangleState = triangleFromPhase(phase);
+}
+
+void Oscillator::setWarp(float newWarpAmount)
+{
+    warpAmount = juce::jlimit(0.0f, 1.0f, newWarpAmount);
 }
 
 float Oscillator::process()
@@ -112,7 +132,7 @@ float Oscillator::process()
     if (phase >= 1.0f)
         phase -= std::floor(phase);
 
-    return juce::jlimit(-1.0f, 1.0f, sample);
+    return harmonicWarp(juce::jlimit(-1.0f, 1.0f, sample), warpAmount);
 }
 
 void Oscillator::updatePhaseDelta()

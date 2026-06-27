@@ -198,6 +198,7 @@ private:
     juce::Slider osc2LevelSlider;
     juce::Slider subLevelSlider;
     juce::Slider noiseLevelSlider;
+    juce::Slider oscWarpSlider;
     juce::Slider unisonVoicesSlider;
     juce::Slider unisonDetuneSlider;
     juce::Slider unisonBlendSlider;
@@ -304,6 +305,7 @@ private:
     juce::Label osc2LevelLabel;
     juce::Label subLevelLabel;
     juce::Label noiseLevelLabel;
+    juce::Label oscWarpLabel;
     juce::Label unisonVoicesLabel;
     juce::Label unisonDetuneLabel;
     juce::Label unisonBlendLabel;

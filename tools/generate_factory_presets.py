@@ -19,6 +19,7 @@ DEFAULTS = {
     "osc2_level": 0.0,
     "sub_level": 0.0,
     "noise_level": 0.0,
+    "osc_warp": 0.0,
     "amp_attack": 0.01,
     "amp_decay": 0.18,
     "amp_sustain": 0.65,
@@ -228,6 +229,26 @@ FILTER_SLOPE_BY_PRESET = {
     "Minimal Sub Pulse": 1,
     "Techno Pulse Bass": 1,
     "Techno Warehouse Stab": 1,
+}
+
+
+OSC_WARP_BY_PRESET = {
+    "UKG 2-Step Bass": 0.16,
+    "UKG Shuffle Bass": 0.18,
+    "UKG Dred Bass": 0.24,
+    "UKG Organ Stab": 0.12,
+    "UKG Chord Stab": 0.14,
+    "UKG Bell Pluck": 0.04,
+    "UKG Vocal Chop Starter": 0.08,
+    "UKG Late Stab": 0.16,
+    "House Chord Memory": 0.1,
+    "Deep House Sub Chug": 0.12,
+    "Tech House Rubber Bass": 0.22,
+    "Tech House Perc Pluck": 0.12,
+    "Minimal Click Pluck": 0.18,
+    "Minimal Sub Pulse": 0.1,
+    "Techno Pulse Bass": 0.24,
+    "Techno Warehouse Stab": 0.28,
 }
 
 
@@ -1644,6 +1665,8 @@ def write_preset(preset):
         params["filter_character"] = FILTER_CHARACTER_BY_PRESET.get(preset["name"], 0)
     if "filter_slope" not in preset["params"]:
         params["filter_slope"] = FILTER_SLOPE_BY_PRESET.get(preset["name"], 0)
+    if "osc_warp" not in preset["params"]:
+        params["osc_warp"] = OSC_WARP_BY_PRESET.get(preset["name"], 0.0)
     if params.get("fx_pump_enabled", 0) and "fx_pump_curve" not in preset["params"]:
         category = preset.get("category", "UKG")
         params["fx_pump_curve"] = {

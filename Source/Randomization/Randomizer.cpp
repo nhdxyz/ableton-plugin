@@ -107,6 +107,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto osc2Level = 0.0f;
     auto subLevel = 0.0f;
     auto noiseLevel = 0.0f;
+    auto oscWarpAmount = 0.0f;
     auto unisonVoiceCount = 1;
     auto unisonDetune = 0.0f;
     auto unisonBlend = 0.65f;
@@ -192,6 +193,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.05f, 0.32f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.72f ? 1 : 0;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.62f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.02f, 0.18f);
             glide = randomFloat(0.0f, 0.08f);
             unisonVoiceCount = 1;
             fxToneEnabled = true;
@@ -228,6 +230,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.18f, 0.55f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.62f ? 2 : 3;
             filterSlope = 1;
+            oscWarpAmount = randomFloat(0.12f, 0.34f);
             glide = randomFloat(0.0f, 0.12f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.0f, 0.06f);
@@ -271,6 +274,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.28f, 0.72f);
             filterCharacter = 2;
             filterSlope = 1;
+            oscWarpAmount = randomFloat(0.18f, 0.44f);
             glide = randomFloat(0.03f, 0.22f);
             unisonVoiceCount = 1;
             fxToneEnabled = true;
@@ -312,6 +316,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.02f, 0.38f);
             filterCharacter = randomInt(0, 3);
             filterSlope = randomFloat(0.0f, 1.0f) < 0.38f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.05f, 0.52f);
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.12f);
             unisonBlend = randomFloat(0.3f, 0.65f);
@@ -360,6 +365,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.15f, 0.62f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.58f ? 3 : 1;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.7f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.12f, 0.38f);
             unisonVoiceCount = randomInt(2, 5);
             unisonDetune = randomFloat(0.04f, 0.18f);
             unisonBlend = randomFloat(0.45f, 0.85f);
@@ -407,6 +413,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.1f, 0.9f);
             filterCharacter = 3;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.68f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.18f, 0.68f);
             unisonVoiceCount = randomInt(1, 7);
             unisonDetune = randomFloat(0.05f, 0.4f);
             unisonBlend = randomFloat(0.35f, 1.0f);
@@ -457,6 +464,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.08f, 0.38f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.74f ? 1 : 2;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.74f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.08f, 0.28f);
             glide = randomFloat(0.025f, 0.11f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.0f, 0.055f);
@@ -512,6 +520,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.16f, 0.44f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.55f ? 3 : 1;
             filterSlope = 1;
+            oscWarpAmount = randomFloat(0.16f, 0.36f);
             glide = randomFloat(0.035f, 0.13f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.02f, 0.08f);
@@ -567,6 +576,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.04f, 0.22f);
             filterCharacter = 1;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.36f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.06f, 0.22f);
             glide = 0.0f;
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.08f);
@@ -618,6 +628,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.08f, 0.32f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.78f ? 1 : 2;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.46f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.06f, 0.26f);
             glide = 0.0f;
             unisonVoiceCount = randomInt(2, 5);
             unisonDetune = randomFloat(0.04f, 0.16f);
@@ -673,6 +684,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             drive = randomFloat(0.02f, 0.18f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.68f ? 0 : 1;
             filterSlope = randomFloat(0.0f, 1.0f) < 0.24f ? 1 : 0;
+            oscWarpAmount = randomFloat(0.0f, 0.18f);
             glide = 0.0f;
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.08f);
@@ -928,6 +940,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = blend(Parameters::ID::osc2Level, osc2Level);
         subLevel = blend(Parameters::ID::subLevel, subLevel);
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
+        oscWarpAmount = blend(Parameters::ID::oscWarp, oscWarpAmount);
         unisonVoiceCount = static_cast<int>(std::round(blend(Parameters::ID::unisonVoices, static_cast<float>(unisonVoiceCount))));
         unisonDetune = blend(Parameters::ID::unisonDetune, unisonDetune);
         unisonBlend = blend(Parameters::ID::unisonBlend, unisonBlend);
@@ -998,6 +1011,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = juce::jlimit(0.12f, 0.48f, osc2Level);
         subLevel = juce::jlimit(0.42f, 0.74f, subLevel);
         noiseLevel = juce::jlimit(0.0f, 0.06f, noiseLevel);
+        oscWarpAmount = juce::jlimit(0.04f, 0.3f, oscWarpAmount);
         unisonVoiceCount = juce::jlimit(1, 2, unisonVoiceCount);
         unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
         unisonSpread = juce::jlimit(0.0f, 0.08f, unisonSpread);
@@ -1031,6 +1045,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::osc2Level, osc2Level);
     setParameter(Parameters::ID::subLevel, subLevel);
     setParameter(Parameters::ID::noiseLevel, noiseLevel);
+    setParameter(Parameters::ID::oscWarp, oscWarpAmount);
     setParameter(Parameters::ID::unisonVoices, static_cast<float>(juce::jlimit(1, 7, unisonVoiceCount)));
     setParameter(Parameters::ID::unisonDetune, unisonDetune);
     setParameter(Parameters::ID::unisonBlend, unisonBlend);

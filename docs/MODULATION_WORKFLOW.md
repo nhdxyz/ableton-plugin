@@ -55,6 +55,7 @@ Good first destinations:
 - `osc2_level`
 - `sub_level`
 - `noise_level`
+- `osc_warp`
 - `sample_start`
 - `sample_mix`
 - Sample Pitch, Ramp, and Stutter
@@ -81,6 +82,8 @@ Initial macro behavior should be explicit and simple:
 - Each macro can have up to four internal assignments.
 - Each assignment stores source, destination, bipolar amount, and optional curve later.
 - Randomization may move macro assignments, but should preserve output safety.
+- Warp now affects oscillator bend and Osc Warp source harmonics, so it can push bass and stab character before filter/FX processing.
+- Osc Warp is a per-voice synth destination, so LFO 1, Mod Env 1, Velocity, and macro sources can all target it. The FX and sample destinations still use global LFO/macro sources until a proper global Mod Env/Velocity strategy exists.
 
 Possible parameter IDs:
 

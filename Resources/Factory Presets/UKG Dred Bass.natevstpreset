@@ -10,6 +10,7 @@
   <PARAM id="osc2_level" value="0.42" />
   <PARAM id="sub_level" value="0.66" />
   <PARAM id="noise_level" value="0" />
+  <PARAM id="osc_warp" value="0.24" />
   <PARAM id="amp_attack" value="0.006" />
   <PARAM id="amp_decay" value="0.34" />
   <PARAM id="amp_sustain" value="0.32" />

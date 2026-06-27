@@ -20,6 +20,7 @@ public:
 
     void setFrequency(float newFrequencyHz);
     void setWaveform(Waveform newWaveform);
+    void setWarp(float newWarpAmount);
 
     float process();
 
@@ -29,6 +30,7 @@ private:
     float phase = 0.0f;
     float phaseDelta = 0.0f;
     float triangleState = -1.0f;
+    float warpAmount = 0.0f;
     Waveform waveform = Waveform::saw;
 
     void updatePhaseDelta();

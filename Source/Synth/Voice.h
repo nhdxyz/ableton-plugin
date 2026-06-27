@@ -81,6 +81,7 @@ private:
     std::atomic<float>* osc2Level = nullptr;
     std::atomic<float>* subLevel = nullptr;
     std::atomic<float>* noiseLevel = nullptr;
+    std::atomic<float>* oscWarp = nullptr;
     std::atomic<float>* ampAttack = nullptr;
     std::atomic<float>* ampDecay = nullptr;
     std::atomic<float>* ampSustain = nullptr;

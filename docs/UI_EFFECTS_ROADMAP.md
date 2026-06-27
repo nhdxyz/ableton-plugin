@@ -480,6 +480,7 @@ Build the next larger slices in this order:
    First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
+   First source-warp pass implemented as a saved Osc Warp control with macro and MOD matrix routing for pre-filter harmonic movement on house basses, UKG Dred/Reese patches, stabs, and techno pulses.
    First character pass implemented in the existing filter lane with Clean, Warm, Acid, and Dirty drive behaviors for house basses, UKG stabs, rubber tech-house lines, and dirty techno tones.
    First slope pass implemented in the existing filter lane with 12 dB for open stabs/plucks and 24 dB for tighter bass, acid, dred, and warehouse filtering. Remaining work is more modeled filter types, richer routing, and drive oversampling.
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.

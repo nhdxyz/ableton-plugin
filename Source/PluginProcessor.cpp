@@ -1590,6 +1590,7 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::osc2Level,
                 Parameters::ID::subLevel,
                 Parameters::ID::noiseLevel,
+                Parameters::ID::oscWarp,
                 Parameters::ID::monoMode,
                 Parameters::ID::glideTime,
                 Parameters::ID::unisonVoices,
@@ -1809,6 +1810,7 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::osc2Level,
             Parameters::ID::subLevel,
             Parameters::ID::noiseLevel,
+            Parameters::ID::oscWarp,
             Parameters::ID::unisonVoices,
             Parameters::ID::unisonDetune,
             Parameters::ID::unisonBlend,
@@ -2144,6 +2146,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
+    const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -2164,6 +2167,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::filterCharacter, 0.0f);
     if (! hasFilterSlope)
         setParameterPlainValue(Parameters::ID::filterSlope, 0.0f);
+    if (! hasOscWarp)
+        setParameterPlainValue(Parameters::ID::oscWarp, 0.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

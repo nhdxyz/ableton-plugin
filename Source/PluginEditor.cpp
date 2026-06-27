@@ -111,6 +111,11 @@ bool parameterIsOneOf(const juce::String& parameterID, std::initializer_list<con
     return false;
 }
 
+bool destinationUsesGlobalModulationSources(int destinationIndex)
+{
+    return destinationIndex >= 7 && destinationIndex <= 16;
+}
+
 int rotaryDragSensitivityForParameter(const juce::String& parameterID)
 {
     if (parameterIsOneOf(parameterID, {
@@ -174,7 +179,7 @@ juce::String modSourceSummaryText(size_t index)
         "Space: delay + reverb sends",
         "Weight: sub + low-end support",
         "Bounce: pump depth + groove",
-        "Warp: osc2 bend + filter edge",
+        "Warp: osc bend + harmonic edge",
         "Throw: delay + reverb push"
     };
 
@@ -713,6 +718,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(osc2LevelSlider, osc2LevelLabel, "Osc 2", Parameters::ID::osc2Level);
     configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
+    configureSlider(oscWarpSlider, oscWarpLabel, "Osc Warp", Parameters::ID::oscWarp);
     configureSlider(unisonVoicesSlider, unisonVoicesLabel, "Voices", Parameters::ID::unisonVoices);
     configureSlider(unisonDetuneSlider, unisonDetuneLabel, "Detune", Parameters::ID::unisonDetune);
     configureSlider(unisonBlendSlider, unisonBlendLabel, "Blend", Parameters::ID::unisonBlend);
@@ -775,6 +781,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     driveSlider.onDragStart = [this] { setModInspectorDestination(4); };
     osc2TuneSlider.onDragStart = [this] { setModInspectorDestination(5); };
     osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
+    oscWarpSlider.onDragStart = [this] { setModInspectorDestination(17); };
     sampleStartSlider.onDragStart = [this] { setModInspectorDestination(12); };
     sampleMixSlider.onDragStart = [this] { setModInspectorDestination(13); };
     sampleTransposeSlider.onDragStart = [this] { setModInspectorDestination(14); };
@@ -1605,6 +1612,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
             setSliderVisible(subLevelSlider, subLevelLabel, true);
             setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
+            setSliderVisible(oscWarpSlider, oscWarpLabel, true);
             setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
             setSliderVisible(osc2TuneSlider, osc2TuneLabel, true);
             setSliderVisible(octaveSlider, octaveLabel, true);
@@ -1647,7 +1655,8 @@ void NateVSTAudioProcessorEditor::resized()
                 &tuneSlider,
                 &osc2OctaveSlider,
                 &osc2TuneSlider,
-                &glideSlider
+                &glideSlider,
+                &oscWarpSlider
             });
             layoutKnobRow(voiceArea.removeFromTop(72).withTrimmedTop(5), {
                 &unisonVoicesSlider,
@@ -3821,6 +3830,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(osc2LevelSlider, osc2LevelLabel, false);
     setSliderVisible(subLevelSlider, subLevelLabel, false);
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
+    setSliderVisible(oscWarpSlider, oscWarpLabel, false);
     setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, false);
     setSliderVisible(unisonDetuneSlider, unisonDetuneLabel, false);
     setSliderVisible(unisonBlendSlider, unisonBlendLabel, false);
@@ -4181,7 +4191,7 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     const auto destinationIndex = juce::jlimit(1,
                                               destinationChoices.size() - 1,
                                               modInspectorDestinationBox.getSelectedId() - 1);
-    if (destinationIndex >= 7 && (sourceIndex == 2 || sourceIndex == 3))
+    if (destinationUsesGlobalModulationSources(destinationIndex) && (sourceIndex == 2 || sourceIndex == 3))
     {
         sourceIndex = 1;
         modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
@@ -4216,7 +4226,7 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     }
 
     auto defaultAmount = 0.28f;
-    if (destinationIndex >= 7)
+    if (destinationUsesGlobalModulationSources(destinationIndex))
         defaultAmount = 0.24f;
     else if (sourceIndex == 1 || sourceIndex == 2)
         defaultAmount = 0.35f;
@@ -4282,7 +4292,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 17> destinationDepths {};
+    std::array<float, 18> destinationDepths {};
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
@@ -4333,6 +4343,7 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(sampleTransposeSlider, destinationDepths[14]);
     setIndicator(samplePitchRampSlider, destinationDepths[15]);
     setIndicator(sampleStutterRepeatsSlider, destinationDepths[16]);
+    setIndicator(oscWarpSlider, destinationDepths[17]);
 }
 
 void NateVSTAudioProcessorEditor::updateOutputMeter()

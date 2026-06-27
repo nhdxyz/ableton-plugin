@@ -20,6 +20,7 @@ inline constexpr auto osc2Tune = "osc2_tune";
 inline constexpr auto osc2Level = "osc2_level";
 inline constexpr auto subLevel = "sub_level";
 inline constexpr auto noiseLevel = "noise_level";
+inline constexpr auto oscWarp = "osc_warp";
 inline constexpr auto ampAttack = "amp_attack";
 inline constexpr auto ampDecay = "amp_decay";
 inline constexpr auto ampSustain = "amp_sustain";

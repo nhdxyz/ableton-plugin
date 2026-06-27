@@ -123,7 +123,8 @@ juce::StringArray modulationDestinationChoices()
         "Sample Mix",
         "Sample Pitch",
         "Sample Ramp",
-        "Sample Stutter"
+        "Sample Stutter",
+        "Osc Warp"
     };
 }
 
@@ -197,6 +198,12 @@ APVTS::ParameterLayout createLayout()
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::noiseLevel,
         "Noise Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::oscWarp,
+        "Osc Warp",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 

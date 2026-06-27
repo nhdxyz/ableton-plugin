@@ -42,6 +42,7 @@ Research references:
 - Dred/reverse-filter bass should use a centered sub, a restrained Reese layer, a slower modulation envelope opening the filter, and short glide so it feels like a garage bass phrase without making the amp envelope sluggish.
 - Filter Character now gives UKG basses and stabs a first tone layer: Warm for rounded sub/stab weight, Acid for rubbery moving basslines, and Dirty for darker Dred or warehouse-style pressure.
 - Filter Slope now gives bass patches a tighter 24 dB option while keeping 12 dB available for softer garage movement and less rigid chord filtering.
+- Osc Warp now adds a pre-filter harmonic movement layer for Reese/Dred bass and rubbery tech-house basses while leaving the centered sub and mono-safety guardrails intact.
 
 ### Stabs, Keys, And Leads
 
@@ -50,6 +51,7 @@ Research references:
 - A future organ/stab source should start as recipes and presets before adding a dedicated drawbar-style oscillator mode.
 - Current recipes and factory presets now seed Filter Character so organ/chord patches open warmer while bell/pluck patches can stay cleaner.
 - Current stab and bell presets mostly stay on 12 dB slope so the transient and chord color remain open before delay, reverb, width, and pump processing.
+- Current stab and bass recipes seed Osc Warp conservatively so organ/chord hits gain edge without replacing the future organ/drawbar or M1-style source work.
 
 ### Vocal And Sample Behavior
 
@@ -139,6 +141,7 @@ Research references:
 - Added synced Delay rate state to presets and UKG randomization so garage chop starters and throw presets open with musical delay timing.
 - Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve or occasionally generate an editable Custom duck shape instead of a generic sidechain curve.
 - Added SAMPLE modulation destinations for start, mix, pitch, ramp, and stutter, and made UKG Chop seed empty MOD slots with start and pitch/ramp motion.
+- Added Osc Warp as a saved source control and MOD destination, with UKG bass/stab presets seeded for restrained harmonic movement before the filter and FX rack.
 
 ## Next UKG Features
 
@@ -148,7 +151,7 @@ Reference-backed next passes:
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector into per-route bypass/delete editing.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
-- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator, first filter-character, and first filter-slope passes are in place.
+- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.
 
 1. Vocal chop mode for the sampler.
 

@@ -123,7 +123,7 @@ Research references:
 - Added SAMPLE `Slice Style` modes so numbered pads can apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behavior while auditioning phrase sections.
 - Set `UKG Vocal Chop Starter` to Garage slice style and tightened the SAMPLE panel grouping so vocal-chop source, phrase slicing, and shape controls stay visually separate.
 - Added FX `Module Preset` choices for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, controlled drive, resonator color, and Guard safety.
-- Added a MOD destination inspector so UKG bass/stab movement can be checked by destination, with route slots, source depths, summed depth, and one-click destination clearing.
+- Added a MOD destination inspector so UKG bass/stab movement can be checked and created by destination, with route slots, source depths, summed depth, source-to-destination Add, and one-click destination clearing.
 
 ## Next UKG Features
 
@@ -131,7 +131,7 @@ Reference-backed next passes:
 
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets and direct modulation destinations for FX mix/depth controls.
-- Expand the modulation inspector into direct per-control add/bypass/delete editing and add sample/FX destinations.
+- Expand the modulation inspector into per-route bypass/delete editing and add sample/FX destinations.
 
 1. Vocal chop mode for the sampler.
 

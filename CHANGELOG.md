@@ -5,7 +5,7 @@
 ### Modulation Inspector
 
 - Added a MOD routing inspector that focuses one modulation destination at a time and summarizes every active source, slot, depth, and summed depth for that destination.
-- Added a destination selector plus `Clear` action for deleting all routes targeting the inspected destination without scanning every matrix row.
+- Added destination/source selectors, an `Add` action that fills the first available matrix slot with a sensible default depth, and a `Clear` action for deleting all routes targeting the inspected destination.
 - Made Cutoff, Resonance, Filter Env, Drive, Osc 2 Tune, and Osc 2 Level focus the inspector when dragged, while preserving the existing matrix and modulation-ring behavior.
 
 ### FX Module Presets

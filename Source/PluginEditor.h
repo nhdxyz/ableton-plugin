@@ -140,6 +140,7 @@ private:
     juce::ComboBox fxPumpRateBox;
     juce::ComboBox fxTremoloRateBox;
     juce::ComboBox modInspectorDestinationBox;
+    juce::ComboBox modInspectorSourceBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
@@ -457,6 +458,7 @@ private:
     juce::TextButton fxHoldPumpButton { "Hold Pump" };
     juce::TextButton fxMuteDropButton { "Mute Drop" };
     juce::TextButton fxApplyPresetButton { "Load" };
+    juce::TextButton modInspectorAddButton { "Add" };
     juce::TextButton modInspectorClearButton { "Clear" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
@@ -561,6 +563,7 @@ private:
     void applySelectedFxPreset();
     void applyFxModulePreset(FxModule module, int presetId);
     void setModInspectorDestination(int destinationIndex);
+    void addInspectedModRoute();
     void clearInspectedModRoutes();
     FxMomentarySnapshot captureFxMomentarySnapshot() const;
     void restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot);

@@ -146,6 +146,8 @@ private:
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
     juce::ComboBox presetTagBox;
+    juce::ComboBox presetSortBox;
+    juce::ComboBox presetRatingBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPresetBox;
     juce::ComboBox fxDelayRateBox;
@@ -565,6 +567,7 @@ private:
     void auditionSelectedPreset();
     void releasePresetAuditionNote();
     void toggleFavoritePreset();
+    void setSelectedPresetRating();
     void updateFavoritePresetButton();
     void shiftKeyboardOctave(int semitones);
     void updateKeyboardRangeLabel();

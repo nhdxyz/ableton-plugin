@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Library Ratings And Category Folders
+
+- Added persistent 0-5 star preset ratings in `Library.xml`, so user and factory presets can be ranked without modifying factory preset files.
+- Added LIBRARY-panel rating and sort controls with filters for rated, five-star, and four-star-plus presets, plus sorting by name, rating, newest file, category, or source.
+- Made the save category box editable and made new user preset saves write into category subfolders, including slash paths such as `UKG/Bass` or `House/Chords`.
+- Changed user/factory preset scanning and loading to recurse through subfolders while preserving older flat preset files.
+
 ### Host Sync Status And Home Macro Layout
 
 - Added an audio-thread host-sync snapshot for the editor, exposing host BPM, play state, and PPQ availability without querying the host playhead from the UI.

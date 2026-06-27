@@ -75,7 +75,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
-- Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
+- Browser workflow: large synths make preset search, tags, categories, favorites, ratings, sort modes, folders, and per-section browsing feel central rather than secondary.
 - Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. SEQ and FX now expose a compact host-sync status badge for lock/stopped/internal fallback state. Remaining work is deeper per-lane modulation sync and richer phase visualization.
 - Audio quality: oscillator and drive stages need bandlimiting/oversampling attention before the synth can compete with polished commercial dance plugins at bright high-note settings. The first oscillator pass is implemented with polyBLEP saw/square generation, an integrated bandlimited triangle, and safer upper-register phase increments.
 
@@ -424,7 +424,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
    First filter-character pass implemented as a saved Filter Character selector with Clean, Warm, Acid, and Dirty modes, recipe seeds, and factory-preset defaults.
    First filter-slope pass implemented as a saved Filter Slope selector with 12 dB and cascaded 24 dB modes, recipe seeds, factory-preset defaults, and old-preset fallback to 12 dB.
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
-5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
+5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, ratings, sort modes, category folders, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
 6. House performance tools: A/B snapshots, eight consistent performance macros, XY movement, delay throws, mute drops, chord/scale helpers, and low-end metering for club translation.
    First performance slice implemented as HOME A/B snapshots that save with plugin/preset state and recall full patch/sample/sequencer state.
    Second performance slice implemented as a HOME XY pad for one-gesture Motion and Space macro control.
@@ -475,11 +475,12 @@ Build the next larger slices in this order:
    First slice-style pass implemented as a saved SAMPLE `Slice Style` selector that lets pads apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behaviors.
    First modulation pass implemented as global LFO/macro destinations for Sample Start, Mix, Pitch, Ramp, and Stutter.
    `UKG Vocal Chop Starter` now opens with Garage slice style selected in the factory pack.
-4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
+4. Browser depth: text search, multi-tags, ratings, sort modes, category folders, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.
    First browser-search pass implemented as token-based Library text search across preset name, category, source, user/factory status, and favorite state.
    First smart-tag pass implemented as generated `preset_tags` metadata plus a Library tag filter for role, safety, FX, sequencing, and genre tags.
    First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
+   First rating/organization pass implemented 1-5 star ratings in `Library.xml`, sort modes, rated/star filters, recursive preset scanning, and category subfolder saves for user presets.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
    First source-warp pass implemented as a saved Osc Warp control with macro and MOD matrix routing for pre-filter harmonic movement on house basses, UKG Dred/Reese patches, stabs, and techno pulses.

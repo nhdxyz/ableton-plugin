@@ -50,6 +50,7 @@ Current UI research takeaway:
 
 - Large instruments tend to separate core synthesis, modulation, effects, and browsing into focused pages or panels.
 - Browsers/libraries are central for recall, tags, favorites, and fast auditioning.
+- Ratings, sort modes, recursive folders, and category/subfolder saves matter once the factory/user library grows; users need to keep good house, UKG, and techno patches findable instead of relying only on preset names.
 - Short option sets should feel immediate, so segmented controls are preferred over dropdowns for choices like waveform and synced step rate.
 - Long option sets still belong in dropdowns or browser lists.
 - Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
@@ -1232,8 +1233,10 @@ Current browser slice:
 
 - User presets remain in `~/Library/Application Support/Nate VST/Presets`.
 - Factory presets are scanned separately from `~/Library/Application Support/Nate VST/Factory Presets`.
-- Favorites and recent presets are stored in `~/Library/Application Support/Nate VST/Library.xml`.
-- LIBRARY can filter by all presets, favorites, recent presets, user presets, factory presets, or saved category.
+- New user saves can be written into category subfolders such as `Presets/UKG/Bass` or `Presets/House/Chords`; older flat presets remain loadable.
+- Favorites, ratings, and recent presets are stored in `~/Library/Application Support/Nate VST/Library.xml`.
+- LIBRARY can filter by all presets, favorites, recent presets, rated presets, user presets, factory presets, star thresholds, or saved category.
+- LIBRARY can sort by name, rating, newest modified file, category, or source.
 
 ## Code Architecture
 
@@ -1577,5 +1580,5 @@ These can all be reconsidered later. They are distractions before the synth make
 2. Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 3. Expand the first modulation inspector beyond implemented per-route bypass/delete and sample/FX destinations into richer route editing, macro assignment views, and eventually sequencer modulation lanes.
 4. Expand FX presets into user-saveable module presets, per-module randomize/compare actions, and direct modulation access to FX mix/depth controls.
-5. Expand browser metadata and audition workflow with richer tags, ratings/favorites polish, and macro preview values.
+5. Expand browser metadata and audition workflow with macro preview values, per-pack construction kits, and richer author/BPM/key metadata now that ratings, sort modes, favorites, recursive folders, and category subfolder saves are in place.
 6. Start larger engine work only after the current subtractive/source-warp/sampler/SEQ/FX workflow feels strong in real sessions.

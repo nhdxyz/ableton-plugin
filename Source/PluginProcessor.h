@@ -44,6 +44,9 @@ public:
         juce::String category;
         juce::String source;
         juce::String tags;
+        juce::String folder;
+        int rating = 0;
+        juce::int64 lastModifiedMs = 0;
         bool isFactory = false;
         bool isFavorite = false;
     };
@@ -97,6 +100,8 @@ public:
     juce::File getFactoryPresetDirectory() const;
     bool isPresetFavorite(const juce::String& presetName) const;
     bool setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite);
+    int getPresetRating(const juce::String& presetName) const;
+    bool setPresetRating(const juce::String& presetName, int rating);
     juce::StringArray getRecentPresetNames() const;
     void notePresetLoaded(const juce::String& presetName);
     void capturePerformanceSnapshot(int slotIndex);
@@ -210,7 +215,10 @@ private:
     bool saveLibraryState(const juce::ValueTree& state) const;
     juce::StringArray getLibraryStateNames(const juce::Identifier& childType) const;
     juce::File presetFileForName(const juce::String& presetName) const;
+    juce::File presetFileForName(const juce::String& presetName, const juce::String& category) const;
     juce::File factoryPresetFileForName(const juce::String& presetName) const;
+    juce::File findPresetFileInDirectory(const juce::File& directory, const juce::String& presetName) const;
+    juce::File presetDirectoryForCategory(const juce::String& category) const;
     juce::File libraryStateFile() const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessor)

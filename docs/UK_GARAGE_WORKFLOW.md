@@ -61,7 +61,7 @@ Research references:
 - The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
 - Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
-- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits.
+- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes.
 
 ## Sound Targets
 
@@ -131,7 +131,7 @@ Research references:
 - Reworked the MOD route list into two four-slot banks so source, destination, and amount controls remain usable while assigning UKG bass, stab, and chop movement.
 - Regenerated factory presets with explicit chord-memory and FX-order state so UKG patches restore their performance and rack layout consistently.
 - Added synced Delay rate state to presets and UKG randomization so garage chop starters and throw presets open with musical delay timing.
-- Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve instead of a generic sidechain shape.
+- Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve or occasionally generate an editable Custom duck shape instead of a generic sidechain curve.
 
 ## Next UKG Features
 
@@ -159,6 +159,7 @@ Reference-backed next passes:
 - Implemented as the `Pump` FX module.
 - Tempo-synced volume shaper.
 - Depth, rate, shape, and phase controls.
+- Editable Custom curve with eight automatable points for hand-drawn 2-step/house duck movement.
 - Useful for UKG, house, and garage-adjacent bass movement.
 - Bass presets now use the MOD-panel curve LFO for garage-style push/pull cutoff movement where a basic sine felt too even.
 - HOME now includes a compact club low-end assistant so UKG bass patches expose root Hz, sub energy, low-side stereo risk, Width mono-below status, Guard/headroom state, phase-reset status, and root-range suggestions while designing.

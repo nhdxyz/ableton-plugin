@@ -1,5 +1,6 @@
 #include "Randomizer.h"
 
+#include <array>
 #include <cmath>
 
 namespace Randomization
@@ -134,6 +135,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxPumpDepth = 0.35f;
     auto fxPumpShape = 0.45f;
     auto fxPumpPhase = 0.0f;
+    std::array<float, 8> fxPumpCustomCurve { 1.0f, 0.82f, 0.62f, 0.44f, 0.28f, 0.16f, 0.07f, 0.0f };
     auto fxTremoloEnabled = false;
     auto fxTremoloRate = 1;
     auto fxTremoloDepth = 0.28f;
@@ -810,6 +812,25 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
     if (fxPumpEnabled)
     {
+        auto makeCustomPumpCurve = [&]
+        {
+            const auto snap = randomFloat(0.78f, 1.0f);
+            const auto hold = randomFloat(0.62f, 0.94f);
+            const auto shoulder = randomFloat(0.34f, 0.66f);
+            const auto tail = randomFloat(0.04f, 0.20f);
+
+            fxPumpCustomCurve = {
+                1.0f,
+                snap,
+                hold,
+                shoulder,
+                randomFloat(0.18f, 0.42f),
+                randomFloat(tail, 0.28f),
+                randomFloat(0.0f, tail),
+                0.0f
+            };
+        };
+
         switch (recipe)
         {
             case Recipe::deepHouseBass:
@@ -840,6 +861,13 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             case Recipe::ukgBellPluck:
                 fxPumpCurve = randomInt(2, 3);
                 break;
+        }
+
+        const auto customChance = subtle ? 0.06f : 0.12f + (chaos * 0.22f);
+        if (randomFloat(0.0f, 1.0f) < customChance)
+        {
+            fxPumpCurve = 5;
+            makeCustomPumpCurve();
         }
     }
 
@@ -900,6 +928,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxPumpDepth = blend(Parameters::ID::fxPumpDepth, fxPumpDepth);
         fxPumpShape = blend(Parameters::ID::fxPumpShape, fxPumpShape);
         fxPumpPhase = blend(Parameters::ID::fxPumpPhase, fxPumpPhase);
+        for (size_t index = 0; index < fxPumpCustomCurve.size(); ++index)
+            fxPumpCustomCurve[index] = blend(Parameters::ID::fxPumpCustomCurve[index], fxPumpCustomCurve[index]);
         fxTremoloDepth = blend(Parameters::ID::fxTremoloDepth, fxTremoloDepth);
         fxTremoloPan = blend(Parameters::ID::fxTremoloPan, fxTremoloPan);
         fxTremoloShape = blend(Parameters::ID::fxTremoloShape, fxTremoloShape);
@@ -1001,7 +1031,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxBitcrushMix, fxBitcrushMix);
     setParameter(Parameters::ID::fxPumpEnabled, fxPumpEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxPumpRate, static_cast<float>(juce::jlimit(0, 3, fxPumpRate)));
-    setParameter(Parameters::ID::fxPumpCurve, static_cast<float>(juce::jlimit(0, 4, fxPumpCurve)));
+    setParameter(Parameters::ID::fxPumpCurve, static_cast<float>(juce::jlimit(0, 5, fxPumpCurve)));
+    for (size_t index = 0; index < fxPumpCustomCurve.size(); ++index)
+        setParameter(Parameters::ID::fxPumpCustomCurve[index], fxPumpCustomCurve[index]);
     setParameter(Parameters::ID::fxPumpDepth, fxPumpDepth);
     setParameter(Parameters::ID::fxPumpShape, fxPumpShape);
     setParameter(Parameters::ID::fxPumpPhase, fxPumpPhase);

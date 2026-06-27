@@ -105,6 +105,14 @@
   <PARAM id="fx_pump_enabled" value="1" />
   <PARAM id="fx_pump_rate" value="1" />
   <PARAM id="fx_pump_curve" value="2" />
+  <PARAM id="fx_pump_curve_1" value="1" />
+  <PARAM id="fx_pump_curve_2" value="0.82" />
+  <PARAM id="fx_pump_curve_3" value="0.62" />
+  <PARAM id="fx_pump_curve_4" value="0.44" />
+  <PARAM id="fx_pump_curve_5" value="0.28" />
+  <PARAM id="fx_pump_curve_6" value="0.16" />
+  <PARAM id="fx_pump_curve_7" value="0.07" />
+  <PARAM id="fx_pump_curve_8" value="0" />
   <PARAM id="fx_pump_depth" value="0.34" />
   <PARAM id="fx_pump_shape" value="0.45" />
   <PARAM id="fx_pump_phase" value="0" />

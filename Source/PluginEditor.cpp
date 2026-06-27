@@ -18,7 +18,7 @@ constexpr auto modPanelGap = 6;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
-constexpr std::array<const char*, 23> momentaryFxParameterIDs {
+constexpr std::array<const char*, 31> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
     Parameters::ID::fxDelaySync,
     Parameters::ID::fxDelayRate,
@@ -32,6 +32,14 @@ constexpr std::array<const char*, 23> momentaryFxParameterIDs {
     Parameters::ID::fxPumpEnabled,
     Parameters::ID::fxPumpRate,
     Parameters::ID::fxPumpCurve,
+    Parameters::ID::fxPumpCustomCurve[0],
+    Parameters::ID::fxPumpCustomCurve[1],
+    Parameters::ID::fxPumpCustomCurve[2],
+    Parameters::ID::fxPumpCustomCurve[3],
+    Parameters::ID::fxPumpCustomCurve[4],
+    Parameters::ID::fxPumpCustomCurve[5],
+    Parameters::ID::fxPumpCustomCurve[6],
+    Parameters::ID::fxPumpCustomCurve[7],
     Parameters::ID::fxPumpDepth,
     Parameters::ID::fxPumpShape,
     Parameters::ID::fxPumpPhase,
@@ -715,6 +723,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setPlainParameterValue(Parameters::ID::lfo1Curve[index], value);
     };
     addAndMakeVisible(lfoCurveDisplay);
+    pumpCurveDisplay.onPointChange = [this] (size_t index, float value)
+    {
+        if (index < Parameters::ID::fxPumpCustomCurve.size())
+        {
+            setPlainParameterValue(Parameters::ID::fxPumpCurve, 5.0f);
+            setPlainParameterValue(Parameters::ID::fxPumpCustomCurve[index], value);
+        }
+    };
     addAndMakeVisible(pumpCurveDisplay);
 
     for (size_t index = 0; index < lfoCurveSliders.size(); ++index)
@@ -2039,18 +2055,25 @@ void NateVSTAudioProcessorEditor::resized()
                     visibleFxSlots[static_cast<size_t>(visibleFxSlotCount++)] = &slotButton;
             }
 
-            const auto slotGap = visibleFxSlotCount > 10 ? 4 : 6;
-            const auto slotHeight = visibleFxSlotCount > 0
+            const auto useTwoColumnRack = visibleFxSlotCount > 10;
+            const auto slotGap = useTwoColumnRack ? 4 : 6;
+            const auto columnGap = useTwoColumnRack ? 6 : 0;
+            const auto rackColumnCount = useTwoColumnRack ? 2 : 1;
+            const auto rackRowCount = visibleFxSlotCount > 0
+                ? (visibleFxSlotCount + rackColumnCount - 1) / rackColumnCount
+                : 0;
+            const auto slotHeight = rackRowCount > 0
                 ? juce::jlimit(24,
                                34,
-                               (rackArea.getHeight() - ((visibleFxSlotCount - 1) * slotGap)) / visibleFxSlotCount)
+                               (rackArea.getHeight() - ((rackRowCount - 1) * slotGap)) / rackRowCount)
                 : 34;
-            const auto slotWidth = rackArea.getWidth();
+            const auto slotWidth = (rackArea.getWidth() - columnGap) / rackColumnCount;
 
             for (auto index = 0; index < visibleFxSlotCount; ++index)
             {
-                const auto row = index;
-                const auto x = rackArea.getX();
+                const auto column = useTwoColumnRack ? index / rackRowCount : 0;
+                const auto row = useTwoColumnRack ? index % rackRowCount : index;
+                const auto x = rackArea.getX() + (column * (slotWidth + columnGap));
                 const auto y = rackArea.getY() + (row * (slotHeight + slotGap));
                 visibleFxSlots[static_cast<size_t>(index)]->setBounds(x, y, slotWidth, slotHeight);
             }
@@ -3396,9 +3419,30 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
     }
     const auto selectedPosition = fxOrderPosition(selectedFxModule);
     const auto canMoveSelected = selectedFxModule != FxModule::guard;
+    const auto hasVisibleMoveTarget = [&] (int direction)
+    {
+        if (! canMoveSelected)
+            return false;
+
+        const auto position = selectedPosition - 1;
+        const auto lastMovablePosition = static_cast<int>(moduleOrder.size()) - 2;
+        const auto step = direction < 0 ? -1 : 1;
+        auto targetPosition = position + step;
+
+        while (targetPosition >= 0 && targetPosition <= lastMovablePosition)
+        {
+            if (shouldShowFxModule(moduleOrder[static_cast<size_t>(targetPosition)]))
+                return true;
+
+            targetPosition += step;
+        }
+
+        return false;
+    };
+
     updateFxPresetBox();
-    fxMoveUpButton.setEnabled(canMoveSelected && selectedPosition > 1);
-    fxMoveDownButton.setEnabled(canMoveSelected && selectedPosition > 0 && selectedPosition < static_cast<int>(moduleOrder.size()) - 1);
+    fxMoveUpButton.setEnabled(hasVisibleMoveTarget(-1));
+    fxMoveDownButton.setEnabled(hasVisibleMoveTarget(1));
     fxRemoveButton.setEnabled(selectedFxModule != FxModule::guard);
 }
 
@@ -3933,13 +3977,21 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
 
 void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
 {
+    std::array<float, 8> customCurve {};
+    for (size_t index = 0; index < customCurve.size(); ++index)
+        customCurve[index] = readPlainParameterValue(Parameters::ID::fxPumpCustomCurve[index], 0.0f);
+
+    const auto bounce = readPlainParameterValue(Parameters::ID::macroBounce, 0.0f);
+    const auto moduleEnabled = readPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f) >= 0.5f;
+
     pumpCurveDisplay.setState(
         juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpCurve, 0.0f)),
-        readPlainParameterValue(Parameters::ID::fxPumpDepth, 0.35f),
-        readPlainParameterValue(Parameters::ID::fxPumpShape, 0.45f),
+        juce::jlimit(0.0f, 1.0f, (moduleEnabled ? readPlainParameterValue(Parameters::ID::fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::fxPumpShape, 0.45f) + (bounce * 0.16f)),
         readPlainParameterValue(Parameters::ID::fxPumpPhase, 0.0f),
         juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)),
-        readPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f) >= 0.5f);
+        moduleEnabled || bounce > 0.001f,
+        customCurve);
 }
 
 void NateVSTAudioProcessorEditor::updateModMatrixRows()

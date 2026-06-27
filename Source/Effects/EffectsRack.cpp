@@ -1,6 +1,7 @@
 #include "EffectsRack.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace
@@ -40,7 +41,18 @@ double delaySecondsForRate(int rateIndex, double bpm)
     }
 }
 
-float pumpDuckAmount(float recovery, float shape, int curveIndex)
+float customPumpDuckAmount(float recovery, const std::array<float, 8>& customCurve)
+{
+    const auto safeRecovery = juce::jlimit(0.0f, 1.0f, recovery);
+    const auto scaledIndex = safeRecovery * static_cast<float>(customCurve.size() - 1);
+    const auto leftIndex = juce::jlimit(0, static_cast<int>(customCurve.size() - 1), static_cast<int>(std::floor(scaledIndex)));
+    const auto rightIndex = juce::jmin(leftIndex + 1, static_cast<int>(customCurve.size() - 1));
+    const auto amount = scaledIndex - static_cast<float>(leftIndex);
+
+    return juce::jlimit(0.0f, 1.0f, juce::jmap(amount, customCurve[static_cast<size_t>(leftIndex)], customCurve[static_cast<size_t>(rightIndex)]));
+}
+
+float pumpDuckAmount(float recovery, float shape, int curveIndex, const std::array<float, 8>& customCurve)
 {
     const auto safeRecovery = juce::jlimit(0.0f, 1.0f, recovery);
     const auto safeShape = juce::jlimit(0.0f, 1.0f, shape);
@@ -81,6 +93,9 @@ float pumpDuckAmount(float recovery, float shape, int curveIndex)
             return std::pow(1.0f - tail, 8.0f);
         }
 
+        case 5: // Custom
+            return customPumpDuckAmount(safeRecovery, customCurve);
+
         case 0:
         default:
             return std::pow(inverseRecovery, juce::jmap(safeShape, 0.35f, 4.5f));
@@ -102,6 +117,8 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxPumpEnabled = parameters.getRawParameterValue(Parameters::ID::fxPumpEnabled);
     fxPumpRate = parameters.getRawParameterValue(Parameters::ID::fxPumpRate);
     fxPumpCurve = parameters.getRawParameterValue(Parameters::ID::fxPumpCurve);
+    for (size_t index = 0; index < fxPumpCustomCurve.size(); ++index)
+        fxPumpCustomCurve[index] = parameters.getRawParameterValue(Parameters::ID::fxPumpCustomCurve[index]);
     fxPumpDepth = parameters.getRawParameterValue(Parameters::ID::fxPumpDepth);
     fxPumpShape = parameters.getRawParameterValue(Parameters::ID::fxPumpShape);
     fxPumpPhase = parameters.getRawParameterValue(Parameters::ID::fxPumpPhase);
@@ -421,7 +438,14 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
     const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(isEnabled ? readParameter(fxPumpRate, 0.0f) : 1.0f)));
     const auto cyclesPerBeat = pumpCyclesPerBeat(rateIndex);
     const auto phaseIncrement = (safeBpm / 60.0) * cyclesPerBeat / safeSampleRate;
-    const auto curveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(readParameter(fxPumpCurve, 0.0f))));
+    const auto curveIndex = juce::jlimit(0, 5, static_cast<int>(std::round(readParameter(fxPumpCurve, 0.0f))));
+    std::array<float, 8> customCurve {
+        1.0f, 0.82f, 0.62f, 0.44f, 0.28f, 0.16f, 0.07f, 0.0f
+    };
+
+    for (size_t index = 0; index < customCurve.size(); ++index)
+        customCurve[index] = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpCustomCurve[index], customCurve[index]));
+
     const auto depth = juce::jlimit(0.0f, 1.0f, (isEnabled ? readParameter(fxPumpDepth, 0.35f) : 0.0f) + (bounce * 0.5f));
     const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpShape, 0.45f) + (bounce * 0.16f));
     const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxPumpPhase, 0.0f));
@@ -441,7 +465,7 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
             shapedPhase += 1.0;
 
         const auto recovery = static_cast<float>(shapedPhase);
-        const auto duckAmount = pumpDuckAmount(recovery, shape, curveIndex);
+        const auto duckAmount = pumpDuckAmount(recovery, shape, curveIndex, customCurve);
         const auto targetGain = juce::jlimit(0.0f, 1.0f, 1.0f - (depth * duckAmount));
         pumpSmoothedGain += (targetGain - pumpSmoothedGain) * smoothing;
 

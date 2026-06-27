@@ -73,7 +73,7 @@ private:
 
     struct FxMomentarySnapshot
     {
-        std::array<float, 23> values {};
+        std::array<float, 31> values {};
         FxModule selectedModule = FxModule::guard;
         bool valid = false;
     };

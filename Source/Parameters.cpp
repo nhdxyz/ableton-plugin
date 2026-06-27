@@ -86,7 +86,7 @@ juce::StringArray delayRateChoices()
 
 juce::StringArray pumpCurveChoices()
 {
-    return { "Smooth", "Tight", "Garage", "Stutter", "Gate" };
+    return { "Smooth", "Tight", "Garage", "Stutter", "Gate", "Custom" };
 }
 
 juce::StringArray modulationSourceChoices()
@@ -727,6 +727,19 @@ APVTS::ParameterLayout createLayout()
         "FX Pump Curve",
         pumpCurveChoices(),
         0));
+
+    constexpr std::array<float, 8> defaultPumpCurve {
+        1.0f, 0.82f, 0.62f, 0.44f, 0.28f, 0.16f, 0.07f, 0.0f
+    };
+
+    for (size_t index = 0; index < ID::fxPumpCustomCurve.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::fxPumpCustomCurve[index],
+            "FX Pump Curve " + juce::String(static_cast<int>(index + 1)),
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            defaultPumpCurve[index]));
+    }
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::fxPumpDepth,

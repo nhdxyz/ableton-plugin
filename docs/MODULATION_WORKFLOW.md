@@ -63,7 +63,7 @@ Avoid modulating parameters that can easily create unstable or silent patches un
 
 ## Macro Controls
 
-Start with four macros on HOME, then expose the full eight-macro bank on MOD:
+The first macro pass started with four HOME controls; the current implementation uses an eight-macro performance bank across HOME and MOD:
 
 - `Macro 1: Tone`
 - `Macro 2: Dirt`
@@ -138,10 +138,10 @@ Start with 8 slots. This is enough to be useful without becoming hard to validat
 
 HOME:
 
-- Show four macro knobs.
-- Keep fast unison width controls available without hiding source mix or preset recall.
+- Show the performance-critical macro controls and the Motion/Space XY pad without turning HOME into a full modulation matrix.
+- Keep fast patch-shaping and preset recall visible.
 - Show a small moving indicator when macro/LFO modulation is active.
-- Keep source mix and preset controls visible.
+- Keep deeper source, routing, and assignment editing in focused panels.
 
 SYNTH:
 
@@ -175,7 +175,7 @@ SEQ:
 
 Implemented first slice:
 
-1. Add four macro parameters and macro knobs on HOME.
+1. Add the first macro parameters and macro knobs on HOME.
 2. Add fixed internal macro assignments for useful first behavior:
    - Tone -> filter cutoff and resonance.
    - Dirt -> drive amount and output compensation.
@@ -215,9 +215,10 @@ Editable engine slice:
    - Oscillator 2 level.
 6. Made randomization seed safe modulation movement for bass, UKG stabs, plucks, minimal blips, and noise FX.
 7. Added the first MSEG-style slice: `Curve` as an LFO 1 shape, eight saved curve-point parameters, a compact MOD-panel curve display, and randomization/factory seeds for house and UKG bass movement.
+8. Added the first FX curve-shaper slice: Pump Custom curve points with a draggable FX-panel editor, matching DSP interpolation, and recipe randomization support.
 
 Remaining modulation work:
 
 - Add shared sample and FX destinations after a global modulation lane exists.
 - Add visible activity indicators around key destination controls.
-- Add draggable curve editing, destination rings, and per-slot curves or bipolar/unipolar mode after this compact curve source has been tested in Ableton.
+- Expand draggable curve editing into reusable curve presets, per-slot curve modulation, and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.

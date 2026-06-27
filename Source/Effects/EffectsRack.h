@@ -5,6 +5,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 
+#include <array>
 #include <optional>
 #include <vector>
 
@@ -57,6 +58,7 @@ private:
     std::atomic<float>* fxPumpEnabled = nullptr;
     std::atomic<float>* fxPumpRate = nullptr;
     std::atomic<float>* fxPumpCurve = nullptr;
+    std::array<std::atomic<float>*, 8> fxPumpCustomCurve {};
     std::atomic<float>* fxPumpDepth = nullptr;
     std::atomic<float>* fxPumpShape = nullptr;
     std::atomic<float>* fxPumpPhase = nullptr;

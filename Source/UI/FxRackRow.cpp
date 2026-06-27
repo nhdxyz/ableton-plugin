@@ -63,9 +63,9 @@ void FxRackRow::paintButton(juce::Graphics& g,
     g.drawRoundedRectangle(bounds, rowRadius, moduleSelected ? 1.4f : 1.0f);
 
     auto content = getLocalBounds().reduced(8, 4);
-    const auto accent = modulePinned ? juce::Colour(0xffffc36b)
-                                     : (moduleEnabled ? juce::Colour(0xff8ee6c9)
-                                                      : juce::Colour(0xff5f6b70));
+    const auto accent = modulePinned && moduleEnabled ? juce::Colour(0xffffc36b)
+                                                      : (moduleEnabled ? juce::Colour(0xff8ee6c9)
+                                                                       : juce::Colour(0xff5f6b70));
 
     auto orderArea = content.removeFromLeft(24).reduced(0, 3);
     g.setColour(moduleSelected ? juce::Colour(0xff27453e) : juce::Colour(0xff20292d));
@@ -86,15 +86,16 @@ void FxRackRow::paintButton(juce::Graphics& g,
     auto badgeArea = content.removeFromRight(modulePinned ? 42 : 34).reduced(0, 3);
     const auto badgeFill = moduleEnabled ? juce::Colour(0xff315b52)
                                          : juce::Colour(0xff263035);
+    const auto guardIsSafe = modulePinned && moduleEnabled;
 
-    g.setColour(modulePinned ? juce::Colour(0xff5b4722) : badgeFill);
+    g.setColour(guardIsSafe ? juce::Colour(0xff5b4722) : badgeFill);
     g.fillRoundedRectangle(badgeArea.toFloat(), 4.0f);
-    g.setColour(modulePinned ? juce::Colour(0xffffc36b)
-                             : (moduleEnabled ? juce::Colour(0xff8ee6c9)
-                                              : juce::Colour(0xff6d7b82)));
+    g.setColour(guardIsSafe ? juce::Colour(0xffffc36b)
+                            : (moduleEnabled ? juce::Colour(0xff8ee6c9)
+                                             : juce::Colour(0xff6d7b82)));
     g.drawRoundedRectangle(badgeArea.toFloat(), 4.0f, 1.0f);
     g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-    g.drawFittedText(modulePinned ? "SAFE" : (moduleEnabled ? "ON" : "OFF"),
+    g.drawFittedText(guardIsSafe ? "SAFE" : (moduleEnabled ? "ON" : "OFF"),
                      badgeArea,
                      juce::Justification::centred,
                      1);

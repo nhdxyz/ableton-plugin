@@ -147,6 +147,16 @@ inline constexpr auto fxBitcrushMix = "fx_bitcrush_mix";
 inline constexpr auto fxPumpEnabled = "fx_pump_enabled";
 inline constexpr auto fxPumpRate = "fx_pump_rate";
 inline constexpr auto fxPumpCurve = "fx_pump_curve";
+inline constexpr std::array<const char*, 8> fxPumpCustomCurve {
+    "fx_pump_curve_1",
+    "fx_pump_curve_2",
+    "fx_pump_curve_3",
+    "fx_pump_curve_4",
+    "fx_pump_curve_5",
+    "fx_pump_curve_6",
+    "fx_pump_curve_7",
+    "fx_pump_curve_8"
+};
 inline constexpr auto fxPumpDepth = "fx_pump_depth";
 inline constexpr auto fxPumpShape = "fx_pump_shape";
 inline constexpr auto fxPumpPhase = "fx_pump_phase";

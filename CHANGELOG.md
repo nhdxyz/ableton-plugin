@@ -8,6 +8,15 @@
 - Updated Pump DSP so each curve changes the gain envelope while preserving the old Smooth behavior as the default.
 - Added a focused Pump curve preview to the FX detail view so the selected duck shape, rate, depth, and phase are visible while designing rhythmic movement.
 - Wired Pump Curve into the FX detail UI, rack summaries, momentary Pump Drop restore path, module presets, randomization recipes, and factory-preset generation.
+- Added a saved Custom Pump curve with eight automatable points, draggable FX-panel handles, and matching DSP interpolation for VolumeShaper-style house/UKG duck editing.
+- Made Pump preview reflect Bounce macro-driven pumping, even when the Pump module itself is bypassed.
+- Let recipe randomization occasionally generate editable Custom Pump curves for stronger house, tech-house, minimal, techno, and UKG rhythmic variation.
+
+### FX Rack Review Fixes
+
+- Restored the compact two-column FX rack layout when the visible module count is high, so full effect chains do not overflow the rack lane.
+- Changed the Guard rack badge to show `SAFE` only when Guard is enabled; bypassed Guard now reads as `OFF`.
+- Made FX Move Up/Down enablement check for an actual visible move target, avoiding no-op controls when hidden disabled modules sit in the order list.
 
 ### Tempo-Synced Delay And Host Phase
 

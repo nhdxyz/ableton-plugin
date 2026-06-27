@@ -42,7 +42,7 @@ The next version should treat the rack like a compact lane: grouped Add FX menu,
 
 ### Modulation Is Too Implicit
 
-The four macros are useful, but their assignments are mostly invisible. A user can hear movement but cannot quickly tell what is being modulated, what source owns the movement, or how much depth is applied.
+The eight performance macros are useful, but their assignments still need clearer editing and destination feedback. A user can hear movement but cannot always quickly tell what is being modulated, what source owns the movement, or how much depth is applied.
 
 The next modulation pass should avoid putting the whole matrix on HOME. HOME should stay fast. The deeper assignment workflow belongs in a focused MOD area.
 
@@ -274,7 +274,7 @@ Not urgent for this instrument. It adds asset management and bigger CPU/memory q
 - Keep snap-to-click disabled.
 - Keep double-click reset.
 - Keep value popups.
-- Current pass: wheel edits stay enabled for fast sound design, with Ableton testing still needed for accidental-scroll risk.
+- Current pass: wheel edits stay disabled on slider controls to avoid accidental parameter jumps while scrolling or sound-designing in Ableton.
 - Add clearer fine-control behavior. If JUCE modifier fine-drag is not enough, add explicit small step behavior for high-precision parameters.
 - If wheel edits become a problem in longer panels, disable them only where scrolling and knob editing conflict.
 
@@ -301,13 +301,13 @@ Do not use knobs for every parameter.
 Groups:
 
 - Perform: Sub, Cutoff, Drive, Output.
-- Macros: Tone, Dirt, Motion, Space.
+- Macros: Tone, Dirt, Weight, Bounce, Warp, Throw, plus the Motion/Space XY pad.
 - Random Lab: recipe, generate, mutate, variation, undo, status.
 - Library: preset, favorite, and save/load workflow.
 
 Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
 
-HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the first four fast controls plus the Motion/Space XY pad.
+HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the most performance-critical macro controls plus the Motion/Space XY pad.
 
 ### SYNTH
 
@@ -376,7 +376,7 @@ MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels
 
 - Implemented: adjusted the custom look-and-feel for stronger pointer/value feedback.
 - Implemented: increased effective drag target in layout cells.
-- Implemented: switched rotary knobs to direct drag, shorter full-range movement, disabled snap-to-click, kept double-click reset, kept value popups, and kept mouse-wheel edits enabled for quick patching.
+- Implemented: switched rotary knobs to direct drag, shorter full-range movement, disabled snap-to-click, kept double-click reset, kept value popups, and disabled slider mouse-wheel edits to reduce accidental changes.
 - Current pass: shortened rotary drag travel again for common macro, tone, drive, output, and timing controls after the knobs still felt too hard to move.
 - Still needs real Ableton testing and further tuning if specific controls feel too fast or too slow.
 
@@ -386,7 +386,7 @@ Add in this order:
 
 1. Bitcrusher/downsample. Implemented as the Crush module.
 2. Flanger. Implemented as the Flanger module.
-3. Pump/Duck. Implemented as the Pump module, now with selectable curve types for smooth ducking, tight house pump, garage hold, stutter pulses, and gated minimal movement.
+3. Pump/Duck. Implemented as the Pump module, now with selectable curve types for smooth ducking, tight house pump, garage hold, stutter pulses, gated minimal movement, and a saved Custom curve with eight draggable points.
 4. Stereo Width/Mono Bass. Implemented as the Width module.
 5. Three-Band EQ. Implemented as the EQ module.
 6. Tremolo / Auto Pan. Implemented as the Tremolo module.
@@ -445,6 +445,7 @@ Build the next larger slices in this order:
    First source-visibility pass implemented as live MOD source rows for LFO 1, Mod Env 1, Velocity, and the eight macros, with active route count and summed depth/polarity.
    First panel-alignment pass realigned MOD paint grouping, compacted SAMPLE source/chop/shape regions, and reduced the FX command/performance header footprint.
    First inspector pass implemented as a MOD destination inspector with focused route summaries, summed depth, drag-to-focus for existing destinations, direct source-to-destination route creation, and a destination clear action.
+   First Pump curve-edit pass implemented as an FX-panel custom curve editor with eight saved points, matching DSP interpolation, Bounce-aware preview, and recipe randomization seeds.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
@@ -477,6 +478,7 @@ Build the next larger slices in this order:
    First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
    First FX declutter pass combined the throw and momentary actions into a single performance row under the add/reorder strip.
    First module-preset pass implemented as a selected-module `Module Preset` menu with focused house/UKG settings for every FX module while writing only existing automatable parameters.
+   Current rack review pass restores two-column layout for high module counts, makes Guard safety state distinct from bypass state, and prevents Up/Down controls from enabling when no visible move target exists.
 7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
    First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.

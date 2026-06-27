@@ -431,6 +431,7 @@ Build the next larger slices in this order:
    Third chord/stab pass implemented as a saved Strum amount that spreads chord note-ons in playback and exported MIDI clips.
    First utility pass implemented as `Rot <` / `Rot >` pattern rotation that preserves each step's note, velocity, probability, and timing.
    First variation pass implemented as a SEQ-panel `Vary` action that mutates notes, velocity, probability, timing, and ghost steps without replacing the pattern.
+   First safety pass implemented as a SEQ-panel `Undo` action that restores the prior generated, varied, template, copy, rotate, or clear state.
    First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.

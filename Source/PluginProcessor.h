@@ -71,6 +71,7 @@ public:
     void setSequencerStep(int index, Sequencer::Step step);
     bool randomizeSequencerPattern();
     bool mutateSequencerPattern();
+    bool undoSequencerEdit();
     void applySequencerPatternPreset(int presetIndex);
     void copySequencerFirstHalfToSecondHalf();
     void rotateSequencerPattern(int stepOffset);
@@ -125,8 +126,10 @@ private:
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
+    juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
     bool hasRandomUndoState = false;
+    bool hasSequencerUndoState = false;
 
     void runRandomAction(RandomAction action);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
@@ -137,6 +140,7 @@ private:
     void restoreLockedSectionsFromState(const juce::ValueTree& state);
     void restoreSampleFromState(const juce::ValueTree& state);
     void restoreSequencerFromState(const juce::ValueTree& state);
+    void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     double getHostBpm() const;
     std::optional<double> getHostPpqPosition() const;

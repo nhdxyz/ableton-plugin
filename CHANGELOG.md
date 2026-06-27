@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+### Sequencer Utility Undo
+
+- Added a SEQ-panel `Undo` action for restoring the previous sequencer utility state after pattern generation, variation, template apply, copy, rotate, or clear.
+- Kept the undo snapshot local to sequencer utilities so house and UKG groove experiments can be tried quickly without changing preset files or performance snapshots.
+
 ### Sequencer Variation
 
 - Added a SEQ-panel `Vary` action for making small mutations to the current 16-step pattern without replacing the groove.

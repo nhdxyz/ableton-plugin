@@ -310,6 +310,8 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
     if (isRandomLockEnabled(Parameters::ID::randomLockSequencer))
         return false;
 
+    captureSequencerUndoState();
+
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
     const auto scale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     if (scale == nullptr || scale->load() <= 0.5f)
@@ -353,6 +355,8 @@ bool NateVSTAudioProcessor::mutateSequencerPattern()
 
     if (! hasEnabledStep)
         return randomizeSequencerPattern();
+
+    captureSequencerUndoState();
 
     for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
     {
@@ -402,8 +406,21 @@ bool NateVSTAudioProcessor::mutateSequencerPattern()
     return true;
 }
 
+bool NateVSTAudioProcessor::undoSequencerEdit()
+{
+    if (! hasSequencerUndoState || ! sequencerUndoState.isValid())
+        return false;
+
+    restoreSequencerFromState(sequencerUndoState);
+    hasSequencerUndoState = false;
+    patternSequencer.reset();
+    return true;
+}
+
 void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
 {
+    captureSequencerUndoState();
+
     patternSequencer.clear();
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
     const auto scaleMode = presetIndex == 1 ? 2.0f
@@ -558,6 +575,8 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
 
 void NateVSTAudioProcessor::copySequencerFirstHalfToSecondHalf()
 {
+    captureSequencerUndoState();
+
     for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps / 2; ++stepIndex)
         patternSequencer.setStep(stepIndex + (Sequencer::PatternSequencer::numSteps / 2), patternSequencer.getStep(stepIndex));
 }
@@ -571,6 +590,8 @@ void NateVSTAudioProcessor::rotateSequencerPattern(int stepOffset)
 
     if (offset == 0)
         return;
+
+    captureSequencerUndoState();
 
     std::array<Sequencer::Step, stepCount> steps {};
     for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
@@ -692,6 +713,7 @@ bool NateVSTAudioProcessor::exportSequencerMidiFile(const juce::File& destinatio
 
 void NateVSTAudioProcessor::clearSequencerPattern()
 {
+    captureSequencerUndoState();
     patternSequencer.clear();
 }
 
@@ -1227,6 +1249,12 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         step.timing = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_timing", 0.0f));
         patternSequencer.setStep(stepIndex, step);
     }
+}
+
+void NateVSTAudioProcessor::captureSequencerUndoState()
+{
+    sequencerUndoState = createPluginState(false);
+    hasSequencerUndoState = true;
 }
 
 void NateVSTAudioProcessor::setParameterPlainValue(const juce::String& parameterID, float plainValue)

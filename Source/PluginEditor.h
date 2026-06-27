@@ -365,6 +365,7 @@ private:
     std::array<juce::TextButton, 8> sampleSliceButtons;
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
+    juce::TextButton undoSequencerButton { "Undo" };
     juce::TextButton clearSequencerButton { "Clear" };
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };

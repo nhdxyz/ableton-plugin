@@ -728,6 +728,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("Sequence skipped");
         }
     };
+    undoSequencerButton.setTooltip("Undo the last sequencer utility edit");
+    undoSequencerButton.onClick = [this]
+    {
+        if (audioProcessor.undoSequencerEdit())
+        {
+            sequencerGrid.repaint();
+            updateSegmentedSelectors();
+            setRandomStatus("Sequence undo");
+        }
+        else
+        {
+            setRandomStatus("No sequence undo");
+        }
+    };
     clearSequencerButton.onClick = [this]
     {
         audioProcessor.clearSequencerPattern();
@@ -855,6 +869,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(ukgChopButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(mutateSequencerButton);
+    addAndMakeVisible(undoSequencerButton);
     addAndMakeVisible(clearSequencerButton);
     addAndMakeVisible(bassPatternButton);
     addAndMakeVisible(stabPatternButton);
@@ -1430,6 +1445,7 @@ void NateVSTAudioProcessorEditor::resized()
             ukgPatternButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             mutateSequencerButton.setVisible(true);
+            undoSequencerButton.setVisible(true);
             clearSequencerButton.setVisible(true);
             sequencerGrid.setVisible(true);
             sequencerSectionLabel.setBounds(content.removeFromTop(28));
@@ -1452,6 +1468,7 @@ void NateVSTAudioProcessorEditor::resized()
             ukgPatternButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
             auto utilityRow = content.removeFromTop(38).withTrimmedTop(2);
             copySequencerButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            undoSequencerButton.setBounds(utilityRow.removeFromLeft(68).reduced(4));
             rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(62).reduced(4));
             rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(62).reduced(4));
             exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
@@ -2378,7 +2395,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &undoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
-        &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &clearSequencerButton,
+        &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,

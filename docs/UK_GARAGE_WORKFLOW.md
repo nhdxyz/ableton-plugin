@@ -152,6 +152,7 @@ Research references:
 - The SEQ panel includes Close, Inv 1, Inv 2, Open, and Drop 2 voicings so short organ, chord, and late-stab patterns can sit in different registers without redrawing the grid.
 - The SEQ panel includes a Strum control for subtle flam/spread on chord stabs; chord-focused factory presets use it lightly while bass and vocal chop patterns stay tight.
 - The SEQ panel includes `Vary` for small groove-preserving mutations to basslines, chord stabs, and vocal-trigger patterns.
+- The SEQ panel includes `Undo` for stepping back from generated, varied, template, copied, rotated, or cleared patterns while searching for a garage groove.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.
 - The SEQ panel includes MIDI export so generated UKG basslines, skanks, and vocal trigger patterns can be saved as `.mid` clips and edited directly in Ableton.
 

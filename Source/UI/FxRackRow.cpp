@@ -12,12 +12,14 @@ FxRackRow::FxRackRow(const juce::String& name)
 
 void FxRackRow::setState(const juce::String& name,
                          const juce::String& summary,
+                         int orderIndex,
                          bool enabled,
                          bool selected,
                          bool pinned)
 {
     if (moduleName == name
         && moduleSummary == summary
+        && moduleOrderIndex == orderIndex
         && moduleEnabled == enabled
         && moduleSelected == selected
         && modulePinned == pinned)
@@ -27,6 +29,7 @@ void FxRackRow::setState(const juce::String& name,
 
     moduleName = name;
     moduleSummary = summary;
+    moduleOrderIndex = orderIndex;
     moduleEnabled = enabled;
     moduleSelected = selected;
     modulePinned = pinned;
@@ -63,6 +66,18 @@ void FxRackRow::paintButton(juce::Graphics& g,
     const auto accent = modulePinned ? juce::Colour(0xffffc36b)
                                      : (moduleEnabled ? juce::Colour(0xff8ee6c9)
                                                       : juce::Colour(0xff5f6b70));
+
+    auto orderArea = content.removeFromLeft(24).reduced(0, 3);
+    g.setColour(moduleSelected ? juce::Colour(0xff27453e) : juce::Colour(0xff20292d));
+    g.fillRoundedRectangle(orderArea.toFloat(), 4.0f);
+    g.setColour(moduleSelected ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff6d7b82));
+    g.drawRoundedRectangle(orderArea.toFloat(), 4.0f, 1.0f);
+    g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+    g.drawFittedText(moduleOrderIndex > 0 ? juce::String(moduleOrderIndex).paddedLeft('0', 2) : "--",
+                     orderArea,
+                     juce::Justification::centred,
+                     1);
+    content.removeFromLeft(7);
 
     g.setColour(accent);
     g.fillRoundedRectangle(content.removeFromLeft(4).toFloat(), 2.0f);

@@ -91,6 +91,8 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxFlangerDepth = parameters.getRawParameterValue(Parameters::ID::fxFlangerDepth);
     fxFlangerFeedback = parameters.getRawParameterValue(Parameters::ID::fxFlangerFeedback);
     fxFlangerMix = parameters.getRawParameterValue(Parameters::ID::fxFlangerMix);
+    for (size_t index = 0; index < fxOrder.size(); ++index)
+        fxOrder[index] = parameters.getRawParameterValue(Parameters::ID::fxOrder[index]);
     macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
     macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
 }
@@ -149,21 +151,70 @@ void EffectsRack::reset()
 
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
 {
-    processTone(buffer);
-    processEq(buffer);
-    processDistortion(buffer);
-    processBitcrush(buffer);
-    processPump(buffer, bpm, ppqPosition);
-    processTremolo(buffer, bpm, ppqPosition);
-    processRingMod(buffer);
-    processComb(buffer);
-    processPhaser(buffer);
-    processFlanger(buffer);
-    processChorus(buffer);
-    processDelay(buffer);
-    processReverb(buffer);
-    processWidth(buffer);
+    const auto moduleOrder = orderedModuleIndices();
+    for (const auto moduleIndex : moduleOrder)
+        processModule(moduleIndex, buffer, bpm, ppqPosition);
+
     applyOutputGainAndSafety(buffer, outputGainDb);
+}
+
+std::array<int, EffectsRack::fxModuleCount> EffectsRack::orderedModuleIndices() const
+{
+    std::array<int, fxModuleCount> ordered {};
+    std::array<bool, fxModuleCount> used {};
+    auto writeIndex = size_t { 0 };
+
+    for (size_t slotIndex = 0; slotIndex < fxOrder.size(); ++slotIndex)
+    {
+        const auto moduleIndex = juce::jlimit(0,
+                                             static_cast<int>(fxModuleCount - 1),
+                                             static_cast<int>(std::round(readParameter(fxOrder[slotIndex], static_cast<float>(slotIndex)))));
+
+        if (moduleIndex == guardModuleIndex || used[static_cast<size_t>(moduleIndex)])
+            continue;
+
+        ordered[writeIndex++] = moduleIndex;
+        used[static_cast<size_t>(moduleIndex)] = true;
+    }
+
+    for (auto moduleIndex = 0; moduleIndex < static_cast<int>(fxModuleCount); ++moduleIndex)
+    {
+        if (moduleIndex == guardModuleIndex || used[static_cast<size_t>(moduleIndex)])
+            continue;
+
+        ordered[writeIndex++] = moduleIndex;
+        used[static_cast<size_t>(moduleIndex)] = true;
+    }
+
+    while (writeIndex < ordered.size())
+        ordered[writeIndex++] = guardModuleIndex;
+
+    return ordered;
+}
+
+void EffectsRack::processModule(int moduleIndex,
+                                juce::AudioBuffer<float>& buffer,
+                                double bpm,
+                                std::optional<double> ppqPosition)
+{
+    switch (moduleIndex)
+    {
+        case 0: processTone(buffer); break;
+        case 1: processEq(buffer); break;
+        case 2: processDistortion(buffer); break;
+        case 3: processBitcrush(buffer); break;
+        case 4: processPump(buffer, bpm, ppqPosition); break;
+        case 5: processTremolo(buffer, bpm, ppqPosition); break;
+        case 6: processRingMod(buffer); break;
+        case 7: processComb(buffer); break;
+        case 8: processPhaser(buffer); break;
+        case 9: processFlanger(buffer); break;
+        case 10: processChorus(buffer); break;
+        case 11: processDelay(buffer); break;
+        case 12: processReverb(buffer); break;
+        case 13: processWidth(buffer); break;
+        default: break;
+    }
 }
 
 void EffectsRack::processTone(juce::AudioBuffer<float>& buffer)

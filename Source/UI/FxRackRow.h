@@ -11,6 +11,7 @@ public:
 
     void setState(const juce::String& name,
                   const juce::String& summary,
+                  int orderIndex,
                   bool enabled,
                   bool selected,
                   bool pinned);
@@ -22,6 +23,7 @@ public:
 private:
     juce::String moduleName;
     juce::String moduleSummary;
+    int moduleOrderIndex = 0;
     bool moduleEnabled = false;
     bool moduleSelected = false;
     bool modulePinned = false;

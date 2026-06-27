@@ -764,6 +764,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             addFxModule(static_cast<FxModule>(selectedId - 1));
     };
     fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
+    fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
+    fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
+    fxResetOrderButton.onClick = [this] { resetFxModuleOrder(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -837,6 +840,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(loadPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
+    addAndMakeVisible(fxMoveUpButton);
+    addAndMakeVisible(fxMoveDownButton);
+    addAndMakeVisible(fxResetOrderButton);
     addAndMakeVisible(fxRemoveButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
@@ -1409,9 +1415,15 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto actionRow = content.removeFromTop(48);
             fxAddBox.setVisible(true);
+            fxMoveUpButton.setVisible(true);
+            fxMoveDownButton.setVisible(true);
+            fxResetOrderButton.setVisible(true);
             fxRemoveButton.setVisible(true);
             fxRackStatusLabel.setVisible(true);
-            fxAddBox.setBounds(actionRow.removeFromLeft(170).reduced(4));
+            fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
+            fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
+            fxMoveDownButton.setBounds(actionRow.removeFromLeft(58).reduced(4));
+            fxResetOrderButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
             fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
             fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
 
@@ -1424,21 +1436,8 @@ void NateVSTAudioProcessorEditor::resized()
             std::array<UI::FxRackRow*, 15> visibleFxSlots {};
             auto visibleFxSlotCount = 0;
 
-            for (auto module : { FxModule::tone,
-                                 FxModule::eq,
-                                 FxModule::distortion,
-                                 FxModule::bitcrush,
-                                 FxModule::pump,
-                                 FxModule::tremolo,
-                                 FxModule::ring,
-                                 FxModule::comb,
-                                 FxModule::phaser,
-                                 FxModule::flanger,
-                                 FxModule::chorus,
-                                 FxModule::delay,
-                                 FxModule::reverb,
-                                 FxModule::width,
-                                 FxModule::guard })
+            const auto moduleOrder = fxModuleOrder();
+            for (const auto module : moduleOrder)
             {
                 auto& slotButton = fxSlotButton(module);
                 const auto isVisible = shouldShowFxModule(module);
@@ -1897,39 +1896,173 @@ void NateVSTAudioProcessorEditor::selectFxModule(FxModule module)
     repaint();
 }
 
+void NateVSTAudioProcessorEditor::moveSelectedFxModule(int direction)
+{
+    if (selectedFxModule == FxModule::guard)
+    {
+        fxRackStatusLabel.setText("Guard stays last as the output safety stage", juce::dontSendNotification);
+        return;
+    }
+
+    auto order = fxModuleOrder();
+    const auto position = fxOrderPosition(selectedFxModule) - 1;
+    const auto targetPosition = position + (direction < 0 ? -1 : 1);
+    const auto lastMovablePosition = static_cast<int>(order.size()) - 2;
+
+    if (position < 0 || targetPosition < 0 || targetPosition > lastMovablePosition)
+        return;
+
+    std::swap(order[static_cast<size_t>(position)], order[static_cast<size_t>(targetPosition)]);
+    setFxModuleOrder(order);
+    updateFxRackControls();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::resetFxModuleOrder()
+{
+    setFxModuleOrder(fxDefaultModuleOrder());
+    updateFxRackControls();
+    resized();
+    repaint();
+}
+
 void NateVSTAudioProcessorEditor::updateFxRackControls()
 {
     if (! shouldShowFxModule(selectedFxModule))
         selectedFxModule = FxModule::guard;
 
-    for (auto module : { FxModule::tone,
-                         FxModule::eq,
-                         FxModule::distortion,
-                         FxModule::bitcrush,
-                         FxModule::pump,
-                         FxModule::tremolo,
-                         FxModule::ring,
-                         FxModule::comb,
-                         FxModule::phaser,
-                         FxModule::flanger,
-                         FxModule::chorus,
-                         FxModule::delay,
-                         FxModule::reverb,
-                         FxModule::width,
-                         FxModule::guard })
+    const auto moduleOrder = fxModuleOrder();
+    for (const auto module : moduleOrder)
     {
         auto& button = fxSlotButton(module);
         const auto isEnabled = isFxModuleEnabled(module);
         button.setState(fxModuleName(module),
                         fxModuleSummary(module),
+                        fxOrderPosition(module),
                         isEnabled,
                         module == selectedFxModule,
                         module == FxModule::guard);
     }
 
-    fxRackStatusLabel.setText(fxModuleName(selectedFxModule) + " | " + fxModuleSummary(selectedFxModule),
+    fxRackStatusLabel.setText("#" + juce::String(fxOrderPosition(selectedFxModule)).paddedLeft('0', 2)
+                                  + " " + fxModuleName(selectedFxModule)
+                                  + " | " + fxModuleSummary(selectedFxModule),
                               juce::dontSendNotification);
+    const auto selectedPosition = fxOrderPosition(selectedFxModule);
+    const auto canMoveSelected = selectedFxModule != FxModule::guard;
+    fxMoveUpButton.setEnabled(canMoveSelected && selectedPosition > 1);
+    fxMoveDownButton.setEnabled(canMoveSelected && selectedPosition > 0 && selectedPosition < static_cast<int>(moduleOrder.size()) - 1);
     fxRemoveButton.setEnabled(selectedFxModule != FxModule::guard);
+}
+
+std::array<NateVSTAudioProcessorEditor::FxModule, 15> NateVSTAudioProcessorEditor::fxDefaultModuleOrder() const
+{
+    return {
+        FxModule::tone,
+        FxModule::eq,
+        FxModule::distortion,
+        FxModule::bitcrush,
+        FxModule::pump,
+        FxModule::tremolo,
+        FxModule::ring,
+        FxModule::comb,
+        FxModule::phaser,
+        FxModule::flanger,
+        FxModule::chorus,
+        FxModule::delay,
+        FxModule::reverb,
+        FxModule::width,
+        FxModule::guard
+    };
+}
+
+std::array<NateVSTAudioProcessorEditor::FxModule, 15> NateVSTAudioProcessorEditor::fxModuleOrder() const
+{
+    auto order = fxDefaultModuleOrder();
+    std::array<bool, 15> used {};
+    auto writeIndex = size_t { 0 };
+
+    for (size_t slotIndex = 0; slotIndex < Parameters::ID::fxOrder.size(); ++slotIndex)
+    {
+        const auto fallback = static_cast<float>(slotIndex);
+        auto moduleIndex = static_cast<int>(slotIndex);
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(Parameters::ID::fxOrder[slotIndex]))
+            moduleIndex = static_cast<int>(std::round(value->load()));
+        else
+            moduleIndex = static_cast<int>(fallback);
+
+        moduleIndex = juce::jlimit(0, 14, moduleIndex);
+        const auto module = fxModuleFromIndex(moduleIndex);
+        if (module == FxModule::guard || used[static_cast<size_t>(moduleIndex)])
+            continue;
+
+        order[writeIndex++] = module;
+        used[static_cast<size_t>(moduleIndex)] = true;
+    }
+
+    for (const auto module : fxDefaultModuleOrder())
+    {
+        const auto moduleIndex = fxModuleIndex(module);
+        if (module == FxModule::guard || used[static_cast<size_t>(moduleIndex)])
+            continue;
+
+        order[writeIndex++] = module;
+        used[static_cast<size_t>(moduleIndex)] = true;
+    }
+
+    while (writeIndex < order.size() - 1)
+        order[writeIndex++] = FxModule::guard;
+
+    order.back() = FxModule::guard;
+    return order;
+}
+
+void NateVSTAudioProcessorEditor::setFxModuleOrder(const std::array<FxModule, 15>& order)
+{
+    auto normalised = order;
+    normalised.back() = FxModule::guard;
+
+    for (size_t slotIndex = 0; slotIndex < Parameters::ID::fxOrder.size(); ++slotIndex)
+        setPlainParameterValue(Parameters::ID::fxOrder[slotIndex], static_cast<float>(fxModuleIndex(normalised[slotIndex])));
+}
+
+int NateVSTAudioProcessorEditor::fxOrderPosition(FxModule module) const
+{
+    const auto order = fxModuleOrder();
+    for (size_t index = 0; index < order.size(); ++index)
+        if (order[index] == module)
+            return static_cast<int>(index + 1);
+
+    return 0;
+}
+
+int NateVSTAudioProcessorEditor::fxModuleIndex(FxModule module) const
+{
+    return static_cast<int>(module);
+}
+
+NateVSTAudioProcessorEditor::FxModule NateVSTAudioProcessorEditor::fxModuleFromIndex(int index) const
+{
+    switch (juce::jlimit(0, 14, index))
+    {
+        case 0: return FxModule::tone;
+        case 1: return FxModule::eq;
+        case 2: return FxModule::distortion;
+        case 3: return FxModule::bitcrush;
+        case 4: return FxModule::pump;
+        case 5: return FxModule::tremolo;
+        case 6: return FxModule::ring;
+        case 7: return FxModule::comb;
+        case 8: return FxModule::phaser;
+        case 9: return FxModule::flanger;
+        case 10: return FxModule::chorus;
+        case 11: return FxModule::delay;
+        case 12: return FxModule::reverb;
+        case 13: return FxModule::width;
+        case 14:
+        default: return FxModule::guard;
+    }
 }
 
 bool NateVSTAudioProcessorEditor::isFxModuleEnabled(FxModule module) const
@@ -2111,6 +2244,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,

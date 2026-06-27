@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### FX Rack Chain Order
+
+- Added saved FX order slots so the rack can process enabled modules in a user-controlled chain order instead of a fixed internal list.
+- Added FX page `Up`, `Down`, and `Reset` controls for moving the selected module while keeping Guard pinned as the final safety/output stage.
+- Added numbered order badges to FX rack rows and updated the rack status text to show the selected module's chain position.
+- Preserved old preset behavior by defaulting the order slots to the previous fixed chain and normalizing invalid or duplicated order data defensively.
+
 ### Control Feel and LFO Declutter
 
 - Reworked rotary slider movement to use direct drag instead of velocity mode, with slower drag ranges for fine pitch, filter, EQ, timing, and frequency controls.

@@ -20,6 +20,9 @@ public:
     void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
 
 private:
+    static constexpr size_t fxModuleCount = 15;
+    static constexpr int guardModuleIndex = 14;
+
     Parameters::APVTS& parameters;
     juce::dsp::Phaser<float> phaser;
     juce::dsp::Chorus<float> flanger;
@@ -107,9 +110,15 @@ private:
     std::atomic<float>* fxFlangerDepth = nullptr;
     std::atomic<float>* fxFlangerFeedback = nullptr;
     std::atomic<float>* fxFlangerMix = nullptr;
+    std::array<std::atomic<float>*, fxModuleCount> fxOrder {};
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroSpace = nullptr;
 
+    std::array<int, fxModuleCount> orderedModuleIndices() const;
+    void processModule(int moduleIndex,
+                       juce::AudioBuffer<float>& buffer,
+                       double bpm,
+                       std::optional<double> ppqPosition);
     void processTone(juce::AudioBuffer<float>& buffer);
     void processEq(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);

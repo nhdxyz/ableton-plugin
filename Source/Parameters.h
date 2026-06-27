@@ -191,6 +191,23 @@ inline constexpr auto fxFlangerRate = "fx_flanger_rate";
 inline constexpr auto fxFlangerDepth = "fx_flanger_depth";
 inline constexpr auto fxFlangerFeedback = "fx_flanger_feedback";
 inline constexpr auto fxFlangerMix = "fx_flanger_mix";
+inline constexpr std::array<const char*, 15> fxOrder {
+    "fx_order_1",
+    "fx_order_2",
+    "fx_order_3",
+    "fx_order_4",
+    "fx_order_5",
+    "fx_order_6",
+    "fx_order_7",
+    "fx_order_8",
+    "fx_order_9",
+    "fx_order_10",
+    "fx_order_11",
+    "fx_order_12",
+    "fx_order_13",
+    "fx_order_14",
+    "fx_order_15"
+};
 }
 
 juce::StringArray waveformChoices();

@@ -968,6 +968,16 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.16f));
 
+    for (size_t index = 0; index < ID::fxOrder.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterInt>(
+            ID::fxOrder[index],
+            "FX Order " + juce::String(static_cast<int>(index + 1)),
+            0,
+            static_cast<int>(ID::fxOrder.size() - 1),
+            static_cast<int>(index)));
+    }
+
     return { params.begin(), params.end() };
 }
 }

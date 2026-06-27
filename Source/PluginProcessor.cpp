@@ -927,6 +927,9 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxFlangerFeedback,
             Parameters::ID::fxFlangerMix
         });
+
+        for (const auto* parameterID : Parameters::ID::fxOrder)
+            restoreParameterFromState(state, parameterID);
     }
 
     if (isRandomLockEnabled(Parameters::ID::randomLockOutput))

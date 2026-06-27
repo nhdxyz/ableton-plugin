@@ -393,6 +393,9 @@ private:
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton fxMoveUpButton { "Up" };
+    juce::TextButton fxMoveDownButton { "Down" };
+    juce::TextButton fxResetOrderButton { "Reset" };
     juce::TextButton fxRemoveButton { "Remove" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
@@ -467,7 +470,15 @@ private:
     void addFxModule(FxModule module);
     void removeSelectedFxModule();
     void selectFxModule(FxModule module);
+    void moveSelectedFxModule(int direction);
+    void resetFxModuleOrder();
     void updateFxRackControls();
+    std::array<FxModule, 15> fxDefaultModuleOrder() const;
+    std::array<FxModule, 15> fxModuleOrder() const;
+    void setFxModuleOrder(const std::array<FxModule, 15>& order);
+    int fxOrderPosition(FxModule module) const;
+    int fxModuleIndex(FxModule module) const;
+    FxModule fxModuleFromIndex(int index) const;
     bool isFxModuleEnabled(FxModule module) const;
     bool shouldShowFxModule(FxModule module) const;
     juce::String fxEnabledParameterID(FxModule module) const;

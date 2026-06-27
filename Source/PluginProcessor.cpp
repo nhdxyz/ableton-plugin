@@ -10,6 +10,7 @@ const juce::Identifier libraryStateType { "NateVSTLibrary" };
 const juce::Identifier favoritesType { "Favorites" };
 const juce::Identifier recentType { "Recent" };
 const juce::Identifier presetRefType { "Preset" };
+const juce::Identifier performanceSnapshotType { "PerformanceSnapshot" };
 }
 
 NateVSTAudioProcessor::NateVSTAudioProcessor()
@@ -633,6 +634,34 @@ juce::StringArray NateVSTAudioProcessor::getRecentPresetNames() const
     return getLibraryStateNames(recentType);
 }
 
+void NateVSTAudioProcessor::capturePerformanceSnapshot(int slotIndex)
+{
+    if (slotIndex < 0 || slotIndex >= static_cast<int>(performanceSnapshots.size()))
+        return;
+
+    performanceSnapshots[static_cast<size_t>(slotIndex)] = createPluginState(false);
+}
+
+bool NateVSTAudioProcessor::recallPerformanceSnapshot(int slotIndex)
+{
+    if (slotIndex < 0 || slotIndex >= static_cast<int>(performanceSnapshots.size()))
+        return false;
+
+    const auto& snapshot = performanceSnapshots[static_cast<size_t>(slotIndex)];
+    if (! snapshot.isValid())
+        return false;
+
+    restorePluginState(snapshot.createCopy(), false);
+    return true;
+}
+
+bool NateVSTAudioProcessor::hasPerformanceSnapshot(int slotIndex) const
+{
+    return slotIndex >= 0
+        && slotIndex < static_cast<int>(performanceSnapshots.size())
+        && performanceSnapshots[static_cast<size_t>(slotIndex)].isValid();
+}
+
 void NateVSTAudioProcessor::notePresetLoaded(const juce::String& presetName)
 {
     const auto trimmedName = presetName.trim();
@@ -1060,6 +1089,11 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
 
 juce::ValueTree NateVSTAudioProcessor::createPluginState()
 {
+    return createPluginState(true);
+}
+
+juce::ValueTree NateVSTAudioProcessor::createPluginState(bool includePerformanceSnapshots)
+{
     auto state = parameters.copyState();
     state.setProperty("nate_vst_state_version", 1, nullptr);
     state.setProperty("sample_file", loadedSamplePath, nullptr);
@@ -1074,13 +1108,27 @@ juce::ValueTree NateVSTAudioProcessor::createPluginState()
         state.setProperty("seq_step_" + juce::String(stepIndex) + "_timing", step.timing, nullptr);
     }
 
+    if (includePerformanceSnapshots)
+        appendPerformanceSnapshotsToState(state);
+
     return state;
 }
 
 void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state)
 {
-    loadedSamplePath = state.getProperty("sample_file").toString();
-    parameters.replaceState(state);
+    restorePluginState(state, true);
+}
+
+void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, bool shouldRestorePerformanceSnapshots)
+{
+    auto stateForParameters = state.createCopy();
+    removePerformanceSnapshotChildren(stateForParameters);
+
+    if (shouldRestorePerformanceSnapshots)
+        restorePerformanceSnapshotsFromState(state);
+
+    loadedSamplePath = stateForParameters.getProperty("sample_file").toString();
+    parameters.replaceState(stateForParameters);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));
@@ -1090,13 +1138,58 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state)
     for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
     {
         Sequencer::Step step;
-        step.enabled = static_cast<bool>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_enabled", false));
-        step.noteOffset = static_cast<int>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_note", 0));
-        step.velocity = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_velocity", 0.8f));
-        step.probability = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_probability", 1.0f));
-        step.timing = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_timing", 0.0f));
+        step.enabled = static_cast<bool>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_enabled", false));
+        step.noteOffset = static_cast<int>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_note", 0));
+        step.velocity = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_velocity", 0.8f));
+        step.probability = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_probability", 1.0f));
+        step.timing = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_timing", 0.0f));
         patternSequencer.setStep(stepIndex, step);
     }
+}
+
+void NateVSTAudioProcessor::restorePerformanceSnapshotsFromState(const juce::ValueTree& state)
+{
+    for (auto& snapshot : performanceSnapshots)
+        snapshot = {};
+
+    for (auto childIndex = 0; childIndex < state.getNumChildren(); ++childIndex)
+    {
+        const auto child = state.getChild(childIndex);
+        if (! child.hasType(performanceSnapshotType))
+            continue;
+
+        const auto slotIndex = static_cast<int>(child.getProperty("slot", -1));
+        if (slotIndex < 0 || slotIndex >= static_cast<int>(performanceSnapshots.size()) || child.getNumChildren() <= 0)
+            continue;
+
+        auto snapshotState = child.getChild(0).createCopy();
+        removePerformanceSnapshotChildren(snapshotState);
+
+        if (snapshotState.isValid() && snapshotState.hasType(parameters.state.getType()))
+            performanceSnapshots[static_cast<size_t>(slotIndex)] = snapshotState;
+    }
+}
+
+void NateVSTAudioProcessor::appendPerformanceSnapshotsToState(juce::ValueTree& state) const
+{
+    for (size_t slotIndex = 0; slotIndex < performanceSnapshots.size(); ++slotIndex)
+    {
+        const auto& snapshot = performanceSnapshots[slotIndex];
+        if (! snapshot.isValid())
+            continue;
+
+        juce::ValueTree child(performanceSnapshotType);
+        child.setProperty("slot", static_cast<int>(slotIndex), nullptr);
+        child.addChild(snapshot.createCopy(), -1, nullptr);
+        state.addChild(child, -1, nullptr);
+    }
+}
+
+void NateVSTAudioProcessor::removePerformanceSnapshotChildren(juce::ValueTree& state) const
+{
+    for (auto childIndex = state.getNumChildren(); --childIndex >= 0;)
+        if (state.getChild(childIndex).hasType(performanceSnapshotType))
+            state.removeChild(childIndex, nullptr);
 }
 
 juce::ValueTree NateVSTAudioProcessor::loadLibraryState() const

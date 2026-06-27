@@ -119,6 +119,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(randomStatusLabel);
 
+    performanceStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    performanceStatusLabel.setFont(juce::FontOptions(11.0f));
+    performanceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(performanceStatusLabel);
+
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
@@ -529,6 +534,38 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleNameLabel();
         sequencerGrid.repaint();
     };
+    recallSnapshotAButton.setTooltip("Recall performance snapshot A");
+    recallSnapshotAButton.onClick = [this]
+    {
+        if (audioProcessor.recallPerformanceSnapshot(0))
+        {
+            updateSampleNameLabel();
+            sequencerGrid.repaint();
+            updatePerformanceSnapshotButtons();
+        }
+    };
+    captureSnapshotAButton.setTooltip("Store the current patch in performance snapshot A");
+    captureSnapshotAButton.onClick = [this]
+    {
+        audioProcessor.capturePerformanceSnapshot(0);
+        updatePerformanceSnapshotButtons();
+    };
+    recallSnapshotBButton.setTooltip("Recall performance snapshot B");
+    recallSnapshotBButton.onClick = [this]
+    {
+        if (audioProcessor.recallPerformanceSnapshot(1))
+        {
+            updateSampleNameLabel();
+            sequencerGrid.repaint();
+            updatePerformanceSnapshotButtons();
+        }
+    };
+    captureSnapshotBButton.setTooltip("Store the current patch in performance snapshot B");
+    captureSnapshotBButton.onClick = [this]
+    {
+        audioProcessor.capturePerformanceSnapshot(1);
+        updatePerformanceSnapshotButtons();
+    };
     loadSampleButton.onClick = [this] { chooseSampleFile(); };
     clearSampleButton.onClick = [this]
     {
@@ -661,6 +698,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(mutateButton);
     addAndMakeVisible(variationButton);
     addAndMakeVisible(undoRandomButton);
+    addAndMakeVisible(recallSnapshotAButton);
+    addAndMakeVisible(captureSnapshotAButton);
+    addAndMakeVisible(recallSnapshotBButton);
+    addAndMakeVisible(captureSnapshotBButton);
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
     addAndMakeVisible(randomCutButton);
@@ -880,6 +921,11 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             lowEndAssistant.setVisible(true);
+            performanceStatusLabel.setVisible(true);
+            recallSnapshotAButton.setVisible(true);
+            captureSnapshotAButton.setVisible(true);
+            recallSnapshotBButton.setVisible(true);
+            captureSnapshotBButton.setVisible(true);
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
@@ -903,7 +949,13 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(126).withTrimmedTop(6), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(112).withTrimmedTop(6), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
+            performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(156).reduced(4, 4));
+            recallSnapshotAButton.setBounds(snapshotRow.removeFromLeft(48).reduced(3, 4));
+            captureSnapshotAButton.setBounds(snapshotRow.removeFromLeft(72).reduced(3, 4));
+            recallSnapshotBButton.setBounds(snapshotRow.removeFromLeft(48).reduced(3, 4));
+            captureSnapshotBButton.setBounds(snapshotRow.removeFromLeft(72).reduced(3, 4));
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             recipeBox.setBounds(labArea.removeFromTop(38).reduced(3, 4));
@@ -1925,7 +1977,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel, &sampleSectionLabel, &sequencerSectionLabel,
-        &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
+        &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
@@ -1935,7 +1987,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton,
-        &generateButton, &mutateButton, &variationButton, &undoRandomButton, &loadSampleButton, &clearSampleButton,
+        &generateButton, &mutateButton, &variationButton, &undoRandomButton,
+        &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
+        &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
@@ -2188,12 +2242,26 @@ void NateVSTAudioProcessorEditor::updateLowEndAssistant()
     lowEndAssistant.setState(state);
 }
 
+void NateVSTAudioProcessorEditor::updatePerformanceSnapshotButtons()
+{
+    const auto hasSnapshotA = audioProcessor.hasPerformanceSnapshot(0);
+    const auto hasSnapshotB = audioProcessor.hasPerformanceSnapshot(1);
+
+    recallSnapshotAButton.setEnabled(hasSnapshotA);
+    recallSnapshotBButton.setEnabled(hasSnapshotB);
+    performanceStatusLabel.setText(juce::String(hasSnapshotA ? "A ready" : "A empty")
+                                       + " | "
+                                       + juce::String(hasSnapshotB ? "B ready" : "B empty"),
+                                   juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updateOutputMeter();
     updateLowEndAssistant();
+    updatePerformanceSnapshotButtons();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

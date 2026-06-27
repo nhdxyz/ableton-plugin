@@ -411,6 +411,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
 5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
 6. House performance tools: A/B snapshots, eight consistent performance macros, XY movement, delay throws, mute drops, chord/scale helpers, and low-end metering for club translation.
+   First performance slice implemented as HOME A/B snapshots that save with plugin/preset state and recall full patch/sample/sequencer state.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

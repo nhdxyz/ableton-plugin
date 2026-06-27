@@ -10,6 +10,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#include <array>
 #include <atomic>
 #include <initializer_list>
 #include <optional>
@@ -83,6 +84,9 @@ public:
     bool setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite);
     juce::StringArray getRecentPresetNames() const;
     void notePresetLoaded(const juce::String& presetName);
+    void capturePerformanceSnapshot(int slotIndex);
+    bool recallPerformanceSnapshot(int slotIndex);
+    bool hasPerformanceSnapshot(int slotIndex) const;
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
@@ -117,6 +121,7 @@ private:
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
+    std::array<juce::ValueTree, 2> performanceSnapshots;
     bool hasRandomUndoState = false;
 
     void runRandomAction(RandomAction action);
@@ -133,7 +138,12 @@ private:
     std::optional<double> getHostPpqPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     juce::ValueTree createPluginState();
+    juce::ValueTree createPluginState(bool includePerformanceSnapshots);
     void restorePluginState(const juce::ValueTree& state);
+    void restorePluginState(const juce::ValueTree& state, bool restorePerformanceSnapshots);
+    void restorePerformanceSnapshotsFromState(const juce::ValueTree& state);
+    void appendPerformanceSnapshotsToState(juce::ValueTree& state) const;
+    void removePerformanceSnapshotChildren(juce::ValueTree& state) const;
     juce::ValueTree loadLibraryState() const;
     bool saveLibraryState(const juce::ValueTree& state) const;
     juce::StringArray getLibraryStateNames(const juce::Identifier& childType) const;

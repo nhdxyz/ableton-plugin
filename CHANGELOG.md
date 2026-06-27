@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Performance A/B Snapshots
+
+- Added HOME-panel A/B performance snapshots with `A`, `Set A`, `B`, and `Set B` controls beside the macro area.
+- Stored snapshot payloads inside plugin/preset state as `PerformanceSnapshot` children, while stripping them before APVTS parameter restore so existing parameter automation remains stable.
+- Made snapshot recall restore the current patch, sample path, and sequencer pattern while preserving the stored A/B slots for continued comparison.
+- Disabled recall buttons until their snapshot slot has content and added compact HOME status text for A/B readiness.
+
 ### Club Low-End Assistant
 
 - Added post-FX low-end metering for sub-band RMS, low-frequency stereo side risk, and output peak using lightweight atomic values for the UI.

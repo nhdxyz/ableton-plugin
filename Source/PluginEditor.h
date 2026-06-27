@@ -86,6 +86,7 @@ private:
     juce::Label sampleNameLabel;
     juce::Label presetStatusLabel;
     juce::Label randomStatusLabel;
+    juce::Label performanceStatusLabel;
 
     juce::ComboBox waveformBox;
     juce::ComboBox osc2WaveBox;
@@ -342,6 +343,10 @@ private:
     juce::TextButton mutateButton { "Mutate" };
     juce::TextButton variationButton { "Variation" };
     juce::TextButton undoRandomButton { "Undo" };
+    juce::TextButton recallSnapshotAButton { "A" };
+    juce::TextButton captureSnapshotAButton { "Set A" };
+    juce::TextButton recallSnapshotBButton { "B" };
+    juce::TextButton captureSnapshotBButton { "Set B" };
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton randomCutButton { "Rand Cut" };
@@ -436,6 +441,7 @@ private:
     void updateLfoCurveDisplay();
     void updateOutputMeter();
     void updateLowEndAssistant();
+    void updatePerformanceSnapshotButtons();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

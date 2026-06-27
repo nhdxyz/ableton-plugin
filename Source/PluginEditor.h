@@ -358,6 +358,7 @@ private:
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton ukgChopButton { "UKG Chop" };
+    std::array<juce::TextButton, 8> sampleSliceButtons;
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton clearSequencerButton { "Clear" };
     juce::TextButton bassPatternButton { "Bass" };
@@ -458,6 +459,8 @@ private:
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
     void updateSequencerGridContext();
+    void selectSampleSlice(size_t sliceIndex);
+    void updateSampleSliceButtons();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

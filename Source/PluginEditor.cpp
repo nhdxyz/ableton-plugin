@@ -684,6 +684,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("UKG chop skipped");
         }
     };
+    for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
+    {
+        auto& button = sampleSliceButtons[index];
+        button.setButtonText(juce::String(static_cast<int>(index + 1)));
+        button.setTooltip("Select sample slice " + juce::String(static_cast<int>(index + 1)));
+        button.onClick = [this, index] { selectSampleSlice(index); };
+        addAndMakeVisible(button);
+    }
     randomSequencerButton.onClick = [this]
     {
         if (audioProcessor.randomizeSequencerPattern())
@@ -1320,6 +1328,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleModeBox.setVisible(true);
             sampleStutterEnabledButton.setVisible(true);
             sampleStutterRateBox.setVisible(true);
+            for (auto& button : sampleSliceButtons)
+                button.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
@@ -1334,6 +1344,10 @@ void NateVSTAudioProcessorEditor::resized()
             sampleNameLabel.setBounds(stutterRow.removeFromLeft(430).reduced(8, 4));
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
             sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
+            auto sliceRow = content.removeFromTop(42).withTrimmedTop(4);
+            const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
+            for (auto& button : sampleSliceButtons)
+                button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
             auto cutRow = content.removeFromTop(70).withTrimmedTop(18);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -1831,6 +1845,49 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
     sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName : "No sample", juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
+{
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    if (sliceCount <= 0.0f)
+        return;
+
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto start = static_cast<float>(safeIndex) / sliceCount;
+    const auto end = static_cast<float>(safeIndex + 1) / sliceCount;
+
+    setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::sampleStart, start);
+    setPlainParameterValue(Parameters::ID::sampleEnd, end);
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + " selected");
+    updateSampleSliceButtons();
+}
+
+void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
+{
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    const auto start = juce::jlimit(0.0f, 1.0f, readParameter(Parameters::ID::sampleStart, 0.0f));
+    const auto end = juce::jlimit(0.0f, 1.0f, readParameter(Parameters::ID::sampleEnd, 1.0f));
+    const auto orderedStart = juce::jmin(start, end);
+    const auto orderedEnd = juce::jmax(start, end);
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+
+    for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
+    {
+        const auto sliceStart = static_cast<float>(index) / sliceCount;
+        const auto sliceEnd = static_cast<float>(index + 1) / sliceCount;
+        const auto isSelected = std::abs(orderedStart - sliceStart) < 0.005f
+            && std::abs(orderedEnd - sliceEnd) < 0.005f;
+        sampleSliceButtons[index].setToggleState(isSelected, juce::dontSendNotification);
+    }
+}
+
 void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 {
     const auto locks = audioProcessor.getActiveRandomizationLockSummary();
@@ -2254,6 +2311,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     for (auto& slider : lfoCurveSliders)
         slider.setVisible(false);
 
+    for (auto& button : sampleSliceButtons)
+        button.setVisible(false);
+
     for (auto& label : modSourceRows)
         label.setVisible(false);
 
@@ -2647,6 +2707,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
     updateSequencerGridContext();
+    updateSampleSliceButtons();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

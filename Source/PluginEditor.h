@@ -7,6 +7,7 @@
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
 #include "UI/OutputMeter.h"
+#include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/XYMacroPad.h"
@@ -498,6 +499,7 @@ private:
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
+    UI::PumpCurveDisplay pumpCurveDisplay;
     UI::SampleWaveformDisplay sampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
     UI::XYMacroPad performanceXYPad;
@@ -534,6 +536,7 @@ private:
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
+    void updatePumpCurveDisplay();
     void updateModMatrixRows();
     void updateModInspectorStatus();
     void updateModDestinationIndicators();

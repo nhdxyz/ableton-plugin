@@ -715,6 +715,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setPlainParameterValue(Parameters::ID::lfo1Curve[index], value);
     };
     addAndMakeVisible(lfoCurveDisplay);
+    addAndMakeVisible(pumpCurveDisplay);
 
     for (size_t index = 0; index < lfoCurveSliders.size(); ++index)
         configureCompactHorizontalSlider(lfoCurveSliders[index], Parameters::ID::lfo1Curve[index]);
@@ -2104,13 +2105,15 @@ void NateVSTAudioProcessorEditor::resized()
                     fxPumpEnabledButton.setVisible(true);
                     fxPumpRateBox.setVisible(true);
                     fxPumpCurveBox.setVisible(true);
+                    pumpCurveDisplay.setVisible(true);
                     fxPumpEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
                     fxPumpRateBox.setBounds(detailHeader.removeFromLeft(96).reduced(3, 4));
                     fxPumpCurveBox.setBounds(detailHeader.removeFromLeft(118).reduced(3, 4));
+                    pumpCurveDisplay.setBounds(controlsArea.removeFromTop(86).reduced(4, 2));
                     setSliderVisible(fxPumpDepthSlider, fxPumpDepthLabel, true);
                     setSliderVisible(fxPumpShapeSlider, fxPumpShapeLabel, true);
                     setSliderVisible(fxPumpPhaseSlider, fxPumpPhaseLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxPumpDepthSlider, &fxPumpShapeSlider, &fxPumpPhaseSlider });
+                    layoutKnobRow(controlsArea.removeFromTop(128).withTrimmedTop(8), { &fxPumpDepthSlider, &fxPumpShapeSlider, &fxPumpPhaseSlider });
                     break;
 
                 case FxModule::tremolo:
@@ -3724,7 +3727,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,
-        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &lfoCurveDisplay, &sequencerGrid
+        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -3926,6 +3929,17 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
         shapeIndex = static_cast<int>(value->load() + 0.5f);
 
     lfoCurveDisplay.setValues(values, shapeIndex == 5);
+}
+
+void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
+{
+    pumpCurveDisplay.setState(
+        juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpCurve, 0.0f)),
+        readPlainParameterValue(Parameters::ID::fxPumpDepth, 0.35f),
+        readPlainParameterValue(Parameters::ID::fxPumpShape, 0.45f),
+        readPlainParameterValue(Parameters::ID::fxPumpPhase, 0.0f),
+        juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)),
+        readPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f) >= 0.5f);
 }
 
 void NateVSTAudioProcessorEditor::updateModMatrixRows()
@@ -4377,6 +4391,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
 
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
+    updatePumpCurveDisplay();
     updateModMatrixRows();
     updateModInspectorStatus();
     updateModDestinationIndicators();

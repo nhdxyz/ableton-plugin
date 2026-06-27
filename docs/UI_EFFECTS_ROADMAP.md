@@ -223,7 +223,7 @@ Good for minimal clicks, rough digital texture, old sampler color, and aggressiv
 
 Implemented as the Pump module. An internal tempo-sync pump gives sidechain-style movement without requiring external sidechain routing. The current version uses synced rate, curve type, depth, shape, phase, host PPQ alignment when available, and a BPM-based fallback. Real external sidechain can come much later.
 
-The first rhythmic-shaper curve pass is implemented with Smooth, Tight, Garage, Stutter, and Gate curves. This does not replace a future drawable curve editor, but it gives house and UKG patches useful production shapes now while keeping the parameter model stable.
+The first rhythmic-shaper curve pass is implemented with Smooth, Tight, Garage, Stutter, and Gate curves plus a focused FX detail preview that draws the active duck envelope. This does not replace a future drawable curve editor, but it gives house and UKG patches useful production shapes now while keeping the parameter model stable.
 
 4. Stereo Width / Mono Bass
 

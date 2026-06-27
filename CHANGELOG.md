@@ -6,6 +6,7 @@
 
 - Added an automatable Pump Curve selector with Smooth, Tight, Garage, Stutter, and Gate shapes for more precise house, tech-house, minimal, techno, and UKG ducking.
 - Updated Pump DSP so each curve changes the gain envelope while preserving the old Smooth behavior as the default.
+- Added a focused Pump curve preview to the FX detail view so the selected duck shape, rate, depth, and phase are visible while designing rhythmic movement.
 - Wired Pump Curve into the FX detail UI, rack summaries, momentary Pump Drop restore path, module presets, randomization recipes, and factory-preset generation.
 
 ### Tempo-Synced Delay And Host Phase

@@ -138,8 +138,8 @@ First implementation:
 - Implemented: use Add FX to enable and reveal fixed modules.
 - Implemented: show one selected effect editor at a time.
 - Implemented: keep Guard available as the output safety module.
-- Current pass: compact the list into two columns when many modules are visible and group Add FX by role.
-- Next pass: replace text-only rack buttons with a dedicated rack-row component that separates selected state, enabled/bypassed state, module name, and summary.
+- Implemented: compact the list into two columns when many modules are visible and group Add FX by role.
+- Implemented: replace text-only rack buttons with a dedicated rack-row component that separates selected state, enabled/bypassed state, module name, summary, and Guard safety status.
 
 Suggested FX page layout:
 
@@ -400,7 +400,7 @@ Each effect should include:
 - Add small modulation indicators to macro and destination knobs.
 - Keep HOME focused on performance, not assignment editing.
 
-### Phase 6: UKG And Modern Synth Feature Tracks
+### Phase 6: House, UKG, And Modern Synth Feature Tracks
 
 Create and work these as separate feature tracks so the plugin grows coherently:
 
@@ -409,13 +409,14 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 3. Wavetable and character filter pass: wavetable position/warp first, then filter slopes/drive/flavors before deeper spectral or granular work.
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
 5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
+6. House performance tools: A/B snapshots, eight consistent performance macros, XY movement, delay throws, mute drops, chord/scale helpers, and low-end metering for club translation.
 
 ## Acceptance Criteria For The Next Big UI Pass
 
 - FX page no longer overflows when many effect modules are visible.
 - Add FX workflow can reveal existing modules without changing parameter IDs and is grouped by production task.
 - Current modules can be selected and edited in a focused detail area.
-- Rack selected state, enabled state, and bypass state are visually distinct in the next custom rack-row pass.
+- Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
 - A clear path exists for adding more FX without redesigning the page again.

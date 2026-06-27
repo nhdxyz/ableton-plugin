@@ -1229,7 +1229,7 @@ void NateVSTAudioProcessorEditor::resized()
             auto detailArea = content.reduced(24, 18);
             detailArea.removeFromTop(30);
 
-            std::array<juce::TextButton*, 15> visibleFxSlots {};
+            std::array<UI::FxRackRow*, 15> visibleFxSlots {};
             auto visibleFxSlotCount = 0;
 
             for (auto module : { FxModule::tone,
@@ -1706,8 +1706,11 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
     {
         auto& button = fxSlotButton(module);
         const auto isEnabled = isFxModuleEnabled(module);
-        button.setButtonText(juce::String(isEnabled ? "On " : "Off ") + fxModuleName(module));
-        button.setToggleState(module == selectedFxModule, juce::dontSendNotification);
+        button.setState(fxModuleName(module),
+                        fxModuleSummary(module),
+                        isEnabled,
+                        module == selectedFxModule,
+                        module == FxModule::guard);
     }
 
     fxRackStatusLabel.setText(fxModuleName(selectedFxModule) + " | " + fxModuleSummary(selectedFxModule),
@@ -1800,7 +1803,7 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
     return {};
 }
 
-juce::TextButton& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
+UI::FxRackRow& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
 {
     switch (module)
     {

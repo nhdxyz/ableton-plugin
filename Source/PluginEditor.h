@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "UI/FxRackRow.h"
 #include "UI/LookAndFeel.h"
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
@@ -378,21 +379,21 @@ private:
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton fxRemoveButton { "Remove" };
-    juce::TextButton fxToneSlotButton { "Tone" };
-    juce::TextButton fxEqSlotButton { "EQ" };
-    juce::TextButton fxDistortionSlotButton { "Drive" };
-    juce::TextButton fxBitcrushSlotButton { "Crush" };
-    juce::TextButton fxPumpSlotButton { "Pump" };
-    juce::TextButton fxTremoloSlotButton { "Trem" };
-    juce::TextButton fxRingSlotButton { "Ring" };
-    juce::TextButton fxCombSlotButton { "Comb" };
-    juce::TextButton fxPhaserSlotButton { "Phaser" };
-    juce::TextButton fxFlangerSlotButton { "Flanger" };
-    juce::TextButton fxChorusSlotButton { "Chorus" };
-    juce::TextButton fxDelaySlotButton { "Delay" };
-    juce::TextButton fxReverbSlotButton { "Reverb" };
-    juce::TextButton fxWidthSlotButton { "Width" };
-    juce::TextButton fxGuardSlotButton { "Guard" };
+    UI::FxRackRow fxToneSlotButton { "Tone" };
+    UI::FxRackRow fxEqSlotButton { "EQ" };
+    UI::FxRackRow fxDistortionSlotButton { "Drive" };
+    UI::FxRackRow fxBitcrushSlotButton { "Crush" };
+    UI::FxRackRow fxPumpSlotButton { "Pump" };
+    UI::FxRackRow fxTremoloSlotButton { "Trem" };
+    UI::FxRackRow fxRingSlotButton { "Ring" };
+    UI::FxRackRow fxCombSlotButton { "Comb" };
+    UI::FxRackRow fxPhaserSlotButton { "Phaser" };
+    UI::FxRackRow fxFlangerSlotButton { "Flanger" };
+    UI::FxRackRow fxChorusSlotButton { "Chorus" };
+    UI::FxRackRow fxDelaySlotButton { "Delay" };
+    UI::FxRackRow fxReverbSlotButton { "Reverb" };
+    UI::FxRackRow fxWidthSlotButton { "Width" };
+    UI::FxRackRow fxGuardSlotButton { "Guard" };
     juce::TextButton keyboardOctaveDownButton { "Oct -" };
     juce::TextButton keyboardOctaveUpButton { "Oct +" };
     juce::TextButton keyboardPanicButton { "Panic" };
@@ -445,7 +446,7 @@ private:
     juce::String fxEnabledParameterID(FxModule module) const;
     juce::String fxModuleName(FxModule module) const;
     juce::String fxModuleSummary(FxModule module) const;
-    juce::TextButton& fxSlotButton(FxModule module);
+    UI::FxRackRow& fxSlotButton(FxModule module);
     void setPlainParameterValue(const juce::String& parameterID, float plainValue);
 
     Panel activePanel = Panel::home;

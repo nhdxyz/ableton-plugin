@@ -12,6 +12,13 @@
 - Prevented Guard from being removed from the rack so output safety remains available.
 - Tuned rotary controls to use velocity-aware movement with a less cramped drag feel while keeping double-click reset, value popups, snap-to-click disabled, and mouse-wheel edits disabled.
 
+### FX Rack Row UI
+
+- Added a dedicated `FxRackRow` JUCE component for the fixed FX rack.
+- Separated selected state, enabled/bypassed state, module name, module summary, and Guard safety status instead of encoding everything into text-button labels.
+- Kept the existing fixed FX parameters, DSP order, Add FX menu, and selected-module editor behavior stable.
+- Preserved the one-column/two-column compact rack layout while improving scanability when many house/UKG FX modules are active.
+
 ## 2026-06-26
 
 ### Rename To Nate VST

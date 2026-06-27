@@ -29,6 +29,7 @@ Research references:
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
 - Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
 - The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
+- The SEQ and FX panels now show `LOCK`, `HOST`, or `INT` tempo status so Ableton transport lock, stopped-host state, and internal fallback are visible while editing skippy patterns and pump/delay movement.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
 
 ### Bass Character
@@ -142,6 +143,7 @@ Research references:
 - Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve or occasionally generate an editable Custom duck shape instead of a generic sidechain curve.
 - Added SAMPLE modulation destinations for start, mix, pitch, ramp, and stutter, and made UKG Chop seed empty MOD slots with start and pitch/ramp motion.
 - Added Osc Warp as a saved source control and MOD destination, with UKG bass/stab presets seeded for restrained harmonic movement before the filter and FX rack.
+- Added visible host-sync badges to SEQ and FX so transport-locked garage patterns, Pump, Tremolo, and synced Delay state can be checked without leaving the panel.
 
 ## Next UKG Features
 
@@ -150,7 +152,6 @@ Reference-backed next passes:
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector beyond the implemented per-route bypass/delete controls into richer route editing and macro assignment views.
-- Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
 - Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.
 
 1. Vocal chop mode for the sampler.

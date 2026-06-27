@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Host Sync Status And Home Macro Layout
+
+- Added an audio-thread host-sync snapshot for the editor, exposing host BPM, play state, and PPQ availability without querying the host playhead from the UI.
+- Added compact `LOCK/HOST/INT` status badges to the SEQ and FX panels so house, UKG, techno, and minimal patterns can be checked against Ableton transport and tempo-sync state while editing.
+- Split the HOME macro bank into two three-knob rows and gave the HOME top band more space so Tone, Dirt, Weight, Bounce, Warp, and Throw stay readable next to the Motion/Space XY pad.
+- Re-reviewed the current feature set against Serum-style visual modulation, ZENOLOGY-style layers/browsing, u-he-style quality/character, Korg-style motion lanes, ShaperBox-style curve editing, and UKG chop workflows; the remaining gaps stay focused on source depth, visual modulation, slice lanes, construction-kit presets, and drive/filter quality modes.
+
 ### Mod Route Bypass And Delete
 
 - Added saved per-slot MOD route enable flags so individual matrix routes can be bypassed without losing their source, destination, or amount.

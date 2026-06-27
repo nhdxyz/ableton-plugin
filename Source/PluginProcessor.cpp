@@ -42,6 +42,11 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     lowEndSubRms.store(0.0f, std::memory_order_relaxed);
     lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
     lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
+    hostSyncBpm.store(124.0f, std::memory_order_relaxed);
+    hostSyncPpqPosition.store(0.0f, std::memory_order_relaxed);
+    hostSyncPositionAvailable.store(false, std::memory_order_relaxed);
+    hostSyncPlaying.store(false, std::memory_order_relaxed);
+    hostSyncPpqAvailable.store(false, std::memory_order_relaxed);
     lowEndStateLeft = 0.0f;
     lowEndStateRight = 0.0f;
 }
@@ -51,6 +56,8 @@ void NateVSTAudioProcessor::releaseResources()
     effectsRack.reset();
     patternSequencer.reset();
     clearChordMemoryActiveNotes();
+    hostSyncPlaying.store(false, std::memory_order_relaxed);
+    hostSyncPpqAvailable.store(false, std::memory_order_relaxed);
 }
 
 bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -69,6 +76,12 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     applyChordMemoryToMidi(midiMessages);
     const auto hostBpm = getHostBpm();
     const auto hostPosition = getHostPosition();
+    hostSyncBpm.store(static_cast<float>(hostBpm), std::memory_order_relaxed);
+    hostSyncPositionAvailable.store(hostPosition.isAvailable, std::memory_order_relaxed);
+    hostSyncPlaying.store(hostPosition.isPlaying, std::memory_order_relaxed);
+    hostSyncPpqAvailable.store(hostPosition.ppqPosition.has_value(), std::memory_order_relaxed);
+    hostSyncPpqPosition.store(hostPosition.ppqPosition.has_value() ? static_cast<float>(*hostPosition.ppqPosition) : 0.0f,
+                              std::memory_order_relaxed);
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     synthEngine.render(buffer, midiMessages, hostBpm);
     samplePlayer.render(buffer,
@@ -1412,6 +1425,17 @@ void NateVSTAudioProcessor::getLowEndMeterLevels(float& subRms, float& lowStereo
     subRms = lowEndSubRms.load(std::memory_order_relaxed);
     lowStereoRisk = lowEndStereoRisk.load(std::memory_order_relaxed);
     outputPeak = lowEndOutputPeak.load(std::memory_order_relaxed);
+}
+
+NateVSTAudioProcessor::HostSyncStatus NateVSTAudioProcessor::getHostSyncStatus() const noexcept
+{
+    HostSyncStatus status;
+    status.bpm = hostSyncBpm.load(std::memory_order_relaxed);
+    status.positionAvailable = hostSyncPositionAvailable.load(std::memory_order_relaxed);
+    status.playing = hostSyncPlaying.load(std::memory_order_relaxed);
+    status.ppqAvailable = hostSyncPpqAvailable.load(std::memory_order_relaxed);
+    status.ppqPosition = hostSyncPpqPosition.load(std::memory_order_relaxed);
+    return status;
 }
 
 juce::String NateVSTAudioProcessor::getActiveRandomizationLockSummary() const

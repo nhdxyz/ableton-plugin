@@ -265,6 +265,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(futureSectionLabel, "FX");
     configureSectionLabel(librarySectionLabel, "LIBRARY");
 
+    hostSyncStatusLabel.setText("INT 124 | FREE", juce::dontSendNotification);
+    hostSyncStatusLabel.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    hostSyncStatusLabel.setJustificationType(juce::Justification::centred);
+    hostSyncStatusLabel.setMinimumHorizontalScale(0.72f);
+    hostSyncStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xff7d8b90));
+    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0x22141a1d));
+    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
+    hostSyncStatusLabel.setTooltip("Host tempo and transport phase status for sequencer and tempo-synced FX");
+    addAndMakeVisible(hostSyncStatusLabel);
+
     sampleNameLabel.setText("No sample", juce::dontSendNotification);
     sampleNameLabel.setJustificationType(juce::Justification::centredLeft);
     sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -1315,7 +1325,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(202);
+        auto topRow = homeContent.removeFromTop(224);
         auto engineArea = topRow.removeFromLeft(330).reduced(5);
         auto shapeArea = topRow.reduced(5);
         auto bottomRow = homeContent.withTrimmedTop(16);
@@ -1507,7 +1517,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(202);
+            auto topRow = dashboard.removeFromTop(224);
             auto performArea = topRow.removeFromLeft(330).reduced(18, 12);
             auto macroArea = topRow.reduced(18, 12);
             auto bottomRow = dashboard.withTrimmedTop(16);
@@ -1529,12 +1539,14 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroBounceSlider, macroBounceLabel, true);
             setSliderVisible(macroWarpSlider, macroWarpLabel, true);
             setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            auto macroControlArea = macroArea.removeFromTop(112).withTrimmedTop(6);
+            auto macroControlArea = macroArea.removeFromTop(128).withTrimmedTop(4);
             performanceXYPad.setBounds(macroControlArea.removeFromRight(136).reduced(4, 0));
-            layoutKnobRow(macroControlArea, {
+            layoutKnobRow(macroControlArea.removeFromTop(60), {
                 &macroToneSlider,
                 &macroDirtSlider,
-                &macroWeightSlider,
+                &macroWeightSlider
+            });
+            layoutKnobRow(macroControlArea.withTrimmedTop(4), {
                 &macroBounceSlider,
                 &macroWarpSlider,
                 &macroThrowSlider
@@ -1973,6 +1985,7 @@ void NateVSTAudioProcessorEditor::resized()
         {
             sequencerSectionLabel.setVisible(true);
             sequencerEnabledButton.setVisible(true);
+            hostSyncStatusLabel.setVisible(true);
             rateEighthButton.setVisible(true);
             rateSixteenthButton.setVisible(true);
             rateThirtySecondButton.setVisible(true);
@@ -2007,6 +2020,7 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerChordBox.setBounds(timingRow.removeFromLeft(112).reduced(4));
             sequencerVoicingBox.setBounds(timingRow.removeFromLeft(104).reduced(4));
             sequencerChordMemoryButton.setBounds(timingRow.removeFromLeft(92).reduced(4));
+            hostSyncStatusLabel.setBounds(timingRow.reduced(4));
             auto patternRow = content.removeFromTop(42).withTrimmedTop(2);
             sequencerPatternBox.setBounds(patternRow.removeFromLeft(230).reduced(4));
             applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
@@ -2066,11 +2080,13 @@ void NateVSTAudioProcessorEditor::resized()
             fxRackStatusLabel.setVisible(true);
             fxPresetBox.setVisible(true);
             fxApplyPresetButton.setVisible(true);
+            hostSyncStatusLabel.setVisible(true);
             fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
             fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
             fxMoveDownButton.setBounds(actionRow.removeFromLeft(58).reduced(4));
             fxResetOrderButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
             fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
+            hostSyncStatusLabel.setBounds(actionRow.removeFromRight(126).reduced(4));
             fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
 
             auto performRow = content.removeFromTop(42).withTrimmedTop(2);
@@ -3790,7 +3806,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -4043,6 +4059,48 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
         juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)),
         moduleEnabled || bounce > 0.001f,
         customCurve);
+}
+
+void NateVSTAudioProcessorEditor::updateHostSyncStatus()
+{
+    const auto status = audioProcessor.getHostSyncStatus();
+    const auto bpm = juce::roundToInt(juce::jlimit(20.0, 300.0, status.bpm));
+    juce::String text;
+    juce::String tooltip;
+    auto textColour = juce::Colour(0xff7d8b90);
+    auto background = juce::Colour(0x22141a1d);
+    auto outline = juce::Colour(0xff263035);
+
+    if (status.positionAvailable && status.ppqAvailable && status.playing)
+    {
+        text = "LOCK " + juce::String(bpm) + " | PLAY";
+        tooltip = "Host BPM and PPQ are available. SEQ, Pump, Tremolo, and synced Delay can follow Ableton transport phase. PPQ "
+            + juce::String(status.ppqPosition, 2);
+        textColour = juce::Colour(0xff8ee6c9);
+        background = juce::Colour(0x243bcfa7);
+        outline = juce::Colour(0xff3bcfa7);
+    }
+    else if (status.positionAvailable)
+    {
+        text = "HOST " + juce::String(bpm) + (status.playing ? " | NO PPQ" : " | STOP");
+        tooltip = status.playing
+            ? "Host tempo is available, but PPQ phase is not. Tempo-synced movement uses internal phase fallback."
+            : "Host tempo is available and transport is stopped. The sequencer waits; tempo-synced FX can audition from internal phase.";
+        textColour = juce::Colour(0xffffc29a);
+        background = juce::Colour(0x22ff8a4d);
+        outline = juce::Colour(0xff705846);
+    }
+    else
+    {
+        text = "INT " + juce::String(bpm) + " | FREE";
+        tooltip = "No host tempo or transport position has reached the audio engine yet. Nate VST is using its internal fallback tempo.";
+    }
+
+    hostSyncStatusLabel.setText(text, juce::dontSendNotification);
+    hostSyncStatusLabel.setTooltip(tooltip);
+    hostSyncStatusLabel.setColour(juce::Label::textColourId, textColour);
+    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, background);
+    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, outline);
 }
 
 void NateVSTAudioProcessorEditor::updateModMatrixRows()
@@ -4543,6 +4601,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
+    updateHostSyncStatus();
     updateModMatrixRows();
     updateModInspectorStatus();
     updateModDestinationIndicators();

@@ -117,6 +117,7 @@ private:
     juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
+    juce::Label hostSyncStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
     juce::Label sampleNameLabel;
@@ -543,6 +544,7 @@ private:
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
+    void updateHostSyncStatus();
     void updateModMatrixRows();
     void updateModInspectorStatus();
     void updateModDestinationIndicators();

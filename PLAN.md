@@ -56,6 +56,8 @@ Current UI research takeaway:
 - The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset recall, randomization, and deeper-panel navigation should all be close at hand.
 - Latest reference review points to low-risk polish before new engines: per-control modulation inspection, deeper preset metadata/audition, tighter UKG chop trimming, selective groove transforms, editable macro assignments, FX module presets, and genre-specific init templates.
 - Larger engine tracks should stay deliberate: wavetable oscillator support, layered partials, motion sequencing lanes, advanced sampler slicing, character filter/drive models, FM/operator options, and vector morphing.
+- Current deep review says Nate VST is no longer missing the basics for a house-focused synth; the biggest remaining gaps are polish and depth: visual drag-style modulation, stronger source engines, per-slice chop lanes, construction-kit browsing, per-lane sequencer modulation, and oversampled nonlinear quality modes.
+- UI status should make timing trust obvious. SEQ and FX now show host-sync state so Ableton BPM/PPQ lock, stopped-host state, and internal fallback are visible while building groove-heavy patches.
 
 ### What To Learn From ZENOLOGY
 

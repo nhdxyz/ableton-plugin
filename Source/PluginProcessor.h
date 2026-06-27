@@ -105,6 +105,15 @@ public:
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
+    struct HostSyncStatus
+    {
+        double bpm = 124.0;
+        bool positionAvailable = false;
+        bool playing = false;
+        bool ppqAvailable = false;
+        double ppqPosition = 0.0;
+    };
+    HostSyncStatus getHostSyncStatus() const noexcept;
 
 private:
     enum class RandomAction
@@ -148,6 +157,11 @@ private:
     std::atomic<float> lowEndSubRms { 0.0f };
     std::atomic<float> lowEndStereoRisk { 0.0f };
     std::atomic<float> lowEndOutputPeak { 0.0f };
+    std::atomic<float> hostSyncBpm { 124.0f };
+    std::atomic<float> hostSyncPpqPosition { 0.0f };
+    std::atomic<bool> hostSyncPositionAvailable { false };
+    std::atomic<bool> hostSyncPlaying { false };
+    std::atomic<bool> hostSyncPpqAvailable { false };
     float lowEndStateLeft = 0.0f;
     float lowEndStateRight = 0.0f;
     double meterSampleRate = 44100.0;

@@ -76,7 +76,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
 - Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
-- Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. Remaining work is deeper per-lane modulation sync and clearer transport-state feedback in the UI.
+- Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. SEQ and FX now expose a compact host-sync status badge for lock/stopped/internal fallback state. Remaining work is deeper per-lane modulation sync and richer phase visualization.
 - Audio quality: oscillator and drive stages need bandlimiting/oversampling attention before the synth can compete with polished commercial dance plugins at bright high-note settings. The first oscillator pass is implemented with polyBLEP saw/square generation, an integrated bandlimited triangle, and safer upper-register phase increments.
 
 These are product directions, not framework reasons to leave JUCE. The best next framework work is still custom JUCE components for modulation rings, rack rows, curve editors, waveform/slice views, and browser lists.
@@ -99,7 +99,7 @@ This should be used first for FX, then later for modulation slots.
 HOME should not become the whole plugin. It should expose:
 
 - Preset load and save.
-- Four macros.
+- Six fast performance macros plus the full eight-macro bank in MOD.
 - Performance controls: Sub, Cutoff, Drive, Output.
 - Randomization entry points.
 - Audition keyboard.
@@ -463,10 +463,11 @@ Build the next larger slices in this order:
    First variation pass implemented as a SEQ-panel `Vary` action that mutates notes, velocity, probability, timing, and ghost steps without replacing the pattern.
    First safety pass implemented as a SEQ-panel `Undo` action that restores the prior generated, varied, template, copy, rotate, or clear state.
    First broader club-template pass implemented as `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates in the SEQ pattern selector.
-   First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
-   First chord-memory pass implemented as a saved default-off SEQ `Memory` toggle that expands live MIDI through the current chord mode and voicing while preserving matched note-offs.
-   First declutter pass moved duplicate quick-template buttons behind the pattern dropdown, grouped random/edit actions, added SEQ control/grid panel framing, and gave the grid more room.
-   First selective-transform pass implemented as SEQ `Shape` tools for Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize edits.
+	   First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
+	   First chord-memory pass implemented as a saved default-off SEQ `Memory` toggle that expands live MIDI through the current chord mode and voicing while preserving matched note-offs.
+	   First declutter pass moved duplicate quick-template buttons behind the pattern dropdown, grouped random/edit actions, added SEQ control/grid panel framing, and gave the grid more room.
+	   First selective-transform pass implemented as SEQ `Shape` tools for Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize edits.
+	   First transport-feedback pass implemented as a SEQ status badge showing host lock, stopped-host state, or internal fallback tempo.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.
@@ -489,9 +490,10 @@ Build the next larger slices in this order:
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.
    First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
    First FX declutter pass combined the throw and momentary actions into a single performance row under the add/reorder strip.
-   First module-preset pass implemented as a selected-module `Module Preset` menu with focused house/UKG settings for every FX module while writing only existing automatable parameters.
-   First direct-modulation pass implemented as matrix destinations for Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive.
-   Current rack review pass restores two-column layout for high module counts, makes Guard safety state distinct from bypass state, and prevents Up/Down controls from enabling when no visible move target exists.
+	   First module-preset pass implemented as a selected-module `Module Preset` menu with focused house/UKG settings for every FX module while writing only existing automatable parameters.
+	   First direct-modulation pass implemented as matrix destinations for Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive.
+	   Current rack review pass restores two-column layout for high module counts, makes Guard safety state distinct from bypass state, and prevents Up/Down controls from enabling when no visible move target exists.
+	   First tempo-status pass adds the same host-sync badge used by SEQ so Pump, Tremolo, and synced Delay can be checked while editing the rack.
 7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
    First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.
@@ -506,4 +508,5 @@ Build the next larger slices in this order:
 - Remaining UI polish: direct grid gestures should eventually edit velocity/probability as well as timing, and dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
+- HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.
 - A clear path exists for adding more FX without redesigning the page again.

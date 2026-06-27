@@ -70,6 +70,7 @@ public:
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);
     bool randomizeSequencerPattern();
+    bool mutateSequencerPattern();
     void applySequencerPatternPreset(int presetIndex);
     void copySequencerFirstHalfToSecondHalf();
     void rotateSequencerPattern(int stepOffset);

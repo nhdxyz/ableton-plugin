@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Variation
+
+- Added a SEQ-panel `Vary` action for making small mutations to the current 16-step pattern without replacing the groove.
+- Varied active steps by nudging notes, velocity, probability, and non-anchor timing, with occasional ghost-note adds/removes for house and UKG movement.
+- Made SEQ variation respect the sequencer randomization lock and fall back to full sequence generation when the current pattern is empty.
+
 ### Sequencer Chord Strum
 
 - Added a saved SEQ `Strum` amount that spreads chord note-ons for softer house chords and less rigid UKG stabs.

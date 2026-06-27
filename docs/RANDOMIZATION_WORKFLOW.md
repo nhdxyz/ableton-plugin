@@ -30,4 +30,4 @@ Output safety remains active even when `Output` is locked. If a recipe lowers ou
 
 ## Section Random Buttons
 
-`Rand Cut` does nothing while `Sample` is locked. `Rand Seq` does nothing while `Seq` is locked.
+`Rand Cut` does nothing while `Sample` is locked. `Rand Seq` and SEQ `Vary` do nothing while `Seq` is locked.

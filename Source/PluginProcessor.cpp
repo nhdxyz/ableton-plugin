@@ -313,7 +313,8 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
     const auto amount = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
     const auto scale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     if (scale == nullptr || scale->load() <= 0.5f)
-    setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+        setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+
     setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
     setParameterPlainValue(Parameters::ID::sequencerChordVoicing, 0.0f);
     setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f);
@@ -331,6 +332,73 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
     setParameterPlainValue(Parameters::ID::sequencerAccent, accentDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sequencerOctave, static_cast<float>(octaveDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sequencerProbability, probabilityDistribution(sampleRandomEngine));
+    return true;
+}
+
+bool NateVSTAudioProcessor::mutateSequencerPattern()
+{
+    if (isRandomLockEnabled(Parameters::ID::randomLockSequencer))
+        return false;
+
+    constexpr auto stepCount = Sequencer::PatternSequencer::numSteps;
+    const auto amountValue = parameters.getRawParameterValue(Parameters::ID::sequencerRandomAmount);
+    const auto amount = juce::jlimit(0.0f, 1.0f, amountValue != nullptr ? amountValue->load() : 0.45f);
+    std::uniform_real_distribution<float> chance(0.0f, 1.0f);
+    std::uniform_real_distribution<float> smallMove(-1.0f, 1.0f);
+    const std::array<int, 9> noteMoves { -7, -5, -3, -2, 2, 3, 5, 7, 12 };
+
+    auto hasEnabledStep = false;
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+        hasEnabledStep = hasEnabledStep || patternSequencer.getStep(stepIndex).enabled;
+
+    if (! hasEnabledStep)
+        return randomizeSequencerPattern();
+
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+    {
+        auto step = patternSequencer.getStep(stepIndex);
+        const auto isAnchorStep = stepIndex == 0 || stepIndex == 4 || stepIndex == 8 || stepIndex == 12;
+
+        if (step.enabled)
+        {
+            if (chance(sampleRandomEngine) < (0.12f + amount * 0.26f))
+                step.noteOffset += noteMoves[static_cast<size_t>(std::uniform_int_distribution<int>(0, static_cast<int>(noteMoves.size()) - 1)(sampleRandomEngine))];
+
+            step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + smallMove(sampleRandomEngine) * amount * 0.16f);
+            step.probability = juce::jlimit(0.35f, 1.0f, step.probability + smallMove(sampleRandomEngine) * amount * 0.18f);
+
+            if (! isAnchorStep)
+                step.timing = juce::jlimit(0.0f, 1.0f, step.timing + smallMove(sampleRandomEngine) * amount * 0.18f);
+
+            if (! isAnchorStep && chance(sampleRandomEngine) < amount * 0.08f)
+                step.enabled = false;
+        }
+        else if (! isAnchorStep && chance(sampleRandomEngine) < (0.03f + amount * 0.09f))
+        {
+            step.enabled = true;
+            step.noteOffset = noteMoves[static_cast<size_t>(std::uniform_int_distribution<int>(0, static_cast<int>(noteMoves.size()) - 1)(sampleRandomEngine))];
+            step.velocity = juce::jlimit(0.25f, 0.82f, 0.42f + chance(sampleRandomEngine) * 0.24f);
+            step.probability = juce::jlimit(0.35f, 0.92f, 0.48f + chance(sampleRandomEngine) * 0.3f);
+            step.timing = (stepIndex % 2) != 0 ? juce::jlimit(0.0f, 1.0f, 0.28f + chance(sampleRandomEngine) * 0.48f) : 0.0f;
+        }
+
+        patternSequencer.setStep(stepIndex, step);
+    }
+
+    std::uniform_real_distribution<float> globalMove(-1.0f, 1.0f);
+    setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sequencerSwing,
+                           juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f) + globalMove(sampleRandomEngine) * amount * 0.045f));
+    setParameterPlainValue(Parameters::ID::sequencerAccent,
+                           juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f) + globalMove(sampleRandomEngine) * amount * 0.06f));
+    setParameterPlainValue(Parameters::ID::sequencerProbability,
+                           juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f) + globalMove(sampleRandomEngine) * amount * 0.04f));
+
+    if (getParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f) > 0.5f)
+        setParameterPlainValue(Parameters::ID::sequencerChordStrum,
+                               juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f) + globalMove(sampleRandomEngine) * amount * 0.04f));
+
+    patternSequencer.reset();
     return true;
 }
 

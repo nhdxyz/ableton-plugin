@@ -61,7 +61,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxWidthMonoCutoff,
             Parameters::ID::fxToneLowCut
         }))
-        return 280;
+        return 220;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::filterResonance,
@@ -78,7 +78,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxEqTrim,
             Parameters::ID::fxGuardCeiling
         }))
-        return 230;
+        return 170;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::macroTone,
@@ -91,9 +91,9 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 150;
+        return 120;
 
-    return 190;
+    return 145;
 }
 }
 
@@ -1796,7 +1796,7 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     slider.setMouseDragSensitivity(rotaryDragSensitivityForParameter(parameterID));
     slider.setVelocityBasedMode(false);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(false);
+    slider.setScrollWheelEnabled(true);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
@@ -1825,7 +1825,7 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
     slider.setMouseDragSensitivity(180);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(false);
+    slider.setScrollWheelEnabled(true);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
@@ -1853,7 +1853,7 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
     slider.setMouseDragSensitivity(130);
     slider.setSliderSnapsToMousePosition(false);
-    slider.setScrollWheelEnabled(false);
+    slider.setScrollWheelEnabled(true);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
     slider.setNumDecimalPlacesToDisplay(2);

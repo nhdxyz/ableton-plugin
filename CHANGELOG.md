@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+### Knob Feel Pass
+
+- Reduced rotary drag travel so common sound-design knobs respond faster while keeping frequency/time controls more controlled.
+- Enabled mouse-wheel adjustment on rotary and horizontal sliders for quicker Ableton patching sessions.
+
 ### House And Tech Sequencer Templates
 
 - Added `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates to the SEQ pattern selector for faster house, tech-house, techno, and minimal starts.

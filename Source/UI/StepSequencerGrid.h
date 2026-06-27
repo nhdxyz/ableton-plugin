@@ -21,16 +21,25 @@ public:
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
 private:
     static constexpr int numRows = 13;
+    enum class DragMode
+    {
+        none,
+        paint,
+        erase
+    };
+
     StepGetter getStep;
     StepSetter setStep;
     int lastEditedStep = -1;
     int lastEditedRow = -1;
     int rootNote = 36;
     int scaleMode = 0;
+    DragMode dragMode = DragMode::none;
 
     juce::Rectangle<int> gridBounds() const;
     juce::Rectangle<int> noteLabelBounds() const;
@@ -40,6 +49,7 @@ private:
     int noteOffsetForRow(int row) const;
     int rowForNoteOffset(int noteOffset) const;
     bool isOffsetInScale(int noteOffset) const;
+    void beginEditAt(juce::Point<int> position);
     void editAt(juce::Point<int> position);
     void cycleTimingAt(juce::Point<int> position);
     void nudgeTimingAt(juce::Point<int> position, float delta);

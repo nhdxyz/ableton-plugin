@@ -145,6 +145,7 @@ void StepSequencerGrid::mouseDown(const juce::MouseEvent& event)
 {
     lastEditedStep = -1;
     lastEditedRow = -1;
+    dragMode = DragMode::none;
 
     if (event.mods.isPopupMenu() || event.mods.isCommandDown())
     {
@@ -152,7 +153,7 @@ void StepSequencerGrid::mouseDown(const juce::MouseEvent& event)
         return;
     }
 
-    editAt(event.getPosition());
+    beginEditAt(event.getPosition());
 }
 
 void StepSequencerGrid::mouseDrag(const juce::MouseEvent& event)
@@ -161,6 +162,13 @@ void StepSequencerGrid::mouseDrag(const juce::MouseEvent& event)
         return;
 
     editAt(event.getPosition());
+}
+
+void StepSequencerGrid::mouseUp(const juce::MouseEvent&)
+{
+    dragMode = DragMode::none;
+    lastEditedStep = -1;
+    lastEditedRow = -1;
 }
 
 void StepSequencerGrid::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
@@ -247,9 +255,28 @@ bool StepSequencerGrid::isOffsetInScale(int noteOffset) const
     }
 }
 
+void StepSequencerGrid::beginEditAt(juce::Point<int> position)
+{
+    if (! getStep)
+        return;
+
+    const auto stepIndex = stepForPosition(position);
+    const auto row = rowForPosition(position);
+
+    if (stepIndex < 0 || row < 0)
+        return;
+
+    const auto step = getStep(stepIndex);
+    const auto noteOffset = noteOffsetForRow(row);
+    dragMode = step.enabled && step.noteOffset == noteOffset ? DragMode::erase
+                                                             : DragMode::paint;
+
+    editAt(position);
+}
+
 void StepSequencerGrid::editAt(juce::Point<int> position)
 {
-    if (! getStep || ! setStep)
+    if (! getStep || ! setStep || dragMode == DragMode::none)
         return;
 
     const auto stepIndex = stepForPosition(position);
@@ -264,12 +291,18 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
     auto step = getStep(stepIndex);
     const auto noteOffset = noteOffsetForRow(row);
 
-    if (step.enabled && step.noteOffset == noteOffset)
+    if (dragMode == DragMode::erase)
     {
+        if (! step.enabled || step.noteOffset != noteOffset)
+            return;
+
         step.enabled = false;
     }
     else
     {
+        if (step.enabled && step.noteOffset == noteOffset)
+            return;
+
         step.enabled = true;
         step.noteOffset = noteOffset;
         step.velocity = 0.85f;

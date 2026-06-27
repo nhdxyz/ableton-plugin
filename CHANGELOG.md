@@ -7,6 +7,7 @@
 - Reworked rotary slider movement to use direct drag instead of velocity mode, with slower drag ranges for fine pitch, filter, EQ, timing, and frequency controls.
 - Enlarged the MOD-panel LFO curve editor and hid the cramped point-slider grid from the visible layout while preserving the same automatable curve parameters.
 - Gave the MOD macro and LFO rows slightly more vertical room so the page reads more like a focused modulation editor and less like a dense control wall.
+- Made SEQ-grid drag editing deterministic: the first cell decides whether the gesture paints notes or erases matching notes, avoiding accidental toggles while drawing basslines.
 
 ### Sequencer Scale Helper
 

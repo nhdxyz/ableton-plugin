@@ -366,6 +366,8 @@ private:
     juce::TextButton ukgPatternButton { "UKG" };
     juce::TextButton applyPatternButton { "Apply" };
     juce::TextButton copySequencerButton { "Copy" };
+    juce::TextButton rotateSequencerLeftButton { "Rot <" };
+    juce::TextButton rotateSequencerRightButton { "Rot >" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };

@@ -21,7 +21,7 @@ Planned major areas:
 - Synth engine: oscillator 1, oscillator 2, sub, noise, unison/spread, envelopes, multimode filter, drive, modulation.
 - Sound Lab: guided randomization, mutation, recipes, section locks, undo, and safety rules.
 - Sample Lab: load audio, jump and audition phrase slices with eight pads, cut it with start/end controls, reverse/pitch/gain/mix it, and trigger it from MIDI.
-- Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, scale helper, beat grouping, groove cues, and quick pattern tools for riffs, basslines, and generated ideas.
+- Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, scale helper, beat grouping, groove cues, rotate utilities, and quick pattern tools for riffs, basslines, and generated ideas.
 - FX: reorderable post-synth/post-sample rack with tone cleanup, three-band EQ, distortion, pump, tremolo/auto pan, ring modulation, comb resonance, phaser, flanger, chorus, delay, reverb, width, output trim, and Guard safety clipping.
 - Library: save and load categorized `.natevstpreset` files from the user preset folder.
 
@@ -38,7 +38,7 @@ The editor uses focused panels instead of one tall stacked page:
 - `FX`
 - `LIBRARY`
 
-The `HOME` panel is the default dashboard for quick patch shaping, source selection, core shape controls, performance macros, one-gesture Motion/Space XY movement, randomization, A/B snapshots, and preset recall. The `MOD` panel includes LFO 1, Mod Env 1, macro controls, and an editable eight-slot matrix for safe synth destinations. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. The `SEQ` panel includes one-tap Bass, Stab, and UKG pattern shortcuts for fast house and garage sketching. A compact top-bar output meter stays visible across panels, and a bottom piano keyboard stays available for mouse auditioning. The `LIBRARY` panel adds preset filtering for favorites, recents, user/factory source, and saved categories.
+The `HOME` panel is the default dashboard for quick patch shaping, source selection, core shape controls, performance macros, one-gesture Motion/Space XY movement, randomization, A/B snapshots, and preset recall. The `MOD` panel includes LFO 1, Mod Env 1, macro controls, and an editable eight-slot matrix for safe synth destinations. Waveform, oscillator 2 waveform, filter mode, and sequencer-rate controls use segmented selectors. The `SEQ` panel includes one-tap Bass, Stab, and UKG pattern shortcuts plus rotate controls for fast house and garage sketching. A compact top-bar output meter stays visible across panels, and a bottom piano keyboard stays available for mouse auditioning. The `LIBRARY` panel adds preset filtering for favorites, recents, user/factory source, and saved categories.
 
 User presets are stored at:
 

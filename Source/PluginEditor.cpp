@@ -735,6 +735,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.copySequencerFirstHalfToSecondHalf();
         sequencerGrid.repaint();
     };
+    rotateSequencerLeftButton.setTooltip("Shift the whole sequencer pattern one step earlier");
+    rotateSequencerLeftButton.onClick = [this]
+    {
+        audioProcessor.rotateSequencerPattern(-1);
+        sequencerGrid.repaint();
+        setRandomStatus("Sequence rotated left");
+    };
+    rotateSequencerRightButton.setTooltip("Shift the whole sequencer pattern one step later");
+    rotateSequencerRightButton.onClick = [this]
+    {
+        audioProcessor.rotateSequencerPattern(1);
+        sequencerGrid.repaint();
+        setRandomStatus("Sequence rotated right");
+    };
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
@@ -820,6 +834,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(ukgPatternButton);
     addAndMakeVisible(applyPatternButton);
     addAndMakeVisible(copySequencerButton);
+    addAndMakeVisible(rotateSequencerLeftButton);
+    addAndMakeVisible(rotateSequencerRightButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
     addAndMakeVisible(labTabButton);
@@ -1376,6 +1392,8 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerPatternBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
+            rotateSequencerLeftButton.setVisible(true);
+            rotateSequencerRightButton.setVisible(true);
             bassPatternButton.setVisible(true);
             stabPatternButton.setVisible(true);
             ukgPatternButton.setVisible(true);
@@ -1393,14 +1411,16 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerGrooveBox.setBounds(timingRow.removeFromLeft(150).reduced(4));
             sequencerScaleBox.setBounds(timingRow.removeFromLeft(132).reduced(4));
             auto patternRow = content.removeFromTop(44).withTrimmedTop(2);
-            sequencerPatternBox.setBounds(patternRow.removeFromLeft(190).reduced(4));
-            applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
-            copySequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
-            bassPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
-            stabPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
-            ukgPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
-            randomSequencerButton.setBounds(patternRow.removeFromLeft(104).reduced(4));
-            clearSequencerButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
+            sequencerPatternBox.setBounds(patternRow.removeFromLeft(184).reduced(4));
+            applyPatternButton.setBounds(patternRow.removeFromLeft(68).reduced(4));
+            copySequencerButton.setBounds(patternRow.removeFromLeft(66).reduced(4));
+            rotateSequencerLeftButton.setBounds(patternRow.removeFromLeft(58).reduced(4));
+            rotateSequencerRightButton.setBounds(patternRow.removeFromLeft(58).reduced(4));
+            bassPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
+            stabPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
+            ukgPatternButton.setBounds(patternRow.removeFromLeft(62).reduced(4));
+            randomSequencerButton.setBounds(patternRow.removeFromLeft(94).reduced(4));
+            clearSequencerButton.setBounds(patternRow.removeFromLeft(72).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
@@ -2296,6 +2316,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

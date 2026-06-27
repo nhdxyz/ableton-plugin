@@ -479,6 +479,27 @@ void NateVSTAudioProcessor::copySequencerFirstHalfToSecondHalf()
         patternSequencer.setStep(stepIndex + (Sequencer::PatternSequencer::numSteps / 2), patternSequencer.getStep(stepIndex));
 }
 
+void NateVSTAudioProcessor::rotateSequencerPattern(int stepOffset)
+{
+    constexpr auto stepCount = Sequencer::PatternSequencer::numSteps;
+    auto offset = stepOffset % stepCount;
+    if (offset < 0)
+        offset += stepCount;
+
+    if (offset == 0)
+        return;
+
+    std::array<Sequencer::Step, stepCount> steps {};
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+        steps[static_cast<size_t>(stepIndex)] = patternSequencer.getStep(stepIndex);
+
+    for (auto destination = 0; destination < stepCount; ++destination)
+    {
+        const auto source = (destination + stepCount - offset) % stepCount;
+        patternSequencer.setStep(destination, steps[static_cast<size_t>(source)]);
+    }
+}
+
 void NateVSTAudioProcessor::clearSequencerPattern()
 {
     patternSequencer.clear();

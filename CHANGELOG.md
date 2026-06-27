@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+### Sequencer Rotate Utilities
+
+- Added `Rot <` and `Rot >` controls to shift the whole 16-step SEQ pattern earlier or later without redrawing it.
+- Preserved each step's enabled state, note offset, velocity, probability, and timing while rotating, so shuffled UKG and house grooves keep their feel.
+
 ### Sample Slice Pads
 
 - Added eight numbered SAMPLE-panel slice pads for jumping the sample start/end window to equal phrase sections.

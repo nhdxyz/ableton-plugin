@@ -54,6 +54,8 @@ Factory presets can be placed separately at:
 
 See [PLAN.md](./PLAN.md) for the full roadmap, [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design, [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md) for the next UI grouping and FX rack direction, and [docs/UK_GARAGE_WORKFLOW.md](./docs/UK_GARAGE_WORKFLOW.md) for the UK garage sound direction.
 
+Current house/UKG workflow focus: HOME performance macros and club low-end guidance, SEQ chord/voicing/strum plus the new one-finger Memory toggle, waveform-based sample chopping, section-scoped randomization, and an addable FX rack with throw controls.
+
 ## Local Development
 
 Expected tools:

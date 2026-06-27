@@ -75,6 +75,7 @@ Research references:
 - Short attack.
 - Tight decay and release.
 - Brighter filtering than techno stabs, but not harsh.
+- One-finger chord memory is useful for auditioning short minor 7, minor 9, drop-2, and open-voiced stabs from the bottom keyboard or host MIDI.
 - Light chorus or phaser only when it helps movement.
 - Later: dedicated organ-style source or additive/drawbar-inspired mode.
 
@@ -115,8 +116,18 @@ Research references:
 - Added a focused Tremolo/Auto Pan module and seeded UKG movement presets with light synced motion.
 - Added a focused Ring Mod module and seeded select UKG pluck, chop, and late-stab presets with restrained metallic edge.
 - Added a focused Comb module and seeded select UKG pluck, chop, and late-stab presets with tuned resonance.
+- Added SEQ chord memory for turning the selected chord mode and voicing into one-finger played stabs while keeping it default-off for old presets.
+- Cleaned up the SEQ panel so chord/groove controls, random/variation actions, and the grid are grouped more clearly for pattern building.
 
 ## Next UKG Features
+
+Reference-backed next passes:
+
+- Add zero-cross snap and tiny fade guards to sample chops so vocal cuts stay tight without clicks.
+- Add selective groove transforms such as straight anchors, swung ghosts, late stabs, and vocal push instead of only global swing.
+- Add per-slice pitch, reverse, gain, stutter, and choke behavior once the waveform and pad workflow are stable.
+- Add FX module presets for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, and controlled drive.
+- Add a per-control modulation inspector so UKG bass movement and stab macro routing can be understood without opening the full matrix.
 
 1. Vocal chop mode for the sampler.
 
@@ -151,11 +162,12 @@ Research references:
 - Implemented as a compact SEQ-panel template selector.
 - Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
 - Per-template rate, gate, swing, groove mode, scale mode, per-step timing, accent, probability, octave, and random amount defaults are set when applied.
-- The grid now shows timing markers on pushed steps, probability bars, anchor-step dots, beat-group dividers, and root-aware note rows, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
+- The grid now shows timing markers on pushed steps, probability bars, beat-group dividers, and root-aware note rows, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
 - The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 - The SEQ panel includes chord modes for fast 5th, minor, minor 7, major, and minor 9 stabs; Organ Skank, UKG Chord Stab, and Late Stab templates now use those modes by default.
 - The SEQ panel includes Close, Inv 1, Inv 2, Open, and Drop 2 voicings so short organ, chord, and late-stab patterns can sit in different registers without redrawing the grid.
 - The SEQ panel includes a Strum control for subtle flam/spread on chord stabs; chord-focused factory presets use it lightly while bass and vocal chop patterns stay tight.
+- The SEQ panel includes `Memory` for playing the selected chord mode and voicing from one MIDI note, which speeds up organ skanks, late stabs, and sampled-chord style ideas.
 - The SEQ panel includes `Vary` for small groove-preserving mutations to basslines, chord stabs, and vocal-trigger patterns.
 - The SEQ panel includes `Undo` for stepping back from generated, varied, template, copied, rotated, or cleared patterns while searching for a garage groove.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.

@@ -132,6 +132,7 @@ inline constexpr auto sequencerScale = "sequencer_scale";
 inline constexpr auto sequencerChordMode = "sequencer_chord_mode";
 inline constexpr auto sequencerChordVoicing = "sequencer_chord_voicing";
 inline constexpr auto sequencerChordStrum = "sequencer_chord_strum";
+inline constexpr auto sequencerChordMemory = "sequencer_chord_memory";
 inline constexpr auto sequencerAccent = "sequencer_accent";
 inline constexpr auto sequencerOctave = "sequencer_octave";
 inline constexpr auto sequencerProbability = "sequencer_probability";

@@ -134,7 +134,12 @@ private:
     Effects::EffectsRack effectsRack;
     juce::MidiKeyboardState midiKeyboardState;
 
+    using ChordMemoryNoteArray = Sequencer::PatternSequencer::ChordNoteArray;
+    std::array<std::array<ChordMemoryNoteArray, 128>, 16> chordMemoryActiveNotes {};
+    std::array<std::array<int, 128>, 16> chordMemoryActiveNoteCounts {};
+
     std::atomic<float>* outputGain = nullptr;
+    std::atomic<float>* sequencerChordMemory = nullptr;
     std::atomic<float> outputMeterPeakLeft { 0.0f };
     std::atomic<float> outputMeterPeakRight { 0.0f };
     std::atomic<float> outputMeterRmsLeft { 0.0f };
@@ -174,6 +179,8 @@ private:
     void restoreSequencerFromState(const juce::ValueTree& state);
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
+    void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
+    void clearChordMemoryActiveNotes();
     double getHostBpm() const;
     std::optional<double> getHostPpqPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;

@@ -24,6 +24,8 @@ NateVSTAudioProcessor::NateVSTAudioProcessor()
       sampleRandomEngine(std::random_device{}())
 {
     outputGain = parameters.getRawParameterValue(Parameters::ID::outputGain);
+    sequencerChordMemory = parameters.getRawParameterValue(Parameters::ID::sequencerChordMemory);
+    clearChordMemoryActiveNotes();
 }
 
 void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -48,6 +50,7 @@ void NateVSTAudioProcessor::releaseResources()
 {
     effectsRack.reset();
     patternSequencer.reset();
+    clearChordMemoryActiveNotes();
 }
 
 bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -63,6 +66,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     buffer.clear();
 
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+    applyChordMemoryToMidi(midiMessages);
     const auto hostBpm = getHostBpm();
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm);
     synthEngine.render(buffer, midiMessages, hostBpm);
@@ -72,6 +76,131 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                         hostBpm,
                         getHostPpqPosition());
     updateOutputMeters(buffer);
+}
+
+void NateVSTAudioProcessor::applyChordMemoryToMidi(juce::MidiBuffer& midiMessages)
+{
+    const auto shouldExpandNoteOns = sequencerChordMemory != nullptr
+        && sequencerChordMemory->load(std::memory_order_relaxed) > 0.5f
+        && getParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f) > 0.5f;
+
+    auto hasActiveChordNotes = false;
+    for (const auto& channelCounts : chordMemoryActiveNoteCounts)
+    {
+        for (const auto noteCount : channelCounts)
+        {
+            if (noteCount > 0)
+            {
+                hasActiveChordNotes = true;
+                break;
+            }
+        }
+
+        if (hasActiveChordNotes)
+            break;
+    }
+
+    if (! shouldExpandNoteOns && ! hasActiveChordNotes)
+        return;
+
+    juce::MidiBuffer expandedMidi;
+
+    auto releaseStoredChord = [this, &expandedMidi] (int channelIndex, int inputNote, int midiChannel, int samplePosition)
+    {
+        auto& activeCount = chordMemoryActiveNoteCounts[static_cast<size_t>(channelIndex)][static_cast<size_t>(inputNote)];
+        if (activeCount <= 0)
+            return false;
+
+        auto& activeNotes = chordMemoryActiveNotes[static_cast<size_t>(channelIndex)][static_cast<size_t>(inputNote)];
+        for (auto noteIndex = 0; noteIndex < activeCount; ++noteIndex)
+        {
+            const auto noteNumber = activeNotes[static_cast<size_t>(noteIndex)];
+            if (noteNumber >= 0)
+                expandedMidi.addEvent(juce::MidiMessage::noteOff(midiChannel, noteNumber), samplePosition);
+        }
+
+        activeNotes.fill(-1);
+        activeCount = 0;
+        return true;
+    };
+
+    for (const auto metadata : midiMessages)
+    {
+        const auto message = metadata.getMessage();
+        const auto samplePosition = metadata.samplePosition;
+
+        if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            const auto channelIndex = juce::jlimit(0, 15, message.getChannel() - 1);
+            for (auto note = 0; note < 128; ++note)
+            {
+                chordMemoryActiveNotes[static_cast<size_t>(channelIndex)][static_cast<size_t>(note)].fill(-1);
+                chordMemoryActiveNoteCounts[static_cast<size_t>(channelIndex)][static_cast<size_t>(note)] = 0;
+            }
+
+            expandedMidi.addEvent(message, samplePosition);
+            continue;
+        }
+
+        if (message.isNoteOn())
+        {
+            const auto midiChannel = message.getChannel();
+            const auto channelIndex = juce::jlimit(0, 15, midiChannel - 1);
+            const auto inputNote = juce::jlimit(0, 127, message.getNoteNumber());
+
+            if (! shouldExpandNoteOns)
+            {
+                expandedMidi.addEvent(message, samplePosition);
+                continue;
+            }
+
+            releaseStoredChord(channelIndex, inputNote, midiChannel, samplePosition);
+
+            auto noteCount = 0;
+            const auto chordNotes = patternSequencer.getChordNotes(inputNote, 0, 0, noteCount);
+            auto& activeNotes = chordMemoryActiveNotes[static_cast<size_t>(channelIndex)][static_cast<size_t>(inputNote)];
+            auto& activeCount = chordMemoryActiveNoteCounts[static_cast<size_t>(channelIndex)][static_cast<size_t>(inputNote)];
+            activeNotes.fill(-1);
+            activeCount = juce::jlimit(0, Sequencer::PatternSequencer::maxChordNotes, noteCount);
+
+            for (auto noteIndex = 0; noteIndex < activeCount; ++noteIndex)
+            {
+                const auto noteNumber = chordNotes[static_cast<size_t>(noteIndex)];
+                activeNotes[static_cast<size_t>(noteIndex)] = noteNumber;
+                expandedMidi.addEvent(juce::MidiMessage::noteOn(midiChannel, noteNumber, message.getFloatVelocity()), samplePosition);
+            }
+
+            continue;
+        }
+
+        if (message.isNoteOff())
+        {
+            const auto midiChannel = message.getChannel();
+            const auto channelIndex = juce::jlimit(0, 15, midiChannel - 1);
+            const auto inputNote = juce::jlimit(0, 127, message.getNoteNumber());
+
+            if (! releaseStoredChord(channelIndex, inputNote, midiChannel, samplePosition))
+                expandedMidi.addEvent(message, samplePosition);
+
+            continue;
+        }
+
+        expandedMidi.addEvent(message, samplePosition);
+    }
+
+    midiMessages.swapWith(expandedMidi);
+}
+
+void NateVSTAudioProcessor::clearChordMemoryActiveNotes()
+{
+    for (auto channel = 0; channel < 16; ++channel)
+    {
+        for (auto note = 0; note < 128; ++note)
+        {
+            chordMemoryActiveNotes[static_cast<size_t>(channel)][static_cast<size_t>(note)].fill(-1);
+            chordMemoryActiveNoteCounts[static_cast<size_t>(channel)][static_cast<size_t>(note)] = 0;
+        }
+    }
 }
 
 juce::AudioProcessorEditor* NateVSTAudioProcessor::createEditor()
@@ -1603,6 +1732,8 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         setParameterPlainValue(Parameters::ID::sequencerChordVoicing, 0.0f);
     if (! state.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid())
         setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f);
+    if (! state.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid())
+        setParameterPlainValue(Parameters::ID::sequencerChordMemory, 0.0f);
 
     restoreParameterGroupFromState(state, {
         Parameters::ID::sequencerEnabled,
@@ -1615,6 +1746,7 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         Parameters::ID::sequencerChordMode,
         Parameters::ID::sequencerChordVoicing,
         Parameters::ID::sequencerChordStrum,
+        Parameters::ID::sequencerChordMemory,
         Parameters::ID::sequencerAccent,
         Parameters::ID::sequencerOctave,
         Parameters::ID::sequencerProbability,
@@ -1779,6 +1911,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordMode = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMode).isValid();
     const auto hasSequencerChordVoicing = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordVoicing).isValid();
     const auto hasSequencerChordStrum = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid();
+    const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -1791,6 +1924,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::sequencerChordVoicing, 0.0f);
     if (! hasSequencerChordStrum)
         setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f);
+    if (! hasSequencerChordMemory)
+        setParameterPlainValue(Parameters::ID::sequencerChordMemory, 0.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

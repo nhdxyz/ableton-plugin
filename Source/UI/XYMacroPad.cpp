@@ -60,9 +60,10 @@ void XYMacroPad::paint(juce::Graphics& g)
         g.drawHorizontalLine(static_cast<int>(horizontalY), pad.getX(), pad.getRight());
     }
 
+    const auto handleRange = pad.reduced(7.0f);
     const auto handle = juce::Point<float> {
-        juce::jmap(x, 0.0f, 1.0f, pad.getX(), pad.getRight()),
-        juce::jmap(y, 0.0f, 1.0f, pad.getBottom(), pad.getY())
+        juce::jmap(x, 0.0f, 1.0f, handleRange.getX(), handleRange.getRight()),
+        juce::jmap(y, 0.0f, 1.0f, handleRange.getBottom(), handleRange.getY())
     };
 
     g.setColour(accent.withAlpha(0.26f));

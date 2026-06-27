@@ -420,10 +420,13 @@ Create and work these as separate feature tracks so the plugin grows coherently:
    Third performance slice implemented as one-click FX-panel delay, space, pump, and throw-off commands for arrangement fills and breakdowns.
    Fourth performance slice implemented as hold-to-restore Delay, Space, Pump, and Mute Drop buttons with snapshot/restore cleanup on release.
    Fifth performance slice implemented as the eight-macro bank: Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw, with MOD grouping, modulation-source access, randomizer support, and factory preset values.
+   Sixth performance slice implemented as a SEQ `Memory` toggle that turns the selected chord mode and voicing into one-finger played house/UKG stabs.
 
 ### Reference-Audit Build Order
 
 Recent reference checks against Serum 2, ZENOLOGY Pro, u-he Hive/Diva/Zebra, and Korg Collection/wavestate/modwave point to the same product direction: fast sound browsing, visible modulation, playable macros/XY, motion sequencing, serious FX, and genre-specific generators.
+
+Low-risk additions from the latest audit: per-control modulation inspector, richer preset metadata/ratings/audition, zero-cross/fade guards for UKG chops, selective groove transforms, editable macro assignment lists, FX module presets, and genre-specific init buttons. Larger tracks remain wavetable import/warp, layered partials, motion sequencing lanes, advanced sampler slicing, character filters/drives, FM/operator modes, and vector morphing.
 
 Build the next larger slices in this order:
 
@@ -443,6 +446,8 @@ Build the next larger slices in this order:
    First safety pass implemented as a SEQ-panel `Undo` action that restores the prior generated, varied, template, copy, rotate, or clear state.
    First broader club-template pass implemented as `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates in the SEQ pattern selector.
    First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
+   First chord-memory pass implemented as a saved default-off SEQ `Memory` toggle that expands live MIDI through the current chord mode and voicing while preserving matched note-offs.
+   First declutter pass moved duplicate quick-template buttons behind the pattern dropdown, grouped random/edit actions, added SEQ control/grid panel framing, and gave the grid more room.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.

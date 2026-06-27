@@ -2,6 +2,24 @@
 
 ## 2026-06-27
 
+### Chord Memory And Sequencer UI Pass
+
+- Added a saved SEQ `Memory` toggle that expands live played MIDI notes through the selected SEQ chord mode and voicing for one-finger house and UKG stabs.
+- Matched note-offs against the chord notes that were actually triggered, so changing or disabling Memory while notes are held does not leave hanging chord voices.
+- Rebalanced the SEQ panel around the pattern dropdown, Apply, random/variation/undo/clear actions, and a secondary copy/rotate/MIDI strip so the grid gets more visual priority.
+- Added subtle SEQ panel grouping, lighter step timing/probability markers, and removed redundant quick-pattern buttons now covered by the template dropdown.
+
+### Home Performance And Control Feel
+
+- Made rotary controls easier to move by shortening drag travel again while keeping frequency and time parameters slower for precision.
+- Shifted HOME macro knobs toward Tone, Dirt, Weight, Bounce, Warp, and Throw while leaving Motion/Space on the XY pad.
+- Increased the HOME club low-end assistant area slightly and fixed XY pad handle clipping at the edges.
+
+### Feature Research Backlog
+
+- Prioritized low-risk next additions from reference research: per-control modulation inspection, richer preset metadata/audition, tighter UKG chop editing, selective groove transforms, editable macro assignments, and FX module presets.
+- Kept larger researched items on the roadmap: wavetable oscillator lane, layered/partial architecture, motion sequencing lanes, deeper sampler/chopper behavior, character filter/drive bank, FM/operator options, and XY/vector morphing.
+
 ### Low-End Assistant Guidance
 
 - Expanded the HOME `CLUB` assistant with a phase/status chip and soft guidance line for bass patch decisions.

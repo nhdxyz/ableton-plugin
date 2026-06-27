@@ -113,22 +113,16 @@ void StepSequencerGrid::paint(juce::Graphics& g)
             if (step.timing > 0.0f)
             {
                 const auto timingWidth = juce::jmax(3.0f, cell.getWidth() * juce::jlimit(0.0f, 1.0f, step.timing));
-                auto timingMarker = cell.withY(cell.getBottom() - 3.0f).withHeight(3.0f).withWidth(timingWidth);
+                auto timingMarker = cell.withY(cell.getBottom() - 2.0f).withHeight(2.0f).withWidth(timingWidth);
                 g.setColour(juce::Colour(0xffffc857).withAlpha(0.9f));
-                g.fillRoundedRectangle(timingMarker, 1.5f);
+                g.fillRoundedRectangle(timingMarker, 1.0f);
             }
             if (step.probability < 0.995f)
             {
                 const auto probabilityWidth = juce::jmax(3.0f, cell.getWidth() * juce::jlimit(0.0f, 1.0f, step.probability));
-                auto probabilityMarker = cell.withHeight(3.0f).withWidth(probabilityWidth);
+                auto probabilityMarker = cell.withHeight(2.0f).withWidth(probabilityWidth);
                 g.setColour(juce::Colour(0xffb7a4ff).withAlpha(0.9f));
-                g.fillRoundedRectangle(probabilityMarker, 1.5f);
-            }
-            if ((stepIndex % 4) == 0)
-            {
-                auto anchorDot = cell;
-                g.setColour(juce::Colour(0xffedf7f4).withAlpha(0.58f));
-                g.fillEllipse(anchorDot.removeFromTop(8.0f).removeFromRight(8.0f).reduced(2.0f));
+                g.fillRoundedRectangle(probabilityMarker, 1.0f);
             }
             g.setColour(juce::Colour(0xff0d1113));
             g.drawRoundedRectangle(cell, 3.0f, 1.0f);

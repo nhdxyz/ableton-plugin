@@ -143,6 +143,7 @@ private:
     juce::ToggleButton sampleReverseButton;
     juce::ToggleButton sampleStutterEnabledButton;
     juce::ToggleButton sequencerEnabledButton;
+    juce::ToggleButton sequencerChordMemoryButton;
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;
     juce::ToggleButton fxPumpEnabledButton;

@@ -54,6 +54,8 @@ Current UI research takeaway:
 - Long option sets still belong in dropdowns or browser lists.
 - Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
 - The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset recall, randomization, and deeper-panel navigation should all be close at hand.
+- Latest reference review points to low-risk polish before new engines: per-control modulation inspection, deeper preset metadata/audition, tighter UKG chop trimming, selective groove transforms, editable macro assignments, FX module presets, and genre-specific init templates.
+- Larger engine tracks should stay deliberate: wavetable oscillator support, layered partials, motion sequencing lanes, advanced sampler slicing, character filter/drive models, FM/operator options, and vector morphing.
 
 ### What To Learn From ZENOLOGY
 
@@ -1569,10 +1571,10 @@ These can all be reconsidered later. They are distractions before the synth make
 
 ## Immediate Next Steps
 
-1. Initialize git in this folder.
-2. Add `.gitignore` and `README.md`.
-3. Choose plain JUCE or Pamplejuce.
-4. Scaffold a macOS VST3 instrument plugin.
-5. Build the empty plugin.
-6. Load it in Ableton.
-7. Add the first oscillator and MIDI note handling.
+1. Validate the current SEQ chord-memory and UI declutter pass in Ableton with house, UKG, tech-house, minimal, and techno preset workflows.
+2. Add UKG chop tightening: zero-cross snap, tiny fade guards, and per-slice audition polish.
+3. Add selective groove transforms for straight anchors, swung ghosts, late stabs, and vocal push.
+4. Add a per-control modulation inspector so users can see source, depth, polarity, bypass, and delete actions without scanning the full matrix.
+5. Add FX module presets and clearer per-module preset/reorder affordances.
+6. Expand browser metadata and audition workflow with richer tags, ratings/favorites polish, and macro preview values.
+7. Start larger engine work only after the current subtractive/sampler/SEQ/FX workflow feels strong in real sessions.

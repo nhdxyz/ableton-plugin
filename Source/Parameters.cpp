@@ -624,6 +624,11 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::sequencerChordMemory,
+        "Sequencer Chord Memory",
+        false));
+
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::sequencerAccent,
         "Sequencer Accent",

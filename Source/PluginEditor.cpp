@@ -247,6 +247,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetNameEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
     addAndMakeVisible(presetNameEditor);
 
+    presetSearchEditor.setTextToShowWhenEmpty("Search presets", juce::Colour(0xff617078));
+    presetSearchEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
+    presetSearchEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
+    presetSearchEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
+    presetSearchEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+    addAndMakeVisible(presetSearchEditor);
+
     waveformBox.addItemList(Parameters::waveformChoices(), 1);
     addAndMakeVisible(waveformBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWave, waveformBox));
@@ -822,6 +829,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
     favoritePresetButton.onClick = [this] { toggleFavoritePreset(); };
     presetFilterBox.onChange = [this] { refreshPresetList(); };
+    presetSearchEditor.onTextChange = [this] { refreshPresetList(); };
     presetBox.onChange = [this] { updateFavoritePresetButton(); };
     fxAddBox.onChange = [this]
     {
@@ -1733,6 +1741,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetNameEditor.setVisible(true);
             presetCategoryBox.setVisible(true);
             presetFilterBox.setVisible(true);
+            presetSearchEditor.setVisible(true);
             savePresetButton.setVisible(true);
             presetBox.setVisible(true);
             previousPresetButton.setVisible(true);
@@ -1747,13 +1756,14 @@ void NateVSTAudioProcessorEditor::resized()
             presetNameEditor.setBounds(saveRow.removeFromLeft(300).reduced(4));
             savePresetButton.setBounds(saveRow.removeFromLeft(90).reduced(4));
             auto loadRow = content.removeFromTop(54).withTrimmedTop(10);
-            presetFilterBox.setBounds(loadRow.removeFromLeft(130).reduced(4));
-            previousPresetButton.setBounds(loadRow.removeFromLeft(44).reduced(4));
-            presetBox.setBounds(loadRow.removeFromLeft(250).reduced(4));
-            nextPresetButton.setBounds(loadRow.removeFromLeft(44).reduced(4));
-            loadPresetButton.setBounds(loadRow.removeFromLeft(90).reduced(4));
-            favoritePresetButton.setBounds(loadRow.removeFromLeft(70).reduced(4));
-            refreshPresetsButton.setBounds(loadRow.removeFromLeft(100).reduced(4));
+            presetFilterBox.setBounds(loadRow.removeFromLeft(126).reduced(4));
+            presetSearchEditor.setBounds(loadRow.removeFromLeft(180).reduced(4));
+            previousPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
+            presetBox.setBounds(loadRow.removeFromLeft(220).reduced(4));
+            nextPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
+            loadPresetButton.setBounds(loadRow.removeFromLeft(78).reduced(4));
+            favoritePresetButton.setBounds(loadRow.removeFromLeft(62).reduced(4));
+            refreshPresetsButton.setBounds(loadRow.removeFromLeft(90).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(36).reduced(6, 4));
             break;
         }
@@ -2411,7 +2421,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &lfoCurveDisplay, &sequencerGrid
     });
 
@@ -2831,6 +2841,27 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     if (filter.isEmpty())
         filter = "All";
 
+    const auto searchText = presetSearchEditor.getText().trim();
+    juce::StringArray searchTerms;
+    searchTerms.addTokens(searchText, " ", "\"");
+    searchTerms.removeEmptyStrings();
+
+    auto matchesSearch = [&searchTerms] (const NateVSTAudioProcessor::PresetInfo& preset)
+    {
+        if (searchTerms.isEmpty())
+            return true;
+
+        const auto sourceText = preset.isFactory ? juce::String("Factory") : juce::String("User");
+        const auto searchable = preset.name + " " + preset.category + " " + preset.source + " " + sourceText
+            + (preset.isFavorite ? " Favorite" : "");
+
+        for (const auto& term : searchTerms)
+            if (! searchable.containsIgnoreCase(term))
+                return false;
+
+        return true;
+    };
+
     auto nextItemId = 1;
     auto addPreset = [this, &nextItemId] (const NateVSTAudioProcessor::PresetInfo& preset)
     {
@@ -2850,7 +2881,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     {
         for (const auto& recentName : recentNames)
             if (const auto* preset = findPreset(recentName))
-                addPreset(*preset);
+                if (matchesSearch(*preset))
+                    addPreset(*preset);
     }
     else
     {
@@ -2862,7 +2894,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || (filter == "Factory" && preset.isFactory)
                 || preset.category.equalsIgnoreCase(filter);
 
-            if (matchesFilter)
+            if (matchesFilter && matchesSearch(preset))
                 addPreset(preset);
         }
     }
@@ -2881,9 +2913,11 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     else if (presetBox.getNumItems() > 0)
         presetBox.setSelectedItemIndex(0, juce::dontSendNotification);
 
-    presetStatusLabel.setText(juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter
-                                  + " | User: " + audioProcessor.getPresetDirectory().getFullPathName(),
-                              juce::dontSendNotification);
+    auto statusText = juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter;
+    if (searchText.isNotEmpty())
+        statusText += " | Search: " + searchText;
+    statusText += " | User: " + audioProcessor.getPresetDirectory().getFullPathName();
+    presetStatusLabel.setText(statusText, juce::dontSendNotification);
     updateFavoritePresetButton();
 }
 

@@ -430,6 +430,7 @@ private:
     std::array<juce::Label, 4> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
+    juce::TextEditor presetSearchEditor;
     UI::OutputMeter outputMeter;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;

@@ -2,6 +2,11 @@
 
 ## 2026-06-27
 
+### Library Search
+
+- Added a `Search presets` field to the LIBRARY panel for filtering presets by name, category, source, user/factory status, or favorite state.
+- Made preset search token-based so multi-word queries like `tech bass` can match genre/category plus preset role.
+
 ### Club Factory Preset Packs
 
 - Added repo-managed factory presets for house, tech-house, minimal, and techno workflows, expanding the factory pack from 8 to 16 presets.

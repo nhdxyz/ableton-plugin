@@ -124,6 +124,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     performanceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(performanceStatusLabel);
 
+    performanceXYPad.onChange = [this] (float motion, float space)
+    {
+        setPlainParameterValue(Parameters::ID::macroMotion, motion);
+        setPlainParameterValue(Parameters::ID::macroSpace, space);
+    };
+    addAndMakeVisible(performanceXYPad);
+
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(fxRackStatusLabel);
@@ -921,6 +928,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             lowEndAssistant.setVisible(true);
+            performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
             recallSnapshotAButton.setVisible(true);
             captureSnapshotAButton.setVisible(true);
@@ -949,7 +957,9 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(112).withTrimmedTop(6), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            auto macroControlArea = macroArea.removeFromTop(112).withTrimmedTop(6);
+            performanceXYPad.setBounds(macroControlArea.removeFromRight(160).reduced(4, 0));
+            layoutKnobRow(macroControlArea, { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
             auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
             performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(156).reduced(4, 4));
             recallSnapshotAButton.setBounds(snapshotRow.removeFromLeft(48).reduced(3, 4));
@@ -1251,6 +1261,9 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerPatternBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
+            bassPatternButton.setVisible(true);
+            stabPatternButton.setVisible(true);
+            ukgPatternButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             clearSequencerButton.setVisible(true);
             sequencerGrid.setVisible(true);
@@ -1267,6 +1280,9 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerPatternBox.setBounds(patternRow.removeFromLeft(190).reduced(4));
             applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
             copySequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
+            bassPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
+            stabPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
+            ukgPatternButton.setBounds(patternRow.removeFromLeft(70).reduced(4));
             randomSequencerButton.setBounds(patternRow.removeFromLeft(104).reduced(4));
             clearSequencerButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
@@ -2001,7 +2017,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,
-        &lowEndAssistant, &lfoCurveDisplay, &sequencerGrid
+        &lowEndAssistant, &performanceXYPad, &lfoCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -2255,6 +2271,20 @@ void NateVSTAudioProcessorEditor::updatePerformanceSnapshotButtons()
                                    juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::updatePerformanceXYPad()
+{
+    auto readParameter = [this] (const juce::String& parameterID)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return 0.0f;
+    };
+
+    performanceXYPad.setValues(readParameter(Parameters::ID::macroMotion),
+                               readParameter(Parameters::ID::macroSpace));
+}
+
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
@@ -2262,6 +2292,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateOutputMeter();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
+    updatePerformanceXYPad();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

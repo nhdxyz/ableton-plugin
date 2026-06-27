@@ -2,6 +2,17 @@
 
 ## 2026-06-27
 
+### Performance XY Pad
+
+- Added a HOME-panel XY performance pad that controls the existing `Motion` and `Space` macro parameters for one-gesture rhythmic movement.
+- Placed the pad inside the `MACROS` card beside the macro knobs so performance movement is grouped with the controls it drives.
+- Synced the pad from APVTS macro values on the UI timer so host automation, preset recall, and snapshot recall stay reflected visually.
+
+### Sequencer Workflow Shortcuts
+
+- Exposed the already-wired `Bass`, `Stab`, and `UKG` quick-pattern buttons on the SEQ panel.
+- Kept pattern copy, randomize, clear, and the new genre shortcuts in one row for faster house and UK garage sketching.
+
 ### Performance A/B Snapshots
 
 - Added HOME-panel A/B performance snapshots with `A`, `Set A`, `B`, and `Set B` controls beside the macro area.

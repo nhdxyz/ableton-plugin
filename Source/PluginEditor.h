@@ -7,6 +7,7 @@
 #include "UI/ModCurveDisplay.h"
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
+#include "UI/XYMacroPad.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_extra/juce_gui_extra.h>
@@ -415,6 +416,7 @@ private:
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::StepSequencerGrid sequencerGrid;
+    UI::XYMacroPad performanceXYPad;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -442,6 +444,7 @@ private:
     void updateOutputMeter();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
+    void updatePerformanceXYPad();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

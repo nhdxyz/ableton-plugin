@@ -992,14 +992,56 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         setParameter(Parameters::ID::modMatrixAmount[slotIndex], juce::jlimit(-1.0f, 1.0f, slotAmount));
     };
 
+    auto setLfoCurve = [this] (const std::array<float, 8>& curve)
+    {
+        for (size_t index = 0; index < Parameters::ID::lfo1Curve.size(); ++index)
+            setParameter(Parameters::ID::lfo1Curve[index], juce::jlimit(-1.0f, 1.0f, curve[index]));
+    };
+
     const auto motionScale = juce::jlimit(0.55f, 1.35f, 0.82f + (positiveMotionBias * 0.28f) + (chaos * 0.16f));
+    const auto usesCurveLfo = recipe == Recipe::deepHouseBass
+        || recipe == Recipe::rollingTechBass
+        || recipe == Recipe::ukgTwoStepBass
+        || recipe == Recipe::ukgDredBass;
     setParameter(Parameters::ID::lfo1Sync, 1.0f);
     setChoice(Parameters::ID::lfo1SyncRate, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 3 : 1);
-    setChoice(Parameters::ID::lfo1Shape, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 4 : 0);
+    setChoice(Parameters::ID::lfo1Shape, usesCurveLfo ? 5 : recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 4 : 0);
     setParameter(Parameters::ID::lfo1Rate, randomFloat(0.6f, 2.4f));
     setParameter(Parameters::ID::lfo1Depth, juce::jlimit(0.08f, 0.72f, randomFloat(0.16f, 0.4f) * motionScale));
     setParameter(Parameters::ID::lfo1Phase, randomFloat(0.0f, 0.25f));
     setParameter(Parameters::ID::lfo1Retrigger, recipe == Recipe::minimalBlip || recipe == Recipe::noiseFx ? 0.0f : 1.0f);
+
+    if (recipe == Recipe::ukgDredBass)
+    {
+        setLfoCurve({
+            randomFloat(-0.24f, 0.04f),
+            randomFloat(0.08f, 0.34f),
+            randomFloat(0.64f, 0.92f),
+            randomFloat(0.82f, 1.0f),
+            randomFloat(0.32f, 0.62f),
+            randomFloat(-0.18f, 0.12f),
+            randomFloat(-0.66f, -0.32f),
+            randomFloat(-0.42f, -0.12f)
+        });
+    }
+    else if (usesCurveLfo)
+    {
+        setLfoCurve({
+            randomFloat(-0.08f, 0.12f),
+            randomFloat(0.48f, 0.82f),
+            randomFloat(0.82f, 1.0f),
+            randomFloat(0.22f, 0.52f),
+            randomFloat(-0.18f, 0.08f),
+            randomFloat(-0.56f, -0.24f),
+            randomFloat(-0.92f, -0.58f),
+            randomFloat(-0.38f, -0.08f)
+        });
+    }
+    else
+    {
+        setLfoCurve({ 0.0f, 0.58f, 1.0f, 0.42f, -0.18f, -0.72f, -1.0f, -0.36f });
+    }
+
     const auto dredModEnv = recipe == Recipe::ukgDredBass;
     setParameter(Parameters::ID::modEnv1Attack, dredModEnv ? randomFloat(0.045f, 0.14f) : randomFloat(0.002f, 0.03f));
     setParameter(Parameters::ID::modEnv1Decay, dredModEnv ? randomFloat(0.18f, 0.46f) : randomFloat(0.08f, recipe == Recipe::ukgOrganStab || recipe == Recipe::ukgChordStab ? 0.34f : 0.22f));

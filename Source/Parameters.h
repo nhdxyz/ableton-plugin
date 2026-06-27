@@ -47,6 +47,16 @@ inline constexpr auto lfo1Shape = "lfo1_shape";
 inline constexpr auto lfo1Depth = "lfo1_depth";
 inline constexpr auto lfo1Phase = "lfo1_phase";
 inline constexpr auto lfo1Retrigger = "lfo1_retrigger";
+inline constexpr std::array<const char*, 8> lfo1Curve {
+    "lfo1_curve_1",
+    "lfo1_curve_2",
+    "lfo1_curve_3",
+    "lfo1_curve_4",
+    "lfo1_curve_5",
+    "lfo1_curve_6",
+    "lfo1_curve_7",
+    "lfo1_curve_8"
+};
 inline constexpr auto modEnv1Attack = "mod_env1_attack";
 inline constexpr auto modEnv1Decay = "mod_env1_decay";
 inline constexpr auto modEnv1Sustain = "mod_env1_sustain";

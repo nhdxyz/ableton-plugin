@@ -130,6 +130,7 @@ Research references:
 - Tempo-synced volume shaper.
 - Depth, rate, shape, and phase controls.
 - Useful for UKG, house, and garage-adjacent bass movement.
+- Bass presets now use the MOD-panel curve LFO for garage-style push/pull cutoff movement where a basic sine felt too even.
 - Available as an FX rack module. Simple macro/mod assignment should come through the future MOD workflow.
 
 3. Organ/Stab source.

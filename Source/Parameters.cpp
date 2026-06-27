@@ -51,7 +51,7 @@ juce::StringArray sequencerGrooveModeChoices()
 
 juce::StringArray lfoShapeChoices()
 {
-    return { "Sine", "Triangle", "Saw", "Square", "Step" };
+    return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
 }
 
 juce::StringArray lfoSyncRateChoices()
@@ -308,6 +308,19 @@ APVTS::ParameterLayout createLayout()
         ID::lfo1Retrigger,
         "LFO 1 Retrigger",
         true));
+
+    constexpr std::array<float, 8> defaultLfoCurve {
+        0.0f, 0.58f, 1.0f, 0.42f, -0.18f, -0.72f, -1.0f, -0.36f
+    };
+
+    for (size_t index = 0; index < ID::lfo1Curve.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::lfo1Curve[index],
+            "LFO 1 Curve " + juce::String(static_cast<int>(index + 1)),
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+            defaultLfoCurve[index]));
+    }
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::modEnv1Attack,

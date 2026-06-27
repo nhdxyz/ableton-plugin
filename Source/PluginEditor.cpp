@@ -414,6 +414,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(lfo1RateSlider, lfo1RateLabel, "Rate", Parameters::ID::lfo1Rate);
     configureSlider(lfo1DepthSlider, lfo1DepthLabel, "Depth", Parameters::ID::lfo1Depth);
     configureSlider(lfo1PhaseSlider, lfo1PhaseLabel, "Phase", Parameters::ID::lfo1Phase);
+    addAndMakeVisible(lfoCurveDisplay);
+
+    for (size_t index = 0; index < lfoCurveSliders.size(); ++index)
+        configureCompactHorizontalSlider(lfoCurveSliders[index], Parameters::ID::lfo1Curve[index]);
+
     configureSlider(modEnv1AttackSlider, modEnv1AttackLabel, "Attack", Parameters::ID::modEnv1Attack);
     configureSlider(modEnv1DecaySlider, modEnv1DecayLabel, "Decay", Parameters::ID::modEnv1Decay);
     configureSlider(modEnv1SustainSlider, modEnv1SustainLabel, "Sustain", Parameters::ID::modEnv1Sustain);
@@ -1042,6 +1047,10 @@ void NateVSTAudioProcessorEditor::resized()
             lfo1SyncRateBox.setVisible(true);
             lfo1SyncButton.setVisible(true);
             lfo1RetriggerButton.setVisible(true);
+            lfoCurveDisplay.setVisible(true);
+            for (auto& slider : lfoCurveSliders)
+                slider.setVisible(true);
+
             modSectionLabel.setBounds(content.removeFromTop(28));
 
             for (auto& label : modSourceRows)
@@ -1057,44 +1066,56 @@ void NateVSTAudioProcessorEditor::resized()
             }
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(132);
-            auto sourceArea = topRow.removeFromLeft(300).reduced(18, 12);
-            auto macroArea = topRow.reduced(18, 12);
+            auto topRow = modContent.removeFromTop(108);
+            auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
+            auto macroArea = topRow.reduced(18, 8);
 
-            modSourceLabel.setBounds(sourceArea.removeFromTop(24));
+            modSourceLabel.setBounds(sourceArea.removeFromTop(22));
             for (auto& label : modSourceRows)
-                label.setBounds(sourceArea.removeFromTop(24).reduced(3, 2));
+                label.setBounds(sourceArea.removeFromTop(17).reduced(3, 1));
 
-            modMacroLabel.setBounds(macroArea.removeFromTop(24));
+            modMacroLabel.setBounds(macroArea.removeFromTop(22));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(92).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(70).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
 
-            modContent.removeFromTop(12);
-            auto generatorRow = modContent.removeFromTop(138);
-            auto lfoArea = generatorRow.removeFromLeft(410).reduced(18, 12);
-            auto envelopeArea = generatorRow.reduced(18, 12);
+            modContent.removeFromTop(8);
+            auto generatorRow = modContent.removeFromTop(198);
+            auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
+            auto envelopeArea = generatorRow.reduced(18, 8);
 
-            modLfoLabel.setBounds(lfoArea.removeFromTop(24));
-            auto lfoModeRow = lfoArea.removeFromTop(36).withTrimmedTop(3);
+            modLfoLabel.setBounds(lfoArea.removeFromTop(20));
+            auto lfoModeRow = lfoArea.removeFromTop(28).withTrimmedTop(2);
             lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(118).reduced(3, 4));
             lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(36).withTrimmedTop(2));
+
+            auto curveGrid = lfoArea.removeFromTop(38).withTrimmedTop(2);
+            auto layoutCurveRow = [] (juce::Rectangle<int> row, std::array<juce::Slider, 8>& sliders, size_t startIndex)
+            {
+                const auto cellWidth = row.getWidth() / 4;
+                for (size_t offset = 0; offset < 4; ++offset)
+                    sliders[startIndex + offset].setBounds(row.removeFromLeft(cellWidth).reduced(3, 1));
+            };
+            layoutCurveRow(curveGrid.removeFromTop(18), lfoCurveSliders, 0);
+            layoutCurveRow(curveGrid.removeFromTop(18), lfoCurveSliders, 4);
+
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(72).withTrimmedTop(4), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(58).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
-            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(24));
+            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
             setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
             setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
             setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
             setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-            layoutKnobRow(envelopeArea.removeFromTop(102).withTrimmedTop(6), {
+            layoutKnobRow(envelopeArea.removeFromTop(92).withTrimmedTop(4), {
                 &modEnv1AttackSlider,
                 &modEnv1DecaySlider,
                 &modEnv1SustainSlider,
@@ -1102,17 +1123,17 @@ void NateVSTAudioProcessorEditor::resized()
                 &modEnv1DepthSlider
             });
 
-            modContent.removeFromTop(12);
-            auto matrixArea = modContent.reduced(18, 10);
-            modMatrixLabel.setBounds(matrixArea.removeFromTop(26));
+            modContent.removeFromTop(6);
+            auto matrixArea = modContent.reduced(18, 0);
+            modMatrixLabel.setBounds(matrixArea.removeFromTop(18));
 
             for (size_t index = 0; index < modSlotRows.size(); ++index)
             {
-                auto row = matrixArea.removeFromTop(25).reduced(3, 1);
-                modSlotRows[index].setBounds(row.removeFromLeft(32).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(142).reduced(3, 1));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(190).reduced(3, 1));
-                modAmountSliders[index].setBounds(row.removeFromLeft(260).reduced(3, 1));
+                auto row = matrixArea.removeFromTop(18).reduced(3, 1);
+                modSlotRows[index].setBounds(row.removeFromLeft(30).reduced(2, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(134).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(178).reduced(3, 0));
+                modAmountSliders[index].setBounds(row.reduced(3, 0));
             }
 
             break;
@@ -1508,7 +1529,7 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(112);
+    slider.setMouseDragSensitivity(88);
     slider.setVelocityBasedMode(true);
     slider.setVelocityModeParameters(1.0, 1, 0.06, true, juce::ModifierKeys::shiftModifier);
     slider.setSliderSnapsToMousePosition(false);
@@ -1556,6 +1577,29 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     label.attachToComponent(&slider, true);
     addAndMakeVisible(label);
+
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+        slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
+
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
+}
+
+void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider& slider,
+                                                                    const juce::String& parameterID)
+{
+    slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setMouseDragSensitivity(130);
+    slider.setSliderSnapsToMousePosition(false);
+    slider.setScrollWheelEnabled(false);
+    slider.setPopupDisplayEnabled(true, true, this);
+    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
+    slider.setNumDecimalPlacesToDisplay(2);
+    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
+    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    addAndMakeVisible(slider);
 
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
@@ -1896,8 +1940,11 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,
-        &sequencerGrid
+        &lfoCurveDisplay, &sequencerGrid
     });
+
+    for (auto& slider : lfoCurveSliders)
+        slider.setVisible(false);
 
     for (auto& label : modSourceRows)
         label.setVisible(false);
@@ -2074,6 +2121,20 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     rateThirtySecondButton.setToggleState(rateIndex == 2, juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
+{
+    std::array<float, 8> values {};
+    for (size_t index = 0; index < values.size(); ++index)
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(Parameters::ID::lfo1Curve[index]))
+            values[index] = value->load();
+
+    auto shapeIndex = 0;
+    if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(Parameters::ID::lfo1Shape))
+        shapeIndex = static_cast<int>(value->load() + 0.5f);
+
+    lfoCurveDisplay.setValues(values, shapeIndex == 5);
+}
+
 void NateVSTAudioProcessorEditor::updateOutputMeter()
 {
     auto peakLeft = 0.0f;
@@ -2092,6 +2153,7 @@ void NateVSTAudioProcessorEditor::updateOutputMeter()
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
+    updateLfoCurveDisplay();
     updateOutputMeter();
     updateKeyboardRangeLabel();
     updateFxRackControls();

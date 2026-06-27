@@ -107,6 +107,7 @@ private:
     std::atomic<float>* lfo1Depth = nullptr;
     std::atomic<float>* lfo1Phase = nullptr;
     std::atomic<float>* lfo1Retrigger = nullptr;
+    std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
     std::atomic<float>* modEnv1Attack = nullptr;
     std::atomic<float>* modEnv1Decay = nullptr;
     std::atomic<float>* modEnv1Sustain = nullptr;
@@ -119,6 +120,7 @@ private:
     void updateVoiceParameters(float envelopeValue);
     void updateGlide();
     float processLfo();
+    float evaluateLfoCurve(float phase) const;
     float evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const;
     StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
     int getUnisonVoiceCount() const;

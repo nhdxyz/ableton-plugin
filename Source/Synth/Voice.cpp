@@ -57,6 +57,9 @@ Voice::Voice(Parameters::APVTS& state)
     lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
     lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
     lfo1Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo1Retrigger);
+    for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
+        lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
+
     modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
     modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
     modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
@@ -367,6 +370,10 @@ float Voice::processLfo()
             value = lfoStepValue;
             break;
 
+        case 5:
+            value = evaluateLfoCurve(phase);
+            break;
+
         default:
             value = std::sin(juce::MathConstants<float>::twoPi * phase);
             break;
@@ -383,6 +390,19 @@ float Voice::processLfo()
     }
 
     return juce::jlimit(-1.0f, 1.0f, value);
+}
+
+float Voice::evaluateLfoCurve(float phase) const
+{
+    constexpr auto pointCount = 8;
+    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
+    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
+    const auto rightIndex = (leftIndex + 1) % pointCount;
+    const auto fraction = scaledPhase - std::floor(scaledPhase);
+    const auto leftValue = readParameter(lfo1CurvePoints[static_cast<size_t>(leftIndex)], 0.0f);
+    const auto rightValue = readParameter(lfo1CurvePoints[static_cast<size_t>(rightIndex)], 0.0f);
+
+    return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
 float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const

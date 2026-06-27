@@ -33,10 +33,18 @@
   <PARAM id="lfo1_rate" value="1" />
   <PARAM id="lfo1_sync" value="1" />
   <PARAM id="lfo1_sync_rate" value="1" />
-  <PARAM id="lfo1_shape" value="0" />
+  <PARAM id="lfo1_shape" value="5" />
   <PARAM id="lfo1_depth" value="0.24" />
   <PARAM id="lfo1_phase" value="0" />
   <PARAM id="lfo1_retrigger" value="1" />
+  <PARAM id="lfo1_curve_1" value="-0.04" />
+  <PARAM id="lfo1_curve_2" value="0.62" />
+  <PARAM id="lfo1_curve_3" value="1" />
+  <PARAM id="lfo1_curve_4" value="0.28" />
+  <PARAM id="lfo1_curve_5" value="-0.12" />
+  <PARAM id="lfo1_curve_6" value="-0.5" />
+  <PARAM id="lfo1_curve_7" value="-0.86" />
+  <PARAM id="lfo1_curve_8" value="-0.18" />
   <PARAM id="mod_env1_attack" value="0.01" />
   <PARAM id="mod_env1_decay" value="0.14" />
   <PARAM id="mod_env1_sustain" value="0" />

@@ -108,6 +108,7 @@ Initial shapes:
 - saw
 - square
 - random stepped
+- editable 8-point curve for pump, wobble, and off-grid filter movement
 
 Start with one LFO before building LFO 2.
 
@@ -198,9 +199,10 @@ Editable engine slice:
    - Oscillator 2 tune.
    - Oscillator 2 level.
 6. Made randomization seed safe modulation movement for bass, UKG stabs, plucks, minimal blips, and noise FX.
+7. Added the first MSEG-style slice: `Curve` as an LFO 1 shape, eight saved curve-point parameters, a compact MOD-panel curve display, and randomization/factory seeds for house and UKG bass movement.
 
 Remaining modulation work:
 
 - Add shared sample and FX destinations after a global modulation lane exists.
 - Add visible activity indicators around key destination controls.
-- Add per-slot curves or bipolar/unipolar mode only after the simple matrix has been tested in Ableton.
+- Add draggable curve editing, destination rings, and per-slot curves or bipolar/unipolar mode after this compact curve source has been tested in Ableton.

@@ -46,6 +46,14 @@ DEFAULTS = {
     "lfo1_depth": 0.45,
     "lfo1_phase": 0.0,
     "lfo1_retrigger": 1,
+    "lfo1_curve_1": 0.0,
+    "lfo1_curve_2": 0.58,
+    "lfo1_curve_3": 1.0,
+    "lfo1_curve_4": 0.42,
+    "lfo1_curve_5": -0.18,
+    "lfo1_curve_6": -0.72,
+    "lfo1_curve_7": -1.0,
+    "lfo1_curve_8": -0.36,
     "mod_env1_attack": 0.01,
     "mod_env1_decay": 0.22,
     "mod_env1_sustain": 0.0,
@@ -185,6 +193,10 @@ def sequence(*steps):
     return props
 
 
+def curve(*values):
+    return {f"lfo1_curve_{index + 1}": value for index, value in enumerate(values)}
+
+
 PRESETS = [
     {
         "name": "UKG 2-Step Bass",
@@ -210,7 +222,9 @@ PRESETS = [
             "macro_1": 0.18,
             "macro_2": 0.12,
             "macro_3": 0.24,
+            "lfo1_shape": 5,
             "lfo1_depth": 0.2,
+            **curve(0.02, 0.7, 0.95, 0.36, -0.08, -0.42, -0.78, -0.24),
             "mod_env1_decay": 0.16,
             "mod_env1_depth": 0.34,
             "mod_slot_1_source": 1,
@@ -284,7 +298,9 @@ PRESETS = [
             "mono_mode": 1,
             "glide_time": 0.075,
             "macro_3": 0.28,
+            "lfo1_shape": 5,
             "lfo1_depth": 0.24,
+            **curve(-0.04, 0.62, 1.0, 0.28, -0.12, -0.5, -0.86, -0.18),
             "mod_env1_decay": 0.14,
             "mod_env1_depth": 0.38,
             "mod_slot_1_source": 1,
@@ -357,7 +373,9 @@ PRESETS = [
             "unison_spread": 0.06,
             "macro_2": 0.2,
             "macro_3": 0.36,
+            "lfo1_shape": 5,
             "lfo1_depth": 0.26,
+            **curve(-0.16, 0.18, 0.78, 1.0, 0.44, -0.05, -0.48, -0.26),
             "mod_env1_attack": 0.09,
             "mod_env1_decay": 0.34,
             "mod_env1_sustain": 0.12,

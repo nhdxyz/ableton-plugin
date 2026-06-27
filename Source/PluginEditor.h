@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "UI/FxRackRow.h"
 #include "UI/LookAndFeel.h"
+#include "UI/ModCurveDisplay.h"
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
 
@@ -155,6 +156,7 @@ private:
     juce::Slider lfo1RateSlider;
     juce::Slider lfo1DepthSlider;
     juce::Slider lfo1PhaseSlider;
+    std::array<juce::Slider, 8> lfoCurveSliders;
     juce::Slider modEnv1AttackSlider;
     juce::Slider modEnv1DecaySlider;
     juce::Slider modEnv1SustainSlider;
@@ -404,6 +406,7 @@ private:
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
     juce::MidiKeyboardComponent pianoKeyboard;
+    UI::ModCurveDisplay lfoCurveDisplay;
     UI::StepSequencerGrid sequencerGrid;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
@@ -414,6 +417,7 @@ private:
 
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureHorizontalSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
+    void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
     void configureSectionLabel(juce::Label& label, const juce::String& text);
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);
     void chooseSampleFile();
@@ -427,6 +431,7 @@ private:
     void setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible);
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);
     void updateSegmentedSelectors();
+    void updateLfoCurveDisplay();
     void updateOutputMeter();
     void timerCallback() override;
     void refreshPresetList();

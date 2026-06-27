@@ -52,6 +52,7 @@ target_sources(NateVST
         Source/Effects/EffectsRack.cpp
         Source/UI/FxRackRow.cpp
         Source/UI/LookAndFeel.cpp
+        Source/UI/ModCurveDisplay.cpp
         Source/UI/OutputMeter.cpp
         Source/UI/StepSequencerGrid.cpp
 )

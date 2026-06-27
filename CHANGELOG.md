@@ -2,6 +2,16 @@
 
 ## 2026-06-27
 
+### LFO Curve Modulation
+
+- Added a sixth LFO 1 shape, `Curve`, with eight saved and automatable curve-point parameters.
+- Added a compact curve display and point controls to the MOD panel so rhythmic movement is visible without crowding HOME.
+- Routed the curve shape through the voice DSP as a cyclic interpolated modulation source for filter, drive, and oscillator movement through the existing matrix.
+- Tightened the MOD page layout by shortening the macro/source row, expanding the LFO editor area, and making routing rows denser to reduce overlap.
+- Seeded house, tech-house, and UKG bass randomization with curve-based filter movement while leaving stepped modulation for minimal/noise recipes.
+- Regenerated factory presets so UKG bass patches include useful garage-style curve movement.
+- Reduced rotary full-range drag distance again so knobs feel quicker during sound-design tweaks.
+
 ### Research-Led UI Polish
 
 - Ran a focused reference pass across Serum 2, Pigments, Phase Plant, u-he, Korg, ZENOLOGY Pro, ShaperBox, and UK garage production workflows.

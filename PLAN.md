@@ -1574,6 +1574,6 @@ These can all be reconsidered later. They are distractions before the synth make
 1. Validate the current SEQ chord-memory and UI declutter pass in Ableton with house, UKG, tech-house, minimal, and techno preset workflows.
 2. Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 3. Add a per-control modulation inspector so users can see source, depth, polarity, bypass, and delete actions without scanning the full matrix.
-4. Add FX module presets and clearer per-module preset/reorder affordances.
+4. Expand FX presets into user-saveable module presets, per-module randomize/compare actions, and direct modulation access to FX mix/depth controls.
 5. Expand browser metadata and audition workflow with richer tags, ratings/favorites polish, and macro preview values.
 6. Start larger engine work only after the current subtractive/sampler/SEQ/FX workflow feels strong in real sessions.

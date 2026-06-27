@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### FX Module Presets
+
+- Added a selected-module `Module Preset` menu and `Load` action to the FX detail header.
+- Added focused house/UKG/tech-house presets for all 15 FX modules, including garage delay throws, short rooms, mono-safe width, controlled drive, light movement, resonator, and Guard safety settings.
+- Kept the pass host-safe by writing existing automatable FX parameters instead of adding new parameter IDs.
+
 ### Sample Slice Styles
 
 - Added a saved SAMPLE `Slice Style` selector with Clean, Pitch, Reverse, Stutter, and Garage modes for the numbered slice pads.

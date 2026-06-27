@@ -134,6 +134,7 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox presetTagBox;
     juce::ComboBox fxAddBox;
+    juce::ComboBox fxPresetBox;
     juce::ComboBox fxPumpRateBox;
     juce::ComboBox fxTremoloRateBox;
     juce::ComboBox lfo1ShapeBox;
@@ -452,6 +453,7 @@ private:
     juce::TextButton fxHoldSpaceButton { "Hold Spc" };
     juce::TextButton fxHoldPumpButton { "Hold Pump" };
     juce::TextButton fxMuteDropButton { "Mute Drop" };
+    juce::TextButton fxApplyPresetButton { "Load" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
     UI::FxRackRow fxDistortionSlotButton { "Drive" };
@@ -550,6 +552,9 @@ private:
     void beginMomentaryFxAction(MomentaryFxAction action);
     void endMomentaryFxAction(MomentaryFxAction action);
     void applyMomentaryMuteDrop();
+    void updateFxPresetBox(bool force = false);
+    void applySelectedFxPreset();
+    void applyFxModulePreset(FxModule module, int presetId);
     FxMomentarySnapshot captureFxMomentarySnapshot() const;
     void restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot);
     void setFxRackStatusOverride(const juce::String& message);
@@ -571,6 +576,7 @@ private:
 
     Panel activePanel = Panel::home;
     FxModule selectedFxModule = FxModule::guard;
+    FxModule fxPresetBoxModule = FxModule::guard;
     float displayedPeakLeft = 0.0f;
     float displayedPeakRight = 0.0f;
     float displayedRmsLeft = 0.0f;

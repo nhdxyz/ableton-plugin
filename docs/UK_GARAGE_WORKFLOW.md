@@ -122,13 +122,14 @@ Research references:
 - Added SEQ `Shape` transforms for tightening anchors, swinging ghost notes, pushing late stabs, nudging vocal-trigger timing, and adding light human feel without replacing the notes.
 - Added SAMPLE `Slice Style` modes so numbered pads can apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behavior while auditioning phrase sections.
 - Set `UKG Vocal Chop Starter` to Garage slice style and tightened the SAMPLE panel grouping so vocal-chop source, phrase slicing, and shape controls stay visually separate.
+- Added FX `Module Preset` choices for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, controlled drive, resonator color, and Guard safety.
 
 ## Next UKG Features
 
 Reference-backed next passes:
 
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
-- Add FX module presets for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, and controlled drive.
+- Expand FX presets into user-saveable module presets and direct modulation destinations for FX mix/depth controls.
 - Add a per-control modulation inspector so UKG bass movement and stab macro routing can be understood without opening the full matrix.
 
 1. Vocal chop mode for the sampler.

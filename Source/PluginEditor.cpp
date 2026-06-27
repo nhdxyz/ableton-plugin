@@ -463,6 +463,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxAddBox.setTooltip("Enable a fixed FX module and open its focused editor");
     addAndMakeVisible(fxAddBox);
 
+    fxPresetBox.setTextWhenNothingSelected("Module Preset");
+    fxPresetBox.setTooltip("Load a focused preset for the selected FX module");
+    addAndMakeVisible(fxPresetBox);
+
     fxPumpRateBox.addItem("1/4", 1);
     fxPumpRateBox.addItem("1/8", 2);
     fxPumpRateBox.addItem("1/8T", 3);
@@ -995,6 +999,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         if (selectedId > 0)
             addFxModule(static_cast<FxModule>(selectedId - 1));
     };
+    fxPresetBox.onChange = [this] { applySelectedFxPreset(); };
     fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
@@ -1035,6 +1040,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         else
             endMomentaryFxAction(MomentaryFxAction::mute);
     };
+    fxApplyPresetButton.setTooltip("Reload the selected FX module preset");
+    fxApplyPresetButton.onClick = [this] { applySelectedFxPreset(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -1129,6 +1136,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxHoldSpaceButton);
     addAndMakeVisible(fxHoldPumpButton);
     addAndMakeVisible(fxMuteDropButton);
+    addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -1810,6 +1818,8 @@ void NateVSTAudioProcessorEditor::resized()
             fxHoldPumpButton.setVisible(true);
             fxMuteDropButton.setVisible(true);
             fxRackStatusLabel.setVisible(true);
+            fxPresetBox.setVisible(true);
+            fxApplyPresetButton.setVisible(true);
             fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
             fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
             fxMoveDownButton.setBounds(actionRow.removeFromLeft(58).reduced(4));
@@ -1862,6 +1872,8 @@ void NateVSTAudioProcessorEditor::resized()
             }
 
             auto detailHeader = detailArea.removeFromTop(38);
+            fxApplyPresetButton.setBounds(detailHeader.removeFromRight(68).reduced(3, 4));
+            fxPresetBox.setBounds(detailHeader.removeFromRight(188).reduced(3, 4));
             auto controlsArea = detailArea.withTrimmedTop(16);
 
             switch (selectedFxModule)
@@ -2646,6 +2658,457 @@ void NateVSTAudioProcessorEditor::applyMomentaryMuteDrop()
     setFxRackStatusOverride("Holding mute drop | release to restore");
 }
 
+void NateVSTAudioProcessorEditor::updateFxPresetBox(bool force)
+{
+    if (! force && fxPresetBoxModule == selectedFxModule && fxPresetBox.getNumItems() > 0)
+        return;
+
+    fxPresetBoxModule = selectedFxModule;
+    fxPresetBox.clear(juce::dontSendNotification);
+
+    auto addPreset = [this] (int presetId, const juce::String& name)
+    {
+        fxPresetBox.addItem(name, presetId);
+    };
+
+    switch (selectedFxModule)
+    {
+        case FxModule::tone:
+            addPreset(1, "Garage Low Cut");
+            addPreset(2, "Warm Top");
+            addPreset(3, "Dark Warehouse");
+            break;
+
+        case FxModule::eq:
+            addPreset(1, "Bass Tuck");
+            addPreset(2, "Stab Presence");
+            addPreset(3, "Club Trim");
+            break;
+
+        case FxModule::distortion:
+            addPreset(1, "Controlled Grit");
+            addPreset(2, "Rubber Bass");
+            addPreset(3, "Warehouse Clip");
+            break;
+
+        case FxModule::bitcrush:
+            addPreset(1, "Perc Dirt");
+            addPreset(2, "Dub Edge");
+            addPreset(3, "Digital Tight");
+            break;
+
+        case FxModule::pump:
+            addPreset(1, "House Quarter");
+            addPreset(2, "UKG Bounce");
+            addPreset(3, "Tight Sixteenth");
+            break;
+
+        case FxModule::tremolo:
+            addPreset(1, "Garage Skank");
+            addPreset(2, "Wide Chop");
+            addPreset(3, "Subtle Pulse");
+            break;
+
+        case FxModule::ring:
+            addPreset(1, "Vocal Edge");
+            addPreset(2, "Metal Blip");
+            addPreset(3, "Dark Sidebands");
+            break;
+
+        case FxModule::comb:
+            addPreset(1, "Garage Resonator");
+            addPreset(2, "Perc Notch");
+            addPreset(3, "Pluck Body");
+            break;
+
+        case FxModule::phaser:
+            addPreset(1, "Light Sweep");
+            addPreset(2, "Dub Swirl");
+            addPreset(3, "Tech Pulse");
+            break;
+
+        case FxModule::flanger:
+            addPreset(1, "Short Comb");
+            addPreset(2, "Garage Drift");
+            addPreset(3, "Metal Jet");
+            break;
+
+        case FxModule::chorus:
+            addPreset(1, "Wide Organ");
+            addPreset(2, "Tight Stab");
+            addPreset(3, "Warm Pad");
+            break;
+
+        case FxModule::delay:
+            addPreset(1, "Garage Throw");
+            addPreset(2, "Short Slap");
+            addPreset(3, "Dub Repeat");
+            break;
+
+        case FxModule::reverb:
+            addPreset(1, "Short Room");
+            addPreset(2, "Plate Wash");
+            addPreset(3, "Dark Space");
+            break;
+
+        case FxModule::width:
+            addPreset(1, "Mono-Safe Width");
+            addPreset(2, "Wide Stab");
+            addPreset(3, "Club Narrow");
+            break;
+
+        case FxModule::guard:
+            addPreset(1, "Club Safety");
+            addPreset(2, "Hot Push");
+            addPreset(3, "Clean Ceiling");
+            break;
+    }
+
+    fxPresetBox.setTextWhenNothingSelected("Module Preset");
+    fxPresetBox.setSelectedId(0, juce::dontSendNotification);
+    fxApplyPresetButton.setEnabled(fxPresetBox.getNumItems() > 0);
+}
+
+void NateVSTAudioProcessorEditor::applySelectedFxPreset()
+{
+    const auto presetId = fxPresetBox.getSelectedId();
+    if (presetId <= 0)
+        return;
+
+    applyFxModulePreset(selectedFxModule, presetId);
+}
+
+void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int presetId)
+{
+    const auto presetName = fxPresetBox.getText().isNotEmpty() ? fxPresetBox.getText() : juce::String("FX preset");
+
+    auto set = [this] (const juce::String& parameterID, float value)
+    {
+        setPlainParameterValue(parameterID, value);
+    };
+
+    selectedFxModule = module;
+    set(fxEnabledParameterID(module), 1.0f);
+
+    switch (module)
+    {
+        case FxModule::tone:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxToneTilt, 0.08f);
+                set(Parameters::ID::fxToneLowCut, 92.0f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxToneTilt, 0.22f);
+                set(Parameters::ID::fxToneLowCut, 48.0f);
+            }
+            else
+            {
+                set(Parameters::ID::fxToneTilt, -0.30f);
+                set(Parameters::ID::fxToneLowCut, 70.0f);
+            }
+            break;
+
+        case FxModule::eq:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxEqLowGain, -2.6f);
+                set(Parameters::ID::fxEqMidGain, 0.4f);
+                set(Parameters::ID::fxEqHighGain, 1.2f);
+                set(Parameters::ID::fxEqTrim, -0.8f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxEqLowGain, -1.2f);
+                set(Parameters::ID::fxEqMidGain, 1.8f);
+                set(Parameters::ID::fxEqHighGain, 2.4f);
+                set(Parameters::ID::fxEqTrim, -1.2f);
+            }
+            else
+            {
+                set(Parameters::ID::fxEqLowGain, -0.8f);
+                set(Parameters::ID::fxEqMidGain, -1.0f);
+                set(Parameters::ID::fxEqHighGain, 0.8f);
+                set(Parameters::ID::fxEqTrim, -1.8f);
+            }
+            break;
+
+        case FxModule::distortion:
+            set(Parameters::ID::fxDistortionAmount, presetId == 1 ? 0.22f : (presetId == 2 ? 0.38f : 0.56f));
+            break;
+
+        case FxModule::bitcrush:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxBitcrushBits, 10.0f);
+                set(Parameters::ID::fxBitcrushDownsample, 2.0f);
+                set(Parameters::ID::fxBitcrushMix, 0.18f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxBitcrushBits, 8.0f);
+                set(Parameters::ID::fxBitcrushDownsample, 4.0f);
+                set(Parameters::ID::fxBitcrushMix, 0.24f);
+            }
+            else
+            {
+                set(Parameters::ID::fxBitcrushBits, 12.0f);
+                set(Parameters::ID::fxBitcrushDownsample, 3.0f);
+                set(Parameters::ID::fxBitcrushMix, 0.14f);
+            }
+            break;
+
+        case FxModule::pump:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxPumpRate, 0.0f);
+                set(Parameters::ID::fxPumpDepth, 0.44f);
+                set(Parameters::ID::fxPumpShape, 0.56f);
+                set(Parameters::ID::fxPumpPhase, 0.0f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxPumpRate, 1.0f);
+                set(Parameters::ID::fxPumpDepth, 0.34f);
+                set(Parameters::ID::fxPumpShape, 0.64f);
+                set(Parameters::ID::fxPumpPhase, 0.08f);
+            }
+            else
+            {
+                set(Parameters::ID::fxPumpRate, 3.0f);
+                set(Parameters::ID::fxPumpDepth, 0.26f);
+                set(Parameters::ID::fxPumpShape, 0.48f);
+                set(Parameters::ID::fxPumpPhase, 0.0f);
+            }
+            break;
+
+        case FxModule::tremolo:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxTremoloRate, 2.0f);
+                set(Parameters::ID::fxTremoloDepth, 0.30f);
+                set(Parameters::ID::fxTremoloPan, 0.46f);
+                set(Parameters::ID::fxTremoloShape, 0.64f);
+                set(Parameters::ID::fxTremoloPhase, 0.18f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxTremoloRate, 3.0f);
+                set(Parameters::ID::fxTremoloDepth, 0.44f);
+                set(Parameters::ID::fxTremoloPan, 0.78f);
+                set(Parameters::ID::fxTremoloShape, 0.70f);
+                set(Parameters::ID::fxTremoloPhase, 0.28f);
+            }
+            else
+            {
+                set(Parameters::ID::fxTremoloRate, 1.0f);
+                set(Parameters::ID::fxTremoloDepth, 0.18f);
+                set(Parameters::ID::fxTremoloPan, 0.20f);
+                set(Parameters::ID::fxTremoloShape, 0.42f);
+                set(Parameters::ID::fxTremoloPhase, 0.0f);
+            }
+            break;
+
+        case FxModule::ring:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxRingFrequency, 92.0f);
+                set(Parameters::ID::fxRingDepth, 0.18f);
+                set(Parameters::ID::fxRingMix, 0.08f);
+                set(Parameters::ID::fxRingBias, 0.60f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxRingFrequency, 420.0f);
+                set(Parameters::ID::fxRingDepth, 0.34f);
+                set(Parameters::ID::fxRingMix, 0.14f);
+                set(Parameters::ID::fxRingBias, 0.42f);
+            }
+            else
+            {
+                set(Parameters::ID::fxRingFrequency, 58.0f);
+                set(Parameters::ID::fxRingDepth, 0.26f);
+                set(Parameters::ID::fxRingMix, 0.10f);
+                set(Parameters::ID::fxRingBias, 0.34f);
+            }
+            break;
+
+        case FxModule::comb:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxCombFrequency, 280.0f);
+                set(Parameters::ID::fxCombFeedback, 0.20f);
+                set(Parameters::ID::fxCombDamping, 0.56f);
+                set(Parameters::ID::fxCombMix, 0.08f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxCombFrequency, 620.0f);
+                set(Parameters::ID::fxCombFeedback, -0.24f);
+                set(Parameters::ID::fxCombDamping, 0.42f);
+                set(Parameters::ID::fxCombMix, 0.10f);
+            }
+            else
+            {
+                set(Parameters::ID::fxCombFrequency, 170.0f);
+                set(Parameters::ID::fxCombFeedback, 0.32f);
+                set(Parameters::ID::fxCombDamping, 0.48f);
+                set(Parameters::ID::fxCombMix, 0.12f);
+            }
+            break;
+
+        case FxModule::phaser:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxPhaserRate, 0.32f);
+                set(Parameters::ID::fxPhaserDepth, 0.34f);
+                set(Parameters::ID::fxPhaserMix, 0.16f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxPhaserRate, 0.18f);
+                set(Parameters::ID::fxPhaserDepth, 0.56f);
+                set(Parameters::ID::fxPhaserMix, 0.24f);
+            }
+            else
+            {
+                set(Parameters::ID::fxPhaserRate, 0.78f);
+                set(Parameters::ID::fxPhaserDepth, 0.28f);
+                set(Parameters::ID::fxPhaserMix, 0.14f);
+            }
+            break;
+
+        case FxModule::flanger:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxFlangerRate, 0.16f);
+                set(Parameters::ID::fxFlangerDepth, 0.28f);
+                set(Parameters::ID::fxFlangerFeedback, 0.24f);
+                set(Parameters::ID::fxFlangerMix, 0.10f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxFlangerRate, 0.24f);
+                set(Parameters::ID::fxFlangerDepth, 0.40f);
+                set(Parameters::ID::fxFlangerFeedback, 0.12f);
+                set(Parameters::ID::fxFlangerMix, 0.16f);
+            }
+            else
+            {
+                set(Parameters::ID::fxFlangerRate, 0.46f);
+                set(Parameters::ID::fxFlangerDepth, 0.52f);
+                set(Parameters::ID::fxFlangerFeedback, 0.42f);
+                set(Parameters::ID::fxFlangerMix, 0.18f);
+            }
+            break;
+
+        case FxModule::chorus:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxChorusRate, 0.28f);
+                set(Parameters::ID::fxChorusDepth, 0.42f);
+                set(Parameters::ID::fxChorusMix, 0.24f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxChorusRate, 0.42f);
+                set(Parameters::ID::fxChorusDepth, 0.24f);
+                set(Parameters::ID::fxChorusMix, 0.14f);
+            }
+            else
+            {
+                set(Parameters::ID::fxChorusRate, 0.18f);
+                set(Parameters::ID::fxChorusDepth, 0.54f);
+                set(Parameters::ID::fxChorusMix, 0.28f);
+            }
+            break;
+
+        case FxModule::delay:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxDelayTime, 0.31f);
+                set(Parameters::ID::fxDelayFeedback, 0.54f);
+                set(Parameters::ID::fxDelayMix, 0.34f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxDelayTime, 0.11f);
+                set(Parameters::ID::fxDelayFeedback, 0.20f);
+                set(Parameters::ID::fxDelayMix, 0.16f);
+            }
+            else
+            {
+                set(Parameters::ID::fxDelayTime, 0.42f);
+                set(Parameters::ID::fxDelayFeedback, 0.62f);
+                set(Parameters::ID::fxDelayMix, 0.28f);
+            }
+            break;
+
+        case FxModule::reverb:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxReverbSize, 0.24f);
+                set(Parameters::ID::fxReverbDamping, 0.62f);
+                set(Parameters::ID::fxReverbMix, 0.12f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxReverbSize, 0.54f);
+                set(Parameters::ID::fxReverbDamping, 0.42f);
+                set(Parameters::ID::fxReverbMix, 0.24f);
+            }
+            else
+            {
+                set(Parameters::ID::fxReverbSize, 0.74f);
+                set(Parameters::ID::fxReverbDamping, 0.28f);
+                set(Parameters::ID::fxReverbMix, 0.30f);
+            }
+            break;
+
+        case FxModule::width:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxWidthAmount, 1.12f);
+                set(Parameters::ID::fxWidthMonoCutoff, 145.0f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxWidthAmount, 1.42f);
+                set(Parameters::ID::fxWidthMonoCutoff, 135.0f);
+            }
+            else
+            {
+                set(Parameters::ID::fxWidthAmount, 0.92f);
+                set(Parameters::ID::fxWidthMonoCutoff, 175.0f);
+            }
+            break;
+
+        case FxModule::guard:
+            if (presetId == 1)
+            {
+                set(Parameters::ID::fxGuardPush, 0.06f);
+                set(Parameters::ID::fxGuardCeiling, 0.90f);
+            }
+            else if (presetId == 2)
+            {
+                set(Parameters::ID::fxGuardPush, 0.16f);
+                set(Parameters::ID::fxGuardCeiling, 0.88f);
+            }
+            else
+            {
+                set(Parameters::ID::fxGuardPush, 0.02f);
+                set(Parameters::ID::fxGuardCeiling, 0.94f);
+            }
+            break;
+    }
+
+    updateFxRackControls();
+    resized();
+    repaint();
+    setFxRackStatusOverride(presetName + " loaded | " + fxModuleName(module));
+}
+
 NateVSTAudioProcessorEditor::FxMomentarySnapshot NateVSTAudioProcessorEditor::captureFxMomentarySnapshot() const
 {
     FxMomentarySnapshot snapshot;
@@ -2710,6 +3173,7 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
     }
     const auto selectedPosition = fxOrderPosition(selectedFxModule);
     const auto canMoveSelected = selectedFxModule != FxModule::guard;
+    updateFxPresetBox();
     fxMoveUpButton.setEnabled(canMoveSelected && selectedPosition > 1);
     fxMoveDownButton.setEnabled(canMoveSelected && selectedPosition > 0 && selectedPosition < static_cast<int>(moduleOrder.size()) - 1);
     fxRemoveButton.setEnabled(selectedFxModule != FxModule::guard);
@@ -2992,7 +3456,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
+        &presetFilterBox, &presetTagBox, &fxAddBox, &fxPresetBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -3015,6 +3479,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
+        &fxApplyPresetButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,

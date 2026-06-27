@@ -107,6 +107,11 @@
   <PARAM id="fx_tone_enabled" value="1" />
   <PARAM id="fx_tone_tilt" value="0" />
   <PARAM id="fx_tone_low_cut" value="34" />
+  <PARAM id="fx_eq_enabled" value="1" />
+  <PARAM id="fx_eq_low_gain" value="1.2" />
+  <PARAM id="fx_eq_mid_gain" value="-1.4" />
+  <PARAM id="fx_eq_high_gain" value="-0.4" />
+  <PARAM id="fx_eq_trim" value="-0.7" />
   <PARAM id="fx_phaser_enabled" value="0" />
   <PARAM id="fx_phaser_rate" value="0.32" />
   <PARAM id="fx_phaser_depth" value="0.42" />

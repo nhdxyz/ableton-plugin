@@ -58,6 +58,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxToneEnabled = parameters.getRawParameterValue(Parameters::ID::fxToneEnabled);
     fxToneTilt = parameters.getRawParameterValue(Parameters::ID::fxToneTilt);
     fxToneLowCut = parameters.getRawParameterValue(Parameters::ID::fxToneLowCut);
+    fxEqEnabled = parameters.getRawParameterValue(Parameters::ID::fxEqEnabled);
+    fxEqLowGain = parameters.getRawParameterValue(Parameters::ID::fxEqLowGain);
+    fxEqMidGain = parameters.getRawParameterValue(Parameters::ID::fxEqMidGain);
+    fxEqHighGain = parameters.getRawParameterValue(Parameters::ID::fxEqHighGain);
+    fxEqTrim = parameters.getRawParameterValue(Parameters::ID::fxEqTrim);
     fxPhaserEnabled = parameters.getRawParameterValue(Parameters::ID::fxPhaserEnabled);
     fxPhaserRate = parameters.getRawParameterValue(Parameters::ID::fxPhaserRate);
     fxPhaserDepth = parameters.getRawParameterValue(Parameters::ID::fxPhaserDepth);
@@ -92,6 +97,8 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
     toneLowCutState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    eqLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    eqHighState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
     widthLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
@@ -107,6 +114,8 @@ void EffectsRack::reset()
     delayBuffer.clear();
     std::fill(toneLowCutState.begin(), toneLowCutState.end(), 0.0f);
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
+    std::fill(eqLowState.begin(), eqLowState.end(), 0.0f);
+    std::fill(eqHighState.begin(), eqHighState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
     std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
@@ -118,6 +127,7 @@ void EffectsRack::reset()
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
 {
     processTone(buffer);
+    processEq(buffer);
     processDistortion(buffer);
     processBitcrush(buffer);
     processPump(buffer, bpm, ppqPosition);
@@ -160,6 +170,40 @@ void EffectsRack::processTone(juce::AudioBuffer<float>& buffer)
             const auto low = tiltState;
             const auto high = highPassed - low;
             samples[sampleIndex] = ((low * lowGain) + (high * highGain)) * compensation;
+        }
+    }
+}
+
+void EffectsRack::processEq(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxEqEnabled, 0.0f) < 0.5f || eqLowState.empty() || eqHighState.empty())
+        return;
+
+    const auto lowGain = juce::Decibels::decibelsToGain(readParameter(fxEqLowGain, 0.0f));
+    const auto midGain = juce::Decibels::decibelsToGain(readParameter(fxEqMidGain, 0.0f));
+    const auto highGain = juce::Decibels::decibelsToGain(readParameter(fxEqHighGain, 0.0f));
+    const auto trimGain = juce::Decibels::decibelsToGain(readParameter(fxEqTrim, 0.0f));
+    const auto compensation = 1.0f / juce::jmax(1.0f, (lowGain + midGain + highGain) / 3.0f);
+    const auto lowAlpha = onePoleAlpha(180.0f, currentSampleRate);
+    const auto highAlpha = onePoleAlpha(3600.0f, currentSampleRate);
+    const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(eqLowState.size()));
+
+    for (auto channel = 0; channel < channels; ++channel)
+    {
+        auto* samples = buffer.getWritePointer(channel);
+        auto& lowState = eqLowState[static_cast<size_t>(channel)];
+        auto& highState = eqHighState[static_cast<size_t>(channel)];
+
+        for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+        {
+            const auto input = samples[sampleIndex];
+            lowState += lowAlpha * (input - lowState);
+            highState += highAlpha * (input - highState);
+
+            const auto low = lowState;
+            const auto high = input - highState;
+            const auto mid = input - low - high;
+            samples[sampleIndex] = ((low * lowGain) + (mid * midGain) + (high * highGain)) * trimGain * compensation;
         }
     }
 }

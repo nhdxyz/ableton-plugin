@@ -259,3 +259,11 @@
 - Tuned the recipe for mono-safe sub, restrained Reese detune, slower filter-opening modulation, short glide, Pump, Width, subtle movement FX, and Guard safety.
 - Added a matching repo-managed factory preset and regenerated the UKG preset pack.
 - Updated UK garage workflow docs and factory preset notes.
+
+### Three-Band EQ FX
+
+- Added a bypassable EQ module to the focused FX rack.
+- Added stable EQ parameters for low gain, mid gain, high gain, and trim.
+- Processed EQ after Tone and before Drive/Crush so patches can be shaped before saturation.
+- Added EQ to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
+- Regenerated the UKG factory preset pack with practical EQ curves for basses, stabs, plucks, and vocal chop starters.

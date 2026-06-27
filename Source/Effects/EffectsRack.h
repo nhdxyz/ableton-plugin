@@ -28,6 +28,8 @@ private:
     juce::AudioBuffer<float> delayBuffer;
     std::vector<float> toneLowCutState;
     std::vector<float> toneTiltState;
+    std::vector<float> eqLowState;
+    std::vector<float> eqHighState;
     std::vector<float> bitcrushHeldSample;
     std::vector<int> bitcrushHoldCounter;
     std::vector<float> widthLowState;
@@ -67,6 +69,11 @@ private:
     std::atomic<float>* fxToneEnabled = nullptr;
     std::atomic<float>* fxToneTilt = nullptr;
     std::atomic<float>* fxToneLowCut = nullptr;
+    std::atomic<float>* fxEqEnabled = nullptr;
+    std::atomic<float>* fxEqLowGain = nullptr;
+    std::atomic<float>* fxEqMidGain = nullptr;
+    std::atomic<float>* fxEqHighGain = nullptr;
+    std::atomic<float>* fxEqTrim = nullptr;
     std::atomic<float>* fxPhaserEnabled = nullptr;
     std::atomic<float>* fxPhaserRate = nullptr;
     std::atomic<float>* fxPhaserDepth = nullptr;
@@ -83,6 +90,7 @@ private:
     std::atomic<float>* macroSpace = nullptr;
 
     void processTone(juce::AudioBuffer<float>& buffer);
+    void processEq(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);
     void processBitcrush(juce::AudioBuffer<float>& buffer);
     void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);

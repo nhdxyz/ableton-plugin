@@ -108,6 +108,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxToneEnabled = false;
     auto fxToneTilt = 0.0f;
     auto fxToneLowCut = 30.0f;
+    auto fxEqEnabled = false;
+    auto fxEqLowGain = 0.0f;
+    auto fxEqMidGain = 0.0f;
+    auto fxEqHighGain = 0.0f;
+    auto fxEqTrim = 0.0f;
     auto fxBitcrushEnabled = false;
     auto fxBitcrushBits = 12.0f;
     auto fxBitcrushDownsample = 1.0f;
@@ -651,20 +656,28 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
 
     switch (recipe)
     {
-        case Recipe::minimalBlip:
-        case Recipe::noiseFx:
-            fxFlangerEnabled = true;
-            fxFlangerRate = randomFloat(0.08f, 1.2f);
-            fxFlangerDepth = randomFloat(0.35f, 0.78f);
-            fxFlangerFeedback = randomFloat(-0.32f, 0.5f);
-            fxFlangerMix = randomFloat(0.08f, 0.32f);
+        case Recipe::deepHouseBass:
+        case Recipe::rollingTechBass:
+        case Recipe::ukgTwoStepBass:
+        case Recipe::ukgDredBass:
+            fxEqEnabled = true;
+            fxEqLowGain = randomFloat(0.4f, 1.8f);
+            fxEqMidGain = randomFloat(-2.4f, -0.4f);
+            fxEqHighGain = randomFloat(-1.4f, 0.8f);
+            fxEqTrim = randomFloat(-1.2f, -0.2f);
+            fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.12f + (chaos * 0.08f);
+            fxFlangerRate = randomFloat(0.05f, 0.32f);
+            fxFlangerDepth = randomFloat(0.12f, 0.34f);
+            fxFlangerFeedback = randomFloat(0.02f, 0.16f);
+            fxFlangerMix = randomFloat(0.02f, 0.09f);
             break;
 
         case Recipe::acidLine:
-        case Recipe::darkStab:
-        case Recipe::ukgOrganStab:
-        case Recipe::ukgChordStab:
-        case Recipe::ukgBellPluck:
+            fxEqEnabled = randomFloat(0.0f, 1.0f) < 0.65f + (chaos * 0.15f);
+            fxEqLowGain = randomFloat(-1.2f, 0.8f);
+            fxEqMidGain = randomFloat(-0.8f, 1.4f);
+            fxEqHighGain = randomFloat(0.0f, 2.2f);
+            fxEqTrim = randomFloat(-1.4f, -0.2f);
             fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.2f + (chaos * 0.12f);
             fxFlangerRate = randomFloat(0.05f, 0.48f);
             fxFlangerDepth = randomFloat(0.16f, 0.52f);
@@ -672,15 +685,34 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxFlangerMix = randomFloat(0.03f, 0.16f);
             break;
 
-        case Recipe::deepHouseBass:
-        case Recipe::rollingTechBass:
-        case Recipe::ukgTwoStepBass:
-        case Recipe::ukgDredBass:
-            fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.12f + (chaos * 0.08f);
-            fxFlangerRate = randomFloat(0.05f, 0.32f);
-            fxFlangerDepth = randomFloat(0.12f, 0.34f);
-            fxFlangerFeedback = randomFloat(0.02f, 0.16f);
-            fxFlangerMix = randomFloat(0.02f, 0.09f);
+        case Recipe::minimalBlip:
+        case Recipe::noiseFx:
+            fxEqEnabled = true;
+            fxEqLowGain = randomFloat(-3.8f, 0.4f);
+            fxEqMidGain = randomFloat(-1.2f, 1.8f);
+            fxEqHighGain = randomFloat(-0.6f, 2.8f);
+            fxEqTrim = randomFloat(-2.0f, -0.4f);
+            fxFlangerEnabled = true;
+            fxFlangerRate = randomFloat(0.08f, 1.2f);
+            fxFlangerDepth = randomFloat(0.35f, 0.78f);
+            fxFlangerFeedback = randomFloat(-0.32f, 0.5f);
+            fxFlangerMix = randomFloat(0.08f, 0.32f);
+            break;
+
+        case Recipe::darkStab:
+        case Recipe::ukgOrganStab:
+        case Recipe::ukgChordStab:
+        case Recipe::ukgBellPluck:
+            fxEqEnabled = true;
+            fxEqLowGain = randomFloat(-4.5f, -1.0f);
+            fxEqMidGain = randomFloat(-1.0f, 1.2f);
+            fxEqHighGain = randomFloat(0.0f, 2.4f);
+            fxEqTrim = randomFloat(-1.5f, -0.2f);
+            fxFlangerEnabled = randomFloat(0.0f, 1.0f) < 0.2f + (chaos * 0.12f);
+            fxFlangerRate = randomFloat(0.05f, 0.48f);
+            fxFlangerDepth = randomFloat(0.16f, 0.52f);
+            fxFlangerFeedback = randomFloat(0.02f, 0.26f);
+            fxFlangerMix = randomFloat(0.03f, 0.16f);
             break;
     }
 
@@ -723,6 +755,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroSpace = blend(Parameters::ID::macroSpace, macroSpace);
         fxToneTilt = blend(Parameters::ID::fxToneTilt, fxToneTilt);
         fxToneLowCut = blend(Parameters::ID::fxToneLowCut, fxToneLowCut);
+        fxEqLowGain = blend(Parameters::ID::fxEqLowGain, fxEqLowGain);
+        fxEqMidGain = blend(Parameters::ID::fxEqMidGain, fxEqMidGain);
+        fxEqHighGain = blend(Parameters::ID::fxEqHighGain, fxEqHighGain);
+        fxEqTrim = blend(Parameters::ID::fxEqTrim, fxEqTrim);
         fxBitcrushBits = blend(Parameters::ID::fxBitcrushBits, fxBitcrushBits);
         fxBitcrushDownsample = blend(Parameters::ID::fxBitcrushDownsample, fxBitcrushDownsample);
         fxBitcrushMix = blend(Parameters::ID::fxBitcrushMix, fxBitcrushMix);
@@ -799,6 +835,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxToneEnabled, fxToneEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxToneTilt, fxToneTilt);
     setParameter(Parameters::ID::fxToneLowCut, fxToneLowCut);
+    setParameter(Parameters::ID::fxEqEnabled, fxEqEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxEqLowGain, fxEqLowGain);
+    setParameter(Parameters::ID::fxEqMidGain, fxEqMidGain);
+    setParameter(Parameters::ID::fxEqHighGain, fxEqHighGain);
+    setParameter(Parameters::ID::fxEqTrim, fxEqTrim);
     setParameter(Parameters::ID::fxBitcrushEnabled, fxBitcrushEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxBitcrushBits, fxBitcrushBits);
     setParameter(Parameters::ID::fxBitcrushDownsample, fxBitcrushDownsample);

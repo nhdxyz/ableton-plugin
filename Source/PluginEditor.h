@@ -39,6 +39,7 @@ private:
     enum class FxModule
     {
         tone = 0,
+        eq,
         distortion,
         bitcrush,
         pump,
@@ -111,6 +112,7 @@ private:
     juce::ToggleButton fxReverbEnabledButton;
     juce::ToggleButton fxWidthEnabledButton;
     juce::ToggleButton fxToneEnabledButton;
+    juce::ToggleButton fxEqEnabledButton;
     juce::ToggleButton fxPhaserEnabledButton;
     juce::ToggleButton fxFlangerEnabledButton;
     juce::ToggleButton fxGuardEnabledButton;
@@ -199,6 +201,10 @@ private:
     juce::Slider fxWidthMonoCutoffSlider;
     juce::Slider fxToneTiltSlider;
     juce::Slider fxToneLowCutSlider;
+    juce::Slider fxEqLowGainSlider;
+    juce::Slider fxEqMidGainSlider;
+    juce::Slider fxEqHighGainSlider;
+    juce::Slider fxEqTrimSlider;
     juce::Slider fxPhaserRateSlider;
     juce::Slider fxPhaserDepthSlider;
     juce::Slider fxPhaserMixSlider;
@@ -283,6 +289,10 @@ private:
     juce::Label fxWidthMonoCutoffLabel;
     juce::Label fxToneTiltLabel;
     juce::Label fxToneLowCutLabel;
+    juce::Label fxEqLowGainLabel;
+    juce::Label fxEqMidGainLabel;
+    juce::Label fxEqHighGainLabel;
+    juce::Label fxEqTrimLabel;
     juce::Label fxPhaserRateLabel;
     juce::Label fxPhaserDepthLabel;
     juce::Label fxPhaserMixLabel;
@@ -338,6 +348,7 @@ private:
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton fxRemoveButton { "Remove" };
     juce::TextButton fxToneSlotButton { "Tone" };
+    juce::TextButton fxEqSlotButton { "EQ" };
     juce::TextButton fxDistortionSlotButton { "Drive" };
     juce::TextButton fxBitcrushSlotButton { "Crush" };
     juce::TextButton fxPumpSlotButton { "Pump" };

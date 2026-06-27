@@ -212,7 +212,7 @@ Implemented as the Width module. Useful for club translation. Keep low frequenci
 
 5. Three-Band EQ
 
-Useful for fast mix cleanup without opening another plugin. Start with simple low, mid, high gains rather than a complex parametric EQ.
+Implemented as the EQ module. It gives fast low, mid, high, and trim controls for bass cleanup, UKG stab/vocal chop shaping, and quick patch balancing without opening another plugin.
 
 ### Medium Priority
 
@@ -365,7 +365,7 @@ Add in this order:
 2. Flanger. Implemented as the Flanger module.
 3. Pump/Duck. Implemented as the Pump module.
 4. Stereo Width/Mono Bass. Implemented as the Width module.
-5. Three-Band EQ.
+5. Three-Band EQ. Implemented as the EQ module.
 
 Each effect should include:
 

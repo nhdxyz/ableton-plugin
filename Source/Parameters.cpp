@@ -816,6 +816,39 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.18f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxEqEnabled,
+        "FX EQ Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxEqLowGain,
+        "FX EQ Low Gain",
+        juce::NormalisableRange<float> { -12.0f, 12.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("dB")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxEqMidGain,
+        "FX EQ Mid Gain",
+        juce::NormalisableRange<float> { -12.0f, 12.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("dB")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxEqHighGain,
+        "FX EQ High Gain",
+        juce::NormalisableRange<float> { -12.0f, 12.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("dB")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxEqTrim,
+        "FX EQ Trim",
+        juce::NormalisableRange<float> { -12.0f, 6.0f, 0.01f },
+        0.0f,
+        juce::AudioParameterFloatAttributes().withLabel("dB")));
+
     return { params.begin(), params.end() };
 }
 }

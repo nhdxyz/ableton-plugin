@@ -41,6 +41,7 @@ Research references:
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 - Dred/reverse-filter bass should use a centered sub, a restrained Reese layer, a slower modulation envelope opening the filter, and short glide so it feels like a garage bass phrase without making the amp envelope sluggish.
 - Filter Character now gives UKG basses and stabs a first tone layer: Warm for rounded sub/stab weight, Acid for rubbery moving basslines, and Dirty for darker Dred or warehouse-style pressure.
+- Filter Slope now gives bass patches a tighter 24 dB option while keeping 12 dB available for softer garage movement and less rigid chord filtering.
 
 ### Stabs, Keys, And Leads
 
@@ -48,6 +49,7 @@ Research references:
 - These need short envelopes, cleaner transients than techno stabs, optional chorus/width, and a quick low-cut/tone path.
 - A future organ/stab source should start as recipes and presets before adding a dedicated drawbar-style oscillator mode.
 - Current recipes and factory presets now seed Filter Character so organ/chord patches open warmer while bell/pluck patches can stay cleaner.
+- Current stab and bell presets mostly stay on 12 dB slope so the transient and chord color remain open before delay, reverb, width, and pump processing.
 
 ### Vocal And Sample Behavior
 
@@ -146,7 +148,7 @@ Reference-backed next passes:
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector into per-route bypass/delete editing.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
-- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator and first filter-character passes are in place.
+- Add a broader source-character pass for organ/drawbar color, M1-style attack tones, Reese movement, and wavetable/warp movement now that the basic oscillator, first filter-character, and first filter-slope passes are in place.
 
 1. Vocal chop mode for the sampler.
 

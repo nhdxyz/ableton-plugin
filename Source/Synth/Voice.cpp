@@ -40,6 +40,7 @@ Voice::Voice(Parameters::APVTS& state)
     filterEnvAmount = parameters.getRawParameterValue(Parameters::ID::filterEnvAmount);
     filterMode = parameters.getRawParameterValue(Parameters::ID::filterMode);
     filterCharacter = parameters.getRawParameterValue(Parameters::ID::filterCharacter);
+    filterSlope = parameters.getRawParameterValue(Parameters::ID::filterSlope);
     driveAmount = parameters.getRawParameterValue(Parameters::ID::driveAmount);
     monoMode = parameters.getRawParameterValue(Parameters::ID::monoMode);
     glideTime = parameters.getRawParameterValue(Parameters::ID::glideTime);
@@ -326,6 +327,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto mode = static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex));
     const auto filterCharacterIndex = static_cast<int>(readParameter(filterCharacter, 0.0f));
     const auto character = static_cast<Filter::Character>(juce::jlimit(0, 3, filterCharacterIndex));
+    const auto filterSlopeIndex = static_cast<int>(readParameter(filterSlope, 0.0f));
+    const auto slope = static_cast<Filter::Slope>(juce::jlimit(0, 1, filterSlopeIndex));
     auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
     const auto baseDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + currentDriveOffset);
 
@@ -355,6 +358,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
     rightFilter.setMode(mode);
     leftFilter.setCharacter(character, baseDrive);
     rightFilter.setCharacter(character, baseDrive);
+    leftFilter.setSlope(slope);
+    rightFilter.setSlope(slope);
     leftFilter.setCutoffAndResonance(cutoff, macroResonance);
     rightFilter.setCutoffAndResonance(cutoff, macroResonance);
 }

@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Filter Slope Pass
+
+- Added an automatable Filter Slope selector with 12 dB and 24 dB options so house/UKG patches can choose open movement or tighter club filtering.
+- Implemented 24 dB filtering as a second TPT filter stage with restrained resonance, preserving the old single-stage 12 dB behavior as the default for existing presets.
+- Added the slope selector to the SYNTH page, made old presets migrate to 12 dB, and included slope in filter-scoped randomization locks.
+- Seeded recipe randomization and factory presets with 24 dB for bass, acid, dred, and warehouse tones while keeping cleaner stabs, bells, and plucks mostly at 12 dB.
+
 ### Filter Character Pass
 
 - Added an automatable Filter Character selector with Clean, Warm, Acid, and Dirty modes for faster house bass, tech-house rubber, techno stab, and UKG organ/chord coloration.

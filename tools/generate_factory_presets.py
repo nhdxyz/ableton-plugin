@@ -28,6 +28,7 @@ DEFAULTS = {
     "filter_env_amount": 0.15,
     "filter_mode": 0,
     "filter_character": 0,
+    "filter_slope": 0,
     "drive_amount": 0.18,
     "output_gain": -8.0,
     "mono_mode": 0,
@@ -207,6 +208,26 @@ FILTER_CHARACTER_BY_PRESET = {
     "Minimal Sub Pulse": 1,
     "Techno Pulse Bass": 2,
     "Techno Warehouse Stab": 3,
+}
+
+
+FILTER_SLOPE_BY_PRESET = {
+    "UKG 2-Step Bass": 1,
+    "UKG Shuffle Bass": 1,
+    "UKG Dred Bass": 1,
+    "UKG Organ Stab": 0,
+    "UKG Chord Stab": 0,
+    "UKG Bell Pluck": 0,
+    "UKG Vocal Chop Starter": 0,
+    "UKG Late Stab": 0,
+    "House Chord Memory": 0,
+    "Deep House Sub Chug": 1,
+    "Tech House Rubber Bass": 1,
+    "Tech House Perc Pluck": 0,
+    "Minimal Click Pluck": 0,
+    "Minimal Sub Pulse": 1,
+    "Techno Pulse Bass": 1,
+    "Techno Warehouse Stab": 1,
 }
 
 
@@ -1621,6 +1642,8 @@ def write_preset(preset):
     params = DEFAULTS | preset["params"]
     if "filter_character" not in preset["params"]:
         params["filter_character"] = FILTER_CHARACTER_BY_PRESET.get(preset["name"], 0)
+    if "filter_slope" not in preset["params"]:
+        params["filter_slope"] = FILTER_SLOPE_BY_PRESET.get(preset["name"], 0)
     if params.get("fx_pump_enabled", 0) and "fx_pump_curve" not in preset["params"]:
         category = preset.get("category", "UKG")
         params["fx_pump_curve"] = {

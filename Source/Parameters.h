@@ -29,6 +29,7 @@ inline constexpr auto filterResonance = "filter_resonance";
 inline constexpr auto filterEnvAmount = "filter_env_amount";
 inline constexpr auto filterMode = "filter_mode";
 inline constexpr auto filterCharacter = "filter_character";
+inline constexpr auto filterSlope = "filter_slope";
 inline constexpr auto driveAmount = "drive_amount";
 inline constexpr auto outputGain = "output_gain";
 inline constexpr auto monoMode = "mono_mode";
@@ -236,6 +237,7 @@ inline constexpr std::array<const char*, 15> fxOrder {
 juce::StringArray waveformChoices();
 juce::StringArray filterModeChoices();
 juce::StringArray filterCharacterChoices();
+juce::StringArray filterSlopeChoices();
 juce::StringArray randomRecipeChoices();
 juce::StringArray sequencerRateChoices();
 juce::StringArray sequencerGrooveModeChoices();

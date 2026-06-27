@@ -98,6 +98,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto osc2Wave = 1;
     auto filterMode = 0;
     auto filterCharacter = 0;
+    auto filterSlope = 0;
     auto octave = 0;
     auto osc2Octave = 0;
     auto tune = 0.0f;
@@ -190,6 +191,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.08f, 0.28f);
             drive = randomFloat(0.05f, 0.32f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.72f ? 1 : 0;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.62f ? 1 : 0;
             glide = randomFloat(0.0f, 0.08f);
             unisonVoiceCount = 1;
             fxToneEnabled = true;
@@ -225,6 +227,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.035f, 0.2f);
             drive = randomFloat(0.18f, 0.55f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.62f ? 2 : 3;
+            filterSlope = 1;
             glide = randomFloat(0.0f, 0.12f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.0f, 0.06f);
@@ -267,6 +270,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.03f, 0.16f);
             drive = randomFloat(0.28f, 0.72f);
             filterCharacter = 2;
+            filterSlope = 1;
             glide = randomFloat(0.03f, 0.22f);
             unisonVoiceCount = 1;
             fxToneEnabled = true;
@@ -307,6 +311,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.01f, 0.12f);
             drive = randomFloat(0.02f, 0.38f);
             filterCharacter = randomInt(0, 3);
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.38f ? 1 : 0;
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.12f);
             unisonBlend = randomFloat(0.3f, 0.65f);
@@ -354,6 +359,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.12f, 0.8f);
             drive = randomFloat(0.15f, 0.62f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.58f ? 3 : 1;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.7f ? 1 : 0;
             unisonVoiceCount = randomInt(2, 5);
             unisonDetune = randomFloat(0.04f, 0.18f);
             unisonBlend = randomFloat(0.45f, 0.85f);
@@ -400,6 +406,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.03f, 2.0f);
             drive = randomFloat(0.1f, 0.9f);
             filterCharacter = 3;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.68f ? 1 : 0;
             unisonVoiceCount = randomInt(1, 7);
             unisonDetune = randomFloat(0.05f, 0.4f);
             unisonBlend = randomFloat(0.35f, 1.0f);
@@ -449,6 +456,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.035f, 0.18f);
             drive = randomFloat(0.08f, 0.38f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.74f ? 1 : 2;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.74f ? 1 : 0;
             glide = randomFloat(0.025f, 0.11f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.0f, 0.055f);
@@ -503,6 +511,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.06f, 0.22f);
             drive = randomFloat(0.16f, 0.44f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.55f ? 3 : 1;
+            filterSlope = 1;
             glide = randomFloat(0.035f, 0.13f);
             unisonVoiceCount = randomInt(1, 2);
             unisonDetune = randomFloat(0.02f, 0.08f);
@@ -557,6 +566,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.045f, 0.2f);
             drive = randomFloat(0.04f, 0.22f);
             filterCharacter = 1;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.36f ? 1 : 0;
             glide = 0.0f;
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.08f);
@@ -607,6 +617,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.05f, 0.24f);
             drive = randomFloat(0.08f, 0.32f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.78f ? 1 : 2;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.46f ? 1 : 0;
             glide = 0.0f;
             unisonVoiceCount = randomInt(2, 5);
             unisonDetune = randomFloat(0.04f, 0.16f);
@@ -661,6 +672,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             release = randomFloat(0.1f, 0.42f);
             drive = randomFloat(0.02f, 0.18f);
             filterCharacter = randomFloat(0.0f, 1.0f) < 0.68f ? 0 : 1;
+            filterSlope = randomFloat(0.0f, 1.0f) < 0.24f ? 1 : 0;
             glide = 0.0f;
             unisonVoiceCount = randomInt(1, 3);
             unisonDetune = randomFloat(0.0f, 0.08f);
@@ -970,6 +982,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         const auto characterChangeChance = juce::jlimit(0.05f, 0.42f, amount + (chaos * 0.12f));
         if (randomFloat(0.0f, 1.0f) > characterChangeChance)
             filterCharacter = readChoice(Parameters::ID::filterCharacter);
+
+        const auto slopeChangeChance = juce::jlimit(0.04f, 0.32f, (amount * 0.75f) + (chaos * 0.08f));
+        if (randomFloat(0.0f, 1.0f) > slopeChangeChance)
+            filterSlope = readChoice(Parameters::ID::filterSlope);
     }
 
     if (recipe == Recipe::ukgTwoStepBass || recipe == Recipe::ukgDredBass)
@@ -1006,6 +1022,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setChoice(Parameters::ID::osc2Wave, osc2Wave);
     setChoice(Parameters::ID::filterMode, filterMode);
     setChoice(Parameters::ID::filterCharacter, filterCharacter);
+    setChoice(Parameters::ID::filterSlope, filterSlope);
     setParameter(Parameters::ID::oscOctave, static_cast<float>(octave));
     setParameter(Parameters::ID::oscTune, tune);
     setParameter(Parameters::ID::osc1Level, osc1Level);

@@ -19,6 +19,7 @@
   <PARAM id="filter_env_amount" value="0.4" />
   <PARAM id="filter_mode" value="0" />
   <PARAM id="filter_character" value="1" />
+  <PARAM id="filter_slope" value="1" />
   <PARAM id="drive_amount" value="0.26" />
   <PARAM id="output_gain" value="-10" />
   <PARAM id="mono_mode" value="1" />

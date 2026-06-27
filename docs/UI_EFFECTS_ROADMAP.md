@@ -447,6 +447,7 @@ Build the next larger slices in this order:
    First inspector pass implemented as a MOD destination inspector with focused route summaries, summed depth, drag-to-focus for existing destinations, direct source-to-destination route creation, and a destination clear action.
    First Pump curve-edit pass implemented as an FX-panel custom curve editor with eight saved points, matching DSP interpolation, Bounce-aware preview, and recipe randomization seeds.
    First FX-destination pass implemented as MOD matrix targets for Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive, with LFO/macro DSP support and modulation-ring feedback on the matching FX controls.
+   First sample-destination pass implemented as MOD matrix targets for Sample Start, Mix, Pitch, Ramp, and Stutter, with UKG Chop seeding empty slots for start and pitch/ramp motion.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
@@ -466,6 +467,7 @@ Build the next larger slices in this order:
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.
    First click-safety pass implemented as internal zero-cross/low-energy boundary snapping plus adaptive fade-in/fade-out guards for chop playback and stutter restarts.
    First slice-style pass implemented as a saved SAMPLE `Slice Style` selector that lets pads apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behaviors.
+   First modulation pass implemented as global LFO/macro destinations for Sample Start, Mix, Pitch, Ramp, and Stutter.
    `UKG Vocal Chop Starter` now opens with Garage slice style selected in the factory pack.
 4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.

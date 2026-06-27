@@ -26,6 +26,17 @@ double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRat
     }
 }
 
+double lfoCyclesPerBeat(int rateIndex)
+{
+    switch (rateIndex)
+    {
+        case 1: return 2.0; // 1/8
+        case 2: return 3.0; // 1/8 triplet
+        case 3: return 4.0; // 1/16
+        default: return 1.0; // 1/4
+    }
+}
+
 int boundaryFadeSamplesForSpan(int sourceSpan)
 {
     return juce::jlimit(8, chopFadeSamples, juce::jmax(1, sourceSpan / 4));
@@ -143,6 +154,29 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleStutterEnabled = parameters.getRawParameterValue(Parameters::ID::sampleStutterEnabled);
     sampleStutterRate = parameters.getRawParameterValue(Parameters::ID::sampleStutterRate);
     sampleStutterRepeats = parameters.getRawParameterValue(Parameters::ID::sampleStutterRepeats);
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
+        modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
+        modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
+    }
+    for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
+        lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
+
+    macroTone = parameters.getRawParameterValue(Parameters::ID::macroTone);
+    macroDirt = parameters.getRawParameterValue(Parameters::ID::macroDirt);
+    macroMotion = parameters.getRawParameterValue(Parameters::ID::macroMotion);
+    macroSpace = parameters.getRawParameterValue(Parameters::ID::macroSpace);
+    macroWeight = parameters.getRawParameterValue(Parameters::ID::macroWeight);
+    macroBounce = parameters.getRawParameterValue(Parameters::ID::macroBounce);
+    macroWarp = parameters.getRawParameterValue(Parameters::ID::macroWarp);
+    macroThrow = parameters.getRawParameterValue(Parameters::ID::macroThrow);
+    lfo1Rate = parameters.getRawParameterValue(Parameters::ID::lfo1Rate);
+    lfo1Sync = parameters.getRawParameterValue(Parameters::ID::lfo1Sync);
+    lfo1SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo1SyncRate);
+    lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
+    lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
+    lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
 }
 
 void SamplePlayer::prepare(double sampleRate)
@@ -156,6 +190,8 @@ void SamplePlayer::clear()
     sampleData.reset();
     voices = {};
     region = {};
+    sampleModLfoPhase = 0.0f;
+    sampleModLfoStepValue = 0.0f;
 }
 
 bool SamplePlayer::loadFile(const juce::File& file)
@@ -276,11 +312,15 @@ bool SamplePlayer::triggerAudition(int midiNoteNumber, float velocity, double bp
     if (sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return false;
 
+    updateSampleModulation(0, bpm, std::nullopt);
     startVoice(*sampleData, midiNoteNumber, velocity, bpm, true);
     return true;
 }
 
-void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm)
+void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer,
+                          const juce::MidiBuffer& midi,
+                          double bpm,
+                          std::optional<double> ppqPosition)
 {
     if (readParameter(sampleEnabled, 0.0f) < 0.5f)
         return;
@@ -288,6 +328,8 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
     const juce::SpinLock::ScopedTryLockType lock(sampleLock);
     if (! lock.isLocked() || sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return;
+
+    updateSampleModulation(outputBuffer.getNumSamples(), bpm, ppqPosition);
 
     auto cursor = 0;
 
@@ -312,6 +354,133 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
         renderActiveVoices(*sampleData, outputBuffer, cursor, outputBuffer.getNumSamples() - cursor);
 }
 
+void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    sampleModulation = {};
+
+    const auto lfoValue = processSampleModulationLfo(numSamples, bpm, ppqPosition);
+
+    for (size_t index = 0; index < modMatrixSources.size(); ++index)
+    {
+        const auto sourceIndex = static_cast<int>(std::round(readParameter(modMatrixSources[index], 0.0f)));
+        const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
+        const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
+
+        if (sourceIndex == 0 || destinationIndex < 12 || std::abs(amount) <= 0.0001f)
+            continue;
+
+        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue) * amount;
+
+        switch (destinationIndex)
+        {
+            case 12: sampleModulation.start += contribution; break;
+            case 13: sampleModulation.mix += contribution; break;
+            case 14: sampleModulation.pitch += contribution; break;
+            case 15: sampleModulation.ramp += contribution; break;
+            case 16: sampleModulation.stutter += contribution; break;
+            default: break;
+        }
+    }
+
+    sampleModulation.start = juce::jlimit(-1.0f, 1.0f, sampleModulation.start);
+    sampleModulation.mix = juce::jlimit(-1.0f, 1.0f, sampleModulation.mix);
+    sampleModulation.pitch = juce::jlimit(-1.0f, 1.0f, sampleModulation.pitch);
+    sampleModulation.ramp = juce::jlimit(-1.0f, 1.0f, sampleModulation.ramp);
+    sampleModulation.stutter = juce::jlimit(-1.0f, 1.0f, sampleModulation.stutter);
+}
+
+float SamplePlayer::processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
+    const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)));
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(syncRateIndex))
+        : readParameter(lfo1Rate, 1.0f);
+    const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
+
+    if (syncEnabled && ppqPosition.has_value())
+    {
+        sampleModLfoPhase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(syncRateIndex), 1.0));
+        if (sampleModLfoPhase < 0.0f)
+            sampleModLfoPhase += 1.0f;
+    }
+
+    auto phase = std::fmod(sampleModLfoPhase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = sampleModLfoStepValue;
+            break;
+
+        case 5:
+            value = evaluateSampleLfoCurve(phase);
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = sampleModLfoPhase;
+    sampleModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(playbackSampleRate);
+
+    if (sampleModLfoPhase >= 1.0f)
+    {
+        sampleModLfoPhase -= std::floor(sampleModLfoPhase);
+        if (previousPhase < 1.0f)
+            sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
+}
+
+float SamplePlayer::evaluateSampleLfoCurve(float phase) const
+{
+    constexpr auto pointCount = 8;
+    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
+    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
+    const auto rightIndex = (leftIndex + 1) % pointCount;
+    const auto fraction = scaledPhase - std::floor(scaledPhase);
+    const auto leftValue = readParameter(lfo1CurvePoints[static_cast<size_t>(leftIndex)], 0.0f);
+    const auto rightValue = readParameter(lfo1CurvePoints[static_cast<size_t>(rightIndex)], 0.0f);
+
+    return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
+}
+
+float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue) const
+{
+    switch (sourceIndex)
+    {
+        case 1: return lfoValue;
+        case 4: return readParameter(macroTone, 0.0f);
+        case 5: return readParameter(macroDirt, 0.0f);
+        case 6: return readParameter(macroMotion, 0.0f);
+        case 7: return readParameter(macroSpace, 0.0f);
+        case 8: return readParameter(macroWeight, 0.0f);
+        case 9: return readParameter(macroBounce, 0.0f);
+        case 10: return readParameter(macroWarp, 0.0f);
+        case 11: return readParameter(macroThrow, 0.0f);
+        default: return 0.0f;
+    }
+}
+
 void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot)
 {
     auto* voiceToUse = std::find_if(voices.begin(), voices.end(), [] (const Voice& voice)
@@ -327,7 +496,9 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
         return;
 
     const auto reverse = currentRegion.reverse;
-    const auto transpose = currentRegion.transposeSemitones + static_cast<float>(midiNoteNumber - 60);
+    const auto transpose = currentRegion.transposeSemitones
+        + static_cast<float>(midiNoteNumber - 60)
+        + (sampleModulation.pitch * 12.0f);
     const auto sourceRatio = data.sourceSampleRate / playbackSampleRate;
     const auto pitchRatio = std::pow(2.0, static_cast<double>(transpose) / 12.0);
 
@@ -340,13 +511,13 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->velocity = velocity;
     voiceToUse->sourceRatio = sourceRatio;
     voiceToUse->baseTransposeSemitones = transpose;
-    voiceToUse->pitchRampSemitones = readParameter(samplePitchRamp, 0.0f);
+    voiceToUse->pitchRampSemitones = juce::jlimit(-24.0f, 24.0f, readParameter(samplePitchRamp, 0.0f) + (sampleModulation.ramp * 12.0f));
     voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
-    voiceToUse->stutterEnabled = readParameter(sampleStutterEnabled, 0.0f) >= 0.5f;
+    voiceToUse->stutterEnabled = readParameter(sampleStutterEnabled, 0.0f) >= 0.5f || sampleModulation.stutter > 0.05f;
     voiceToUse->stutterRepeatsRemaining = voiceToUse->stutterEnabled
-        ? juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleStutterRepeats, 3.0f))))
+        ? juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleStutterRepeats, 3.0f) + (sampleModulation.stutter * 4.0f))))
         : 0;
     voiceToUse->stutterIntervalSamples = stutterIntervalSamplesForRate(
         juce::jlimit(0, 2, static_cast<int>(std::round(readParameter(sampleStutterRate, 1.0f)))),
@@ -386,7 +557,7 @@ void SamplePlayer::renderVoice(Voice& voice,
     const auto sourceChannels = data.buffer.getNumChannels();
     const auto outputChannels = outputBuffer.getNumChannels();
     const auto gain = juce::Decibels::decibelsToGain(readParameter(sampleGain, -6.0f))
-                    * readParameter(sampleMix, 0.75f)
+                    * juce::jlimit(0.0f, 1.0f, readParameter(sampleMix, 0.75f) + (sampleModulation.mix * 0.45f))
                     * voice.velocity;
 
     if (sourceChannels == 0 || outputChannels == 0)
@@ -458,7 +629,7 @@ void SamplePlayer::renderVoice(Voice& voice,
 SampleRegion SamplePlayer::currentRegionFor(const SampleData& data) const
 {
     const auto numSamples = data.buffer.getNumSamples();
-    const auto startNorm = juce::jlimit(0.0f, 1.0f, readParameter(sampleStart, 0.0f));
+    const auto startNorm = juce::jlimit(0.0f, 1.0f, readParameter(sampleStart, 0.0f) + (sampleModulation.start * 0.25f));
     const auto endNorm = juce::jlimit(0.0f, 1.0f, readParameter(sampleEnd, 1.0f));
     const auto orderedStart = juce::jmin(startNorm, endNorm);
     const auto orderedEnd = juce::jmax(startNorm, endNorm);

@@ -108,7 +108,12 @@ juce::StringArray modulationDestinationChoices()
         "FX Delay Mix",
         "FX Reverb Mix",
         "FX Width",
-        "FX Drive"
+        "FX Drive",
+        "Sample Start",
+        "Sample Mix",
+        "Sample Pitch",
+        "Sample Ramp",
+        "Sample Stutter"
     };
 }
 

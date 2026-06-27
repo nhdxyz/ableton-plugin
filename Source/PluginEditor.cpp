@@ -763,6 +763,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     driveSlider.onDragStart = [this] { setModInspectorDestination(4); };
     osc2TuneSlider.onDragStart = [this] { setModInspectorDestination(5); };
     osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
+    sampleStartSlider.onDragStart = [this] { setModInspectorDestination(12); };
+    sampleMixSlider.onDragStart = [this] { setModInspectorDestination(13); };
+    sampleTransposeSlider.onDragStart = [this] { setModInspectorDestination(14); };
+    samplePitchRampSlider.onDragStart = [this] { setModInspectorDestination(15); };
+    sampleStutterRepeatsSlider.onDragStart = [this] { setModInspectorDestination(16); };
     configureSlider(randomAmountSlider, randomAmountLabel, "Amount", Parameters::ID::randomAmount);
     configureSlider(randomChaosSlider, randomChaosLabel, "Chaos", Parameters::ID::randomChaos);
     configureSlider(brightnessSlider, brightnessLabel, "Bright", Parameters::ID::randomBrightnessBias);
@@ -4261,7 +4266,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 12> destinationDepths {};
+    std::array<float, 17> destinationDepths {};
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
@@ -4307,6 +4312,11 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(fxReverbMixSlider, destinationDepths[9]);
     setIndicator(fxWidthAmountSlider, destinationDepths[10]);
     setIndicator(fxDistortionAmountSlider, destinationDepths[11]);
+    setIndicator(sampleStartSlider, destinationDepths[12]);
+    setIndicator(sampleMixSlider, destinationDepths[13]);
+    setIndicator(sampleTransposeSlider, destinationDepths[14]);
+    setIndicator(samplePitchRampSlider, destinationDepths[15]);
+    setIndicator(sampleStutterRepeatsSlider, destinationDepths[16]);
 }
 
 void NateVSTAudioProcessorEditor::updateOutputMeter()

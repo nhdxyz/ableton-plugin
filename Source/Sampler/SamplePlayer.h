@@ -5,6 +5,7 @@
 #include <juce_audio_formats/juce_audio_formats.h>
 
 #include <array>
+#include <optional>
 #include <vector>
 
 namespace Sampler
@@ -54,7 +55,10 @@ public:
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
     bool triggerAudition(int midiNoteNumber, float velocity, double bpm);
-    void render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm);
+    void render(juce::AudioBuffer<float>& outputBuffer,
+                const juce::MidiBuffer& midi,
+                double bpm,
+                std::optional<double> ppqPosition);
 
 private:
     struct Voice
@@ -86,6 +90,20 @@ private:
     std::array<Voice, 8> voices {};
     SampleRegion region;
     double playbackSampleRate = 44100.0;
+    float sampleModLfoPhase = 0.0f;
+    float sampleModLfoStepValue = 0.0f;
+
+    struct SampleModulationOffsets
+    {
+        float start = 0.0f;
+        float mix = 0.0f;
+        float pitch = 0.0f;
+        float ramp = 0.0f;
+        float stutter = 0.0f;
+    };
+
+    SampleModulationOffsets sampleModulation;
+    juce::Random sampleModulationRandom;
 
     std::atomic<float>* sampleEnabled = nullptr;
     std::atomic<float>* sampleStart = nullptr;
@@ -99,7 +117,29 @@ private:
     std::atomic<float>* sampleStutterEnabled = nullptr;
     std::atomic<float>* sampleStutterRate = nullptr;
     std::atomic<float>* sampleStutterRepeats = nullptr;
+    std::array<std::atomic<float>*, 8> modMatrixSources {};
+    std::array<std::atomic<float>*, 8> modMatrixDestinations {};
+    std::array<std::atomic<float>*, 8> modMatrixAmounts {};
+    std::atomic<float>* macroTone = nullptr;
+    std::atomic<float>* macroDirt = nullptr;
+    std::atomic<float>* macroMotion = nullptr;
+    std::atomic<float>* macroSpace = nullptr;
+    std::atomic<float>* macroWeight = nullptr;
+    std::atomic<float>* macroBounce = nullptr;
+    std::atomic<float>* macroWarp = nullptr;
+    std::atomic<float>* macroThrow = nullptr;
+    std::atomic<float>* lfo1Rate = nullptr;
+    std::atomic<float>* lfo1Sync = nullptr;
+    std::atomic<float>* lfo1SyncRate = nullptr;
+    std::atomic<float>* lfo1Shape = nullptr;
+    std::atomic<float>* lfo1Depth = nullptr;
+    std::atomic<float>* lfo1Phase = nullptr;
+    std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
 
+    void updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float evaluateSampleLfoCurve(float phase) const;
+    float evaluateSampleModulationSource(int sourceIndex, float lfoValue) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot);
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);

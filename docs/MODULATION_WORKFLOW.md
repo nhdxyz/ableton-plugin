@@ -57,6 +57,7 @@ Good first destinations:
 - `noise_level`
 - `sample_start`
 - `sample_mix`
+- Sample Pitch, Ramp, and Stutter
 - FX Pump Depth, Delay Mix, Reverb Mix, Width, and Drive
 
 Avoid modulating parameters that can easily create unstable or silent patches until safety rules exist.
@@ -217,10 +218,10 @@ Editable engine slice:
 7. Added the first MSEG-style slice: `Curve` as an LFO 1 shape, eight saved curve-point parameters, a compact MOD-panel curve display, and randomization/factory seeds for house and UKG bass movement.
 8. Added the first FX curve-shaper slice: Pump Custom curve points with a draggable FX-panel editor, matching DSP interpolation, and recipe randomization support.
 9. Added the first global FX modulation destinations: Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. LFO 1 and macro sources drive these in the effects rack; Mod Env and Velocity remain per-voice synth-only sources.
+10. Added the first global sample modulation destinations: Sample Start, Mix, Pitch, Ramp, and Stutter. UKG Chop seeds empty routes for start and pitch/ramp movement when a sample workflow is active.
 
 Remaining modulation work:
 
-- Add shared sample destinations after a global modulation lane exists.
-- Add a real global Mod Env/Velocity aggregation strategy before allowing those sources to drive FX targets.
+- Add a real global Mod Env/Velocity aggregation strategy before allowing those sources to drive sample or FX targets.
 - Add visible activity indicators around key destination controls.
 - Expand draggable curve editing into reusable curve presets, per-slot curve modulation, and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.

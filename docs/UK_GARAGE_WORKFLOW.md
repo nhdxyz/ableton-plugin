@@ -51,6 +51,7 @@ Research references:
 
 - Chopped vocal hooks are central enough that the sampler needs a dedicated UKG chop workflow, not just generic sample playback.
 - Required controls: one-shot vs gated, quick slice/cut ranges, pitch offsets, pitch ramps, reverse, stutter/retrigger, delay throws, and sequencer-lane triggering.
+- MOD matrix routes can now target sample start, mix, pitch, ramp, and stutter amount for LFO/macro-driven vocal chop motion.
 - Randomized chops should prefer short, rhythmic fragments and avoid huge unpredictable pitch sweeps unless chaos is high.
 - True formant-preserving pitch movement should remain future work because it needs a dedicated time-stretch/formant engine; the current lightweight performance pass uses pitch-ramped playback instead.
 
@@ -132,6 +133,7 @@ Research references:
 - Regenerated factory presets with explicit chord-memory and FX-order state so UKG patches restore their performance and rack layout consistently.
 - Added synced Delay rate state to presets and UKG randomization so garage chop starters and throw presets open with musical delay timing.
 - Added Pump Curve state to presets and UKG randomization so garage bass/chord/chop recipes can prefer the Garage duck curve or occasionally generate an editable Custom duck shape instead of a generic sidechain curve.
+- Added SAMPLE modulation destinations for start, mix, pitch, ramp, and stutter, and made UKG Chop seed empty MOD slots with start and pitch/ramp motion.
 
 ## Next UKG Features
 
@@ -139,7 +141,7 @@ Reference-backed next passes:
 
 - Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
-- Expand the modulation inspector into per-route bypass/delete editing and add sample destinations.
+- Expand the modulation inspector into per-route bypass/delete editing.
 - Add visible host-sync status for sequencer and tempo-based FX so transport-locked movement is easier to verify from the UI.
 
 1. Vocal chop mode for the sampler.
@@ -150,6 +152,7 @@ Reference-backed next passes:
 - Quick pitch choices such as -12, -7, 0, +7, +12 are implemented in `UKG Chop`.
 - Retrigger/stutter timing is implemented as synced sample stutter controls with 1/8, 1/16, and 1/32 rates plus repeat count.
 - Pitch-ramped chop movement is implemented with the SAMPLE-panel `Ramp` control.
+- First MOD routing for chops is implemented with Sample Start, Mix, Pitch, Ramp, and Stutter destinations.
 - UKG Chop now sets a short delay throw when FX locking is off.
 - The SAMPLE panel now includes eight numbered slice pads for jumping and auditioning a loaded phrase in equal chop windows before applying stutter, reverse, pitch, ramp, or sequencer triggering.
 - The SAMPLE panel now includes a waveform display with draggable start/end handles, visible phrase markers, and selection readout for faster vocal chop trimming.

@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sample Modulation Destinations
+
+- Added MOD matrix destinations for Sample Start, Sample Mix, Sample Pitch, Sample Ramp, and Sample Stutter so UKG vocal chops can move from the same routing workflow as synth and FX motion.
+- Wired sample modulation into `SamplePlayer` using global LFO 1 and macro sources, with host-PPQ sync when Ableton transport position is available.
+- Added modulation-ring feedback to the matching SAMPLE controls and made `UKG Chop` seed empty matrix slots with useful sample-start and pitch/ramp movement.
+
 ### FX Modulation Destinations
 
 - Added MOD matrix destinations for FX Pump Depth, FX Delay Mix, FX Reverb Mix, FX Width, and FX Drive so house/UKG movement can reach the effects rack directly.

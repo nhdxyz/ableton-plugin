@@ -71,7 +71,10 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     const auto hostPosition = getHostPosition();
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     synthEngine.render(buffer, midiMessages, hostBpm);
-    samplePlayer.render(buffer, midiMessages, hostBpm);
+    samplePlayer.render(buffer,
+                        midiMessages,
+                        hostBpm,
+                        hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
     effectsRack.process(buffer,
                         outputGain != nullptr ? outputGain->load() : -8.0f,
                         hostBpm,
@@ -442,6 +445,28 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     setParameterPlainValue(Parameters::ID::samplePitchRamp, rampChoices[rampDistribution(sampleRandomEngine)]);
     setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
     setParameterPlainValue(Parameters::ID::sampleMix, mixDistribution(sampleRandomEngine));
+
+    auto addModRouteIfAvailable = [this] (int sourceIndex, int destinationIndex, float amount)
+    {
+        for (size_t slotIndex = 0; slotIndex < Parameters::ID::modMatrixSource.size(); ++slotIndex)
+        {
+            const auto currentSource = getParameterPlainValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f);
+            const auto currentDestination = getParameterPlainValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f);
+            const auto currentAmount = getParameterPlainValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+
+            if (currentSource > 0.5f && currentDestination > 0.5f && std::abs(currentAmount) > 0.001f)
+                continue;
+
+            setParameterPlainValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
+            setParameterPlainValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
+            setParameterPlainValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
+            return;
+        }
+    };
+
+    addModRouteIfAvailable(1, 12, 0.18f);
+    addModRouteIfAvailable(10, 14, 0.12f);
+    addModRouteIfAvailable(10, 15, 0.10f);
 
     if (! isRandomLockEnabled(Parameters::ID::randomLockFx))
     {

@@ -218,13 +218,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxAddBox.addItem("Pump", 5);
     fxAddBox.addItem("Tremolo", 6);
     fxAddBox.addItem("Ring Mod", 7);
-    fxAddBox.addItem("Phaser", 8);
-    fxAddBox.addItem("Flanger", 9);
-    fxAddBox.addItem("Chorus", 10);
-    fxAddBox.addItem("Delay", 11);
-    fxAddBox.addItem("Reverb", 12);
-    fxAddBox.addItem("Width", 13);
-    fxAddBox.addItem("Guard", 14);
+    fxAddBox.addItem("Comb", 8);
+    fxAddBox.addItem("Phaser", 9);
+    fxAddBox.addItem("Flanger", 10);
+    fxAddBox.addItem("Chorus", 11);
+    fxAddBox.addItem("Delay", 12);
+    fxAddBox.addItem("Reverb", 13);
+    fxAddBox.addItem("Width", 14);
+    fxAddBox.addItem("Guard", 15);
     fxAddBox.setTextWhenNothingSelected("Add FX");
     addAndMakeVisible(fxAddBox);
 
@@ -308,6 +309,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxRingEnabledButton.setButtonText("Ring");
     addAndMakeVisible(fxRingEnabledButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxRingEnabled, fxRingEnabledButton));
+
+    fxCombEnabledButton.setButtonText("Comb");
+    addAndMakeVisible(fxCombEnabledButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxCombEnabled, fxCombEnabledButton));
 
     fxChorusEnabledButton.setButtonText("Chorus");
     addAndMakeVisible(fxChorusEnabledButton);
@@ -460,6 +465,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxRingDepthSlider, fxRingDepthLabel, "Depth", Parameters::ID::fxRingDepth);
     configureSlider(fxRingMixSlider, fxRingMixLabel, "Mix", Parameters::ID::fxRingMix);
     configureSlider(fxRingBiasSlider, fxRingBiasLabel, "Bias", Parameters::ID::fxRingBias);
+    configureSlider(fxCombFrequencySlider, fxCombFrequencyLabel, "Freq", Parameters::ID::fxCombFrequency);
+    configureSlider(fxCombFeedbackSlider, fxCombFeedbackLabel, "Fdbk", Parameters::ID::fxCombFeedback);
+    configureSlider(fxCombDampingSlider, fxCombDampingLabel, "Damp", Parameters::ID::fxCombDamping);
+    configureSlider(fxCombMixSlider, fxCombMixLabel, "Mix", Parameters::ID::fxCombMix);
     configureSlider(fxChorusRateSlider, fxChorusRateLabel, "Rate", Parameters::ID::fxChorusRate);
     configureSlider(fxChorusDepthSlider, fxChorusDepthLabel, "Depth", Parameters::ID::fxChorusDepth);
     configureSlider(fxChorusMixSlider, fxChorusMixLabel, "Mix", Parameters::ID::fxChorusMix);
@@ -617,6 +626,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxPumpSlotButton.onClick = [this] { selectFxModule(FxModule::pump); };
     fxTremoloSlotButton.onClick = [this] { selectFxModule(FxModule::tremolo); };
     fxRingSlotButton.onClick = [this] { selectFxModule(FxModule::ring); };
+    fxCombSlotButton.onClick = [this] { selectFxModule(FxModule::comb); };
     fxPhaserSlotButton.onClick = [this] { selectFxModule(FxModule::phaser); };
     fxFlangerSlotButton.onClick = [this] { selectFxModule(FxModule::flanger); };
     fxChorusSlotButton.onClick = [this] { selectFxModule(FxModule::chorus); };
@@ -686,6 +696,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxPumpSlotButton);
     addAndMakeVisible(fxTremoloSlotButton);
     addAndMakeVisible(fxRingSlotButton);
+    addAndMakeVisible(fxCombSlotButton);
     addAndMakeVisible(fxPhaserSlotButton);
     addAndMakeVisible(fxFlangerSlotButton);
     addAndMakeVisible(fxChorusSlotButton);
@@ -1252,6 +1263,7 @@ void NateVSTAudioProcessorEditor::resized()
                                  FxModule::pump,
                                  FxModule::tremolo,
                                  FxModule::ring,
+                                 FxModule::comb,
                                  FxModule::phaser,
                                  FxModule::flanger,
                                  FxModule::chorus,
@@ -1355,6 +1367,21 @@ void NateVSTAudioProcessorEditor::resized()
                         &fxRingDepthSlider,
                         &fxRingMixSlider,
                         &fxRingBiasSlider
+                    });
+                    break;
+
+                case FxModule::comb:
+                    fxCombEnabledButton.setVisible(true);
+                    fxCombEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
+                    setSliderVisible(fxCombFrequencySlider, fxCombFrequencyLabel, true);
+                    setSliderVisible(fxCombFeedbackSlider, fxCombFeedbackLabel, true);
+                    setSliderVisible(fxCombDampingSlider, fxCombDampingLabel, true);
+                    setSliderVisible(fxCombMixSlider, fxCombMixLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), {
+                        &fxCombFrequencySlider,
+                        &fxCombFeedbackSlider,
+                        &fxCombDampingSlider,
+                        &fxCombMixSlider
                     });
                     break;
 
@@ -1675,6 +1702,7 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
                          FxModule::pump,
                          FxModule::tremolo,
                          FxModule::ring,
+                         FxModule::comb,
                          FxModule::phaser,
                          FxModule::flanger,
                          FxModule::chorus,
@@ -1717,6 +1745,7 @@ juce::String NateVSTAudioProcessorEditor::fxEnabledParameterID(FxModule module) 
         case FxModule::pump: return Parameters::ID::fxPumpEnabled;
         case FxModule::tremolo: return Parameters::ID::fxTremoloEnabled;
         case FxModule::ring: return Parameters::ID::fxRingEnabled;
+        case FxModule::comb: return Parameters::ID::fxCombEnabled;
         case FxModule::phaser: return Parameters::ID::fxPhaserEnabled;
         case FxModule::flanger: return Parameters::ID::fxFlangerEnabled;
         case FxModule::chorus: return Parameters::ID::fxChorusEnabled;
@@ -1740,6 +1769,7 @@ juce::String NateVSTAudioProcessorEditor::fxModuleName(FxModule module) const
         case FxModule::pump: return "Pump";
         case FxModule::tremolo: return "Tremolo";
         case FxModule::ring: return "Ring Mod";
+        case FxModule::comb: return "Comb";
         case FxModule::phaser: return "Phaser";
         case FxModule::flanger: return "Flanger";
         case FxModule::chorus: return "Chorus";
@@ -1763,6 +1793,7 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::pump: return "sync depth shape";
         case FxModule::tremolo: return "sync trem pan";
         case FxModule::ring: return "metallic sidebands";
+        case FxModule::comb: return "tuned resonance";
         case FxModule::phaser: return "rate depth mix";
         case FxModule::flanger: return "short delay feedback";
         case FxModule::chorus: return "rate depth mix";
@@ -1786,6 +1817,7 @@ juce::TextButton& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
         case FxModule::pump: return fxPumpSlotButton;
         case FxModule::tremolo: return fxTremoloSlotButton;
         case FxModule::ring: return fxRingSlotButton;
+        case FxModule::comb: return fxCombSlotButton;
         case FxModule::phaser: return fxPhaserSlotButton;
         case FxModule::flanger: return fxFlangerSlotButton;
         case FxModule::chorus: return fxChorusSlotButton;
@@ -1849,7 +1881,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
-        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
+        &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &fxFlangerEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
@@ -1864,7 +1896,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton,
-        &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
+        &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,
         &sequencerGrid
@@ -1949,6 +1981,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(fxRingDepthSlider, fxRingDepthLabel, false);
     setSliderVisible(fxRingMixSlider, fxRingMixLabel, false);
     setSliderVisible(fxRingBiasSlider, fxRingBiasLabel, false);
+    setSliderVisible(fxCombFrequencySlider, fxCombFrequencyLabel, false);
+    setSliderVisible(fxCombFeedbackSlider, fxCombFeedbackLabel, false);
+    setSliderVisible(fxCombDampingSlider, fxCombDampingLabel, false);
+    setSliderVisible(fxCombMixSlider, fxCombMixLabel, false);
     setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, false);
     setSliderVisible(fxChorusDepthSlider, fxChorusDepthLabel, false);
     setSliderVisible(fxChorusMixSlider, fxChorusMixLabel, false);

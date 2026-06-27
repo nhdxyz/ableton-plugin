@@ -133,6 +133,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxRingDepth = 0.35f;
     auto fxRingMix = 0.18f;
     auto fxRingBias = 0.45f;
+    auto fxCombEnabled = false;
+    auto fxCombFrequency = 180.0f;
+    auto fxCombFeedback = 0.28f;
+    auto fxCombDamping = 0.35f;
+    auto fxCombMix = 0.16f;
     auto fxWidthEnabled = false;
     auto fxWidthAmount = 1.15f;
     auto fxWidthMonoCutoff = 120.0f;
@@ -692,6 +697,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxRingDepth = randomFloat(0.08f, 0.28f);
             fxRingMix = randomFloat(0.02f, 0.08f);
             fxRingBias = randomFloat(0.45f, 0.85f);
+            fxCombEnabled = randomFloat(0.0f, 1.0f) < 0.1f + (chaos * 0.08f);
+            fxCombFrequency = randomFloat(55.0f, 180.0f);
+            fxCombFeedback = randomFloat(0.08f, 0.28f);
+            fxCombDamping = randomFloat(0.35f, 0.75f);
+            fxCombMix = randomFloat(0.02f, 0.08f);
             break;
 
         case Recipe::acidLine:
@@ -716,6 +726,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxRingDepth = randomFloat(0.18f, 0.58f);
             fxRingMix = randomFloat(0.04f, 0.18f);
             fxRingBias = randomFloat(0.0f, 0.55f);
+            fxCombEnabled = randomFloat(0.0f, 1.0f) < 0.24f + (chaos * 0.16f);
+            fxCombFrequency = randomFloat(90.0f, 760.0f);
+            fxCombFeedback = randomFloat(-0.24f, 0.44f);
+            fxCombDamping = randomFloat(0.18f, 0.62f);
+            fxCombMix = randomFloat(0.03f, 0.14f);
             break;
 
         case Recipe::minimalBlip:
@@ -741,6 +756,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxRingDepth = randomFloat(0.22f, 0.75f);
             fxRingMix = randomFloat(0.06f, 0.28f);
             fxRingBias = randomFloat(0.0f, 0.65f);
+            fxCombEnabled = true;
+            fxCombFrequency = randomFloat(120.0f, 1800.0f);
+            fxCombFeedback = randomFloat(-0.42f, 0.62f);
+            fxCombDamping = randomFloat(0.08f, 0.72f);
+            fxCombMix = randomFloat(0.05f, 0.24f);
             break;
 
         case Recipe::darkStab:
@@ -768,6 +788,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxRingDepth = randomFloat(0.12f, 0.46f);
             fxRingMix = randomFloat(0.03f, 0.14f);
             fxRingBias = randomFloat(0.12f, 0.72f);
+            fxCombEnabled = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.14f);
+            fxCombFrequency = randomFloat(110.0f, 920.0f);
+            fxCombFeedback = randomFloat(0.08f, 0.46f);
+            fxCombDamping = randomFloat(0.2f, 0.72f);
+            fxCombMix = randomFloat(0.03f, 0.14f);
             break;
     }
 
@@ -828,6 +853,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxRingDepth = blend(Parameters::ID::fxRingDepth, fxRingDepth);
         fxRingMix = blend(Parameters::ID::fxRingMix, fxRingMix);
         fxRingBias = blend(Parameters::ID::fxRingBias, fxRingBias);
+        fxCombFrequency = blend(Parameters::ID::fxCombFrequency, fxCombFrequency);
+        fxCombFeedback = blend(Parameters::ID::fxCombFeedback, fxCombFeedback);
+        fxCombDamping = blend(Parameters::ID::fxCombDamping, fxCombDamping);
+        fxCombMix = blend(Parameters::ID::fxCombMix, fxCombMix);
         fxWidthAmount = blend(Parameters::ID::fxWidthAmount, fxWidthAmount);
         fxWidthMonoCutoff = blend(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
@@ -923,6 +952,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxRingDepth, fxRingDepth);
     setParameter(Parameters::ID::fxRingMix, fxRingMix);
     setParameter(Parameters::ID::fxRingBias, fxRingBias);
+    setParameter(Parameters::ID::fxCombEnabled, fxCombEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxCombFrequency, fxCombFrequency);
+    setParameter(Parameters::ID::fxCombFeedback, fxCombFeedback);
+    setParameter(Parameters::ID::fxCombDamping, fxCombDamping);
+    setParameter(Parameters::ID::fxCombMix, fxCombMix);
     setParameter(Parameters::ID::fxWidthEnabled, fxWidthEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxWidthAmount, fxWidthAmount);
     setParameter(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);

@@ -226,7 +226,7 @@ Implemented first as the Ring Mod module. Useful for metallic stabs, weird percu
 
 8. Comb / Resonator
 
-Useful for plucks, tuned metallic sounds, and short percussive resonance.
+Implemented as the Comb module. Useful for plucks, tuned metallic sounds, UKG stab/chop resonance, and short percussive techno/minimal color.
 
 9. Multiband Drive
 
@@ -368,6 +368,7 @@ Add in this order:
 5. Three-Band EQ. Implemented as the EQ module.
 6. Tremolo / Auto Pan. Implemented as the Tremolo module.
 7. Frequency Shifter / Ring Mod. Implemented first as the Ring Mod module.
+8. Comb / Resonator. Implemented as the Comb module.
 
 Each effect should include:
 

@@ -45,6 +45,7 @@ private:
         pump,
         tremolo,
         ring,
+        comb,
         phaser,
         flanger,
         chorus,
@@ -112,6 +113,7 @@ private:
     juce::ToggleButton fxPumpEnabledButton;
     juce::ToggleButton fxTremoloEnabledButton;
     juce::ToggleButton fxRingEnabledButton;
+    juce::ToggleButton fxCombEnabledButton;
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
@@ -201,6 +203,10 @@ private:
     juce::Slider fxRingDepthSlider;
     juce::Slider fxRingMixSlider;
     juce::Slider fxRingBiasSlider;
+    juce::Slider fxCombFrequencySlider;
+    juce::Slider fxCombFeedbackSlider;
+    juce::Slider fxCombDampingSlider;
+    juce::Slider fxCombMixSlider;
     juce::Slider fxChorusRateSlider;
     juce::Slider fxChorusDepthSlider;
     juce::Slider fxChorusMixSlider;
@@ -297,6 +303,10 @@ private:
     juce::Label fxRingDepthLabel;
     juce::Label fxRingMixLabel;
     juce::Label fxRingBiasLabel;
+    juce::Label fxCombFrequencyLabel;
+    juce::Label fxCombFeedbackLabel;
+    juce::Label fxCombDampingLabel;
+    juce::Label fxCombMixLabel;
     juce::Label fxChorusRateLabel;
     juce::Label fxChorusDepthLabel;
     juce::Label fxChorusMixLabel;
@@ -375,6 +385,7 @@ private:
     juce::TextButton fxPumpSlotButton { "Pump" };
     juce::TextButton fxTremoloSlotButton { "Trem" };
     juce::TextButton fxRingSlotButton { "Ring" };
+    juce::TextButton fxCombSlotButton { "Comb" };
     juce::TextButton fxPhaserSlotButton { "Phaser" };
     juce::TextButton fxFlangerSlotButton { "Flanger" };
     juce::TextButton fxChorusSlotButton { "Chorus" };

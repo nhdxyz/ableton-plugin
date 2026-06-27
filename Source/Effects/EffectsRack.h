@@ -26,10 +26,12 @@ private:
     juce::dsp::Chorus<float> chorus;
     juce::Reverb reverb;
     juce::AudioBuffer<float> delayBuffer;
+    juce::AudioBuffer<float> combBuffer;
     std::vector<float> toneLowCutState;
     std::vector<float> toneTiltState;
     std::vector<float> eqLowState;
     std::vector<float> eqHighState;
+    std::vector<float> combDampingState;
     std::vector<float> bitcrushHeldSample;
     std::vector<int> bitcrushHoldCounter;
     std::vector<float> widthLowState;
@@ -40,6 +42,7 @@ private:
     double ringPhase = 0.0;
     float pumpSmoothedGain = 1.0f;
     int delayWritePosition = 0;
+    int combWritePosition = 0;
     int preparedChannels = 2;
 
     std::atomic<float>* fxDistortionEnabled = nullptr;
@@ -64,6 +67,11 @@ private:
     std::atomic<float>* fxRingDepth = nullptr;
     std::atomic<float>* fxRingMix = nullptr;
     std::atomic<float>* fxRingBias = nullptr;
+    std::atomic<float>* fxCombEnabled = nullptr;
+    std::atomic<float>* fxCombFrequency = nullptr;
+    std::atomic<float>* fxCombFeedback = nullptr;
+    std::atomic<float>* fxCombDamping = nullptr;
+    std::atomic<float>* fxCombMix = nullptr;
     std::atomic<float>* fxChorusEnabled = nullptr;
     std::atomic<float>* fxChorusRate = nullptr;
     std::atomic<float>* fxChorusDepth = nullptr;
@@ -109,6 +117,7 @@ private:
     void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processTremolo(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processRingMod(juce::AudioBuffer<float>& buffer);
+    void processComb(juce::AudioBuffer<float>& buffer);
     void processPhaser(juce::AudioBuffer<float>& buffer);
     void processFlanger(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);

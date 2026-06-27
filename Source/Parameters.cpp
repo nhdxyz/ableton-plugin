@@ -914,6 +914,36 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.45f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxCombEnabled,
+        "FX Comb Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxCombFrequency,
+        "FX Comb Frequency",
+        skewedRange(25.0f, 2400.0f, 180.0f),
+        180.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxCombFeedback,
+        "FX Comb Feedback",
+        juce::NormalisableRange<float> { -0.82f, 0.82f, 0.001f },
+        0.28f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxCombDamping,
+        "FX Comb Damping",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxCombMix,
+        "FX Comb Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.16f));
+
     return { params.begin(), params.end() };
 }
 }

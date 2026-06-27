@@ -51,6 +51,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxRingDepth = parameters.getRawParameterValue(Parameters::ID::fxRingDepth);
     fxRingMix = parameters.getRawParameterValue(Parameters::ID::fxRingMix);
     fxRingBias = parameters.getRawParameterValue(Parameters::ID::fxRingBias);
+    fxCombEnabled = parameters.getRawParameterValue(Parameters::ID::fxCombEnabled);
+    fxCombFrequency = parameters.getRawParameterValue(Parameters::ID::fxCombFrequency);
+    fxCombFeedback = parameters.getRawParameterValue(Parameters::ID::fxCombFeedback);
+    fxCombDamping = parameters.getRawParameterValue(Parameters::ID::fxCombDamping);
+    fxCombMix = parameters.getRawParameterValue(Parameters::ID::fxCombMix);
     fxChorusEnabled = parameters.getRawParameterValue(Parameters::ID::fxChorusEnabled);
     fxChorusRate = parameters.getRawParameterValue(Parameters::ID::fxChorusRate);
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
@@ -106,10 +111,12 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     chorus.prepare(spec);
     reverb.setSampleRate(currentSampleRate);
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
+    combBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 0.12)));
     toneLowCutState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqHighState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    combDampingState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
     widthLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
@@ -123,10 +130,12 @@ void EffectsRack::reset()
     chorus.reset();
     reverb.reset();
     delayBuffer.clear();
+    combBuffer.clear();
     std::fill(toneLowCutState.begin(), toneLowCutState.end(), 0.0f);
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
     std::fill(eqLowState.begin(), eqLowState.end(), 0.0f);
     std::fill(eqHighState.begin(), eqHighState.end(), 0.0f);
+    std::fill(combDampingState.begin(), combDampingState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
     std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
@@ -135,6 +144,7 @@ void EffectsRack::reset()
     ringPhase = 0.0;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
+    combWritePosition = 0;
 }
 
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
@@ -146,6 +156,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
     processPump(buffer, bpm, ppqPosition);
     processTremolo(buffer, bpm, ppqPosition);
     processRingMod(buffer);
+    processComb(buffer);
     processPhaser(buffer);
     processFlanger(buffer);
     processChorus(buffer);
@@ -418,6 +429,42 @@ void EffectsRack::processRingMod(juce::AudioBuffer<float>& buffer)
         ringPhase += phaseIncrement;
         while (ringPhase >= 1.0)
             ringPhase -= 1.0;
+    }
+}
+
+void EffectsRack::processComb(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxCombEnabled, 0.0f) < 0.5f || combBuffer.getNumSamples() <= 1 || combDampingState.empty())
+        return;
+
+    const auto frequency = juce::jlimit(25.0f, 2400.0f, readParameter(fxCombFrequency, 180.0f));
+    const auto feedback = juce::jlimit(-0.82f, 0.82f, readParameter(fxCombFeedback, 0.28f));
+    const auto damping = juce::jlimit(0.0f, 1.0f, readParameter(fxCombDamping, 0.35f));
+    const auto mix = juce::jlimit(0.0f, 1.0f, readParameter(fxCombMix, 0.16f));
+    const auto delaySamples = juce::jlimit(1,
+                                           combBuffer.getNumSamples() - 1,
+                                           static_cast<int>(std::round(currentSampleRate / static_cast<double>(frequency))));
+    const auto dampingCutoff = juce::jmap(1.0f - damping, 450.0f, 12000.0f);
+    const auto dampingAlpha = onePoleAlpha(dampingCutoff, currentSampleRate);
+    const auto compensation = 1.0f / (1.0f + (std::abs(feedback) * mix * 0.75f));
+    const auto channels = juce::jmin(juce::jmin(buffer.getNumChannels(), combBuffer.getNumChannels()),
+                                     static_cast<int>(combDampingState.size()));
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        const auto readPosition = (combWritePosition + combBuffer.getNumSamples() - delaySamples) % combBuffer.getNumSamples();
+
+        for (auto channel = 0; channel < channels; ++channel)
+        {
+            const auto input = buffer.getSample(channel, sampleIndex);
+            const auto delayed = combBuffer.getSample(channel, readPosition);
+            auto& dampingState = combDampingState[static_cast<size_t>(channel)];
+            dampingState += dampingAlpha * (delayed - dampingState);
+            combBuffer.setSample(channel, combWritePosition, input + (dampingState * feedback));
+            buffer.setSample(channel, sampleIndex, (input + (delayed * mix)) * compensation);
+        }
+
+        combWritePosition = (combWritePosition + 1) % combBuffer.getNumSamples();
     }
 }
 

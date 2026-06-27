@@ -100,6 +100,11 @@
   <PARAM id="fx_ring_depth" value="0.35" />
   <PARAM id="fx_ring_mix" value="0.18" />
   <PARAM id="fx_ring_bias" value="0.45" />
+  <PARAM id="fx_comb_enabled" value="0" />
+  <PARAM id="fx_comb_frequency" value="180" />
+  <PARAM id="fx_comb_feedback" value="0.28" />
+  <PARAM id="fx_comb_damping" value="0.35" />
+  <PARAM id="fx_comb_mix" value="0.16" />
   <PARAM id="fx_chorus_enabled" value="1" />
   <PARAM id="fx_chorus_rate" value="0.35" />
   <PARAM id="fx_chorus_depth" value="0.22" />

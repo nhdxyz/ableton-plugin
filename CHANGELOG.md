@@ -283,3 +283,11 @@
 - Processed Ring Mod after Tremolo and before phaser/flanger/chorus for metallic movement before modulation effects.
 - Added Ring Mod to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
 - Regenerated the UKG factory preset pack with restrained metallic edge for bell plucks, vocal chop starters, and late stabs.
+
+### Comb Resonator FX
+
+- Added a bypassable Comb module to the focused FX rack.
+- Added stable Comb parameters for frequency, feedback, damping, and mix.
+- Processed Comb after Ring Mod and before phaser/flanger/chorus for tuned resonance before modulation effects.
+- Added Comb to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
+- Regenerated the UKG factory preset pack with tuned resonance for bell plucks, vocal chop starters, and late stabs.

@@ -426,6 +426,7 @@ Build the next larger slices in this order:
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
+   First chord/stab pass implemented as saved Off, 5th, Minor, Minor 7, Major, and Minor 9 sequencer chord modes shared by playback and MIDI export.
    First utility pass implemented as `Rot <` / `Rot >` pattern rotation that preserves each step's note, velocity, probability, and timing.
    First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.

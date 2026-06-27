@@ -22,8 +22,10 @@ class PatternSequencer
 {
 public:
     static constexpr int numSteps = 16;
+    static constexpr int maxChordNotes = 5;
     static constexpr int minNoteOffset = -12;
     static constexpr int maxNoteOffset = 12;
+    using ChordNoteArray = std::array<int, maxChordNotes>;
 
     explicit PatternSequencer(Parameters::APVTS& parameters);
 
@@ -33,6 +35,8 @@ public:
     Step getStep(int index) const;
     void setStep(int index, Step step);
     int getQuantizedNoteOffset(int noteOffset) const;
+    ChordNoteArray getChordNotes(int rootNote, int octaveOffset, int noteOffset, int& noteCount) const;
+    float getChordNoteVelocity(float velocity, int noteIndex) const;
     void clear();
     void randomize(float amount);
 
@@ -49,7 +53,8 @@ private:
     double samplesUntilNextStep = 0.0;
     double pendingNoteOffSamples = -1.0;
     int currentStep = 0;
-    int activeNote = -1;
+    ChordNoteArray activeNotes {};
+    int activeNoteCount = 0;
     juce::uint32 randomState = 0x1234abcd;
 
     std::atomic<float>* sequencerEnabled = nullptr;
@@ -59,6 +64,7 @@ private:
     std::atomic<float>* sequencerSwing = nullptr;
     std::atomic<float>* sequencerGrooveMode = nullptr;
     std::atomic<float>* sequencerScale = nullptr;
+    std::atomic<float>* sequencerChordMode = nullptr;
     std::atomic<float>* sequencerAccent = nullptr;
     std::atomic<float>* sequencerOctave = nullptr;
     std::atomic<float>* sequencerProbability = nullptr;
@@ -68,6 +74,7 @@ private:
     int getStepDelaySamples(int baseStepLengthSamples, int stepIndex) const;
     int quantizeNoteOffset(int noteOffset) const;
     bool isOffsetInScale(int noteOffset, int scaleMode) const;
+    void addNoteOffsForActiveNotes(juce::MidiBuffer& midi, int samplePosition);
     float nextRandomFloat();
     bool shouldTriggerStep(const Step& step);
     float readParameter(std::atomic<float>* parameter, float fallback) const;

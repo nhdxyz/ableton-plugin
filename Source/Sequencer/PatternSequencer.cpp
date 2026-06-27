@@ -15,6 +15,7 @@ PatternSequencer::PatternSequencer(Parameters::APVTS& state)
     sequencerSwing = parameters.getRawParameterValue(Parameters::ID::sequencerSwing);
     sequencerGrooveMode = parameters.getRawParameterValue(Parameters::ID::sequencerGrooveMode);
     sequencerScale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
+    sequencerChordMode = parameters.getRawParameterValue(Parameters::ID::sequencerChordMode);
     sequencerAccent = parameters.getRawParameterValue(Parameters::ID::sequencerAccent);
     sequencerOctave = parameters.getRawParameterValue(Parameters::ID::sequencerOctave);
     sequencerProbability = parameters.getRawParameterValue(Parameters::ID::sequencerProbability);
@@ -33,7 +34,8 @@ void PatternSequencer::reset()
     samplesUntilNextStep = 0.0;
     pendingNoteOffSamples = -1.0;
     currentStep = 0;
-    activeNote = -1;
+    activeNotes.fill(-1);
+    activeNoteCount = 0;
 }
 
 bool PatternSequencer::isEnabled() const
@@ -72,6 +74,77 @@ void PatternSequencer::setStep(int index, Step step)
 int PatternSequencer::getQuantizedNoteOffset(int noteOffset) const
 {
     return quantizeNoteOffset(juce::jlimit(-24, 24, noteOffset));
+}
+
+PatternSequencer::ChordNoteArray PatternSequencer::getChordNotes(int rootNote, int octaveOffset, int noteOffset, int& noteCount) const
+{
+    ChordNoteArray notes {};
+    notes.fill(-1);
+    noteCount = 0;
+
+    auto addInterval = [&notes, &noteCount, rootNote, octaveOffset, noteOffset, this] (int interval)
+    {
+        if (noteCount >= maxChordNotes)
+            return;
+
+        const auto noteNumber = juce::jlimit(0, 127, rootNote + octaveOffset + quantizeNoteOffset(noteOffset + interval));
+        for (auto noteIndex = 0; noteIndex < noteCount; ++noteIndex)
+            if (notes[static_cast<size_t>(noteIndex)] == noteNumber)
+                return;
+
+        notes[static_cast<size_t>(noteCount++)] = noteNumber;
+    };
+
+    switch (static_cast<int>(std::round(readParameter(sequencerChordMode, 0.0f))))
+    {
+        case 1:
+            addInterval(0);
+            addInterval(7);
+            break;
+
+        case 2:
+            addInterval(0);
+            addInterval(3);
+            addInterval(7);
+            break;
+
+        case 3:
+            addInterval(0);
+            addInterval(3);
+            addInterval(7);
+            addInterval(10);
+            break;
+
+        case 4:
+            addInterval(0);
+            addInterval(4);
+            addInterval(7);
+            break;
+
+        case 5:
+            addInterval(0);
+            addInterval(3);
+            addInterval(7);
+            addInterval(10);
+            addInterval(14);
+            break;
+
+        case 0:
+        default:
+            addInterval(0);
+            break;
+    }
+
+    return notes;
+}
+
+float PatternSequencer::getChordNoteVelocity(float velocity, int noteIndex) const
+{
+    if (noteIndex <= 0)
+        return juce::jlimit(0.0f, 1.0f, velocity);
+
+    const auto trim = 0.92f - (0.04f * static_cast<float>(noteIndex - 1));
+    return juce::jlimit(0.0f, 1.0f, velocity * juce::jmax(0.72f, trim));
 }
 
 void PatternSequencer::clear()
@@ -117,12 +190,11 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
     if (! isEnabled() || numSamples <= 0)
         return;
 
-    if (activeNote >= 0 && pendingNoteOffSamples >= 0.0)
+    if (activeNoteCount > 0 && pendingNoteOffSamples >= 0.0)
     {
         if (pendingNoteOffSamples < static_cast<double>(numSamples))
         {
-            midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), static_cast<int>(pendingNoteOffSamples));
-            activeNote = -1;
+            addNoteOffsForActiveNotes(midi, static_cast<int>(pendingNoteOffSamples));
             pendingNoteOffSamples = -1.0;
         }
         else
@@ -142,10 +214,9 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
         const auto gateSamples = juce::jlimit(1, juce::jmax(1, currentStepDuration - 1),
                                              static_cast<int>(static_cast<float>(currentStepDuration) * readParameter(sequencerGate, 0.55f)));
 
-        if (activeNote >= 0)
+        if (activeNoteCount > 0)
         {
-            midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), eventOffset);
-            activeNote = -1;
+            addNoteOffsForActiveNotes(midi, eventOffset);
             pendingNoteOffSamples = -1.0;
         }
 
@@ -159,14 +230,21 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
             const auto velocity = isAnchorStep
                 ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
                 : juce::jlimit(0.0f, 1.0f, step.velocity * (1.0f - (accent * 0.12f)));
-            activeNote = juce::jlimit(0, 127, root + octaveOffset + quantizeNoteOffset(step.noteOffset));
-            midi.addEvent(juce::MidiMessage::noteOn(1, activeNote, velocity), eventOffset);
+            auto noteCount = 0;
+            const auto notes = getChordNotes(root, octaveOffset, step.noteOffset, noteCount);
+            activeNoteCount = noteCount;
+            activeNotes = notes;
+
+            for (auto noteIndex = 0; noteIndex < noteCount; ++noteIndex)
+            {
+                const auto noteVelocity = getChordNoteVelocity(velocity, noteIndex);
+                midi.addEvent(juce::MidiMessage::noteOn(1, notes[static_cast<size_t>(noteIndex)], noteVelocity), eventOffset);
+            }
 
             const auto noteOffOffset = eventOffset + gateSamples;
             if (noteOffOffset < numSamples)
             {
-                midi.addEvent(juce::MidiMessage::noteOff(1, activeNote), noteOffOffset);
-                activeNote = -1;
+                addNoteOffsForActiveNotes(midi, noteOffOffset);
                 pendingNoteOffSamples = -1.0;
             }
             else
@@ -287,6 +365,19 @@ bool PatternSequencer::isOffsetInScale(int noteOffset, int scaleMode) const
         case 4: return contains({ 0, 3, 5, 7, 10 });
         default: return true;
     }
+}
+
+void PatternSequencer::addNoteOffsForActiveNotes(juce::MidiBuffer& midi, int samplePosition)
+{
+    for (auto noteIndex = 0; noteIndex < activeNoteCount; ++noteIndex)
+    {
+        const auto noteNumber = activeNotes[static_cast<size_t>(noteIndex)];
+        if (noteNumber >= 0)
+            midi.addEvent(juce::MidiMessage::noteOff(1, noteNumber), samplePosition);
+    }
+
+    activeNotes.fill(-1);
+    activeNoteCount = 0;
 }
 
 float PatternSequencer::nextRandomFloat()

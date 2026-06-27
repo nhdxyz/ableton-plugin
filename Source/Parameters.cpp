@@ -54,6 +54,11 @@ juce::StringArray sequencerScaleChoices()
     return { "Off", "Major", "Minor", "Dorian", "Minor Pent" };
 }
 
+juce::StringArray sequencerChordModeChoices()
+{
+    return { "Off", "5th", "Minor", "Minor 7", "Major", "Minor 9" };
+}
+
 juce::StringArray lfoShapeChoices()
 {
     return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
@@ -570,6 +575,12 @@ APVTS::ParameterLayout createLayout()
         ID::sequencerScale,
         "Sequencer Scale",
         sequencerScaleChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sequencerChordMode,
+        "Sequencer Chord Mode",
+        sequencerChordModeChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterFloat>(

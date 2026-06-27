@@ -101,6 +101,7 @@ private:
     juce::ComboBox sequencerRateBox;
     juce::ComboBox sequencerGrooveBox;
     juce::ComboBox sequencerScaleBox;
+    juce::ComboBox sequencerChordBox;
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleStutterRateBox;

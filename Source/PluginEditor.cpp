@@ -277,6 +277,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerScaleBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerScale, sequencerScaleBox));
 
+    sequencerChordBox.addItemList(Parameters::sequencerChordModeChoices(), 1);
+    sequencerChordBox.setTextWhenNothingSelected("Chord");
+    addAndMakeVisible(sequencerChordBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerChordMode, sequencerChordBox));
+
     sequencerPatternBox.addItem("Bass", 1);
     sequencerPatternBox.addItem("Stab", 2);
     sequencerPatternBox.addItem("UKG 2-Step", 3);
@@ -1392,6 +1397,7 @@ void NateVSTAudioProcessorEditor::resized()
             rateThirtySecondButton.setVisible(true);
             sequencerGrooveBox.setVisible(true);
             sequencerScaleBox.setVisible(true);
+            sequencerChordBox.setVisible(true);
             sequencerPatternBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
@@ -1414,6 +1420,7 @@ void NateVSTAudioProcessorEditor::resized()
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
             sequencerGrooveBox.setBounds(timingRow.removeFromLeft(150).reduced(4));
             sequencerScaleBox.setBounds(timingRow.removeFromLeft(132).reduced(4));
+            sequencerChordBox.setBounds(timingRow.removeFromLeft(134).reduced(4));
             auto patternRow = content.removeFromTop(38).withTrimmedTop(2);
             sequencerPatternBox.setBounds(patternRow.removeFromLeft(202).reduced(4));
             applyPatternButton.setBounds(patternRow.removeFromLeft(72).reduced(4));
@@ -2333,7 +2340,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

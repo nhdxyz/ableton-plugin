@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Sequencer Chord Mode
+
+- Added a saved SEQ `Chord` mode with Off, 5th, Minor, Minor 7, Major, and Minor 9 options for quick house and UKG stab patterns.
+- Made sequencer playback and MIDI export use the same chord builder, including scale quantization, per-note velocity trim, and shared gate timing.
+- Updated Stab, Organ Skank, and Late Stab templates plus the UKG factory preset pack to carry chord modes while bass and vocal chop templates stay mono.
+
 ### Sequencer MIDI Export
 
 - Added a SEQ-panel `MIDI` export action that writes the current 16-step pattern as a `.mid` clip for Ableton arrangement and editing.

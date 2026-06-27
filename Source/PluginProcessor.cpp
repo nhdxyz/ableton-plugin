@@ -314,6 +314,7 @@ bool NateVSTAudioProcessor::randomizeSequencerPattern()
     const auto scale = parameters.getRawParameterValue(Parameters::ID::sequencerScale);
     if (scale == nullptr || scale->load() <= 0.5f)
         setParameterPlainValue(Parameters::ID::sequencerScale, 4.0f);
+    setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
 
     patternSequencer.randomize(amount != nullptr ? amount->load() : 0.55f);
     setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
@@ -339,6 +340,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
         : presetIndex == 4 || presetIndex == 6 ? 2.0f
         : 4.0f;
     setParameterPlainValue(Parameters::ID::sequencerScale, scaleMode);
+    setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
 
     auto setStep = [this] (int index, int noteOffset, float velocity, float probability, float timing = 0.0f)
     {
@@ -362,6 +364,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
             setParameterPlainValue(Parameters::ID::sequencerGate, 0.28f);
             setParameterPlainValue(Parameters::ID::sequencerSwing, 0.38f);
             setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordMode, 5.0f);
             setParameterPlainValue(Parameters::ID::sequencerAccent, 0.52f);
             setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
             setParameterPlainValue(Parameters::ID::sequencerProbability, 0.9f);
@@ -394,6 +397,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
             setParameterPlainValue(Parameters::ID::sequencerGate, 0.24f);
             setParameterPlainValue(Parameters::ID::sequencerSwing, 0.34f);
             setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordMode, 3.0f);
             setParameterPlainValue(Parameters::ID::sequencerAccent, 0.56f);
             setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
             setParameterPlainValue(Parameters::ID::sequencerProbability, 0.92f);
@@ -445,6 +449,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
             setParameterPlainValue(Parameters::ID::sequencerGate, 0.36f);
             setParameterPlainValue(Parameters::ID::sequencerSwing, 0.18f);
             setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerChordMode, 4.0f);
             setParameterPlainValue(Parameters::ID::sequencerAccent, 0.48f);
             setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
             setParameterPlainValue(Parameters::ID::sequencerProbability, 0.94f);
@@ -573,12 +578,18 @@ bool NateVSTAudioProcessor::exportSequencerMidiFile(const juce::File& destinatio
         const auto velocity = isAnchorStep
             ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
             : juce::jlimit(0.0f, 1.0f, step.velocity * (1.0f - (accent * 0.12f)));
-        const auto noteNumber = juce::jlimit(0, 127, root + octaveOffset + patternSequencer.getQuantizedNoteOffset(step.noteOffset));
         const auto startTicks = (stepIndex * stepTicks) + delayTicks;
+        auto noteCount = 0;
+        const auto notes = patternSequencer.getChordNotes(root, octaveOffset, step.noteOffset, noteCount);
 
-        sequence.addEvent(juce::MidiMessage::noteOn(1, noteNumber, velocity), static_cast<double>(startTicks));
-        sequence.addEvent(juce::MidiMessage::noteOff(1, noteNumber), static_cast<double>(startTicks + gateTicks));
-        ++exportedNotes;
+        for (auto noteIndex = 0; noteIndex < noteCount; ++noteIndex)
+        {
+            const auto noteNumber = notes[static_cast<size_t>(noteIndex)];
+            const auto noteVelocity = patternSequencer.getChordNoteVelocity(velocity, noteIndex);
+            sequence.addEvent(juce::MidiMessage::noteOn(1, noteNumber, noteVelocity), static_cast<double>(startTicks));
+            sequence.addEvent(juce::MidiMessage::noteOff(1, noteNumber), static_cast<double>(startTicks + gateTicks));
+            ++exportedNotes;
+        }
     }
 
     if (exportedNotes == 0)
@@ -1102,6 +1113,8 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
 {
     if (! state.getChildWithProperty("id", Parameters::ID::sequencerScale).isValid())
         setParameterPlainValue(Parameters::ID::sequencerScale, 0.0f);
+    if (! state.getChildWithProperty("id", Parameters::ID::sequencerChordMode).isValid())
+        setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
 
     restoreParameterGroupFromState(state, {
         Parameters::ID::sequencerEnabled,
@@ -1111,6 +1124,7 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         Parameters::ID::sequencerSwing,
         Parameters::ID::sequencerGrooveMode,
         Parameters::ID::sequencerScale,
+        Parameters::ID::sequencerChordMode,
         Parameters::ID::sequencerAccent,
         Parameters::ID::sequencerOctave,
         Parameters::ID::sequencerProbability,
@@ -1266,12 +1280,15 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
 {
     auto stateForParameters = state.createCopy();
     removePerformanceSnapshotChildren(stateForParameters);
+    const auto hasSequencerChordMode = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMode).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
 
     loadedSamplePath = stateForParameters.getProperty("sample_file").toString();
     parameters.replaceState(stateForParameters);
+    if (! hasSequencerChordMode)
+        setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
 
     if (loadedSamplePath.isNotEmpty())
         samplePlayer.loadFile(juce::File(loadedSamplePath));

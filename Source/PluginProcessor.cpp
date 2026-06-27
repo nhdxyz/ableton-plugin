@@ -170,8 +170,28 @@ bool NateVSTAudioProcessor::undoRandomization()
     if (! hasRandomUndoState || ! randomUndoState.isValid())
         return false;
 
+    randomRedoState = createPluginState();
+    randomRedoLabel = randomUndoLabel;
+    hasRandomRedoState = true;
     restorePluginState(randomUndoState.createCopy());
     hasRandomUndoState = false;
+    randomUndoState = {};
+    randomUndoLabel.clear();
+    return true;
+}
+
+bool NateVSTAudioProcessor::redoRandomization()
+{
+    if (! hasRandomRedoState || ! randomRedoState.isValid())
+        return false;
+
+    randomUndoState = createPluginState();
+    randomUndoLabel = randomRedoLabel;
+    hasRandomUndoState = true;
+    restorePluginState(randomRedoState.createCopy());
+    hasRandomRedoState = false;
+    randomRedoState = {};
+    randomRedoLabel.clear();
     return true;
 }
 
@@ -1071,11 +1091,28 @@ juce::String NateVSTAudioProcessor::getActiveRandomizationLockSummary() const
     return locks.joinIntoString(", ");
 }
 
+juce::String NateVSTAudioProcessor::getRandomHistorySummary() const
+{
+    juce::StringArray history;
+
+    if (hasRandomUndoState && randomUndoState.isValid())
+        history.add("Undo: " + (randomUndoLabel.isNotEmpty() ? randomUndoLabel : "Random"));
+
+    if (hasRandomRedoState && randomRedoState.isValid())
+        history.add("Redo: " + (randomRedoLabel.isNotEmpty() ? randomRedoLabel : "Random"));
+
+    return history.joinIntoString(" / ");
+}
+
 void NateVSTAudioProcessor::runRandomAction(RandomAction action)
 {
     const auto snapshot = createPluginState();
     randomUndoState = snapshot.createCopy();
+    randomUndoLabel = randomActionLabel(action);
     hasRandomUndoState = true;
+    randomRedoState = {};
+    randomRedoLabel.clear();
+    hasRandomRedoState = false;
 
     switch (action)
     {
@@ -1091,6 +1128,18 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action)
     }
 
     restoreLockedSectionsFromState(snapshot);
+}
+
+juce::String NateVSTAudioProcessor::randomActionLabel(RandomAction action)
+{
+    switch (action)
+    {
+        case RandomAction::generate: return "Generate";
+        case RandomAction::mutate: return "Mutate";
+        case RandomAction::variation: return "Variation";
+    }
+
+    return "Random";
 }
 
 bool NateVSTAudioProcessor::isRandomLockEnabled(const juce::String& parameterID) const

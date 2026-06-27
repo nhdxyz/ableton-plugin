@@ -62,6 +62,7 @@ public:
     void mutateRandomPatch();
     void createRandomVariation();
     bool undoRandomization();
+    bool redoRandomization();
     bool loadSampleFile(const juce::File& file);
     void clearSample();
     bool randomizeSampleCut();
@@ -80,6 +81,7 @@ public:
     bool exportSequencerMidiFile(const juce::File& destination) const;
     void clearSequencerPattern();
     juce::String getActiveRandomizationLockSummary() const;
+    juce::String getRandomHistorySummary() const;
     bool savePreset(const juce::String& presetName);
     bool savePreset(const juce::String& presetName, const juce::String& category);
     bool loadPreset(const juce::String& presetName);
@@ -128,12 +130,17 @@ private:
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
+    juce::ValueTree randomRedoState;
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
+    juce::String randomUndoLabel;
+    juce::String randomRedoLabel;
     bool hasRandomUndoState = false;
+    bool hasRandomRedoState = false;
     bool hasSequencerUndoState = false;
 
     void runRandomAction(RandomAction action);
+    static juce::String randomActionLabel(RandomAction action);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
     float getParameterPlainValue(const juce::String& parameterID, float fallback) const;
     float getParameterPlainValueFromState(const juce::ValueTree& state, const juce::String& parameterID, float fallback) const;

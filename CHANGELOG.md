@@ -8,6 +8,12 @@
 - Surfaced when oscillator phases reset cleanly, when Mono is actively collapsing unison spread, when low-side energy needs mono-bass protection, and when the sequencer root is outside the practical club sub range.
 - Kept the pass UI-only by reading existing root, Mono, Width, unison, Guard, and low-end meter values without adding parameters or audio-thread work.
 
+### Randomization Redo History
+
+- Added a LAB/HOME `Redo` action for restoring the last undone Generate, Mutate, or Variation result.
+- Added randomization history summaries such as `Undo: Mutate` and `Redo: Variation` to the random status label.
+- Kept the history transient and parameter-compatible by storing in-session plugin-state snapshots only, without adding host parameters or preset data.
+
 ### Sample Waveform Display
 
 - Added a SAMPLE-panel waveform overview for loaded audio so vocal chops and phrase cuts can be edited visually instead of only by start/end numbers.

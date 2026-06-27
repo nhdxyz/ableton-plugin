@@ -745,6 +745,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleWaveformDisplay();
         sequencerGrid.repaint();
     };
+    redoRandomButton.setTooltip("Redo the last undone randomization action");
+    redoRandomButton.onClick = [this]
+    {
+        setRandomStatus(audioProcessor.redoRandomization() ? "Redo restored" : "Nothing to redo");
+        updateSampleNameLabel();
+        updateSampleWaveformDisplay();
+        sequencerGrid.repaint();
+    };
     recallSnapshotAButton.setTooltip("Recall performance snapshot A");
     recallSnapshotAButton.onClick = [this]
     {
@@ -1008,6 +1016,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(mutateButton);
     addAndMakeVisible(variationButton);
     addAndMakeVisible(undoRandomButton);
+    addAndMakeVisible(redoRandomButton);
     addAndMakeVisible(recallSnapshotAButton);
     addAndMakeVisible(captureSnapshotAButton);
     addAndMakeVisible(recallSnapshotBButton);
@@ -1239,6 +1248,7 @@ void NateVSTAudioProcessorEditor::resized()
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
             undoRandomButton.setVisible(true);
+            redoRandomButton.setVisible(true);
             presetBox.setVisible(true);
             presetCategoryBox.setVisible(true);
             previousPresetButton.setVisible(true);
@@ -1297,7 +1307,8 @@ void NateVSTAudioProcessorEditor::resized()
             mutateButton.setBounds(labButtonRow.removeFromLeft(86).reduced(3, 4));
             variationButton.setBounds(labButtonRow.removeFromLeft(96).reduced(3, 4));
             auto randomStatusRow = labArea.removeFromTop(34).withTrimmedTop(6);
-            undoRandomButton.setBounds(randomStatusRow.removeFromLeft(76).reduced(3, 4));
+            undoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
+            redoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
             randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
@@ -1391,6 +1402,7 @@ void NateVSTAudioProcessorEditor::resized()
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
             undoRandomButton.setVisible(true);
+            redoRandomButton.setVisible(true);
             randomLockPitchButton.setVisible(true);
             randomLockEnvelopeButton.setVisible(true);
             randomLockFilterButton.setVisible(true);
@@ -1407,6 +1419,7 @@ void NateVSTAudioProcessorEditor::resized()
             mutateButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
             variationButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
             undoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
+            redoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
             auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
             const auto lockButtonWidth = lockRow.getWidth() / 8;
             randomLockPitchButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
@@ -2225,8 +2238,12 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
 void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 {
     const auto locks = audioProcessor.getActiveRandomizationLockSummary();
-    randomStatusLabel.setText(locks.isNotEmpty() ? action + " | Locked: " + locks : action + " | No locks",
-                              juce::dontSendNotification);
+    const auto history = audioProcessor.getRandomHistorySummary();
+    juce::StringArray details;
+    if (history.isNotEmpty())
+        details.add(history);
+    details.add(locks.isNotEmpty() ? "Locked: " + locks : "No locks");
+    randomStatusLabel.setText(action + " | " + details.joinIntoString(" | "), juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
@@ -2818,7 +2835,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton,
-        &generateButton, &mutateButton, &variationButton, &undoRandomButton,
+        &generateButton, &mutateButton, &variationButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,

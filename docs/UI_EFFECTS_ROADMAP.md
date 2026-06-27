@@ -456,6 +456,8 @@ Build the next larger slices in this order:
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.
    First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
+7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
+   First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

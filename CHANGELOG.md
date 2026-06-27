@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Club Factory Preset Packs
+
+- Added repo-managed factory presets for house, tech-house, minimal, and techno workflows, expanding the factory pack from 8 to 16 presets.
+- Added House, Tech House, Techno, and Minimal Library category filters so the new factory presets are browsable in the plugin.
+- Made `tools/generate_factory_presets.py` preserve per-preset categories instead of hardcoding every factory preset as UKG.
+
 ### Knob Feel Pass
 
 - Reduced rotary drag travel so common sound-design knobs respond faster while keeping frequency/time controls more controlled.

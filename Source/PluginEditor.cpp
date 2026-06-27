@@ -25,12 +25,12 @@ juce::Colour panelColour()
 
 juce::StringArray presetCategoryChoices()
 {
-    return { "User", "Bass", "Stab", "Lead", "UKG", "FX", "Sequence", "Sample" };
+    return { "User", "Bass", "Stab", "Lead", "House", "Tech House", "Techno", "Minimal", "UKG", "FX", "Sequence", "Sample" };
 }
 
 juce::StringArray presetFilterChoices()
 {
-    return { "All", "Favorites", "Recent", "User", "Factory", "Bass", "Stab", "Lead", "UKG", "FX", "Sequence", "Sample" };
+    return { "All", "Favorites", "Recent", "User", "Factory", "Bass", "Stab", "Lead", "House", "Tech House", "Techno", "Minimal", "UKG", "FX", "Sequence", "Sample" };
 }
 
 float smoothMeterValue(float current, float target)

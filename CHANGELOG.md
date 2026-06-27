@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Momentary FX Holds
+
+- Added FX-panel hold buttons for temporary Delay, Space, Pump, and Mute Drop performance moves.
+- Momentary holds snapshot the touched FX/output parameters on mouse down, apply the throw while held, and restore the previous values and selected FX module on release.
+- Added editor-close cleanup so a held momentary throw is restored if the UI is closed before mouse release.
+
 ### FX Throw Performance Buttons
 
 - Added FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions for fast house, UKG, tech-house, and minimal arrangement moves.

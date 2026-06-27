@@ -417,6 +417,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
    First performance slice implemented as HOME A/B snapshots that save with plugin/preset state and recall full patch/sample/sequencer state.
    Second performance slice implemented as a HOME XY pad for one-gesture Motion and Space macro control.
    Third performance slice implemented as one-click FX-panel delay, space, pump, and throw-off commands for arrangement fills and breakdowns.
+   Fourth performance slice implemented as hold-to-restore Delay, Space, Pump, and Mute Drop buttons with snapshot/restore cleanup on release.
 
 ### Reference-Audit Build Order
 
@@ -449,6 +450,7 @@ Build the next larger slices in this order:
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.
    First throw pass implemented as FX-panel `Delay Throw`, `Space Throw`, `Pump Drop`, and `Throw Off` actions that write Delay, Reverb, Pump, Width, and Guard settings without new parameter IDs.
+   First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

@@ -60,6 +60,22 @@ private:
         guard
     };
 
+    enum class MomentaryFxAction
+    {
+        none,
+        delay,
+        space,
+        pump,
+        mute
+    };
+
+    struct FxMomentarySnapshot
+    {
+        std::array<float, 20> values {};
+        FxModule selectedModule = FxModule::guard;
+        bool valid = false;
+    };
+
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -413,6 +429,10 @@ private:
     juce::TextButton fxThrowSpaceButton { "Space Throw" };
     juce::TextButton fxThrowPumpButton { "Pump Drop" };
     juce::TextButton fxThrowDryButton { "Throw Off" };
+    juce::TextButton fxHoldDelayButton { "Hold Dly" };
+    juce::TextButton fxHoldSpaceButton { "Hold Spc" };
+    juce::TextButton fxHoldPumpButton { "Hold Pump" };
+    juce::TextButton fxMuteDropButton { "Mute Drop" };
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
     UI::FxRackRow fxDistortionSlotButton { "Drive" };
@@ -448,6 +468,8 @@ private:
     double presetAuditionNoteOffMs = 0.0;
     juce::String fxRackStatusOverride;
     double fxRackStatusOverrideUntilMs = 0.0;
+    MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
+    FxMomentarySnapshot fxMomentarySnapshot;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -502,6 +524,11 @@ private:
     void applySpaceThrow();
     void applyPumpDrop();
     void clearFxThrows();
+    void beginMomentaryFxAction(MomentaryFxAction action);
+    void endMomentaryFxAction(MomentaryFxAction action);
+    void applyMomentaryMuteDrop();
+    FxMomentarySnapshot captureFxMomentarySnapshot() const;
+    void restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot);
     void setFxRackStatusOverride(const juce::String& message);
     void updateFxRackControls();
     std::array<FxModule, 15> fxDefaultModuleOrder() const;
@@ -516,6 +543,7 @@ private:
     juce::String fxModuleName(FxModule module) const;
     juce::String fxModuleSummary(FxModule module) const;
     UI::FxRackRow& fxSlotButton(FxModule module);
+    float readPlainParameterValue(const juce::String& parameterID, float fallback) const;
     void setPlainParameterValue(const juce::String& parameterID, float plainValue);
 
     Panel activePanel = Panel::home;

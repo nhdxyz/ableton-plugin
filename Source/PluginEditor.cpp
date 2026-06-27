@@ -15,6 +15,28 @@ constexpr auto keyboardMaxLowestVisibleNote = 84;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
+constexpr std::array<const char*, 20> momentaryFxParameterIDs {
+    Parameters::ID::fxDelayEnabled,
+    Parameters::ID::fxDelayTime,
+    Parameters::ID::fxDelayFeedback,
+    Parameters::ID::fxDelayMix,
+    Parameters::ID::fxReverbEnabled,
+    Parameters::ID::fxReverbSize,
+    Parameters::ID::fxReverbDamping,
+    Parameters::ID::fxReverbMix,
+    Parameters::ID::fxPumpEnabled,
+    Parameters::ID::fxPumpRate,
+    Parameters::ID::fxPumpDepth,
+    Parameters::ID::fxPumpShape,
+    Parameters::ID::fxPumpPhase,
+    Parameters::ID::fxWidthEnabled,
+    Parameters::ID::fxWidthAmount,
+    Parameters::ID::fxWidthMonoCutoff,
+    Parameters::ID::fxGuardEnabled,
+    Parameters::ID::fxGuardPush,
+    Parameters::ID::fxGuardCeiling,
+    Parameters::ID::outputGain
+};
 
 juce::Colour backgroundColour()
 {
@@ -881,6 +903,38 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxThrowSpaceButton.onClick = [this] { applySpaceThrow(); };
     fxThrowPumpButton.onClick = [this] { applyPumpDrop(); };
     fxThrowDryButton.onClick = [this] { clearFxThrows(); };
+    fxHoldDelayButton.setTooltip("Hold for a temporary delay throw, release to restore");
+    fxHoldDelayButton.onStateChange = [this]
+    {
+        if (fxHoldDelayButton.isDown())
+            beginMomentaryFxAction(MomentaryFxAction::delay);
+        else
+            endMomentaryFxAction(MomentaryFxAction::delay);
+    };
+    fxHoldSpaceButton.setTooltip("Hold for a temporary delay and reverb wash, release to restore");
+    fxHoldSpaceButton.onStateChange = [this]
+    {
+        if (fxHoldSpaceButton.isDown())
+            beginMomentaryFxAction(MomentaryFxAction::space);
+        else
+            endMomentaryFxAction(MomentaryFxAction::space);
+    };
+    fxHoldPumpButton.setTooltip("Hold for a temporary pump/duck move, release to restore");
+    fxHoldPumpButton.onStateChange = [this]
+    {
+        if (fxHoldPumpButton.isDown())
+            beginMomentaryFxAction(MomentaryFxAction::pump);
+        else
+            endMomentaryFxAction(MomentaryFxAction::pump);
+    };
+    fxMuteDropButton.setTooltip("Hold for a temporary mute drop, release to restore");
+    fxMuteDropButton.onStateChange = [this]
+    {
+        if (fxMuteDropButton.isDown())
+            beginMomentaryFxAction(MomentaryFxAction::mute);
+        else
+            endMomentaryFxAction(MomentaryFxAction::mute);
+    };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -968,6 +1022,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxThrowSpaceButton);
     addAndMakeVisible(fxThrowPumpButton);
     addAndMakeVisible(fxThrowDryButton);
+    addAndMakeVisible(fxHoldDelayButton);
+    addAndMakeVisible(fxHoldSpaceButton);
+    addAndMakeVisible(fxHoldPumpButton);
+    addAndMakeVisible(fxMuteDropButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -996,6 +1054,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
 NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
+    restoreFxMomentarySnapshot(fxMomentarySnapshot);
     releasePresetAuditionNote();
     stopTimer();
     setLookAndFeel(nullptr);
@@ -1573,6 +1632,10 @@ void NateVSTAudioProcessorEditor::resized()
             fxThrowSpaceButton.setVisible(true);
             fxThrowPumpButton.setVisible(true);
             fxThrowDryButton.setVisible(true);
+            fxHoldDelayButton.setVisible(true);
+            fxHoldSpaceButton.setVisible(true);
+            fxHoldPumpButton.setVisible(true);
+            fxMuteDropButton.setVisible(true);
             fxRackStatusLabel.setVisible(true);
             fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
             fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
@@ -1587,7 +1650,13 @@ void NateVSTAudioProcessorEditor::resized()
             fxThrowPumpButton.setBounds(throwRow.removeFromLeft(104).reduced(4));
             fxThrowDryButton.setBounds(throwRow.removeFromLeft(96).reduced(4));
 
-            content.removeFromTop(8);
+            auto holdRow = content.removeFromTop(34).withTrimmedTop(1);
+            fxHoldDelayButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
+            fxHoldSpaceButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
+            fxHoldPumpButton.setBounds(holdRow.removeFromLeft(100).reduced(4));
+            fxMuteDropButton.setBounds(holdRow.removeFromLeft(96).reduced(4));
+
+            content.removeFromTop(6);
             auto rackArea = content.removeFromLeft(260).reduced(18, 16);
             rackArea.removeFromTop(26);
             auto detailArea = content.reduced(24, 18);
@@ -2249,6 +2318,90 @@ void NateVSTAudioProcessorEditor::clearFxThrows()
     setFxRackStatusOverride("Throws cleared | Guard remains on");
 }
 
+void NateVSTAudioProcessorEditor::beginMomentaryFxAction(MomentaryFxAction action)
+{
+    if (action == MomentaryFxAction::none || activeMomentaryFxAction != MomentaryFxAction::none)
+        return;
+
+    fxMomentarySnapshot = captureFxMomentarySnapshot();
+    activeMomentaryFxAction = action;
+
+    switch (action)
+    {
+        case MomentaryFxAction::delay:
+            applyDelayThrow();
+            setFxRackStatusOverride("Holding delay throw | release to restore");
+            break;
+
+        case MomentaryFxAction::space:
+            applySpaceThrow();
+            setFxRackStatusOverride("Holding space throw | release to restore");
+            break;
+
+        case MomentaryFxAction::pump:
+            applyPumpDrop();
+            setFxRackStatusOverride("Holding pump drop | release to restore");
+            break;
+
+        case MomentaryFxAction::mute:
+            applyMomentaryMuteDrop();
+            break;
+
+        case MomentaryFxAction::none:
+            break;
+    }
+}
+
+void NateVSTAudioProcessorEditor::endMomentaryFxAction(MomentaryFxAction action)
+{
+    if (action == MomentaryFxAction::none || activeMomentaryFxAction != action)
+        return;
+
+    restoreFxMomentarySnapshot(fxMomentarySnapshot);
+    fxMomentarySnapshot = {};
+    activeMomentaryFxAction = MomentaryFxAction::none;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Momentary FX restored");
+}
+
+void NateVSTAudioProcessorEditor::applyMomentaryMuteDrop()
+{
+    setPlainParameterValue(Parameters::ID::outputGain, -24.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPush, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.92f);
+
+    selectedFxModule = FxModule::guard;
+    resized();
+    repaint();
+    setFxRackStatusOverride("Holding mute drop | release to restore");
+}
+
+NateVSTAudioProcessorEditor::FxMomentarySnapshot NateVSTAudioProcessorEditor::captureFxMomentarySnapshot() const
+{
+    FxMomentarySnapshot snapshot;
+    snapshot.selectedModule = selectedFxModule;
+    snapshot.valid = true;
+
+    for (size_t index = 0; index < momentaryFxParameterIDs.size(); ++index)
+        snapshot.values[index] = readPlainParameterValue(momentaryFxParameterIDs[index], 0.0f);
+
+    return snapshot;
+}
+
+void NateVSTAudioProcessorEditor::restoreFxMomentarySnapshot(const FxMomentarySnapshot& snapshot)
+{
+    if (! snapshot.valid)
+        return;
+
+    for (size_t index = 0; index < momentaryFxParameterIDs.size(); ++index)
+        setPlainParameterValue(momentaryFxParameterIDs[index], snapshot.values[index]);
+
+    fxPumpRateBox.setSelectedItemIndex(juce::roundToInt(snapshot.values[9]), juce::dontSendNotification);
+    selectedFxModule = snapshot.selectedModule;
+}
+
 void NateVSTAudioProcessorEditor::setFxRackStatusOverride(const juce::String& message)
 {
     fxRackStatusOverride = message;
@@ -2512,6 +2665,14 @@ UI::FxRackRow& NateVSTAudioProcessorEditor::fxSlotButton(FxModule module)
     return fxGuardSlotButton;
 }
 
+float NateVSTAudioProcessorEditor::readPlainParameterValue(const juce::String& parameterID, float fallback) const
+{
+    if (const auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+        return value->load();
+
+    return fallback;
+}
+
 void NateVSTAudioProcessorEditor::setPlainParameterValue(const juce::String& parameterID, float plainValue)
 {
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
@@ -2585,6 +2746,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
+        &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &fxRackStatusLabel,

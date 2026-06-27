@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Club Low-End Assistant
+
+- Added post-FX low-end metering for sub-band RMS, low-frequency stereo side risk, and output peak using lightweight atomic values for the UI.
+- Added a compact HOME-panel `CLUB` assistant showing sequencer root Hz, mono/mono-below status, sub energy, low-side risk, and Guard/headroom status.
+- Reused existing Mono, Width mono-bass crossover, Guard, and sequencer-root parameters so the assistant reflects the current patch instead of creating a separate safety system.
+- Updated MOD-panel background painting to match the newer compact curve layout and reduce visual grouping mismatch.
+
 ### LFO Curve Modulation
 
 - Added a sixth LFO 1 shape, `Curve`, with eight saved and automatable curve-point parameters.

@@ -3,6 +3,7 @@
 #include "PluginProcessor.h"
 #include "UI/FxRackRow.h"
 #include "UI/LookAndFeel.h"
+#include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
 #include "UI/OutputMeter.h"
 #include "UI/StepSequencerGrid.h"
@@ -405,6 +406,7 @@ private:
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     UI::OutputMeter outputMeter;
+    UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::StepSequencerGrid sequencerGrid;
@@ -433,6 +435,7 @@ private:
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
     void updateOutputMeter();
+    void updateLowEndAssistant();
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();

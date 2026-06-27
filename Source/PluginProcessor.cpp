@@ -27,6 +27,7 @@ NateVSTAudioProcessor::NateVSTAudioProcessor()
 
 void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    meterSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
     synthEngine.prepare(sampleRate, samplesPerBlock);
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
@@ -35,6 +36,11 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
+    lowEndSubRms.store(0.0f, std::memory_order_relaxed);
+    lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
+    lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
+    lowEndStateLeft = 0.0f;
+    lowEndStateRight = 0.0f;
 }
 
 void NateVSTAudioProcessor::releaseResources()
@@ -671,6 +677,13 @@ void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,
     rmsRight = outputMeterRmsRight.load(std::memory_order_relaxed);
 }
 
+void NateVSTAudioProcessor::getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept
+{
+    subRms = lowEndSubRms.load(std::memory_order_relaxed);
+    lowStereoRisk = lowEndStereoRisk.load(std::memory_order_relaxed);
+    outputPeak = lowEndOutputPeak.load(std::memory_order_relaxed);
+}
+
 juce::String NateVSTAudioProcessor::getActiveRandomizationLockSummary() const
 {
     juce::StringArray locks;
@@ -985,6 +998,9 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
         outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
         outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
         outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
+        lowEndSubRms.store(0.0f, std::memory_order_relaxed);
+        lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
+        lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
         return;
     }
 
@@ -1016,6 +1032,30 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
     outputMeterPeakRight.store(peakRight, std::memory_order_relaxed);
     outputMeterRmsLeft.store(rmsLeft, std::memory_order_relaxed);
     outputMeterRmsRight.store(rmsRight, std::memory_order_relaxed);
+
+    const auto lowAlpha = 1.0f - std::exp((-juce::MathConstants<float>::twoPi * 160.0f) / static_cast<float>(juce::jmax(1.0, meterSampleRate)));
+    const auto* leftSamples = buffer.getReadPointer(0);
+    const auto* rightSamples = buffer.getReadPointer(numChannels > 1 ? 1 : 0);
+    auto monoLowSquares = 0.0;
+    auto sideLowSquares = 0.0;
+
+    for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+    {
+        lowEndStateLeft += lowAlpha * (leftSamples[sampleIndex] - lowEndStateLeft);
+        lowEndStateRight += lowAlpha * (rightSamples[sampleIndex] - lowEndStateRight);
+
+        const auto monoLow = (lowEndStateLeft + lowEndStateRight) * 0.5f;
+        const auto sideLow = (lowEndStateLeft - lowEndStateRight) * 0.5f;
+        monoLowSquares += static_cast<double>(monoLow) * static_cast<double>(monoLow);
+        sideLowSquares += static_cast<double>(sideLow) * static_cast<double>(sideLow);
+    }
+
+    const auto subRms = static_cast<float>(std::sqrt(monoLowSquares / static_cast<double>(numSamples)));
+    const auto sideRms = static_cast<float>(std::sqrt(sideLowSquares / static_cast<double>(numSamples)));
+    const auto stereoRisk = sideRms / juce::jmax(0.00001f, subRms + sideRms);
+    lowEndSubRms.store(juce::jlimit(0.0f, 2.0f, subRms), std::memory_order_relaxed);
+    lowEndStereoRisk.store(juce::jlimit(0.0f, 1.0f, stereoRisk), std::memory_order_relaxed);
+    lowEndOutputPeak.store(juce::jlimit(0.0f, 2.0f, juce::jmax(peakLeft, peakRight)), std::memory_order_relaxed);
 }
 
 juce::ValueTree NateVSTAudioProcessor::createPluginState()

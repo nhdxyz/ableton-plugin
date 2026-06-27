@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include <cmath>
+
 namespace
 {
 constexpr auto editorWidth = 940;
@@ -53,6 +55,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
+    addAndMakeVisible(lowEndAssistant);
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
@@ -775,13 +778,15 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(132);
+        auto topRow = modContent.removeFromTop(108);
         auto sourceArea = topRow.removeFromLeft(300).reduced(5);
         auto macroArea = topRow.reduced(5);
-        auto controlsRow = modContent.withTrimmedTop(12).removeFromTop(138);
-        auto lfoArea = controlsRow.removeFromLeft(410).reduced(5);
+        modContent.removeFromTop(8);
+        auto controlsRow = modContent.removeFromTop(198);
+        auto lfoArea = controlsRow.removeFromLeft(450).reduced(5);
         auto envelopeArea = controlsRow.reduced(5);
-        auto matrixArea = modContent.withTrimmedTop(164).reduced(5);
+        modContent.removeFromTop(6);
+        auto matrixArea = modContent.reduced(5);
 
         for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
         {
@@ -874,6 +879,7 @@ void NateVSTAudioProcessorEditor::resized()
             savePresetButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
+            lowEndAssistant.setVisible(true);
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
@@ -889,7 +895,8 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(performArea.removeFromTop(126).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
+            layoutKnobRow(performArea.removeFromTop(112).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
+            lowEndAssistant.setBounds(performArea.removeFromTop(40).reduced(2, 4));
 
             homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -1940,7 +1947,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &fxRackStatusLabel,
-        &lfoCurveDisplay, &sequencerGrid
+        &lowEndAssistant, &lfoCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -2150,11 +2157,43 @@ void NateVSTAudioProcessorEditor::updateOutputMeter()
     outputMeter.setLevels(displayedPeakLeft, displayedPeakRight, displayedRmsLeft, displayedRmsRight);
 }
 
+void NateVSTAudioProcessorEditor::updateLowEndAssistant()
+{
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    auto subRms = 0.0f;
+    auto lowStereoRisk = 0.0f;
+    auto outputPeak = 0.0f;
+    audioProcessor.getLowEndMeterLevels(subRms, lowStereoRisk, outputPeak);
+
+    const auto rootNote = juce::jlimit(0, 127, juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 36.0f)));
+    const auto rootName = juce::MidiMessage::getMidiNoteName(rootNote, true, true, 3);
+    const auto rootHz = juce::MidiMessage::getMidiNoteInHertz(rootNote);
+
+    UI::LowEndAssistant::State state;
+    state.rootText = rootName + " " + juce::String(static_cast<int>(std::round(rootHz))) + "Hz";
+    state.subRms = subRms;
+    state.lowStereoRisk = lowStereoRisk;
+    state.outputPeak = outputPeak;
+    state.monoCrossoverHz = readParameter(Parameters::ID::fxWidthMonoCutoff, 120.0f);
+    state.monoEnabled = readParameter(Parameters::ID::monoMode, 0.0f) >= 0.5f;
+    state.widthEnabled = readParameter(Parameters::ID::fxWidthEnabled, 0.0f) >= 0.5f;
+    state.guardEnabled = readParameter(Parameters::ID::fxGuardEnabled, 0.0f) >= 0.5f;
+    lowEndAssistant.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updateOutputMeter();
+    updateLowEndAssistant();
     updateKeyboardRangeLabel();
     updateFxRackControls();
 }

@@ -85,6 +85,7 @@ public:
     void notePresetLoaded(const juce::String& presetName);
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
+    void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
 
 private:
     enum class RandomAction
@@ -107,6 +108,12 @@ private:
     std::atomic<float> outputMeterPeakRight { 0.0f };
     std::atomic<float> outputMeterRmsLeft { 0.0f };
     std::atomic<float> outputMeterRmsRight { 0.0f };
+    std::atomic<float> lowEndSubRms { 0.0f };
+    std::atomic<float> lowEndStereoRisk { 0.0f };
+    std::atomic<float> lowEndOutputPeak { 0.0f };
+    float lowEndStateLeft = 0.0f;
+    float lowEndStateRight = 0.0f;
+    double meterSampleRate = 44100.0;
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;

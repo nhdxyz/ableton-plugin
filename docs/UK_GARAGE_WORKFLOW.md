@@ -131,6 +131,7 @@ Research references:
 - Depth, rate, shape, and phase controls.
 - Useful for UKG, house, and garage-adjacent bass movement.
 - Bass presets now use the MOD-panel curve LFO for garage-style push/pull cutoff movement where a basic sine felt too even.
+- HOME now includes a compact club low-end assistant so UKG bass patches expose root Hz, sub energy, low-side stereo risk, Width mono-below status, and Guard/headroom state while designing.
 - Available as an FX rack module. Simple macro/mod assignment should come through the future MOD workflow.
 
 3. Organ/Stab source.

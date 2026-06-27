@@ -809,9 +809,11 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juc
 
     auto state = createPluginState();
     state.setProperty("preset_name", trimmedName, nullptr);
-    state.setProperty("preset_category", category.trim().isNotEmpty() ? category.trim() : "User", nullptr);
+    const auto storedCategory = category.trim().isNotEmpty() ? category.trim() : juce::String("User");
+    state.setProperty("preset_category", storedCategory, nullptr);
     state.setProperty("preset_author", "User", nullptr);
     state.setProperty("preset_source", "User", nullptr);
+    state.setProperty("preset_tags", storedCategory, nullptr);
 
     if (auto xml = state.createXml())
         return xml->writeTo(presetFileForName(trimmedName));
@@ -874,6 +876,7 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
 
             auto category = isFactory ? juce::String("Factory") : juce::String("User");
             auto source = isFactory ? juce::String("Factory") : juce::String("User");
+            juce::String tags;
 
             if (auto xml = juce::XmlDocument::parse(file))
             {
@@ -887,10 +890,14 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                     const auto storedSource = state.getProperty("preset_source").toString().trim();
                     if (storedSource.isNotEmpty())
                         source = storedSource;
+
+                    const auto storedTags = state.getProperty("preset_tags").toString().trim();
+                    if (storedTags.isNotEmpty())
+                        tags = storedTags;
                 }
             }
 
-            presets.push_back({ name, category, source, isFactory, favorites.contains(name) });
+            presets.push_back({ name, category, source, tags, isFactory, favorites.contains(name) });
             seenNames.add(name);
         }
     };

@@ -43,6 +43,7 @@ public:
         juce::String name;
         juce::String category;
         juce::String source;
+        juce::String tags;
         bool isFactory = false;
         bool isFavorite = false;
     };

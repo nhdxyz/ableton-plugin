@@ -201,6 +201,73 @@ def curve(*values):
     return {f"lfo1_curve_{index + 1}": value for index, value in enumerate(values)}
 
 
+TAG_ORDER = [
+    "House",
+    "Tech House",
+    "Techno",
+    "Minimal",
+    "UKG",
+    "Bass",
+    "Chord",
+    "Pluck",
+    "Stab",
+    "Sequenced",
+    "Mono Safe",
+    "Pump",
+    "Wide",
+    "FX",
+    "Vocal Chop",
+    "Sample",
+    "Guard",
+]
+
+
+def preset_tags(preset, params):
+    name = preset["name"].lower()
+    category = preset.get("category", "UKG")
+    tags = {category}
+
+    if "bass" in name or params.get("sub_level", 0.0) >= 0.35:
+        tags.add("Bass")
+    if "chord" in name or params.get("sequencer_chord_mode", 0) >= 2:
+        tags.add("Chord")
+    if "pluck" in name or "bell" in name:
+        tags.add("Pluck")
+    if "stab" in name or params.get("sequencer_chord_mode", 0) > 0:
+        tags.add("Stab")
+    if "vocal" in name or "chop" in name:
+        tags.add("Vocal Chop")
+    if params.get("sample_enabled", 0) or "sample" in name:
+        tags.add("Sample")
+    if params.get("sequencer_enabled", 0):
+        tags.add("Sequenced")
+    if params.get("mono_mode", 0) or (params.get("fx_width_enabled", 0) and params.get("fx_width_mono_cutoff", 0.0) >= 100.0):
+        tags.add("Mono Safe")
+    if params.get("fx_pump_enabled", 0):
+        tags.add("Pump")
+    if params.get("fx_width_enabled", 0) and params.get("fx_width_amount", 1.0) > 1.05:
+        tags.add("Wide")
+    if params.get("fx_guard_enabled", 0):
+        tags.add("Guard")
+
+    fx_enabled = [
+        "fx_distortion_enabled",
+        "fx_bitcrush_enabled",
+        "fx_tremolo_enabled",
+        "fx_ring_enabled",
+        "fx_comb_enabled",
+        "fx_chorus_enabled",
+        "fx_delay_enabled",
+        "fx_reverb_enabled",
+        "fx_phaser_enabled",
+        "fx_flanger_enabled",
+    ]
+    if any(params.get(param, 0) for param in fx_enabled):
+        tags.add("FX")
+
+    return ", ".join(tag for tag in TAG_ORDER if tag in tags)
+
+
 PRESETS = [
     {
         "name": "UKG 2-Step Bass",
@@ -1489,6 +1556,7 @@ def write_preset(preset):
             "preset_category": preset.get("category", "UKG"),
             "preset_author": "Nate",
             "preset_source": "Factory",
+            "preset_tags": preset.get("tags", preset_tags(preset, params)),
             **preset["steps"],
         },
     )

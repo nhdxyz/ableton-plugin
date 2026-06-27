@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Library Smart Tags
+
+- Added a LIBRARY `Tag` filter with smart tags such as Bass, Chord, Pluck, Stab, Sequenced, Mono Safe, Pump, Wide, FX, Vocal Chop, and genre tags.
+- Added saved `preset_tags` metadata to preset library scanning and user preset saving while keeping older presets valid without tags.
+- Regenerated all factory presets with deterministic smart tags from the preset generator.
+
 ### Library Search
 
 - Added a `Search presets` field to the LIBRARY panel for filtering presets by name, category, source, user/factory status, or favorite state.

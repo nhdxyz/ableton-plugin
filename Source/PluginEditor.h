@@ -109,6 +109,7 @@ private:
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
+    juce::ComboBox presetTagBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPumpRateBox;
     juce::ComboBox fxTremoloRateBox;

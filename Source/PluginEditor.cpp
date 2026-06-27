@@ -39,6 +39,62 @@ float smoothMeterValue(float current, float target)
     const auto coefficient = target > current ? 0.65f : 0.18f;
     return current + ((target - current) * coefficient);
 }
+
+bool parameterIsOneOf(const juce::String& parameterID, std::initializer_list<const char*> ids)
+{
+    for (const auto* id : ids)
+        if (parameterID == id)
+            return true;
+
+    return false;
+}
+
+int rotaryDragSensitivityForParameter(const juce::String& parameterID)
+{
+    if (parameterIsOneOf(parameterID, {
+            Parameters::ID::oscTune,
+            Parameters::ID::osc2Tune,
+            Parameters::ID::filterCutoff,
+            Parameters::ID::fxRingFrequency,
+            Parameters::ID::fxCombFrequency,
+            Parameters::ID::fxDelayTime,
+            Parameters::ID::fxWidthMonoCutoff,
+            Parameters::ID::fxToneLowCut
+        }))
+        return 280;
+
+    if (parameterIsOneOf(parameterID, {
+            Parameters::ID::filterResonance,
+            Parameters::ID::filterEnvAmount,
+            Parameters::ID::driveAmount,
+            Parameters::ID::outputGain,
+            Parameters::ID::sampleTranspose,
+            Parameters::ID::samplePitchRamp,
+            Parameters::ID::sequencerRoot,
+            Parameters::ID::sequencerSwing,
+            Parameters::ID::fxEqLowGain,
+            Parameters::ID::fxEqMidGain,
+            Parameters::ID::fxEqHighGain,
+            Parameters::ID::fxEqTrim,
+            Parameters::ID::fxGuardCeiling
+        }))
+        return 230;
+
+    if (parameterIsOneOf(parameterID, {
+            Parameters::ID::macroTone,
+            Parameters::ID::macroDirt,
+            Parameters::ID::macroMotion,
+            Parameters::ID::macroSpace,
+            Parameters::ID::randomAmount,
+            Parameters::ID::randomChaos,
+            Parameters::ID::randomBrightnessBias,
+            Parameters::ID::randomDriveBias,
+            Parameters::ID::randomMotionBias
+        }))
+        return 150;
+
+    return 190;
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -1150,8 +1206,6 @@ void NateVSTAudioProcessorEditor::resized()
             lfo1SyncButton.setVisible(true);
             lfo1RetriggerButton.setVisible(true);
             lfoCurveDisplay.setVisible(true);
-            for (auto& slider : lfoCurveSliders)
-                slider.setVisible(true);
 
             modSectionLabel.setBounds(content.removeFromTop(28));
 
@@ -1173,7 +1227,7 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixAmountHeader.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(100);
+            auto topRow = modContent.removeFromTop(104);
             auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
             auto macroArea = topRow.reduced(18, 8);
 
@@ -1186,10 +1240,10 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(62).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(66).withTrimmedTop(2), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
 
             modContent.removeFromTop(6);
-            auto generatorRow = modContent.removeFromTop(186);
+            auto generatorRow = modContent.removeFromTop(190);
             auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
             auto envelopeArea = generatorRow.reduced(18, 8);
 
@@ -1199,22 +1253,12 @@ void NateVSTAudioProcessorEditor::resized()
             lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(34).withTrimmedTop(1));
-
-            auto curveGrid = lfoArea.removeFromTop(34).withTrimmedTop(1);
-            auto layoutCurveRow = [] (juce::Rectangle<int> row, std::array<juce::Slider, 8>& sliders, size_t startIndex)
-            {
-                const auto cellWidth = row.getWidth() / 4;
-                for (size_t offset = 0; offset < 4; ++offset)
-                    sliders[startIndex + offset].setBounds(row.removeFromLeft(cellWidth).reduced(3, 1));
-            };
-            layoutCurveRow(curveGrid.removeFromTop(18), lfoCurveSliders, 0);
-            layoutCurveRow(curveGrid.removeFromTop(18), lfoCurveSliders, 4);
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(66).withTrimmedTop(2));
 
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(52).withTrimmedTop(1), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(60).withTrimmedTop(3), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
             modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
@@ -1656,13 +1700,12 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(88);
-    slider.setVelocityBasedMode(true);
-    slider.setVelocityModeParameters(1.0, 1, 0.06, true, juce::ModifierKeys::shiftModifier);
+    slider.setMouseDragSensitivity(rotaryDragSensitivityForParameter(parameterID));
+    slider.setVelocityBasedMode(false);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 76, 20);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);

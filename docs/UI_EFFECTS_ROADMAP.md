@@ -422,6 +422,7 @@ Recent reference checks against Serum 2, ZENOLOGY Pro, u-he Hive/Diva/Zebra, and
 Build the next larger slices in this order:
 
 1. Modulation visibility: destination rings, source activity, assignment summaries, direct curve dragging, and more destinations for sample and FX parameters.
+   First control-feel pass implemented as direct rotary dragging, parameter-aware drag ranges, and a larger visible LFO curve editor.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.

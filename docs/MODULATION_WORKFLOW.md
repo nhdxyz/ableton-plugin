@@ -137,7 +137,7 @@ HOME:
 
 SYNTH:
 
-- Show modulation amount rings around key tone controls later.
+- Show modulation amount rings around key tone controls. Current implementation covers the six matrix destinations: Cutoff, Resonance, Filter Env, Drive, Osc 2 Tune, and Osc 2 Level.
 - Keep detailed oscillator, unison, and filter controls here.
 
 MOD:

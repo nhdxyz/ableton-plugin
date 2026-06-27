@@ -448,6 +448,7 @@ private:
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
     void updateModMatrixRows();
+    void updateModDestinationIndicators();
     void updateOutputMeter();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();

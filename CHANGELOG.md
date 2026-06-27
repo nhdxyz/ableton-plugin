@@ -6,6 +6,7 @@
 
 - Added a visual MOD matrix row component that highlights active routes, shows polarity/amount as a small bar, and exposes route summaries through tooltips.
 - Added a matrix status line and `SOURCE`, `DESTINATION`, and `AMOUNT` headers so random/generated modulation is easier to read.
+- Added destination modulation rings to the six current matrix targets: Cutoff, Resonance, Filter Env, Drive, Osc 2 Tune, and Osc 2 Level.
 - Rebalanced the MOD page so the routing matrix has taller rows while keeping the LFO curve, point sliders, and Mod Env controls visible.
 - Made the LFO curve display directly draggable; edits write back to the existing automatable `lfo1_curve_*` parameters.
 

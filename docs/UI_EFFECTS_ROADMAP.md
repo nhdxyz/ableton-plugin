@@ -398,7 +398,7 @@ Each effect should include:
 - Add LFO 1 and Mod Env 1. Implemented for per-voice synth modulation.
 - Add an 8-slot matrix. Implemented for safe synth destinations.
 - First modulation-visibility pass implemented as active route rows, matrix headers/status, route tooltips, and draggable LFO curve points.
-- Add small modulation indicators to macro and destination knobs.
+- Add small modulation indicators to macro and destination knobs. Implemented first as destination rings for the current matrix targets.
 - Keep HOME focused on performance, not assignment editing.
 
 ### Phase 6: House, UKG, And Modern Synth Feature Tracks

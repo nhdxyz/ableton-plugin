@@ -2317,6 +2317,51 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
     modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
+{
+    std::array<float, 7> destinationDepths {};
+
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixSource[index], 0.0f)));
+        const auto destinationIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f)));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+
+        if (sourceIndex <= 0 || destinationIndex <= 0 || destinationIndex >= static_cast<int>(destinationDepths.size()))
+            continue;
+
+        destinationDepths[static_cast<size_t>(destinationIndex)] += amount;
+    }
+
+    auto setIndicator = [] (juce::Slider& slider, float amount)
+    {
+        amount = juce::jlimit(-1.0f, 1.0f, amount);
+
+        auto& properties = slider.getProperties();
+        const auto previous = static_cast<float>(static_cast<double>(properties.getWithDefault("modAmount", 0.0)));
+        if (std::abs(previous - amount) < 0.001f)
+            return;
+
+        properties.set("modAmount", amount);
+        slider.repaint();
+    };
+
+    setIndicator(cutoffSlider, destinationDepths[1]);
+    setIndicator(resonanceSlider, destinationDepths[2]);
+    setIndicator(filterEnvSlider, destinationDepths[3]);
+    setIndicator(driveSlider, destinationDepths[4]);
+    setIndicator(osc2TuneSlider, destinationDepths[5]);
+    setIndicator(osc2LevelSlider, destinationDepths[6]);
+}
+
 void NateVSTAudioProcessorEditor::updateOutputMeter()
 {
     auto peakLeft = 0.0f;
@@ -2395,6 +2440,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updateModMatrixRows();
+    updateModDestinationIndicators();
     updateOutputMeter();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();

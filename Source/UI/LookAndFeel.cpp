@@ -1,5 +1,7 @@
 #include "LookAndFeel.h"
 
+#include <cmath>
+
 namespace UI
 {
 LookAndFeel::LookAndFeel()
@@ -32,6 +34,8 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     const auto centre = cellBounds.getCentre();
     const auto angle = rotaryStartAngle + sliderPos * (rotaryEndAngle - rotaryStartAngle);
     const auto knobBounds = juce::Rectangle<float>(radius * 2.0f, radius * 2.0f).withCentre(centre);
+    const auto modulationAmount = static_cast<float>(static_cast<double>(slider.getProperties().getWithDefault("modAmount", 0.0)));
+    const auto modulationDepth = juce::jlimit(0.0f, 1.0f, std::abs(modulationAmount));
 
     g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
     g.fillRoundedRectangle(cellBounds, 6.0f);
@@ -68,6 +72,26 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
     g.setColour(isActive ? juce::Colour(0x338ee6c9) : juce::Colour(0x00101619));
     g.drawEllipse(knobBounds.expanded(4.0f), 1.0f);
+
+    if (modulationDepth > 0.001f)
+    {
+        const auto ringRadius = radius + 2.5f;
+        const auto ringColour = modulationAmount >= 0.0f ? juce::Colour(0xff8ee6c9)
+                                                         : juce::Colour(0xffffa36f);
+        const auto ringEnd = rotaryStartAngle + ((rotaryEndAngle - rotaryStartAngle) * modulationDepth);
+
+        juce::Path modRail;
+        modRail.addCentredArc(centre.x, centre.y, ringRadius, ringRadius, 0.0f,
+                              rotaryStartAngle, rotaryEndAngle, true);
+        g.setColour(ringColour.withAlpha(0.16f));
+        g.strokePath(modRail, juce::PathStrokeType(2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        juce::Path modArc;
+        modArc.addCentredArc(centre.x, centre.y, ringRadius, ringRadius, 0.0f,
+                             rotaryStartAngle, ringEnd, true);
+        g.setColour(ringColour);
+        g.strokePath(modArc, juce::PathStrokeType(2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
 }
 
 void LookAndFeel::drawButtonBackground(juce::Graphics& g,

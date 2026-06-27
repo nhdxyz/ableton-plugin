@@ -458,6 +458,7 @@ Build the next larger slices in this order:
    First momentary pass implemented as hold buttons that snapshot Delay, Reverb, Pump, Width, Guard, and output gain, then restore those values on release.
 7. Smart mutation workflow: mutation strengths, section-scoped mutation, visible undo/redo history, variation comparison, and save-as-preset handoff.
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
+   First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

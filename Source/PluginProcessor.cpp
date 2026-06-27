@@ -160,6 +160,11 @@ void NateVSTAudioProcessor::mutateRandomPatch()
     runRandomAction(RandomAction::mutate);
 }
 
+void NateVSTAudioProcessor::wildMutateRandomPatch()
+{
+    runRandomAction(RandomAction::wild);
+}
+
 void NateVSTAudioProcessor::createRandomVariation()
 {
     runRandomAction(RandomAction::variation);
@@ -1122,6 +1127,9 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action)
         case RandomAction::mutate:
             randomizer.mutate();
             break;
+        case RandomAction::wild:
+            randomizer.wildMutate();
+            break;
         case RandomAction::variation:
             randomizer.variation();
             break;
@@ -1136,6 +1144,7 @@ juce::String NateVSTAudioProcessor::randomActionLabel(RandomAction action)
     {
         case RandomAction::generate: return "Generate";
         case RandomAction::mutate: return "Mutate";
+        case RandomAction::wild: return "Wild";
         case RandomAction::variation: return "Variation";
     }
 

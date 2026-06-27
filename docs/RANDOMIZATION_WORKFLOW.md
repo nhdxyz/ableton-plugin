@@ -8,9 +8,10 @@ The LAB panel should make new patches quickly while letting users protect the pa
 
 - `Generate` creates a new patch from the selected recipe.
 - `Mutate` moves the current patch toward a new recipe result.
-- `Variation` makes a smaller move from the current patch.
-- `Undo` restores the patch state from immediately before the last Generate, Mutate, or Variation action.
-- `Redo` restores the last undone Generate, Mutate, or Variation result unless a new random action has replaced the redo slot.
+- `Vary` makes a smaller move from the current patch.
+- `Wild` makes a stronger recipe-aware mutation for bigger idea jumps.
+- `Undo` restores the patch state from immediately before the last Generate, Mutate, Vary, or Wild action.
+- `Redo` restores the last undone Generate, Mutate, Vary, or Wild result unless a new random action has replaced the redo slot.
 
 ## Locks
 
@@ -31,7 +32,7 @@ Output safety remains active even when `Output` is locked. If a recipe lowers ou
 
 ## History
 
-Global randomization now keeps one in-session undo snapshot and one redo snapshot. The status line labels the available action, for example `Undo: Mutate` after a mutation or `Redo: Variation` after undoing a variation. A new Generate, Mutate, or Variation clears redo so the history stays predictable.
+Global randomization now keeps one in-session undo snapshot and one redo snapshot. The status line labels the available action, for example `Undo: Mutate` after a mutation or `Redo: Wild` after undoing a wild mutation. A new Generate, Mutate, Vary, or Wild action clears redo so the history stays predictable.
 
 ## Section Random Buttons
 

@@ -19,7 +19,7 @@ The first useful version should load in Ableton, respond to MIDI, generate sound
 Planned major areas:
 
 - Synth engine: oscillator 1, oscillator 2, sub, noise, unison/spread, envelopes, multimode filter, drive, modulation, and eight stable performance macros for club-ready tone, dirt, motion, space, weight, bounce, warp, and throw moves.
-- Sound Lab: guided randomization, mutation, recipes, section locks, undo, and safety rules.
+- Sound Lab: guided randomization, Vary/Mutate/Wild mutation strengths, recipes, section locks, undo/redo, and safety rules.
 - Sample Lab: load audio, view the waveform, jump and audition phrase slices with eight pads, drag chop windows with visible handles, reverse/pitch/gain/mix it, and trigger it from MIDI.
 - Sequencer: internal 16-step piano-roll style pattern area with root-aware note rows, scale helper, chord/stab modes, voicing and strum controls, beat grouping, groove cues, rotate, variation, undo, MIDI export, and quick pattern tools for house chords, tech-house basslines, techno pulses, minimal plucks, UKG riffs, and generated ideas.
 - FX: reorderable post-synth/post-sample rack with one-click and hold-to-restore delay/space/pump throws, mute drops, tone cleanup, three-band EQ, distortion, pump, tremolo/auto pan, ring modulation, comb resonance, phaser, flanger, chorus, delay, reverb, width, output trim, and Guard safety clipping.

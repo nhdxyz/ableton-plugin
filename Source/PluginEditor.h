@@ -381,7 +381,8 @@ private:
 
     juce::TextButton generateButton { "Generate" };
     juce::TextButton mutateButton { "Mutate" };
-    juce::TextButton variationButton { "Variation" };
+    juce::TextButton variationButton { "Vary" };
+    juce::TextButton wildMutateButton { "Wild" };
     juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton redoRandomButton { "Redo" };
     juce::TextButton recallSnapshotAButton { "A" };

@@ -60,6 +60,7 @@ public:
     Parameters::APVTS& getValueTreeState();
     void generateRandomPatch();
     void mutateRandomPatch();
+    void wildMutateRandomPatch();
     void createRandomVariation();
     bool undoRandomization();
     bool redoRandomization();
@@ -105,6 +106,7 @@ private:
     {
         generate,
         mutate,
+        wild,
         variation
     };
 

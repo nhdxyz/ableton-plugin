@@ -738,6 +738,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.createRandomVariation();
         setRandomStatus("Variation");
     };
+    wildMutateButton.setTooltip("Make a stronger recipe-aware mutation while respecting active locks");
+    wildMutateButton.onClick = [this]
+    {
+        audioProcessor.wildMutateRandomPatch();
+        setRandomStatus("Wild");
+    };
     undoRandomButton.onClick = [this]
     {
         setRandomStatus(audioProcessor.undoRandomization() ? "Undo restored" : "Nothing to undo");
@@ -1015,6 +1021,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(generateButton);
     addAndMakeVisible(mutateButton);
     addAndMakeVisible(variationButton);
+    addAndMakeVisible(wildMutateButton);
     addAndMakeVisible(undoRandomButton);
     addAndMakeVisible(redoRandomButton);
     addAndMakeVisible(recallSnapshotAButton);
@@ -1247,6 +1254,7 @@ void NateVSTAudioProcessorEditor::resized()
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
+            wildMutateButton.setVisible(true);
             undoRandomButton.setVisible(true);
             redoRandomButton.setVisible(true);
             presetBox.setVisible(true);
@@ -1303,9 +1311,10 @@ void NateVSTAudioProcessorEditor::resized()
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             recipeBox.setBounds(labArea.removeFromTop(38).reduced(3, 4));
             auto labButtonRow = labArea.removeFromTop(36).withTrimmedTop(4);
-            generateButton.setBounds(labButtonRow.removeFromLeft(96).reduced(3, 4));
-            mutateButton.setBounds(labButtonRow.removeFromLeft(86).reduced(3, 4));
-            variationButton.setBounds(labButtonRow.removeFromLeft(96).reduced(3, 4));
+            generateButton.setBounds(labButtonRow.removeFromLeft(82).reduced(3, 4));
+            mutateButton.setBounds(labButtonRow.removeFromLeft(74).reduced(3, 4));
+            variationButton.setBounds(labButtonRow.removeFromLeft(62).reduced(3, 4));
+            wildMutateButton.setBounds(labButtonRow.removeFromLeft(56).reduced(3, 4));
             auto randomStatusRow = labArea.removeFromTop(34).withTrimmedTop(6);
             undoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
             redoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
@@ -1401,6 +1410,7 @@ void NateVSTAudioProcessorEditor::resized()
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
+            wildMutateButton.setVisible(true);
             undoRandomButton.setVisible(true);
             redoRandomButton.setVisible(true);
             randomLockPitchButton.setVisible(true);
@@ -1415,9 +1425,10 @@ void NateVSTAudioProcessorEditor::resized()
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
             recipeBox.setBounds(actionRow.removeFromLeft(230).reduced(4));
-            generateButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
-            mutateButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
-            variationButton.setBounds(actionRow.removeFromLeft(120).reduced(4));
+            generateButton.setBounds(actionRow.removeFromLeft(112).reduced(4));
+            mutateButton.setBounds(actionRow.removeFromLeft(112).reduced(4));
+            variationButton.setBounds(actionRow.removeFromLeft(108).reduced(4));
+            wildMutateButton.setBounds(actionRow.removeFromLeft(88).reduced(4));
             undoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
             redoRandomButton.setBounds(actionRow.removeFromLeft(92).reduced(4));
             auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
@@ -2835,7 +2846,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton,
-        &generateButton, &mutateButton, &variationButton, &undoRandomButton, &redoRandomButton,
+        &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,

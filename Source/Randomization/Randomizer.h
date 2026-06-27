@@ -29,6 +29,7 @@ public:
 
     void generate();
     void mutate();
+    void wildMutate();
     void variation();
 
 private:

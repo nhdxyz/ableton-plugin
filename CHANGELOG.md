@@ -14,6 +14,12 @@
 - Added randomization history summaries such as `Undo: Mutate` and `Redo: Variation` to the random status label.
 - Kept the history transient and parameter-compatible by storing in-session plugin-state snapshots only, without adding host parameters or preset data.
 
+### Wild Mutation Strength
+
+- Added a LAB/HOME `Wild` mutation action for stronger recipe-aware sound changes while preserving active randomization locks.
+- Kept the mutation ladder explicit: `Vary` for subtle changes, `Mutate` for medium movement, and `Wild` for bigger house/UKG idea jumps.
+- Integrated Wild with the existing Undo/Redo randomization history so status labels and restore behavior remain consistent.
+
 ### Sample Waveform Display
 
 - Added a SAMPLE-panel waveform overview for loaded audio so vocal chops and phrase cuts can be edited visually instead of only by start/end numbers.

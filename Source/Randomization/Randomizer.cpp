@@ -24,6 +24,13 @@ void Randomizer::mutate()
     randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, true);
 }
 
+void Randomizer::wildMutate()
+{
+    const auto amount = juce::jlimit(0.35f, 1.0f, readFloat(Parameters::ID::randomAmount) * 1.15f);
+    const auto chaos = juce::jlimit(0.2f, 1.0f, (readFloat(Parameters::ID::randomChaos) * 1.25f) + 0.15f);
+    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, false);
+}
+
 void Randomizer::variation()
 {
     const auto amount = juce::jlimit(0.02f, 0.35f, readFloat(Parameters::ID::randomAmount) * 0.25f);

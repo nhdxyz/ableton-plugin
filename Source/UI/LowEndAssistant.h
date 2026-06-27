@@ -17,6 +17,9 @@ public:
         bool monoEnabled = false;
         bool widthEnabled = false;
         bool guardEnabled = false;
+        juce::String phaseText { "RESET" };
+        juce::String guidanceText { "Phase resets on note start" };
+        int guidanceLevel = 0;
     };
 
     void setState(const State& newState);
@@ -28,6 +31,7 @@ private:
     static float levelToProportion(float linearLevel) noexcept;
     static juce::Colour levelColour(float linearLevel) noexcept;
     static juce::Colour riskColour(float risk) noexcept;
+    static juce::Colour guidanceColour(int guidanceLevel) noexcept;
     void drawMeter(juce::Graphics& g, juce::Rectangle<int> area, const juce::String& label, float value, bool riskMode) const;
 };
 }

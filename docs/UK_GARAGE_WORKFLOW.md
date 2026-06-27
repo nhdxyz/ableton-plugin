@@ -36,6 +36,7 @@ Research references:
 - Useful controls: filter envelope amount, filter envelope attack, glide, mono/legato, drive, Crush mix, and output Guard.
 - Bass randomization should include tuned-sub guardrails, with practical club notes called out when preset authors build sub-focused patches.
 - Sub-focused preset authoring should keep the fundamental in a useful club range, roughly 40 to 80 Hz, and avoid relying on stereo detune for the weight of the bass.
+- The HOME `CLUB` assistant now turns this into live patch guidance by flagging root-range issues, low-side stereo risk, Mono spread-lock behavior, Guard/headroom risk, and phase-reset status.
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 - Dred/reverse-filter bass should use a centered sub, a restrained Reese layer, a slower modulation envelope opening the filter, and short glide so it feels like a garage bass phrase without making the amp envelope sluggish.
 
@@ -136,7 +137,7 @@ Research references:
 - Depth, rate, shape, and phase controls.
 - Useful for UKG, house, and garage-adjacent bass movement.
 - Bass presets now use the MOD-panel curve LFO for garage-style push/pull cutoff movement where a basic sine felt too even.
-- HOME now includes a compact club low-end assistant so UKG bass patches expose root Hz, sub energy, low-side stereo risk, Width mono-below status, and Guard/headroom state while designing.
+- HOME now includes a compact club low-end assistant so UKG bass patches expose root Hz, sub energy, low-side stereo risk, Width mono-below status, Guard/headroom state, phase-reset status, and root-range suggestions while designing.
 - Available as an FX rack module. Simple macro/mod assignment should come through the future MOD workflow.
 
 3. Organ/Stab source.

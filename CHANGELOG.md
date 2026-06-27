@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Low-End Assistant Guidance
+
+- Expanded the HOME `CLUB` assistant with a phase/status chip and soft guidance line for bass patch decisions.
+- Surfaced when oscillator phases reset cleanly, when Mono is actively collapsing unison spread, when low-side energy needs mono-bass protection, and when the sequencer root is outside the practical club sub range.
+- Kept the pass UI-only by reading existing root, Mono, Width, unison, Guard, and low-end meter values without adding parameters or audio-thread work.
+
 ### Sample Waveform Display
 
 - Added a SAMPLE-panel waveform overview for loaded audio so vocal chops and phrase cuts can be edited visually instead of only by start/end numbers.

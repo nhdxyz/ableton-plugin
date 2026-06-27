@@ -1272,8 +1272,8 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(performArea.removeFromTop(112).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
-            lowEndAssistant.setBounds(performArea.removeFromTop(40).reduced(2, 4));
+            layoutKnobRow(performArea.removeFromTop(100).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
+            lowEndAssistant.setBounds(performArea.removeFromTop(54).reduced(2, 4));
 
             homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -3211,6 +3211,8 @@ void NateVSTAudioProcessorEditor::updateLowEndAssistant()
     const auto rootNote = juce::jlimit(0, 127, juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 36.0f)));
     const auto rootName = juce::MidiMessage::getMidiNoteName(rootNote, true, true, 3);
     const auto rootHz = juce::MidiMessage::getMidiNoteInHertz(rootNote);
+    const auto unisonVoiceCount = juce::jlimit(1, 8, juce::roundToInt(readParameter(Parameters::ID::unisonVoices, 1.0f)));
+    const auto unisonSpreadAmount = readParameter(Parameters::ID::unisonSpread, 0.0f);
 
     UI::LowEndAssistant::State state;
     state.rootText = rootName + " " + juce::String(static_cast<int>(std::round(rootHz))) + "Hz";
@@ -3221,6 +3223,50 @@ void NateVSTAudioProcessorEditor::updateLowEndAssistant()
     state.monoEnabled = readParameter(Parameters::ID::monoMode, 0.0f) >= 0.5f;
     state.widthEnabled = readParameter(Parameters::ID::fxWidthEnabled, 0.0f) >= 0.5f;
     state.guardEnabled = readParameter(Parameters::ID::fxGuardEnabled, 0.0f) >= 0.5f;
+
+    if (! state.monoEnabled && ! state.widthEnabled && lowStereoRisk >= 0.28f)
+    {
+        state.phaseText = "LOW SIDE";
+        state.guidanceText = "Mono lows before club play";
+        state.guidanceLevel = 2;
+    }
+    else if (! state.monoEnabled && ! state.widthEnabled && lowStereoRisk >= 0.16f)
+    {
+        state.phaseText = "LOW SIDE";
+        state.guidanceText = "Width off: watch bass sides";
+        state.guidanceLevel = 1;
+    }
+    else if (rootHz < 40.0)
+    {
+        state.phaseText = "ROOT LOW";
+        state.guidanceText = "Raise root for club subs";
+        state.guidanceLevel = 1;
+    }
+    else if (rootHz > 82.0)
+    {
+        state.phaseText = "ROOT HIGH";
+        state.guidanceText = "Root above sub sweet spot";
+        state.guidanceLevel = 1;
+    }
+    else if (! state.guardEnabled && outputPeak >= 0.9f)
+    {
+        state.phaseText = "HEADROOM";
+        state.guidanceText = "Guard off near ceiling";
+        state.guidanceLevel = 1;
+    }
+    else if (state.monoEnabled && unisonVoiceCount > 1 && unisonSpreadAmount > 0.05f)
+    {
+        state.phaseText = "SPREAD LOCK";
+        state.guidanceText = "Mono is collapsing spread";
+        state.guidanceLevel = 0;
+    }
+    else
+    {
+        state.phaseText = "RESET OK";
+        state.guidanceText = "Phase resets on note start";
+        state.guidanceLevel = 0;
+    }
+
     lowEndAssistant.setState(state);
 }
 

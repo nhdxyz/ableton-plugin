@@ -409,6 +409,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 
 1. UKG/Bassline bass engine: protected sub layer, character layer, phase/wobble movement, glide, mono-below, and low-end safety readouts.
    First safety readout implemented as the HOME `CLUB` assistant: root Hz, sub-band energy, low-side stereo risk, mono/Width status, and Guard/headroom state.
+   Second safety readout implemented as phase/reset and club-range guidance: phase reset status, Mono spread-lock status, low-side protection suggestions, root-range warnings, and Guard/headroom prompts.
 2. Vocal chop and stab sampler: slice grid, audition pads, choke behavior, reverse/stutter, delay throws, and formant/time-stretch investigation.
 3. Wavetable and character filter pass: wavetable position/warp first, then filter slopes/drive/flavors before deeper spectral or granular work.
 4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.

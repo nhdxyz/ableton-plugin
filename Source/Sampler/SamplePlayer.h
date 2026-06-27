@@ -37,6 +37,7 @@ public:
     juce::String getLoadedFileName() const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
+    bool triggerAudition(int midiNoteNumber, float velocity, double bpm);
     void render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm);
 
 private:
@@ -82,7 +83,7 @@ private:
     std::atomic<float>* sampleStutterRate = nullptr;
     std::atomic<float>* sampleStutterRepeats = nullptr;
 
-    void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm);
+    void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot);
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);

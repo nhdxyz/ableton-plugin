@@ -5,6 +5,7 @@
 ### Sample Slice Pads
 
 - Added eight numbered SAMPLE-panel slice pads for jumping the sample start/end window to equal phrase sections.
+- Made slice pads audition the selected chop through the sampler only, without also firing the synth voice path.
 - Slice pads write the existing automatable `sample_start` and `sample_end` parameters, so reverse, Gate/One Shot, stutter, pitch, ramp, gain, mix, presets, and host state all stay compatible.
 - Added active-slice highlighting that follows manual start/end slider edits and preset recall.
 

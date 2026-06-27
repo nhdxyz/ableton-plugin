@@ -119,6 +119,17 @@ void SamplePlayer::setRegion(SampleRegion newRegion)
     region = newRegion;
 }
 
+bool SamplePlayer::triggerAudition(int midiNoteNumber, float velocity, double bpm)
+{
+    const juce::SpinLock::ScopedLockType lock(sampleLock);
+
+    if (sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
+        return false;
+
+    startVoice(*sampleData, midiNoteNumber, velocity, bpm, true);
+    return true;
+}
+
 void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::MidiBuffer& midi, double bpm)
 {
     if (readParameter(sampleEnabled, 0.0f) < 0.5f)
@@ -142,7 +153,7 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
         }
 
         if (message.isNoteOn())
-            startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity(), bpm);
+            startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity(), bpm, false);
         else if (message.isNoteOff())
             stopVoicesForNote(message.getNoteNumber());
     }
@@ -151,7 +162,7 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer, const juce::Mi
         renderActiveVoices(*sampleData, outputBuffer, cursor, outputBuffer.getNumSamples() - cursor);
 }
 
-void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm)
+void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot)
 {
     auto* voiceToUse = std::find_if(voices.begin(), voices.end(), [] (const Voice& voice)
     {
@@ -175,7 +186,7 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->endSample = currentRegion.endSample;
     voiceToUse->midiNoteNumber = midiNoteNumber;
     voiceToUse->reverse = reverse;
-    voiceToUse->gated = readParameter(samplePlaybackMode, 1.0f) < 0.5f;
+    voiceToUse->gated = ! forceOneShot && readParameter(samplePlaybackMode, 1.0f) < 0.5f;
     voiceToUse->velocity = velocity;
     voiceToUse->sourceRatio = sourceRatio;
     voiceToUse->baseTransposeSemitones = transpose;

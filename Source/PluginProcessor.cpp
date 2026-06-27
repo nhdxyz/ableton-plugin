@@ -282,6 +282,14 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     return true;
 }
 
+bool NateVSTAudioProcessor::triggerSampleAudition()
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    return samplePlayer.triggerAudition(60, 1.0f, getHostBpm());
+}
+
 juce::String NateVSTAudioProcessor::getLoadedSampleName() const
 {
     return samplePlayer.getLoadedFileName();

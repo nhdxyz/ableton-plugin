@@ -65,6 +65,7 @@ public:
     void clearSample();
     bool randomizeSampleCut();
     bool randomizeUkgVocalChop();
+    bool triggerSampleAudition();
     juce::String getLoadedSampleName() const;
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);

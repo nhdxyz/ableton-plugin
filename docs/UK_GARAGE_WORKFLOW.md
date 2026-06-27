@@ -123,7 +123,7 @@ Research references:
 - Retrigger/stutter timing is implemented as synced sample stutter controls with 1/8, 1/16, and 1/32 rates plus repeat count.
 - Pitch-ramped chop movement is implemented with the SAMPLE-panel `Ramp` control.
 - UKG Chop now sets a short delay throw when FX locking is off.
-- The SAMPLE panel now includes eight numbered slice pads for jumping a loaded phrase into equal chop windows before applying stutter, reverse, pitch, ramp, or sequencer triggering.
+- The SAMPLE panel now includes eight numbered slice pads for jumping and auditioning a loaded phrase in equal chop windows before applying stutter, reverse, pitch, ramp, or sequencer triggering.
 
 2. Pump/Duck FX.
 

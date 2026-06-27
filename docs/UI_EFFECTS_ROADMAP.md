@@ -427,7 +427,7 @@ Build the next larger slices in this order:
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
-   First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections.
+   First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
 4. Browser depth: text search, multi-tags, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.

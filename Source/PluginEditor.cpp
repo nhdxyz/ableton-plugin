@@ -688,7 +688,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         auto& button = sampleSliceButtons[index];
         button.setButtonText(juce::String(static_cast<int>(index + 1)));
-        button.setTooltip("Select sample slice " + juce::String(static_cast<int>(index + 1)));
+        button.setTooltip("Select and audition sample slice " + juce::String(static_cast<int>(index + 1)));
         button.onClick = [this, index] { selectSampleSlice(index); };
         addAndMakeVisible(button);
     }
@@ -1858,7 +1858,8 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::sampleStart, start);
     setPlainParameterValue(Parameters::ID::sampleEnd, end);
-    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + " selected");
+    const auto didAudition = audioProcessor.triggerSampleAudition();
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : " selected"));
     updateSampleSliceButtons();
 }
 

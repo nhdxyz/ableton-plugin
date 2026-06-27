@@ -125,6 +125,7 @@ private:
     juce::ComboBox sequencerChordBox;
     juce::ComboBox sequencerVoicingBox;
     juce::ComboBox sequencerPatternBox;
+    juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleStutterRateBox;
     juce::ComboBox presetBox;
@@ -408,6 +409,7 @@ private:
     juce::TextButton rotateSequencerLeftButton { "Rot <" };
     juce::TextButton rotateSequencerRightButton { "Rot >" };
     juce::TextButton exportSequencerMidiButton { "MIDI" };
+    juce::TextButton applyGrooveTransformButton { "Shape" };
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };

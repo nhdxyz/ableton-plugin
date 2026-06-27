@@ -426,7 +426,7 @@ Create and work these as separate feature tracks so the plugin grows coherently:
 
 Recent reference checks against Serum 2, ZENOLOGY Pro, u-he Hive/Diva/Zebra, and Korg Collection/wavestate/modwave point to the same product direction: fast sound browsing, visible modulation, playable macros/XY, motion sequencing, serious FX, and genre-specific generators.
 
-Low-risk additions from the latest audit: per-control modulation inspector, richer preset metadata/ratings/audition, selective groove transforms, editable macro assignment lists, FX module presets, and genre-specific init buttons. Larger tracks remain wavetable import/warp, layered partials, motion sequencing lanes, advanced sampler slicing, character filters/drives, FM/operator modes, and vector morphing.
+Low-risk additions from the latest audit: per-control modulation inspector, richer preset metadata/ratings/audition, editable macro assignment lists, FX module presets, and genre-specific init buttons. Larger tracks remain wavetable import/warp, layered partials, motion sequencing lanes, advanced sampler slicing, character filters/drives, FM/operator modes, and vector morphing.
 
 Build the next larger slices in this order:
 
@@ -448,6 +448,7 @@ Build the next larger slices in this order:
    First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
    First chord-memory pass implemented as a saved default-off SEQ `Memory` toggle that expands live MIDI through the current chord mode and voicing while preserving matched note-offs.
    First declutter pass moved duplicate quick-template buttons behind the pattern dropdown, grouped random/edit actions, added SEQ control/grid panel framing, and gave the grid more room.
+   First selective-transform pass implemented as SEQ `Shape` tools for Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize edits.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.

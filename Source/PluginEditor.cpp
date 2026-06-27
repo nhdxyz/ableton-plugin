@@ -398,6 +398,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
     addAndMakeVisible(sequencerPatternBox);
 
+    sequencerGrooveTransformBox.addItem("Tighten", 1);
+    sequencerGrooveTransformBox.addItem("Straight Anchors", 2);
+    sequencerGrooveTransformBox.addItem("Swung Ghosts", 3);
+    sequencerGrooveTransformBox.addItem("Late Stabs", 4);
+    sequencerGrooveTransformBox.addItem("Vocal Push", 5);
+    sequencerGrooveTransformBox.addItem("Humanize", 6);
+    sequencerGrooveTransformBox.setSelectedId(1, juce::dontSendNotification);
+    sequencerGrooveTransformBox.setTooltip("Choose a timing transform for the current sequence");
+    addAndMakeVisible(sequencerGrooveTransformBox);
+
     sampleModeBox.addItem("Gate", 1);
     sampleModeBox.addItem("One Shot", 2);
     sampleModeBox.setTextWhenNothingSelected("Mode");
@@ -924,6 +934,22 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     exportSequencerMidiButton.setTooltip("Export the current sequencer pattern as a MIDI clip");
     exportSequencerMidiButton.onClick = [this] { exportSequencerMidiClip(); };
+    applyGrooveTransformButton.setTooltip("Apply the selected groove transform to the current sequence");
+    applyGrooveTransformButton.onClick = [this]
+    {
+        const auto selectedId = sequencerGrooveTransformBox.getSelectedId();
+        const auto transformIndex = juce::jmax(1, selectedId) - 1;
+        if (audioProcessor.applySequencerGrooveTransform(transformIndex))
+        {
+            sequencerGrid.repaint();
+            updateSegmentedSelectors();
+            setRandomStatus(sequencerGrooveTransformBox.getText() + " shaped");
+        }
+        else
+        {
+            setRandomStatus("Groove skipped");
+        }
+    };
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
@@ -1055,6 +1081,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(rotateSequencerLeftButton);
     addAndMakeVisible(rotateSequencerRightButton);
     addAndMakeVisible(exportSequencerMidiButton);
+    addAndMakeVisible(applyGrooveTransformButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
     addAndMakeVisible(labTabButton);
@@ -1674,11 +1701,13 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerVoicingBox.setVisible(true);
             sequencerChordMemoryButton.setVisible(true);
             sequencerPatternBox.setVisible(true);
+            sequencerGrooveTransformBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
             rotateSequencerLeftButton.setVisible(true);
             rotateSequencerRightButton.setVisible(true);
             exportSequencerMidiButton.setVisible(true);
+            applyGrooveTransformButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             mutateSequencerButton.setVisible(true);
             undoSequencerButton.setVisible(true);
@@ -1709,6 +1738,8 @@ void NateVSTAudioProcessorEditor::resized()
             rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            sequencerGrooveTransformBox.setBounds(utilityRow.removeFromLeft(184).reduced(4));
+            applyGrooveTransformButton.setBounds(utilityRow.removeFromLeft(76).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
@@ -2880,7 +2911,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &fxAddBox, &fxPumpRateBox, &fxTremoloRateBox, &lfo1ShapeBox, &lfo1SyncRateBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -2894,7 +2925,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &loadSampleButton, &clearSampleButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &applyGrooveTransformButton,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

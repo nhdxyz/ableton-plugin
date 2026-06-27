@@ -119,12 +119,12 @@ Research references:
 - Added SEQ chord memory for turning the selected chord mode and voicing into one-finger played stabs while keeping it default-off for old presets.
 - Cleaned up the SEQ panel so chord/groove controls, random/variation actions, and the grid are grouped more clearly for pattern building.
 - Added non-destructive zero-cross/low-energy boundary snapping and adaptive fade guards for SAMPLE playback so short vocal cuts and slice-pad auditions click less.
+- Added SEQ `Shape` transforms for tightening anchors, swinging ghost notes, pushing late stabs, nudging vocal-trigger timing, and adding light human feel without replacing the notes.
 
 ## Next UKG Features
 
 Reference-backed next passes:
 
-- Add selective groove transforms such as straight anchors, swung ghosts, late stabs, and vocal push instead of only global swing.
 - Add per-slice pitch, reverse, gain, stutter, and choke behavior once the waveform and pad workflow are stable.
 - Add FX module presets for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, and controlled drive.
 - Add a per-control modulation inspector so UKG bass movement and stab macro routing can be understood without opening the full matrix.

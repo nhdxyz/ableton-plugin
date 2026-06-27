@@ -81,6 +81,7 @@ public:
     bool mutateSequencerPattern();
     bool undoSequencerEdit();
     void applySequencerPatternPreset(int presetIndex);
+    bool applySequencerGrooveTransform(int transformIndex);
     void copySequencerFirstHalfToSecondHalf();
     void rotateSequencerPattern(int stepOffset);
     bool exportSequencerMidiFile(const juce::File& destination) const;

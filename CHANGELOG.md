@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Selective Groove Transforms
+
+- Added a SEQ groove transform dropdown with Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize options.
+- Added a compact `Shape` action that applies the selected transform to the current pattern without replacing notes, chord settings, scale mode, or template identity.
+- Made transforms use the existing sequencer undo path and randomization lock, while reshaping per-step timing/probability/velocity plus focused gate/swing/groove settings.
+
 ### Sample Chop Click Guards
 
 - Added non-destructive zero-cross/low-energy snapping for internal sample chop playback boundaries so UKG vocal cuts and slice pads are less click-prone.
@@ -23,7 +29,7 @@
 
 ### Feature Research Backlog
 
-- Prioritized low-risk next additions from reference research: per-control modulation inspection, richer preset metadata/audition, tighter UKG chop editing, selective groove transforms, editable macro assignments, and FX module presets.
+- Prioritized low-risk next additions from reference research: per-control modulation inspection, richer preset metadata/audition, tighter UKG chop editing, editable macro assignments, and FX module presets.
 - Kept larger researched items on the roadmap: wavetable oscillator lane, layered/partial architecture, motion sequencing lanes, deeper sampler/chopper behavior, character filter/drive bank, FM/operator options, and XY/vector morphing.
 
 ### Low-End Assistant Guidance

@@ -827,6 +827,167 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
     patternSequencer.reset();
 }
 
+bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
+{
+    if (isRandomLockEnabled(Parameters::ID::randomLockSequencer))
+        return false;
+
+    constexpr auto stepCount = Sequencer::PatternSequencer::numSteps;
+    auto hasEnabledStep = false;
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+        hasEnabledStep = hasEnabledStep || patternSequencer.getStep(stepIndex).enabled;
+
+    if (! hasEnabledStep)
+        return false;
+
+    captureSequencerUndoState();
+
+    const auto isAnchorStep = [] (int stepIndex)
+    {
+        return (stepIndex % 4) == 0;
+    };
+    const auto isOffbeatStep = [] (int stepIndex)
+    {
+        return (stepIndex % 2) != 0;
+    };
+    const auto isLateStabStep = [] (int stepIndex)
+    {
+        return stepIndex == 2 || stepIndex == 6 || stepIndex == 10 || stepIndex == 14;
+    };
+    const auto isVocalPushStep = [] (int stepIndex)
+    {
+        return stepIndex == 3 || stepIndex == 7 || stepIndex == 11 || stepIndex == 15;
+    };
+
+    std::uniform_real_distribution<float> humanize(-1.0f, 1.0f);
+
+    for (auto stepIndex = 0; stepIndex < stepCount; ++stepIndex)
+    {
+        auto step = patternSequencer.getStep(stepIndex);
+        if (! step.enabled)
+            continue;
+
+        switch (transformIndex)
+        {
+            case 1: // Straight Anchors
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = 1.0f;
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.08f);
+                }
+                break;
+
+            case 2: // Swung Ghosts
+                if (! isAnchorStep(stepIndex))
+                {
+                    if (isOffbeatStep(stepIndex))
+                        step.timing = juce::jmax(step.timing, 0.58f);
+                    else
+                        step.timing = juce::jmax(step.timing, 0.24f);
+
+                    if (step.velocity < 0.72f || step.probability < 0.9f)
+                    {
+                        step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity * 0.88f);
+                        step.probability = juce::jlimit(0.35f, 1.0f, step.probability * 0.86f);
+                    }
+                }
+                break;
+
+            case 3: // Late Stabs
+                if (isLateStabStep(stepIndex) || (! isAnchorStep(stepIndex) && step.velocity >= 0.72f))
+                {
+                    step.timing = juce::jmax(step.timing, isLateStabStep(stepIndex) ? 0.64f : 0.42f);
+                    step.probability = juce::jlimit(0.5f, 1.0f, step.probability + 0.06f);
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.04f);
+                }
+                break;
+
+            case 4: // Vocal Push
+                if (isVocalPushStep(stepIndex))
+                {
+                    step.timing = juce::jmax(step.timing, 0.78f);
+                    step.probability = juce::jlimit(0.35f, 0.92f, step.probability * 0.9f);
+                }
+                else if (! isAnchorStep(stepIndex))
+                {
+                    step.timing = juce::jmax(step.timing, isOffbeatStep(stepIndex) ? 0.42f : 0.16f);
+                }
+                break;
+
+            case 5: // Humanize Light
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = juce::jlimit(0.0f, 0.12f, step.timing + humanize(sampleRandomEngine) * 0.035f);
+                }
+                else
+                {
+                    step.timing = juce::jlimit(0.0f, 1.0f, step.timing + humanize(sampleRandomEngine) * 0.09f);
+                    step.probability = juce::jlimit(0.35f, 1.0f, step.probability + humanize(sampleRandomEngine) * 0.045f);
+                }
+
+                step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + humanize(sampleRandomEngine) * 0.055f);
+                break;
+
+            case 0: // Tighten
+            default:
+                step.timing = isAnchorStep(stepIndex) ? 0.0f : step.timing * 0.32f;
+                step.probability = juce::jlimit(0.55f, 1.0f, step.probability + 0.08f);
+                break;
+        }
+
+        patternSequencer.setStep(stepIndex, step);
+    }
+
+    switch (transformIndex)
+    {
+        case 1:
+            setParameterPlainValue(Parameters::ID::sequencerSwing,
+                                   juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f) * 0.82f));
+            break;
+
+        case 2:
+            setParameterPlainValue(Parameters::ID::sequencerSwing,
+                                   juce::jlimit(0.0f, 0.65f, juce::jmax(0.24f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 2.0f);
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmin(0.94f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            break;
+
+        case 3:
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.38f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            if (getParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f) > 0.5f)
+                setParameterPlainValue(Parameters::ID::sequencerChordStrum,
+                                       juce::jlimit(0.0f, 1.0f, juce::jmax(0.14f, getParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f))));
+            break;
+
+        case 4:
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.26f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 1.0f);
+            break;
+
+        case 5:
+            setParameterPlainValue(Parameters::ID::sequencerSwing,
+                                   juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f) + humanize(sampleRandomEngine) * 0.025f));
+            break;
+
+        case 0:
+        default:
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.42f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f) * 0.9f)));
+            setParameterPlainValue(Parameters::ID::sequencerSwing,
+                                   juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f) * 0.65f));
+            break;
+    }
+
+    setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+    patternSequencer.reset();
+    return true;
+}
+
 void NateVSTAudioProcessor::copySequencerFirstHalfToSecondHalf()
 {
     captureSequencerUndoState();

@@ -85,9 +85,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     updateKeyboardRangeLabel();
 
     configureSectionLabel(homeSectionLabel, "HOME");
-    configureSectionLabel(homeEngineLabel, "SOURCE");
-    configureSectionLabel(homeShapeLabel, "SHAPE");
-    configureSectionLabel(homeLabLabel, "MOTION");
+    configureSectionLabel(homeEngineLabel, "PERFORM");
+    configureSectionLabel(homeShapeLabel, "MACROS");
+    configureSectionLabel(homeLabLabel, "RANDOM LAB");
     configureSectionLabel(homeLibraryLabel, "LIBRARY");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(randomSectionLabel, "LAB");
@@ -211,10 +211,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetFilterBox.setSelectedItemIndex(0, juce::dontSendNotification);
     addAndMakeVisible(presetFilterBox);
 
+    fxAddBox.addSectionHeading("Tone & Drive");
     fxAddBox.addItem("Tone", 1);
     fxAddBox.addItem("EQ", 2);
     fxAddBox.addItem("Drive", 3);
     fxAddBox.addItem("Crush", 4);
+    fxAddBox.addSectionHeading("Movement");
     fxAddBox.addItem("Pump", 5);
     fxAddBox.addItem("Tremolo", 6);
     fxAddBox.addItem("Ring Mod", 7);
@@ -222,11 +224,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxAddBox.addItem("Phaser", 9);
     fxAddBox.addItem("Flanger", 10);
     fxAddBox.addItem("Chorus", 11);
+    fxAddBox.addSectionHeading("Space & Utility");
     fxAddBox.addItem("Delay", 12);
     fxAddBox.addItem("Reverb", 13);
     fxAddBox.addItem("Width", 14);
     fxAddBox.addItem("Guard", 15);
     fxAddBox.setTextWhenNothingSelected("Add FX");
+    fxAddBox.setTooltip("Enable a fixed FX module and open its focused editor");
     addAndMakeVisible(fxAddBox);
 
     fxPumpRateBox.addItem("1/4", 1);
@@ -747,11 +751,11 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(260);
-        auto engineArea = topRow.removeFromLeft(360).reduced(5);
+        auto topRow = homeContent.removeFromTop(202);
+        auto engineArea = topRow.removeFromLeft(330).reduced(5);
         auto shapeArea = topRow.reduced(5);
         auto bottomRow = homeContent.withTrimmedTop(16);
-        auto labArea = bottomRow.removeFromLeft(360).reduced(5);
+        auto labArea = bottomRow.removeFromLeft(330).reduced(5);
         auto libraryArea = bottomRow.reduced(5);
 
         for (auto area : { engineArea, shapeArea, labArea, libraryArea })
@@ -788,7 +792,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         auto fxContent = contentArea.reduced(18).withTrimmedTop(36);
         fxContent.removeFromTop(48);
         fxContent.removeFromTop(10);
-        auto rackArea = fxContent.removeFromLeft(220).reduced(5);
+        auto rackArea = fxContent.removeFromLeft(260).reduced(5);
         auto detailArea = fxContent.reduced(5);
 
         for (auto area : { rackArea, detailArea })
@@ -850,25 +854,11 @@ void NateVSTAudioProcessorEditor::resized()
             homeShapeLabel.setVisible(true);
             homeLabLabel.setVisible(true);
             homeLibraryLabel.setVisible(true);
-            sineWaveButton.setVisible(true);
-            sawWaveButton.setVisible(true);
-            squareWaveButton.setVisible(true);
-            triangleWaveButton.setVisible(true);
-            osc2SineWaveButton.setVisible(true);
-            osc2SawWaveButton.setVisible(true);
-            osc2SquareWaveButton.setVisible(true);
-            osc2TriangleWaveButton.setVisible(true);
-            lowpassFilterButton.setVisible(true);
-            bandpassFilterButton.setVisible(true);
-            highpassFilterButton.setVisible(true);
-            monoButton.setVisible(true);
-            setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, true);
-            setSliderVisible(unisonSpreadSlider, unisonSpreadLabel, true);
-            setSliderVisible(glideSlider, glideLabel, true);
             recipeBox.setVisible(true);
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
+            undoRandomButton.setVisible(true);
             presetBox.setVisible(true);
             presetCategoryBox.setVisible(true);
             previousPresetButton.setVisible(true);
@@ -878,57 +868,40 @@ void NateVSTAudioProcessorEditor::resized()
             presetNameEditor.setVisible(true);
             savePresetButton.setVisible(true);
             presetStatusLabel.setVisible(true);
+            randomStatusLabel.setVisible(true);
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(260);
-            auto engineArea = topRow.removeFromLeft(360).reduced(18, 12);
-            auto shapeArea = topRow.reduced(18, 12);
+            auto topRow = dashboard.removeFromTop(202);
+            auto performArea = topRow.removeFromLeft(330).reduced(18, 12);
+            auto macroArea = topRow.reduced(18, 12);
             auto bottomRow = dashboard.withTrimmedTop(16);
-            auto labArea = bottomRow.removeFromLeft(360).reduced(18, 12);
+            auto labArea = bottomRow.removeFromLeft(330).reduced(18, 12);
             auto libraryArea = bottomRow.reduced(18, 12);
 
-            homeEngineLabel.setBounds(engineArea.removeFromTop(24));
-            auto waveRow = engineArea.removeFromTop(36);
-            const auto waveButtonWidth = waveRow.getWidth() / 4;
-            sineWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            sawWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            squareWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            triangleWaveButton.setBounds(waveRow.reduced(3, 4));
-
-            auto osc2Row = engineArea.removeFromTop(36).withTrimmedTop(3);
-            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 4;
-            osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2TriangleWaveButton.setBounds(osc2Row.reduced(3, 4));
-
-            auto filterRow = engineArea.removeFromTop(36).withTrimmedTop(3);
-            const auto filterButtonWidth = filterRow.getWidth() / 3;
-            lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
-            bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
-            highpassFilterButton.setBounds(filterRow.reduced(3, 4));
-            monoButton.setBounds(engineArea.removeFromTop(32).reduced(3, 3));
-            layoutKnobRow(engineArea.removeFromTop(68).withTrimmedTop(2), { &unisonVoicesSlider, &unisonSpreadSlider, &glideSlider });
-
-            homeShapeLabel.setBounds(shapeArea.removeFromTop(24));
+            homeEngineLabel.setBounds(performArea.removeFromTop(24));
             setSliderVisible(subLevelSlider, subLevelLabel, true);
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(shapeArea.removeFromTop(116).withTrimmedTop(4), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
+            layoutKnobRow(performArea.removeFromTop(126).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
 
-            homeLabLabel.setBounds(labArea.removeFromTop(24));
+            homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
             setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            layoutKnobRow(labArea.removeFromTop(95).withTrimmedTop(4), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(126).withTrimmedTop(6), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+
+            homeLabLabel.setBounds(labArea.removeFromTop(24));
             recipeBox.setBounds(labArea.removeFromTop(38).reduced(3, 4));
             auto labButtonRow = labArea.removeFromTop(36).withTrimmedTop(4);
-            generateButton.setBounds(labButtonRow.removeFromLeft(110).reduced(3, 4));
-            mutateButton.setBounds(labButtonRow.removeFromLeft(100).reduced(3, 4));
-            variationButton.setBounds(labButtonRow.removeFromLeft(112).reduced(3, 4));
+            generateButton.setBounds(labButtonRow.removeFromLeft(96).reduced(3, 4));
+            mutateButton.setBounds(labButtonRow.removeFromLeft(86).reduced(3, 4));
+            variationButton.setBounds(labButtonRow.removeFromLeft(96).reduced(3, 4));
+            auto randomStatusRow = labArea.removeFromTop(34).withTrimmedTop(6);
+            undoRandomButton.setBounds(randomStatusRow.removeFromLeft(76).reduced(3, 4));
+            randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
@@ -1251,10 +1224,13 @@ void NateVSTAudioProcessorEditor::resized()
             fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
 
             content.removeFromTop(10);
-            auto rackArea = content.removeFromLeft(220).reduced(18, 16);
+            auto rackArea = content.removeFromLeft(260).reduced(18, 16);
             rackArea.removeFromTop(26);
             auto detailArea = content.reduced(24, 18);
             detailArea.removeFromTop(30);
+
+            std::array<juce::TextButton*, 15> visibleFxSlots {};
+            auto visibleFxSlotCount = 0;
 
             for (auto module : { FxModule::tone,
                                  FxModule::eq,
@@ -1277,10 +1253,21 @@ void NateVSTAudioProcessorEditor::resized()
                 slotButton.setVisible(isVisible);
 
                 if (isVisible)
-                {
-                    slotButton.setBounds(rackArea.removeFromTop(36).reduced(0, 3));
-                    rackArea.removeFromTop(2);
-                }
+                    visibleFxSlots[static_cast<size_t>(visibleFxSlotCount++)] = &slotButton;
+            }
+
+            const auto slotColumns = visibleFxSlotCount > 8 ? 2 : 1;
+            const auto slotGap = 6;
+            const auto slotHeight = slotColumns == 2 ? 30 : 34;
+            const auto slotWidth = (rackArea.getWidth() - ((slotColumns - 1) * slotGap)) / slotColumns;
+
+            for (auto index = 0; index < visibleFxSlotCount; ++index)
+            {
+                const auto column = index % slotColumns;
+                const auto row = index / slotColumns;
+                const auto x = rackArea.getX() + (column * (slotWidth + slotGap));
+                const auto y = rackArea.getY() + (row * (slotHeight + slotGap));
+                visibleFxSlots[static_cast<size_t>(index)]->setBounds(x, y, slotWidth, slotHeight);
             }
 
             auto detailHeader = detailArea.removeFromTop(38);
@@ -1521,8 +1508,9 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
                                                     const juce::String& parameterID)
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setMouseDragSensitivity(64);
-    slider.setVelocityBasedMode(false);
+    slider.setMouseDragSensitivity(112);
+    slider.setVelocityBasedMode(true);
+    slider.setVelocityModeParameters(1.0, 1, 0.06, true, juce::ModifierKeys::shiftModifier);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
@@ -1672,10 +1660,15 @@ void NateVSTAudioProcessorEditor::addFxModule(FxModule module)
 
 void NateVSTAudioProcessorEditor::removeSelectedFxModule()
 {
+    if (selectedFxModule == FxModule::guard)
+    {
+        fxRackStatusLabel.setText("Guard stays available as the output safety module", juce::dontSendNotification);
+        return;
+    }
+
     setPlainParameterValue(fxEnabledParameterID(selectedFxModule), 0.0f);
 
-    if (selectedFxModule != FxModule::guard)
-        selectedFxModule = FxModule::guard;
+    selectedFxModule = FxModule::guard;
 
     updateFxRackControls();
     resized();
@@ -1719,6 +1712,7 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
 
     fxRackStatusLabel.setText(fxModuleName(selectedFxModule) + " | " + fxModuleSummary(selectedFxModule),
                               juce::dontSendNotification);
+    fxRemoveButton.setEnabled(selectedFxModule != FxModule::guard);
 }
 
 bool NateVSTAudioProcessorEditor::isFxModuleEnabled(FxModule module) const

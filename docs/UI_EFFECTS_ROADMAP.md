@@ -10,9 +10,15 @@ Reference products reviewed:
 
 - Xfer Serum 2: https://xferrecords.com/products/serum-2
 - Arturia Pigments: https://www.arturia.com/products/software-instruments/pigments/overview
+- Kilohearts Phase Plant: https://kilohearts.com/products/phase_plant
+- u-he Hive: https://u-he.com/products/hive/
 - u-he Diva: https://u-he.com/products/diva/
-- Korg modwave: https://www.korg.com/us/products/synthesizers/modwave/
-- Roland ZENOLOGY: https://www.roland.com/us/products/rc_zenology/
+- Korg modwave native: https://www.korg.com/us/products/software/modwave_native/
+- Korg wavestate native: https://www.korg.com/us/products/software/wavestate_native/
+- Roland ZENOLOGY Pro: https://www.roland.com/us/products/rc_zenology_pro/
+- Cableguys ShaperBox: https://www.cableguys.com/shaperbox
+- Native Instruments UK garage guide: https://blog.native-instruments.com/uk-garage-music/
+- MusicRadar UK garage guide: https://www.musicradar.com/how-to/uk-garage-tutorial
 
 ## Framework Decision
 
@@ -30,17 +36,9 @@ Instead, improve the internal UI system:
 
 ### FX Shows Too Much
 
-The FX page currently lays out every effect in a fixed 4x2 grid:
+The FX page now has the right high-level pattern: an Add FX control, a fixed-parameter rack list, and a selected-module editor. The remaining risk is scale. With 15 modules available, a single vertical rack list can still become crowded when many modules are enabled, and selected state can be visually confused with enabled state.
 
-- Tone
-- Distortion
-- Phaser
-- Chorus
-- Delay
-- Reverb
-- Guard
-
-This works while there are only seven modules, but it will not scale. Adding more effects would either shrink every module, make knobs harder to use, or force the page to feel crowded.
+The next version should treat the rack like a compact lane: grouped Add FX menu, compact list rows, visible enabled/bypassed state, selected detail editor, and Guard kept available as the output safety module.
 
 ### Modulation Is Too Implicit
 
@@ -66,6 +64,19 @@ Many panels are grouped by implementation order rather than user task. A produce
 
 The UI should use these groupings more consistently.
 
+### Research Gaps To Fill
+
+Modern synths and club tools are converging around a few product expectations that Nate VST only partially covers today:
+
+- Oscillator engines: wavetable position/warp, sample/granular style sources, and stronger FM/phase movement are common in Serum 2, Pigments, Phase Plant, Current, and modwave.
+- Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments.
+- Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
+- Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
+- Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
+- Browser workflow: large synths make preset search, tags, categories, favorites, and per-section browsing feel central rather than secondary.
+
+These are product directions, not framework reasons to leave JUCE. The best next framework work is still custom JUCE components for modulation rings, rack rows, curve editors, waveform/slice views, and browser lists.
+
 ## UI Direction
 
 ### 1. Show A Focused Module, Not Every Module
@@ -85,12 +96,11 @@ HOME should not become the whole plugin. It should expose:
 
 - Preset load and save.
 - Four macros.
-- Source mix highlights.
-- Core shape highlights.
+- Performance controls: Sub, Cutoff, Drive, Output.
 - Randomization entry points.
 - Audition keyboard.
 
-HOME should not show every effect, every modulation assignment, or every oscillator detail.
+HOME should not show every effect, every modulation assignment, or every oscillator detail. Oscillator source choices, filter mode, unison detail, and envelope editing belong in focused panels.
 
 ### 3. Add A MOD Panel Before Adding More Modulation Controls To HOME
 
@@ -124,11 +134,12 @@ Important reason: Ableton automation and saved Live Sets depend on stable parame
 First implementation:
 
 - Keep existing effect parameters stable.
-- Add a visible rack list.
-- Use Add FX to enable and reveal fixed modules.
-- Let Remove mean bypass and hide, not delete parameters.
-- Show one selected effect editor at a time.
-- Keep Guard always available at the end as output safety.
+- Implemented: add a visible rack list.
+- Implemented: use Add FX to enable and reveal fixed modules.
+- Implemented: show one selected effect editor at a time.
+- Implemented: keep Guard available as the output safety module.
+- Current pass: compact the list into two columns when many modules are visible and group Add FX by role.
+- Next pass: replace text-only rack buttons with a dedicated rack-row component that separates selected state, enabled/bypassed state, module name, and summary.
 
 Suggested FX page layout:
 
@@ -280,12 +291,12 @@ Do not use knobs for every parameter.
 
 Groups:
 
-- Source: oscillator/sample/noise mix highlights.
-- Shape: filter/drive/output highlights.
-- Motion: macros and randomization entry points.
+- Perform: Sub, Cutoff, Drive, Output.
+- Macros: Tone, Dirt, Motion, Space.
+- Random Lab: recipe, generate, mutate, variation, undo, status.
 - Library: preset, favorite, and save/load workflow.
 
-Current HOME implementation now keeps only the fast patch-building controls visible: source selectors, mono/unison/glide, Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator level detail, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
+Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
 
 HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later.
 
@@ -343,11 +354,13 @@ MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels
 
 ### Phase 2: FX UI Rack Without New DSP
 
-- Add an Add FX combo/menu.
-- Add a compact rack list.
-- Add selected-effect detail rendering.
-- Keep all existing FX parameters and DSP order stable.
-- Use Remove as hide/bypass.
+- Implemented: add an Add FX combo/menu.
+- Implemented: add a compact rack list.
+- Implemented: add selected-effect detail rendering.
+- Implemented: keep all existing FX parameters and DSP order stable.
+- Current pass: group Add FX by Tone & Drive, Movement, and Space & Utility.
+- Current pass: use a two-column compact rack when many modules are visible.
+- Current pass: prevent removing Guard from the rack safety endpoint.
 - Validate in pluginval and Ableton.
 
 ### Phase 3: Knob Ergonomics
@@ -387,11 +400,22 @@ Each effect should include:
 - Add small modulation indicators to macro and destination knobs.
 - Keep HOME focused on performance, not assignment editing.
 
+### Phase 6: UKG And Modern Synth Feature Tracks
+
+Create and work these as separate feature tracks so the plugin grows coherently:
+
+1. UKG/Bassline bass engine: protected sub layer, character layer, phase/wobble movement, glide, mono-below, and low-end safety readouts.
+2. Vocal chop and stab sampler: slice grid, audition pads, choke behavior, reverse/stutter, delay throws, and formant/time-stretch investigation.
+3. Wavetable and character filter pass: wavetable position/warp first, then filter slopes/drive/flavors before deeper spectral or granular work.
+4. MSEG and visual modulation: drawable synced curve, modulation rings, destination highlighting, and generated-route feedback from randomization.
+5. Browser and construction-kit workflow: genre/role/BPM/key tags, favorites, per-section presets, and factory packs for UKG, tech house, minimal, and techno.
+
 ## Acceptance Criteria For The Next Big UI Pass
 
-- FX page no longer shows every effect module at once.
-- Add FX workflow can reveal existing modules without changing parameter IDs.
+- FX page no longer overflows when many effect modules are visible.
+- Add FX workflow can reveal existing modules without changing parameter IDs and is grouped by production task.
 - Current modules can be selected and edited in a focused detail area.
-- Knobs feel easier to grab and read. Implemented for the current global rotary control style.
-- HOME feels less like a control dump. Implemented by limiting HOME Shape to Sub, Cutoff, Drive, and Output while keeping deeper controls on SYNTH.
+- Rack selected state, enabled state, and bypass state are visually distinct in the next custom rack-row pass.
+- Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
+- HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
 - A clear path exists for adding more FX without redesigning the page again.

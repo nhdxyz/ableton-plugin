@@ -1,5 +1,17 @@
 # Nate VST Changelog
 
+## 2026-06-27
+
+### Research-Led UI Polish
+
+- Ran a focused reference pass across Serum 2, Pigments, Phase Plant, u-he, Korg, ZENOLOGY Pro, ShaperBox, and UK garage production workflows.
+- Updated the UI/effects roadmap with the next product tracks: UKG bass engine, vocal chop/stab sampler, wavetable/character filter pass, MSEG modulation, and tagged construction-kit browsing.
+- Simplified HOME into a faster dashboard with Perform, Macros, Random Lab, and Library areas instead of duplicating oscillator waveform, filter-mode, mono, unison, and glide controls from SYNTH.
+- Grouped the Add FX menu by production role: Tone & Drive, Movement, and Space & Utility.
+- Made the FX rack switch to a compact two-column layout when many fixed modules are visible, reducing overflow risk as the effect list grows.
+- Prevented Guard from being removed from the rack so output safety remains available.
+- Tuned rotary controls to use velocity-aware movement with a less cramped drag feel while keeping double-click reset, value popups, snap-to-click disabled, and mouse-wheel edits disabled.
+
 ## 2026-06-26
 
 ### Rename To Nate VST

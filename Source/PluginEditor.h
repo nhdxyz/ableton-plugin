@@ -43,6 +43,7 @@ private:
         distortion,
         bitcrush,
         pump,
+        tremolo,
         phaser,
         flanger,
         chorus,
@@ -95,6 +96,7 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPumpRateBox;
+    juce::ComboBox fxTremoloRateBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
@@ -107,6 +109,7 @@ private:
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;
     juce::ToggleButton fxPumpEnabledButton;
+    juce::ToggleButton fxTremoloEnabledButton;
     juce::ToggleButton fxChorusEnabledButton;
     juce::ToggleButton fxDelayEnabledButton;
     juce::ToggleButton fxReverbEnabledButton;
@@ -188,6 +191,10 @@ private:
     juce::Slider fxPumpDepthSlider;
     juce::Slider fxPumpShapeSlider;
     juce::Slider fxPumpPhaseSlider;
+    juce::Slider fxTremoloDepthSlider;
+    juce::Slider fxTremoloPanSlider;
+    juce::Slider fxTremoloShapeSlider;
+    juce::Slider fxTremoloPhaseSlider;
     juce::Slider fxChorusRateSlider;
     juce::Slider fxChorusDepthSlider;
     juce::Slider fxChorusMixSlider;
@@ -276,6 +283,10 @@ private:
     juce::Label fxPumpDepthLabel;
     juce::Label fxPumpShapeLabel;
     juce::Label fxPumpPhaseLabel;
+    juce::Label fxTremoloDepthLabel;
+    juce::Label fxTremoloPanLabel;
+    juce::Label fxTremoloShapeLabel;
+    juce::Label fxTremoloPhaseLabel;
     juce::Label fxChorusRateLabel;
     juce::Label fxChorusDepthLabel;
     juce::Label fxChorusMixLabel;
@@ -352,6 +363,7 @@ private:
     juce::TextButton fxDistortionSlotButton { "Drive" };
     juce::TextButton fxBitcrushSlotButton { "Crush" };
     juce::TextButton fxPumpSlotButton { "Pump" };
+    juce::TextButton fxTremoloSlotButton { "Trem" };
     juce::TextButton fxPhaserSlotButton { "Phaser" };
     juce::TextButton fxFlangerSlotButton { "Flanger" };
     juce::TextButton fxChorusSlotButton { "Chorus" };

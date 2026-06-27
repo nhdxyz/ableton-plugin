@@ -267,3 +267,11 @@
 - Processed EQ after Tone and before Drive/Crush so patches can be shaped before saturation.
 - Added EQ to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
 - Regenerated the UKG factory preset pack with practical EQ curves for basses, stabs, plucks, and vocal chop starters.
+
+### Tremolo And Auto Pan FX
+
+- Added a bypassable Tremolo module to the focused FX rack.
+- Added stable Tremolo parameters for synced rate, depth, pan amount, shape, and phase.
+- Processed Tremolo after Pump and before phaser/flanger/chorus for rhythmic movement before modulation effects.
+- Added Tremolo to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
+- Regenerated the UKG factory preset pack with light synced motion for stabs, bell plucks, late hits, and vocal chop starters.

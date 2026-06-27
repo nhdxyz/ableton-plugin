@@ -218,7 +218,7 @@ Implemented as the EQ module. It gives fast low, mid, high, and trim controls fo
 
 6. Tremolo / Auto Pan
 
-Useful for rhythmic motion and minimal/techno movement. It can share LFO concepts with the MOD panel later.
+Implemented as the Tremolo module. Useful for rhythmic amplitude movement, stereo push-pull, UKG stab/chop animation, minimal blips, techno movement, and house/garage groove detail.
 
 7. Frequency Shifter / Ring Mod
 
@@ -366,6 +366,7 @@ Add in this order:
 3. Pump/Duck. Implemented as the Pump module.
 4. Stereo Width/Mono Bass. Implemented as the Width module.
 5. Three-Band EQ. Implemented as the EQ module.
+6. Tremolo / Auto Pan. Implemented as the Tremolo module.
 
 Each effect should include:
 

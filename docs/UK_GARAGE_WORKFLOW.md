@@ -54,7 +54,7 @@ Research references:
 
 ### FX Flavor
 
-- Useful UKG FX are tight and rhythmic: three-band EQ for low-mid cleanup and presence, short room/plate, short delay throws, pump/duck, stereo width above the bass, subtle chorus/phaser/flanger, bitcrush/downsample for sampler color, and reverse/rewind-style transitions.
+- Useful UKG FX are tight and rhythmic: three-band EQ for low-mid cleanup and presence, short room/plate, short delay throws, pump/duck, tremolo/auto-pan movement, stereo width above the bass, subtle chorus/phaser/flanger, bitcrush/downsample for sampler color, and reverse/rewind-style transitions.
 - The newly added Crush module fits this by giving old-sampler grit without requiring a full sample editor yet.
 
 ## Sound Targets
@@ -108,6 +108,7 @@ Research references:
 - Added a sampler Pitch Ramp control and made `UKG Chop` create pitch-ramped vocal cuts with delay throws when FX locking allows it.
 - Added `UKG Dred Bass` as a reverse-filter/Reese-style randomization recipe and factory preset.
 - Added a focused EQ module and seeded the UKG factory presets with subtle bass, stab, pluck, and vocal chop EQ curves.
+- Added a focused Tremolo/Auto Pan module and seeded UKG movement presets with light synced motion.
 
 ## Next UKG Features
 

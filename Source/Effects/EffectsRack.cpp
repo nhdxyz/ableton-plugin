@@ -40,6 +40,12 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxPumpDepth = parameters.getRawParameterValue(Parameters::ID::fxPumpDepth);
     fxPumpShape = parameters.getRawParameterValue(Parameters::ID::fxPumpShape);
     fxPumpPhase = parameters.getRawParameterValue(Parameters::ID::fxPumpPhase);
+    fxTremoloEnabled = parameters.getRawParameterValue(Parameters::ID::fxTremoloEnabled);
+    fxTremoloRate = parameters.getRawParameterValue(Parameters::ID::fxTremoloRate);
+    fxTremoloDepth = parameters.getRawParameterValue(Parameters::ID::fxTremoloDepth);
+    fxTremoloPan = parameters.getRawParameterValue(Parameters::ID::fxTremoloPan);
+    fxTremoloShape = parameters.getRawParameterValue(Parameters::ID::fxTremoloShape);
+    fxTremoloPhase = parameters.getRawParameterValue(Parameters::ID::fxTremoloPhase);
     fxChorusEnabled = parameters.getRawParameterValue(Parameters::ID::fxChorusEnabled);
     fxChorusRate = parameters.getRawParameterValue(Parameters::ID::fxChorusRate);
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
@@ -120,6 +126,7 @@ void EffectsRack::reset()
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
     std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
     pumpPhase = 0.0;
+    tremoloPhase = 0.0;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
 }
@@ -131,6 +138,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
     processDistortion(buffer);
     processBitcrush(buffer);
     processPump(buffer, bpm, ppqPosition);
+    processTremolo(buffer, bpm, ppqPosition);
     processPhaser(buffer);
     processFlanger(buffer);
     processChorus(buffer);
@@ -303,6 +311,73 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
         pumpPhase += phaseIncrement;
         while (pumpPhase >= 1.0)
             pumpPhase -= 1.0;
+    }
+}
+
+void EffectsRack::processTremolo(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition)
+{
+    if (readParameter(fxTremoloEnabled, 0.0f) < 0.5f)
+        return;
+
+    const auto safeSampleRate = juce::jmax(1.0, currentSampleRate);
+    const auto safeBpm = juce::jlimit(20.0, 300.0, bpm);
+    const auto rateIndex = juce::jlimit(0, 3, static_cast<int>(std::round(readParameter(fxTremoloRate, 1.0f))));
+    const auto cyclesPerBeat = pumpCyclesPerBeat(rateIndex);
+    const auto phaseIncrement = (safeBpm / 60.0) * cyclesPerBeat / safeSampleRate;
+    const auto depth = juce::jlimit(0.0f, 1.0f, readParameter(fxTremoloDepth, 0.28f));
+    const auto panAmount = juce::jlimit(0.0f, 1.0f, readParameter(fxTremoloPan, 0.25f));
+    const auto shape = juce::jlimit(0.0f, 1.0f, readParameter(fxTremoloShape, 0.45f));
+    const auto phaseOffset = juce::jlimit(0.0f, 1.0f, readParameter(fxTremoloPhase, 0.0f));
+    const auto curve = juce::jmap(shape, 0.55f, 5.0f);
+    const auto hasStereo = buffer.getNumChannels() >= 2;
+    constexpr auto rootTwo = 1.41421356237f;
+
+    if (ppqPosition.has_value())
+    {
+        tremoloPhase = std::fmod(*ppqPosition * cyclesPerBeat, 1.0);
+        if (tremoloPhase < 0.0)
+            tremoloPhase += 1.0;
+    }
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        auto phase = std::fmod(tremoloPhase + static_cast<double>(phaseOffset), 1.0);
+        if (phase < 0.0)
+            phase += 1.0;
+
+        const auto phaseFloat = static_cast<float>(phase);
+        const auto sine = 0.5f - (0.5f * std::cos(juce::MathConstants<float>::twoPi * phaseFloat));
+        const auto movement = std::pow(sine, curve);
+        const auto tremoloGain = juce::jlimit(0.0f, 1.0f, 1.0f - (depth * movement));
+
+        if (hasStereo && panAmount > 0.001f)
+        {
+            const auto panPhase = std::sin(juce::MathConstants<float>::twoPi * phaseFloat);
+            const auto angle = juce::jmap((panPhase * panAmount * 0.5f) + 0.5f,
+                                          0.0f,
+                                          1.0f,
+                                          0.0f,
+                                          juce::MathConstants<float>::halfPi);
+            const auto autoPanLeft = std::cos(angle) * rootTwo;
+            const auto autoPanRight = std::sin(angle) * rootTwo;
+            const auto leftGain = ((1.0f - panAmount) + (autoPanLeft * panAmount)) * tremoloGain;
+            const auto rightGain = ((1.0f - panAmount) + (autoPanRight * panAmount)) * tremoloGain;
+
+            buffer.setSample(0, sampleIndex, buffer.getSample(0, sampleIndex) * leftGain);
+            buffer.setSample(1, sampleIndex, buffer.getSample(1, sampleIndex) * rightGain);
+
+            for (auto channel = 2; channel < buffer.getNumChannels(); ++channel)
+                buffer.setSample(channel, sampleIndex, buffer.getSample(channel, sampleIndex) * tremoloGain);
+        }
+        else
+        {
+            for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+                buffer.setSample(channel, sampleIndex, buffer.getSample(channel, sampleIndex) * tremoloGain);
+        }
+
+        tremoloPhase += phaseIncrement;
+        while (tremoloPhase >= 1.0)
+            tremoloPhase -= 1.0;
     }
 }
 

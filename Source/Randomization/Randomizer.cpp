@@ -122,6 +122,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxPumpDepth = 0.35f;
     auto fxPumpShape = 0.45f;
     auto fxPumpPhase = 0.0f;
+    auto fxTremoloEnabled = false;
+    auto fxTremoloRate = 1;
+    auto fxTremoloDepth = 0.28f;
+    auto fxTremoloPan = 0.25f;
+    auto fxTremoloShape = 0.45f;
+    auto fxTremoloPhase = 0.0f;
     auto fxWidthEnabled = false;
     auto fxWidthAmount = 1.15f;
     auto fxWidthMonoCutoff = 120.0f;
@@ -670,6 +676,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxFlangerDepth = randomFloat(0.12f, 0.34f);
             fxFlangerFeedback = randomFloat(0.02f, 0.16f);
             fxFlangerMix = randomFloat(0.02f, 0.09f);
+            fxTremoloEnabled = randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.1f);
+            fxTremoloRate = randomInt(0, 2);
+            fxTremoloDepth = randomFloat(0.06f, 0.2f);
+            fxTremoloPan = randomFloat(0.02f, 0.18f);
+            fxTremoloShape = randomFloat(0.28f, 0.65f);
+            fxTremoloPhase = randomFloat(0.0f, 0.16f);
             break;
 
         case Recipe::acidLine:
@@ -683,6 +695,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxFlangerDepth = randomFloat(0.16f, 0.52f);
             fxFlangerFeedback = randomFloat(0.02f, 0.26f);
             fxFlangerMix = randomFloat(0.03f, 0.16f);
+            fxTremoloEnabled = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.14f);
+            fxTremoloRate = randomInt(0, 3);
+            fxTremoloDepth = randomFloat(0.1f, 0.34f);
+            fxTremoloPan = randomFloat(0.04f, 0.28f);
+            fxTremoloShape = randomFloat(0.32f, 0.78f);
+            fxTremoloPhase = randomFloat(0.0f, 0.2f);
             break;
 
         case Recipe::minimalBlip:
@@ -697,6 +715,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxFlangerDepth = randomFloat(0.35f, 0.78f);
             fxFlangerFeedback = randomFloat(-0.32f, 0.5f);
             fxFlangerMix = randomFloat(0.08f, 0.32f);
+            fxTremoloEnabled = true;
+            fxTremoloRate = randomInt(1, 3);
+            fxTremoloDepth = randomFloat(0.18f, 0.58f);
+            fxTremoloPan = randomFloat(0.12f, 0.72f);
+            fxTremoloShape = randomFloat(0.25f, 0.88f);
+            fxTremoloPhase = randomFloat(0.0f, 0.5f);
             break;
 
         case Recipe::darkStab:
@@ -713,6 +737,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxFlangerDepth = randomFloat(0.16f, 0.52f);
             fxFlangerFeedback = randomFloat(0.02f, 0.26f);
             fxFlangerMix = randomFloat(0.03f, 0.16f);
+            fxTremoloEnabled = randomFloat(0.0f, 1.0f) < 0.34f + (chaos * 0.18f);
+            fxTremoloRate = randomInt(0, 3);
+            fxTremoloDepth = randomFloat(0.08f, 0.32f);
+            fxTremoloPan = randomFloat(0.12f, 0.55f);
+            fxTremoloShape = randomFloat(0.3f, 0.82f);
+            fxTremoloPhase = randomFloat(0.0f, 0.32f);
             break;
     }
 
@@ -765,6 +795,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxPumpDepth = blend(Parameters::ID::fxPumpDepth, fxPumpDepth);
         fxPumpShape = blend(Parameters::ID::fxPumpShape, fxPumpShape);
         fxPumpPhase = blend(Parameters::ID::fxPumpPhase, fxPumpPhase);
+        fxTremoloDepth = blend(Parameters::ID::fxTremoloDepth, fxTremoloDepth);
+        fxTremoloPan = blend(Parameters::ID::fxTremoloPan, fxTremoloPan);
+        fxTremoloShape = blend(Parameters::ID::fxTremoloShape, fxTremoloShape);
+        fxTremoloPhase = blend(Parameters::ID::fxTremoloPhase, fxTremoloPhase);
         fxWidthAmount = blend(Parameters::ID::fxWidthAmount, fxWidthAmount);
         fxWidthMonoCutoff = blend(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
@@ -849,6 +883,12 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxPumpDepth, fxPumpDepth);
     setParameter(Parameters::ID::fxPumpShape, fxPumpShape);
     setParameter(Parameters::ID::fxPumpPhase, fxPumpPhase);
+    setParameter(Parameters::ID::fxTremoloEnabled, fxTremoloEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxTremoloRate, static_cast<float>(juce::jlimit(0, 3, fxTremoloRate)));
+    setParameter(Parameters::ID::fxTremoloDepth, fxTremoloDepth);
+    setParameter(Parameters::ID::fxTremoloPan, fxTremoloPan);
+    setParameter(Parameters::ID::fxTremoloShape, fxTremoloShape);
+    setParameter(Parameters::ID::fxTremoloPhase, fxTremoloPhase);
     setParameter(Parameters::ID::fxWidthEnabled, fxWidthEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxWidthAmount, fxWidthAmount);
     setParameter(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);

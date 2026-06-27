@@ -36,6 +36,7 @@ private:
 
     double currentSampleRate = 44100.0;
     double pumpPhase = 0.0;
+    double tremoloPhase = 0.0;
     float pumpSmoothedGain = 1.0f;
     int delayWritePosition = 0;
     int preparedChannels = 2;
@@ -51,6 +52,12 @@ private:
     std::atomic<float>* fxPumpDepth = nullptr;
     std::atomic<float>* fxPumpShape = nullptr;
     std::atomic<float>* fxPumpPhase = nullptr;
+    std::atomic<float>* fxTremoloEnabled = nullptr;
+    std::atomic<float>* fxTremoloRate = nullptr;
+    std::atomic<float>* fxTremoloDepth = nullptr;
+    std::atomic<float>* fxTremoloPan = nullptr;
+    std::atomic<float>* fxTremoloShape = nullptr;
+    std::atomic<float>* fxTremoloPhase = nullptr;
     std::atomic<float>* fxChorusEnabled = nullptr;
     std::atomic<float>* fxChorusRate = nullptr;
     std::atomic<float>* fxChorusDepth = nullptr;
@@ -94,6 +101,7 @@ private:
     void processDistortion(juce::AudioBuffer<float>& buffer);
     void processBitcrush(juce::AudioBuffer<float>& buffer);
     void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
+    void processTremolo(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processPhaser(juce::AudioBuffer<float>& buffer);
     void processFlanger(juce::AudioBuffer<float>& buffer);
     void processChorus(juce::AudioBuffer<float>& buffer);

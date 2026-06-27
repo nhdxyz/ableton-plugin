@@ -849,6 +849,41 @@ APVTS::ParameterLayout createLayout()
         0.0f,
         juce::AudioParameterFloatAttributes().withLabel("dB")));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxTremoloEnabled,
+        "FX Tremolo Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::fxTremoloRate,
+        "FX Tremolo Rate",
+        juce::StringArray { "1/4", "1/8", "1/8T", "1/16" },
+        1));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxTremoloDepth,
+        "FX Tremolo Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.28f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxTremoloPan,
+        "FX Tremolo Pan",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.25f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxTremoloShape,
+        "FX Tremolo Shape",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.45f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxTremoloPhase,
+        "FX Tremolo Phase",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
     return { params.begin(), params.end() };
 }
 }

@@ -89,6 +89,12 @@
   <PARAM id="fx_pump_depth" value="0.34" />
   <PARAM id="fx_pump_shape" value="0.45" />
   <PARAM id="fx_pump_phase" value="0" />
+  <PARAM id="fx_tremolo_enabled" value="0" />
+  <PARAM id="fx_tremolo_rate" value="1" />
+  <PARAM id="fx_tremolo_depth" value="0.28" />
+  <PARAM id="fx_tremolo_pan" value="0.25" />
+  <PARAM id="fx_tremolo_shape" value="0.45" />
+  <PARAM id="fx_tremolo_phase" value="0" />
   <PARAM id="fx_chorus_enabled" value="0" />
   <PARAM id="fx_chorus_rate" value="0.35" />
   <PARAM id="fx_chorus_depth" value="0.35" />

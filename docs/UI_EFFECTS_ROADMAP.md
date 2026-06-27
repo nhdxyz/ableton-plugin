@@ -266,8 +266,9 @@ Not urgent for this instrument. It adds asset management and bigger CPU/memory q
 - Keep snap-to-click disabled.
 - Keep double-click reset.
 - Keep value popups.
+- Current pass: wheel edits stay enabled for fast sound design, with Ableton testing still needed for accidental-scroll risk.
 - Add clearer fine-control behavior. If JUCE modifier fine-drag is not enough, add explicit small step behavior for high-precision parameters.
-- Consider disabling mouse-wheel changes on knobs to avoid accidental changes while scrolling future panels.
+- If wheel edits become a problem in longer panels, disable them only where scrolling and knob editing conflict.
 
 ### Visual
 
@@ -367,7 +368,8 @@ MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels
 
 - Implemented: adjusted the custom look-and-feel for stronger pointer/value feedback.
 - Implemented: increased effective drag target in layout cells.
-- Implemented: switched rotary knobs to direct drag, shorter full-range movement, disabled snap-to-click, kept double-click reset, kept value popups, and disabled mouse-wheel edits.
+- Implemented: switched rotary knobs to direct drag, shorter full-range movement, disabled snap-to-click, kept double-click reset, kept value popups, and kept mouse-wheel edits enabled for quick patching.
+- Current pass: shortened rotary drag travel again for common macro, tone, drive, output, and timing controls after the knobs still felt too hard to move.
 - Still needs real Ableton testing and further tuning if specific controls feel too fast or too slow.
 
 ### Phase 4: Add Low-Risk Effects
@@ -441,6 +443,7 @@ Build the next larger slices in this order:
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.
    First browser-search pass implemented as token-based Library text search across preset name, category, source, user/factory status, and favorite state.
    First smart-tag pass implemented as generated `preset_tags` metadata plus a Library tag filter for role, safety, FX, sequencing, and genre tags.
+   First audition pass implemented as a HOME/LIBRARY `Audition` button that loads the selected preset, plays a short root-note preview, and releases it on the UI timer.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
 6. FX performance workflow: tempo delay divisions, module presets, reorder/duplicate, send-style throws, and direct modulation access to FX mix/depth parameters.
    First routing pass implemented as saved FX chain order slots, rack order badges, Up/Down/Reset controls, and DSP processing through the selected order while keeping Guard last.

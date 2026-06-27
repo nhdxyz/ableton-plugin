@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Library Audition And Control Feel
+
+- Added an `Audition` action to HOME and LIBRARY preset rows so selected sounds can be loaded and briefly played without reaching for the bottom keyboard.
+- Added timer-based note release and panic-button cleanup for preset auditions to avoid stuck preview notes.
+- Tightened HOME/LIBRARY preset row widths and made rotary drag travel shorter again so core house-production knobs move with less mouse effort.
+
 ### Library Smart Tags
 
 - Added a LIBRARY `Tag` filter with smart tags such as Bass, Chord, Pluck, Stab, Sequenced, Mono Safe, Pump, Wide, FX, Vocal Chop, and genre tags.

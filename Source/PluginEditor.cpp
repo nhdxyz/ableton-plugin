@@ -12,6 +12,8 @@ constexpr auto keyboardLowestNote = 24;
 constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 84;
+constexpr auto presetAuditionDurationMs = 720.0;
+constexpr auto presetAuditionVelocity = 0.86f;
 
 juce::Colour backgroundColour()
 {
@@ -84,7 +86,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxWidthMonoCutoff,
             Parameters::ID::fxToneLowCut
         }))
-        return 220;
+        return 190;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::filterResonance,
@@ -101,7 +103,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxEqTrim,
             Parameters::ID::fxGuardCeiling
         }))
-        return 170;
+        return 145;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::macroTone,
@@ -114,9 +116,9 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 120;
+        return 100;
 
-    return 145;
+    return 125;
 }
 }
 
@@ -157,7 +159,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(keyboardOctaveUpButton);
 
     keyboardPanicButton.setTooltip("Release all audition notes");
-    keyboardPanicButton.onClick = [this] { audioProcessor.getMidiKeyboardState().allNotesOff(0); };
+    keyboardPanicButton.onClick = [this]
+    {
+        releasePresetAuditionNote();
+        audioProcessor.getMidiKeyboardState().allNotesOff(0);
+    };
     addAndMakeVisible(keyboardPanicButton);
 
     keyboardRangeLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
@@ -853,6 +859,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     nextPresetButton.onClick = [this] { loadPresetByOffset(1); };
     savePresetButton.onClick = [this] { saveCurrentPreset(); };
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
+    auditionPresetButton.onClick = [this] { auditionSelectedPreset(); };
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
     favoritePresetButton.onClick = [this] { toggleFavoritePreset(); };
     presetFilterBox.onChange = [this] { refreshPresetList(); };
@@ -945,6 +952,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(nextPresetButton);
     addAndMakeVisible(savePresetButton);
     addAndMakeVisible(loadPresetButton);
+    addAndMakeVisible(auditionPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
     addAndMakeVisible(fxMoveUpButton);
@@ -979,6 +987,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
 NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
+    releasePresetAuditionNote();
     stopTimer();
     setLookAndFeel(nullptr);
 }
@@ -1124,6 +1133,7 @@ void NateVSTAudioProcessorEditor::resized()
             previousPresetButton.setVisible(true);
             nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
+            auditionPresetButton.setVisible(true);
             favoritePresetButton.setVisible(true);
             presetNameEditor.setVisible(true);
             savePresetButton.setVisible(true);
@@ -1182,9 +1192,10 @@ void NateVSTAudioProcessorEditor::resized()
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
             previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
-            presetBox.setBounds(loadRow.removeFromLeft(220).reduced(3, 4));
+            presetBox.setBounds(loadRow.removeFromLeft(202).reduced(3, 4));
             nextPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
-            loadPresetButton.setBounds(loadRow.removeFromLeft(78).reduced(3, 4));
+            loadPresetButton.setBounds(loadRow.removeFromLeft(70).reduced(3, 4));
+            auditionPresetButton.setBounds(loadRow.removeFromLeft(82).reduced(3, 4));
             favoritePresetButton.setBounds(loadRow.removeFromLeft(58).reduced(3, 4));
             auto saveRow = libraryArea.removeFromTop(42).withTrimmedTop(4);
             presetCategoryBox.setBounds(saveRow.removeFromLeft(130).reduced(3, 4));
@@ -1776,6 +1787,7 @@ void NateVSTAudioProcessorEditor::resized()
             previousPresetButton.setVisible(true);
             nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
+            auditionPresetButton.setVisible(true);
             favoritePresetButton.setVisible(true);
             refreshPresetsButton.setVisible(true);
             presetStatusLabel.setVisible(true);
@@ -1791,9 +1803,10 @@ void NateVSTAudioProcessorEditor::resized()
             refreshPresetsButton.setBounds(filterRow.removeFromLeft(90).reduced(4));
             auto loadRow = content.removeFromTop(46).withTrimmedTop(6);
             previousPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
-            presetBox.setBounds(loadRow.removeFromLeft(340).reduced(4));
+            presetBox.setBounds(loadRow.removeFromLeft(318).reduced(4));
             nextPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
             loadPresetButton.setBounds(loadRow.removeFromLeft(78).reduced(4));
+            auditionPresetButton.setBounds(loadRow.removeFromLeft(88).reduced(4));
             favoritePresetButton.setBounds(loadRow.removeFromLeft(62).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(36).reduced(6, 4));
             break;
@@ -2448,7 +2461,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &loadPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
@@ -2847,6 +2860,12 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
 
 void NateVSTAudioProcessorEditor::timerCallback()
 {
+    if (activePresetAuditionNote >= 0
+        && juce::Time::getMillisecondCounterHiRes() >= presetAuditionNoteOffMs)
+    {
+        releasePresetAuditionNote();
+    }
+
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updateModMatrixRows();
@@ -2994,6 +3013,8 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
 
 void NateVSTAudioProcessorEditor::loadSelectedPreset()
 {
+    releasePresetAuditionNote();
+
     const auto presetName = presetBox.getText().trim();
     if (audioProcessor.loadPreset(presetName))
     {
@@ -3029,6 +3050,64 @@ void NateVSTAudioProcessorEditor::loadPresetByOffset(int offset)
     loadSelectedPreset();
 }
 
+void NateVSTAudioProcessorEditor::auditionSelectedPreset()
+{
+    releasePresetAuditionNote();
+
+    const auto presetName = presetBox.getText().trim();
+    if (presetName.isEmpty())
+    {
+        presetStatusLabel.setText("Select a preset to audition", juce::dontSendNotification);
+        return;
+    }
+
+    if (! audioProcessor.loadPreset(presetName))
+    {
+        presetStatusLabel.setText("Select a preset to audition", juce::dontSendNotification);
+        return;
+    }
+
+    refreshPresetList();
+    presetBox.setText(presetName, juce::dontSendNotification);
+    presetNameEditor.setText(presetName, juce::dontSendNotification);
+    updateFavoritePresetButton();
+    updateSampleNameLabel();
+    sequencerGrid.repaint();
+
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (const auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    auto note = juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 60.0f)
+                                 + (readParameter(Parameters::ID::sequencerOctave, 0.0f) * 12.0f));
+    while (note < 48)
+        note += 12;
+    while (note > 72)
+        note -= 12;
+
+    activePresetAuditionNote = juce::jlimit(0, 127, note);
+    presetAuditionNoteOffMs = juce::Time::getMillisecondCounterHiRes() + presetAuditionDurationMs;
+    audioProcessor.getMidiKeyboardState().noteOn(1, activePresetAuditionNote, presetAuditionVelocity);
+
+    presetStatusLabel.setText("Auditioning " + presetName + " | "
+                                  + juce::MidiMessage::getMidiNoteName(activePresetAuditionNote, true, true, 3),
+                              juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::releasePresetAuditionNote()
+{
+    if (activePresetAuditionNote < 0)
+        return;
+
+    audioProcessor.getMidiKeyboardState().noteOff(1, activePresetAuditionNote, 0.0f);
+    activePresetAuditionNote = -1;
+    presetAuditionNoteOffMs = 0.0;
+}
+
 void NateVSTAudioProcessorEditor::toggleFavoritePreset()
 {
     const auto presetName = presetBox.getText().trim();
@@ -3057,6 +3136,7 @@ void NateVSTAudioProcessorEditor::toggleFavoritePreset()
 void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
 {
     const auto presetName = presetBox.getText().trim();
+    auditionPresetButton.setEnabled(presetName.isNotEmpty());
     favoritePresetButton.setEnabled(presetName.isNotEmpty());
     favoritePresetButton.setToggleState(presetName.isNotEmpty() && audioProcessor.isPresetFavorite(presetName),
                                         juce::dontSendNotification);

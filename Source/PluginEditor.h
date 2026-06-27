@@ -402,6 +402,7 @@ private:
     juce::TextButton nextPresetButton { ">" };
     juce::TextButton savePresetButton { "Save" };
     juce::TextButton loadPresetButton { "Load" };
+    juce::TextButton auditionPresetButton { "Audition" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton fxMoveUpButton { "Up" };
@@ -439,6 +440,8 @@ private:
     UI::StepSequencerGrid sequencerGrid;
     UI::XYMacroPad performanceXYPad;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
+    int activePresetAuditionNote = -1;
+    double presetAuditionNoteOffMs = 0.0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -478,6 +481,8 @@ private:
     void saveCurrentPreset();
     void loadSelectedPreset();
     void loadPresetByOffset(int offset);
+    void auditionSelectedPreset();
+    void releasePresetAuditionNote();
     void toggleFavoritePreset();
     void updateFavoritePresetButton();
     void shiftKeyboardOctave(int semitones);

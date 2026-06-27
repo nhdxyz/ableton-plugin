@@ -46,6 +46,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxTremoloPan = parameters.getRawParameterValue(Parameters::ID::fxTremoloPan);
     fxTremoloShape = parameters.getRawParameterValue(Parameters::ID::fxTremoloShape);
     fxTremoloPhase = parameters.getRawParameterValue(Parameters::ID::fxTremoloPhase);
+    fxRingEnabled = parameters.getRawParameterValue(Parameters::ID::fxRingEnabled);
+    fxRingFrequency = parameters.getRawParameterValue(Parameters::ID::fxRingFrequency);
+    fxRingDepth = parameters.getRawParameterValue(Parameters::ID::fxRingDepth);
+    fxRingMix = parameters.getRawParameterValue(Parameters::ID::fxRingMix);
+    fxRingBias = parameters.getRawParameterValue(Parameters::ID::fxRingBias);
     fxChorusEnabled = parameters.getRawParameterValue(Parameters::ID::fxChorusEnabled);
     fxChorusRate = parameters.getRawParameterValue(Parameters::ID::fxChorusRate);
     fxChorusDepth = parameters.getRawParameterValue(Parameters::ID::fxChorusDepth);
@@ -127,6 +132,7 @@ void EffectsRack::reset()
     std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
     pumpPhase = 0.0;
     tremoloPhase = 0.0;
+    ringPhase = 0.0;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
 }
@@ -139,6 +145,7 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
     processBitcrush(buffer);
     processPump(buffer, bpm, ppqPosition);
     processTremolo(buffer, bpm, ppqPosition);
+    processRingMod(buffer);
     processPhaser(buffer);
     processFlanger(buffer);
     processChorus(buffer);
@@ -378,6 +385,39 @@ void EffectsRack::processTremolo(juce::AudioBuffer<float>& buffer, double bpm, s
         tremoloPhase += phaseIncrement;
         while (tremoloPhase >= 1.0)
             tremoloPhase -= 1.0;
+    }
+}
+
+void EffectsRack::processRingMod(juce::AudioBuffer<float>& buffer)
+{
+    if (readParameter(fxRingEnabled, 0.0f) < 0.5f)
+        return;
+
+    const auto safeSampleRate = juce::jmax(1.0, currentSampleRate);
+    const auto frequency = juce::jlimit(0.25f, 2500.0f, readParameter(fxRingFrequency, 72.0f));
+    const auto depth = juce::jlimit(0.0f, 1.0f, readParameter(fxRingDepth, 0.35f));
+    const auto mix = juce::jlimit(0.0f, 1.0f, readParameter(fxRingMix, 0.18f));
+    const auto bias = juce::jlimit(0.0f, 1.0f, readParameter(fxRingBias, 0.45f));
+    const auto phaseIncrement = static_cast<double>(frequency) / safeSampleRate;
+    const auto makeUp = 1.0f / (1.0f + (depth * mix * 0.45f));
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        const auto bipolarCarrier = std::sin(juce::MathConstants<float>::twoPi * static_cast<float>(ringPhase));
+        const auto unipolarCarrier = (bipolarCarrier * 0.5f) + 0.5f;
+        const auto carrier = juce::jmap(bias, bipolarCarrier, unipolarCarrier);
+        const auto modulator = (1.0f - depth) + (carrier * depth);
+
+        for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            const auto input = buffer.getSample(channel, sampleIndex);
+            const auto wet = input * modulator;
+            buffer.setSample(channel, sampleIndex, ((input * (1.0f - mix)) + (wet * mix)) * makeUp);
+        }
+
+        ringPhase += phaseIncrement;
+        while (ringPhase >= 1.0)
+            ringPhase -= 1.0;
     }
 }
 

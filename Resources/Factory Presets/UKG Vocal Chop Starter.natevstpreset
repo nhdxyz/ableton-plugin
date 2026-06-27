@@ -95,6 +95,11 @@
   <PARAM id="fx_tremolo_pan" value="0.44" />
   <PARAM id="fx_tremolo_shape" value="0.62" />
   <PARAM id="fx_tremolo_phase" value="0.18" />
+  <PARAM id="fx_ring_enabled" value="1" />
+  <PARAM id="fx_ring_frequency" value="92" />
+  <PARAM id="fx_ring_depth" value="0.18" />
+  <PARAM id="fx_ring_mix" value="0.06" />
+  <PARAM id="fx_ring_bias" value="0.62" />
   <PARAM id="fx_chorus_enabled" value="0" />
   <PARAM id="fx_chorus_rate" value="0.35" />
   <PARAM id="fx_chorus_depth" value="0.35" />

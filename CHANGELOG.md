@@ -275,3 +275,11 @@
 - Processed Tremolo after Pump and before phaser/flanger/chorus for rhythmic movement before modulation effects.
 - Added Tremolo to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
 - Regenerated the UKG factory preset pack with light synced motion for stabs, bell plucks, late hits, and vocal chop starters.
+
+### Ring Mod FX
+
+- Added a bypassable Ring Mod module to the focused FX rack.
+- Added stable Ring Mod parameters for frequency, depth, mix, and bias.
+- Processed Ring Mod after Tremolo and before phaser/flanger/chorus for metallic movement before modulation effects.
+- Added Ring Mod to the Add FX menu, rack list, selected-module editor, FX randomization lock, recipe randomization, and factory preset defaults.
+- Regenerated the UKG factory preset pack with restrained metallic edge for bell plucks, vocal chop starters, and late stabs.

@@ -128,6 +128,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxTremoloPan = 0.25f;
     auto fxTremoloShape = 0.45f;
     auto fxTremoloPhase = 0.0f;
+    auto fxRingEnabled = false;
+    auto fxRingFrequency = 72.0f;
+    auto fxRingDepth = 0.35f;
+    auto fxRingMix = 0.18f;
+    auto fxRingBias = 0.45f;
     auto fxWidthEnabled = false;
     auto fxWidthAmount = 1.15f;
     auto fxWidthMonoCutoff = 120.0f;
@@ -682,6 +687,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxTremoloPan = randomFloat(0.02f, 0.18f);
             fxTremoloShape = randomFloat(0.28f, 0.65f);
             fxTremoloPhase = randomFloat(0.0f, 0.16f);
+            fxRingEnabled = randomFloat(0.0f, 1.0f) < 0.08f + (chaos * 0.06f);
+            fxRingFrequency = randomFloat(18.0f, 110.0f);
+            fxRingDepth = randomFloat(0.08f, 0.28f);
+            fxRingMix = randomFloat(0.02f, 0.08f);
+            fxRingBias = randomFloat(0.45f, 0.85f);
             break;
 
         case Recipe::acidLine:
@@ -701,6 +711,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxTremoloPan = randomFloat(0.04f, 0.28f);
             fxTremoloShape = randomFloat(0.32f, 0.78f);
             fxTremoloPhase = randomFloat(0.0f, 0.2f);
+            fxRingEnabled = randomFloat(0.0f, 1.0f) < 0.38f + (chaos * 0.22f);
+            fxRingFrequency = randomFloat(45.0f, 620.0f);
+            fxRingDepth = randomFloat(0.18f, 0.58f);
+            fxRingMix = randomFloat(0.04f, 0.18f);
+            fxRingBias = randomFloat(0.0f, 0.55f);
             break;
 
         case Recipe::minimalBlip:
@@ -721,6 +736,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxTremoloPan = randomFloat(0.12f, 0.72f);
             fxTremoloShape = randomFloat(0.25f, 0.88f);
             fxTremoloPhase = randomFloat(0.0f, 0.5f);
+            fxRingEnabled = true;
+            fxRingFrequency = randomFloat(80.0f, 1600.0f);
+            fxRingDepth = randomFloat(0.22f, 0.75f);
+            fxRingMix = randomFloat(0.06f, 0.28f);
+            fxRingBias = randomFloat(0.0f, 0.65f);
             break;
 
         case Recipe::darkStab:
@@ -743,6 +763,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             fxTremoloPan = randomFloat(0.12f, 0.55f);
             fxTremoloShape = randomFloat(0.3f, 0.82f);
             fxTremoloPhase = randomFloat(0.0f, 0.32f);
+            fxRingEnabled = randomFloat(0.0f, 1.0f) < 0.24f + (chaos * 0.16f);
+            fxRingFrequency = randomFloat(35.0f, 420.0f);
+            fxRingDepth = randomFloat(0.12f, 0.46f);
+            fxRingMix = randomFloat(0.03f, 0.14f);
+            fxRingBias = randomFloat(0.12f, 0.72f);
             break;
     }
 
@@ -799,6 +824,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxTremoloPan = blend(Parameters::ID::fxTremoloPan, fxTremoloPan);
         fxTremoloShape = blend(Parameters::ID::fxTremoloShape, fxTremoloShape);
         fxTremoloPhase = blend(Parameters::ID::fxTremoloPhase, fxTremoloPhase);
+        fxRingFrequency = blend(Parameters::ID::fxRingFrequency, fxRingFrequency);
+        fxRingDepth = blend(Parameters::ID::fxRingDepth, fxRingDepth);
+        fxRingMix = blend(Parameters::ID::fxRingMix, fxRingMix);
+        fxRingBias = blend(Parameters::ID::fxRingBias, fxRingBias);
         fxWidthAmount = blend(Parameters::ID::fxWidthAmount, fxWidthAmount);
         fxWidthMonoCutoff = blend(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);
         fxPhaserRate = blend(Parameters::ID::fxPhaserRate, fxPhaserRate);
@@ -889,6 +918,11 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxTremoloPan, fxTremoloPan);
     setParameter(Parameters::ID::fxTremoloShape, fxTremoloShape);
     setParameter(Parameters::ID::fxTremoloPhase, fxTremoloPhase);
+    setParameter(Parameters::ID::fxRingEnabled, fxRingEnabled ? 1.0f : 0.0f);
+    setParameter(Parameters::ID::fxRingFrequency, fxRingFrequency);
+    setParameter(Parameters::ID::fxRingDepth, fxRingDepth);
+    setParameter(Parameters::ID::fxRingMix, fxRingMix);
+    setParameter(Parameters::ID::fxRingBias, fxRingBias);
     setParameter(Parameters::ID::fxWidthEnabled, fxWidthEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxWidthAmount, fxWidthAmount);
     setParameter(Parameters::ID::fxWidthMonoCutoff, fxWidthMonoCutoff);

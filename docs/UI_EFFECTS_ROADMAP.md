@@ -222,7 +222,7 @@ Implemented as the Tremolo module. Useful for rhythmic amplitude movement, stere
 
 7. Frequency Shifter / Ring Mod
 
-Useful for metallic stabs, weird percussion, and techno FX. It should have conservative ranges so randomization does not make every patch unusable.
+Implemented first as the Ring Mod module. Useful for metallic stabs, weird percussion, UKG chop edge, and techno FX. True frequency shifting remains a later higher-risk DSP pass if Ring Mod does not cover enough of the workflow.
 
 8. Comb / Resonator
 
@@ -367,6 +367,7 @@ Add in this order:
 4. Stereo Width/Mono Bass. Implemented as the Width module.
 5. Three-Band EQ. Implemented as the EQ module.
 6. Tremolo / Auto Pan. Implemented as the Tremolo module.
+7. Frequency Shifter / Ring Mod. Implemented first as the Ring Mod module.
 
 Each effect should include:
 

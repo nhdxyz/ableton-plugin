@@ -884,6 +884,36 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxRingEnabled,
+        "FX Ring Mod Enabled",
+        false));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxRingFrequency,
+        "FX Ring Mod Frequency",
+        skewedRange(0.25f, 2500.0f, 85.0f),
+        72.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxRingDepth,
+        "FX Ring Mod Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxRingMix,
+        "FX Ring Mod Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.18f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxRingBias,
+        "FX Ring Mod Bias",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.45f));
+
     return { params.begin(), params.end() };
 }
 }

@@ -85,6 +85,10 @@ Nate VST should become a fast club-music instrument, not a generic copy of every
 29. Add consistent visual language for source, modulation, sequence, effect, and library surfaces.
 30. Add a dedicated visual design pass after component extraction.
 
+Implemented P0 sub-slice:
+
+- Standard slider setup now gives rotary, horizontal, compact curve, and macro-assignment amount controls lower-effort normal drag, Shift/Cmd fine adjustment, drag popups, typed values, and double-click reset. Scroll-wheel edits remain disabled to avoid accidental trackpad changes while working in Ableton.
+
 ### P1 - Core Synth Engines
 
 31. Add a true wavetable oscillator with table position modulation.

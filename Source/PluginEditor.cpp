@@ -239,7 +239,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxWidthMonoCutoff,
             Parameters::ID::fxToneLowCut
         }))
-        return 104;
+        return 86;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::filterResonance,
@@ -256,7 +256,7 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::fxEqTrim,
             Parameters::ID::fxGuardCeiling
         }))
-        return 78;
+        return 64;
 
     if (parameterIsOneOf(parameterID, {
             Parameters::ID::macroTone,
@@ -273,9 +273,26 @@ int rotaryDragSensitivityForParameter(const juce::String& parameterID)
             Parameters::ID::randomDriveBias,
             Parameters::ID::randomMotionBias
         }))
-        return 72;
+        return 58;
 
-    return 62;
+    return 52;
+}
+
+juce::ModifierKeys::Flags fineDragModifierFlags()
+{
+    return static_cast<juce::ModifierKeys::Flags>(juce::ModifierKeys::shiftModifier
+                                                  | juce::ModifierKeys::commandModifier);
+}
+
+void applyFineDragMode(juce::Slider& slider, double sensitivity)
+{
+    slider.setVelocityBasedMode(false);
+    slider.setVelocityModeParameters(sensitivity, 1, 0.0, true, fineDragModifierFlags());
+}
+
+juce::String controlFeelTooltip(const juce::String& labelText)
+{
+    return labelText + ": drag to adjust, hold Shift or Cmd for fine movement, double-click to reset, or type a value.";
 }
 
 juce::String modSourceSummaryText(size_t index)
@@ -1025,6 +1042,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modMacroAssignAmountSlider.setValue(30.0, juce::dontSendNotification);
     modMacroAssignAmountSlider.setDoubleClickReturnValue(true, 30.0);
     modMacroAssignAmountSlider.setMouseDragSensitivity(135);
+    applyFineDragMode(modMacroAssignAmountSlider, 0.36);
     modMacroAssignAmountSlider.setSliderSnapsToMousePosition(false);
     modMacroAssignAmountSlider.setScrollWheelEnabled(false);
     modMacroAssignAmountSlider.setPopupDisplayEnabled(true, true, this);
@@ -1035,7 +1053,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modMacroAssignAmountSlider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     modMacroAssignAmountSlider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
     modMacroAssignAmountSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    modMacroAssignAmountSlider.setTooltip("Macro modulation depth in percent");
+    modMacroAssignAmountSlider.setTooltip(controlFeelTooltip("Macro amount"));
     addAndMakeVisible(modMacroAssignAmountSlider);
 
     configureSlider(attackSlider, attackLabel, "Attack", Parameters::ID::ampAttack);
@@ -2701,11 +2719,12 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
 {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setMouseDragSensitivity(rotaryDragSensitivityForParameter(parameterID));
-    slider.setVelocityBasedMode(false);
+    applyFineDragMode(slider, 0.32);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
+    slider.setTooltip(controlFeelTooltip(labelText));
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
@@ -2731,10 +2750,12 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
 {
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
     slider.setMouseDragSensitivity(150);
+    applyFineDragMode(slider, 0.40);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
+    slider.setTooltip(controlFeelTooltip(labelText));
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
     slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
@@ -2759,10 +2780,12 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
 {
     slider.setSliderStyle(juce::Slider::LinearHorizontal);
     slider.setMouseDragSensitivity(110);
+    applyFineDragMode(slider, 0.38);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
+    slider.setTooltip("Curve point: drag to adjust, hold Shift or Cmd for fine movement, double-click to reset, or type a value.");
     slider.setNumDecimalPlacesToDisplay(2);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
     slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));

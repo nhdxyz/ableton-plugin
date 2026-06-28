@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Control Feel Pass
+
+- Reduced rotary drag distance for the main knob groups so common house/UKG shaping controls respond with less dragging.
+- Added explicit Shift/Cmd fine-adjust behavior to rotary, horizontal, compact curve, and macro-assignment amount sliders using JUCE velocity mode.
+- Kept scroll-wheel changes disabled to avoid accidental Ableton trackpad edits, while preserving drag popups, typed values, and double-click reset.
+- Added control tooltips that call out drag, fine-adjust, reset, and value typing behavior.
+
 ### Competitor Gap Analysis Refresh
 
 - Added `docs/COMPETITOR_GAP_ANALYSIS.md`, a larger feature-gap review across Serum, Pigments, Phase Plant, Vital, u-he, Korg, Roland, Ableton, ShaperBox, Saturn, Portal-style granular FX, and UKG production references.

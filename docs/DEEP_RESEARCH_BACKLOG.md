@@ -66,6 +66,10 @@ See `docs/COMPETITOR_GAP_ANALYSIS.md` for the expanded 2026-06-28 competitor ref
 14. Add page-level mini meters for output, voice count, CPU estimate, and safety limiting.
 15. Add a compact "init from genre" strip on HOME instead of more permanent controls.
 
+Implemented control-feel sub-slice:
+
+- Rotary, horizontal, compact curve, and macro-assignment amount sliders now expose Shift/Cmd fine adjustment, value popups, typed values, and double-click reset through a shared slider setup path. Rotary drag distance was reduced so primary sound-shaping controls move with less effort while scroll-wheel editing stays disabled to prevent accidental trackpad changes inside Ableton.
+
 ## Priority 1: Modulation And Movement
 
 16. Add drag-style modulation assignment from source chips to destination controls.

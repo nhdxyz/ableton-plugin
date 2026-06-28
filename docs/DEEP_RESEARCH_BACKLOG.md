@@ -36,7 +36,7 @@ Primary FX, groove, and club-workflow references:
 - Filter character and slope options.
 - Oscillator warp control.
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
-- MOD panel with sources, destinations, route bypass/delete, curve presets, and destination badges.
+- MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, groove timing, templates, and host transport sync.
 - Sampler/chop workflow for UKG vocal and stab material.
 - Library with folders, categories, favorites, ratings, metadata, search, sort, and recursive preset scanning.
@@ -68,7 +68,7 @@ The largest remaining gap is no longer "does the plugin have enough controls." I
 
 16. Add drag-style modulation assignment from source chips to destination controls.
 17. Add right-click or menu assignment from any automatable control.
-18. Add a macro assignment editor showing destination, amount, polarity, and range.
+18. Add a macro assignment editor showing destination, amount, polarity, and range. First pass implemented for macro source, destination, amount, add/update, replace, clear, and summary; explicit min/max range editing remains open.
 19. Add per-route curve shaping.
 20. Add per-route unipolar/bipolar mode.
 21. Add per-route smoothing.

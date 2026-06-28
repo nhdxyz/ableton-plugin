@@ -160,6 +160,7 @@ MOD:
 - Matrix rows.
 - Assignment amount controls.
 - Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, and direct dragging on LFO curve points.
+- Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
 
 SEQ:
 
@@ -203,6 +204,16 @@ Visible workflow slice:
    - Throw -> delay and reverb push.
 4. Reuse the same APVTS macro parameters, so values remain saved in Ableton state and `.natevstpreset` files.
 5. Keep HOME focused on the first four fast controls and show all eight macro sources in the deeper MOD workflow.
+
+Macro assignment workflow slice:
+
+1. Added a MOD-panel macro assignment lane for the eight performance macros.
+2. Reused the existing saved matrix slots instead of adding new host automation IDs.
+3. Added Add/Update behavior for a selected macro and destination.
+4. Added Replace behavior that clears the selected macro's older routes before adding the target route.
+5. Added Clear behavior for all routes owned by the selected macro.
+6. Added a live macro summary showing the selected macro's active destinations and depths.
+7. Kept HOME as the performance surface while detailed macro editing stays in MOD.
 
 Editable engine slice:
 

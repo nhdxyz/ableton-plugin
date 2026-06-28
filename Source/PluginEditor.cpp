@@ -17,6 +17,7 @@ constexpr auto keyboardMaxLowestVisibleNote = 84;
 constexpr auto modTopRowHeight = 148;
 constexpr auto modGeneratorRowHeight = 150;
 constexpr auto modPanelGap = 6;
+constexpr auto firstMacroModSourceIndex = 4;
 constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
@@ -454,11 +455,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureMatrixHeader(modMatrixDestinationHeaderB, "DESTINATION");
     configureMatrixHeader(modMatrixAmountHeaderB, "AMOUNT");
     configureMatrixHeader(modInspectorLabel, "INSPECT");
+    configureMatrixHeader(modMacroAssignLabel, "ASSIGN");
 
     modInspectorStatusLabel.setJustificationType(juce::Justification::centredLeft);
     modInspectorStatusLabel.setFont(juce::FontOptions(11.0f));
     modInspectorStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(modInspectorStatusLabel);
+
+    modMacroAssignStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    modMacroAssignStatusLabel.setFont(juce::FontOptions(10.5f));
+    modMacroAssignStatusLabel.setMinimumHorizontalScale(0.64f);
+    modMacroAssignStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(modMacroAssignStatusLabel);
 
     performanceStatusLabel.setJustificationType(juce::Justification::centredLeft);
     performanceStatusLabel.setFont(juce::FontOptions(11.0f));
@@ -759,6 +767,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorSourceBox.setTooltip("Choose a modulation source to add to the inspected destination");
     addAndMakeVisible(modInspectorSourceBox);
 
+    for (auto index = firstMacroModSourceIndex; index < modSourceChoices.size(); ++index)
+        modMacroAssignSourceBox.addItem(modSourceChoices[index], index + 1);
+    modMacroAssignSourceBox.setSelectedId(firstMacroModSourceIndex + 1, juce::dontSendNotification);
+    modMacroAssignSourceBox.setTextWhenNothingSelected("Macro");
+    modMacroAssignSourceBox.setTooltip("Choose the performance macro to edit");
+    addAndMakeVisible(modMacroAssignSourceBox);
+
+    for (auto index = 1; index < modDestinationChoices.size(); ++index)
+        modMacroAssignDestinationBox.addItem(modDestinationChoices[index], index + 1);
+    modMacroAssignDestinationBox.setSelectedId(2, juce::dontSendNotification);
+    modMacroAssignDestinationBox.setTextWhenNothingSelected("Destination");
+    modMacroAssignDestinationBox.setTooltip("Choose the destination controlled by the selected macro");
+    addAndMakeVisible(modMacroAssignDestinationBox);
+
     lfo1ShapeBox.addItemList(Parameters::lfoShapeChoices(), 1);
     lfo1ShapeBox.setTextWhenNothingSelected("Shape");
     addAndMakeVisible(lfo1ShapeBox);
@@ -990,6 +1012,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                                   modAmountLabels[index],
                                   "Amt " + juce::String(static_cast<int>(index + 1)),
                                   Parameters::ID::modMatrixAmount[index]);
+
+    modMacroAssignAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    modMacroAssignAmountSlider.setRange(-100.0, 100.0, 1.0);
+    modMacroAssignAmountSlider.setValue(30.0, juce::dontSendNotification);
+    modMacroAssignAmountSlider.setDoubleClickReturnValue(true, 30.0);
+    modMacroAssignAmountSlider.setMouseDragSensitivity(135);
+    modMacroAssignAmountSlider.setSliderSnapsToMousePosition(false);
+    modMacroAssignAmountSlider.setScrollWheelEnabled(false);
+    modMacroAssignAmountSlider.setPopupDisplayEnabled(true, true, this);
+    modMacroAssignAmountSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 46, 18);
+    modMacroAssignAmountSlider.setTextValueSuffix("%");
+    modMacroAssignAmountSlider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
+    modMacroAssignAmountSlider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
+    modMacroAssignAmountSlider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
+    modMacroAssignAmountSlider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    modMacroAssignAmountSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    modMacroAssignAmountSlider.setTooltip("Macro modulation depth in percent");
+    addAndMakeVisible(modMacroAssignAmountSlider);
 
     configureSlider(attackSlider, attackLabel, "Attack", Parameters::ID::ampAttack);
     configureSlider(decaySlider, decayLabel, "Decay", Parameters::ID::ampDecay);
@@ -1327,6 +1367,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     fxPresetBox.onChange = [this] { applySelectedFxPreset(); };
     modInspectorDestinationBox.onChange = [this] { updateModInspectorStatus(); };
+    modMacroAssignSourceBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
+    modMacroAssignDestinationBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
+    modMacroAssignAmountSlider.onValueChange = [this] { updateMacroAssignmentEditorStatus(); };
     lfoCurvePresetBox.onChange = [this]
     {
         const auto selectedId = lfoCurvePresetBox.getSelectedId();
@@ -1379,6 +1422,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorAddButton.onClick = [this] { addInspectedModRoute(); };
     modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
     modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
+    modMacroAssignAddButton.setTooltip("Add or update this macro assignment");
+    modMacroAssignAddButton.onClick = [this] { addMacroAssignment(false); };
+    modMacroAssignReplaceButton.setTooltip("Replace all assignments for the selected macro with this one destination");
+    modMacroAssignReplaceButton.onClick = [this] { addMacroAssignment(true); };
+    modMacroAssignClearButton.setTooltip("Delete all routes owned by the selected macro");
+    modMacroAssignClearButton.onClick = [this] { clearSelectedMacroAssignments(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -1476,6 +1525,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
     addAndMakeVisible(modInspectorClearButton);
+    addAndMakeVisible(modMacroAssignAddButton);
+    addAndMakeVisible(modMacroAssignReplaceButton);
+    addAndMakeVisible(modMacroAssignClearButton);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -2008,6 +2060,14 @@ void NateVSTAudioProcessorEditor::resized()
             modInspectorStatusLabel.setVisible(true);
             modInspectorAddButton.setVisible(true);
             modInspectorClearButton.setVisible(true);
+            modMacroAssignLabel.setVisible(true);
+            modMacroAssignStatusLabel.setVisible(true);
+            modMacroAssignSourceBox.setVisible(true);
+            modMacroAssignDestinationBox.setVisible(true);
+            modMacroAssignAmountSlider.setVisible(true);
+            modMacroAssignAddButton.setVisible(true);
+            modMacroAssignReplaceButton.setVisible(true);
+            modMacroAssignClearButton.setVisible(true);
             modMatrixSourceHeader.setVisible(true);
             modMatrixDestinationHeader.setVisible(true);
             modMatrixAmountHeader.setVisible(true);
@@ -2032,7 +2092,9 @@ void NateVSTAudioProcessorEditor::resized()
                 modSourceRows[index].setBounds(column.removeFromTop(sourceRowHeight).reduced(3, 1));
             }
 
-            modMacroLabel.setBounds(macroArea.removeFromTop(18));
+            auto macroHeader = macroArea.removeFromTop(18);
+            modMacroLabel.setBounds(macroHeader.removeFromLeft(74));
+            modMacroAssignStatusLabel.setBounds(macroHeader.reduced(3, 0));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
             setSliderVisible(macroMotionSlider, macroMotionLabel, true);
@@ -2041,8 +2103,16 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroBounceSlider, macroBounceLabel, true);
             setSliderVisible(macroWarpSlider, macroWarpLabel, true);
             setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(56).withTrimmedTop(1), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
-            layoutKnobRow(macroArea.removeFromTop(56).withTrimmedTop(1), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
+            layoutKnobRow(macroArea.removeFromTop(42).withTrimmedTop(1), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
+            layoutKnobRow(macroArea.removeFromTop(42).withTrimmedTop(1), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
+            auto macroAssignRow = macroArea.removeFromTop(30).withTrimmedTop(4);
+            modMacroAssignLabel.setBounds(macroAssignRow.removeFromLeft(48).withTrimmedTop(5));
+            modMacroAssignSourceBox.setBounds(macroAssignRow.removeFromLeft(88).reduced(3, 3));
+            modMacroAssignDestinationBox.setBounds(macroAssignRow.removeFromLeft(124).reduced(3, 3));
+            modMacroAssignAmountSlider.setBounds(macroAssignRow.removeFromLeft(114).reduced(3, 4));
+            modMacroAssignAddButton.setBounds(macroAssignRow.removeFromLeft(48).reduced(3, 3));
+            modMacroAssignReplaceButton.setBounds(macroAssignRow.removeFromLeft(66).reduced(3, 3));
+            modMacroAssignClearButton.setBounds(macroAssignRow.removeFromLeft(52).reduced(3, 3));
 
             modContent.removeFromTop(modPanelGap);
             auto generatorRow = modContent.removeFromTop(modGeneratorRowHeight);
@@ -3991,6 +4061,20 @@ void NateVSTAudioProcessorEditor::setPlainParameterValue(const juce::String& par
     }
 }
 
+int NateVSTAudioProcessorEditor::selectedMacroAssignmentSourceIndex() const
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto selectedSource = modMacroAssignSourceBox.getSelectedId() - 1;
+    return juce::jlimit(firstMacroModSourceIndex, sourceChoices.size() - 1, selectedSource);
+}
+
+int NateVSTAudioProcessorEditor::selectedMacroAssignmentDestinationIndex() const
+{
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto selectedDestination = modMacroAssignDestinationBox.getSelectedId() - 1;
+    return juce::jlimit(1, destinationChoices.size() - 1, selectedDestination);
+}
+
 void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
@@ -4030,11 +4114,11 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
-        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB,
+        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfoCurvePresetBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -4057,7 +4141,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
-        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton,
+        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &fxRackStatusLabel,
@@ -4106,6 +4190,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(macroBounceSlider, macroBounceLabel, false);
     setSliderVisible(macroWarpSlider, macroWarpLabel, false);
     setSliderVisible(macroThrowSlider, macroThrowLabel, false);
+    modMacroAssignAmountSlider.setVisible(false);
     setSliderVisible(lfo1RateSlider, lfo1RateLabel, false);
     setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, false);
     setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, false);
@@ -4521,6 +4606,53 @@ void NateVSTAudioProcessorEditor::updateModInspectorStatus()
     modInspectorClearButton.setEnabled(true);
 }
 
+void NateVSTAudioProcessorEditor::updateMacroAssignmentEditorStatus()
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceIndex = selectedMacroAssignmentSourceIndex();
+    const auto destinationIndex = selectedMacroAssignmentDestinationIndex();
+    const auto sourceName = sourceChoices[sourceIndex];
+    juce::StringArray routes;
+    auto selectedRouteExists = false;
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+
+        if (currentSource != sourceIndex
+            || currentDestination <= 0
+            || ! juce::isPositiveAndBelow(currentDestination, destinationChoices.size())
+            || std::abs(amount) <= 0.001f)
+        {
+            continue;
+        }
+
+        if (currentDestination == destinationIndex)
+            selectedRouteExists = true;
+
+        const auto percent = juce::roundToInt(amount * 100.0f);
+        routes.add(destinationChoices[currentDestination]
+                   + " " + (percent >= 0 ? "+" : "") + juce::String(percent)
+                   + (enabled ? "" : " off"));
+    }
+
+    const auto targetAmount = juce::roundToInt(modMacroAssignAmountSlider.getValue());
+    const auto targetText = destinationChoices[destinationIndex]
+        + " " + (targetAmount >= 0 ? "+" : "") + juce::String(targetAmount) + "%";
+    const auto summary = routes.isEmpty()
+        ? sourceName + ": no assignments | target " + targetText
+        : sourceName + ": " + routes.joinIntoString(", ");
+
+    modMacroAssignStatusLabel.setText(summary, juce::dontSendNotification);
+    modMacroAssignStatusLabel.setTooltip(summary + " | Add updates a matching route, Replace keeps only the target route for this macro");
+    modMacroAssignAddButton.setButtonText(selectedRouteExists ? "Update" : "Add");
+    modMacroAssignClearButton.setEnabled(! routes.isEmpty());
+}
+
 void NateVSTAudioProcessorEditor::setModInspectorDestination(int destinationIndex)
 {
     const auto destinationChoices = Parameters::modulationDestinationChoices();
@@ -4592,11 +4724,114 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     updateModMatrixRows();
     updateModDestinationIndicators();
     updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
 
     const auto percent = juce::roundToInt(defaultAmount * 100.0f);
     modMatrixStatusLabel.setText("Added S" + juce::String(targetSlot + 1) + " "
                                      + sourceChoices[sourceIndex] + " -> " + destinationChoices[destinationIndex]
                                      + " +" + juce::String(percent) + "%",
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::addMacroAssignment(bool replaceExisting)
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceIndex = selectedMacroAssignmentSourceIndex();
+    const auto destinationIndex = selectedMacroAssignmentDestinationIndex();
+    auto amount = static_cast<float>(modMacroAssignAmountSlider.getValue() / 100.0);
+
+    if (std::abs(amount) < 0.001f)
+        amount = 0.01f;
+
+    auto targetSlot = -1;
+    auto firstEmptySlot = -1;
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto currentAmount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto isEmpty = currentSource <= 0 || currentDestination <= 0 || std::abs(currentAmount) <= 0.001f;
+
+        if (! replaceExisting && currentSource == sourceIndex && currentDestination == destinationIndex)
+            targetSlot = static_cast<int>(index);
+
+        if (replaceExisting && currentSource == sourceIndex)
+        {
+            if (targetSlot < 0)
+                targetSlot = static_cast<int>(index);
+
+            setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+            continue;
+        }
+
+        if (firstEmptySlot < 0 && isEmpty)
+            firstEmptySlot = static_cast<int>(index);
+    }
+
+    if (targetSlot < 0)
+        targetSlot = firstEmptySlot;
+
+    if (targetSlot < 0)
+    {
+        modMatrixStatusLabel.setText("No free modulation slot for " + sourceChoices[sourceIndex], juce::dontSendNotification);
+        updateMacroAssignmentEditorStatus();
+        return;
+    }
+
+    const auto slotIndex = static_cast<size_t>(targetSlot);
+    setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
+    setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
+    setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
+    setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+
+    modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+    modInspectorDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+
+    const auto percent = juce::roundToInt(amount * 100.0f);
+    modMatrixStatusLabel.setText(juce::String(replaceExisting ? "Replaced " : "Assigned ")
+                                     + sourceChoices[sourceIndex] + " -> " + destinationChoices[destinationIndex]
+                                     + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%",
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::clearSelectedMacroAssignments()
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto sourceIndex = selectedMacroAssignmentSourceIndex();
+    auto clearedCount = 0;
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        if (currentSource != sourceIndex)
+            continue;
+
+        setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+        ++clearedCount;
+    }
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+
+    modMatrixStatusLabel.setText(clearedCount > 0
+                                     ? "Cleared " + juce::String(clearedCount) + " " + sourceChoices[sourceIndex] + " route"
+                                        + (clearedCount == 1 ? "" : "s")
+                                     : sourceChoices[sourceIndex] + " had no routes",
                                  juce::dontSendNotification);
 }
 
@@ -4613,6 +4848,7 @@ void NateVSTAudioProcessorEditor::deleteModRoute(size_t slotIndex)
     updateModMatrixRows();
     updateModDestinationIndicators();
     updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
 
     modMatrixStatusLabel.setText("Deleted S" + juce::String(static_cast<int>(slotIndex + 1)),
                                  juce::dontSendNotification);
@@ -4650,6 +4886,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
     updateModMatrixRows();
     updateModDestinationIndicators();
     updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
 
     if (clearedCount > 0)
         modMatrixStatusLabel.setText("Cleared " + juce::String(clearedCount)
@@ -4882,6 +5119,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateHostSyncStatus();
     updateModMatrixRows();
     updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
     updateModDestinationIndicators();
     updateOutputMeter();
     updateLowEndAssistant();

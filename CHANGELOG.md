@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Macro Assignment Editor
+
+- Added a compact MOD-panel macro assignment lane for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
+- The new editor can add/update a macro route, replace all routes for the selected macro with one destination, or clear that macro's routes while reusing the existing eight saved MOD matrix slots.
+- Added a live macro summary so the selected macro shows its current destinations and depths without scanning every matrix row.
+- Kept the HOME performance macro layout unchanged and kept the deeper editing workflow inside the focused MOD panel.
+
 ### Deep Research Backlog
 
 - Added `docs/DEEP_RESEARCH_BACKLOG.md`, a long feature inventory based on current synth, FX, groove, and UKG production references.

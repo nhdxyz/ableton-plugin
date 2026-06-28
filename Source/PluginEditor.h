@@ -112,6 +112,8 @@ private:
     juce::Label modMatrixSourceHeaderB;
     juce::Label modMatrixDestinationHeaderB;
     juce::Label modMatrixAmountHeaderB;
+    juce::Label modMacroAssignLabel;
+    juce::Label modMacroAssignStatusLabel;
     juce::Label sampleSectionLabel;
     juce::Label sampleSourceLabel;
     juce::Label sampleChopLabel;
@@ -159,6 +161,8 @@ private:
     juce::ComboBox fxTremoloRateBox;
     juce::ComboBox modInspectorDestinationBox;
     juce::ComboBox modInspectorSourceBox;
+    juce::ComboBox modMacroAssignSourceBox;
+    juce::ComboBox modMacroAssignDestinationBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
     juce::ComboBox lfoCurvePresetBox;
@@ -229,6 +233,7 @@ private:
     juce::Slider modEnv1ReleaseSlider;
     juce::Slider modEnv1DepthSlider;
     std::array<juce::Slider, 8> modAmountSliders;
+    juce::Slider modMacroAssignAmountSlider;
     juce::Slider attackSlider;
     juce::Slider decaySlider;
     juce::Slider sustainSlider;
@@ -482,6 +487,9 @@ private:
     juce::TextButton fxApplyPresetButton { "Load" };
     juce::TextButton modInspectorAddButton { "Add" };
     juce::TextButton modInspectorClearButton { "Clear" };
+    juce::TextButton modMacroAssignAddButton { "Add" };
+    juce::TextButton modMacroAssignReplaceButton { "Replace" };
+    juce::TextButton modMacroAssignClearButton { "Clear" };
     std::array<juce::ToggleButton, 8> modSlotEnabledButtons;
     std::array<juce::TextButton, 8> modSlotDeleteButtons;
     UI::FxRackRow fxToneSlotButton { "Tone" };
@@ -554,6 +562,7 @@ private:
     void updateHostSyncStatus();
     void updateModMatrixRows();
     void updateModInspectorStatus();
+    void updateMacroAssignmentEditorStatus();
     void updateModDestinationIndicators();
     void applyLfoCurvePreset(int presetId);
     void updateOutputMeter();
@@ -594,6 +603,8 @@ private:
     void applyFxModulePreset(FxModule module, int presetId);
     void setModInspectorDestination(int destinationIndex);
     void addInspectedModRoute();
+    void addMacroAssignment(bool replaceExisting);
+    void clearSelectedMacroAssignments();
     void deleteModRoute(size_t slotIndex);
     void clearInspectedModRoutes();
     FxMomentarySnapshot captureFxMomentarySnapshot() const;
@@ -614,6 +625,8 @@ private:
     UI::FxRackRow& fxSlotButton(FxModule module);
     float readPlainParameterValue(const juce::String& parameterID, float fallback) const;
     void setPlainParameterValue(const juce::String& parameterID, float plainValue);
+    int selectedMacroAssignmentSourceIndex() const;
+    int selectedMacroAssignmentDestinationIndex() const;
 
     Panel activePanel = Panel::home;
     FxModule selectedFxModule = FxModule::guard;

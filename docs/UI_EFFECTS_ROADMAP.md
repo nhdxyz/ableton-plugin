@@ -508,6 +508,7 @@ Build the next larger slices in this order:
    First candidate-cue pass implemented per-slot LAB `Cue` buttons that preview generated candidates, restore the current patch afterward, and verify non-destructive preview in `RandomCandidateAudit`.
    First candidate-save pass implemented LAB `Save Slot`, processor-level candidate snapshot preset writes, generated metadata/category folder preservation, and RandomCandidateAudit coverage that saving a candidate leaves the current patch unchanged.
    First candidate-diff pass implemented changed-section count badges, recall/cue tooltip section summaries, old/new value diffs for key controls, and RandomCandidateAudit coverage for the Filter/Cutoff diff path.
+   First candidate-organization pass implemented LAB `Save Slot` favorite/rating controls that persist into Library filters and RandomCandidateAudit coverage for the stored candidate name.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

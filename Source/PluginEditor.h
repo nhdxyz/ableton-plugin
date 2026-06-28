@@ -166,6 +166,7 @@ private:
     juce::ComboBox presetTagBox;
     juce::ComboBox presetSortBox;
     juce::ComboBox presetRatingBox;
+    juce::ComboBox candidateRatingBox;
     juce::ComboBox presetPackBox;
     juce::ComboBox presetKeyBox;
     juce::ComboBox presetBpmBox;
@@ -520,6 +521,7 @@ private:
     juce::TextButton auditionPresetButton { "Audition" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
     juce::TextButton fxMoveUpButton { "Up" };
     juce::TextButton fxMoveDownButton { "Down" };

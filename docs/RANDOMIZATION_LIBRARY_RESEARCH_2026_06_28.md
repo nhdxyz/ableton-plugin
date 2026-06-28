@@ -54,6 +54,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Per-slot candidate `Cue` buttons now preview generated ideas with a short note and restore the current patch afterward; `RandomCandidateAudit` verifies that preview state is non-destructive.
 - LAB `Save Slot` now writes the active generated candidate into the recursive preset library with generated-source metadata, category folder, pack, key, BPM, and source-recipe tags without recalling the candidate first.
 - Candidate buttons now show changed-section count badges, and recall/cue tooltips include changed sections plus old/new value diffs for the most important sound-shaping controls.
+- LAB `Save Slot` now has candidate-specific favorite and 1-5 star rating controls, and the saved generated preset is immediately available to Library favorite/rating filters.
 
 ## Highest-Value Randomization Backlog
 
@@ -65,7 +66,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 6. Add a larger visible mutation diff panel with changed parameters, old value, new value, and section.
 7. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
 8. Add "promote variation" and "discard variation" actions.
-9. Add save/favorite/rating handoff from generated candidate rows.
+9. Add per-candidate row save/favorite/rating shortcuts so each generated slot can be organized without using the shared save strip.
 10. Add favorite-aware randomization seeded from 4-5 star presets.
 11. Add "more like selected preset" using parameter-distance mutation.
 12. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.

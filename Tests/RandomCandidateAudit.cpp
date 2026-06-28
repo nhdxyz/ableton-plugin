@@ -153,6 +153,18 @@ int main()
         return 1;
     }
 
+    if (! processor.setPresetFavorite(candidateLegalName, true)
+        || ! processor.isPresetFavorite(candidateLegalName)
+        || ! processor.setPresetRating(candidateLegalName, 5)
+        || processor.getPresetRating(candidateLegalName) != 5)
+    {
+        std::cerr << "Candidate preset favorite/rating handoff failed\n";
+        candidatePresetFile.deleteFile();
+        processor.setPresetFavorite(candidateLegalName, false);
+        processor.setPresetRating(candidateLegalName, 0);
+        return 1;
+    }
+
     if (auto xml = juce::XmlDocument::parse(candidatePresetFile))
     {
         const auto state = juce::ValueTree::fromXml(*xml);
@@ -170,12 +182,26 @@ int main()
         {
             std::cerr << "Saved candidate preset did not preserve generated metadata or candidate cutoff\n";
             candidatePresetFile.deleteFile();
+            processor.setPresetFavorite(candidateLegalName, false);
+            processor.setPresetRating(candidateLegalName, 0);
             return 1;
         }
     }
     else
     {
         std::cerr << "Candidate preset XML could not be parsed\n";
+        candidatePresetFile.deleteFile();
+        processor.setPresetFavorite(candidateLegalName, false);
+        processor.setPresetRating(candidateLegalName, 0);
+        return 1;
+    }
+
+    if (! processor.setPresetFavorite(candidateLegalName, false)
+        || processor.isPresetFavorite(candidateLegalName)
+        || ! processor.setPresetRating(candidateLegalName, 0)
+        || processor.getPresetRating(candidateLegalName) != 0)
+    {
+        std::cerr << "Candidate preset favorite/rating clear failed\n";
         candidatePresetFile.deleteFile();
         return 1;
     }

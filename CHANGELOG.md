@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Candidate Rating Handoff
+
+- Added LAB save-strip controls for marking `Save Slot` exports as starred and assigning a 1-5 star rating before they enter the Library.
+- Candidate save-from-slot now applies favorite/rating state to `Library.xml` before refreshing the preset browser, so generated house/UKG ideas can be found immediately through Favorites and rating filters.
+- Extended `RandomCandidateAudit` to verify that a saved random candidate can persist favorite/rating metadata under the same legal preset name used by the candidate preset file.
+
 ### Random Candidate Diff Badges
 
 - Added generated-candidate changed-section counts so LAB slot buttons can show how many areas differ from the current patch.

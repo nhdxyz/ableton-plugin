@@ -921,6 +921,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetRatingBox.setTooltip("Rate the selected preset from 1 to 5 stars");
     addAndMakeVisible(presetRatingBox);
 
+    candidateRatingBox.addItem("No Stars", 1);
+    candidateRatingBox.addItem("1 Star", 2);
+    candidateRatingBox.addItem("2 Stars", 3);
+    candidateRatingBox.addItem("3 Stars", 4);
+    candidateRatingBox.addItem("4 Stars", 5);
+    candidateRatingBox.addItem("5 Stars", 6);
+    candidateRatingBox.setSelectedId(1, juce::dontSendNotification);
+    candidateRatingBox.setTextWhenNothingSelected("Save Rating");
+    candidateRatingBox.setTooltip("Rating to apply when saving the active random candidate");
+    addAndMakeVisible(candidateRatingBox);
+
     presetPackBox.addItemList(presetPackChoices(), 1);
     presetPackBox.setSelectedId(1, juce::dontSendNotification);
     presetPackBox.setEditableText(true);
@@ -1678,6 +1689,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     previousPresetButton.onClick = [this] { loadPresetByOffset(-1); };
     nextPresetButton.onClick = [this] { loadPresetByOffset(1); };
     savePresetButton.onClick = [this] { saveCurrentPreset(); };
+    candidateFavoriteButton.setClickingTogglesState(true);
+    candidateFavoriteButton.setTooltip("Favorite the preset created by Save Slot");
     saveCandidateButton.setTooltip("Save the active random candidate into the Library without recalling it");
     saveCandidateButton.onClick = [this] { saveActiveRandomCandidatePreset(); };
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
@@ -1914,6 +1927,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(auditionPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
+    addAndMakeVisible(candidateFavoriteButton);
     addAndMakeVisible(saveCandidateButton);
     addAndMakeVisible(fxMoveUpButton);
     addAndMakeVisible(fxMoveDownButton);
@@ -2428,6 +2442,8 @@ void NateVSTAudioProcessorEditor::resized()
             presetNameEditor.setVisible(true);
             presetPackBox.setVisible(true);
             presetBpmBox.setVisible(true);
+            candidateRatingBox.setVisible(true);
+            candidateFavoriteButton.setVisible(true);
             savePresetButton.setVisible(true);
             saveCandidateButton.setVisible(true);
             presetStatusLabel.setVisible(true);
@@ -2485,12 +2501,14 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(content.removeFromTop(112), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
             content.removeFromTop(8);
             auto saveRow = content.removeFromTop(42);
-            presetCategoryBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
-            presetNameEditor.setBounds(saveRow.removeFromLeft(236).reduced(4));
-            presetPackBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
-            presetBpmBox.setBounds(saveRow.removeFromLeft(100).reduced(4));
-            savePresetButton.setBounds(saveRow.removeFromLeft(82).reduced(4));
-            saveCandidateButton.setBounds(saveRow.removeFromLeft(112).reduced(4));
+            presetCategoryBox.setBounds(saveRow.removeFromLeft(136).reduced(4));
+            presetNameEditor.setBounds(saveRow.removeFromLeft(194).reduced(4));
+            presetPackBox.setBounds(saveRow.removeFromLeft(126).reduced(4));
+            presetBpmBox.setBounds(saveRow.removeFromLeft(78).reduced(4));
+            candidateRatingBox.setBounds(saveRow.removeFromLeft(96).reduced(4));
+            candidateFavoriteButton.setBounds(saveRow.removeFromLeft(54).reduced(4));
+            savePresetButton.setBounds(saveRow.removeFromLeft(72).reduced(4));
+            saveCandidateButton.setBounds(saveRow.removeFromLeft(100).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
             break;
         }
@@ -4367,11 +4385,17 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
 
     promoteCandidateAButton.setEnabled(activeCandidateReady);
     promoteCandidateBButton.setEnabled(activeCandidateReady);
+    candidateRatingBox.setEnabled(activeCandidateReady);
+    candidateFavoriteButton.setEnabled(activeCandidateReady);
     saveCandidateButton.setEnabled(activeCandidateReady);
     promoteCandidateAButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot A"
                                                             : "Recall or generate a candidate before promoting");
     promoteCandidateBButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot B"
                                                             : "Recall or generate a candidate before promoting");
+    candidateRatingBox.setTooltip(activeCandidateReady ? "Rating to apply when Save Slot writes this candidate into the Library"
+                                                       : "Generate, cue, or recall a candidate before choosing save rating");
+    candidateFavoriteButton.setTooltip(activeCandidateReady ? "Favorite the preset created by Save Slot"
+                                                            : "Generate, cue, or recall a candidate before starring a save");
     saveCandidateButton.setTooltip(activeCandidateReady ? "Save the active random candidate with the current category, pack, BPM, and generated-source metadata"
                                                         : "Generate, cue, or recall a random candidate before saving a slot");
 }
@@ -5785,7 +5809,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -5805,7 +5829,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton, &candidateFavoriteButton,
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
@@ -7308,8 +7332,17 @@ void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
         if (storedName.isEmpty())
             storedName = "Untitled";
 
-        presetStatusLabel.setText("Saved candidate " + storedName,
-                                  juce::dontSendNotification);
+        const auto candidateRating = juce::jlimit(0, 5, candidateRatingBox.getSelectedId() - 1);
+        const auto favoriteCandidate = candidateFavoriteButton.getToggleState();
+        auto statusText = "Saved candidate " + storedName;
+
+        if (audioProcessor.setPresetFavorite(storedName, favoriteCandidate) && favoriteCandidate)
+            statusText += " | Starred";
+
+        if (audioProcessor.setPresetRating(storedName, candidateRating) && candidateRating > 0)
+            statusText += " | " + juce::String(candidateRating) + " star" + (candidateRating == 1 ? "" : "s");
+
+        presetStatusLabel.setText(statusText, juce::dontSendNotification);
         refreshPresetList();
         presetBox.setText(storedName, juce::dontSendNotification);
         presetNameEditor.setText(storedName, juce::dontSendNotification);

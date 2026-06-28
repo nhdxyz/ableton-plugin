@@ -10,6 +10,8 @@ namespace
 {
 constexpr auto editorWidth = 940;
 constexpr auto editorHeight = 710;
+constexpr auto editorMaxWidth = 1440;
+constexpr auto editorMaxHeight = 980;
 constexpr auto pianoKeyboardHeight = 58;
 constexpr auto keyboardControlsWidth = 214;
 constexpr auto keyboardLowestNote = 24;
@@ -177,7 +179,9 @@ void appendVisibleLayoutIssues(const juce::Component& root,
                        + boundsInEditor.toString() + " outside " + editorBounds.toString());
         }
 
-        appendVisibleLayoutIssues(root, *child, panelName, childPath, issues);
+        // Viewport contents can be virtual/clipped rows; audit the viewport shell, not its scroll contents.
+        if (dynamic_cast<const juce::Viewport*>(child) == nullptr)
+            appendVisibleLayoutIssues(root, *child, panelName, childPath, issues);
     }
 }
 
@@ -674,6 +678,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 {
     setLookAndFeel(&lookAndFeel);
     setSize(editorWidth, editorHeight);
+    setResizeLimits(editorWidth, editorHeight, editorMaxWidth, editorMaxHeight);
+    setResizable(true, true);
 
     titleLabel.setText("Nate VST", juce::dontSendNotification);
     titleLabel.setFont(juce::FontOptions(24.0f, juce::Font::bold));
@@ -3688,6 +3694,13 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         const char* name = "";
     };
 
+    struct LayoutSizeAuditSpec
+    {
+        const char* name = "";
+        int width = editorWidth;
+        int height = editorHeight;
+    };
+
     const std::array<PanelAuditSpec, 8> panels {
         PanelAuditSpec { Panel::home, "HOME" },
         PanelAuditSpec { Panel::synth, "SYNTH" },
@@ -3725,9 +3738,17 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         std::pair<RandomLabPage, const char*> { RandomLabPage::save, "Save" }
     };
 
+    const std::array<LayoutSizeAuditSpec, 3> layoutSizes {
+        LayoutSizeAuditSpec { "Default", editorWidth, editorHeight },
+        LayoutSizeAuditSpec { "Wide", 1180, 820 },
+        LayoutSizeAuditSpec { "Max", editorMaxWidth, editorMaxHeight }
+    };
+
     const auto originalPanel = activePanel;
     const auto originalFxModule = selectedFxModule;
     const auto originalRandomLabPage = activeRandomLabPage;
+    const auto originalWidth = getWidth();
+    const auto originalHeight = getHeight();
     juce::StringArray issues;
 
     auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
@@ -3736,33 +3757,45 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         appendVisibleLayoutIssues(*this, *this, panelName, {}, issues);
     };
 
-    for (const auto& panel : panels)
+    for (const auto& layoutSize : layoutSizes)
     {
-        activePanel = panel.panel;
-        updatePanelVisibility();
+        setSize(layoutSize.width, layoutSize.height);
+        const auto layoutPrefix = juce::String(layoutSize.name)
+                                + " "
+                                + juce::String(layoutSize.width)
+                                + "x"
+                                + juce::String(layoutSize.height)
+                                + " ";
 
-        if (panel.panel == Panel::effects)
+        for (const auto& panel : panels)
         {
-            for (const auto module : fxModules)
+            activePanel = panel.panel;
+            updatePanelVisibility();
+
+            if (panel.panel == Panel::effects)
             {
-                selectedFxModule = module;
-                auditCurrentLayout(juce::String(panel.name) + "/" + fxModuleName(module));
+                for (const auto module : fxModules)
+                {
+                    selectedFxModule = module;
+                    auditCurrentLayout(layoutPrefix + panel.name + "/" + fxModuleName(module));
+                }
             }
-        }
-        else if (panel.panel == Panel::lab)
-        {
-            for (const auto& page : randomLabPages)
+            else if (panel.panel == Panel::lab)
             {
-                activeRandomLabPage = page.first;
-                auditCurrentLayout(juce::String(panel.name) + "/" + page.second);
+                for (const auto& page : randomLabPages)
+                {
+                    activeRandomLabPage = page.first;
+                    auditCurrentLayout(layoutPrefix + panel.name + "/" + page.second);
+                }
             }
-        }
-        else
-        {
-            auditCurrentLayout(panel.name);
+            else
+            {
+                auditCurrentLayout(layoutPrefix + panel.name);
+            }
         }
     }
 
+    setSize(originalWidth, originalHeight);
     activePanel = originalPanel;
     selectedFxModule = originalFxModule;
     activeRandomLabPage = originalRandomLabPage;

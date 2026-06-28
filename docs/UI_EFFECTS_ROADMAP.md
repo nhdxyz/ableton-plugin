@@ -32,6 +32,11 @@ Instead, improve the internal UI system:
 - Keep parameters in APVTS so Ableton automation and saved sets remain stable.
 - Add external libraries only when they solve a specific DSP or rendering problem that JUCE does not handle well.
 
+Implemented foundation pass:
+
+- The editor now opens at the established 940x710 layout and can resize up to 1440x980 in hosts that expose plugin resize handles.
+- `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
+
 ## Current Problems
 
 ### FX Shows Too Much

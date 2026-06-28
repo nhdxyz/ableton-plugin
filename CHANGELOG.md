@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Resizable Editor Layout Audit
+
+- Enabled host editor resizing from the current 940x710 compact layout up to a 1440x980 expanded workspace.
+- Expanded `EditorLayoutAudit` to sweep default, wide, and maximum editor sizes across all panels, every Random Lab page, and every FX detail module.
+- Added the first automated guardrail for future resizable UI work before deeper panel extraction, compact browser modes, and screenshot regression tests.
+
 ### Library Macro Value Strip
 
 - Added structured per-preset macro values to Library scan results, preserving the existing top-macro summary while exposing all eight Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw values.

@@ -22,6 +22,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Editor layout audit passed for all panels and FX detail modules.\n";
+    std::cout << "Editor layout audit passed for all panels, Random Lab pages, FX detail modules, and audited editor sizes.\n";
     return 0;
 }

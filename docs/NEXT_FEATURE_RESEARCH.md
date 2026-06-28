@@ -76,7 +76,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 5. Add UI scale choices: 85%, 100%, 125%, and 150%.
 6. Add a compact Ableton-laptop layout that shows fewer controls per page.
 7. Add a larger sound-design layout once component extraction is complete.
-8. Replace text-heavy buttons with icon buttons where the action is standard: save, reload, favorite, audition, undo, redo, copy, clear, move up, move down.
+8. Replace text-heavy buttons with icon buttons where the action is standard: save, reload, favorite, audition, undo, redo, copy, clear, move up, move down. First-pass global `Undo Edit`/`Redo Edit` buttons are implemented in the persistent selected-control strip; icon conversion remains open.
 9. Add a global selected-control inspector that shows value, automation name, modulation routes, and reset action.
 10. Add value popovers for every draggable control.
 11. Add consistent double-click reset behavior across all sliders, buttons, and curve points.
@@ -244,7 +244,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 152. Add per-scope intensity: Source, Filter, Amp, Motion, FX, Seq, Sample, Library, Macros.
 153. Add "useful only" guardrails for pitch, output gain, sub level, resonance, feedback, wet FX, and stereo bass.
 154. Add a user recipe builder for randomization.
-155. Add randomization history beyond the current one-step undo/redo.
+155. Add randomization history beyond the current one-step undo/redo. First global sound-design edit history is implemented separately for manual UI edits, preset loads, snapshots, modulation routes, sample/slice edits, MSEG tools, FX rack changes, and slider gestures.
 156. Add A/B compare for generated patches.
 157. Add transforms: darker, brighter, tighter, wider, dirtier, cleaner, bouncier, more minimal, more garage, more warehouse.
 158. Add automatic preset naming from detected traits.

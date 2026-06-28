@@ -520,6 +520,8 @@ private:
     juce::TextButton sequencerTabButton { "SEQ" };
     juce::TextButton effectsTabButton { "FX" };
     juce::TextButton libraryTabButton { "LIBRARY" };
+    juce::TextButton undoEditButton { "Undo Edit" };
+    juce::TextButton redoEditButton { "Redo Edit" };
     juce::TextButton selectedControlAddModButton { "MOD+" };
     juce::TextButton selectedControlOpenModButton { "MOD" };
     juce::TextButton sineWaveButton { "Sine" };
@@ -684,6 +686,11 @@ private:
     float modulationSourceActivityForUi(int sourceIndex) const;
     void updateSelectedControlInspector(const juce::String& labelText, const juce::String& parameterID, double plainValue);
     void updateSelectedControlActionState();
+    void captureGlobalEdit(const juce::String& label);
+    void triggerGlobalUndo();
+    void triggerGlobalRedo();
+    void refreshGlobalEditControls();
+    void refreshAfterGlobalEditRestore(const juce::String& statusText);
     void addModRouteForSelectedControl();
     void focusSelectedControlModDestination();
     juce::String formattedParameterValue(const juce::String& parameterID, double plainValue) const;

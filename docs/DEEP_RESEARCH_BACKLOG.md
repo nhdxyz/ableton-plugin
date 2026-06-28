@@ -74,6 +74,7 @@ Implemented UI test sub-slices:
 
 - `EditorLayoutAudit` now instantiates the real plugin editor and checks HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module for visible empty-bounds or editor-overflow failures through CTest.
 - The editor now exposes host resize limits from 940x710 to 1440x980, and `EditorLayoutAudit` sweeps default, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module.
+- First-pass global `Undo Edit`/`Redo Edit` is available from the persistent selected-control strip, with `GlobalEditHistoryAudit` verifying full-state restore across synth parameters, modulation routes, sequencer step data, and performance snapshots.
 
 ## Priority 1: Modulation And Movement
 

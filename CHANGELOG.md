@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Global Sound-Design Undo/Redo
+
+- Added a bounded global edit-history stack for sound-design edits, stored as full plugin state snapshots so APVTS parameters, sequencer steps, sample state, modulation routes, and performance snapshots restore together.
+- Added persistent top-strip `Undo Edit` and `Redo Edit` controls, separate from the existing Random Lab and sequencer utility undo actions.
+- Captured first-pass global undo points for slider gestures, segmented source/filter/rate choices, preset loading, A/B snapshot capture/recall, sample/chop/slice edits, MSEG tools, modulation route edits, macro assignments, FX rack changes, and FX throw commands.
+- Added `GlobalEditHistoryAudit` to verify undo/redo restores synth parameters, modulation routes, sequencer lane data, and performance snapshot A.
+
 ### Source-Colored Modulation Rings
 
 - Updated rotary modulation rings and linear modulation badges to use the active modulation source color instead of only positive/negative polarity colors.

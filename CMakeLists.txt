@@ -124,6 +124,19 @@ target_link_libraries(NateVSTRandomCandidateAudit
 
 add_test(NAME RandomCandidateAudit COMMAND NateVSTRandomCandidateAudit)
 
+add_executable(NateVSTGlobalEditHistoryAudit Tests/GlobalEditHistoryAudit.cpp)
+
+target_link_libraries(NateVSTGlobalEditHistoryAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME GlobalEditHistoryAudit COMMAND NateVSTGlobalEditHistoryAudit)
+
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")
 

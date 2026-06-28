@@ -13,6 +13,7 @@ const juce::Identifier ratingsType { "Ratings" };
 const juce::Identifier recentType { "Recent" };
 const juce::Identifier presetRefType { "Preset" };
 const juce::Identifier performanceSnapshotType { "PerformanceSnapshot" };
+constexpr auto maxGlobalEditHistoryDepth = 24;
 
 juce::StringArray presetCategoryPathSegments(const juce::String& category)
 {
@@ -521,6 +522,73 @@ bool NateVSTAudioProcessor::redoRandomization()
     randomRedoState = {};
     randomRedoLabel.clear();
     return true;
+}
+
+void NateVSTAudioProcessor::captureGlobalEditState(const juce::String& label)
+{
+    auto state = createPluginState();
+    if (globalUndoStack.empty() || ! globalUndoStack.back().state.isEquivalentTo(state))
+    {
+        globalUndoStack.push_back({ state.createCopy(), label.trim().isNotEmpty() ? label.trim() : juce::String("Edit") });
+        while (globalUndoStack.size() > static_cast<size_t>(maxGlobalEditHistoryDepth))
+            globalUndoStack.erase(globalUndoStack.begin());
+    }
+
+    globalRedoStack.clear();
+}
+
+bool NateVSTAudioProcessor::undoGlobalEdit()
+{
+    auto currentState = createPluginState();
+    while (! globalUndoStack.empty() && globalUndoStack.back().state.isEquivalentTo(currentState))
+        globalUndoStack.pop_back();
+
+    if (globalUndoStack.empty())
+        return false;
+
+    const auto snapshot = globalUndoStack.back();
+    globalUndoStack.pop_back();
+    globalRedoStack.push_back({ currentState.createCopy(), snapshot.label });
+    restorePluginState(snapshot.state.createCopy());
+    return true;
+}
+
+bool NateVSTAudioProcessor::redoGlobalEdit()
+{
+    auto currentState = createPluginState();
+    while (! globalRedoStack.empty() && globalRedoStack.back().state.isEquivalentTo(currentState))
+        globalRedoStack.pop_back();
+
+    if (globalRedoStack.empty())
+        return false;
+
+    const auto snapshot = globalRedoStack.back();
+    globalRedoStack.pop_back();
+    globalUndoStack.push_back({ currentState.createCopy(), snapshot.label });
+    while (globalUndoStack.size() > static_cast<size_t>(maxGlobalEditHistoryDepth))
+        globalUndoStack.erase(globalUndoStack.begin());
+
+    restorePluginState(snapshot.state.createCopy());
+    return true;
+}
+
+bool NateVSTAudioProcessor::canUndoGlobalEdit() const
+{
+    return ! globalUndoStack.empty();
+}
+
+bool NateVSTAudioProcessor::canRedoGlobalEdit() const
+{
+    return ! globalRedoStack.empty();
+}
+
+juce::String NateVSTAudioProcessor::getGlobalEditHistorySummary() const
+{
+    const auto undoText = globalUndoStack.empty() ? juce::String("Undo: none")
+                                                  : "Undo: " + globalUndoStack.back().label;
+    const auto redoText = globalRedoStack.empty() ? juce::String("Redo: none")
+                                                  : "Redo: " + globalRedoStack.back().label;
+    return undoText + " | " + redoText;
 }
 
 bool NateVSTAudioProcessor::hasRandomCandidate(int slotIndex) const

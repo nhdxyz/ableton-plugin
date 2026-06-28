@@ -1712,6 +1712,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        if (audioProcessor.hasPerformanceSnapshot(0))
+            captureGlobalEdit("Recall snapshot A");
         if (audioProcessor.recallPerformanceSnapshot(0))
         {
             updateSampleNameLabel();
@@ -1725,6 +1727,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        captureGlobalEdit("Capture snapshot A");
         audioProcessor.capturePerformanceSnapshot(0);
         updatePerformanceSnapshotButtons();
     };
@@ -1733,6 +1736,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        if (audioProcessor.hasPerformanceSnapshot(1))
+            captureGlobalEdit("Recall snapshot B");
         if (audioProcessor.recallPerformanceSnapshot(1))
         {
             updateSampleNameLabel();
@@ -1746,6 +1751,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        captureGlobalEdit("Capture snapshot B");
         audioProcessor.capturePerformanceSnapshot(1);
         updatePerformanceSnapshotButtons();
     };
@@ -1754,6 +1760,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        captureGlobalEdit("Clear sample");
         audioProcessor.clearSample();
         sampleWaveformKey = "cleared";
         updateSampleNameLabel();
@@ -1763,6 +1770,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        captureGlobalEdit("Random sample cut");
         setRandomStatus(audioProcessor.randomizeSampleCut() ? "Sample randomized" : "Sample skipped");
         updateSampleWaveformDisplay();
     };
@@ -1770,6 +1778,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
+        captureGlobalEdit("UKG chop");
         if (audioProcessor.randomizeUkgVocalChop())
         {
             sequencerGrid.repaint();
@@ -2049,6 +2058,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorAddButton.onClick = [this] { addInspectedModRoute(); };
     modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
     modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
+    undoEditButton.setTooltip("Undo the last captured sound-design edit");
+    undoEditButton.onClick = [this] { triggerGlobalUndo(); };
+    undoEditButton.setEnabled(false);
+    redoEditButton.setTooltip("Redo the last undone sound-design edit");
+    redoEditButton.onClick = [this] { triggerGlobalRedo(); };
+    redoEditButton.setEnabled(false);
     selectedControlAddModButton.setTooltip("Touch a modulatable control, then add the selected MOD source to it");
     selectedControlAddModButton.onClick = [this] { addModRouteForSelectedControl(); };
     selectedControlAddModButton.setEnabled(false);
@@ -2239,6 +2254,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
     addAndMakeVisible(modInspectorClearButton);
+    addAndMakeVisible(undoEditButton);
+    addAndMakeVisible(redoEditButton);
     addAndMakeVisible(selectedControlAddModButton);
     addAndMakeVisible(selectedControlOpenModButton);
     addAndMakeVisible(modMacroAssignAddButton);
@@ -2465,12 +2482,17 @@ void NateVSTAudioProcessorEditor::resized()
     auto selectedControlArea = selectedControlRow.removeFromRight(520).reduced(0, 2);
     selectedControlHeaderLabel.setVisible(true);
     selectedControlStatusLabel.setVisible(true);
+    undoEditButton.setVisible(true);
+    redoEditButton.setVisible(true);
     selectedControlAddModButton.setVisible(true);
     selectedControlOpenModButton.setVisible(true);
     selectedControlHeaderLabel.setBounds(selectedControlArea.removeFromLeft(72).reduced(2, 0));
+    undoEditButton.setBounds(selectedControlArea.removeFromRight(78).reduced(2, 0));
+    redoEditButton.setBounds(selectedControlArea.removeFromRight(78).reduced(2, 0));
     selectedControlAddModButton.setBounds(selectedControlArea.removeFromRight(58).reduced(2, 0));
     selectedControlOpenModButton.setBounds(selectedControlArea.removeFromRight(50).reduced(2, 0));
     selectedControlStatusLabel.setBounds(selectedControlArea.reduced(2, 0));
+    refreshGlobalEditControls();
 
     switch (activePanel)
     {
@@ -3836,6 +3858,10 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
     auto* sliderPointer = &slider;
+    slider.onDragStart = [this, labelText]
+    {
+        captureGlobalEdit("Edit " + labelText);
+    };
     slider.onValueChange = [this, sliderPointer, labelText, parameterID]
     {
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
@@ -3877,6 +3903,10 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
     auto* sliderPointer = &slider;
+    slider.onDragStart = [this, labelText]
+    {
+        captureGlobalEdit("Edit " + labelText);
+    };
     slider.onValueChange = [this, sliderPointer, labelText, parameterID]
     {
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
@@ -3911,6 +3941,10 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
     auto* sliderPointer = &slider;
+    slider.onDragStart = [this]
+    {
+        captureGlobalEdit("Edit curve point");
+    };
     slider.onValueChange = [this, sliderPointer, parameterID]
     {
         updateSelectedControlInspector("Curve", parameterID, sliderPointer->getValue());
@@ -3954,6 +3988,10 @@ void NateVSTAudioProcessorEditor::configureRandomSectionSlider(juce::Slider& sli
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
     auto* sliderPointer = &slider;
+    slider.onDragStart = [this, labelText]
+    {
+        captureGlobalEdit("Edit Random " + labelText);
+    };
     slider.onValueChange = [this, sliderPointer, labelText, parameterID]
     {
         updateSelectedControlInspector("Rand " + labelText, parameterID, sliderPointer->getValue());
@@ -4137,6 +4175,7 @@ void NateVSTAudioProcessorEditor::setModRouteAmount(size_t slotIndex, float amou
         return;
 
     amount = juce::jlimit(-1.0f, 1.0f, amount);
+    captureGlobalEdit("Edit mod route amount");
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
 
     updateModMatrixRows();
@@ -4239,6 +4278,7 @@ void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
 {
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
+    captureGlobalEdit("Load sample");
 
     if (audioProcessor.loadSampleFile(file))
     {
@@ -4397,6 +4437,7 @@ void NateVSTAudioProcessorEditor::storeSelectedSampleSliceSettings()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
+    captureGlobalEdit("Store sample slice");
     captureCurrentSampleSliceSettings(selectedSampleSliceIndex, true);
     setRandomStatus("Stored slice " + juce::String(static_cast<int>(selectedSampleSliceIndex + 1)));
     updateSampleSliceButtons();
@@ -4410,6 +4451,7 @@ void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
     releasePresetAuditionNote();
 
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    captureGlobalEdit("Recall sample slice");
     recallSampleSliceSettings(safeIndex);
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
@@ -4436,6 +4478,7 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     const auto pan = random.nextFloat() < 0.68f ? (random.nextFloat() * 0.9f) - 0.45f : 0.0f;
     const auto probability = random.nextFloat() < 0.34f ? 0.62f + (random.nextFloat() * 0.28f) : 1.0f;
 
+    captureGlobalEdit("Dice sample slice");
     setPlainParameterValue(Parameters::ID::sampleTranspose, pitch);
     setPlainParameterValue(Parameters::ID::sampleGain, gain);
     setPlainParameterValue(Parameters::ID::sampleReverse, reverse ? 1.0f : 0.0f);
@@ -4462,6 +4505,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
         ? readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f
         : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).reverse;
     const auto nextReverse = ! currentReverse;
+    captureGlobalEdit("Toggle sample slice reverse");
     setPlainParameterValue(Parameters::ID::sampleReverse, nextReverse ? 1.0f : 0.0f);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
@@ -4482,6 +4526,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
         ? readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f
         : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).choke;
     const auto nextChoke = ! currentChoke;
+    captureGlobalEdit("Toggle sample slice choke");
     setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], nextChoke ? 1.0f : 0.0f);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
@@ -4503,6 +4548,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
         : 0.0f;
     const auto nextPan = currentPan < -0.2f ? 0.35f : currentPan > 0.2f ? 0.0f : -0.35f;
 
+    captureGlobalEdit("Pan sample slice");
     setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], nextPan);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
@@ -4525,6 +4571,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
         : 1.0f;
     const auto nextProbability = currentProbability < 0.995f ? 1.0f : 0.72f;
 
+    captureGlobalEdit("Ghost sample slice");
     setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], nextProbability);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
@@ -5271,6 +5318,7 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 
 void NateVSTAudioProcessorEditor::addFxModule(FxModule module)
 {
+    captureGlobalEdit("Add FX " + fxModuleName(module));
     setPlainParameterValue(fxEnabledParameterID(module), 1.0f);
     selectedFxModule = module;
     fxAddBox.setSelectedId(0, juce::dontSendNotification);
@@ -5287,6 +5335,7 @@ void NateVSTAudioProcessorEditor::removeSelectedFxModule()
         return;
     }
 
+    captureGlobalEdit("Remove FX " + fxModuleName(selectedFxModule));
     setPlainParameterValue(fxEnabledParameterID(selectedFxModule), 0.0f);
 
     selectedFxModule = FxModule::guard;
@@ -5332,6 +5381,7 @@ void NateVSTAudioProcessorEditor::moveSelectedFxModule(int direction)
     if (targetPosition < 0 || targetPosition > lastMovablePosition)
         return;
 
+    captureGlobalEdit("Move FX " + fxModuleName(selectedFxModule));
     std::swap(order[static_cast<size_t>(position)], order[static_cast<size_t>(targetPosition)]);
     setFxModuleOrder(order);
     updateFxRackControls();
@@ -5341,6 +5391,7 @@ void NateVSTAudioProcessorEditor::moveSelectedFxModule(int direction)
 
 void NateVSTAudioProcessorEditor::resetFxModuleOrder()
 {
+    captureGlobalEdit("Reset FX order");
     setFxModuleOrder(fxDefaultModuleOrder());
     updateFxRackControls();
     resized();
@@ -5349,6 +5400,7 @@ void NateVSTAudioProcessorEditor::resetFxModuleOrder()
 
 void NateVSTAudioProcessorEditor::applyDelayThrow()
 {
+    captureGlobalEdit("Delay throw");
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayRate, 2.0f);
@@ -5374,6 +5426,7 @@ void NateVSTAudioProcessorEditor::applyDelayThrow()
 
 void NateVSTAudioProcessorEditor::applySpaceThrow()
 {
+    captureGlobalEdit("Space throw");
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f);
@@ -5399,6 +5452,7 @@ void NateVSTAudioProcessorEditor::applySpaceThrow()
 
 void NateVSTAudioProcessorEditor::applyPumpDrop()
 {
+    captureGlobalEdit("Pump drop");
     setPlainParameterValue(Parameters::ID::fxPumpEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxPumpRate, 1.0f);
     setPlainParameterValue(Parameters::ID::fxPumpCurve, 2.0f);
@@ -5422,6 +5476,7 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
 
 void NateVSTAudioProcessorEditor::clearFxThrows()
 {
+    captureGlobalEdit("Clear throws");
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.18f);
@@ -6440,6 +6495,83 @@ void NateVSTAudioProcessorEditor::updateSelectedControlActionState()
                                                 : "Touch a control that is available in the MOD matrix");
 }
 
+void NateVSTAudioProcessorEditor::captureGlobalEdit(const juce::String& label)
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    audioProcessor.captureGlobalEditState(label);
+    refreshGlobalEditControls();
+}
+
+void NateVSTAudioProcessorEditor::triggerGlobalUndo()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    if (! audioProcessor.undoGlobalEdit())
+    {
+        setRandomStatus("No edit undo");
+        refreshGlobalEditControls();
+        return;
+    }
+
+    refreshAfterGlobalEditRestore("Undo edit");
+}
+
+void NateVSTAudioProcessorEditor::triggerGlobalRedo()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    if (! audioProcessor.redoGlobalEdit())
+    {
+        setRandomStatus("No edit redo");
+        refreshGlobalEditControls();
+        return;
+    }
+
+    refreshAfterGlobalEditRestore("Redo edit");
+}
+
+void NateVSTAudioProcessorEditor::refreshGlobalEditControls()
+{
+    const auto canUndo = audioProcessor.canUndoGlobalEdit();
+    const auto canRedo = audioProcessor.canRedoGlobalEdit();
+    const auto summary = audioProcessor.getGlobalEditHistorySummary();
+
+    undoEditButton.setEnabled(canUndo);
+    redoEditButton.setEnabled(canRedo);
+    undoEditButton.setTooltip(canUndo ? "Undo the last captured sound-design edit\n" + summary
+                                      : "No captured sound-design edit to undo");
+    redoEditButton.setTooltip(canRedo ? "Redo the last undone sound-design edit\n" + summary
+                                      : "No captured sound-design edit to redo");
+}
+
+void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::String& statusText)
+{
+    updateSegmentedSelectors();
+    updateLfoCurveDisplay();
+    updatePumpCurveDisplay();
+    updateWavetableDisplay();
+    updateModMatrixRows();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+    updateModDestinationIndicators();
+    updatePerformanceSnapshotButtons();
+    updatePerformanceXYPad();
+    updateSequencerGridContext();
+    updateSampleNameLabel();
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+    updateFxRackControls();
+    if (selectedControlParameterID.isNotEmpty())
+        updateSelectedControlInspector(selectedControlName,
+                                       selectedControlParameterID,
+                                       readPlainParameterValue(selectedControlParameterID, 0.0f));
+    refreshGlobalEditControls();
+    setRandomStatus(statusText);
+    repaint();
+}
+
 void NateVSTAudioProcessorEditor::addModRouteForSelectedControl()
 {
     const auto destinationIndex = modulationDestinationIndexForParameter(selectedControlParameterID);
@@ -6751,6 +6883,7 @@ void NateVSTAudioProcessorEditor::setSliderVisible(juce::Slider& slider, juce::L
 
 void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& parameterID, int choiceIndex)
 {
+    captureGlobalEdit("Select " + parameterID);
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
     {
         parameter->beginChangeGesture();
@@ -6847,6 +6980,7 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
 void NateVSTAudioProcessorEditor::applyLfoCurvePreset(int presetId)
 {
     const auto values = lfoCurvePresetValues(presetId);
+    captureGlobalEdit("Load LFO curve");
     setPlainParameterValue(Parameters::ID::lfo1Shape, 5.0f);
 
     for (size_t index = 0; index < values.size(); ++index)
@@ -6866,6 +7000,7 @@ void NateVSTAudioProcessorEditor::applyLfoCurveTool(LfoCurveTool tool)
 
     auto statusText = juce::String("Edited MSEG");
     auto presetId = 1;
+    captureGlobalEdit("Edit MSEG curve");
 
     switch (tool)
     {
@@ -7384,6 +7519,7 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
         defaultAmount = 0.30f;
 
     const auto slotIndex = static_cast<size_t>(targetSlot);
+    captureGlobalEdit("Add mod route");
     setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], defaultAmount);
@@ -7411,6 +7547,9 @@ void NateVSTAudioProcessorEditor::addMacroAssignment(bool replaceExisting)
 
     if (std::abs(amount) < 0.001f)
         amount = 0.01f;
+
+    if (replaceExisting)
+        captureGlobalEdit("Replace macro assignment");
 
     auto targetSlot = -1;
     auto firstEmptySlot = -1;
@@ -7452,6 +7591,8 @@ void NateVSTAudioProcessorEditor::addMacroAssignment(bool replaceExisting)
     }
 
     const auto slotIndex = static_cast<size_t>(targetSlot);
+    if (! replaceExisting)
+        captureGlobalEdit("Edit macro assignment");
     setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
@@ -7477,6 +7618,14 @@ void NateVSTAudioProcessorEditor::clearSelectedMacroAssignments()
     const auto sourceChoices = Parameters::modulationSourceChoices();
     const auto sourceIndex = selectedMacroAssignmentSourceIndex();
     auto clearedCount = 0;
+    auto hasRoutesToClear = false;
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+        if (juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f)) == sourceIndex)
+            hasRoutesToClear = true;
+
+    if (hasRoutesToClear)
+        captureGlobalEdit("Clear macro assignments");
 
     for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
     {
@@ -7546,6 +7695,7 @@ void NateVSTAudioProcessorEditor::duplicateModRoute(size_t slotIndex)
     }
 
     const auto targetIndex = static_cast<size_t>(targetSlot);
+    captureGlobalEdit("Duplicate mod route");
     setPlainParameterValue(Parameters::ID::modMatrixSource[targetIndex], static_cast<float>(sourceIndex));
     setPlainParameterValue(Parameters::ID::modMatrixDestination[targetIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[targetIndex], amount);
@@ -7571,6 +7721,7 @@ void NateVSTAudioProcessorEditor::deleteModRoute(size_t slotIndex)
     if (slotIndex >= Parameters::ID::modMatrixSource.size())
         return;
 
+    captureGlobalEdit("Delete mod route");
     setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f);
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f);
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
@@ -7601,11 +7752,18 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
         return fallback;
     };
 
+    auto capturedUndo = false;
     for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
     {
         const auto destinationIndex = static_cast<int>(std::round(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f)));
         if (destinationIndex != selectedDestination)
             continue;
+
+        if (! capturedUndo)
+        {
+            captureGlobalEdit("Clear mod destination");
+            capturedUndo = true;
+        }
 
         setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
@@ -7877,6 +8035,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSampleWaveformDisplay();
     updateKeyboardRangeLabel();
     updateFxRackControls();
+    refreshGlobalEditControls();
 }
 
 int NateVSTAudioProcessorEditor::getNumRows()
@@ -8317,6 +8476,9 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
     releasePresetAuditionNote();
 
     const auto presetName = presetBox.getText().trim();
+    if (presetName.isNotEmpty() && audioProcessor.getPresetNames().contains(presetName))
+        captureGlobalEdit("Load preset " + presetName);
+
     if (audioProcessor.loadPreset(presetName))
     {
         refreshPresetList();

@@ -143,6 +143,12 @@ public:
     void capturePerformanceSnapshot(int slotIndex);
     bool recallPerformanceSnapshot(int slotIndex);
     bool hasPerformanceSnapshot(int slotIndex) const;
+    void captureGlobalEditState(const juce::String& label);
+    bool undoGlobalEdit();
+    bool redoGlobalEdit();
+    bool canUndoGlobalEdit() const;
+    bool canRedoGlobalEdit() const;
+    juce::String getGlobalEditHistorySummary() const;
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void panicAllNotesOff();
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
@@ -200,6 +206,12 @@ private:
         bool shouldRetry = false;
     };
 
+    struct GlobalEditSnapshot
+    {
+        juce::ValueTree state;
+        juce::String label;
+    };
+
     Parameters::APVTS parameters;
     Synth::SynthEngine synthEngine;
     Randomization::Randomizer randomizer;
@@ -241,6 +253,8 @@ private:
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
     std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
+    std::vector<GlobalEditSnapshot> globalUndoStack;
+    std::vector<GlobalEditSnapshot> globalRedoStack;
     juce::String randomUndoLabel;
     juce::String randomRedoLabel;
     juce::String lastRandomValidationSummary;

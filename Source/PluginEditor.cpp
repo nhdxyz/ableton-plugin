@@ -351,6 +351,14 @@ juce::String outputSafetySummary(float peak)
     return "safe peak " + juce::String(peakDb, 1) + " dB";
 }
 
+juce::String guardSafetySummary(float peak, float guardReduction, bool guardActive)
+{
+    if (guardActive && guardReduction > 0.005f)
+        return "guard -" + juce::String(juce::roundToInt(guardReduction * 100.0f)) + "% | " + outputSafetySummary(peak);
+
+    return outputSafetySummary(peak);
+}
+
 juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& preset)
 {
     const auto summary = preset.macroSummary.trim();
@@ -6478,8 +6486,13 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
             auto peakRight = 0.0f;
             auto rmsLeft = 0.0f;
             auto rmsRight = 0.0f;
+            auto guardDrive = 0.0f;
+            auto guardReduction = 0.0f;
+            auto guardActive = false;
             audioProcessor.getOutputMeterLevels(peakLeft, peakRight, rmsLeft, rmsRight);
-            return outputSafetySummary(juce::jmax(peakLeft, peakRight));
+            audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, guardActive);
+            juce::ignoreUnused(guardDrive);
+            return guardSafetySummary(juce::jmax(peakLeft, peakRight), guardReduction, guardActive);
         }
     }
 

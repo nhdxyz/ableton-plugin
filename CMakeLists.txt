@@ -150,6 +150,19 @@ target_link_libraries(NateVSTPumpTelemetryAudit
 
 add_test(NAME PumpTelemetryAudit COMMAND NateVSTPumpTelemetryAudit)
 
+add_executable(NateVSTGuardTelemetryAudit Tests/GuardTelemetryAudit.cpp)
+
+target_link_libraries(NateVSTGuardTelemetryAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME GuardTelemetryAudit COMMAND NateVSTGuardTelemetryAudit)
+
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")
 

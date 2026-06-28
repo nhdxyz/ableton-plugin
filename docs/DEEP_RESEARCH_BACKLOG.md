@@ -202,7 +202,7 @@ Implemented sampler sub-slice:
 Implemented FX sub-slice:
 
 - Pump now publishes live phase, gain, peak reduction, and active-state telemetry from the DSP path, and the FX Pump curve display shows HOST/INT timing source, a moving phase marker, and a reduction meter. External Ableton sidechain input remains tracked separately because it requires bus-layout and host-validation work.
-- The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom. This is the first visibility slice for the compressor/clipper/transient safety backlog before adding more dynamics modules.
+- The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction. This is the first visibility slice for the compressor/clipper/transient safety backlog before adding more dynamics modules.
 - Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), and preset previews/construction kits (#68).
 
 ## Priority 6: Randomization And Sound Discovery
@@ -255,7 +255,7 @@ Implemented library sub-slice:
 
 Implemented safety sub-slice:
 
-- The persistent output meter now shows a club-production safety state from live output levels, and the Guard FX summary exposes current peak headroom. Deeper guard-hit telemetry, limiter/clipper metering, and preset-level gain staging audits remain open.
+- The persistent output meter now shows a club-production safety state from live output levels, and the Guard FX summary exposes current peak headroom plus active gain reduction. Deeper guard-hit history, limiter/clipper metering, and preset-level gain staging audits remain open.
 
 ## Priority 9: Ableton And Distribution
 

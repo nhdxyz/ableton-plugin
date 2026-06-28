@@ -6,6 +6,8 @@
 
 - Added always-visible output safety labels to the top-bar meter: `LOW`, `SAFE`, `HOT`, and `CLIP` are derived from current peak/RMS levels.
 - Updated the FX rack Guard summary to report live peak headroom, so house and UKG patches show whether the output is safe, quiet, hot, or clipping without opening a separate analysis page.
+- Added real-time-safe Guard telemetry for safety-stage drive, gain reduction, and active state, with the Guard slot now showing gain reduction when the output protection is actually working.
+- Added `GuardTelemetryAudit` to verify hot patches report Guard activity and disabled Guard resets the telemetry cleanly.
 - Kept this as a visibility-first slice before the broader compressor, clipper, limiter, transient, and LUFS-style mix-safety work tracked in GitHub issue #65.
 
 ### Pump Telemetry And House Sidechain Foundation

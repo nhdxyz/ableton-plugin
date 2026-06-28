@@ -46,7 +46,7 @@ Nate VST already has a real foundation:
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
 - 16-step piano-roll style sequencer with chord memory, templates, groove modes, velocity/probability/timing lanes, MIDI export, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
-- Live pump phase/reduction feedback and top-bar output safety status for checking ducking and level risk while sound-designing.
+- Live pump phase/reduction feedback, top-bar output safety status, and Guard reduction telemetry for checking ducking and level risk while sound-designing.
 - Preset library with recursive folders, categories, search, sort, favorites, 1-5 rating, metadata, macro previews, filters, and audition.
 
 The missing work is not "add one more page of knobs." The missing work is depth, visual feedback, source quality, library maturity, and genre-specific generation.

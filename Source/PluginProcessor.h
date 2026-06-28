@@ -154,6 +154,7 @@ public:
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
+    void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
     struct HostSyncStatus
     {
         double bpm = 124.0;

@@ -2245,6 +2245,11 @@ void NateVSTAudioProcessor::getPumpMeterLevels(float& phase, float& gain, float&
     effectsRack.getPumpMeterLevels(phase, gain, reduction, active);
 }
 
+void NateVSTAudioProcessor::getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept
+{
+    effectsRack.getGuardMeterLevels(drive, reduction, active);
+}
+
 NateVSTAudioProcessor::HostSyncStatus NateVSTAudioProcessor::getHostSyncStatus() const noexcept
 {
     HostSyncStatus status;

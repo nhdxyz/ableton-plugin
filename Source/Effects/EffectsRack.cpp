@@ -291,6 +291,9 @@ void EffectsRack::reset()
     pumpMeterGain.store(1.0f, std::memory_order_relaxed);
     pumpMeterReduction.store(0.0f, std::memory_order_relaxed);
     pumpMeterActive.store(false, std::memory_order_relaxed);
+    guardMeterDrive.store(0.0f, std::memory_order_relaxed);
+    guardMeterReduction.store(0.0f, std::memory_order_relaxed);
+    guardMeterActive.store(false, std::memory_order_relaxed);
     delayWritePosition = 0;
     combWritePosition = 0;
 }
@@ -318,6 +321,13 @@ void EffectsRack::getPumpMeterLevels(float& phase, float& gain, float& reduction
     gain = pumpMeterGain.load(std::memory_order_relaxed);
     reduction = pumpMeterReduction.load(std::memory_order_relaxed);
     active = pumpMeterActive.load(std::memory_order_relaxed);
+}
+
+void EffectsRack::getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept
+{
+    drive = guardMeterDrive.load(std::memory_order_relaxed);
+    reduction = guardMeterReduction.load(std::memory_order_relaxed);
+    active = guardMeterActive.load(std::memory_order_relaxed);
 }
 
 void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
@@ -1073,6 +1083,8 @@ void EffectsRack::applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, flo
     const auto gain = juce::Decibels::decibelsToGain(macroCompensatedOutput + (guardPush * 9.0f));
     const auto guardShape = 1.0f + (guardPush * 2.8f);
     const auto guardNormaliser = std::tanh(guardShape);
+    auto maxGuardDrive = 0.0f;
+    auto maxGuardReduction = 0.0f;
 
     for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
@@ -1081,11 +1093,29 @@ void EffectsRack::applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, flo
         for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
         {
             const auto driven = samples[sampleIndex] * gain;
-            samples[sampleIndex] = guardEnabled
+            const auto processed = guardEnabled
                 ? (std::tanh(driven * guardShape) / guardNormaliser) * guardCeiling
                 : softClip(driven);
+
+            if (guardEnabled)
+            {
+                const auto drivenLevel = std::abs(driven);
+                const auto processedLevel = std::abs(processed);
+                maxGuardDrive = juce::jmax(maxGuardDrive, drivenLevel / juce::jmax(0.000001f, guardCeiling));
+
+                if (drivenLevel > 0.000001f)
+                    maxGuardReduction = juce::jmax(maxGuardReduction, 1.0f - (processedLevel / drivenLevel));
+            }
+
+            samples[sampleIndex] = processed;
         }
     }
+
+    guardMeterDrive.store(guardEnabled ? juce::jlimit(0.0f, 2.0f, maxGuardDrive) : 0.0f,
+                          std::memory_order_relaxed);
+    guardMeterReduction.store(guardEnabled ? juce::jlimit(0.0f, 1.0f, maxGuardReduction) : 0.0f,
+                              std::memory_order_relaxed);
+    guardMeterActive.store(guardEnabled && maxGuardReduction > 0.005f, std::memory_order_relaxed);
 }
 
 float EffectsRack::softClip(float sample) const

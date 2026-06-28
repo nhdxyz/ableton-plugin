@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Smart Crates
+
+- Added first-pass smart crate matching to the existing Library filter menu for Five Star Crate, Club Bass, Chord Stabs, Dub Stabs, UKG Essentials, UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Techno Stabs, Dirty Tools, Mono Safe, and Sequenced Grooves.
+- Reused existing preset metadata, tags, notes, pack, BPM, rating, source, and macro values so no preset-file or automation changes are needed.
+- Shared the browser search corpus with the smart-crate matcher so text search and curated production crates stay consistent.
+
 ### Library Preset Compare And Revert
 
 - Added Library `Before`/`Loaded` compare and `Revert` controls for the most recent explicit preset load, using full plugin state snapshots so modulation, sequencer, sampler, FX, and performance snapshot state are included.

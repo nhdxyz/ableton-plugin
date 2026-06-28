@@ -304,17 +304,17 @@ Implemented P5 sub-slice:
 
 ### P8 - Library, Presets, And Packs
 
-216. Add a real multi-column browser table: name, category, pack, rating, key, BPM, tags, source, modified, macro summary.
+216. Expand the compact browser rows into a full sortable multi-column browser: name, category, pack, rating, key, BPM, tags, source, modified, macro summary.
 217. Add sortable columns with stable secondary sort.
 218. Add tag editor for user presets.
 219. Add custom user tags.
 220. Add multi-select metadata editing.
-221. Add preset notes.
-222. Add smart folders: Favorites, Five Star, Recent, UKG Bass, UKG Vocal Chops, House Stabs, Minimal Plucks, Dirty Techno, Macro Rich, User, Factory.
+221. Expand implemented preset notes into structured production tips and batch-editable metadata.
+222. Expand the implemented smart-crate filter pass into a full sidebar with editable crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
 223. Add folder tree view for user and factory libraries.
 224. Add pack manager with import/export.
 225. Add duplicate preset detection.
-226. Add preset compare before overwrite.
+226. Extend the implemented preset-load compare/revert into safe overwrite compare.
 227. Add preset version history for user saves.
 228. Add missing sample warnings in browser rows.
 229. Add per-preset audio preview render.
@@ -381,14 +381,14 @@ The best next slices are the ones that improve professional feel before adding a
 
 1. Componentize the editor and add layout-overlap tests.
 2. Expand control feel with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
-3. Grow the compact LIBRARY table into a full browser with smart folders, custom tags, audio previews, and construction kits.
+3. Grow the compact LIBRARY table and first smart-crate pass into a full browser with sidebar crates, custom tags, audio previews, and construction kits.
 4. Add a focused modulation-routing UX: drag assignment, visible rings, selected-parameter route view, and route range editing.
 5. Add multiple SEQ patterns, ratchets, scale-locked chord paint, and per-step modulation lanes.
 6. Add transient/manual sample slicing with per-slice controls.
 7. Add wavetable oscillator playback with preview before import/editor work.
 8. Add multiband drive with oversampling and gain compensation.
 9. Add UKG recipe tools: Dred/Reese bass, organ bass, late stabs, vocal chop motifs, and swung 2-step patterns.
-10. Add preset preview rendering and smart folders.
+10. Add preset preview rendering and expand smart crates into editable full-browser folders.
 11. Add randomizer locks directly on UI groups.
 12. Add Ableton save/reopen/freeze/flatten test checklist.
 
@@ -398,7 +398,7 @@ Track the backlog through one umbrella issue plus focused child issues. Good fir
 
 - Componentize editor panels and add layout regression checks.
 - Improve rotary controls with fine drag, double-click reset, and value popovers.
-- Build multi-column preset browser with smart folders.
+- Expand the compact preset browser and smart-crate filters into a full multi-column browser with editable sidebar folders.
 - Add drag-and-drop modulation assignment and visible modulation rings.
 - Add sequencer pattern chaining, ratchets, chord paint, and per-step modulation lanes.
 - Add transient/manual slicing with per-slice controls.

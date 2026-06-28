@@ -440,13 +440,13 @@ Nate VST gaps:
 
 173. Add full-browser mode.
 174. Add folder tree for user and factory libraries.
-175. Add smart folders: Favorites, Five Star, Recent, UKG Bass, UKG Vocal Chops, House Stabs, Minimal Plucks, Dirty Techno, Macro Rich, User, Factory.
+175. Expand the implemented smart-crate filter pass into full smart folders with editable user crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
 176. Add custom tag editor.
 177. Add multi-select metadata editing.
-178. Add preset notes.
+178. Expand implemented preset notes into structured production tips and batch-editable metadata.
 179. Add pack manager import/export.
 180. Add duplicate preset detection.
-181. Add preset compare before overwrite.
+181. Extend the implemented preset-load compare/revert into safe overwrite compare.
 182. Add preset version history.
 183. Add missing sample and wavetable warnings in browser rows.
 184. Add per-preset audio preview rendering.
@@ -690,18 +690,18 @@ Key extra lessons:
 367. Add full-screen or wide browser mode with tree, results, details, macro preview, and audio preview.
 368. Add rendered preset audio previews using standard house/UKG/techno MIDI phrases.
 369. Add auto-preview with output safety and host-transport awareness.
-370. Add smart collections: Five Star, Favorites, Recent, Macro Rich, UKG Bass, UKG Chops, House Chords, Tech House Bass, Minimal Plucks, Dirty Techno, Clean Subs.
+370. Expand the implemented smart-crate filter pass into smart collections for New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Clean Subs, and pack folders.
 371. Add editable user tags with batch metadata editing.
-372. Add search tokens for source type, modulation count, FX type, sequencer type, sample dependencies, BPM, key, pack, rating, author, and date.
+372. Extend the existing search tokens with modulation count, FX type, sequencer type, sample dependencies, and date.
 373. Add "find similar preset" using parameter distance, macro roles, tags, and future audio preview descriptors.
 374. Add "more like this" randomization seeded from favorites or high-rated presets.
-375. Add compare/revert for loaded preset vs edited state.
+375. Extend the implemented Library preset-load compare/revert into edited-vs-saved and generated-slot compare states.
 376. Add preset version history for user saves.
 377. Add safe overwrite flow with rename, duplicate, and compare.
 378. Add pack manager with import/export, missing dependency report, and pack validation.
 379. Add construction-kit preset type that bundles patch, sequence, sample references, MIDI phrase, macro intent, BPM, key, and suggested Ableton use.
 380. Add subfolder templates for UKG/Bass, UKG/Vocal Chops, UKG/Organ, House/Chords, Tech House/Bass, Techno/Stabs, Minimal/Plucks.
-381. Add preset notes and production tips field for factory content.
+381. Expand preset notes with richer production tips fields for factory content and batch editing.
 382. Add "used in current project" or "recent in this session" collection if host-safe state tracking is practical.
 
 ### 20. House And UKG Content Direction

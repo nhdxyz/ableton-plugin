@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <initializer_list>
 #include <typeinfo>
 #include <utility>
 #include <vector>
@@ -241,6 +242,10 @@ juce::StringArray presetFilterChoices()
         "Generated",
         "User",
         "Factory",
+        "Five Star Crate",
+        "Club Bass",
+        "Chord Stabs",
+        "Dub Stabs",
         "Bass",
         "Stab",
         "Lead",
@@ -257,10 +262,16 @@ juce::StringArray presetFilterChoices()
         "UKG Essentials",
         "UKG Basslines",
         "Garage Chops",
+        "House Chords",
         "House Tools",
         "Tech House Tools",
+        "Minimal Plucks",
         "Minimal Tools",
+        "Techno Stabs",
         "Techno Tools",
+        "Dirty Tools",
+        "Mono Safe",
+        "Sequenced Grooves",
         "120-124 BPM",
         "125-128 BPM",
         "129-132 BPM",
@@ -334,6 +345,88 @@ int parsePresetBpm(const juce::String& text)
 juce::String formatPresetBpm(int bpm)
 {
     return bpm >= 20 && bpm <= 300 ? juce::String(bpm) + " BPM" : juce::String("Any Tempo");
+}
+
+juce::String presetSearchText(const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    const auto sourceText = preset.isFactory ? juce::String("Factory") : juce::String("User");
+    const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + " Star" : juce::String("Unrated");
+
+    return preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
+        + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
+        + preset.pack + " " + preset.key + " " + formatPresetBpm(preset.bpm) + " "
+        + preset.macroSummary + " " + preset.notes
+        + (preset.isFavorite ? " Favorite" : "");
+}
+
+bool textContainsAny(const juce::String& text, std::initializer_list<const char*> terms)
+{
+    for (const auto* term : terms)
+        if (text.containsIgnoreCase(term))
+            return true;
+
+    return false;
+}
+
+bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, const juce::String& crate)
+{
+    const auto text = presetSearchText(preset);
+    const auto isUkg = textContainsAny(text, { "UKG", "Garage", "2-Step", "Two Step", "Dred", "Reese" });
+    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit", "Lo-Fi", "Afro" })
+        && ! textContainsAny(text, { "Tech House", "Tech-House" });
+    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House" });
+    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click" });
+    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid" });
+    const auto isBass = textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" });
+    const auto isChordOrStab = textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" });
+    const auto isChop = textContainsAny(text, { "Chop", "Vocal", "Sample", "Slice" });
+    const auto isPluck = textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba" });
+    const auto isDirty = textContainsAny(text, { "Dirty", "Dirt", "Drive", "Distortion", "Acid", "Warehouse", "Metallic" })
+        || preset.macroValues[1] >= 0.45f;
+    const auto isMonoSafe = textContainsAny(text, { "Mono Safe", "Mono-Safe", "Sub Safe" })
+        || (isBass && preset.macroValues[4] >= 0.35f && preset.macroValues[3] <= 0.45f);
+    const auto isSequenced = textContainsAny(text, { "Sequence", "Sequenced", "Pattern", "Groove", "Arp", "Pulse", "Roll" });
+
+    if (crate == "Five Star Crate")
+        return preset.rating == 5;
+    if (crate == "Club Bass")
+        return isBass;
+    if (crate == "Chord Stabs")
+        return isChordOrStab;
+    if (crate == "Dub Stabs")
+        return textContainsAny(text, { "Dub", "Chord", "Stab" }) && (isHouse || isTechno || isMinimal || isUkg);
+    if (crate == "Project Pack")
+        return preset.pack.equalsIgnoreCase("Project Pack") || (! preset.isFactory && ! preset.source.equalsIgnoreCase("Generated"));
+    if (crate == "Factory Pack")
+        return preset.isFactory || preset.pack.equalsIgnoreCase("Factory Pack");
+    if (crate == "UKG Essentials")
+        return isUkg;
+    if (crate == "UKG Basslines")
+        return isUkg && isBass;
+    if (crate == "Garage Chops")
+        return isUkg && isChop;
+    if (crate == "House Chords")
+        return isHouse && isChordOrStab;
+    if (crate == "House Tools")
+        return isHouse;
+    if (crate == "Tech House Tools")
+        return isTechHouse;
+    if (crate == "Minimal Plucks")
+        return isMinimal && isPluck;
+    if (crate == "Minimal Tools")
+        return isMinimal;
+    if (crate == "Techno Stabs")
+        return isTechno && isChordOrStab;
+    if (crate == "Techno Tools")
+        return isTechno;
+    if (crate == "Dirty Tools")
+        return isDirty;
+    if (crate == "Mono Safe")
+        return isMonoSafe;
+    if (crate == "Sequenced Grooves")
+        return isSequenced;
+
+    return false;
 }
 
 juce::String outputSafetySummary(float peak)
@@ -1273,6 +1366,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     presetFilterBox.addItemList(presetFilterChoices(), 1);
     presetFilterBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    presetFilterBox.setTooltip("Choose basic filters or smart production crates built from tags, notes, pack, BPM, rating, source, and macro values");
     addAndMakeVisible(presetFilterBox);
 
     presetTagBox.addItemList(presetTagChoices(), 1);
@@ -9114,15 +9208,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         if (searchTerms.isEmpty())
             return true;
 
-        const auto sourceText = preset.isFactory ? juce::String("Factory") : juce::String("User");
-        const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + " Star" : juce::String("Unrated");
-        const auto bpmText = formatPresetBpm(preset.bpm);
-        const auto searchable = preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
-            + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
-            + preset.pack + " " + preset.key + " " + bpmText + " " + preset.macroSummary + " "
-            + presetMacroPreviewText(preset) + " Macro Macros Performance"
-            + " " + preset.notes
-            + (preset.isFavorite ? " Favorite" : "");
+        const auto searchable = presetSearchText(preset) + " "
+            + presetMacroPreviewText(preset) + " Macro Macros Performance";
 
         for (const auto& term : searchTerms)
             if (! searchable.containsIgnoreCase(term))
@@ -9245,6 +9332,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || (filter == "125-128 BPM" && preset.bpm >= 125 && preset.bpm <= 128)
                 || (filter == "129-132 BPM" && preset.bpm >= 129 && preset.bpm <= 132)
                 || (filter == "133+ BPM" && preset.bpm >= 133)
+                || presetMatchesSmartCrate(preset, filter)
                 || preset.category.equalsIgnoreCase(filter)
                 || leafCategory.equalsIgnoreCase(filter)
                 || preset.pack.equalsIgnoreCase(filter)

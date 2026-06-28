@@ -261,14 +261,14 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 166. Add a larger full-browser mode.
 167. Add a folder tree for user and factory libraries.
-168. Add smart folders: Favorites, Five Star, Recent, UKG Bass, UKG Vocal Chops, House Stabs, Minimal Plucks, Dirty Techno, Macro Rich, User, Factory.
+168. Expand the first smart-crate filter pass into full smart folders: New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, pack crates, and full-browser sidebar navigation.
 169. Add tag editor for user presets.
 170. Add custom user tags.
 171. Add multi-select metadata editing.
-172. Add preset notes.
+172. Expand implemented preset notes into structured production tips, source-recipe context, and batch-editable metadata.
 173. Add pack manager with import/export.
 174. Add duplicate preset detection.
-175. Add preset compare before overwrite.
+175. Extend the implemented preset-load compare/revert into safe overwrite compare.
 176. Add preset version history for user saves.
 177. Add missing sample and missing wavetable warnings in browser rows.
 178. Add per-preset audio preview rendering.

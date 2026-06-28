@@ -1046,13 +1046,13 @@ Suggested first UI size:
 - Toggle buttons for mono/poly, sync, retrigger, and tempo sync.
 - Compact output metering in the top bar.
 - Clear numeric readouts where exact values matter.
-- Modulation rings or overlays around controls later.
-- A small oscilloscope or waveform display later.
-- A wavetable display once wavetable synthesis exists.
-- A sample waveform display once sample import exists.
-- A compact piano-roll grid once the internal sequencer exists.
-- A persistent bottom piano keyboard for quick note auditioning.
-- An XY pad once performance macros exist.
+- Modulation rings or overlays around controls are partially implemented through wavetable, filter, sample, and MOD route visual feedback; remaining work is per-knob rings and drag-to-modulate.
+- HOME includes a final-output oscilloscope, spectrum, and stereo/correlation display; remaining work is freeze/zoom and expanded analyzer modes.
+- The SYNTH panel includes a wavetable display for the current internal wavetable-style source; remaining work is true wavetable playback/import/editing.
+- The SAMPLE panel includes a waveform display with chop handles and modulation overlays; remaining work is transient detection, manual slicing depth, and time-stretch/formant tools.
+- The SEQ panel includes a compact piano-roll style grid with note rows and editable lanes; remaining work is ratchets, conditions, and deeper per-step modulation.
+- A persistent bottom piano keyboard is implemented for quick note auditioning.
+- A performance XY pad is implemented for Motion/Space macro movement; remaining work is assignable XY targets and recordable gestures.
 
 ### Visual Sections
 

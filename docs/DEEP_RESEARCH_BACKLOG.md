@@ -252,11 +252,11 @@ Implemented FX sub-slice:
 111. Add custom user tags.
 112. Add tag editing for existing user presets.
 113. Add multi-select preset metadata editing.
-114. Add preset notes.
+114. Expand preset notes into structured production tips, source-recipe context, and batch-editable metadata.
 115. Add pack artwork or pack color markers if the UI can support it cleanly.
-116. Add smart folders such as Favorites, Five Star, Recent, UKG Bass, House Stabs, Dirty Techno.
+116. Expand the implemented smart-crate filter pass into a full browser sidebar with editable user crates, New This Week, and pack crates.
 117. Add audition auto-advance.
-118. Add preset compare before overwrite.
+118. Extend the implemented preset-load compare/revert into safe overwrite compare.
 119. Add duplicate preset detection.
 120. Add import/export preset pack bundles.
 121. Add library repair/reindex command.
@@ -266,7 +266,7 @@ Implemented FX sub-slice:
 Implemented library sub-slice:
 
 - Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
-- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. A larger full-browser mode, smart folders, tag editing, and audio preview rendering remain open.
+- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The filter menu now includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
 
 ## Priority 8: Sound Quality And Safety
 
@@ -302,11 +302,11 @@ Implemented safety sub-slice:
 
 1. Build automated editor layout checks and component extraction for the largest pages.
 2. Expand the completed control-feel pass with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
-3. Grow the compact LIBRARY browser into a full browser with smart folders, tag editing, audio previews, and construction kits.
+3. Grow the compact LIBRARY browser and first smart-crate pass into a full browser with sidebar crates, tag editing, audio previews, and construction kits.
 4. Add drag/menu modulation assignment plus selected-parameter route views.
 5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
 6. Add transient/manual sample slice markers plus per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
-7. Add user tags, smart folders, and preset preview rendering in LIBRARY.
+7. Add user tags, editable/full-browser smart crates, and preset preview rendering in LIBRARY.
 8. Add wavetable oscillator playback after UI layout risk is reduced.
 9. Add multiband drive with oversampling, gain compensation, and loudness checks.
 10. Add UKG recipe tools for Dred bass, organ bass, late stabs, and vocal chop motifs.

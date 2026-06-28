@@ -233,7 +233,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 154. Add rendered audio previews per preset.
 155. Add auto-play preview while arrowing through presets.
 156. Add macro preview columns in the browser.
-157. Add smart collections: Favorites, 5 Stars, Recent, New This Week, UKG, Bass, Stabs, Vocal Chops, Dirty, Clean, Mono-Safe.
+157. Expand smart collections beyond the first implemented filter-menu crate pass with New This Week, editable user crates, pack crates, full-browser sidebar browsing, and multi-select metadata actions.
 158. Add editable user tag manager.
 159. Add pack installer/exporter.
 160. Add construction-kit presets storing patch, sample, sequence, key, BPM, macro intent, and recommended FX.
@@ -246,8 +246,8 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 167. Add missing-file dependency report.
 168. Add "replace sample with similar" later.
 169. Add project-specific crates/playlists.
-170. Add author, license, pack, and notes fields.
-171. Add factory pack categories: UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Warehouse Techno, Dub Stabs, Club FX.
+170. Expand implemented author, pack, and notes metadata with license fields and batch editing.
+171. Expand the 40-preset factory pack and first smart-crate coverage with Warehouse Techno, Dub Stabs, Club FX, license metadata, and pack-level QA.
 
 ### 9. Randomization And Sound Discovery
 

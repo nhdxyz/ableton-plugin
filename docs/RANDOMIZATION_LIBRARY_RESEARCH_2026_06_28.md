@@ -72,6 +72,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - The LIBRARY panel now has a preset-vault polish pass with quick genre/source filter buttons, a denser central crate, and a clearer right-side save metadata flow while preserving existing preset files and metadata.
 - HOME now includes stereo field/correlation visualization beside the spectrum display, exposing full-band width, balance, correlation, and low-end side risk for mono-safe house and club mix decisions.
 - LIBRARY now captures a full state pair around explicit preset loads, enabling Before/Loaded comparison and Revert without changing preset files, APVTS parameters, or Ableton automation IDs.
+- The Library filter menu now has first-pass smart crate matching for Five Star, Club Bass, Chord Stabs, Dub Stabs, UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Techno Stabs, Dirty Tools, Mono Safe, and Sequenced Grooves using existing metadata and macro values.
 
 ## Highest-Value Randomization Backlog
 
@@ -110,8 +111,8 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 ## Browser And Save Backlog
 
 1. Extend compare/revert into generated-preset slots and richer source-recipe notes.
-2. Add smart folders for Five Star, Favorites, Recent, Generated, UKG Bass, UKG Chops, House Chords, Tech House Bass, Minimal Plucks, and Dirty Techno.
-3. Add preset compare/revert before overwriting an existing preset.
+2. Expand smart crates into a full browser sidebar with editable user crates, New This Week, pack crates, and multi-select metadata actions.
+3. Extend the implemented preset-load compare/revert into safe overwrite compare before replacing an existing preset.
 4. Add duplicate-name prompt instead of silently replacing older folder copies.
 5. Add preset version history for user presets.
 6. Add per-preset notes and "source recipe" metadata.

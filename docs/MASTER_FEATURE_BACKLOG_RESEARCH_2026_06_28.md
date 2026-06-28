@@ -527,13 +527,13 @@ These should stay near the top because every future feature becomes harder if th
 
 1. Add larger full-browser mode.
 2. Add folder tree for factory and user libraries.
-3. Add smart folders: Favorites, Five Star, Recent, User, Factory, Macro Rich.
-4. Add smart folders for UKG Bass, UKG Vocal Chops, House Stabs, Tech-House Bass, Minimal Plucks, Dirty Techno.
+3. Expand the first smart-crate filter pass into a full browser sidebar with Favorites, Five Star, Recent, User, Factory, Macro Rich, and editable user crates.
+4. Extend smart crates with New This Week, UKG Vocal Chops, House Stabs, Tech-House Bass, Dirty Techno, Clean Subs, and user-defined rules.
 5. Add editable custom user tags.
 6. Add tag editor for existing presets.
 7. Add multi-select metadata editing.
-8. Add preset notes.
-9. Add preset compare before overwrite.
+8. Expand preset notes into structured production tips, source-recipe context, and batch-editable metadata.
+9. Extend the implemented preset-load compare/revert into safe overwrite compare.
 10. Add preset version history for user saves.
 11. Add duplicate preset detection.
 12. Add library repair/reindex command.

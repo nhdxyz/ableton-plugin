@@ -387,23 +387,23 @@ If we only pick the next 15 big work tracks, they should be:
 256. Add full browser page with dense columns.
 257. Add preset audio preview rendering.
 258. Add automatic preview regeneration when a preset changes.
-259. Add macro-preview columns for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
+259. Expand the implemented macro-value strip into optional full browser columns for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 260. Add key, BPM, pack, category, subcategory, author, rating, favorite, date, source type, sample dependency, and wavetable dependency columns.
-261. Add smart collections.
+261. Expand the implemented smart-crate filter pass into editable smart collections and a full browser sidebar.
 262. Add user crates/playlists.
 263. Add editable tag manager.
 264. Add batch retagging.
 265. Add duplicate preset detection.
 266. Add find-similar preset by metadata and parameter distance.
 267. Add favorites-aware random preset suggestions.
-268. Add preset compare/revert.
+268. Extend the implemented Library load compare/revert into overwrite, generated-slot, and edited-vs-saved workflows.
 269. Add preset mutation history.
 270. Add section presets: source, filter, modulation, sequence, sampler, FX, and macros.
 271. Add construction-kit browser packs.
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Add factory packs: UKG Basslines, Garage Chops, House Chords, Tech-House Loops, Minimal Plucks, Dub Techno Stabs, Warehouse Hits, Vocal Tags, Reese/Dred Bass, Organ Stabs.
+275. Expand the 40-preset factory pack and first smart-crate coverage with Tech-House Loops, Dub Techno Stabs, Warehouse Hits, Vocal Tags, Reese/Dred Bass, Organ Stabs, and pack-level QA metadata.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.

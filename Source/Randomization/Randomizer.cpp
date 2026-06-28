@@ -108,6 +108,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto subLevel = 0.0f;
     auto noiseLevel = 0.0f;
     auto oscWarpAmount = 0.0f;
+    auto oscWavetablePosition = 0.0f;
+    auto osc2WavetablePosition = 0.35f;
     auto unisonVoiceCount = 1;
     auto unisonDetune = 0.0f;
     auto unisonBlend = 0.65f;
@@ -298,8 +300,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
 
         case Recipe::minimalBlip:
-            wave = randomInt(0, 3);
-            osc2Wave = randomInt(0, 3);
+            wave = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.12f) ? 4 : randomInt(0, 3);
+            osc2Wave = randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.1f) ? 4 : randomInt(0, 3);
             filterMode = randomInt(0, 1);
             octave = randomInt(-1, 1);
             osc2Octave = octave + randomInt(-1, 1);
@@ -392,8 +394,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
 
         case Recipe::noiseFx:
-            wave = randomInt(0, 3);
-            osc2Wave = randomInt(0, 3);
+            wave = randomFloat(0.0f, 1.0f) < 0.38f + (chaos * 0.18f) ? 4 : randomInt(0, 3);
+            osc2Wave = randomFloat(0.0f, 1.0f) < 0.32f + (chaos * 0.16f) ? 4 : randomInt(0, 3);
             filterMode = randomInt(0, 2);
             octave = randomInt(-2, 2);
             osc2Octave = randomInt(-2, 2);
@@ -941,6 +943,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         subLevel = blend(Parameters::ID::subLevel, subLevel);
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
         oscWarpAmount = blend(Parameters::ID::oscWarp, oscWarpAmount);
+        oscWavetablePosition = blend(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
+        osc2WavetablePosition = blend(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);
         unisonVoiceCount = static_cast<int>(std::round(blend(Parameters::ID::unisonVoices, static_cast<float>(unisonVoiceCount))));
         unisonDetune = blend(Parameters::ID::unisonDetune, unisonDetune);
         unisonBlend = blend(Parameters::ID::unisonBlend, unisonBlend);
@@ -1032,6 +1036,24 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         glide = juce::jlimit(0.02f, 0.12f, glide);
     }
 
+    const auto isWavetableFriendlyStab = recipe == Recipe::darkStab
+        || recipe == Recipe::ukgOrganStab
+        || recipe == Recipe::ukgChordStab
+        || recipe == Recipe::ukgBellPluck;
+
+    if (isWavetableFriendlyStab)
+    {
+        if (! subtle && randomFloat(0.0f, 1.0f) < 0.18f + (chaos * 0.14f))
+            wave = 4;
+        if (! subtle && randomFloat(0.0f, 1.0f) < 0.14f + (chaos * 0.12f))
+            osc2Wave = 4;
+    }
+
+    if (wave == 4)
+        oscWavetablePosition = randomFloat(0.08f, recipe == Recipe::noiseFx ? 0.98f : 0.74f);
+    if (osc2Wave == 4)
+        osc2WavetablePosition = randomFloat(0.18f, 0.92f);
+
     setChoice(Parameters::ID::oscWave, wave);
     setChoice(Parameters::ID::osc2Wave, osc2Wave);
     setChoice(Parameters::ID::filterMode, filterMode);
@@ -1046,6 +1068,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::subLevel, subLevel);
     setParameter(Parameters::ID::noiseLevel, noiseLevel);
     setParameter(Parameters::ID::oscWarp, oscWarpAmount);
+    setParameter(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
+    setParameter(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);
     setParameter(Parameters::ID::unisonVoices, static_cast<float>(juce::jlimit(1, 7, unisonVoiceCount)));
     setParameter(Parameters::ID::unisonDetune, unisonDetune);
     setParameter(Parameters::ID::unisonBlend, unisonBlend);

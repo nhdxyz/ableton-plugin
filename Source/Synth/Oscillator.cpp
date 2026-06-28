@@ -63,6 +63,70 @@ float harmonicWarp(float sample, float amount)
 
     return juce::jlimit(-1.0f, 1.0f, saturated + ((folded - saturated) * foldedMix));
 }
+
+float sineHarmonic(float phase, float harmonic, float phaseOffset = 0.0f)
+{
+    return std::sin(juce::MathConstants<float>::twoPi * ((phase * harmonic) + phaseOffset));
+}
+
+float wavetableFrameSample(int frameIndex, float phase, float phaseDelta)
+{
+    auto add = [phase, phaseDelta] (float harmonic, float amount, float phaseOffset = 0.0f)
+    {
+        if (harmonic * phaseDelta >= 0.45f)
+            return 0.0f;
+
+        return sineHarmonic(phase, harmonic, phaseOffset) * amount;
+    };
+
+    switch (frameIndex)
+    {
+        case 0:
+            return (add(1.0f, 1.0f) + add(2.0f, 0.46f) + add(3.0f, 0.28f) + add(6.0f, 0.16f)) * 0.58f;
+
+        case 1:
+        {
+            auto sample = 0.0f;
+            for (auto harmonic = 1; harmonic <= 12; ++harmonic)
+                sample += add(static_cast<float>(harmonic), (harmonic % 2 == 0 ? -0.72f : 1.0f) / static_cast<float>(harmonic));
+            return sample * 0.62f;
+        }
+
+        case 2:
+        {
+            auto sample = 0.0f;
+            for (auto harmonic = 1; harmonic <= 13; harmonic += 2)
+                sample += add(static_cast<float>(harmonic), 1.0f / static_cast<float>(harmonic));
+            return sample * 0.82f;
+        }
+
+        case 3:
+            return (add(1.0f, 0.82f)
+                    + add(2.0f, 0.48f, 0.08f)
+                    + add(5.0f, 0.33f, 0.19f)
+                    + add(8.0f, 0.18f, 0.31f)) * 0.72f;
+
+        default:
+        {
+            const auto edge = bandlimitedSaw(phase, phaseDelta);
+            const auto fold = std::sin(edge * juce::MathConstants<float>::pi * 1.85f);
+            return (edge * 0.55f) + (fold * 0.45f);
+        }
+    }
+}
+
+float wavetableSample(float phase, float phaseDelta, float position)
+{
+    constexpr auto lastFrame = 4.0f;
+    const auto framePosition = juce::jlimit(0.0f, 1.0f, position) * lastFrame;
+    const auto lowerFrame = juce::jlimit(0, static_cast<int>(lastFrame), static_cast<int>(std::floor(framePosition)));
+    const auto upperFrame = juce::jlimit(0, static_cast<int>(lastFrame), lowerFrame + 1);
+    const auto mix = juce::jlimit(0.0f, 1.0f, framePosition - static_cast<float>(lowerFrame));
+    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
+
+    return wavetableFrameSample(lowerFrame, phase, phaseDelta)
+        + ((wavetableFrameSample(upperFrame, phase, phaseDelta) - wavetableFrameSample(lowerFrame, phase, phaseDelta)) * smoothMix);
+}
 }
 
 void Oscillator::prepare(double newSampleRate)
@@ -99,6 +163,11 @@ void Oscillator::setWarp(float newWarpAmount)
     warpAmount = juce::jlimit(0.0f, 1.0f, newWarpAmount);
 }
 
+void Oscillator::setWavetablePosition(float newPosition)
+{
+    wavetablePosition = juce::jlimit(0.0f, 1.0f, newPosition);
+}
+
 float Oscillator::process()
 {
     float sample = 0.0f;
@@ -119,6 +188,10 @@ float Oscillator::process()
 
         case Waveform::triangle:
             sample = triangleState;
+            break;
+
+        case Waveform::wavetable:
+            sample = wavetableSample(phase, phaseDelta, wavetablePosition);
             break;
     }
 

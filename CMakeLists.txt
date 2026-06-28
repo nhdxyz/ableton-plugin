@@ -62,6 +62,7 @@ target_sources(NateVST
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
+        Source/UI/WavetableDisplay.cpp
         Source/UI/XYMacroPad.cpp
 )
 

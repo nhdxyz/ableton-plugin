@@ -20,6 +20,8 @@ DEFAULTS = {
     "sub_level": 0.0,
     "noise_level": 0.0,
     "osc_warp": 0.0,
+    "osc_wavetable_position": 0.0,
+    "osc2_wavetable_position": 0.35,
     "amp_attack": 0.01,
     "amp_decay": 0.18,
     "amp_sustain": 0.65,
@@ -344,6 +346,7 @@ TAG_ORDER = [
     "Chord",
     "Pluck",
     "Stab",
+    "Wavetable",
     "Sequenced",
     "Mono Safe",
     "Pump",
@@ -370,6 +373,8 @@ def preset_tags(preset, params):
         tags.add("Stab")
     if "vocal" in name or "chop" in name:
         tags.add("Vocal Chop")
+    if params.get("osc_wave", 1) == 4 or params.get("osc2_wave", 1) == 4:
+        tags.add("Wavetable")
     if params.get("sample_enabled", 0) or "sample" in name:
         tags.add("Sample")
     if params.get("sequencer_enabled", 0):
@@ -820,8 +825,9 @@ PRESETS = [
     {
         "name": "UKG Bell Pluck",
         "params": {
-            "osc_wave": 3,
+            "osc_wave": 4,
             "osc_octave": 1,
+            "osc_wavetable_position": 0.22,
             "osc1_level": 0.72,
             "osc2_wave": 0,
             "osc2_octave": 1,
@@ -1380,8 +1386,9 @@ PRESETS = [
         "name": "Minimal Click Pluck",
         "category": "Minimal",
         "params": {
-            "osc_wave": 3,
+            "osc_wave": 4,
             "osc_octave": 1,
+            "osc_wavetable_position": 0.1,
             "osc1_level": 0.62,
             "osc2_wave": 0,
             "osc2_octave": 1,
@@ -1410,6 +1417,9 @@ PRESETS = [
             "mod_slot_2_source": 3,
             "mod_slot_2_destination": 2,
             "mod_slot_2_amount": 0.04,
+            "mod_slot_3_source": 1,
+            "mod_slot_3_destination": 18,
+            "mod_slot_3_amount": 0.06,
             "fx_tone_enabled": 1,
             "fx_tone_low_cut": 180.0,
             "fx_eq_enabled": 1,
@@ -1609,8 +1619,9 @@ PRESETS = [
             "osc_wave": 2,
             "osc_octave": 0,
             "osc1_level": 0.78,
-            "osc2_wave": 1,
+            "osc2_wave": 4,
             "osc2_octave": 0,
+            "osc2_wavetable_position": 0.76,
             "osc2_tune": 7.0,
             "osc2_level": 0.5,
             "noise_level": 0.04,
@@ -1640,6 +1651,9 @@ PRESETS = [
             "mod_slot_3_source": 14,
             "mod_slot_3_destination": 11,
             "mod_slot_3_amount": 0.035,
+            "mod_slot_4_source": 1,
+            "mod_slot_4_destination": 19,
+            "mod_slot_4_amount": 0.08,
             "fx_tone_enabled": 1,
             "fx_tone_low_cut": 120.0,
             "fx_eq_enabled": 1,

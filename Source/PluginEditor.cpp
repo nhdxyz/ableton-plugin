@@ -695,6 +695,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleSliceButtons();
     };
     addAndMakeVisible(sampleWaveformDisplay);
+    addAndMakeVisible(wavetableDisplay);
 
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -1197,6 +1198,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
     configureSlider(oscWarpSlider, oscWarpLabel, "Osc Warp", Parameters::ID::oscWarp);
+    configureSlider(oscWavetablePositionSlider, oscWavetablePositionLabel, "WT 1", Parameters::ID::oscWavetablePosition);
+    configureSlider(osc2WavetablePositionSlider, osc2WavetablePositionLabel, "WT 2", Parameters::ID::osc2WavetablePosition);
     configureSlider(unisonVoicesSlider, unisonVoicesLabel, "Voices", Parameters::ID::unisonVoices);
     configureSlider(unisonDetuneSlider, unisonDetuneLabel, "Detune", Parameters::ID::unisonDetune);
     configureSlider(unisonBlendSlider, unisonBlendLabel, "Blend", Parameters::ID::unisonBlend);
@@ -1594,10 +1597,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 1); };
     squareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 2); };
     triangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 3); };
+    wavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 4); };
     osc2SineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 0); };
     osc2SawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 1); };
     osc2SquareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 2); };
     osc2TriangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 3); };
+    osc2WavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 4); };
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
@@ -1780,10 +1785,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sawWaveButton);
     addAndMakeVisible(squareWaveButton);
     addAndMakeVisible(triangleWaveButton);
+    addAndMakeVisible(wavetableWaveButton);
     addAndMakeVisible(osc2SineWaveButton);
     addAndMakeVisible(osc2SawWaveButton);
     addAndMakeVisible(osc2SquareWaveButton);
     addAndMakeVisible(osc2TriangleWaveButton);
+    addAndMakeVisible(osc2WavetableWaveButton);
     addAndMakeVisible(lowpassFilterButton);
     addAndMakeVisible(bandpassFilterButton);
     addAndMakeVisible(highpassFilterButton);
@@ -2164,10 +2171,12 @@ void NateVSTAudioProcessorEditor::resized()
             sawWaveButton.setVisible(true);
             squareWaveButton.setVisible(true);
             triangleWaveButton.setVisible(true);
+            wavetableWaveButton.setVisible(true);
             osc2SineWaveButton.setVisible(true);
             osc2SawWaveButton.setVisible(true);
             osc2SquareWaveButton.setVisible(true);
             osc2TriangleWaveButton.setVisible(true);
+            osc2WavetableWaveButton.setVisible(true);
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
@@ -2177,11 +2186,12 @@ void NateVSTAudioProcessorEditor::resized()
             synthSectionLabel.setBounds(content.removeFromTop(28));
             auto selectorRow = content.removeFromTop(44);
             auto waveRow = selectorRow.removeFromLeft(320);
-            const auto waveButtonWidth = waveRow.getWidth() / 4;
+            const auto waveButtonWidth = waveRow.getWidth() / 5;
             sineWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             sawWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             squareWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            triangleWaveButton.setBounds(waveRow.reduced(3, 4));
+            triangleWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
+            wavetableWaveButton.setBounds(waveRow.reduced(3, 4));
             auto filterRow = selectorRow.removeFromLeft(180);
             const auto filterButtonWidth = filterRow.getWidth() / 3;
             lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
@@ -2191,17 +2201,20 @@ void NateVSTAudioProcessorEditor::resized()
             filterSlopeBox.setBounds(selectorRow.removeFromLeft(82).reduced(4));
             monoButton.setBounds(selectorRow.removeFromLeft(90).reduced(4));
             auto osc2Row = content.removeFromTop(44).withTrimmedTop(2);
-            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 4;
+            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 5;
             osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2TriangleWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2WavetableWaveButton.setBounds(osc2Row.reduced(3, 4));
             content.removeFromTop(8);
             setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
             setSliderVisible(subLevelSlider, subLevelLabel, true);
             setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
             setSliderVisible(oscWarpSlider, oscWarpLabel, true);
+            setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, true);
+            setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, true);
             setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
             setSliderVisible(osc2TuneSlider, osc2TuneLabel, true);
             setSliderVisible(octaveSlider, octaveLabel, true);
@@ -2231,11 +2244,17 @@ void NateVSTAudioProcessorEditor::resized()
             auto ampArea = bottomCards.reduced(18, 10);
 
             synthSourceLabel.setBounds(sourceArea.removeFromTop(22));
-            layoutKnobRow(sourceArea.removeFromTop(104).withTrimmedTop(5), {
+            wavetableDisplay.setVisible(true);
+            wavetableDisplay.setBounds(sourceArea.removeFromTop(48).reduced(2, 4));
+            layoutKnobRow(sourceArea.removeFromTop(68).withTrimmedTop(3), {
                 &osc1LevelSlider,
                 &osc2LevelSlider,
                 &subLevelSlider,
                 &noiseLevelSlider
+            });
+            layoutKnobRow(sourceArea.removeFromTop(54).withTrimmedTop(2), {
+                &oscWavetablePositionSlider,
+                &osc2WavetablePositionSlider
             });
 
             synthVoiceLabel.setBounds(voiceArea.removeFromTop(22));
@@ -5036,6 +5055,8 @@ int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const ju
     if (parameterID == Parameters::ID::samplePitchRamp) return 15;
     if (parameterID == Parameters::ID::sampleStutterRepeats) return 16;
     if (parameterID == Parameters::ID::oscWarp) return 17;
+    if (parameterID == Parameters::ID::oscWavetablePosition) return 18;
+    if (parameterID == Parameters::ID::osc2WavetablePosition) return 19;
 
     return 0;
 }
@@ -5238,8 +5259,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &applyGrooveTransformButton,
-        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton,
-        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton,
+        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton,
+        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
@@ -5251,7 +5272,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetBrowserList, &fxRackStatusLabel,
-        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -5284,6 +5305,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(subLevelSlider, subLevelLabel, false);
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
     setSliderVisible(oscWarpSlider, oscWarpLabel, false);
+    setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, false);
+    setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, false);
     setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, false);
     setSliderVisible(unisonDetuneSlider, unisonDetuneLabel, false);
     setSliderVisible(unisonBlendSlider, unisonBlendLabel, false);
@@ -5431,12 +5454,14 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     sawWaveButton.setToggleState(waveformIndex == 1, juce::dontSendNotification);
     squareWaveButton.setToggleState(waveformIndex == 2, juce::dontSendNotification);
     triangleWaveButton.setToggleState(waveformIndex == 3, juce::dontSendNotification);
+    wavetableWaveButton.setToggleState(waveformIndex == 4, juce::dontSendNotification);
 
     const auto osc2WaveformIndex = getChoiceIndex(osc2WaveBox, Parameters::ID::osc2Wave, 1);
     osc2SineWaveButton.setToggleState(osc2WaveformIndex == 0, juce::dontSendNotification);
     osc2SawWaveButton.setToggleState(osc2WaveformIndex == 1, juce::dontSendNotification);
     osc2SquareWaveButton.setToggleState(osc2WaveformIndex == 2, juce::dontSendNotification);
     osc2TriangleWaveButton.setToggleState(osc2WaveformIndex == 3, juce::dontSendNotification);
+    osc2WavetableWaveButton.setToggleState(osc2WaveformIndex == 4, juce::dontSendNotification);
 
     const auto filterModeIndex = getChoiceIndex(filterModeBox, Parameters::ID::filterMode, 0);
     lowpassFilterButton.setToggleState(filterModeIndex == 0, juce::dontSendNotification);
@@ -5515,6 +5540,17 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
         juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)),
         moduleEnabled || bounce > 0.001f,
         customCurve);
+}
+
+void NateVSTAudioProcessorEditor::updateWavetableDisplay()
+{
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+    const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    wavetableDisplay.setState(
+        readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
+        readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
+        osc1Wave == 4,
+        osc2Wave == 4);
 }
 
 void NateVSTAudioProcessorEditor::updateHostSyncStatus()
@@ -6081,9 +6117,9 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 18> destinationDepths {};
-    std::array<int, 18> destinationRouteCounts {};
-    std::array<juce::StringArray, 18> destinationSources {};
+    std::array<float, 20> destinationDepths {};
+    std::array<int, 20> destinationRouteCounts {};
+    std::array<juce::StringArray, 20> destinationSources {};
     const auto sourceChoices = Parameters::modulationSourceChoices();
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -6155,6 +6191,8 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(samplePitchRampSlider, destinationDepths[15], destinationRouteCounts[15], destinationSources[15]);
     setIndicator(sampleStutterRepeatsSlider, destinationDepths[16], destinationRouteCounts[16], destinationSources[16]);
     setIndicator(oscWarpSlider, destinationDepths[17], destinationRouteCounts[17], destinationSources[17]);
+    setIndicator(oscWavetablePositionSlider, destinationDepths[18], destinationRouteCounts[18], destinationSources[18]);
+    setIndicator(osc2WavetablePositionSlider, destinationDepths[19], destinationRouteCounts[19], destinationSources[19]);
 
     if (selectedControlParameterID.isNotEmpty())
         updateSelectedControlInspector(selectedControlName, selectedControlParameterID, selectedControlPlainValue);
@@ -6307,6 +6345,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSegmentedSelectors();
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
+    updateWavetableDisplay();
     updateHostSyncStatus();
     updateModMatrixRows();
     updateModInspectorStatus();

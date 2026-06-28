@@ -42,6 +42,8 @@ Voice::Voice(Parameters::APVTS& state)
     subLevel = parameters.getRawParameterValue(Parameters::ID::subLevel);
     noiseLevel = parameters.getRawParameterValue(Parameters::ID::noiseLevel);
     oscWarp = parameters.getRawParameterValue(Parameters::ID::oscWarp);
+    oscWavetablePosition = parameters.getRawParameterValue(Parameters::ID::oscWavetablePosition);
+    osc2WavetablePosition = parameters.getRawParameterValue(Parameters::ID::osc2WavetablePosition);
     ampAttack = parameters.getRawParameterValue(Parameters::ID::ampAttack);
     ampDecay = parameters.getRawParameterValue(Parameters::ID::ampDecay);
     ampSustain = parameters.getRawParameterValue(Parameters::ID::ampSustain);
@@ -280,6 +282,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
     auto osc2TuneMod = 0.0f;
     auto osc2LevelMod = 0.0f;
     auto oscWarpMod = 0.0f;
+    auto oscWavetablePositionMod = 0.0f;
+    auto osc2WavetablePositionMod = 0.0f;
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -302,6 +306,8 @@ void Voice::updateVoiceParameters(float envelopeValue)
             case 5: osc2TuneMod += contribution; break;
             case 6: osc2LevelMod += contribution; break;
             case 17: oscWarpMod += contribution; break;
+            case 18: oscWavetablePositionMod += contribution; break;
+            case 19: osc2WavetablePositionMod += contribution; break;
             default: break;
         }
     }
@@ -313,18 +319,20 @@ void Voice::updateVoiceParameters(float envelopeValue)
     osc2TuneMod = juce::jlimit(-1.0f, 1.0f, osc2TuneMod);
     osc2LevelMod = juce::jlimit(-1.0f, 1.0f, osc2LevelMod);
     oscWarpMod = juce::jlimit(-1.0f, 1.0f, oscWarpMod);
+    oscWavetablePositionMod = juce::jlimit(-1.0f, 1.0f, oscWavetablePositionMod);
+    osc2WavetablePositionMod = juce::jlimit(-1.0f, 1.0f, osc2WavetablePositionMod);
     currentDriveOffset = driveMod * 0.45f;
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
-    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 3, waveIndex));
+    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 4, waveIndex));
 
     const auto octaveOffset = static_cast<int>(readParameter(oscOctave, 0.0f)) * 12.0f;
     const auto tuneOffset = readParameter(oscTune, 0.0f);
     const auto pitchRatio = std::pow(2.0f, (octaveOffset + tuneOffset + pitchBendSemitones) / 12.0f);
 
     const auto osc2WaveIndex = static_cast<int>(readParameter(osc2Wave, 1.0f));
-    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 3, osc2WaveIndex));
+    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 4, osc2WaveIndex));
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
     const auto motion = readParameter(macroMotion, 0.0f);
@@ -332,6 +340,14 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (warp * 7.0f) + (osc2TuneMod * 12.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
     const auto oscillatorWarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(oscWarp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f));
+    const auto osc1WavetablePosition = juce::jlimit(0.0f, 1.0f, readParameter(oscWavetablePosition, 0.0f)
+        + (motion * 0.16f)
+        + (warp * 0.12f)
+        + (oscWavetablePositionMod * 0.5f));
+    const auto osc2WavetablePositionValue = juce::jlimit(0.0f, 1.0f, readParameter(osc2WavetablePosition, 0.35f)
+        + (motion * 0.18f)
+        + (warp * 0.14f)
+        + (osc2WavetablePositionMod * 0.5f));
 
     const auto activeUnisonVoices = getUnisonVoiceCount();
     const auto detuneCents = readParameter(unisonDetune, 0.0f) * 24.0f;
@@ -340,9 +356,11 @@ void Voice::updateVoiceParameters(float envelopeValue)
         const auto detuneRatio = std::pow(2.0f, (getUnisonPosition(voiceIndex, activeUnisonVoices) * detuneCents) / 1200.0f);
         oscillators[static_cast<size_t>(voiceIndex)].setWaveform(waveform);
         oscillators[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
+        oscillators[static_cast<size_t>(voiceIndex)].setWavetablePosition(osc1WavetablePosition);
         oscillators[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * pitchRatio * detuneRatio);
         oscillators2[static_cast<size_t>(voiceIndex)].setWaveform(osc2Waveform);
         oscillators2[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
+        oscillators2[static_cast<size_t>(voiceIndex)].setWavetablePosition(osc2WavetablePositionValue);
         oscillators2[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * osc2PitchRatio * detuneRatio);
     }
 

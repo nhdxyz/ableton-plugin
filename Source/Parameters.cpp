@@ -14,7 +14,7 @@ namespace Parameters
 {
 juce::StringArray waveformChoices()
 {
-    return { "Sine", "Saw", "Square", "Triangle" };
+    return { "Sine", "Saw", "Square", "Triangle", "Wavetable" };
 }
 
 juce::StringArray filterModeChoices()
@@ -129,7 +129,9 @@ juce::StringArray modulationDestinationChoices()
         "Sample Pitch",
         "Sample Ramp",
         "Sample Stutter",
-        "Osc Warp"
+        "Osc Warp",
+        "Osc 1 WT Pos",
+        "Osc 2 WT Pos"
     };
 }
 
@@ -1254,6 +1256,18 @@ APVTS::ParameterLayout createLayout()
             static_cast<int>(ID::fxOrder.size() - 1),
             static_cast<int>(index)));
     }
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::oscWavetablePosition,
+        "Osc 1 Wavetable Position",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc2WavetablePosition,
+        "Osc 2 Wavetable Position",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
 
     return { params.begin(), params.end() };
 }

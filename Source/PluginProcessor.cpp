@@ -1923,6 +1923,8 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::subLevel,
                 Parameters::ID::noiseLevel,
                 Parameters::ID::oscWarp,
+                Parameters::ID::oscWavetablePosition,
+                Parameters::ID::osc2WavetablePosition,
                 Parameters::ID::monoMode,
                 Parameters::ID::glideTime,
                 Parameters::ID::unisonVoices,
@@ -2153,6 +2155,8 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::subLevel,
             Parameters::ID::noiseLevel,
             Parameters::ID::oscWarp,
+            Parameters::ID::oscWavetablePosition,
+            Parameters::ID::osc2WavetablePosition,
             Parameters::ID::unisonVoices,
             Parameters::ID::unisonDetune,
             Parameters::ID::unisonBlend,
@@ -2542,6 +2546,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
+    const auto hasWavetablePositions = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWavetablePosition).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::osc2WavetablePosition).isValid();
     const auto hasModMatrixEnabled = stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixEnabled[0]).isValid();
 
     if (shouldRestorePerformanceSnapshots)
@@ -2606,6 +2612,11 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::filterSlope, 0.0f);
     if (! hasOscWarp)
         setParameterPlainValue(Parameters::ID::oscWarp, 0.0f);
+    if (! hasWavetablePositions)
+    {
+        setParameterPlainValue(Parameters::ID::oscWavetablePosition, 0.0f);
+        setParameterPlainValue(Parameters::ID::osc2WavetablePosition, 0.35f);
+    }
     if (! hasModMatrixEnabled)
         for (const auto* parameterID : Parameters::ID::modMatrixEnabled)
             setParameterPlainValue(parameterID, 1.0f);

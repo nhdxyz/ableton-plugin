@@ -92,8 +92,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 ### B. Source Engines
 
-21. Add a true wavetable oscillator with position modulation.
-22. Add a wavetable preview display with current frame and animated position.
+21. Add a true wavetable oscillator with position modulation. First internal generated-table playback and Osc 1/Osc 2 WT position pass implemented; import, browser, and warp modes remain open.
+22. Add a wavetable preview display with current frame and animated position. First compact SYNTH-panel display implemented; drag/edit/import workflow remains open.
 23. Add factory wavetables for UKG organ/bell, house chord, tech-house rubber bass, dub stab, and techno noise.
 24. Add safe WAV wavetable import after factory playback is stable.
 25. Add wavetable interpolation quality modes.

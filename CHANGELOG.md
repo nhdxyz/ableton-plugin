@@ -2,6 +2,14 @@
 
 ## 2026-06-28
 
+### Internal Wavetable Oscillator Pass
+
+- Added a fifth `Wavetable` waveform mode for Osc 1 and Osc 2 while preserving the existing sine, saw, square, and triangle indices.
+- Added Osc 1/Osc 2 wavetable position parameters, voice-engine modulation routing, and appended modulation destinations for `Osc 1 WT Pos` and `Osc 2 WT Pos`.
+- Added a compact SYNTH-panel wavetable display plus `WT 1` and `WT 2` position controls, with modulation badges and right-click assignment support inherited from the shared slider setup.
+- Regenerated factory presets with explicit wavetable defaults, and moved `UKG Bell Pluck`, `Minimal Click Pluck`, and `Techno Warehouse Stab` onto the new wavetable lane.
+- Added preset migration defaults so older sessions initialize missing wavetable positions predictably.
+
 ### Deep Program Add-List Research
 
 - Added `docs/DEEP_PROGRAM_RESEARCH_ADD_LIST_2026_06_28.md`, a fresh 300-item feature inventory grounded in current synth, sampler, modulation, FX, browser, Ableton, and UK garage references.

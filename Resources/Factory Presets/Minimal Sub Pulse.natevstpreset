@@ -11,6 +11,8 @@
   <PARAM id="sub_level" value="0.7" />
   <PARAM id="noise_level" value="0" />
   <PARAM id="osc_warp" value="0.1" />
+  <PARAM id="osc_wavetable_position" value="0" />
+  <PARAM id="osc2_wavetable_position" value="0.35" />
   <PARAM id="amp_attack" value="0.004" />
   <PARAM id="amp_decay" value="0.18" />
   <PARAM id="amp_sustain" value="0.24" />

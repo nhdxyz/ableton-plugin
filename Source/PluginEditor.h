@@ -10,6 +10,7 @@
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StepSequencerGrid.h"
+#include "UI/WavetableDisplay.h"
 #include "UI/XYMacroPad.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -228,6 +229,8 @@ private:
     juce::Slider subLevelSlider;
     juce::Slider noiseLevelSlider;
     juce::Slider oscWarpSlider;
+    juce::Slider oscWavetablePositionSlider;
+    juce::Slider osc2WavetablePositionSlider;
     juce::Slider unisonVoicesSlider;
     juce::Slider unisonDetuneSlider;
     juce::Slider unisonBlendSlider;
@@ -339,6 +342,8 @@ private:
     juce::Label subLevelLabel;
     juce::Label noiseLevelLabel;
     juce::Label oscWarpLabel;
+    juce::Label oscWavetablePositionLabel;
+    juce::Label osc2WavetablePositionLabel;
     juce::Label unisonVoicesLabel;
     juce::Label unisonDetuneLabel;
     juce::Label unisonBlendLabel;
@@ -488,10 +493,12 @@ private:
     juce::TextButton sawWaveButton { "Saw" };
     juce::TextButton squareWaveButton { "Square" };
     juce::TextButton triangleWaveButton { "Tri" };
+    juce::TextButton wavetableWaveButton { "WT" };
     juce::TextButton osc2SineWaveButton { "Sine" };
     juce::TextButton osc2SawWaveButton { "Saw" };
     juce::TextButton osc2SquareWaveButton { "Square" };
     juce::TextButton osc2TriangleWaveButton { "Tri" };
+    juce::TextButton osc2WavetableWaveButton { "WT" };
     juce::TextButton lowpassFilterButton { "LP" };
     juce::TextButton bandpassFilterButton { "BP" };
     juce::TextButton highpassFilterButton { "HP" };
@@ -559,6 +566,7 @@ private:
     UI::PumpCurveDisplay pumpCurveDisplay;
     UI::SampleWaveformDisplay sampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
+    UI::WavetableDisplay wavetableDisplay;
     UI::XYMacroPad performanceXYPad;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
@@ -616,6 +624,7 @@ private:
     void updateSegmentedSelectors();
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
+    void updateWavetableDisplay();
     void updateHostSyncStatus();
     void updateModMatrixRows();
     void updateModInspectorStatus();

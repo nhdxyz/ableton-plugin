@@ -459,3 +459,7 @@ Existing open issues cover most of this research:
 - #61 covers UI extraction and layout checks.
 
 Avoid creating duplicate issues unless a feature becomes concrete enough for a focused implementation slice.
+
+Implemented update:
+
+- First internal wavetable oscillator slice is now implemented with generated table frames, Osc 1/Osc 2 WT position parameters, a compact SYNTH display, modulation destinations, migration defaults, and factory preset examples. Wavetable import, browser, drag/edit display, bend/sync/FM/warp modes, and user table folders remain open.

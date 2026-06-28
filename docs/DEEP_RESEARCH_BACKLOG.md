@@ -118,6 +118,12 @@ Implemented movement sub-slices:
 42. Add ring modulation.
 43. Add frequency modulation or phase modulation between oscillators.
 44. Add a simple three-operator FM mode for UKG bells, metallic stabs, and techno pings.
+
+Implemented wavetable sub-slice:
+
+- Added an internal generated wavetable mode as waveform index 4 for Osc 1 and Osc 2, preserving existing waveform indices.
+- Added Osc 1/Osc 2 wavetable position parameters and MOD destinations for WT position movement.
+- Added a compact SYNTH-panel wavetable display and seeded selected factory presets with the new source mode.
 45. Add supersaw/unison engine improvements with phase, detune curve, and stereo spread.
 46. Add analog drift with per-voice pitch, phase, and filter variation.
 47. Add a second full synth layer.

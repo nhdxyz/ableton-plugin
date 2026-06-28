@@ -9,7 +9,8 @@ enum class Waveform
     sine = 0,
     saw,
     square,
-    triangle
+    triangle,
+    wavetable
 };
 
 class Oscillator
@@ -21,6 +22,7 @@ public:
     void setFrequency(float newFrequencyHz);
     void setWaveform(Waveform newWaveform);
     void setWarp(float newWarpAmount);
+    void setWavetablePosition(float newPosition);
 
     float process();
 
@@ -31,6 +33,7 @@ private:
     float phaseDelta = 0.0f;
     float triangleState = -1.0f;
     float warpAmount = 0.0f;
+    float wavetablePosition = 0.0f;
     Waveform waveform = Waveform::saw;
 
     void updatePhaseDelta();

@@ -84,6 +84,16 @@ private:
         mute
     };
 
+    enum class LfoCurveTool
+    {
+        invert,
+        reverse,
+        smooth,
+        quantize,
+        randomize,
+        garage
+    };
+
     struct FxMomentarySnapshot
     {
         std::array<float, 31> values {};
@@ -555,6 +565,12 @@ private:
     juce::TextButton modMacroAssignAddButton { "Add" };
     juce::TextButton modMacroAssignReplaceButton { "Replace" };
     juce::TextButton modMacroAssignClearButton { "Clear" };
+    juce::TextButton lfoCurveInvertButton { "Inv" };
+    juce::TextButton lfoCurveReverseButton { "Rev" };
+    juce::TextButton lfoCurveSmoothButton { "Smooth" };
+    juce::TextButton lfoCurveQuantizeButton { "1/8" };
+    juce::TextButton lfoCurveRandomButton { "Dice" };
+    juce::TextButton lfoCurveGarageButton { "UKG" };
     std::array<juce::ToggleButton, 8> modSlotEnabledButtons;
     std::array<juce::TextButton, 8> modSlotDuplicateButtons;
     std::array<juce::TextButton, 8> modSlotDeleteButtons;
@@ -674,6 +690,7 @@ private:
     juce::String modulationSummaryForParameter(const juce::String& parameterID) const;
     int modulationDestinationIndexForParameter(const juce::String& parameterID) const;
     void applyLfoCurvePreset(int presetId);
+    void applyLfoCurveTool(LfoCurveTool tool);
     void updateOutputMeter();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();

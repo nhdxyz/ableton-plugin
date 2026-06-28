@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### MSEG Curve Tool Strip
+
+- Added direct MOD-panel MSEG tools for LFO 1 Curve: invert, reverse, smooth, quantize, controlled random dice, and a one-click UKG swing shape.
+- The tools write the existing `lfo1_curve_*` parameters and force LFO 1 into Curve mode, so presets and Ableton automation IDs stay compatible.
+- Rebalanced the MOD generator card and kept `EditorLayoutAudit` coverage for the tighter MSEG/LFO layout.
+
 ### Random Lab Fallback Strategy
 
 - Added a recipe-aware safe fallback after render-validation retries exhaust, with bass, mid, noise, and general init shapes that recover from the original pre-random state instead of the last rejected attempt.

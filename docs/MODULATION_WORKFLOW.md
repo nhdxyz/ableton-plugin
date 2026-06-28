@@ -170,6 +170,7 @@ MOD:
 - Current implementation includes a first hover-to-inspect pass: moving over a MOD-targetable control updates the top selected-control strip with the current value, automation ID, and active route summary.
 - Current implementation includes per-slot route duplicate buttons in the MOD matrix, making it faster to copy a route and adjust the duplicate into a variation.
 - Current implementation includes right-click amount menus on MOD matrix amount sliders for quick invert, +/-25%, +/-50%, duplicate, and clear actions.
+- Current implementation includes a compact LFO 1 MSEG tool strip for invert, reverse, smooth, quantize, controlled random dice, and UKG swing curve shaping without adding new host parameters.
 
 SEQ:
 
@@ -272,6 +273,7 @@ Editable engine slice:
 10. Added the first global sample modulation destinations: Sample Start, Mix, Pitch, Ramp, and Stutter. UKG Chop seeds empty routes for start and pitch/ramp movement when a sample workflow is active.
 11. Added saved per-slot route enable flags plus compact bypass/delete controls. Disabled routes keep their source/destination/amount for comparison but no longer affect synth, sample, FX, rings, or depth summaries.
 12. Added reusable LFO curve presets, a phase cursor on the curve display, current-value-relative destination rings, and compact route-count/depth badges on modulated knobs.
+13. Added direct LFO 1 MSEG transform tools for invert, reverse, smooth, quantize, controlled random dice, and UKG swing shapes while reusing the saved `lfo1_curve_*` parameters.
 
 Remaining modulation work:
 

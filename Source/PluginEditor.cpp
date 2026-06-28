@@ -17,7 +17,7 @@ constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 84;
 constexpr auto modTopRowHeight = 148;
-constexpr auto modGeneratorRowHeight = 150;
+constexpr auto modGeneratorRowHeight = 158;
 constexpr auto modPanelGap = 6;
 constexpr auto firstMacroModSourceIndex = 4;
 constexpr auto presetAuditionDurationMs = 720.0;
@@ -1220,6 +1220,30 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     lfoCurvePresetBox.setTextWhenNothingSelected("Curve Preset");
     lfoCurvePresetBox.setTooltip("Load an LFO curve shape for house, UKG, techno, and minimal movement");
     addAndMakeVisible(lfoCurvePresetBox);
+
+    lfoCurveInvertButton.setTooltip("Invert the custom LFO curve around the centre line");
+    lfoCurveInvertButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::invert); };
+    addAndMakeVisible(lfoCurveInvertButton);
+
+    lfoCurveReverseButton.setTooltip("Reverse the MSEG point order so the motion plays backward");
+    lfoCurveReverseButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::reverse); };
+    addAndMakeVisible(lfoCurveReverseButton);
+
+    lfoCurveSmoothButton.setTooltip("Smooth neighbouring MSEG points for less stepped movement");
+    lfoCurveSmoothButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::smooth); };
+    addAndMakeVisible(lfoCurveSmoothButton);
+
+    lfoCurveQuantizeButton.setTooltip("Quantize MSEG point values to eighth-depth steps");
+    lfoCurveQuantizeButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::quantize); };
+    addAndMakeVisible(lfoCurveQuantizeButton);
+
+    lfoCurveRandomButton.setTooltip("Generate a controlled random MSEG curve for new movement ideas");
+    lfoCurveRandomButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::randomize); };
+    addAndMakeVisible(lfoCurveRandomButton);
+
+    lfoCurveGarageButton.setTooltip("Apply a UK garage swing MSEG shape for shuffled bass, stabs, and chops");
+    lfoCurveGarageButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::garage); };
+    addAndMakeVisible(lfoCurveGarageButton);
 
     for (size_t index = 0; index < modSourceBoxes.size(); ++index)
     {
@@ -2884,6 +2908,12 @@ void NateVSTAudioProcessorEditor::resized()
             lfo2SyncButton.setVisible(true);
             lfo2RetriggerButton.setVisible(true);
             lfoCurveDisplay.setVisible(true);
+            lfoCurveInvertButton.setVisible(true);
+            lfoCurveReverseButton.setVisible(true);
+            lfoCurveSmoothButton.setVisible(true);
+            lfoCurveQuantizeButton.setVisible(true);
+            lfoCurveRandomButton.setVisible(true);
+            lfoCurveGarageButton.setVisible(true);
 
             modSectionLabel.setBounds(content.removeFromTop(28));
 
@@ -2979,12 +3009,20 @@ void NateVSTAudioProcessorEditor::resized()
             lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(58).reduced(3, 4));
             lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
             lfoCurvePresetBox.setBounds(lfoModeRow.removeFromLeft(130).reduced(3, 4));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(42).withTrimmedTop(2));
+            auto lfoToolRow = lfoArea.removeFromTop(24).withTrimmedTop(3);
+            const auto lfoToolWidth = lfoToolRow.getWidth() / 6;
+            lfoCurveInvertButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
+            lfoCurveReverseButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
+            lfoCurveSmoothButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
+            lfoCurveQuantizeButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
+            lfoCurveRandomButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
+            lfoCurveGarageButton.setBounds(lfoToolRow.reduced(2, 1));
+            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(36).withTrimmedTop(2));
 
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
             setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(50).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            layoutKnobRow(lfoArea.removeFromTop(40).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
             modLfo2Label.setBounds(lfo2Area.removeFromTop(18));
             auto lfo2ModeRow = lfo2Area.removeFromTop(48);
@@ -6440,6 +6478,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
+        &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
+        &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
@@ -6726,6 +6766,81 @@ void NateVSTAudioProcessorEditor::applyLfoCurvePreset(int presetId)
     updateModDestinationIndicators();
     modMatrixStatusLabel.setText("Loaded LFO curve: " + lfoCurvePresetBox.getText(),
                                  juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::applyLfoCurveTool(LfoCurveTool tool)
+{
+    std::array<float, 8> values {};
+    for (size_t index = 0; index < values.size(); ++index)
+        values[index] = readPlainParameterValue(Parameters::ID::lfo1Curve[index], 0.0f);
+
+    auto statusText = juce::String("Edited MSEG");
+    auto presetId = 1;
+
+    switch (tool)
+    {
+        case LfoCurveTool::invert:
+            for (auto& value : values)
+                value = -value;
+            statusText = "Inverted MSEG curve";
+            break;
+
+        case LfoCurveTool::reverse:
+            std::reverse(values.begin(), values.end());
+            statusText = "Reversed MSEG curve";
+            break;
+
+        case LfoCurveTool::smooth:
+        {
+            auto smoothed = values;
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                const auto previous = values[(index + values.size() - 1) % values.size()];
+                const auto next = values[(index + 1) % values.size()];
+                smoothed[index] = juce::jlimit(-1.0f, 1.0f, (previous + (values[index] * 2.0f) + next) * 0.25f);
+            }
+            values = smoothed;
+            statusText = "Smoothed MSEG curve";
+            break;
+        }
+
+        case LfoCurveTool::quantize:
+            for (auto& value : values)
+                value = juce::jlimit(-1.0f, 1.0f, std::round(value * 4.0f) * 0.25f);
+            statusText = "Quantized MSEG curve";
+            break;
+
+        case LfoCurveTool::randomize:
+        {
+            juce::Random random { static_cast<juce::int64> (juce::Time::getMillisecondCounterHiRes() * 1000.0) };
+            auto previous = (random.nextFloat() * 1.6f) - 0.8f;
+            for (auto& value : values)
+            {
+                const auto target = (random.nextFloat() * 2.0f) - 1.0f;
+                previous = (previous * 0.42f) + (target * 0.58f);
+                value = juce::jlimit(-1.0f, 1.0f, previous);
+            }
+            statusText = "Generated controlled random MSEG";
+            break;
+        }
+
+        case LfoCurveTool::garage:
+            values = lfoCurvePresetValues(9);
+            presetId = 9;
+            statusText = "Loaded UKG swing MSEG";
+            break;
+    }
+
+    setPlainParameterValue(Parameters::ID::lfo1Shape, 5.0f);
+    lfoCurvePresetBox.setSelectedId(presetId, juce::dontSendNotification);
+
+    for (size_t index = 0; index < values.size(); ++index)
+        setPlainParameterValue(Parameters::ID::lfo1Curve[index], values[index]);
+
+    updateLfoCurveDisplay();
+    updateModDestinationIndicators();
+    updateSelectedControlInspector("MSEG P1", Parameters::ID::lfo1Curve[0], values[0]);
+    modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()

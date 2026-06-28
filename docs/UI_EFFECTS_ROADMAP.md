@@ -523,6 +523,7 @@ Build the next larger slices in this order:
 
 8. Modulation visibility workflow: rings, route badges, source activity meters, drag assignment, hover inspection, macro assignment, and route processors.
    First source-meter pass implemented compact MOD source activity meters for LFO 1, Mod Env, Velocity, eight macros, S&H, Smooth, Chaos, and LFO 2 without adding new host parameters.
+   First MSEG-tool pass implemented MOD-panel curve transform buttons for invert, reverse, smooth, quantize, controlled random dice, and UKG swing shapes while preserving existing LFO 1 curve parameters.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

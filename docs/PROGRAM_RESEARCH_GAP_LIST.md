@@ -461,13 +461,13 @@ Nate VST gaps:
 
 ### 10. Factory Content Additions
 
-193. Add UKG Essentials pack.
+193. Expand the current UKG Essentials/Basslines presets into a larger pack.
 194. Add Speed Garage pack.
-195. Add Deep House pack.
-196. Add Tech House pack.
-197. Add Minimal pack.
-198. Add Warehouse Techno pack.
-199. Add Dub Techno pack.
+195. Expand the current Deep House/House Chords presets into a larger pack.
+196. Expand the current Tech House Tools presets into a larger pack.
+197. Expand the current Minimal Tools presets into a larger pack.
+198. Expand the current Warehouse Techno presets into a larger pack.
+199. Expand the current Dub Techno preset into a larger pack.
 200. Add Organ House pack.
 201. Add construction kits with sequence, macros, key, BPM, and recommended FX.
 202. Add genre init buttons on HOME or LAB.
@@ -706,13 +706,13 @@ Key extra lessons:
 
 ### 20. House And UKG Content Direction
 
-383. Add UKG Essentials construction-kit pack with bass, organ, vocal, stab, and groove variants.
+383. Expand UKG factory presets into a construction-kit pack with bass, organ, vocal, stab, and groove variants.
 384. Add Speed Garage pack with organ bass, clipped bass, shuffled drums, late stabs, and siren/noise throws.
-385. Add Deep House pack with warm chord stabs, plucks, sub chugs, pads, and mellow macro maps.
-386. Add Tech House pack with rubber bass, perc plucks, short stabs, tight pump, and low CPU presets.
-387. Add Minimal pack with clicks, short resonant plucks, microtimed bass pulses, and sparse FX.
-388. Add Warehouse Techno pack with stabs, drones, noise hits, acid-ish pulses, and guarded distortion.
-389. Add Dub Techno pack with chord echoes, filtered noise, slow modulation, and space macros.
+385. Expand Deep House/House Chords presets with more warm chord stabs, plucks, sub chugs, pads, and mellow macro maps.
+386. Expand Tech House Tools presets with more rubber bass, perc plucks, short stabs, tight pump, and low CPU presets.
+387. Expand Minimal Tools presets with more clicks, short resonant plucks, microtimed bass pulses, and sparse FX.
+388. Expand Warehouse Techno presets with more stabs, drones, noise hits, acid-ish pulses, and guarded distortion.
+389. Expand Dub Techno presets with more chord echoes, filtered noise, slow modulation, and space macros.
 390. Add Organ House pack with original organ source material, chord memory, and drawbar macro assignments.
 391. Add vocal chop starter kits with legal/original vocal snippets or user-drop placeholders.
 392. Add genre QA passes: every factory preset should have macro names, macro ranges, output safety, mono-bass check, and Ableton audition notes.

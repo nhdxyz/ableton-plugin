@@ -214,16 +214,16 @@ These should stay near the top because every future feature becomes harder if th
 
 ## Priority 3: House, UKG, Tech-House, Techno, And Minimal Sound Builders
 
-1. Add UKG Dred Bass builder.
-2. Add Reese Bass builder with mono-safe sub and stereo upper layer.
+1. Expand the existing UKG Dred Bass preset into a reusable builder.
+2. Expand the existing Breakbeat Garage Reese preset into a builder with mono-safe sub and stereo upper layer controls.
 3. Add Organ Bass builder.
 4. Add Speed Garage organ wobble recipe.
-5. Add House Piano Stab builder using original/legal sources.
+5. Expand the existing Piano House Riff Keys preset into a House Piano Stab builder using original/legal sources.
 6. Add UKG Late Stab builder.
-7. Add Dub Techno Chord builder.
+7. Expand the existing Dub Techno Chord Wash preset into a Dub Techno Chord builder.
 8. Add Tech-House Rubber Bass builder.
 9. Add Minimal Click Pluck builder.
-10. Add Warehouse Techno Hit builder.
+10. Expand the existing Warehouse Techno Rumble Hit preset into a Warehouse Techno Hit builder.
 11. Add Bell Pluck builder.
 12. Add Rave Stab builder.
 13. Add Sub Chug builder.
@@ -561,8 +561,8 @@ These should stay near the top because every future feature becomes harder if th
 34. Add House Essentials construction-kit pack.
 35. Add Tech-House Basslines pack.
 36. Add Minimal Plucks pack.
-37. Add Warehouse Techno pack.
-38. Add Dub Techno Chords pack.
+37. Expand first Warehouse Techno factory presets into a full pack.
+38. Expand first Dub Techno Chord factory preset into a full pack.
 39. Add Vocal Chop Starters pack.
 40. Add user pack export for collaboration.
 

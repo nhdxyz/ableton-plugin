@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Expanded 48-Preset House Factory Pack
+
+- Expanded the repo-managed factory pack from 40 to 48 presets with Piano House Riff Keys, Disco House Filter Stab, Latin House Perc Organ, Organic House Kalimba Pluck, Dub Techno Chord Wash, Warehouse Techno Rumble Hit, Breakbeat Garage Reese, and Electro House Sync Lead.
+- Added pack/key/BPM metadata, notes, tags, macro seeds, modulation routes, FX defaults, and sequence data for the new house, UKG, garage, dub-techno, warehouse-techno, and electro-house starters.
+- Updated `FactoryPresetLibraryAudit`, current-state docs, and backlog docs to treat this preset expansion as implemented instead of future work.
+
 ### Library Safe Save Overwrite Guard
 
 - Added a two-step Library Save overwrite guard: if the selected user preset name already exists in the selected category folder, Save changes to `Overwrite` and requires a second click within a short confirmation window.

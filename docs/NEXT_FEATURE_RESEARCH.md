@@ -282,12 +282,12 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 ### J. Genre-Specific Factory Content
 
-186. Add a UKG Essentials pack: organ bass, Dred/Reese bass, late stab, bell pluck, vocal chop, shuffle bass.
+186. Expand the current UKG Essentials/Basslines presets into a larger pack: more organ bass, Dred/Reese variants, late stabs, bell plucks, vocal chops, and shuffle basses.
 187. Add a Speed Garage pack: organ bass, Reese bass, swung bass, offbeat stab, chopped vocal.
-188. Add a Deep House pack: dub chord, warm sub, M1-style stab using original sources, soft pluck, pad stab.
-189. Add a Tech House pack: rubber bass, rolling bass, percussive pluck, stab hit, noise riser.
-190. Add a Minimal pack: click pluck, sine sub pulse, resonant blip, tuned percussion hit, tiny noise accent.
-191. Add a Warehouse Techno pack: drive stab, FM ping, pulse bass, metallic hit, distorted drone.
+188. Expand the current Deep House/House Chords presets into a larger pack: dub chord, warm sub, original-source M1-style stab, soft pluck, and pad stab variants.
+189. Expand the current Tech House Tools presets into a larger pack: more rubber bass, rolling bass, percussive pluck, stab hit, and noise-riser variants.
+190. Expand the current Minimal Tools presets into a larger pack: more click plucks, sine sub pulses, resonant blips, tuned percussion hits, and tiny noise accents.
+191. Expand the current Warehouse Techno presets into a larger pack: more drive stabs, FM pings, pulse basses, metallic hits, and distorted drones.
 192. Add preset construction kits with suggested BPM, key, sequence, macro intent, and recommended Ableton MIDI clip usage.
 193. Add "starter from genre" buttons on HOME or LAB.
 194. Add factory macro names and descriptions that explain performance intent.

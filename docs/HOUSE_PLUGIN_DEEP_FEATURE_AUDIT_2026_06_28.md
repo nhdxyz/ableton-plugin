@@ -247,7 +247,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 168. Add "replace sample with similar" later.
 169. Add project-specific crates/playlists.
 170. Expand implemented author, pack, and notes metadata with license fields and batch editing.
-171. Expand the 40-preset factory pack and first smart-crate coverage with Warehouse Techno, Dub Stabs, Club FX, license metadata, and pack-level QA.
+171. Expand beyond the current 48-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
 
 ### 9. Randomization And Sound Discovery
 

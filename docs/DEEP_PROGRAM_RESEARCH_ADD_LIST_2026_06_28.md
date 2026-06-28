@@ -403,7 +403,7 @@ If we only pick the next 15 big work tracks, they should be:
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Expand the 40-preset factory pack and first smart-crate coverage with Tech-House Loops, Dub Techno Stabs, Warehouse Hits, Vocal Tags, Reese/Dred Bass, Organ Stabs, and pack-level QA metadata.
+275. Expand beyond the current 48-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.

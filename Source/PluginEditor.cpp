@@ -720,6 +720,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
+    addAndMakeVisible(homeOverviewDisplay);
     addAndMakeVisible(lowEndAssistant);
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
@@ -2485,14 +2486,16 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(224);
-        auto engineArea = topRow.removeFromLeft(330).reduced(5);
-        auto shapeArea = topRow.reduced(5);
-        auto bottomRow = homeContent.withTrimmedTop(16);
+        auto topRow = homeContent.removeFromTop(238);
+        const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
+        auto engineArea = topRow.removeFromLeft(306).reduced(5);
+        auto shapeArea = topRow.removeFromRight(macroColumnWidth).reduced(5);
+        auto overviewArea = topRow.reduced(5);
+        auto bottomRow = homeContent.withTrimmedTop(14);
         auto labArea = bottomRow.removeFromLeft(330).reduced(5);
         auto libraryArea = bottomRow.reduced(5);
 
-        for (auto area : { engineArea, shapeArea, labArea, libraryArea })
+        for (auto area : { engineArea, overviewArea, shapeArea, labArea, libraryArea })
         {
             g.setColour(juce::Colour(0xff101619));
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -2705,6 +2708,7 @@ void NateVSTAudioProcessorEditor::resized()
             savePresetButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
+            homeOverviewDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
@@ -2715,10 +2719,12 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(224);
-            auto performArea = topRow.removeFromLeft(330).reduced(18, 12);
-            auto macroArea = topRow.reduced(18, 12);
-            auto bottomRow = dashboard.withTrimmedTop(16);
+            auto topRow = dashboard.removeFromTop(238);
+            const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
+            auto performArea = topRow.removeFromLeft(306).reduced(18, 12);
+            auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(18, 12);
+            auto overviewArea = topRow.reduced(18, 12);
+            auto bottomRow = dashboard.withTrimmedTop(14);
             auto labArea = bottomRow.removeFromLeft(330).reduced(18, 12);
             auto libraryArea = bottomRow.reduced(18, 12);
 
@@ -2730,6 +2736,8 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
 
+            homeOverviewDisplay.setBounds(overviewArea);
+
             homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
             setSliderVisible(macroDirtSlider, macroDirtLabel, true);
@@ -2737,8 +2745,9 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(macroBounceSlider, macroBounceLabel, true);
             setSliderVisible(macroWarpSlider, macroWarpLabel, true);
             setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            auto macroControlArea = macroArea.removeFromTop(128).withTrimmedTop(4);
-            performanceXYPad.setBounds(macroControlArea.removeFromRight(136).reduced(4, 0));
+            auto macroControlArea = macroArea.removeFromTop(132).withTrimmedTop(4);
+            const auto xyWidth = juce::jlimit(104, 128, macroControlArea.getWidth() / 2);
+            performanceXYPad.setBounds(macroControlArea.removeFromRight(xyWidth).reduced(4, 0));
             layoutKnobRow(macroControlArea.removeFromTop(60), {
                 &macroToneSlider,
                 &macroDirtSlider,
@@ -2750,11 +2759,12 @@ void NateVSTAudioProcessorEditor::resized()
                 &macroThrowSlider
             });
             auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
-            performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(156).reduced(4, 4));
-            recallSnapshotAButton.setBounds(snapshotRow.removeFromLeft(48).reduced(3, 4));
-            captureSnapshotAButton.setBounds(snapshotRow.removeFromLeft(72).reduced(3, 4));
-            recallSnapshotBButton.setBounds(snapshotRow.removeFromLeft(48).reduced(3, 4));
-            captureSnapshotBButton.setBounds(snapshotRow.removeFromLeft(72).reduced(3, 4));
+            performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(juce::jlimit(76, 112, snapshotRow.getWidth() / 3)).reduced(4, 4));
+            const auto snapshotButtonWidth = juce::jmax(1, snapshotRow.getWidth() / 4);
+            recallSnapshotAButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
+            captureSnapshotAButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
+            recallSnapshotBButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
+            captureSnapshotBButton.setBounds(snapshotRow.reduced(3, 4));
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             auto randomSelectRow = labArea.removeFromTop(38);
@@ -7079,7 +7089,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -8370,6 +8380,78 @@ void NateVSTAudioProcessorEditor::updatePerformanceXYPad()
                                readParameter(Parameters::ID::macroSpace));
 }
 
+void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
+{
+    UI::HomeOverviewDisplay::State state;
+
+    state.sources = {
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::subLevel, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::noiseLevel, 0.0f))
+    };
+
+    state.macros = {
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroTone, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroDirt, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroMotion, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroSpace, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroWeight, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroBounce, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroWarp, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroThrow, 0.0f))
+    };
+
+    const auto cutoffHz = juce::jlimit(20.0f, 20000.0f, readPlainParameterValue(Parameters::ID::filterCutoff, 1000.0f));
+    state.cutoff = juce::jlimit(0.0f, 1.0f, std::log(cutoffHz / 20.0f) / std::log(1000.0f));
+    state.drive = juce::jlimit(0.0f, 1.0f,
+                               readPlainParameterValue(Parameters::ID::driveAmount, 0.0f)
+                                   + (readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.35f)
+                                   + (readPlainParameterValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
+
+    auto pumpPhase = 0.0f;
+    auto pumpGain = 1.0f;
+    auto pumpReduction = 0.0f;
+    auto pumpActive = false;
+    audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, pumpActive);
+    state.pumpReduction = pumpActive ? juce::jlimit(0.0f, 1.0f, pumpReduction) : 0.0f;
+
+    auto guardDrive = 0.0f;
+    auto guardReduction = 0.0f;
+    auto guardActive = false;
+    audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, guardActive);
+    state.guardReduction = guardActive ? juce::jlimit(0.0f, 1.0f, guardReduction) : 0.0f;
+
+    state.outputPeak = juce::jlimit(0.0f, 1.0f, juce::jmax(displayedPeakLeft, displayedPeakRight));
+    state.delaySend = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::fxSendDelay, 0.0f));
+    state.reverbSend = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::fxSendReverb, 0.0f));
+
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+    const auto osc2Level = state.sources[1];
+    const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f;
+    if (sampleEnabled)
+        state.sourceName = "Sample + Synth";
+    else if (osc1Wave == 4)
+        state.sourceName = osc2Level > 0.04f ? "Dual Wavetable" : "Wavetable Synth";
+    else
+        state.sourceName = osc2Level > 0.04f ? "Dual Synth" : "Synth Engine";
+
+    auto recipeName = recipeBox.getText().trim();
+    state.recipeName = recipeName.isNotEmpty() ? recipeName : juce::String("House");
+
+    const auto rms = juce::jmax(displayedRmsLeft, displayedRmsRight);
+    if (state.outputPeak >= 0.985f)
+        state.safetyName = "CLIP";
+    else if (state.outputPeak >= 0.9f)
+        state.safetyName = "HOT";
+    else if (rms < 0.025f && state.outputPeak < 0.08f)
+        state.safetyName = "LOW";
+    else
+        state.safetyName = "SAFE";
+
+    homeOverviewDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
 {
     const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
@@ -8429,6 +8511,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
+    updateHomeOverviewDisplay();
     updateSequencerGridContext();
     updateSampleSliceButtons();
     updateSampleWaveformDisplay();

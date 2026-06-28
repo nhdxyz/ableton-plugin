@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "UI/FxRackRow.h"
+#include "UI/HomeOverviewDisplay.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
@@ -636,6 +637,7 @@ private:
     juce::TextEditor infoDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
+    UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
@@ -734,6 +736,7 @@ private:
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
+    void updateHomeOverviewDisplay();
     void updateSequencerSceneButtons();
     void updateSequencerGridContext();
     void selectSampleSlice(size_t sliceIndex);

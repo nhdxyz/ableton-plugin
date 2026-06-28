@@ -36,6 +36,7 @@ Implemented foundation pass:
 
 - The editor now opens at the established 940x710 layout and can resize up to 1440x980 in hosts that expose plugin resize handles.
 - `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
+- HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
 
 ## Current Problems
 
@@ -106,6 +107,7 @@ HOME should not become the whole plugin. It should expose:
 - Preset load and save.
 - Six fast performance macros plus the full eight-macro bank in MOD.
 - Performance controls: Sub, Cutoff, Drive, Output.
+- A compact live overview of source mix, macro motion, send/pump status, and output safety.
 - Randomization entry points.
 - Audition keyboard.
 

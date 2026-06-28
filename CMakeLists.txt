@@ -54,6 +54,7 @@ target_sources(NateVST
         Source/Sequencer/PatternSequencer.cpp
         Source/Effects/EffectsRack.cpp
         Source/UI/FxRackRow.cpp
+        Source/UI/HomeOverviewDisplay.cpp
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp
         Source/UI/ModCurveDisplay.cpp

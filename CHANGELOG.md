@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### HOME Overview Dashboard Redesign
+
+- Reworked HOME into a five-zone dashboard with a central live overview instead of another dense knob cluster.
+- Added `HomeOverviewDisplay` to summarize source balance, macro state, cutoff, drive, pump reduction, send amount, output peak, and Guard activity in one scan-friendly component.
+- Wired the overview to APVTS parameters and existing output/pump/Guard telemetry so HOME reflects the current house/UKG patch without exposing deeper SYNTH, MOD, or FX controls.
+- Tightened HOME performance and snapshot layout widths to reduce overlap risk at compact and expanded editor sizes.
+
 ### Guard Dynamics For Club Mix Safety
 
 - Expanded the pinned Guard/output stage with `Glue`, `Punch`, and `Clip` controls for house-focused glue compression, transient lift, and clip-character blending while preserving the existing ceiling safety behavior.

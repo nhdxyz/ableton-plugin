@@ -76,6 +76,7 @@ Implemented UI test sub-slices:
 - The editor now opens at 1040x760, preserves 940x710 as the compact minimum, exposes host resize limits up to 1440x980, and `EditorLayoutAudit` sweeps minimum, default, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module.
 - First-pass global `Undo Edit`/`Redo Edit` is available from the persistent selected-control strip, with `GlobalEditHistoryAudit` verifying full-state restore across synth parameters, modulation routes, sequencer step data, and performance snapshots.
 - A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
+- HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, reducing the need to show every sound-design control on the default dashboard.
 
 ## Priority 1: Modulation And Movement
 

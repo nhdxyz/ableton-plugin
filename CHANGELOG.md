@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Deep Program Add-List Research
+
+- Added `docs/DEEP_PROGRAM_RESEARCH_ADD_LIST_2026_06_28.md`, a fresh 300-item feature inventory grounded in current synth, sampler, modulation, FX, browser, Ableton, and UK garage references.
+- Reframed the biggest remaining gaps around source-rack architecture, wavetable/hybrid engines, visible modulation, lane-based motion, serious sampler discovery, drawable club FX, construction-kit browsing, and Ableton release validation.
+- Linked the new research artifact from README and PLAN so future implementation slices can use it without duplicating existing GitHub issues.
+
 ### Sample Slice Pan And Ghost Probability
 
 - Added saved per-slice pan and trigger-probability parameters for all eight SAMPLE pads, with older presets migrating to center pan and 100% trigger chance.

@@ -67,6 +67,7 @@ Current add-list research:
 Deep backlog:
 
 - The current research-backed feature inventory lives in `docs/DEEP_RESEARCH_BACKLOG.md`. Use that file as the working backlog for future UI, modulation, oscillator, sampler, sequencer, FX, library, quality, and Ableton-distribution slices.
+- The newest full program add-list lives in `docs/DEEP_PROGRAM_RESEARCH_ADD_LIST_2026_06_28.md`. Use it when we need the broadest "what else should we add" inventory before opening or splitting implementation issues.
 - The latest program-by-program gap map lives in `docs/PROGRAM_RESEARCH_GAP_LIST.md`. Use it when deciding whether a new feature should come from synth-engine depth, visual modulation, Korg-style motion, UKG chop workflow, library/discovery, club FX, or Ableton release quality.
 - The latest deep "what else should we add?" audit lives in `docs/HOUSE_PLUGIN_DEEP_FEATURE_AUDIT_2026_06_28.md`. Use it when creating new GitHub issues from the researched long add-list.
 

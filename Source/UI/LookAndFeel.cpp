@@ -2,6 +2,51 @@
 
 #include <cmath>
 
+namespace
+{
+juce::String shortModSourceName(juce::String sourceName)
+{
+    sourceName = sourceName.trim();
+    if (sourceName == "LFO 1") return "L1";
+    if (sourceName == "LFO 2") return "L2";
+    if (sourceName == "Mod Env 1") return "ENV";
+    if (sourceName == "Velocity") return "VEL";
+    if (sourceName == "S&H") return "S&H";
+    if (sourceName == "Smooth") return "SM";
+    if (sourceName == "Chaos") return "CH";
+
+    juce::String compact;
+    for (auto index = 0; index < sourceName.length() && compact.length() < 3; ++index)
+    {
+        const auto character = sourceName[index];
+        if (juce::CharacterFunctions::isLetterOrDigit(character))
+            compact += juce::String::charToString(juce::CharacterFunctions::toUpperCase(character));
+    }
+
+    return compact.isNotEmpty() ? compact : juce::String("MOD");
+}
+
+juce::String modulationBadgeText(const juce::Slider& slider, float modulationAmount, int routeCount)
+{
+    const auto sourceSummary = slider.getProperties().getWithDefault("modSourceSummary", {}).toString();
+    juce::StringArray sources;
+    sources.addTokens(sourceSummary, ",", "");
+    sources.trim();
+    sources.removeEmptyStrings();
+
+    auto sourceText = routeCount > 0 ? juce::String("M") + juce::String(routeCount) : juce::String("M");
+    if (! sources.isEmpty())
+    {
+        sourceText = shortModSourceName(sources[0]);
+        if (routeCount > 1)
+            sourceText += "+" + juce::String(routeCount - 1);
+    }
+
+    const auto percent = juce::roundToInt(modulationAmount * 100.0f);
+    return sourceText + " " + (percent >= 0 ? "+" : "") + juce::String(percent);
+}
+}
+
 namespace UI
 {
 LookAndFeel::LookAndFeel()
@@ -98,7 +143,9 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
         if (modulationRouteCount > 0)
         {
-            auto badge = cellBounds.withSizeKeepingCentre(42.0f, 14.0f);
+            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+            const auto badgeText = modulationBadgeText(slider, modulationAmount, modulationRouteCount);
+            auto badge = cellBounds.withSizeKeepingCentre(56.0f, 14.0f);
             badge.setY(cellBounds.getY() + 4.0f);
             badge.setX(cellBounds.getRight() - badge.getWidth() - 5.0f);
 
@@ -107,10 +154,6 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
             g.setColour(ringColour.withAlpha(0.72f));
             g.drawRoundedRectangle(badge, 4.0f, 1.0f);
 
-            const auto percent = juce::roundToInt(modulationAmount * 100.0f);
-            auto badgeText = "M" + juce::String(modulationRouteCount) + " "
-                + (percent >= 0 ? "+" : "") + juce::String(percent);
-            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
             g.setColour(juce::Colour(0xffedf7f4));
             g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
         }
@@ -181,7 +224,9 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g,
 
         if (modulationRouteCount > 0 && bounds.getWidth() >= 74.0f)
         {
-            auto badge = juce::Rectangle<float>(42.0f, 14.0f);
+            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+            const auto badgeText = modulationBadgeText(slider, modulationAmount, modulationRouteCount);
+            auto badge = juce::Rectangle<float>(56.0f, 14.0f);
             badge.setRight(bounds.getRight() - 5.0f);
             badge.setY(bounds.getY() + 3.0f);
 
@@ -190,10 +235,6 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g,
             g.setColour(ringColour.withAlpha(0.72f));
             g.drawRoundedRectangle(badge, 4.0f, 1.0f);
 
-            const auto percent = juce::roundToInt(modulationAmount * 100.0f);
-            const auto badgeText = "M" + juce::String(modulationRouteCount) + " "
-                + (percent >= 0 ? "+" : "") + juce::String(percent);
-            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
             g.setColour(juce::Colour(0xffedf7f4));
             g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
         }

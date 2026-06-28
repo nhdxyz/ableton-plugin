@@ -465,7 +465,9 @@ bool parameterIsOneOf(const juce::String& parameterID, std::initializer_list<con
 
 bool destinationUsesGlobalModulationSources(int destinationIndex)
 {
-    return destinationIndex >= 7 && destinationIndex <= 16;
+    return (destinationIndex >= 7 && destinationIndex <= 16)
+        || destinationIndex == 20
+        || destinationIndex == 21;
 }
 
 int rotaryDragSensitivityForParameter(const juce::String& parameterID)
@@ -1754,9 +1756,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxDelayTimeSlider, fxDelayTimeLabel, "Time", Parameters::ID::fxDelayTime);
     configureSlider(fxDelayFeedbackSlider, fxDelayFeedbackLabel, "Fdbk", Parameters::ID::fxDelayFeedback);
     configureSlider(fxDelayMixSlider, fxDelayMixLabel, "Mix", Parameters::ID::fxDelayMix);
+    configureSlider(fxSendDelaySlider, fxSendDelayLabel, "Send", Parameters::ID::fxSendDelay);
     configureSlider(fxReverbSizeSlider, fxReverbSizeLabel, "Size", Parameters::ID::fxReverbSize);
     configureSlider(fxReverbDampingSlider, fxReverbDampingLabel, "Damp", Parameters::ID::fxReverbDamping);
     configureSlider(fxReverbMixSlider, fxReverbMixLabel, "Mix", Parameters::ID::fxReverbMix);
+    configureSlider(fxSendReverbSlider, fxSendReverbLabel, "Send", Parameters::ID::fxSendReverb);
     configureSlider(fxWidthAmountSlider, fxWidthAmountLabel, "Width", Parameters::ID::fxWidthAmount);
     configureSlider(fxWidthMonoCutoffSlider, fxWidthMonoCutoffLabel, "Mono Hz", Parameters::ID::fxWidthMonoCutoff);
     configureSlider(fxToneTiltSlider, fxToneTiltLabel, "Tilt", Parameters::ID::fxToneTilt);
@@ -3776,7 +3780,8 @@ void NateVSTAudioProcessorEditor::resized()
                     setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, true);
                     setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, true);
                     setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDelayTimeSlider, &fxDelayFeedbackSlider, &fxDelayMixSlider });
+                    setSliderVisible(fxSendDelaySlider, fxSendDelayLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDelayTimeSlider, &fxDelayFeedbackSlider, &fxDelayMixSlider, &fxSendDelaySlider });
                     break;
 
                 case FxModule::reverb:
@@ -3785,7 +3790,8 @@ void NateVSTAudioProcessorEditor::resized()
                     setSliderVisible(fxReverbSizeSlider, fxReverbSizeLabel, true);
                     setSliderVisible(fxReverbDampingSlider, fxReverbDampingLabel, true);
                     setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxReverbSizeSlider, &fxReverbDampingSlider, &fxReverbMixSlider });
+                    setSliderVisible(fxSendReverbSlider, fxSendReverbLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxReverbSizeSlider, &fxReverbDampingSlider, &fxReverbMixSlider, &fxSendReverbSlider });
                     break;
 
                 case FxModule::width:
@@ -5639,16 +5645,19 @@ void NateVSTAudioProcessorEditor::resetFxModuleOrder()
 void NateVSTAudioProcessorEditor::applyDelayThrow()
 {
     captureGlobalEdit("Delay throw");
+    setPlainParameterValue(Parameters::ID::fxSendTailKill, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayRate, 2.0f);
     setPlainParameterValue(Parameters::ID::fxDelayTime, 0.31f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.58f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.42f);
+    setPlainParameterValue(Parameters::ID::fxSendDelay, 0.72f);
     setPlainParameterValue(Parameters::ID::fxReverbEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxReverbSize, 0.28f);
     setPlainParameterValue(Parameters::ID::fxReverbDamping, 0.50f);
     setPlainParameterValue(Parameters::ID::fxReverbMix, 0.14f);
+    setPlainParameterValue(Parameters::ID::fxSendReverb, 0.12f);
     setPlainParameterValue(Parameters::ID::fxWidthEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxWidthAmount, 1.18f);
     setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 140.0f);
@@ -5659,22 +5668,25 @@ void NateVSTAudioProcessorEditor::applyDelayThrow()
     selectedFxModule = FxModule::delay;
     resized();
     repaint();
-    setFxRackStatusOverride("Delay throw armed | synced 1/8D, high feedback, club safety on");
+    setFxRackStatusOverride("Delay throw armed | send bus + synced 1/8D feedback");
 }
 
 void NateVSTAudioProcessorEditor::applySpaceThrow()
 {
     captureGlobalEdit("Space throw");
+    setPlainParameterValue(Parameters::ID::fxSendTailKill, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f);
     setPlainParameterValue(Parameters::ID::fxDelayTime, 0.42f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.46f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.26f);
+    setPlainParameterValue(Parameters::ID::fxSendDelay, 0.38f);
     setPlainParameterValue(Parameters::ID::fxReverbEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxReverbSize, 0.72f);
     setPlainParameterValue(Parameters::ID::fxReverbDamping, 0.38f);
     setPlainParameterValue(Parameters::ID::fxReverbMix, 0.38f);
+    setPlainParameterValue(Parameters::ID::fxSendReverb, 0.66f);
     setPlainParameterValue(Parameters::ID::fxWidthEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxWidthAmount, 1.36f);
     setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 145.0f);
@@ -5685,7 +5697,7 @@ void NateVSTAudioProcessorEditor::applySpaceThrow()
     selectedFxModule = FxModule::reverb;
     resized();
     repaint();
-    setFxRackStatusOverride("Space throw armed | wide delay into larger reverb");
+    setFxRackStatusOverride("Space throw armed | send delay into larger reverb");
 }
 
 void NateVSTAudioProcessorEditor::applyPumpDrop()
@@ -5715,12 +5727,16 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
 void NateVSTAudioProcessorEditor::clearFxThrows()
 {
     captureGlobalEdit("Clear throws");
+    audioProcessor.requestFxSendTailKill();
     setPlainParameterValue(Parameters::ID::fxDelayEnabled, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelaySync, 0.0f);
     setPlainParameterValue(Parameters::ID::fxDelayFeedback, 0.18f);
     setPlainParameterValue(Parameters::ID::fxDelayMix, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxSendDelay, 0.0f);
     setPlainParameterValue(Parameters::ID::fxReverbEnabled, 0.0f);
     setPlainParameterValue(Parameters::ID::fxReverbMix, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxSendReverb, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxSendTailKill, 0.0f);
     setPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f);
     setPlainParameterValue(Parameters::ID::fxPumpDepth, 0.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
@@ -5730,7 +5746,7 @@ void NateVSTAudioProcessorEditor::clearFxThrows()
     selectedFxModule = FxModule::guard;
     resized();
     repaint();
-    setFxRackStatusOverride("Throws cleared | Guard remains on");
+    setFxRackStatusOverride("Sends reset | tails killed, Guard remains on");
 }
 
 void NateVSTAudioProcessorEditor::beginMomentaryFxAction(MomentaryFxAction action)
@@ -6546,12 +6562,12 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
                 const auto rateIndex = juce::jlimit(0,
                                                      choices.size() - 1,
                                                      juce::roundToInt(readPlainParameterValue(Parameters::ID::fxDelayRate, 1.0f)));
-                return "sync " + choices[rateIndex] + " feedback mix";
+                return "sync " + choices[rateIndex] + " feedback mix send";
             }
 
-            return "time feedback mix";
+            return "time feedback mix send";
         }
-        case FxModule::reverb: return "size damping mix";
+        case FxModule::reverb: return "size damping mix send";
         case FxModule::width: return "mono bass width";
         case FxModule::guard:
         {
@@ -6647,6 +6663,8 @@ int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const ju
     if (parameterID == Parameters::ID::oscWarp) return 17;
     if (parameterID == Parameters::ID::oscWavetablePosition) return 18;
     if (parameterID == Parameters::ID::osc2WavetablePosition) return 19;
+    if (parameterID == Parameters::ID::fxSendDelay) return 20;
+    if (parameterID == Parameters::ID::fxSendReverb) return 21;
 
     return 0;
 }
@@ -6947,7 +6965,7 @@ juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) co
             return "MOD is where motion becomes visible. Source meters show activity for LFOs, macros, random sources, velocity, and envelopes. The matrix routes a source to a destination with bipolar amount control.\n\nTouch a knob first, then use CONTROL MOD+ to add a route quickly. Use the inspector to focus a destination, clear routes, or open the MOD panel from any sound-design page.\n\nFor house and UKG, start with small macro amounts on cutoff, drive, pump, delay mix, sample start, and wavetable position.";
 
         case 4:
-            return "FX is a slot-based rack. Add modules from the dropdown, reorder them, remove weak links, and select a slot to edit only that module.\n\nFor club patches, useful chains are Tone -> Drive -> Pump -> Delay -> Reverb -> Width -> Guard. Guard belongs near the end for output safety.\n\nThrow buttons are performance moves: delay, space, pump drop, dry reset, and hold actions for fills and breakdowns.";
+            return "FX is a slot-based rack. Add modules from the dropdown, reorder them, remove weak links, and select a slot to edit only that module.\n\nFor club patches, useful chains are Tone -> Drive -> Pump -> Delay -> Reverb -> Width -> Guard. Guard belongs near the end for output safety.\n\nThrow buttons are performance moves: send delay, send space, pump drop, dry reset, and hold actions for fills and breakdowns.";
 
         case 5:
             return "LIBRARY stores the patch with category, pack, author, key, BPM, rating, favorite, notes, and searchable metadata.\n\nUse categories like UKG/Bass, UKG/Chops, House/Chords, Tech House/Bass, Minimal/Plucks, and Techno/Stabs so the browser behaves like a production crate.\n\nThe browser can filter by favorites, rating, generated status, category, tag, pack, tempo, and macro-rich patches. Macro previews help decide if a preset has usable performance movement before loading it.";
@@ -7152,9 +7170,11 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, false);
     setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, false);
     setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, false);
+    setSliderVisible(fxSendDelaySlider, fxSendDelayLabel, false);
     setSliderVisible(fxReverbSizeSlider, fxReverbSizeLabel, false);
     setSliderVisible(fxReverbDampingSlider, fxReverbDampingLabel, false);
     setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, false);
+    setSliderVisible(fxSendReverbSlider, fxSendReverbLabel, false);
     setSliderVisible(fxWidthAmountSlider, fxWidthAmountLabel, false);
     setSliderVisible(fxWidthMonoCutoffSlider, fxWidthMonoCutoffLabel, false);
     setSliderVisible(fxToneTiltSlider, fxToneTiltLabel, false);
@@ -8100,9 +8120,9 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 20> destinationDepths {};
-    std::array<int, 20> destinationRouteCounts {};
-    std::array<juce::StringArray, 20> destinationSources {};
+    std::array<float, 22> destinationDepths {};
+    std::array<int, 22> destinationRouteCounts {};
+    std::array<juce::StringArray, 22> destinationSources {};
     const auto sourceChoices = Parameters::modulationSourceChoices();
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -8176,6 +8196,8 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(oscWarpSlider, destinationDepths[17], destinationRouteCounts[17], destinationSources[17]);
     setIndicator(oscWavetablePositionSlider, destinationDepths[18], destinationRouteCounts[18], destinationSources[18]);
     setIndicator(osc2WavetablePositionSlider, destinationDepths[19], destinationRouteCounts[19], destinationSources[19]);
+    setIndicator(fxSendDelaySlider, destinationDepths[20], destinationRouteCounts[20], destinationSources[20]);
+    setIndicator(fxSendReverbSlider, destinationDepths[21], destinationRouteCounts[21], destinationSources[21]);
 
     if (selectedControlParameterID.isNotEmpty())
         updateSelectedControlInspector(selectedControlName, selectedControlParameterID, selectedControlPlainValue);

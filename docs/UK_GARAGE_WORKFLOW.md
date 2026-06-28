@@ -71,9 +71,10 @@ Research references:
 
 - Useful UKG FX are tight and rhythmic: three-band EQ for low-mid cleanup and presence, short room/plate, short delay throws, pump/duck, tremolo/auto-pan movement, restrained ring modulation and comb resonance for chop/pluck edge, stereo width above the bass, subtle chorus/phaser/flanger, bitcrush/downsample for sampler color, and reverse/rewind-style transitions.
 - The newly added Crush module fits this by giving old-sampler grit without requiring a full sample editor yet.
-- The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
+- The FX page now has performance throw actions for send delay, send space, pump drops, and Dry Reset cleanup using the Delay, Reverb, Pump, Width, and Guard modules.
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
 - Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
+- Delay and Reverb now have separate send amounts, so garage throws can ring out from the send bus while insert Delay/Reverb remain available as serial tone modules. Dry Reset uses one-shot tail kill to clear send tails.
 - Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes. The Pump display now also shows HOST/INT timing, live phase, and ducking reduction, while the Guard/output safety labels and reduction telemetry keep garage bass and chop patches from silently drifting into unsafe level ranges.
 
 ## Sound Targets
@@ -153,6 +154,7 @@ Research references:
 - Added appended house chord colors and Deep Chord, Dub Chord, Off Bass, and Rolling Bass pattern starters so chord/bass hooks can be sketched faster.
 - Added SEQ genre groove templates for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive. These shape per-step timing, velocity, probability, length, lock intensity, swing, gate, accent, and lock routing from one grouped action.
 - Added SYNTH noise colors and Noise Decay, with randomization biased toward short Air/Tick attacks for UKG bells and stabs, sub-safe bass recipes, and Vinyl/Digital texture for Noise FX.
+- Added first send-style Delay/Reverb throws with dedicated send tails, MOD targets for send amounts, and one-shot Dry Reset tail kill.
 
 ## Next UKG Features
 

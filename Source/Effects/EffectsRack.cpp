@@ -169,10 +169,13 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxDelayTime = parameters.getRawParameterValue(Parameters::ID::fxDelayTime);
     fxDelayFeedback = parameters.getRawParameterValue(Parameters::ID::fxDelayFeedback);
     fxDelayMix = parameters.getRawParameterValue(Parameters::ID::fxDelayMix);
+    fxSendDelay = parameters.getRawParameterValue(Parameters::ID::fxSendDelay);
     fxReverbEnabled = parameters.getRawParameterValue(Parameters::ID::fxReverbEnabled);
     fxReverbSize = parameters.getRawParameterValue(Parameters::ID::fxReverbSize);
     fxReverbDamping = parameters.getRawParameterValue(Parameters::ID::fxReverbDamping);
     fxReverbMix = parameters.getRawParameterValue(Parameters::ID::fxReverbMix);
+    fxSendReverb = parameters.getRawParameterValue(Parameters::ID::fxSendReverb);
+    fxSendTailKill = parameters.getRawParameterValue(Parameters::ID::fxSendTailKill);
     fxWidthEnabled = parameters.getRawParameterValue(Parameters::ID::fxWidthEnabled);
     fxWidthAmount = parameters.getRawParameterValue(Parameters::ID::fxWidthAmount);
     fxWidthMonoCutoff = parameters.getRawParameterValue(Parameters::ID::fxWidthMonoCutoff);
@@ -245,7 +248,11 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     flanger.prepare(spec);
     chorus.prepare(spec);
     reverb.setSampleRate(currentSampleRate);
+    sendReverb.setSampleRate(currentSampleRate);
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
+    sendDelayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
+    sendInputBuffer.setSize(preparedChannels, juce::jmax(1, maximumBlockSize));
+    sendWorkBuffer.setSize(preparedChannels, juce::jmax(1, maximumBlockSize));
     combBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 0.12)));
     toneLowCutState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
@@ -264,7 +271,11 @@ void EffectsRack::reset()
     flanger.reset();
     chorus.reset();
     reverb.reset();
+    sendReverb.reset();
     delayBuffer.clear();
+    sendDelayBuffer.clear();
+    sendInputBuffer.clear();
+    sendWorkBuffer.clear();
     combBuffer.clear();
     std::fill(toneLowCutState.begin(), toneLowCutState.end(), 0.0f);
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
@@ -294,7 +305,9 @@ void EffectsRack::reset()
     guardMeterDrive.store(0.0f, std::memory_order_relaxed);
     guardMeterReduction.store(0.0f, std::memory_order_relaxed);
     guardMeterActive.store(false, std::memory_order_relaxed);
+    sendTailKillRequested.store(false, std::memory_order_relaxed);
     delayWritePosition = 0;
+    sendDelayWritePosition = 0;
     combWritePosition = 0;
 }
 
@@ -307,11 +320,13 @@ void EffectsRack::setSequencerLock(int destinationIndex, float amount) noexcept
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
 {
     updateFxModulation(buffer.getNumSamples(), bpm, ppqPosition);
+    captureSendInput(buffer);
 
     const auto moduleOrder = orderedModuleIndices();
     for (const auto moduleIndex : moduleOrder)
         processModule(moduleIndex, buffer, bpm, ppqPosition);
 
+    processSendBus(buffer, bpm);
     applyOutputGainAndSafety(buffer, outputGainDb);
 }
 
@@ -328,6 +343,11 @@ void EffectsRack::getGuardMeterLevels(float& drive, float& reduction, bool& acti
     drive = guardMeterDrive.load(std::memory_order_relaxed);
     reduction = guardMeterReduction.load(std::memory_order_relaxed);
     active = guardMeterActive.load(std::memory_order_relaxed);
+}
+
+void EffectsRack::requestSendTailKill() noexcept
+{
+    sendTailKillRequested.store(true, std::memory_order_release);
 }
 
 void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
@@ -356,6 +376,8 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
             case 9: fxModulation.reverbMix += contribution; break;
             case 10: fxModulation.width += contribution; break;
             case 11: fxModulation.drive += contribution; break;
+            case 20: fxModulation.sendDelay += contribution; break;
+            case 21: fxModulation.sendReverb += contribution; break;
             default: break;
         }
     }
@@ -374,6 +396,8 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
     fxModulation.delayMix = juce::jlimit(-1.0f, 1.0f, fxModulation.delayMix);
     fxModulation.reverbMix = juce::jlimit(-1.0f, 1.0f, fxModulation.reverbMix);
     fxModulation.width = juce::jlimit(-1.0f, 1.0f, fxModulation.width);
+    fxModulation.sendDelay = juce::jlimit(-1.0f, 1.0f, fxModulation.sendDelay);
+    fxModulation.sendReverb = juce::jlimit(-1.0f, 1.0f, fxModulation.sendReverb);
 }
 
 float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition)
@@ -1039,6 +1063,119 @@ void EffectsRack::processReverb(juce::AudioBuffer<float>& buffer)
 
     if (buffer.getNumChannels() == 1)
         reverb.processMono(buffer.getWritePointer(0), buffer.getNumSamples());
+}
+
+void EffectsRack::captureSendInput(const juce::AudioBuffer<float>& buffer)
+{
+    const auto channels = juce::jmin(buffer.getNumChannels(), preparedChannels);
+    const auto numSamples = buffer.getNumSamples();
+    if (channels <= 0 || numSamples <= 0)
+        return;
+
+    if (sendInputBuffer.getNumChannels() < channels || sendInputBuffer.getNumSamples() < numSamples)
+        sendInputBuffer.setSize(channels, numSamples, false, false, true);
+
+    sendInputBuffer.clear();
+    for (auto channel = 0; channel < channels; ++channel)
+        sendInputBuffer.copyFrom(channel, 0, buffer, channel, 0, numSamples);
+}
+
+void EffectsRack::clearSendTails()
+{
+    sendDelayBuffer.clear();
+    sendReverb.reset();
+    sendDelayWritePosition = 0;
+}
+
+void EffectsRack::processSendBus(juce::AudioBuffer<float>& buffer, double bpm)
+{
+    if (sendTailKillRequested.exchange(false, std::memory_order_acq_rel)
+        || readParameter(fxSendTailKill, 0.0f) >= 0.5f)
+    {
+        clearSendTails();
+        return;
+    }
+
+    const auto throwAmount = readParameter(macroThrow, 0.0f);
+    const auto space = readParameter(macroSpace, 0.0f);
+    const auto delaySend = juce::jlimit(0.0f, 1.0f, readParameter(fxSendDelay, 0.0f) + (throwAmount * 0.55f) + (fxModulation.sendDelay * 0.42f));
+    const auto reverbSend = juce::jlimit(0.0f, 1.0f, readParameter(fxSendReverb, 0.0f) + (throwAmount * 0.38f) + (space * 0.10f) + (fxModulation.sendReverb * 0.42f));
+
+    processDelaySend(buffer, bpm, delaySend, throwAmount);
+    processReverbSend(buffer, reverbSend, throwAmount);
+}
+
+void EffectsRack::processDelaySend(juce::AudioBuffer<float>& buffer, double bpm, float sendAmount, float throwAmount)
+{
+    if (sendDelayBuffer.getNumSamples() == 0 || sendInputBuffer.getNumSamples() == 0)
+        return;
+
+    const auto syncEnabled = readParameter(fxDelaySync, 0.0f) >= 0.5f;
+    const auto delaySeconds = syncEnabled
+        ? delaySecondsForRate(static_cast<int>(std::round(readParameter(fxDelayRate, 1.0f))), bpm)
+        : static_cast<double>(readParameter(fxDelayTime, 0.25f));
+    const auto delaySamples = juce::jlimit(1, sendDelayBuffer.getNumSamples() - 1,
+                                          static_cast<int>(delaySeconds * currentSampleRate));
+    const auto feedback = juce::jlimit(0.0f, 0.88f, readParameter(fxDelayFeedback, 0.25f) + (throwAmount * 0.12f));
+    const auto returnLevel = 0.48f;
+    const auto channels = juce::jmin(buffer.getNumChannels(),
+                                     juce::jmin(sendInputBuffer.getNumChannels(), sendDelayBuffer.getNumChannels()));
+
+    for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+    {
+        const auto readPosition = (sendDelayWritePosition + sendDelayBuffer.getNumSamples() - delaySamples) % sendDelayBuffer.getNumSamples();
+
+        for (auto channel = 0; channel < channels; ++channel)
+        {
+            const auto input = sendInputBuffer.getSample(channel, sampleIndex) * sendAmount;
+            const auto delayed = sendDelayBuffer.getSample(channel, readPosition);
+            buffer.addSample(channel, sampleIndex, delayed * returnLevel);
+            sendDelayBuffer.setSample(channel, sendDelayWritePosition, input + (delayed * feedback));
+        }
+
+        sendDelayWritePosition = (sendDelayWritePosition + 1) % sendDelayBuffer.getNumSamples();
+    }
+}
+
+void EffectsRack::processReverbSend(juce::AudioBuffer<float>& buffer, float sendAmount, float throwAmount)
+{
+    const auto channels = juce::jmin(buffer.getNumChannels(), sendInputBuffer.getNumChannels());
+    const auto numSamples = buffer.getNumSamples();
+    if (channels <= 0 || numSamples <= 0)
+        return;
+
+    if (sendWorkBuffer.getNumChannels() < channels || sendWorkBuffer.getNumSamples() < numSamples)
+        sendWorkBuffer.setSize(channels, numSamples, false, false, true);
+
+    sendWorkBuffer.clear();
+    for (auto channel = 0; channel < channels; ++channel)
+    {
+        sendWorkBuffer.copyFrom(channel, 0, sendInputBuffer, channel, 0, numSamples);
+        sendWorkBuffer.applyGain(channel, 0, numSamples, sendAmount);
+    }
+
+    juce::Reverb::Parameters reverbParameters;
+    reverbParameters.roomSize = juce::jlimit(0.0f, 1.0f, readParameter(fxReverbSize, 0.35f) + (throwAmount * 0.18f));
+    reverbParameters.damping = readParameter(fxReverbDamping, 0.45f);
+    reverbParameters.wetLevel = 0.54f;
+    reverbParameters.dryLevel = 0.0f;
+    reverbParameters.width = 1.0f;
+    reverbParameters.freezeMode = 0.0f;
+    sendReverb.setParameters(reverbParameters);
+
+    if (channels >= 2)
+    {
+        sendReverb.processStereo(sendWorkBuffer.getWritePointer(0),
+                                 sendWorkBuffer.getWritePointer(1),
+                                 numSamples);
+    }
+    else
+    {
+        sendReverb.processMono(sendWorkBuffer.getWritePointer(0), numSamples);
+    }
+
+    for (auto channel = 0; channel < channels; ++channel)
+        buffer.addFrom(channel, 0, sendWorkBuffer, channel, 0, numSamples, 0.58f);
 }
 
 void EffectsRack::processWidth(juce::AudioBuffer<float>& buffer)

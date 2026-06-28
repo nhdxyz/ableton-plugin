@@ -202,6 +202,19 @@ target_link_libraries(NateVSTNoiseSourceAudit
 
 add_test(NAME NoiseSourceAudit COMMAND NateVSTNoiseSourceAudit)
 
+add_executable(NateVSTEffectsSendAudit Tests/EffectsSendAudit.cpp)
+
+target_link_libraries(NateVSTEffectsSendAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME EffectsSendAudit COMMAND NateVSTEffectsSendAudit)
+
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")
 

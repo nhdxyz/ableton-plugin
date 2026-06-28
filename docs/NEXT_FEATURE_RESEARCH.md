@@ -237,7 +237,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 147. Add per-FX slot presets that users can save.
 148. Add whole-rack presets.
 149. Add parallel wet/dry routing for selected FX.
-150. Add internal send bus for delay/reverb throws.
+150. Add internal send bus for delay/reverb throws. First pass implemented with separate send amounts, dedicated send delay/reverb DSP state, throw-button integration, MOD destinations, and one-shot tail kill; deeper Dub Send/Short Room/Wash preset modes remain open.
 
 ### H. Randomization And Sound Discovery
 

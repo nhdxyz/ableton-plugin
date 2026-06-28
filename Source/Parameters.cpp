@@ -141,7 +141,9 @@ juce::StringArray modulationDestinationChoices()
         "Sample Stutter",
         "Osc Warp",
         "Osc 1 WT Pos",
-        "Osc 2 WT Pos"
+        "Osc 2 WT Pos",
+        "FX Send Delay",
+        "FX Send Reverb"
     };
 }
 
@@ -1054,6 +1056,12 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.2f));
 
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxSendDelay,
+        "FX Send Delay",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
     add(std::make_unique<juce::AudioParameterBool>(
         ID::fxReverbEnabled,
         "FX Reverb Enabled",
@@ -1076,6 +1084,17 @@ APVTS::ParameterLayout createLayout()
         "FX Reverb Mix",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.2f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxSendReverb,
+        "FX Send Reverb",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::fxSendTailKill,
+        "FX Send Tail Kill",
+        false));
 
     add(std::make_unique<juce::AudioParameterBool>(
         ID::fxWidthEnabled,

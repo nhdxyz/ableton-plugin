@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Send-Style Delay And Reverb Throws
+
+- Added internal delay and reverb send amounts separate from the serial insert Delay/Reverb mix controls, with dedicated send delay/reverb DSP state that returns after the insert rack and before output safety.
+- Added Delay/Reverb detail-panel `Send` knobs, appended modulation destinations for `FX Send Delay` and `FX Send Reverb`, and updated throw buttons so Delay Throw and Space Throw drive the send bus.
+- Added a one-shot send tail-kill request for `Dry Reset`, plus legacy preset defaults and FX lock/mutation/diff handling for the new send parameters.
+- Added `EffectsSendAudit` to verify send delay creates an independent tail with insert delay disabled and that one-shot tail kill clears the send bus.
+
 ### Percussive Noise Source
 
 - Added dedicated noise source colors for `White`, `Pink`, `Brown`, `Air`, `Tick`, `Vinyl`, and `Digital`, plus a `Noise Decay` control for short attack ticks and longer texture beds.

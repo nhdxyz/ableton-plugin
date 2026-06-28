@@ -23,6 +23,7 @@ public:
     void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
     void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
+    void requestSendTailKill() noexcept;
 
 private:
     static constexpr size_t fxModuleCount = 15;
@@ -33,7 +34,11 @@ private:
     juce::dsp::Chorus<float> flanger;
     juce::dsp::Chorus<float> chorus;
     juce::Reverb reverb;
+    juce::Reverb sendReverb;
     juce::AudioBuffer<float> delayBuffer;
+    juce::AudioBuffer<float> sendDelayBuffer;
+    juce::AudioBuffer<float> sendInputBuffer;
+    juce::AudioBuffer<float> sendWorkBuffer;
     juce::AudioBuffer<float> combBuffer;
     std::vector<float> toneLowCutState;
     std::vector<float> toneTiltState;
@@ -56,6 +61,7 @@ private:
     std::atomic<float> guardMeterDrive { 0.0f };
     std::atomic<float> guardMeterReduction { 0.0f };
     std::atomic<bool> guardMeterActive { false };
+    std::atomic<bool> sendTailKillRequested { false };
     float fxModLfoPhase = 0.0f;
     float fxModLfoStepValue = 0.0f;
     float fxModSmoothRandomStartValue = 0.0f;
@@ -66,6 +72,7 @@ private:
     int sequencerLockDestination = 0;
     float sequencerLockAmount = 0.0f;
     int delayWritePosition = 0;
+    int sendDelayWritePosition = 0;
     int combWritePosition = 0;
     int preparedChannels = 2;
 
@@ -76,6 +83,8 @@ private:
         float delayMix = 0.0f;
         float reverbMix = 0.0f;
         float width = 0.0f;
+        float sendDelay = 0.0f;
+        float sendReverb = 0.0f;
     };
 
     FxModulationOffsets fxModulation;
@@ -120,10 +129,13 @@ private:
     std::atomic<float>* fxDelayTime = nullptr;
     std::atomic<float>* fxDelayFeedback = nullptr;
     std::atomic<float>* fxDelayMix = nullptr;
+    std::atomic<float>* fxSendDelay = nullptr;
     std::atomic<float>* fxReverbEnabled = nullptr;
     std::atomic<float>* fxReverbSize = nullptr;
     std::atomic<float>* fxReverbDamping = nullptr;
     std::atomic<float>* fxReverbMix = nullptr;
+    std::atomic<float>* fxSendReverb = nullptr;
+    std::atomic<float>* fxSendTailKill = nullptr;
     std::atomic<float>* fxWidthEnabled = nullptr;
     std::atomic<float>* fxWidthAmount = nullptr;
     std::atomic<float>* fxWidthMonoCutoff = nullptr;
@@ -197,6 +209,11 @@ private:
     void processChorus(juce::AudioBuffer<float>& buffer);
     void processDelay(juce::AudioBuffer<float>& buffer, double bpm);
     void processReverb(juce::AudioBuffer<float>& buffer);
+    void captureSendInput(const juce::AudioBuffer<float>& buffer);
+    void clearSendTails();
+    void processSendBus(juce::AudioBuffer<float>& buffer, double bpm);
+    void processDelaySend(juce::AudioBuffer<float>& buffer, double bpm, float sendAmount, float throwAmount);
+    void processReverbSend(juce::AudioBuffer<float>& buffer, float sendAmount, float throwAmount);
     void processWidth(juce::AudioBuffer<float>& buffer);
     void applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, float outputGainDb);
     float softClip(float sample) const;

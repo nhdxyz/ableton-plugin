@@ -211,13 +211,14 @@ Implemented sequencer sub-slice:
 96. Add per-FX slot presets.
 97. Add whole-rack presets.
 98. Add parallel wet/dry routing for selected FX.
-99. Add send-style delay/reverb throw bus inside the plugin.
+99. Add send-style delay/reverb throw bus inside the plugin. First internal send-bus pass implemented for delay/reverb send amounts, throw buttons, modulation destinations, and one-shot tail kill.
 100. Add true slot-based FX instances only after fixed-module automation is proven stable.
 
 Implemented FX sub-slice:
 
 - Pump now publishes live phase, gain, peak reduction, and active-state telemetry from the DSP path, and the FX Pump curve display shows HOST/INT timing source, a moving phase marker, and a reduction meter. External Ableton sidechain input remains tracked separately because it requires bus-layout and host-validation work.
 - The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction. This is the first visibility slice for the compressor/clipper/transient safety backlog before adding more dynamics modules.
+- Delay and Reverb now have separate send amounts and dedicated send DSP state for throw tails, with appended MOD destinations for `FX Send Delay` and `FX Send Reverb`, plus `EffectsSendAudit` coverage for send tails and one-shot tail kill.
 - Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), preset previews/construction kits (#68), percussive noise source (#69), send-style delay/reverb buses (#70), dedicated groove engine (#71), and chord/bassline designer (#72).
 
 ## Priority 6: Randomization And Sound Discovery

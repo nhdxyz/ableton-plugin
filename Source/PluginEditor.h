@@ -346,9 +346,11 @@ private:
     juce::Slider fxDelayTimeSlider;
     juce::Slider fxDelayFeedbackSlider;
     juce::Slider fxDelayMixSlider;
+    juce::Slider fxSendDelaySlider;
     juce::Slider fxReverbSizeSlider;
     juce::Slider fxReverbDampingSlider;
     juce::Slider fxReverbMixSlider;
+    juce::Slider fxSendReverbSlider;
     juce::Slider fxWidthAmountSlider;
     juce::Slider fxWidthMonoCutoffSlider;
     juce::Slider fxToneTiltSlider;
@@ -460,9 +462,11 @@ private:
     juce::Label fxDelayTimeLabel;
     juce::Label fxDelayFeedbackLabel;
     juce::Label fxDelayMixLabel;
+    juce::Label fxSendDelayLabel;
     juce::Label fxReverbSizeLabel;
     juce::Label fxReverbDampingLabel;
     juce::Label fxReverbMixLabel;
+    juce::Label fxSendReverbLabel;
     juce::Label fxWidthAmountLabel;
     juce::Label fxWidthMonoCutoffLabel;
     juce::Label fxToneTiltLabel;
@@ -569,7 +573,7 @@ private:
     juce::TextButton fxThrowDelayButton { "Delay Throw" };
     juce::TextButton fxThrowSpaceButton { "Space Throw" };
     juce::TextButton fxThrowPumpButton { "Pump Drop" };
-    juce::TextButton fxThrowDryButton { "Throw Off" };
+    juce::TextButton fxThrowDryButton { "Dry Reset" };
     juce::TextButton fxHoldDelayButton { "Hold Dly" };
     juce::TextButton fxHoldSpaceButton { "Hold Spc" };
     juce::TextButton fxHoldPumpButton { "Hold Pump" };

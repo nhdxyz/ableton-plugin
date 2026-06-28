@@ -793,6 +793,8 @@ juce::String NateVSTAudioProcessor::getRandomCandidateDiffSummary(int slotIndex)
     addDiff("LFO", Parameters::ID::lfo1Depth, 0.0f, 0.08f, formatPercent);
     addDiff("Delay", Parameters::ID::fxDelayMix, 0.0f, 0.05f, formatPercent);
     addDiff("Reverb", Parameters::ID::fxReverbMix, 0.0f, 0.05f, formatPercent);
+    addDiff("Delay send", Parameters::ID::fxSendDelay, 0.0f, 0.05f, formatPercent);
+    addDiff("Reverb send", Parameters::ID::fxSendReverb, 0.0f, 0.05f, formatPercent);
     addDiff("Width", Parameters::ID::fxWidthAmount, 1.0f, 0.08f, formatPercent);
     addDiff("Output", Parameters::ID::outputGain, 0.8f, 0.05f, formatPercent);
 
@@ -2598,6 +2600,11 @@ void NateVSTAudioProcessor::getGuardMeterLevels(float& drive, float& reduction, 
     effectsRack.getGuardMeterLevels(drive, reduction, active);
 }
 
+void NateVSTAudioProcessor::requestFxSendTailKill() noexcept
+{
+    effectsRack.requestSendTailKill();
+}
+
 NateVSTAudioProcessor::HostSyncStatus NateVSTAudioProcessor::getHostSyncStatus() const noexcept
 {
     HostSyncStatus status;
@@ -2936,10 +2943,13 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
                     Parameters::ID::fxDelayTime,
                     Parameters::ID::fxDelayFeedback,
                     Parameters::ID::fxDelayMix,
+                    Parameters::ID::fxSendDelay,
                     Parameters::ID::fxReverbEnabled,
                     Parameters::ID::fxReverbSize,
                     Parameters::ID::fxReverbDamping,
                     Parameters::ID::fxReverbMix,
+                    Parameters::ID::fxSendReverb,
+                    Parameters::ID::fxSendTailKill,
                     Parameters::ID::fxWidthEnabled,
                     Parameters::ID::fxWidthAmount,
                     Parameters::ID::fxWidthMonoCutoff,
@@ -3737,6 +3747,7 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::fxDelayEnabled,
                 Parameters::ID::fxDelaySync,
                 Parameters::ID::fxDelayRate,
+                Parameters::ID::fxSendTailKill,
                 Parameters::ID::fxReverbEnabled,
                 Parameters::ID::fxWidthEnabled,
                 Parameters::ID::fxToneEnabled,
@@ -3771,9 +3782,11 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::fxDelayTime,
                 Parameters::ID::fxDelayFeedback,
                 Parameters::ID::fxDelayMix,
+                Parameters::ID::fxSendDelay,
                 Parameters::ID::fxReverbSize,
                 Parameters::ID::fxReverbDamping,
                 Parameters::ID::fxReverbMix,
+                Parameters::ID::fxSendReverb,
                 Parameters::ID::fxWidthAmount,
                 Parameters::ID::fxWidthMonoCutoff,
                 Parameters::ID::fxToneTilt,
@@ -3960,10 +3973,13 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::fxDelayTime,
                 Parameters::ID::fxDelayFeedback,
                 Parameters::ID::fxDelayMix,
+                Parameters::ID::fxSendDelay,
                 Parameters::ID::fxReverbEnabled,
                 Parameters::ID::fxReverbSize,
                 Parameters::ID::fxReverbDamping,
                 Parameters::ID::fxReverbMix,
+                Parameters::ID::fxSendReverb,
+                Parameters::ID::fxSendTailKill,
                 Parameters::ID::fxWidthEnabled,
                 Parameters::ID::fxWidthAmount,
                 Parameters::ID::fxWidthMonoCutoff,
@@ -4171,10 +4187,13 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxDelayTime,
             Parameters::ID::fxDelayFeedback,
             Parameters::ID::fxDelayMix,
+            Parameters::ID::fxSendDelay,
             Parameters::ID::fxReverbEnabled,
             Parameters::ID::fxReverbSize,
             Parameters::ID::fxReverbDamping,
             Parameters::ID::fxReverbMix,
+            Parameters::ID::fxSendReverb,
+            Parameters::ID::fxSendTailKill,
             Parameters::ID::fxWidthEnabled,
             Parameters::ID::fxWidthAmount,
             Parameters::ID::fxWidthMonoCutoff,
@@ -4588,6 +4607,9 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
     const auto hasNoiseSourceControls = stateForParameters.getChildWithProperty("id", Parameters::ID::noiseType).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::noiseDecay).isValid();
+    const auto hasFxSendControls = stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendDelay).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendReverb).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendTailKill).isValid();
     const auto hasWavetablePositions = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWavetablePosition).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::osc2WavetablePosition).isValid();
     const auto hasSequencerLockControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDestination).isValid()
@@ -4661,6 +4683,12 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     {
         setParameterPlainValue(Parameters::ID::noiseType, 0.0f);
         setParameterPlainValue(Parameters::ID::noiseDecay, 0.18f);
+    }
+    if (! hasFxSendControls)
+    {
+        setParameterPlainValue(Parameters::ID::fxSendDelay, 0.0f);
+        setParameterPlainValue(Parameters::ID::fxSendReverb, 0.0f);
+        setParameterPlainValue(Parameters::ID::fxSendTailKill, 0.0f);
     }
     if (! hasWavetablePositions)
     {

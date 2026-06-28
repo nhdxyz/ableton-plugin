@@ -124,6 +124,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto macroBounce = 0.0f;
     auto macroWarp = 0.0f;
     auto macroThrow = 0.0f;
+    auto fxSendDelay = 0.0f;
+    auto fxSendReverb = 0.0f;
     auto fxToneEnabled = false;
     auto fxToneTilt = 0.0f;
     auto fxToneLowCut = 30.0f;
@@ -933,6 +935,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     macroBounce = fxPumpEnabled ? juce::jlimit(0.0f, 0.7f, fxPumpDepth + 0.08f) : juce::jlimit(0.0f, 0.34f, chaos * 0.18f);
     macroWarp = juce::jlimit(0.0f, 0.7f, (std::abs(osc2Tune) / 12.0f) + (macroMotion * 0.4f) + (unisonDetune * 1.8f));
     macroThrow = juce::jlimit(0.0f, 0.75f, macroSpace * 0.82f);
+    fxSendDelay = juce::jlimit(0.0f, 0.55f, macroThrow * 0.72f);
+    fxSendReverb = juce::jlimit(0.0f, 0.55f, macroSpace * 0.42f);
 
     if (subtle)
     {
@@ -972,6 +976,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroBounce = blend(Parameters::ID::macroBounce, macroBounce);
         macroWarp = blend(Parameters::ID::macroWarp, macroWarp);
         macroThrow = blend(Parameters::ID::macroThrow, macroThrow);
+        fxSendDelay = blend(Parameters::ID::fxSendDelay, fxSendDelay);
+        fxSendReverb = blend(Parameters::ID::fxSendReverb, fxSendReverb);
         fxToneTilt = blend(Parameters::ID::fxToneTilt, fxToneTilt);
         fxToneLowCut = blend(Parameters::ID::fxToneLowCut, fxToneLowCut);
         fxEqLowGain = blend(Parameters::ID::fxEqLowGain, fxEqLowGain);
@@ -1045,6 +1051,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         macroBounce = juce::jlimit(0.08f, 0.48f, macroBounce);
         macroWarp = juce::jlimit(0.0f, 0.42f, macroWarp);
         macroThrow = juce::jlimit(0.0f, 0.25f, macroThrow);
+        fxSendDelay = juce::jlimit(0.0f, 0.18f, fxSendDelay);
+        fxSendReverb = juce::jlimit(0.0f, 0.12f, fxSendReverb);
         fxToneEnabled = true;
         fxToneLowCut = juce::jlimit(24.0f, 48.0f, fxToneLowCut);
         fxWidthEnabled = true;
@@ -1105,6 +1113,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::macroBounce, macroBounce);
     setParameter(Parameters::ID::macroWarp, macroWarp);
     setParameter(Parameters::ID::macroThrow, macroThrow);
+    setParameter(Parameters::ID::fxSendDelay, fxSendDelay);
+    setParameter(Parameters::ID::fxSendReverb, fxSendReverb);
+    setParameter(Parameters::ID::fxSendTailKill, 0.0f);
     setParameter(Parameters::ID::ampAttack, attack);
     setParameter(Parameters::ID::ampDecay, decay);
     setParameter(Parameters::ID::ampSustain, sustain);

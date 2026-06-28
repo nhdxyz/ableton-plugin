@@ -20,6 +20,8 @@
 class NateVSTAudioProcessor final : public juce::AudioProcessor
 {
 public:
+    static constexpr size_t outputSpectrumSnapshotSize = 1024;
+
     NateVSTAudioProcessor();
     ~NateVSTAudioProcessor() override = default;
 
@@ -156,6 +158,7 @@ public:
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void panicAllNotesOff();
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
+    void getOutputSpectrumSnapshot(std::array<float, outputSpectrumSnapshotSize>& destination) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
     void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
@@ -242,6 +245,8 @@ private:
     std::atomic<float> lowEndSubRms { 0.0f };
     std::atomic<float> lowEndStereoRisk { 0.0f };
     std::atomic<float> lowEndOutputPeak { 0.0f };
+    std::array<std::atomic<float>, outputSpectrumSnapshotSize> outputSpectrumSamples {};
+    std::atomic<uint32_t> outputSpectrumWriteIndex { 0 };
     std::atomic<float> hostSyncBpm { 124.0f };
     std::atomic<float> hostSyncPpqPosition { 0.0f };
     std::atomic<bool> hostSyncPositionAvailable { false };
@@ -250,6 +255,7 @@ private:
     std::atomic<bool> panicRequested { false };
     float lowEndStateLeft = 0.0f;
     float lowEndStateRight = 0.0f;
+    uint32_t outputSpectrumWriteCursor = 0;
     double meterSampleRate = 44100.0;
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
@@ -317,6 +323,7 @@ private:
     double getHostBpm() const;
     Sequencer::HostPosition getHostPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
+    void updateOutputSpectrumSnapshot(const juce::AudioBuffer<float>& buffer) noexcept;
     bool savePresetState(const juce::String& presetName, const PresetSaveOptions& options, juce::ValueTree state);
     juce::ValueTree createPluginState();
     juce::ValueTree createPluginState(bool includePerformanceSnapshots);

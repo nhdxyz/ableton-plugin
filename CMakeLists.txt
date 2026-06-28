@@ -62,6 +62,7 @@ target_sources(NateVST
         Source/UI/ModMatrixRow.cpp
         Source/UI/ModSourceMeter.cpp
         Source/UI/OutputMeter.cpp
+        Source/UI/OutputSpectrumDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/SampleWaveformDisplay.cpp
@@ -248,6 +249,19 @@ target_link_libraries(NateVSTEffectsSendAudit
 )
 
 add_test(NAME EffectsSendAudit COMMAND NateVSTEffectsSendAudit)
+
+add_executable(NateVSTSpectrumSnapshotAudit Tests/SpectrumSnapshotAudit.cpp)
+
+target_link_libraries(NateVSTSpectrumSnapshotAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME SpectrumSnapshotAudit COMMAND NateVSTSpectrumSnapshotAudit)
 
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")

@@ -457,6 +457,49 @@ float smoothMeterValue(float current, float target)
     return current + ((target - current) * coefficient);
 }
 
+constexpr std::array<float, UI::OutputSpectrumDisplay::bandCount> spectrumBandFrequencies {
+    45.0f,
+    70.0f,
+    105.0f,
+    160.0f,
+    250.0f,
+    390.0f,
+    620.0f,
+    1000.0f,
+    1700.0f,
+    3100.0f,
+    5800.0f,
+    11000.0f
+};
+
+float goertzelBandLevel(const std::array<float, NateVSTAudioProcessor::outputSpectrumSnapshotSize>& samples,
+                        double sampleRate,
+                        float frequencyHz)
+{
+    if (sampleRate <= 0.0 || frequencyHz <= 0.0f)
+        return 0.0f;
+
+    const auto omega = juce::MathConstants<double>::twoPi * static_cast<double>(frequencyHz) / sampleRate;
+    const auto coefficient = 2.0 * std::cos(omega);
+    auto q1 = 0.0;
+    auto q2 = 0.0;
+
+    for (const auto sample : samples)
+    {
+        const auto q0 = (coefficient * q1) - q2 + static_cast<double>(sample);
+        q2 = q1;
+        q1 = q0;
+    }
+
+    const auto real = q1 - (q2 * std::cos(omega));
+    const auto imaginary = q2 * std::sin(omega);
+    const auto magnitude = std::sqrt((real * real) + (imaginary * imaginary))
+        / static_cast<double>(samples.size());
+    const auto decibels = juce::Decibels::gainToDecibels(static_cast<float>(magnitude) + 0.000001f);
+
+    return juce::jlimit(0.0f, 1.0f, juce::jmap(decibels, -78.0f, -18.0f, 0.0f, 1.0f));
+}
+
 bool parameterIsOneOf(const juce::String& parameterID, std::initializer_list<const char*> ids)
 {
     for (const auto* id : ids)
@@ -720,6 +763,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
+    addAndMakeVisible(outputSpectrumDisplay);
     addAndMakeVisible(homeOverviewDisplay);
     addAndMakeVisible(lowEndAssistant);
 
@@ -2493,7 +2537,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(238);
+        auto topRow = homeContent.removeFromTop(258);
         const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
         auto engineArea = topRow.removeFromLeft(306).reduced(5);
         auto shapeArea = topRow.removeFromRight(macroColumnWidth).reduced(5);
@@ -2739,6 +2783,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
+            outputSpectrumDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
@@ -2749,7 +2794,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(238);
+            auto topRow = dashboard.removeFromTop(258);
             const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
             auto performArea = topRow.removeFromLeft(306).reduced(18, 12);
             auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(18, 12);
@@ -2766,7 +2811,8 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
 
-            homeOverviewDisplay.setBounds(overviewArea);
+            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(166));
+            outputSpectrumDisplay.setBounds(overviewArea.withTrimmedTop(8));
 
             homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -7146,7 +7192,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &outputSpectrumDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -8350,6 +8396,27 @@ void NateVSTAudioProcessorEditor::updateOutputMeter()
     outputMeter.setLevels(displayedPeakLeft, displayedPeakRight, displayedRmsLeft, displayedRmsRight);
 }
 
+void NateVSTAudioProcessorEditor::updateOutputSpectrumDisplay()
+{
+    audioProcessor.getOutputSpectrumSnapshot(outputSpectrumSnapshot);
+
+    UI::OutputSpectrumDisplay::BandArray nextBands {};
+    const auto sampleRate = audioProcessor.getSampleRate() > 0.0 ? audioProcessor.getSampleRate() : 44100.0;
+    const auto peak = juce::jlimit(0.0f, 1.0f, juce::jmax(displayedPeakLeft, displayedPeakRight));
+    const auto active = peak > 0.0025f;
+
+    for (size_t index = 0; index < nextBands.size(); ++index)
+    {
+        const auto target = active ? goertzelBandLevel(outputSpectrumSnapshot, sampleRate, spectrumBandFrequencies[index])
+                                   : 0.0f;
+        const auto coefficient = target > displayedSpectrumBands[index] ? 0.54f : 0.16f;
+        displayedSpectrumBands[index] += (target - displayedSpectrumBands[index]) * coefficient;
+        nextBands[index] = displayedSpectrumBands[index];
+    }
+
+    outputSpectrumDisplay.setLevels(nextBands, peak, active);
+}
+
 void NateVSTAudioProcessorEditor::updateLowEndAssistant()
 {
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -8583,6 +8650,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateMacroAssignmentEditorStatus();
     updateModDestinationIndicators();
     updateOutputMeter();
+    updateOutputSpectrumDisplay();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();

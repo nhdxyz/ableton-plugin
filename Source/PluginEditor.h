@@ -10,6 +10,7 @@
 #include "UI/ModMatrixRow.h"
 #include "UI/ModSourceMeter.h"
 #include "UI/OutputMeter.h"
+#include "UI/OutputSpectrumDisplay.h"
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
@@ -643,6 +644,7 @@ private:
     juce::TextEditor infoDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
+    UI::OutputSpectrumDisplay outputSpectrumDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::LowEndAssistant lowEndAssistant;
@@ -742,6 +744,7 @@ private:
     void applyLfoCurvePreset(int presetId);
     void applyLfoCurveTool(LfoCurveTool tool);
     void updateOutputMeter();
+    void updateOutputSpectrumDisplay();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
@@ -851,6 +854,8 @@ private:
     float displayedPeakRight = 0.0f;
     float displayedRmsLeft = 0.0f;
     float displayedRmsRight = 0.0f;
+    std::array<float, NateVSTAudioProcessor::outputSpectrumSnapshotSize> outputSpectrumSnapshot {};
+    UI::OutputSpectrumDisplay::BandArray displayedSpectrumBands {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessorEditor)
 };

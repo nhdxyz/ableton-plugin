@@ -209,6 +209,10 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     lowEndSubRms.store(0.0f, std::memory_order_relaxed);
     lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
     lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
+    for (auto& sample : outputSpectrumSamples)
+        sample.store(0.0f, std::memory_order_relaxed);
+    outputSpectrumWriteCursor = 0;
+    outputSpectrumWriteIndex.store(0, std::memory_order_relaxed);
     hostSyncBpm.store(124.0f, std::memory_order_relaxed);
     hostSyncPpqPosition.store(0.0f, std::memory_order_relaxed);
     hostSyncPositionAvailable.store(false, std::memory_order_relaxed);
@@ -2586,6 +2590,17 @@ void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,
     rmsRight = outputMeterRmsRight.load(std::memory_order_relaxed);
 }
 
+void NateVSTAudioProcessor::getOutputSpectrumSnapshot(std::array<float, outputSpectrumSnapshotSize>& destination) const noexcept
+{
+    const auto writeIndex = outputSpectrumWriteIndex.load(std::memory_order_relaxed);
+
+    for (size_t offset = 0; offset < destination.size(); ++offset)
+    {
+        const auto sampleIndex = (static_cast<size_t>(writeIndex) + offset) % outputSpectrumSamples.size();
+        destination[offset] = outputSpectrumSamples[sampleIndex].load(std::memory_order_relaxed);
+    }
+}
+
 void NateVSTAudioProcessor::getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept
 {
     subRms = lowEndSubRms.load(std::memory_order_relaxed);
@@ -4500,6 +4515,8 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
     const auto numChannels = buffer.getNumChannels();
     const auto numSamples = buffer.getNumSamples();
 
+    updateOutputSpectrumSnapshot(buffer);
+
     if (numChannels <= 0 || numSamples <= 0)
     {
         outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
@@ -4564,6 +4581,28 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
     lowEndSubRms.store(juce::jlimit(0.0f, 2.0f, subRms), std::memory_order_relaxed);
     lowEndStereoRisk.store(juce::jlimit(0.0f, 1.0f, stereoRisk), std::memory_order_relaxed);
     lowEndOutputPeak.store(juce::jlimit(0.0f, 2.0f, juce::jmax(peakLeft, peakRight)), std::memory_order_relaxed);
+}
+
+void NateVSTAudioProcessor::updateOutputSpectrumSnapshot(const juce::AudioBuffer<float>& buffer) noexcept
+{
+    const auto numChannels = buffer.getNumChannels();
+    const auto numSamples = buffer.getNumSamples();
+
+    if (numChannels <= 0 || numSamples <= 0)
+        return;
+
+    const auto* leftSamples = buffer.getReadPointer(0);
+    const auto* rightSamples = buffer.getReadPointer(numChannels > 1 ? 1 : 0);
+
+    for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
+    {
+        const auto mono = (leftSamples[sampleIndex] + rightSamples[sampleIndex]) * 0.5f;
+        outputSpectrumSamples[outputSpectrumWriteCursor].store(juce::jlimit(-2.0f, 2.0f, mono),
+                                                               std::memory_order_relaxed);
+        outputSpectrumWriteCursor = (outputSpectrumWriteCursor + 1u) % static_cast<uint32_t>(outputSpectrumSamples.size());
+    }
+
+    outputSpectrumWriteIndex.store(outputSpectrumWriteCursor, std::memory_order_relaxed);
 }
 
 juce::ValueTree NateVSTAudioProcessor::createPluginState()

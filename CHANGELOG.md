@@ -9,6 +9,13 @@
 - Wired the display into timer refresh and full edit-restore refresh paths so preset loads, global undo/redo, randomization recalls, and manual filter edits repaint the visible curve.
 - Kept the implementation JUCE-native and APVTS-driven, preserving current Ableton automation and saved-set compatibility.
 
+### HOME Output Spectrum Analyzer
+
+- Added a real-time-safe output spectrum snapshot path that stores the final mono output into a fixed atomic sample ring for editor-side visual analysis.
+- Added `OutputSpectrumDisplay`, a compact 12-band HOME analyzer with Sub, Low, Mid, Presence, and Air labels plus LOW/LIVE/HOT status.
+- Rebalanced the HOME center stack so the existing overview remains the patch-intent view while the new spectrum shows actual rendered audio energy for house/UKG low-end and mix-shaping decisions.
+- Added `SpectrumSnapshotAudit` to verify the analyzer snapshot starts silent, captures rendered synth output, remains finite, and resets on prepare.
+
 ### Library Save Redesign And Expanded Factory Pack
 
 - Reworked HOME preset access into recall-only controls, moving save metadata out of the default dashboard so HOME stays focused on performance, randomization, overview, and preset audition.

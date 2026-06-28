@@ -2,6 +2,20 @@
 
 ## 2026-06-28
 
+### Per-Slice Choke And Slice-Key Style Fallback
+
+- Added a saved `Sample Slice N Choke` parameter for all eight SAMPLE pads, with old presets and sessions migrating to open slices by default.
+- Added a SAMPLE-panel `Choke` action so UKG vocal slices can cut off other choked slice-key voices while leaving open slices able to overlap.
+- Made Slice Keys playback use the selected Clean, Pitch, Reverse, Stutter, or Garage slice style as the fallback for untouched pads, so MIDI C3-G3 triggering matches pad audition behavior before a slice is customized.
+- Updated the SAMPLE slice status row and pad tooltips to show default-style pitch, gain, reverse, choke, and stutter behavior instead of only raw per-slice memory.
+- Regenerated factory presets with explicit sample-slice state, and switched `UKG Vocal Chop Starter` to open in Slice Keys mode for C3-G3 chop triggering after a user loads a sample.
+
+### Multi-Agent Feature Research Refresh
+
+- Re-reviewed Nate VST against current synth and club-tool references with separate source-engine/modulation and sampler/FX/groove research passes.
+- Confirmed the next missing product depth is source engines, drag-visible modulation, serious UKG slicing, motion lanes, multiband/sidechain club FX, construction-kit presets, audio previews, and Ableton release validation.
+- Updated the planning docs so future feature slices are mapped to existing GitHub issue buckets instead of creating duplicate backlog tickets.
+
 ### LFO 2 Modulation Source
 
 - Added an appended `LFO 2` source after `Chaos`, preserving all existing modulation source indices for saved projects and Ableton automation.

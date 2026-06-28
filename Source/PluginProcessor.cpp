@@ -489,6 +489,7 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
         setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
     }
     return true;
@@ -2262,6 +2263,8 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         restoreParameterFromState(state, parameterID);
     for (const auto* parameterID : Parameters::ID::sampleSliceStutter)
         restoreParameterFromState(state, parameterID);
+    for (const auto* parameterID : Parameters::ID::sampleSliceChoke)
+        restoreParameterFromState(state, parameterID);
     for (const auto* parameterID : Parameters::ID::sampleSliceStutterRepeats)
         restoreParameterFromState(state, parameterID);
 }
@@ -2468,6 +2471,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
     const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
     const auto hasSampleSliceEdits = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceCustom[0]).isValid();
+    const auto hasSampleSliceChoke = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceChoke[0]).isValid();
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
@@ -2497,9 +2501,14 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
             setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
         }
     }
+    if (! hasSampleSliceChoke)
+        for (const auto* parameterID : Parameters::ID::sampleSliceChoke)
+            setParameterPlainValue(parameterID, 0.0f);
+
     if (! hasFilterCharacter)
         setParameterPlainValue(Parameters::ID::filterCharacter, 0.0f);
     if (! hasFilterSlope)

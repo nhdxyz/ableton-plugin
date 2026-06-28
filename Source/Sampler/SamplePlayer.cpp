@@ -10,6 +10,8 @@ constexpr auto chopFadeSamples = 64;
 constexpr auto stutterFadeSamples = 48;
 constexpr auto zeroCrossSearchSamples = 256;
 constexpr auto sliceKeyRootNote = 60;
+constexpr std::array<float, 8> slicePitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
+constexpr std::array<float, 8> garageSlicePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
 
 double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRate)
 {
@@ -165,6 +167,7 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleStutterEnabled = parameters.getRawParameterValue(Parameters::ID::sampleStutterEnabled);
     sampleStutterRate = parameters.getRawParameterValue(Parameters::ID::sampleStutterRate);
     sampleStutterRepeats = parameters.getRawParameterValue(Parameters::ID::sampleStutterRepeats);
+    sampleSliceStyle = parameters.getRawParameterValue(Parameters::ID::sampleSliceStyle);
     for (size_t index = 0; index < sampleSliceCustom.size(); ++index)
     {
         sampleSliceCustom[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceCustom[index]);
@@ -172,6 +175,7 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
         sampleSliceTranspose[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceTranspose[index]);
         sampleSliceGain[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceGain[index]);
         sampleSliceStutter[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutter[index]);
+        sampleSliceChoke[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceChoke[index]);
         sampleSliceStutterRepeats[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutterRepeats[index]);
     }
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
@@ -604,6 +608,15 @@ int SamplePlayer::sliceIndexForMidiNote(int midiNoteNumber) const
 
 void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot)
 {
+    const auto playbackMode = static_cast<int>(std::round(readParameter(samplePlaybackMode, 1.0f)));
+    const auto sliceIndex = (! forceOneShot && playbackMode == 2) ? sliceIndexForMidiNote(midiNoteNumber) : -1;
+    if (sliceIndex >= 0 && sliceChokeEnabled(sliceIndex))
+    {
+        for (auto& voice : voices)
+            if (voice.active && voice.sliceIndex >= 0 && sliceChokeEnabled(voice.sliceIndex))
+                voice.active = false;
+    }
+
     auto* voiceToUse = std::find_if(voices.begin(), voices.end(), [] (const Voice& voice)
     {
         return ! voice.active;
@@ -612,8 +625,6 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     if (voiceToUse == voices.end())
         voiceToUse = voices.begin();
 
-    const auto playbackMode = static_cast<int>(std::round(readParameter(samplePlaybackMode, 1.0f)));
-    const auto sliceIndex = (! forceOneShot && playbackMode == 2) ? sliceIndexForMidiNote(midiNoteNumber) : -1;
     const auto currentRegion = currentRegionFor(data, sliceIndex);
     if (currentRegion.endSample <= currentRegion.startSample + 1)
         return;
@@ -773,28 +784,100 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceInd
     SampleRegion currentRegion;
     currentRegion.startSample = juce::jlimit(0, juce::jmax(0, numSamples - minimumWindow), static_cast<int>(orderedStart * static_cast<float>(numSamples)));
     currentRegion.endSample = juce::jlimit(currentRegion.startSample + minimumWindow, numSamples, static_cast<int>(orderedEnd * static_cast<float>(numSamples)));
+    const auto sliceSettings = sliceMode ? slicePlaybackSettings(sliceIndex) : SlicePlaybackSettings {};
     currentRegion.reverse = sliceMode
-        ? readParameter(sampleSliceReverse[static_cast<size_t>(sliceIndex)], 0.0f) > 0.5f
+        ? sliceSettings.reverse
         : readParameter(sampleReverse, 0.0f) > 0.5f;
     currentRegion.gain = juce::Decibels::decibelsToGain(sliceMode
-                                                            ? readParameter(sampleSliceGain[static_cast<size_t>(sliceIndex)], -6.0f)
+                                                            ? sliceSettings.gainDb
                                                             : readParameter(sampleGain, -6.0f));
     currentRegion.transposeSemitones = sliceMode
-        ? readParameter(sampleSliceTranspose[static_cast<size_t>(sliceIndex)], 0.0f)
+        ? sliceSettings.transposeSemitones
         : readParameter(sampleTranspose, 0.0f);
     return snapRegionToCleanBoundaries(data.buffer, currentRegion);
 }
 
-bool SamplePlayer::sliceStutterEnabled(int sliceIndex) const
+SamplePlayer::SlicePlaybackSettings SamplePlayer::slicePlaybackSettings(int sliceIndex) const
 {
     sliceIndex = juce::jlimit(0, 7, sliceIndex);
-    return readParameter(sampleSliceStutter[static_cast<size_t>(sliceIndex)], 0.0f) >= 0.5f;
+    if (! sliceHasCustomSettings(sliceIndex))
+        return defaultSlicePlaybackSettings(sliceIndex);
+
+    const auto safeIndex = static_cast<size_t>(sliceIndex);
+    SlicePlaybackSettings settings;
+    settings.reverse = readParameter(sampleSliceReverse[safeIndex], 0.0f) >= 0.5f;
+    settings.gainDb = readParameter(sampleSliceGain[safeIndex], -6.0f);
+    settings.transposeSemitones = readParameter(sampleSliceTranspose[safeIndex], 0.0f);
+    settings.stutter = readParameter(sampleSliceStutter[safeIndex], 0.0f) >= 0.5f;
+    settings.choke = readParameter(sampleSliceChoke[safeIndex], 0.0f) >= 0.5f;
+    settings.stutterRepeats = juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleSliceStutterRepeats[safeIndex], 3.0f))));
+    return settings;
+}
+
+SamplePlayer::SlicePlaybackSettings SamplePlayer::defaultSlicePlaybackSettings(int sliceIndex) const
+{
+    sliceIndex = juce::jlimit(0, 7, sliceIndex);
+    const auto safeIndex = static_cast<size_t>(sliceIndex);
+    const auto styleIndex = juce::jlimit(0, 4, static_cast<int>(std::round(readParameter(sampleSliceStyle, 0.0f))));
+
+    SlicePlaybackSettings settings;
+    switch (styleIndex)
+    {
+        case 1: // Pitch
+            settings.transposeSemitones = slicePitchLadder[safeIndex];
+            settings.gainDb = -7.0f + static_cast<float>(sliceIndex % 3);
+            break;
+
+        case 2: // Reverse
+            settings.reverse = (sliceIndex % 2) != 0;
+            settings.transposeSemitones = slicePitchLadder[static_cast<size_t>((sliceIndex + 2) % 8)];
+            settings.gainDb = -7.5f;
+            break;
+
+        case 3: // Stutter
+            settings.transposeSemitones = garageSlicePitch[static_cast<size_t>((sliceIndex + 1) % 8)] * 0.5f;
+            settings.gainDb = -8.0f;
+            settings.stutter = true;
+            settings.choke = true;
+            settings.stutterRepeats = 2 + (sliceIndex % 4);
+            break;
+
+        case 4: // Garage
+            settings.reverse = sliceIndex == 2 || sliceIndex == 6;
+            settings.transposeSemitones = garageSlicePitch[safeIndex];
+            settings.gainDb = -8.5f + static_cast<float>(sliceIndex % 4) * 0.8f;
+            settings.stutter = sliceIndex == 3 || sliceIndex == 7;
+            settings.choke = true;
+            settings.stutterRepeats = sliceIndex == 7 ? 5 : 3;
+            break;
+
+        case 0: // Clean
+        default:
+            break;
+    }
+
+    return settings;
+}
+
+bool SamplePlayer::sliceHasCustomSettings(int sliceIndex) const
+{
+    sliceIndex = juce::jlimit(0, 7, sliceIndex);
+    return readParameter(sampleSliceCustom[static_cast<size_t>(sliceIndex)], 0.0f) >= 0.5f;
+}
+
+bool SamplePlayer::sliceChokeEnabled(int sliceIndex) const
+{
+    return slicePlaybackSettings(sliceIndex).choke;
+}
+
+bool SamplePlayer::sliceStutterEnabled(int sliceIndex) const
+{
+    return slicePlaybackSettings(sliceIndex).stutter;
 }
 
 int SamplePlayer::sliceStutterRepeats(int sliceIndex) const
 {
-    sliceIndex = juce::jlimit(0, 7, sliceIndex);
-    return juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleSliceStutterRepeats[static_cast<size_t>(sliceIndex)], 3.0f))));
+    return slicePlaybackSettings(sliceIndex).stutterRepeats;
 }
 
 double SamplePlayer::incrementForVoice(const Voice& voice) const

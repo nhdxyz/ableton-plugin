@@ -211,6 +211,62 @@
   <PARAM id="mod_slot_8_source" value="0" />
   <PARAM id="mod_slot_8_destination" value="0" />
   <PARAM id="mod_slot_8_amount" value="0" />
+  <PARAM id="sample_slice_1_custom" value="0" />
+  <PARAM id="sample_slice_1_reverse" value="0" />
+  <PARAM id="sample_slice_1_transpose" value="0" />
+  <PARAM id="sample_slice_1_gain" value="-6" />
+  <PARAM id="sample_slice_1_stutter" value="0" />
+  <PARAM id="sample_slice_1_choke" value="0" />
+  <PARAM id="sample_slice_1_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_2_custom" value="0" />
+  <PARAM id="sample_slice_2_reverse" value="0" />
+  <PARAM id="sample_slice_2_transpose" value="0" />
+  <PARAM id="sample_slice_2_gain" value="-6" />
+  <PARAM id="sample_slice_2_stutter" value="0" />
+  <PARAM id="sample_slice_2_choke" value="0" />
+  <PARAM id="sample_slice_2_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_3_custom" value="0" />
+  <PARAM id="sample_slice_3_reverse" value="0" />
+  <PARAM id="sample_slice_3_transpose" value="0" />
+  <PARAM id="sample_slice_3_gain" value="-6" />
+  <PARAM id="sample_slice_3_stutter" value="0" />
+  <PARAM id="sample_slice_3_choke" value="0" />
+  <PARAM id="sample_slice_3_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_4_custom" value="0" />
+  <PARAM id="sample_slice_4_reverse" value="0" />
+  <PARAM id="sample_slice_4_transpose" value="0" />
+  <PARAM id="sample_slice_4_gain" value="-6" />
+  <PARAM id="sample_slice_4_stutter" value="0" />
+  <PARAM id="sample_slice_4_choke" value="0" />
+  <PARAM id="sample_slice_4_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_5_custom" value="0" />
+  <PARAM id="sample_slice_5_reverse" value="0" />
+  <PARAM id="sample_slice_5_transpose" value="0" />
+  <PARAM id="sample_slice_5_gain" value="-6" />
+  <PARAM id="sample_slice_5_stutter" value="0" />
+  <PARAM id="sample_slice_5_choke" value="0" />
+  <PARAM id="sample_slice_5_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_6_custom" value="0" />
+  <PARAM id="sample_slice_6_reverse" value="0" />
+  <PARAM id="sample_slice_6_transpose" value="0" />
+  <PARAM id="sample_slice_6_gain" value="-6" />
+  <PARAM id="sample_slice_6_stutter" value="0" />
+  <PARAM id="sample_slice_6_choke" value="0" />
+  <PARAM id="sample_slice_6_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_7_custom" value="0" />
+  <PARAM id="sample_slice_7_reverse" value="0" />
+  <PARAM id="sample_slice_7_transpose" value="0" />
+  <PARAM id="sample_slice_7_gain" value="-6" />
+  <PARAM id="sample_slice_7_stutter" value="0" />
+  <PARAM id="sample_slice_7_choke" value="0" />
+  <PARAM id="sample_slice_7_stutter_repeats" value="3" />
+  <PARAM id="sample_slice_8_custom" value="0" />
+  <PARAM id="sample_slice_8_reverse" value="0" />
+  <PARAM id="sample_slice_8_transpose" value="0" />
+  <PARAM id="sample_slice_8_gain" value="-6" />
+  <PARAM id="sample_slice_8_stutter" value="0" />
+  <PARAM id="sample_slice_8_choke" value="0" />
+  <PARAM id="sample_slice_8_stutter_repeats" value="3" />
   <PARAM id="fx_order_1" value="0" />
   <PARAM id="fx_order_2" value="1" />
   <PARAM id="fx_order_3" value="2" />

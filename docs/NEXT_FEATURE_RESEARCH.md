@@ -162,7 +162,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 79. Add beat-grid slicing.
 80. Add equal-region slicing with user-selectable count.
 81. Add fully manual slice marker creation and editing.
-82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke.
+82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke. First pitch/gain/reverse/stutter/choke memory and Slice Keys playback pass implemented for eight equal-region pads; marker start/end, pan, fades, and probability remain open.
 83. Add per-slice probability.
 84. Add per-slice stutter and retrigger.
 85. Add slice audition on hover/click.
@@ -320,17 +320,54 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 219. Add plugin metadata audit: manufacturer, plugin name, category, version, automation names.
 220. Add user manual pages for the main workflows.
 
+## Multi-Agent Research Refresh
+
+Two focused research passes were run on 2026-06-28: one for modern synth/source engines and one for club samplers, FX, groove tools, and Ableton workflow. The result does not change the whole roadmap, but it clarifies what should happen next.
+
+Top missing product capabilities:
+
+1. Source rack depth: true wavetable playback, sample/granular source options, focused FM/organ engines, second layer, per-layer mute/solo/blend, and source snippets.
+2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays.
+3. Serious UKG slicing: transient/beat/manual slice markers, per-slice start/end/nudge/pan/fades/probability/playback mode, slice-to-sequencer lanes, and missing-sample relink.
+4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
+5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills.
+6. Preset discovery: audio previews, smart folders, custom tags, similar-preset search, construction-kit preset type, dependency warnings, and pack import/export.
+7. Genre generators: UKG vocal chop templates, Dred/Reese and organ-bass starters, tech-house bassline generator, minimal Euclidean/sparse tools, techno feedback/resonator scenes, and house chord/organ stabs.
+8. Ableton release polish: MIDI drag import/export, automation-name audit, save/reopen/freeze/flatten checklist, sample collection/relink checks, sidechain routing tests, signing/notarization, and installer/copy workflow.
+
+Reference URLs used for this refresh:
+
+- https://xferrecords.com/products/serum-2
+- https://www.arturia.com/products/software-instruments/pigments/overview
+- https://kilohearts.com/products/phase_plant
+- https://www.minimal.audio/products/current
+- https://www.roland.com/us/products/rc_zenology_pro/
+- https://u-he.com/products/hive/
+- https://u-he.com/products/diva/
+- https://www.korg.com/us/products/software/modwave_native/
+- https://www.korg.com/us/products/software/wavestate_native/
+- https://www.ableton.com/en/live-manual/12/midi-tools/
+- https://www.ableton.com/en/manual/live-instrument-reference/
+- https://www.ableton.com/en/manual/live-audio-effect-reference/
+- https://www.cableguys.com/shaperbox
+- https://www.fabfilter.com/products/saturn-2-multiband-distortion-saturation-plug-in
+- https://deviousmachines.com/product/infiltrator/
+- https://support.output.com/en/collections/10910224-portal-manual
+- https://blog.native-instruments.com/uk-garage-music/
+- https://www.musicradar.com/how-to/uk-garage-tutorial
+- https://nitelifeaudio.com/classic-techniques-uk-garage-vocal-cuts/
+
 ## Recommended Build Order
 
 1. Componentize the editor and add layout-overlap checks.
-2. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.
-3. Add transient/manual sample slicing with per-slice controls.
-4. Add drag/menu modulation assignment plus modulation rings.
-5. Add a true wavetable oscillator with preview and safe factory tables.
-6. Add multiband drive with oversampling and gain compensation.
-7. Add full-browser mode, smart folders, user tag editing, and audio previews.
+2. Add drag/menu modulation assignment plus modulation rings, hover route overlays, and per-route range editing.
+3. Add transient/manual sample slicing with per-slice start/end/nudge/pan/fades/probability and slice-to-sequencer lanes.
+4. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.
+5. Add a true wavetable oscillator with preview, position modulation, simple warp, and safe factory tables.
+6. Add multiband drive with oversampling, gain compensation, and bass-safe routing.
+7. Add full-browser mode, smart folders, user tag editing, audio previews, dependency warnings, and construction kits.
 8. Add UKG source tools: organ/drawbar source, Dred/Reese source recipe, vocal-chop construction kits.
-9. Add step LFO/MSEG and deeper route editing.
+9. Add step LFO/MSEG sources and deeper route processors.
 10. Add Ableton save/reopen/freeze/flatten validation and release signing.
 
 ## GitHub Issue Mapping

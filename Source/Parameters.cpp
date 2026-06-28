@@ -715,6 +715,11 @@ APVTS::ParameterLayout createLayout()
             "Sample Slice " + labelIndex + " Stutter",
             false));
 
+        add(std::make_unique<juce::AudioParameterBool>(
+            ID::sampleSliceChoke[index],
+            "Sample Slice " + labelIndex + " Choke",
+            false));
+
         add(std::make_unique<juce::AudioParameterInt>(
             ID::sampleSliceStutterRepeats[index],
             "Sample Slice " + labelIndex + " Stutter Repeats",

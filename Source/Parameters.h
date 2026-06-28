@@ -193,6 +193,16 @@ inline constexpr std::array<const char*, 8> sampleSliceStutter {
     "sample_slice_7_stutter",
     "sample_slice_8_stutter"
 };
+inline constexpr std::array<const char*, 8> sampleSliceChoke {
+    "sample_slice_1_choke",
+    "sample_slice_2_choke",
+    "sample_slice_3_choke",
+    "sample_slice_4_choke",
+    "sample_slice_5_choke",
+    "sample_slice_6_choke",
+    "sample_slice_7_choke",
+    "sample_slice_8_choke"
+};
 inline constexpr std::array<const char*, 8> sampleSliceStutterRepeats {
     "sample_slice_1_stutter_repeats",
     "sample_slice_2_stutter_repeats",

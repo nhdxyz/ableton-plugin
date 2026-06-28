@@ -38,7 +38,7 @@ Primary FX, groove, and club-workflow references:
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
-- Sampler/chop workflow for UKG vocal and stab material.
+- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys and first per-slice pitch/gain/reverse/stutter/choke memory.
 - Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, and recursive preset scanning.
 - Factory preset generator for genre-targeted packs.
 
@@ -123,10 +123,10 @@ Implemented movement sub-slices:
 51. Add transient-based slice detection.
 52. Add manual slice markers in the SAMPLE waveform view.
 53. Add per-slice start/end/nudge.
-54. Add per-slice pitch and gain.
-55. Add per-slice reverse.
-56. Add slice randomization with musical density limits.
-57. Add choke groups for vocal chops.
+54. Add per-slice pitch and gain. First memory/playback pass implemented for eight equal-region pads.
+55. Add per-slice reverse. First memory/playback pass implemented for eight equal-region pads.
+56. Add slice randomization with musical density limits. First `Dice` pass implemented for the selected slice.
+57. Add choke groups for vocal chops. First per-slice choke/open pass implemented for Slice Keys; named multi-group choke remains open.
 58. Add one-shot, gate, and loop modes per slice.
 59. Add start-crossfade and end-crossfade to reduce clicks.
 60. Add formant-preserving pitch mode if a suitable DSP approach is chosen.
@@ -135,6 +135,12 @@ Implemented movement sub-slices:
 63. Add "garage chop" presets for common slice timing layouts.
 64. Add drag-and-drop WAV/AIFF sample import in the plugin UI.
 65. Add a sample pack browser inside LIBRARY.
+
+Implemented sampler sub-slice:
+
+- Slice Keys mode maps the eight SAMPLE pads across C3-G3, reads per-slice pitch/gain/reverse/stutter/choke memory at trigger time, and falls back to the selected slice style for untouched pads.
+- The SAMPLE UI now exposes Store, Recall, Dice, Rev, and Choke actions with status/tooltips that show default or custom slice behavior.
+- Factory presets now serialize the sample-slice state explicitly, and the UKG vocal chop starter opens in Slice Keys mode once a user loads a sample.
 
 ## Priority 4: Sequencer, Piano Roll, And Groove
 
@@ -244,7 +250,7 @@ Implemented library sub-slice:
 3. Grow the compact LIBRARY browser into a full browser with smart folders, tag editing, audio previews, and construction kits.
 4. Add drag/menu modulation assignment plus selected-parameter route views.
 5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
-6. Add sample slice markers and per-slice controls.
+6. Add transient/manual sample slice markers plus per-slice start/end/nudge/pan/fades/probability/playback modes.
 7. Add user tags, smart folders, and preset preview rendering in LIBRARY.
 8. Add wavetable oscillator playback after UI layout risk is reduced.
 9. Add multiband drive with oversampling, gain compensation, and loudness checks.

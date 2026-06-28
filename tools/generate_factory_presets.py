@@ -203,6 +203,15 @@ for slot_index in range(1, 9):
     DEFAULTS[f"mod_slot_{slot_index}_destination"] = 0
     DEFAULTS[f"mod_slot_{slot_index}_amount"] = 0.0
 
+for slice_index in range(1, 9):
+    DEFAULTS[f"sample_slice_{slice_index}_custom"] = 0
+    DEFAULTS[f"sample_slice_{slice_index}_reverse"] = 0
+    DEFAULTS[f"sample_slice_{slice_index}_transpose"] = 0.0
+    DEFAULTS[f"sample_slice_{slice_index}_gain"] = -6.0
+    DEFAULTS[f"sample_slice_{slice_index}_stutter"] = 0
+    DEFAULTS[f"sample_slice_{slice_index}_choke"] = 0
+    DEFAULTS[f"sample_slice_{slice_index}_stutter_repeats"] = 3
+
 for slot_index in range(1, 16):
     DEFAULTS[f"fx_order_{slot_index}"] = slot_index - 1
 
@@ -879,7 +888,7 @@ PRESETS = [
         "name": "UKG Vocal Chop Starter",
         "params": {
             "sample_enabled": 0,
-            "sample_playback_mode": 1,
+            "sample_playback_mode": 2,
             "sample_start": 0.12,
             "sample_end": 0.22,
             "sample_transpose": 7.0,

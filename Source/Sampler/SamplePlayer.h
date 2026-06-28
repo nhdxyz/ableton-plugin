@@ -109,6 +109,16 @@ private:
         float stutter = 0.0f;
     };
 
+    struct SlicePlaybackSettings
+    {
+        bool reverse = false;
+        float gainDb = -6.0f;
+        float transposeSemitones = 0.0f;
+        bool stutter = false;
+        bool choke = false;
+        int stutterRepeats = 3;
+    };
+
     SampleModulationOffsets sampleModulation;
     juce::Random sampleModulationRandom;
 
@@ -124,11 +134,13 @@ private:
     std::atomic<float>* sampleStutterEnabled = nullptr;
     std::atomic<float>* sampleStutterRate = nullptr;
     std::atomic<float>* sampleStutterRepeats = nullptr;
+    std::atomic<float>* sampleSliceStyle = nullptr;
     std::array<std::atomic<float>*, 8> sampleSliceCustom {};
     std::array<std::atomic<float>*, 8> sampleSliceReverse {};
     std::array<std::atomic<float>*, 8> sampleSliceTranspose {};
     std::array<std::atomic<float>*, 8> sampleSliceGain {};
     std::array<std::atomic<float>*, 8> sampleSliceStutter {};
+    std::array<std::atomic<float>*, 8> sampleSliceChoke {};
     std::array<std::atomic<float>*, 8> sampleSliceStutterRepeats {};
     std::array<std::atomic<float>*, 8> modMatrixSources {};
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
@@ -167,6 +179,10 @@ private:
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     SampleRegion currentRegionFor(const SampleData& data, int sliceIndex) const;
+    SlicePlaybackSettings slicePlaybackSettings(int sliceIndex) const;
+    SlicePlaybackSettings defaultSlicePlaybackSettings(int sliceIndex) const;
+    bool sliceHasCustomSettings(int sliceIndex) const;
+    bool sliceChokeEnabled(int sliceIndex) const;
     bool sliceStutterEnabled(int sliceIndex) const;
     int sliceStutterRepeats(int sliceIndex) const;
     double incrementForVoice(const Voice& voice) const;

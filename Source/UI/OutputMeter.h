@@ -15,9 +15,13 @@ private:
     float peakRight = 0.0f;
     float rmsLeft = 0.0f;
     float rmsRight = 0.0f;
+    juce::String safetyText { "SAFE" };
+    juce::Colour safetyColour { 0xff8ee6c9 };
 
     static float levelToProportion(float linearLevel) noexcept;
     static juce::Colour colourForLevel(float linearLevel) noexcept;
+    static juce::String safetyTextForLevels(float peak, float rms);
+    static juce::Colour safetyColourForText(const juce::String& text) noexcept;
     void drawChannel(juce::Graphics& g, juce::Rectangle<float> area, float peak, float rms) const;
 };
 }

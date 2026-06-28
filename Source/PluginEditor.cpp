@@ -333,6 +333,24 @@ juce::String formatPresetBpm(int bpm)
     return bpm >= 20 && bpm <= 300 ? juce::String(bpm) + " BPM" : juce::String("Any Tempo");
 }
 
+juce::String outputSafetySummary(float peak)
+{
+    const auto safePeak = juce::jlimit(0.0f, 2.0f, peak);
+    const auto peakDb = safePeak <= 0.000001f ? -60.0f
+                                              : juce::Decibels::gainToDecibels(safePeak);
+
+    if (safePeak >= 0.995f)
+        return "clip risk " + juce::String(peakDb, 1) + " dB";
+
+    if (peakDb >= -3.0f)
+        return "hot peak " + juce::String(peakDb, 1) + " dB";
+
+    if (peakDb <= -30.0f)
+        return "low peak " + juce::String(peakDb, 1) + " dB";
+
+    return "safe peak " + juce::String(peakDb, 1) + " dB";
+}
+
 juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& preset)
 {
     const auto summary = preset.macroSummary.trim();
@@ -6454,7 +6472,15 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         }
         case FxModule::reverb: return "size damping mix";
         case FxModule::width: return "mono bass width";
-        case FxModule::guard: return "push and ceiling";
+        case FxModule::guard:
+        {
+            auto peakLeft = 0.0f;
+            auto peakRight = 0.0f;
+            auto rmsLeft = 0.0f;
+            auto rmsRight = 0.0f;
+            audioProcessor.getOutputMeterLevels(peakLeft, peakRight, rmsLeft, rmsRight);
+            return outputSafetySummary(juce::jmax(peakLeft, peakRight));
+        }
     }
 
     return {};

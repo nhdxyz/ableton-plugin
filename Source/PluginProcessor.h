@@ -135,6 +135,7 @@ public:
     bool savePreset(const juce::String& presetName, const juce::String& category);
     bool savePreset(const juce::String& presetName, const PresetSaveOptions& options);
     bool saveRandomCandidatePreset(int slotIndex, const juce::String& presetName, const PresetSaveOptions& options);
+    bool userPresetExists(const juce::String& presetName, const juce::String& category) const;
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     std::vector<PresetInfo> getPresetLibrary() const;

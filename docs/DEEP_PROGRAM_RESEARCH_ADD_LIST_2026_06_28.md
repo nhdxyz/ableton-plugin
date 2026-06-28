@@ -393,10 +393,10 @@ If we only pick the next 15 big work tracks, they should be:
 262. Add user crates/playlists.
 263. Add editable tag manager.
 264. Add batch retagging.
-265. Add duplicate preset detection.
+265. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
 266. Add find-similar preset by metadata and parameter distance.
 267. Add favorites-aware random preset suggestions.
-268. Extend the implemented Library load compare/revert into overwrite, generated-slot, and edited-vs-saved workflows.
+268. Extend the implemented Library load compare/revert and two-click overwrite guard into generated-slot, edited-vs-saved, and visual safe-overwrite workflows.
 269. Add preset mutation history.
 270. Add section presets: source, filter, modulation, sequence, sampler, FX, and macros.
 271. Add construction-kit browser packs.

@@ -56,6 +56,11 @@ int main()
                                   .getChildFile("Bass")
                                   .getChildFile(legalName)
                                   .withFileExtension(".natevstpreset");
+    const auto siblingFile = processor.getPresetDirectory()
+                                  .getChildFile("House")
+                                  .getChildFile("Chords")
+                                  .getChildFile(legalName)
+                                  .withFileExtension(".natevstpreset");
 
     if (! processor.savePreset(presetName, options))
     {
@@ -70,9 +75,10 @@ int main()
         return 1;
     }
 
-    auto cleanup = [&expectedFile]
+    auto cleanup = [&expectedFile, &siblingFile]
     {
         expectedFile.deleteFile();
+        siblingFile.deleteFile();
     };
 
     if (auto xml = juce::XmlDocument::parse(expectedFile))
@@ -133,6 +139,40 @@ int main()
     if (! foundInLibrary)
     {
         std::cerr << "Generated preset metadata was not visible through the library scan\n";
+        cleanup();
+        return 1;
+    }
+
+    if (! processor.userPresetExists(presetName, options.category))
+    {
+        std::cerr << "Saved preset existence check failed for first category\n";
+        cleanup();
+        return 1;
+    }
+
+    auto siblingOptions = options;
+    siblingOptions.category = "House/Chords";
+    siblingOptions.generated = false;
+    siblingOptions.notes = "Sibling preset should not delete the UKG/Bass version";
+
+    if (! processor.savePreset(presetName, siblingOptions))
+    {
+        std::cerr << "Saving same-name sibling preset returned false\n";
+        cleanup();
+        return 1;
+    }
+
+    if (! expectedFile.existsAsFile() || ! siblingFile.existsAsFile())
+    {
+        std::cerr << "Same-name presets were not preserved in separate category folders\n";
+        cleanup();
+        return 1;
+    }
+
+    if (! processor.userPresetExists(presetName, options.category)
+        || ! processor.userPresetExists(presetName, siblingOptions.category))
+    {
+        std::cerr << "Preset existence checks failed for same-name category siblings\n";
         cleanup();
         return 1;
     }

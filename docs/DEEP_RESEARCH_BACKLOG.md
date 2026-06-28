@@ -256,8 +256,8 @@ Implemented FX sub-slice:
 115. Add pack artwork or pack color markers if the UI can support it cleanly.
 116. Expand the implemented smart-crate filter pass into a full browser sidebar with editable user crates, New This Week, and pack crates.
 117. Add audition auto-advance.
-118. Extend the implemented preset-load compare/revert into safe overwrite compare.
-119. Add duplicate preset detection.
+118. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
+119. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
 120. Add import/export preset pack bundles.
 121. Add library repair/reindex command.
 122. Add "find similar presets" using metadata and parameter distance.
@@ -268,6 +268,7 @@ Implemented library sub-slice:
 - Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 - A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The filter menu now includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
 - The Library Audition button now plays runtime role-aware MIDI phrases for bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general presets. Rendered preview files, auto-preview, and editable preview phrase templates remain open.
+- Library Save now has a two-click same-folder overwrite guard, and same-name presets in different category folders are preserved for real subfolder organization.
 
 ## Priority 8: Sound Quality And Safety
 

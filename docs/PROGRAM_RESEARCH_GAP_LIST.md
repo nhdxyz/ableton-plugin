@@ -445,8 +445,8 @@ Nate VST gaps:
 177. Add multi-select metadata editing.
 178. Expand implemented preset notes into structured production tips and batch-editable metadata.
 179. Add pack manager import/export.
-180. Add duplicate preset detection.
-181. Extend the implemented preset-load compare/revert into safe overwrite compare.
+180. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
+181. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
 182. Add preset version history.
 183. Add missing sample and wavetable warnings in browser rows.
 184. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
@@ -697,7 +697,7 @@ Key extra lessons:
 374. Add "more like this" randomization seeded from favorites or high-rated presets.
 375. Extend the implemented Library preset-load compare/revert into edited-vs-saved and generated-slot compare states.
 376. Add preset version history for user saves.
-377. Add safe overwrite flow with rename, duplicate, and compare.
+377. Expand the implemented two-click overwrite guard with rename-as-copy, version history, duplicate detection, and visual compare.
 378. Add pack manager with import/export, missing dependency report, and pack validation.
 379. Add construction-kit preset type that bundles patch, sequence, sample references, MIDI phrase, macro intent, BPM, key, and suggested Ableton use.
 380. Add subfolder templates for UKG/Bass, UKG/Vocal Chops, UKG/Organ, House/Chords, Tech House/Bass, Techno/Stabs, Minimal/Plucks.

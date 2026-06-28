@@ -267,8 +267,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 171. Add multi-select metadata editing.
 172. Expand implemented preset notes into structured production tips, source-recipe context, and batch-editable metadata.
 173. Add pack manager with import/export.
-174. Add duplicate preset detection.
-175. Extend the implemented preset-load compare/revert into safe overwrite compare.
+174. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
+175. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
 176. Add preset version history for user saves.
 177. Add missing sample and missing wavetable warnings in browser rows.
 178. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.

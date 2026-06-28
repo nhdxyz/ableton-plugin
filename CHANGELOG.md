@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Safe Save Overwrite Guard
+
+- Added a two-step Library Save overwrite guard: if the selected user preset name already exists in the selected category folder, Save changes to `Overwrite` and requires a second click within a short confirmation window.
+- Preserved same-name user presets across different category/subfolder paths instead of deleting older folder copies after saving a newer one.
+- Added `PresetSaveAudit` coverage for same-name category siblings and the new user-preset existence check.
+
 ### Library Role-Aware Audition Phrases
 
 - Replaced the single-note preset Audition behavior with short role-aware MIDI phrases inferred from preset metadata, tags, notes, and names.

@@ -29,6 +29,7 @@ constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto candidateAuditionDurationMs = 680.0;
 constexpr auto candidateAuditionVelocity = 0.88f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
+constexpr auto presetOverwriteConfirmMs = 6500.0;
 
 enum class PresetAuditionRole
 {
@@ -1165,7 +1166,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetNameEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
     presetNameEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
     presetNameEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
-    presetNameEditor.onTextChange = [this] { presetNameIsRandomDraft = false; };
+    presetNameEditor.onTextChange = [this]
+    {
+        presetNameIsRandomDraft = false;
+        clearPresetOverwriteWarning();
+    };
     addAndMakeVisible(presetNameEditor);
 
     presetSearchEditor.setTextToShowWhenEmpty("Search presets", juce::Colour(0xff617078));
@@ -1424,6 +1429,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetCategoryBox.setEditableText(true);
     presetCategoryBox.setTextWhenNothingSelected("Category / Folder");
     presetCategoryBox.setTooltip("Choose or type a save category. Use slashes for subfolders, like UKG/Bass.");
+    presetCategoryBox.onChange = [this] { clearPresetOverwriteWarning(); };
     addAndMakeVisible(presetCategoryBox);
 
     presetFilterBox.addItemList(presetFilterChoices(), 1);
@@ -9077,6 +9083,11 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
 void NateVSTAudioProcessorEditor::timerCallback()
 {
     updatePresetAudition();
+    if (pendingOverwritePresetName.isNotEmpty()
+        && juce::Time::getMillisecondCounterHiRes() > pendingOverwriteUntilMs)
+    {
+        clearPresetOverwriteWarning();
+    }
 
     if (activeRandomCandidateAuditionNote >= 0
         && juce::Time::getMillisecondCounterHiRes() >= randomCandidateAuditionNoteOffMs)
@@ -9559,6 +9570,32 @@ void NateVSTAudioProcessorEditor::applyPresetQuickFilter(size_t index)
     presetStatusLabel.setText("Quick filter: " + label, juce::dontSendNotification);
 }
 
+bool NateVSTAudioProcessorEditor::isPresetOverwriteArmed(const juce::String& presetName, const juce::String& category) const
+{
+    return pendingOverwritePresetName == presetName.trim()
+        && pendingOverwriteCategory == category.trim()
+        && juce::Time::getMillisecondCounterHiRes() <= pendingOverwriteUntilMs;
+}
+
+void NateVSTAudioProcessorEditor::armPresetOverwrite(const juce::String& presetName, const juce::String& category)
+{
+    pendingOverwritePresetName = presetName.trim();
+    pendingOverwriteCategory = category.trim();
+    pendingOverwriteUntilMs = juce::Time::getMillisecondCounterHiRes() + presetOverwriteConfirmMs;
+    savePresetButton.setButtonText("Overwrite");
+    savePresetButton.setTooltip("Press again to replace " + pendingOverwritePresetName + " in "
+                                    + (pendingOverwriteCategory.isNotEmpty() ? pendingOverwriteCategory : juce::String("User")));
+}
+
+void NateVSTAudioProcessorEditor::clearPresetOverwriteWarning()
+{
+    pendingOverwritePresetName.clear();
+    pendingOverwriteCategory.clear();
+    pendingOverwriteUntilMs = 0.0;
+    savePresetButton.setButtonText("Save");
+    savePresetButton.setTooltip("Save the current patch into the selected category folder");
+}
+
 void NateVSTAudioProcessorEditor::saveCurrentPreset()
 {
     releaseRandomCandidateAudition(false);
@@ -9566,6 +9603,13 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     auto presetName = presetNameEditor.getText().trim();
     if (presetName.isEmpty())
         presetName = presetBox.getText().trim();
+
+    if (presetName.isEmpty())
+    {
+        clearPresetOverwriteWarning();
+        presetStatusLabel.setText("Preset name required", juce::dontSendNotification);
+        return;
+    }
 
     NateVSTAudioProcessor::PresetSaveOptions options;
     options.category = presetCategoryBox.getText().trim();
@@ -9586,8 +9630,26 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         options.notes = presetNotesEditor.getText().trim();
     }
 
+    if (audioProcessor.userPresetExists(presetName, options.category))
+    {
+        if (! isPresetOverwriteArmed(presetName, options.category))
+        {
+            armPresetOverwrite(presetName, options.category);
+            presetStatusLabel.setText("Preset exists in "
+                                          + (options.category.trim().isNotEmpty() ? options.category.trim() : juce::String("User"))
+                                          + " | press Overwrite to replace",
+                                      juce::dontSendNotification);
+            return;
+        }
+    }
+    else
+    {
+        clearPresetOverwriteWarning();
+    }
+
     if (audioProcessor.savePreset(presetName, options))
     {
+        clearPresetOverwriteWarning();
         auto storedName = juce::File::createLegalFileName(presetName);
         if (storedName.isEmpty())
             storedName = "Untitled";
@@ -9605,6 +9667,7 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         return;
     }
 
+    clearPresetOverwriteWarning();
     presetStatusLabel.setText("Preset name required", juce::dontSendNotification);
 }
 

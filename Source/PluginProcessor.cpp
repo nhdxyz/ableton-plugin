@@ -2167,6 +2167,16 @@ bool NateVSTAudioProcessor::saveRandomCandidatePreset(int slotIndex,
                            randomCandidateSnapshots[static_cast<size_t>(slotIndex)].state.createCopy());
 }
 
+bool NateVSTAudioProcessor::userPresetExists(const juce::String& presetName, const juce::String& category) const
+{
+    const auto trimmedName = presetName.trim();
+    if (trimmedName.isEmpty())
+        return false;
+
+    const auto storedCategory = normalisedPresetCategory(presetTextOrFallback(category, "User"));
+    return presetFileForName(trimmedName, storedCategory).existsAsFile();
+}
+
 bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
                                             const PresetSaveOptions& options,
                                             juce::ValueTree state)
@@ -2214,10 +2224,6 @@ bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
     if (auto xml = state.createXml())
     {
         const auto destination = presetFileForName(trimmedName, storedCategory);
-        auto legalName = juce::File::createLegalFileName(trimmedName);
-        if (legalName.isEmpty())
-            legalName = "Untitled";
-
         juce::TemporaryFile temporaryFile(destination);
         if (! xml->writeTo(temporaryFile.getFile()))
             return false;
@@ -2227,14 +2233,6 @@ bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
 
         if (! temporaryFile.overwriteTargetFileWithTemporary())
             return false;
-
-        const auto existingFiles = getPresetDirectory().findChildFiles(juce::File::findFiles, true, "*.natevstpreset");
-        for (const auto& file : existingFiles)
-            if (file.getFileNameWithoutExtension() == legalName
-                && file.getFullPathName() != destination.getFullPathName())
-            {
-                file.deleteFile();
-            }
 
         return true;
     }

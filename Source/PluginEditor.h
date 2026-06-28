@@ -682,6 +682,9 @@ private:
     juce::MemoryBlock presetCompareLoadedSnapshot;
     juce::String presetCompareName;
     bool presetCompareShowingLoaded = true;
+    juce::String pendingOverwritePresetName;
+    juce::String pendingOverwriteCategory;
+    double pendingOverwriteUntilMs = 0.0;
     int activeRandomCandidateAuditionNote = -1;
     int activeRandomCandidateAuditionSlot = -1;
     double randomCandidateAuditionNoteOffMs = 0.0;
@@ -794,6 +797,9 @@ private:
     void timerCallback() override;
     void refreshPresetList();
     void updatePresetLibrarySummary();
+    bool isPresetOverwriteArmed(const juce::String& presetName, const juce::String& category) const;
+    void armPresetOverwrite(const juce::String& presetName, const juce::String& category);
+    void clearPresetOverwriteWarning();
     void saveCurrentPreset();
     void saveActiveRandomCandidatePreset();
     void applyPresetQuickFilter(size_t index);

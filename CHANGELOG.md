@@ -5,6 +5,7 @@
 ### Modulation Route Editing
 
 - Added per-slot duplicate buttons to the MOD matrix so producers can quickly copy a source/destination/amount route into the next free slot and make variations.
+- Added right-click route amount menus with quick invert, +/-25%, +/-50%, duplicate, and clear actions for faster modulation-depth editing.
 - Duplicate actions refresh matrix rows, modulation indicators, inspector summaries, and macro assignment summaries without adding host parameters.
 
 ### Modulation Visibility Polish

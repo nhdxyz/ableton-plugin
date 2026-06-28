@@ -1229,10 +1229,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(modEnv1DepthSlider, modEnv1DepthLabel, "Depth", Parameters::ID::modEnv1Depth);
 
     for (size_t index = 0; index < modAmountSliders.size(); ++index)
+    {
         configureHorizontalSlider(modAmountSliders[index],
                                   modAmountLabels[index],
                                   "Amt " + juce::String(static_cast<int>(index + 1)),
                                   Parameters::ID::modMatrixAmount[index]);
+        modAmountSliders[index].addMouseListener(this, true);
+    }
 
     modMacroAssignAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
     modMacroAssignAmountSlider.setRange(-100.0, 100.0, 1.0);
@@ -3223,6 +3226,20 @@ NateVSTAudioProcessorEditor::findModulationMenuTarget(const juce::Component* com
     return nullptr;
 }
 
+int NateVSTAudioProcessorEditor::findModRouteAmountIndex(const juce::Component* component) const
+{
+    while (component != nullptr && component != this)
+    {
+        for (size_t index = 0; index < modAmountSliders.size(); ++index)
+            if (component == &modAmountSliders[index])
+                return static_cast<int>(index);
+
+        component = component->getParentComponent();
+    }
+
+    return -1;
+}
+
 void NateVSTAudioProcessorEditor::mouseEnter(const juce::MouseEvent& event)
 {
     if (const auto* target = findModulationMenuTarget(event.originalComponent))
@@ -3235,6 +3252,12 @@ void NateVSTAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
 {
     if (! event.mods.isPopupMenu())
         return;
+
+    if (const auto routeAmountIndex = findModRouteAmountIndex(event.originalComponent); routeAmountIndex >= 0)
+    {
+        showModRouteAmountMenu(static_cast<size_t>(routeAmountIndex), modAmountSliders[static_cast<size_t>(routeAmountIndex)]);
+        return;
+    }
 
     if (const auto* target = findModulationMenuTarget(event.originalComponent))
         if (target->component != nullptr)
@@ -3291,6 +3314,78 @@ void NateVSTAudioProcessorEditor::showModulationMenuForControl(const ModulationM
                            if (result >= 1000)
                                editor->addModRouteForParameter(parameterID, labelText, result - 1000);
                        });
+}
+
+void NateVSTAudioProcessorEditor::showModRouteAmountMenu(size_t slotIndex, juce::Component& component)
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return;
+
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f));
+    const auto destinationIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f));
+    const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+    const auto isConfiguredRoute = sourceIndex > 0 && destinationIndex > 0 && std::abs(amount) > 0.001f;
+    const auto sourceName = juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()) ? sourceChoices[sourceIndex] : juce::String("Source");
+    const auto destinationName = juce::isPositiveAndBelow(destinationIndex, destinationChoices.size()) ? destinationChoices[destinationIndex] : juce::String("Destination");
+
+    juce::PopupMenu menu;
+    menu.addSectionHeader("Route S" + juce::String(static_cast<int>(slotIndex + 1)));
+    menu.addItem(1,
+                 sourceName + " -> " + destinationName + " "
+                     + (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%",
+                 false,
+                 false);
+    menu.addSeparator();
+    menu.addItem(10, "Invert Amount", isConfiguredRoute);
+    menu.addItem(11, "Set +25%", isConfiguredRoute);
+    menu.addItem(12, "Set +50%", isConfiguredRoute);
+    menu.addItem(13, "Set -25%", isConfiguredRoute);
+    menu.addItem(14, "Set -50%", isConfiguredRoute);
+    menu.addSeparator();
+    menu.addItem(20, "Duplicate Route", isConfiguredRoute);
+    menu.addItem(21, "Clear Route", isConfiguredRoute);
+
+    juce::Component::SafePointer<NateVSTAudioProcessorEditor> safeEditor(this);
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&component),
+                       [safeEditor, slotIndex, amount] (int result)
+                       {
+                           auto* editor = safeEditor.getComponent();
+                           if (editor == nullptr)
+                               return;
+
+                           switch (result)
+                           {
+                               case 10: editor->setModRouteAmount(slotIndex, -amount); break;
+                               case 11: editor->setModRouteAmount(slotIndex, 0.25f); break;
+                               case 12: editor->setModRouteAmount(slotIndex, 0.50f); break;
+                               case 13: editor->setModRouteAmount(slotIndex, -0.25f); break;
+                               case 14: editor->setModRouteAmount(slotIndex, -0.50f); break;
+                               case 20: editor->duplicateModRoute(slotIndex); break;
+                               case 21: editor->deleteModRoute(slotIndex); break;
+                               default: break;
+                           }
+                       });
+}
+
+void NateVSTAudioProcessorEditor::setModRouteAmount(size_t slotIndex, float amount)
+{
+    if (slotIndex >= Parameters::ID::modMatrixAmount.size())
+        return;
+
+    amount = juce::jlimit(-1.0f, 1.0f, amount);
+    setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+
+    modMatrixStatusLabel.setText("Set S" + juce::String(static_cast<int>(slotIndex + 1))
+                                     + " amount " + (amount >= 0.0f ? "+" : "")
+                                     + juce::String(juce::roundToInt(amount * 100.0f)) + "%",
+                                 juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::addModRouteForParameter(const juce::String& parameterID,

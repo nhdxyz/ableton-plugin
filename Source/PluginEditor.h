@@ -591,9 +591,12 @@ private:
     void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
     void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
     const ModulationMenuTarget* findModulationMenuTarget(const juce::Component* component) const;
+    int findModRouteAmountIndex(const juce::Component* component) const;
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void showModulationMenuForControl(const ModulationMenuTarget& target, juce::Component& component);
+    void showModRouteAmountMenu(size_t slotIndex, juce::Component& component);
+    void setModRouteAmount(size_t slotIndex, float amount);
     void addModRouteForParameter(const juce::String& parameterID, const juce::String& labelText, int sourceIndex);
     void configureSectionLabel(juce::Label& label, const juce::String& text);
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);

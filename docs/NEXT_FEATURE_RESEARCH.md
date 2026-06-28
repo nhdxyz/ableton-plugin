@@ -141,7 +141,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 61. Add route min/max range editing.
 62. Add per-route curve shaping.
 63. Add per-route smoothing and slew.
-64. Add per-route unipolar/bipolar and invert.
+64. Add per-route unipolar/bipolar and invert. First quick-invert amount menu pass implemented for MOD matrix amount sliders.
 65. Add per-route mute, solo, duplicate, copy, and paste. First duplicate-to-next-free-slot pass implemented in the MOD matrix.
 66. Add LFO 2 and LFO 3. First LFO 2 source pass implemented; LFO 3 remains open.
 67. Add smooth random and chaos sources in addition to current S&H. First Smooth and Chaos source passes implemented; deeper random-walk controls remain open.

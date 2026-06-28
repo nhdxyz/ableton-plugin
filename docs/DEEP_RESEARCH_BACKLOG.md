@@ -105,7 +105,7 @@ Implemented movement sub-slices:
 - `LFO 2` is now an appended MOD source after `Chaos`, with independent compact controls and synth/sample/FX routing while preserving old source indices. LFO 3, true MSEG as a separate source, route processors, drag assignment, and step-LFO work remain open.
 - MOD-targetable sliders now expose right-click source assignment menus that reuse the existing matrix and inspector route allocation path. Drag-from-source assignment, route ranges, route curves, and route processors remain open.
 - Horizontal sample, FX, and matrix sliders now show modulation stripes/badges and preserve their original control tooltips while appending active route source/depth status. MOD-targetable controls also update the selected-control route summary on hover. Graphical hover route overlays and source activity meters remain open.
-- MOD matrix slots now include a duplicate action that copies the route into the next free slot, covering the first route-duplicate pass while deeper copy/paste, solo, range, and curve editing remain open.
+- MOD matrix slots now include a duplicate action that copies the route into the next free slot, plus right-click amount menus for invert, quick +/-25% or +/-50% depths, duplicate, and clear. Deeper copy/paste, solo, range, and curve editing remain open.
 
 ## Priority 2: Oscillator And Source Engines
 

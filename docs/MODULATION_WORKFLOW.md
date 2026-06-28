@@ -169,6 +169,7 @@ MOD:
 - Current implementation now shows modulation feedback on both rotary and horizontal sliders: knobs draw amount rings, while horizontal sample/FX/matrix controls draw modulation stripes and compact route badges. Tooltips keep the normal control guidance and append active source/depth status.
 - Current implementation includes a first hover-to-inspect pass: moving over a MOD-targetable control updates the top selected-control strip with the current value, automation ID, and active route summary.
 - Current implementation includes per-slot route duplicate buttons in the MOD matrix, making it faster to copy a route and adjust the duplicate into a variation.
+- Current implementation includes right-click amount menus on MOD matrix amount sliders for quick invert, +/-25%, +/-50%, duplicate, and clear actions.
 
 SEQ:
 
@@ -246,7 +247,10 @@ Route editing polish slice:
 2. Copied source, destination, amount, and enabled state into the next free slot.
 3. Refreshed matrix rows, destination indicators, inspector status, and macro assignment status after duplication.
 4. Reported clear matrix status when the source slot is empty or the matrix has no free slot.
-5. Kept explicit min/max route ranges, curve shaping, copy/paste buffers, and solo as future work.
+5. Added right-click amount menus on route amount sliders.
+6. Added quick amount edits for invert, +25%, +50%, -25%, and -50%.
+7. Exposed duplicate and clear from the same amount menu for faster route editing.
+8. Kept explicit min/max route ranges, curve shaping, copy/paste buffers, and solo as future work.
 
 Editable engine slice:
 

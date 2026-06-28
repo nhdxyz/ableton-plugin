@@ -44,7 +44,7 @@ Nate VST already has a real foundation:
 - Eight performance macros plus an XY macro pad.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
-- 16-step piano-roll style sequencer with chord memory, expanded house/dub chord colors, templates, groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
+- 16-step piano-roll style sequencer with chord memory, expanded house/dub chord colors, templates, appended house/tech/minimal/drive groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Live pump phase/reduction feedback, top-bar output safety status, and Guard reduction telemetry for checking ducking and level risk while sound-designing.
 - Preset library with recursive folders, categories, search, sort, favorites, 1-5 rating, metadata, macro previews, filters, and audition.
@@ -58,7 +58,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 1. The synth source engine is still shallow compared with modern hybrid synths.
 2. Modulation is functional, but assignment and feedback are not yet fast enough.
 3. The sampler is a chop starter, not yet a serious UKG vocal and phrase instrument.
-4. The sequencer is useful, but not yet a full groove/pattern tool.
+4. The sequencer is useful and now has first-pass genre groove templates, but not yet ratchets, chaining, multi-lane locks, or full arrangement tools.
 5. The FX rack is broad, but still needs pro-level drive, shaper, and routing depth.
 6. Randomization needs stronger "useful musical result" guardrails.
 7. The preset browser needs smart folders, audio previews, and pack workflows.
@@ -202,7 +202,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 115. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ stabs, and dub chords. First Maj 7, Dom 7, Sus, House 9, and Dub chord colors plus house/dub chord pattern starters are implemented.
 116. Add voicing spread and inversion tools.
 117. Add humanize with timing, velocity, gate, and pitch amount.
-118. Add groove template library: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, and broken percussion.
+118. Add groove template library: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, and broken percussion. First pass implemented for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive; speed-garage, dub techno, warehouse, and broken-percussion variants remain open.
 119. Add groove amount per lane.
 120. Add swing microtiming visualization.
 121. Add Euclidean generator for minimal blips, hats, and percussion-style synth hits.

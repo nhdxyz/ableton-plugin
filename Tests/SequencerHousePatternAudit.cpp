@@ -114,6 +114,68 @@ int main()
         return 1;
     }
 
+    const auto grooveChoices = Parameters::sequencerGrooveModeChoices();
+    if (grooveChoices.size() < 8
+        || grooveChoices[0] != "Classic"
+        || grooveChoices[3] != "Tight"
+        || grooveChoices[4] != "House Shuf"
+        || grooveChoices[7] != "Drive")
+    {
+        std::cerr << "Appended groove mode choices are not stable\n";
+        return 1;
+    }
+
+    processor.applySequencerPatternPreset(0);
+    if (! processor.applySequencerGrooveTransform(6)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 4.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.28f)
+        || processor.getSequencerStep(3).timing < 0.47f)
+    {
+        std::cerr << "House Shuffle template did not apply expected timing/global state\n";
+        return 1;
+    }
+
+    processor.applySequencerPatternPreset(2);
+    if (! processor.applySequencerGrooveTransform(7)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 2.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.46f)
+        || processor.getSequencerStep(7).timing < 0.81f
+        || processor.getSequencerStep(7).lock < 0.53f)
+    {
+        std::cerr << "UKG 2-Step Push template did not apply expected timing/global state\n";
+        return 1;
+    }
+
+    processor.applySequencerPatternPreset(0);
+    if (! processor.applySequencerGrooveTransform(8)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 5.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.12f)
+        || processor.getSequencerStep(3).timing < 0.27f)
+    {
+        std::cerr << "Tech House Tight template did not apply expected timing/global state\n";
+        return 1;
+    }
+
+    processor.applySequencerPatternPreset(0);
+    if (! processor.applySequencerGrooveTransform(9)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 6.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.2f)
+        || processor.getSequencerStep(3).probability > 0.89f)
+    {
+        std::cerr << "Minimal Skip template did not apply expected timing/global state\n";
+        return 1;
+    }
+
+    processor.applySequencerPatternPreset(10);
+    if (! processor.applySequencerGrooveTransform(10)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 7.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.1f)
+        || processor.getSequencerStep(14).lock < 0.3f)
+    {
+        std::cerr << "Techno Drive template did not apply expected timing/global state\n";
+        return 1;
+    }
+
     std::cout << "Sequencer house pattern audit passed.\n";
     return 0;
 }

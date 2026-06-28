@@ -56,7 +56,7 @@ juce::StringArray sequencerRateChoices()
 
 juce::StringArray sequencerGrooveModeChoices()
 {
-    return { "Classic", "Selective", "UKG Push", "Tight" };
+    return { "Classic", "Selective", "UKG Push", "Tight", "House Shuf", "Tech", "Minimal", "Drive" };
 }
 
 juce::StringArray sequencerScaleChoices()

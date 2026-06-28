@@ -1159,8 +1159,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerGrooveTransformBox.addItem("Late Stabs", 4);
     sequencerGrooveTransformBox.addItem("Vocal Push", 5);
     sequencerGrooveTransformBox.addItem("Humanize", 6);
+    sequencerGrooveTransformBox.addSectionHeading("House Templates");
+    sequencerGrooveTransformBox.addItem("House Shuffle", 7);
+    sequencerGrooveTransformBox.addItem("UKG 2-Step Push", 8);
+    sequencerGrooveTransformBox.addItem("Tech House Tight", 9);
+    sequencerGrooveTransformBox.addItem("Minimal Skip", 10);
+    sequencerGrooveTransformBox.addItem("Techno Drive", 11);
     sequencerGrooveTransformBox.setSelectedId(1, juce::dontSendNotification);
-    sequencerGrooveTransformBox.setTooltip("Choose a timing transform for the current sequence");
+    sequencerGrooveTransformBox.setTooltip("Choose a timing transform or genre groove template for the current sequence");
     addAndMakeVisible(sequencerGrooveTransformBox);
 
     sequencerLockDestinationBox.addItemList(Parameters::sequencerLockDestinationChoices(), 1);

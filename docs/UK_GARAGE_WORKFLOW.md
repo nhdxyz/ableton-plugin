@@ -27,7 +27,7 @@ Research references:
 
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
-- Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
+- Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, Tight applies only conservative per-step delay, and appended House Shuf/Tech/Minimal/Drive modes add focused timing models for the surrounding house, tech-house, minimal, and techno workflows.
 - The SEQ grid now exposes editable Velocity, Probability, Late, and Len lanes under the piano roll so 2-step basslines, vocal triggers, and stab patterns can be shaped per step without leaving the grid.
 - The SEQ panel now stores A/B/Fill/Drop pattern scenes, so a UKG or house patch can keep a main groove, response variation, short fill, and drop pattern inside the preset.
 - The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
@@ -150,6 +150,7 @@ Research references:
 - Added a first assignable SEQ Lock lane so UKG bass, organ stabs, late stabs, and vocal-trigger patterns can push cutoff, drive, Osc Warp, pump, delay, reverb, or wavetable position per step without editing host automation.
 - Added SEQ pattern scenes for A/B/Fill/Drop variations, with scene state saved in plugin and preset state for house and UKG arrangement sketches.
 - Added appended house chord colors and Deep Chord, Dub Chord, Off Bass, and Rolling Bass pattern starters so chord/bass hooks can be sketched faster.
+- Added SEQ genre groove templates for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive. These shape per-step timing, velocity, probability, length, lock intensity, swing, gate, accent, and lock routing from one grouped action.
 
 ## Next UKG Features
 
@@ -210,6 +211,7 @@ Reference-backed next passes:
 - The SEQ panel includes `Undo` for stepping back from generated, varied, template, copied, rotated, or cleared patterns while searching for a garage groove.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.
 - The SEQ panel includes MIDI export so generated UKG basslines, skanks, and vocal trigger patterns can be saved as `.mid` clips and edited directly in Ableton.
+- The SEQ shape menu now includes House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive, so timing feel can be changed without redrawing the pattern or adding another visible control group.
 
 5. UKG factory presets.
 

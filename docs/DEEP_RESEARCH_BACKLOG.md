@@ -172,7 +172,7 @@ Implemented sampler sub-slice:
 75. Add per-step delay throw lane.
 76. Add scale quantize and key lock for the piano roll.
 77. Add chord paint tools for UKG stabs.
-78. Add groove templates for 2-step, shuffle, swung 16ths, minimal offbeats, and techno pulse.
+78. Add groove templates for 2-step, shuffle, swung 16ths, minimal offbeats, and techno pulse. First dedicated template pass implemented for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive.
 79. Add humanize with separate timing, velocity, and gate controls.
 80. Add MIDI drag export from the internal sequencer into Ableton.
 
@@ -181,6 +181,7 @@ Implemented sequencer sub-slice:
 - The SEQ panel now has four pattern scenes, `A`, `B`, `Fill`, and `Drop`, with capture/recall buttons that store the full 16-step pattern, per-step lanes, chord/voicing/strum settings, groove settings, rate/root/gate/accent/probability, and lock destination/depth.
 - Pattern scenes serialize into plugin state and preset state without becoming host automation parameters, and `SequencerPatternSceneAudit` verifies capture, recall, summary, and save/restore behavior.
 - Chord mode choices now include appended Maj 7, Dom 7, Sus, House 9, and Dub colors, and the SEQ preset menu includes Deep Chord, Dub Chord, Off Bass, and Rolling Bass starters. `SequencerHousePatternAudit` verifies these chord colors and presets.
+- Groove mode choices now append House Shuf, Tech, Minimal, and Drive while keeping the original indexes stable, and the SEQ transform menu can apply genre templates that shape per-step timing, velocity, probability, length, lock feel, swing, gate, accent, probability, and lock routing together. `SequencerHousePatternAudit` verifies the appended choices and template behavior.
 
 ## Priority 5: FX And Club Processing
 

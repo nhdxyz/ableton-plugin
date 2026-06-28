@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Dedicated House Groove Engine
+
+- Appended new sequencer groove modes for `House Shuf`, `Tech`, `Minimal`, and `Drive`, preserving existing Classic/Selective/UKG Push/Tight saved indexes.
+- Added SEQ groove templates for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive in the existing transform dropdown to avoid adding more panel clutter.
+- Each template now shapes per-step timing, velocity, probability, length, and Lock intensity while also setting genre-appropriate swing, groove mode, gate, accent, probability, and lock destination/depth.
+- Extended `SequencerHousePatternAudit` to verify appended groove-mode compatibility and the new template/global state behavior.
+
 ### House Chord And Bassline Presets
 
 - Added appended sequencer chord colors for `Maj 7`, `Dom 7`, `Sus`, `House 9`, and `Dub`, preserving existing saved chord-mode indexes.

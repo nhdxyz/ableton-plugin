@@ -1671,6 +1671,117 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                 step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + humanize(sampleRandomEngine) * 0.055f);
                 break;
 
+            case 6: // House Shuffle
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = 1.0f;
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.06f);
+                    step.length = juce::jmax(step.length, 0.62f);
+                    step.lock = juce::jlimit(0.0f, 1.0f, step.lock * 0.65f);
+                }
+                else
+                {
+                    step.timing = juce::jmax(step.timing, isVocalPushStep(stepIndex) ? 0.48f : (isOffbeatStep(stepIndex) ? 0.56f : 0.18f));
+                    step.velocity = juce::jlimit(0.25f, 1.0f, isOffbeatStep(stepIndex) ? step.velocity * 0.94f : step.velocity * 0.9f);
+                    step.probability = juce::jlimit(0.45f, 1.0f, step.probability * (isOffbeatStep(stepIndex) ? 0.96f : 0.9f));
+                    step.length = juce::jlimit(0.22f, 1.0f, juce::jmin(step.length, isVocalPushStep(stepIndex) ? 0.58f : 0.68f));
+                    step.lock = juce::jmax(step.lock, isOffbeatStep(stepIndex) ? 0.3f : 0.18f);
+                }
+                break;
+
+            case 7: // UKG 2-Step Push
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = 1.0f;
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.04f);
+                    step.length = juce::jmax(step.length, 0.56f);
+                    step.lock = 0.0f;
+                }
+                else if (isVocalPushStep(stepIndex))
+                {
+                    step.timing = juce::jmax(step.timing, 0.82f);
+                    step.probability = juce::jlimit(0.38f, 0.94f, step.probability * 0.9f);
+                    step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity * 0.92f);
+                    step.length = juce::jlimit(0.18f, 1.0f, juce::jmin(step.length, 0.52f));
+                    step.lock = juce::jmax(step.lock, 0.54f);
+                }
+                else if (isLateStabStep(stepIndex))
+                {
+                    step.timing = juce::jmax(step.timing, 0.36f);
+                    step.probability = juce::jlimit(0.45f, 1.0f, step.probability);
+                    step.length = juce::jlimit(0.18f, 1.0f, juce::jmin(step.length, 0.64f));
+                    step.lock = juce::jmax(step.lock, 0.32f);
+                }
+                else
+                {
+                    step.timing = juce::jmax(step.timing, isOffbeatStep(stepIndex) ? 0.64f : 0.2f);
+                    step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity * 0.88f);
+                    step.probability = juce::jlimit(0.35f, 1.0f, step.probability * 0.88f);
+                    step.length = juce::jlimit(0.18f, 1.0f, step.length * 0.82f);
+                    step.lock = juce::jmax(step.lock, 0.22f);
+                }
+                break;
+
+            case 8: // Tech House Tight
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = 1.0f;
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.08f);
+                    step.length = juce::jlimit(0.28f, 1.0f, juce::jmin(step.length, 0.74f));
+                    step.lock = juce::jlimit(0.0f, 1.0f, step.lock * 0.45f);
+                }
+                else
+                {
+                    step.timing = juce::jmax(step.timing, isOffbeatStep(stepIndex) ? 0.28f : 0.1f);
+                    step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + (isOffbeatStep(stepIndex) ? 0.02f : -0.04f));
+                    step.probability = juce::jlimit(0.55f, 1.0f, step.probability + 0.06f);
+                    step.length = juce::jlimit(0.2f, 1.0f, juce::jmin(step.length, 0.58f));
+                    step.lock = juce::jmax(step.lock, isOffbeatStep(stepIndex) ? 0.24f : 0.14f);
+                }
+                break;
+
+            case 9: // Minimal Skip
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = juce::jlimit(0.8f, 1.0f, step.probability);
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity * 0.96f);
+                    step.length = juce::jlimit(0.24f, 1.0f, juce::jmin(step.length, 0.62f));
+                    step.lock = juce::jlimit(0.0f, 1.0f, step.lock * 0.55f);
+                }
+                else
+                {
+                    const auto skipStep = stepIndex == 5 || stepIndex == 7 || stepIndex == 11 || stepIndex == 13 || stepIndex == 15;
+                    step.timing = juce::jmax(step.timing, skipStep ? 0.48f : 0.14f);
+                    step.velocity = juce::jlimit(0.25f, 0.86f, step.velocity * (skipStep ? 0.9f : 0.82f));
+                    step.probability = juce::jlimit(0.35f, 0.88f, step.probability * (skipStep ? 0.82f : 0.74f));
+                    step.length = juce::jlimit(0.18f, 1.0f, juce::jmin(step.length, skipStep ? 0.46f : 0.34f));
+                    step.lock = juce::jmax(step.lock, skipStep ? 0.32f : 0.18f);
+                }
+                break;
+
+            case 10: // Techno Drive
+                if (isAnchorStep(stepIndex))
+                {
+                    step.timing = 0.0f;
+                    step.probability = 1.0f;
+                    step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.1f);
+                    step.length = juce::jlimit(0.28f, 1.0f, juce::jmax(step.length, 0.58f));
+                    step.lock = juce::jlimit(0.0f, 1.0f, step.lock * 0.7f);
+                }
+                else
+                {
+                    step.timing = juce::jmax(step.timing, isVocalPushStep(stepIndex) ? 0.26f : 0.12f);
+                    step.velocity = juce::jlimit(0.35f, 1.0f, step.velocity + 0.04f);
+                    step.probability = juce::jlimit(0.62f, 1.0f, step.probability + 0.08f);
+                    step.length = juce::jlimit(0.22f, 1.0f, juce::jmin(step.length, 0.72f));
+                    step.lock = juce::jmax(step.lock, isVocalPushStep(stepIndex) ? 0.34f : 0.22f);
+                }
+                break;
+
             case 0: // Tighten
             default:
                 step.timing = isAnchorStep(stepIndex) ? 0.0f : step.timing * 0.32f;
@@ -1727,6 +1838,76 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
         case 5:
             setParameterPlainValue(Parameters::ID::sequencerSwing,
                                    juce::jlimit(0.0f, 0.65f, getParameterPlainValue(Parameters::ID::sequencerSwing, 0.0f) + humanize(sampleRandomEngine) * 0.025f));
+            break;
+
+        case 6:
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.28f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 4.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.48f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerAccent,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.54f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f))));
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.9f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerLockDestination, 5.0f);
+            setParameterPlainValue(Parameters::ID::sequencerLockDepth,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.26f, getParameterPlainValue(Parameters::ID::sequencerLockDepth, 0.35f))));
+            break;
+
+        case 7:
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.46f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 2.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.3f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerAccent,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.58f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f))));
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmin(0.93f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerLockDestination, 5.0f);
+            setParameterPlainValue(Parameters::ID::sequencerLockDepth,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.34f, getParameterPlainValue(Parameters::ID::sequencerLockDepth, 0.35f))));
+            break;
+
+        case 8:
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.12f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 5.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.36f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerAccent,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.7f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f))));
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.96f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerLockDestination, 1.0f);
+            setParameterPlainValue(Parameters::ID::sequencerLockDepth,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.22f, getParameterPlainValue(Parameters::ID::sequencerLockDepth, 0.35f))));
+            break;
+
+        case 9:
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.2f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 6.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.28f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerAccent,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmin(0.52f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f))));
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmin(0.84f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerLockDestination, 7.0f);
+            setParameterPlainValue(Parameters::ID::sequencerLockDepth,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.24f, getParameterPlainValue(Parameters::ID::sequencerLockDepth, 0.35f))));
+            break;
+
+        case 10:
+            setParameterPlainValue(Parameters::ID::sequencerSwing, 0.1f);
+            setParameterPlainValue(Parameters::ID::sequencerGrooveMode, 7.0f);
+            setParameterPlainValue(Parameters::ID::sequencerGate,
+                                   juce::jlimit(0.05f, 0.95f, juce::jmin(0.46f, getParameterPlainValue(Parameters::ID::sequencerGate, 0.55f))));
+            setParameterPlainValue(Parameters::ID::sequencerAccent,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.78f, getParameterPlainValue(Parameters::ID::sequencerAccent, 0.35f))));
+            setParameterPlainValue(Parameters::ID::sequencerProbability,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.98f, getParameterPlainValue(Parameters::ID::sequencerProbability, 1.0f))));
+            setParameterPlainValue(Parameters::ID::sequencerLockDestination, 3.0f);
+            setParameterPlainValue(Parameters::ID::sequencerLockDepth,
+                                   juce::jlimit(0.0f, 1.0f, juce::jmax(0.3f, getParameterPlainValue(Parameters::ID::sequencerLockDepth, 0.35f))));
             break;
 
         case 0:

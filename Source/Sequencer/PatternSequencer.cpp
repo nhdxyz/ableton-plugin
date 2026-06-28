@@ -493,6 +493,36 @@ int PatternSequencer::getStepDelaySamples(int baseStepLengthSamples, int stepInd
             weight = isAnchorStep ? 0.0f : timing * 0.65f;
             break;
 
+        case 4: // House Shuffle
+            if (! isAnchorStep)
+                weight = timing > 0.0f
+                    ? timing
+                    : (stepIndex == 3 || stepIndex == 7 || stepIndex == 11 || stepIndex == 15 ? 0.42f
+                        : isOffbeatStep ? 0.58f
+                                        : 0.16f);
+            break;
+
+        case 5: // Tech House Tight
+            weight = isAnchorStep ? 0.0f
+                                  : (timing > 0.0f ? timing * 0.72f
+                                                   : (isOffbeatStep ? 0.28f : 0.08f));
+            break;
+
+        case 6: // Minimal Skip
+            if (! isAnchorStep)
+                weight = timing > 0.0f
+                    ? timing * 0.82f
+                    : (stepIndex == 5 || stepIndex == 7 || stepIndex == 11 || stepIndex == 13 || stepIndex == 15 ? 0.48f
+                                                                                                                   : 0.14f);
+            break;
+
+        case 7: // Techno Drive
+            weight = isAnchorStep ? 0.0f
+                                  : (timing > 0.0f ? timing * 0.55f
+                                                   : (stepIndex == 3 || stepIndex == 7 || stepIndex == 11 || stepIndex == 15 ? 0.26f
+                                                                                                                            : 0.12f));
+            break;
+
         case 0:
         default:
             weight = isOffbeatStep ? 1.0f : 0.0f;

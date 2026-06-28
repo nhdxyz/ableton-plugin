@@ -25,6 +25,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <array>
+#include <vector>
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
@@ -114,6 +115,16 @@ private:
         juce::Component* component = nullptr;
         juce::String labelText;
         juce::String parameterID;
+    };
+
+    struct PresetAuditionNote
+    {
+        int note = -1;
+        double startMs = 0.0;
+        double stopMs = 0.0;
+        float velocity = 0.0f;
+        bool started = false;
+        bool stopped = false;
     };
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -666,8 +677,7 @@ private:
     UI::XYMacroPad performanceXYPad;
     UI::ModRouteMapDisplay modRouteMapDisplay;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
-    int activePresetAuditionNote = -1;
-    double presetAuditionNoteOffMs = 0.0;
+    std::vector<PresetAuditionNote> presetAuditionNotes;
     juce::MemoryBlock presetCompareBeforeSnapshot;
     juce::MemoryBlock presetCompareLoadedSnapshot;
     juce::String presetCompareName;
@@ -809,7 +819,9 @@ private:
     int suggestedPresetBpmForCategory(const juce::String& category) const;
     void loadPresetByOffset(int offset);
     void auditionSelectedPreset();
+    void updatePresetAudition();
     void releasePresetAuditionNote();
+    juce::String startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote);
     bool hasPresetCompareSnapshots() const;
     bool capturePresetCompareBefore(const juce::String& presetName);
     void capturePresetCompareLoaded();

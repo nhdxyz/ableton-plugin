@@ -385,7 +385,7 @@ If we only pick the next 15 big work tracks, they should be:
 ### Browser, Presets, Packs, And Content
 
 256. Add full browser page with dense columns.
-257. Add preset audio preview rendering.
+257. Add rendered preset audio preview files; the Library Audition button now has a runtime role-aware MIDI phrase first pass.
 258. Add automatic preview regeneration when a preset changes.
 259. Expand the implemented macro-value strip into optional full browser columns for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 260. Add key, BPM, pack, category, subcategory, author, rating, favorite, date, source type, sample dependency, and wavetable dependency columns.

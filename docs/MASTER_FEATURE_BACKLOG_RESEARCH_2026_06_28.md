@@ -544,8 +544,8 @@ These should stay near the top because every future feature becomes harder if th
 17. Add preset pack import/export.
 18. Add pack validation before import.
 19. Add pack artwork or pack colors if it does not clutter the UI.
-20. Add per-preset audio preview rendering.
-21. Add preview MIDI patterns by category.
+20. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
+21. Expand the implemented runtime role-aware audition phrases into editable preview MIDI patterns by category and rendered preview files.
 22. Add audition auto-advance.
 23. Add audition level normalization.
 24. Add "find similar presets" using metadata and parameter distance.

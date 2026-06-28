@@ -230,7 +230,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 
 ### 8. Browser, Presets, Samples, And Packs
 
-154. Add rendered audio previews per preset.
+154. Add rendered audio preview files per preset; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
 155. Add auto-play preview while arrowing through presets.
 156. Add macro preview columns in the browser.
 157. Expand smart collections beyond the first implemented filter-menu crate pass with New This Week, editable user crates, pack crates, full-browser sidebar browsing, and multi-select metadata actions.

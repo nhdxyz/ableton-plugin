@@ -206,7 +206,7 @@ Nate VST gaps:
 - Library metadata is stronger for presets than samples.
 - No sample-folder indexing, descriptors, duplicate detection, or similarity search.
 - No sample map or visual "nearby sounds" workflow.
-- No audition-in-context against the internal sequencer or a standard house/UKG phrase.
+- Library preset audition now has a first runtime role-aware house/UKG phrase pass; sample audition-in-context and editable preview phrases remain open.
 - No sample dependency report that can explain which presets, construction kits, and chop maps need a missing file.
 
 ### ShaperBox, Saturn, Portal, And Infiltrator Pattern
@@ -449,9 +449,9 @@ Nate VST gaps:
 181. Extend the implemented preset-load compare/revert into safe overwrite compare.
 182. Add preset version history.
 183. Add missing sample and wavetable warnings in browser rows.
-184. Add per-preset audio preview rendering.
+184. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
 185. Add audition auto-advance.
-186. Add preview MIDI patterns by category.
+186. Expand the implemented role-aware audition phrases into editable preview MIDI patterns by category.
 187. Add find-similar presets using metadata and parameter distance.
 188. Add dependency tracking for samples and wavetables.
 189. Add pack artwork or color markers only if it stays uncluttered.
@@ -688,7 +688,7 @@ Key extra lessons:
 ### 19. Browser, Presets, Packs, And Discovery
 
 367. Add full-screen or wide browser mode with tree, results, details, macro preview, and audio preview.
-368. Add rendered preset audio previews using standard house/UKG/techno MIDI phrases.
+368. Add rendered preset audio preview files using standard house/UKG/techno MIDI phrases; runtime role-aware audition phrases are implemented.
 369. Add auto-preview with output safety and host-transport awareness.
 370. Expand the implemented smart-crate filter pass into smart collections for New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Clean Subs, and pack folders.
 371. Add editable user tags with batch metadata editing.

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Role-Aware Audition Phrases
+
+- Replaced the single-note preset Audition behavior with short role-aware MIDI phrases inferred from preset metadata, tags, notes, and names.
+- Added bass, chord-stab, garage-chop, groove, FX, lead/pluck, and general audition phrase shapes so house, UKG, minimal, tech-house, and techno presets can be judged in a more musical context before loading fully into a track.
+- Kept the change editor-side only: no preset format, APVTS parameter, audio engine, or Ableton automation changes.
+
 ### Library Smart Crates
 
 - Added first-pass smart crate matching to the existing Library filter menu for Five Star Crate, Club Bass, Chord Stabs, Dub Stabs, UKG Essentials, UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Techno Stabs, Dirty Tools, Mono Safe, and Sequenced Grooves.

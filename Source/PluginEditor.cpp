@@ -25,11 +25,23 @@ constexpr auto modTopRowHeight = 148;
 constexpr auto modGeneratorRowHeight = 158;
 constexpr auto modPanelGap = 6;
 constexpr auto firstMacroModSourceIndex = 4;
-constexpr auto presetAuditionDurationMs = 720.0;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto candidateAuditionDurationMs = 680.0;
 constexpr auto candidateAuditionVelocity = 0.88f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
+
+enum class PresetAuditionRole
+{
+    bass,
+    chord,
+    chop,
+    sequence,
+    fx,
+    lead,
+    pluck,
+    general
+};
+
 constexpr std::array<const char*, 34> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
     Parameters::ID::fxDelaySync,
@@ -427,6 +439,56 @@ bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, co
         return isSequenced;
 
     return false;
+}
+
+juce::String presetAuditionRoleName(PresetAuditionRole role)
+{
+    switch (role)
+    {
+        case PresetAuditionRole::bass: return "Bass phrase";
+        case PresetAuditionRole::chord: return "Chord stab phrase";
+        case PresetAuditionRole::chop: return "Garage chop phrase";
+        case PresetAuditionRole::sequence: return "Groove phrase";
+        case PresetAuditionRole::fx: return "FX sweep phrase";
+        case PresetAuditionRole::lead: return "Lead phrase";
+        case PresetAuditionRole::pluck: return "Pluck phrase";
+        case PresetAuditionRole::general:
+        default: return "Patch phrase";
+    }
+}
+
+PresetAuditionRole inferPresetAuditionRole(const NateVSTAudioProcessor::PresetInfo* preset)
+{
+    if (preset == nullptr)
+        return PresetAuditionRole::general;
+
+    const auto text = presetSearchText(*preset);
+    if (textContainsAny(text, { "Chop", "Vocal", "Slice", "Sample" }))
+        return PresetAuditionRole::chop;
+    if (textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" }))
+        return PresetAuditionRole::bass;
+    if (textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" }))
+        return PresetAuditionRole::chord;
+    if (textContainsAny(text, { "Sequence", "Sequenced", "Pattern", "Groove", "Arp", "Pulse", "Roll" }))
+        return PresetAuditionRole::sequence;
+    if (textContainsAny(text, { "FX", "Noise", "Riser", "Drop", "Throw", "Sweep" }))
+        return PresetAuditionRole::fx;
+    if (textContainsAny(text, { "Lead" }))
+        return PresetAuditionRole::lead;
+    if (textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba" }))
+        return PresetAuditionRole::pluck;
+
+    return PresetAuditionRole::general;
+}
+
+int foldMidiNoteToRange(int note, int low, int high)
+{
+    while (note < low)
+        note += 12;
+    while (note > high)
+        note -= 12;
+
+    return juce::jlimit(0, 127, note);
 }
 
 juce::String outputSafetySummary(float peak)
@@ -9014,11 +9076,7 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
 
 void NateVSTAudioProcessorEditor::timerCallback()
 {
-    if (activePresetAuditionNote >= 0
-        && juce::Time::getMillisecondCounterHiRes() >= presetAuditionNoteOffMs)
-    {
-        releasePresetAuditionNote();
-    }
+    updatePresetAudition();
 
     if (activeRandomCandidateAuditionNote >= 0
         && juce::Time::getMillisecondCounterHiRes() >= randomCandidateAuditionNoteOffMs)
@@ -9708,6 +9766,18 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
     updateSampleNameLabel();
     sequencerGrid.repaint();
 
+    NateVSTAudioProcessor::PresetInfo auditionPresetInfo;
+    auto hasAuditionPresetInfo = false;
+    for (const auto& preset : audioProcessor.getPresetLibrary())
+    {
+        if (preset.name != presetName)
+            continue;
+
+        auditionPresetInfo = preset;
+        hasAuditionPresetInfo = true;
+        break;
+    }
+
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
         if (const auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
@@ -9723,23 +9793,154 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
     while (note > 72)
         note -= 12;
 
-    activePresetAuditionNote = juce::jlimit(0, 127, note);
-    presetAuditionNoteOffMs = juce::Time::getMillisecondCounterHiRes() + presetAuditionDurationMs;
-    audioProcessor.getMidiKeyboardState().noteOn(1, activePresetAuditionNote, presetAuditionVelocity);
+    const auto phraseName = startPresetAuditionPhrase(hasAuditionPresetInfo ? &auditionPresetInfo : nullptr,
+                                                      juce::jlimit(0, 127, note));
 
-    presetStatusLabel.setText("Auditioning " + presetName + " | "
-                                  + juce::MidiMessage::getMidiNoteName(activePresetAuditionNote, true, true, 3),
+    presetStatusLabel.setText("Auditioning " + presetName + " | " + phraseName,
                               juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::updatePresetAudition()
+{
+    if (presetAuditionNotes.empty())
+        return;
+
+    const auto nowMs = juce::Time::getMillisecondCounterHiRes();
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+
+    for (auto& event : presetAuditionNotes)
+    {
+        if (! event.started && nowMs >= event.startMs)
+        {
+            keyboardState.noteOn(1, event.note, event.velocity);
+            event.started = true;
+        }
+
+        if (event.started && ! event.stopped && nowMs >= event.stopMs)
+        {
+            keyboardState.noteOff(1, event.note, 0.0f);
+            event.stopped = true;
+        }
+    }
+
+    presetAuditionNotes.erase(std::remove_if(presetAuditionNotes.begin(),
+                                             presetAuditionNotes.end(),
+                                             [] (const auto& event) { return event.stopped; }),
+                              presetAuditionNotes.end());
 }
 
 void NateVSTAudioProcessorEditor::releasePresetAuditionNote()
 {
-    if (activePresetAuditionNote < 0)
+    if (presetAuditionNotes.empty())
         return;
 
-    audioProcessor.getMidiKeyboardState().noteOff(1, activePresetAuditionNote, 0.0f);
-    activePresetAuditionNote = -1;
-    presetAuditionNoteOffMs = 0.0;
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+    for (auto& event : presetAuditionNotes)
+        if (event.started && ! event.stopped)
+            keyboardState.noteOff(1, event.note, 0.0f);
+
+    presetAuditionNotes.clear();
+}
+
+juce::String NateVSTAudioProcessorEditor::startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote)
+{
+    presetAuditionNotes.clear();
+
+    const auto role = inferPresetAuditionRole(presetInfo);
+    const auto nowMs = juce::Time::getMillisecondCounterHiRes();
+
+    auto addNote = [this, nowMs] (int note, double startOffsetMs, double durationMs, float velocity)
+    {
+        PresetAuditionNote event;
+        event.note = juce::jlimit(0, 127, note);
+        event.startMs = nowMs + juce::jmax(0.0, startOffsetMs);
+        event.stopMs = event.startMs + juce::jmax(60.0, durationMs);
+        event.velocity = juce::jlimit(0.05f, 1.0f, velocity);
+        presetAuditionNotes.push_back(event);
+    };
+
+    switch (role)
+    {
+        case PresetAuditionRole::bass:
+        {
+            const auto base = foldMidiNoteToRange(rootNote, 36, 48);
+            addNote(base, 0.0, 150.0, 0.92f);
+            addNote(foldMidiNoteToRange(base + 7, 36, 52), 210.0, 130.0, 0.74f);
+            addNote(base, 390.0, 145.0, 0.86f);
+            addNote(foldMidiNoteToRange(base + 10, 36, 52), 610.0, 150.0, 0.78f);
+            addNote(foldMidiNoteToRange(base + 12, 36, 52), 850.0, 260.0, 0.90f);
+            break;
+        }
+
+        case PresetAuditionRole::chord:
+        {
+            const auto base = foldMidiNoteToRange(rootNote, 48, 60);
+            for (const auto interval : { 0, 3, 7, 10 })
+                addNote(foldMidiNoteToRange(base + interval, 48, 76), 0.0, 240.0, 0.78f);
+            for (const auto interval : { 5, 8, 12 })
+                addNote(foldMidiNoteToRange(base + interval, 48, 76), 420.0, 210.0, 0.68f);
+            for (const auto interval : { 7, 10, 14 })
+                addNote(foldMidiNoteToRange(base + interval, 48, 76), 780.0, 300.0, 0.72f);
+            break;
+        }
+
+        case PresetAuditionRole::chop:
+        {
+            const auto base = foldMidiNoteToRange(rootNote + 12, 60, 72);
+            addNote(base, 0.0, 95.0, 0.82f);
+            addNote(foldMidiNoteToRange(base + 3, 60, 76), 145.0, 90.0, 0.70f);
+            addNote(foldMidiNoteToRange(base + 7, 60, 76), 310.0, 110.0, 0.80f);
+            addNote(foldMidiNoteToRange(base + 10, 60, 76), 500.0, 95.0, 0.68f);
+            addNote(base, 650.0, 170.0, 0.86f);
+            break;
+        }
+
+        case PresetAuditionRole::sequence:
+        {
+            const auto base = foldMidiNoteToRange(rootNote, 48, 60);
+            const std::array<int, 6> intervals { 0, 7, 10, 12, 7, 15 };
+            for (size_t index = 0; index < intervals.size(); ++index)
+                addNote(foldMidiNoteToRange(base + intervals[index], 48, 76),
+                        static_cast<double>(index) * 165.0,
+                        105.0,
+                        index % 2 == 0 ? 0.82f : 0.70f);
+            break;
+        }
+
+        case PresetAuditionRole::fx:
+        {
+            const auto note = foldMidiNoteToRange(rootNote + 24, 72, 84);
+            addNote(note, 0.0, 1180.0, 0.78f);
+            addNote(foldMidiNoteToRange(note - 12, 60, 72), 360.0, 520.0, 0.46f);
+            break;
+        }
+
+        case PresetAuditionRole::lead:
+        case PresetAuditionRole::pluck:
+        {
+            const auto base = foldMidiNoteToRange(rootNote + 12, 60, 72);
+            const std::array<int, 5> intervals { 0, 3, 7, 10, 12 };
+            for (size_t index = 0; index < intervals.size(); ++index)
+                addNote(foldMidiNoteToRange(base + intervals[index], 60, 84),
+                        static_cast<double>(index) * 170.0,
+                        role == PresetAuditionRole::pluck ? 105.0 : 180.0,
+                        index == 0 ? 0.84f : 0.72f);
+            break;
+        }
+
+        case PresetAuditionRole::general:
+        default:
+        {
+            const auto base = foldMidiNoteToRange(rootNote, 48, 72);
+            addNote(base, 0.0, 260.0, presetAuditionVelocity);
+            addNote(foldMidiNoteToRange(base + 7, 48, 76), 360.0, 220.0, 0.72f);
+            addNote(foldMidiNoteToRange(base + 12, 48, 84), 700.0, 280.0, 0.78f);
+            break;
+        }
+    }
+
+    updatePresetAudition();
+    return presetAuditionRoleName(role);
 }
 
 bool NateVSTAudioProcessorEditor::hasPresetCompareSnapshots() const

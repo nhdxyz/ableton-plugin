@@ -73,6 +73,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - HOME now includes stereo field/correlation visualization beside the spectrum display, exposing full-band width, balance, correlation, and low-end side risk for mono-safe house and club mix decisions.
 - LIBRARY now captures a full state pair around explicit preset loads, enabling Before/Loaded comparison and Revert without changing preset files, APVTS parameters, or Ableton automation IDs.
 - The Library filter menu now has first-pass smart crate matching for Five Star, Club Bass, Chord Stabs, Dub Stabs, UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Techno Stabs, Dirty Tools, Mono Safe, and Sequenced Grooves using existing metadata and macro values.
+- Library Audition now uses short role-aware MIDI phrases inferred from preset metadata, so bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general patches get more useful house-focused preview gestures than a single sustained note.
 
 ## Highest-Value Randomization Backlog
 
@@ -116,7 +117,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 4. Add duplicate-name prompt instead of silently replacing older folder copies.
 5. Add preset version history for user presets.
 6. Add per-preset notes and "source recipe" metadata.
-7. Add audio preview rendering for factory and user presets.
+7. Add rendered audio preview files, regeneration, and auto-preview; the current first pass is runtime role-aware MIDI audition from the Audition button.
 8. Add preview phrase selection by preset role: bass, stab, pluck, chord, FX, chop.
 9. Add missing sample/wavetable dependency warnings directly in Library rows.
 10. Add preset pack import/export with folder structure and metadata manifest.

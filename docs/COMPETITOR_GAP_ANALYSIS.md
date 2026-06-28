@@ -317,9 +317,9 @@ Implemented P5 sub-slice:
 226. Extend the implemented preset-load compare/revert into safe overwrite compare.
 227. Add preset version history for user saves.
 228. Add missing sample warnings in browser rows.
-229. Add per-preset audio preview render.
+229. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
 230. Add audition auto-advance.
-231. Add preview MIDI patterns by category.
+231. Expand the implemented role-aware audition phrases into editable preview MIDI patterns by category.
 232. Add "find similar presets" using metadata and parameter distance.
 233. Add preset dependency tracking for samples and wavetables.
 234. Add pack artwork or color markers if it does not clutter the UI.
@@ -405,4 +405,4 @@ Track the backlog through one umbrella issue plus focused child issues. Good fir
 - Add wavetable oscillator playback and preview display.
 - Add multiband distortion with oversampling and gain compensation.
 - Add UKG recipe builder for Dred bass, organ bass, vocal chops, and late stabs.
-- Add preset audio preview rendering and construction-kit metadata.
+- Add rendered preset audio preview files and construction-kit metadata; runtime role-aware audition phrases are implemented.

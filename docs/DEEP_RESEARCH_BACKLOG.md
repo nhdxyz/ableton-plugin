@@ -267,6 +267,7 @@ Implemented library sub-slice:
 
 - Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 - A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The filter menu now includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
+- The Library Audition button now plays runtime role-aware MIDI phrases for bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general presets. Rendered preview files, auto-preview, and editable preview phrase templates remain open.
 
 ## Priority 8: Sound Quality And Safety
 
@@ -306,7 +307,7 @@ Implemented safety sub-slice:
 4. Add drag/menu modulation assignment plus selected-parameter route views.
 5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
 6. Add transient/manual sample slice markers plus per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
-7. Add user tags, editable/full-browser smart crates, and preset preview rendering in LIBRARY.
+7. Add user tags, editable/full-browser smart crates, rendered preset preview files, and editable preview phrase templates in LIBRARY.
 8. Add wavetable oscillator playback after UI layout risk is reduced.
 9. Add multiband drive with oversampling, gain compensation, and loudness checks.
 10. Add UKG recipe tools for Dred bass, organ bass, late stabs, and vocal chop motifs.

@@ -271,9 +271,9 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 175. Extend the implemented preset-load compare/revert into safe overwrite compare.
 176. Add preset version history for user saves.
 177. Add missing sample and missing wavetable warnings in browser rows.
-178. Add per-preset audio preview rendering.
+178. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
 179. Add audition auto-advance.
-180. Add preview MIDI patterns per category.
+180. Expand the implemented role-aware audition phrases into editable preview MIDI patterns per category.
 181. Add "find similar presets" using metadata and parameter distance.
 182. Add preset dependency tracking for samples and wavetables.
 183. Add pack artwork or pack color markers only if it does not clutter the UI.

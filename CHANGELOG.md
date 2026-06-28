@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Smooth Random Modulation Source
+
+- Added an appended `Smooth` source after `S&H` so existing modulation source indices and saved presets stay compatible.
+- Routed Smooth random drift through synth, sample, and FX modulation paths, using the existing LFO timing as the random target clock while slewing between targets.
+- Expanded the MOD source summary area from 12 to 13 rows and made the two-column source layout adapt so the new row fits without overlapping the macro controls.
+- Seeded selected factory presets with subtle Smooth routes for UKG Dred warp drift, tech-house oscillator detune, and vocal-chop sample-start variation.
+
 ### Program Research Gap List
 
 - Added `docs/PROGRAM_RESEARCH_GAP_LIST.md`, a deeper program-by-program research matrix covering Serum 2, Pigments, Phase Plant, Current, ZENOLOGY Pro, u-he, Korg, Ableton, ShaperBox, Saturn, Portal, Infiltrator, and UK garage production patterns.

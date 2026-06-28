@@ -298,7 +298,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 12> sourceTexts {
+    static const std::array<const char*, 13> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -310,7 +310,8 @@ juce::String modSourceSummaryText(size_t index)
         "Bounce: pump depth + groove",
         "Warp: osc bend + harmonic edge",
         "Throw: delay + reverb push",
-        "S&H: stepped random movement"
+        "S&H: stepped random movement",
+        "Smooth: slewed random drift"
     };
 
     if (index < sourceTexts.size())
@@ -2145,8 +2146,10 @@ void NateVSTAudioProcessorEditor::resized()
             auto sourceListArea = sourceArea.withTrimmedTop(2);
             auto leftSources = sourceListArea.removeFromLeft(sourceListArea.getWidth() / 2);
             auto rightSources = sourceListArea;
-            constexpr auto sourceColumnRows = 6;
-            const auto sourceRowHeight = juce::jmax(12, sourceListArea.getHeight() / sourceColumnRows);
+            const auto sourceColumnRows = (modSourceRows.size() + 1) / 2;
+            const auto sourceRowHeight = juce::jmax(10,
+                                                    sourceListArea.getHeight()
+                                                        / juce::jmax(1, static_cast<int>(sourceColumnRows)));
             for (size_t index = 0; index < modSourceRows.size(); ++index)
             {
                 auto& column = index < sourceColumnRows ? leftSources : rightSources;

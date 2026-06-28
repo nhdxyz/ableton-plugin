@@ -42,7 +42,7 @@ Nate VST already has a real foundation:
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Randomization recipes, section scope, locks, undo/redo, and genre seeds.
 - Eight performance macros plus an XY macro pad.
-- Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H source.
+- Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
 - 16-step piano-roll style sequencer with chord memory, templates, groove modes, velocity/probability/timing lanes, MIDI export, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
@@ -144,7 +144,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 64. Add per-route unipolar/bipolar and invert.
 65. Add per-route mute, solo, duplicate, copy, and paste.
 66. Add LFO 2 and LFO 3.
-67. Add smooth random and chaos sources in addition to current S&H.
+67. Add smooth random and chaos sources in addition to current S&H. First Smooth source pass implemented; chaos/random-walk remains open.
 68. Add a true MSEG source with multi-point draw/edit.
 69. Add step LFO with per-step hold, slew, probability, and shape.
 70. Add macro snapshots and morphing between macro states.

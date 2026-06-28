@@ -101,7 +101,7 @@ juce::StringArray pumpCurveChoices()
 
 juce::StringArray modulationSourceChoices()
 {
-    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw", "S&H" };
+    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw", "S&H", "Smooth" };
 }
 
 juce::StringArray modulationDestinationChoices()

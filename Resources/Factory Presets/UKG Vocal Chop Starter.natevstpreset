@@ -180,9 +180,9 @@
   <PARAM id="fx_flanger_depth" value="0.32" />
   <PARAM id="fx_flanger_feedback" value="0.18" />
   <PARAM id="fx_flanger_mix" value="0.18" />
-  <PARAM id="mod_slot_1_source" value="0" />
-  <PARAM id="mod_slot_1_destination" value="0" />
-  <PARAM id="mod_slot_1_amount" value="0" />
+  <PARAM id="mod_slot_1_source" value="13" />
+  <PARAM id="mod_slot_1_destination" value="12" />
+  <PARAM id="mod_slot_1_amount" value="0.04" />
   <PARAM id="mod_slot_2_source" value="0" />
   <PARAM id="mod_slot_2_destination" value="0" />
   <PARAM id="mod_slot_2_amount" value="0" />

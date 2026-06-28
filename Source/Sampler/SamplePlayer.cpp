@@ -184,6 +184,8 @@ void SamplePlayer::prepare(double sampleRate)
 {
     playbackSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sampleModSmoothRandomStartValue = sampleModLfoStepValue;
+    sampleModSmoothRandomValue = sampleModLfoStepValue;
 }
 
 void SamplePlayer::clear()
@@ -194,6 +196,8 @@ void SamplePlayer::clear()
     region = {};
     sampleModLfoPhase = 0.0f;
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sampleModSmoothRandomStartValue = sampleModLfoStepValue;
+    sampleModSmoothRandomValue = sampleModLfoStepValue;
 }
 
 bool SamplePlayer::loadFile(const juce::File& file)
@@ -441,6 +445,12 @@ float SamplePlayer::processSampleModulationLfo(int numSamples, double bpm, std::
             break;
     }
 
+    const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
+    sampleModSmoothRandomValue = juce::jlimit(-1.0f,
+                                              1.0f,
+                                              sampleModSmoothRandomStartValue
+                                                  + ((sampleModLfoStepValue - sampleModSmoothRandomStartValue) * smoothProgress));
+
     const auto previousPhase = sampleModLfoPhase;
     sampleModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(playbackSampleRate);
 
@@ -448,7 +458,10 @@ float SamplePlayer::processSampleModulationLfo(int numSamples, double bpm, std::
     {
         sampleModLfoPhase -= std::floor(sampleModLfoPhase);
         if (previousPhase < 1.0f)
+        {
+            sampleModSmoothRandomStartValue = sampleModLfoStepValue;
             sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+        }
     }
 
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
@@ -481,6 +494,7 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return sampleModLfoStepValue;
+        case 13: return sampleModSmoothRandomValue;
         default: return 0.0f;
     }
 }

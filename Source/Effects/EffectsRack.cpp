@@ -263,6 +263,8 @@ void EffectsRack::reset()
     ringPhase = 0.0;
     fxModLfoPhase = 0.0f;
     fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    fxModSmoothRandomStartValue = fxModLfoStepValue;
+    fxModSmoothRandomValue = fxModLfoStepValue;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
@@ -363,6 +365,12 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
             break;
     }
 
+    const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
+    fxModSmoothRandomValue = juce::jlimit(-1.0f,
+                                          1.0f,
+                                          fxModSmoothRandomStartValue
+                                              + ((fxModLfoStepValue - fxModSmoothRandomStartValue) * smoothProgress));
+
     const auto previousPhase = fxModLfoPhase;
     fxModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
 
@@ -370,7 +378,10 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
     {
         fxModLfoPhase -= std::floor(fxModLfoPhase);
         if (previousPhase < 1.0f)
+        {
+            fxModSmoothRandomStartValue = fxModLfoStepValue;
             fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+        }
     }
 
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
@@ -403,6 +414,7 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) c
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return fxModLfoStepValue;
+        case 13: return fxModSmoothRandomValue;
         default: return 0.0f;
     }
 }

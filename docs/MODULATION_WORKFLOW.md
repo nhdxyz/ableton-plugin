@@ -40,6 +40,7 @@ Start with a small set:
 - `velocity`: note velocity as a performance source.
 - `macro_1` through `macro_8`: Ableton-friendly performance controls.
 - `S&H`: stepped random movement clocked from the LFO timing path, usable for small UKG, minimal, and techno instability.
+- `Smooth`: slewed random drift clocked from the same LFO timing path, better for organic cutoff, warp, pitch, sample-start, and FX movement.
 - `seq_lane_1`: a later per-step modulation lane tied to the existing sequencer.
 
 Avoid adding every possible source at once. More sources can follow after the matrix and UI prove stable.
@@ -84,7 +85,7 @@ Initial macro behavior should be explicit and simple:
 - Each assignment stores source, destination, bipolar amount, and optional curve later.
 - Randomization may move macro assignments, but should preserve output safety.
 - Warp now affects oscillator bend and Osc Warp source harmonics, so it can push bass and stab character before filter/FX processing.
-- Osc Warp is a per-voice synth destination, so LFO 1, Mod Env 1, Velocity, macro sources, and S&H can all target it. The FX and sample destinations currently use global LFO, macro, and S&H sources until a proper global Mod Env/Velocity strategy exists.
+- Osc Warp is a per-voice synth destination, so LFO 1, Mod Env 1, Velocity, macro sources, S&H, and Smooth can all target it. The FX and sample destinations currently use global LFO, macro, S&H, and Smooth sources until a proper global Mod Env/Velocity strategy exists.
 
 Possible parameter IDs:
 
@@ -157,10 +158,10 @@ MOD:
 
 - LFO controls.
 - Mod envelope controls.
-- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, and S&H.
+- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, and Smooth.
 - Matrix rows.
 - Assignment amount controls.
-- Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, S&H as an appended source, and direct dragging on LFO curve points.
+- Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, S&H and Smooth as appended sources, and direct dragging on LFO curve points.
 - Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
 
 SEQ:

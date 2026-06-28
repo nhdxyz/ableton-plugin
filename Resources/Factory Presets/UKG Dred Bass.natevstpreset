@@ -189,9 +189,9 @@
   <PARAM id="mod_slot_3_source" value="2" />
   <PARAM id="mod_slot_3_destination" value="3" />
   <PARAM id="mod_slot_3_amount" value="0.13" />
-  <PARAM id="mod_slot_4_source" value="0" />
-  <PARAM id="mod_slot_4_destination" value="0" />
-  <PARAM id="mod_slot_4_amount" value="0" />
+  <PARAM id="mod_slot_4_source" value="13" />
+  <PARAM id="mod_slot_4_destination" value="17" />
+  <PARAM id="mod_slot_4_amount" value="0.035" />
   <PARAM id="mod_slot_5_source" value="0" />
   <PARAM id="mod_slot_5_destination" value="0" />
   <PARAM id="mod_slot_5_amount" value="0" />

@@ -153,6 +153,8 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
     {
         lfoPhase = 0.0f;
         lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
+        lfoSmoothRandomStartValue = lfoStepValue;
+        lfoSmoothRandomValue = lfoStepValue;
     }
 }
 
@@ -428,6 +430,12 @@ float Voice::processLfo()
             break;
     }
 
+    const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
+    lfoSmoothRandomValue = juce::jlimit(-1.0f,
+                                        1.0f,
+                                        lfoSmoothRandomStartValue
+                                            + ((lfoStepValue - lfoSmoothRandomStartValue) * smoothProgress));
+
     const auto previousPhase = lfoPhase;
     lfoPhase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
 
@@ -435,7 +443,10 @@ float Voice::processLfo()
     {
         lfoPhase -= std::floor(lfoPhase);
         if (previousPhase < 1.0f)
+        {
+            lfoSmoothRandomStartValue = lfoStepValue;
             lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
+        }
     }
 
     return juce::jlimit(-1.0f, 1.0f, value);
@@ -470,6 +481,7 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float mod
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return lfoStepValue;
+        case 13: return lfoSmoothRandomValue;
         default: return 0.0f;
     }
 }

@@ -224,7 +224,7 @@ Implemented P0 sub-slice:
 149. Add per-route velocity scaling.
 150. Add per-route keytracking scaling.
 151. Add LFO 2 and LFO 3.
-152. Add random LFO, sample-and-hold, smooth random, and chaos sources.
+152. Add random LFO, sample-and-hold, smooth random, and chaos sources. S&H and a first Smooth source are implemented; chaos/random-walk remains open.
 153. Add MSEG/multi-point envelope source.
 154. Add step LFO with probability, hold, slew, and shape per step.
 155. Add macro snapshot states for eight performance macro positions.
@@ -241,7 +241,8 @@ Implemented P0 sub-slice:
 
 Implemented P5 sub-slice:
 
-- Added `S&H` as an appended modulation source for stepped random movement across synth, sample, and FX destinations. This covers the first sample-and-hold source pass while leaving additional smooth-random, chaos, LFO 2/3, and step-LFO work open.
+- Added `S&H` as an appended modulation source for stepped random movement across synth, sample, and FX destinations.
+- Added `Smooth` after `S&H` as a compatible slewed-random source for slower organic drift across synth, sample, and FX destinations. This covers the first smooth-random pass while leaving chaos/random-walk, LFO 2/3, and step-LFO work open.
 
 ### P6 - FX, Routing, And Club Processing
 

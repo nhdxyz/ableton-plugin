@@ -44,7 +44,7 @@ Nate VST already has a useful skeleton:
 - Subtractive synth layer with oscillator mix, sub, noise, filter character/slope, drive, envelopes, unison, Osc Warp, and output guard.
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Performance macros, XY macro pad, randomization, A/B snapshots, and low-end guidance.
-- LFO curve editor, pump curve editor, modulation matrix, macro assignment editing, route bypass/delete, destination badges, and S&H movement.
+- LFO curve editor, pump curve editor, modulation matrix, macro assignment editing, route bypass/delete, destination badges, and S&H/Smooth movement.
 - Sample waveform area, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
 - Piano-roll style 16-step sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
@@ -286,7 +286,7 @@ Nate VST gaps:
 69. Add per-route velocity scaling.
 70. Add per-route keytracking scaling.
 71. Add LFO 2 and LFO 3.
-72. Add smooth random modulation source.
+72. Add smooth random modulation source. First source pass implemented.
 73. Add chaos/random-walk modulation source.
 74. Add MSEG multi-point envelope source.
 75. Add step LFO with hold, slew, probability, and curve per step.
@@ -474,7 +474,7 @@ Nate VST gaps:
 1. Componentize `PluginEditor` and add layout-overlap checks.
 2. Add selected-control inspector, stronger group focus, and UI scale modes.
 3. Add drag/menu modulation assignment, selected-route view, and route min/max editing.
-4. Add smooth random, chaos/random-walk, LFO 2/3, and MSEG movement sources.
+4. Add chaos/random-walk, LFO 2/3, MSEG, and deeper route movement sources after the first Smooth pass.
 5. Add multiple sequencer patterns, ratchets, per-step modulation, and chord paint.
 6. Add transient/manual slicing with per-slice controls.
 7. Add UKG recipe tools for organ bass, Dred/Reese, late stabs, and vocal chop motifs.

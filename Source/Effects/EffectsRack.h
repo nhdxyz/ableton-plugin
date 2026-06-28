@@ -47,6 +47,8 @@ private:
     float pumpSmoothedGain = 1.0f;
     float fxModLfoPhase = 0.0f;
     float fxModLfoStepValue = 0.0f;
+    float fxModSmoothRandomStartValue = 0.0f;
+    float fxModSmoothRandomValue = 0.0f;
     int delayWritePosition = 0;
     int combWritePosition = 0;
     int preparedChannels = 2;

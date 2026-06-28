@@ -92,6 +92,8 @@ private:
     double playbackSampleRate = 44100.0;
     float sampleModLfoPhase = 0.0f;
     float sampleModLfoStepValue = 0.0f;
+    float sampleModSmoothRandomStartValue = 0.0f;
+    float sampleModSmoothRandomValue = 0.0f;
 
     struct SampleModulationOffsets
     {

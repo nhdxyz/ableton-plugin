@@ -43,6 +43,11 @@ void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& mid
     synthesiser.renderNextBlock(buffer, midi, 0, buffer.getNumSamples());
 }
 
+void SynthEngine::allNotesOff()
+{
+    synthesiser.allNotesOff(0, false);
+}
+
 juce::MidiBuffer SynthEngine::enforceMonoIfNeeded(const juce::MidiBuffer& midi)
 {
     juce::MidiBuffer monoMidi;

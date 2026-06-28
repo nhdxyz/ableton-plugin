@@ -66,6 +66,7 @@ int main()
     if (! validationSummary.containsIgnoreCase("source restored")
         || ! validationSummary.containsIgnoreCase("output clamped")
         || ! validationSummary.containsIgnoreCase("bass range corrected")
+        || ! validationSummary.containsIgnoreCase("render")
         || generatedOutput > -6.0f
         || generatedOsc1 < 0.5f
         || generatedEffectiveRoot > 48.0f)

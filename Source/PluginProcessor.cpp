@@ -142,6 +142,7 @@ NateVSTAudioProcessor::NateVSTAudioProcessor()
 void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     meterSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
+    preparedSamplesPerBlock = samplesPerBlock > 0 ? samplesPerBlock : 512;
     synthEngine.prepare(sampleRate, samplesPerBlock);
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
@@ -2663,7 +2664,147 @@ juce::String NateVSTAudioProcessor::applyRandomGenerationGuardrails(RandomMutati
         }
     }
 
+    const auto renderSummary = applyRandomRenderValidation(fxLocked);
+    if (renderSummary.isNotEmpty())
+        fixes.add(renderSummary);
+
     return fixes.isEmpty() ? juce::String("checked") : fixes.joinIntoString(" / ");
+}
+
+juce::String NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
+{
+    juce::StringArray renderNotes;
+    auto metrics = renderRandomValidationSnippet();
+
+    if (! metrics.finite || metrics.peak > 1.02f)
+    {
+        setParameterPlainValue(Parameters::ID::outputGain,
+                               juce::jmin(getParameterPlainValue(Parameters::ID::outputGain, -8.0f) - 6.0f, -12.0f));
+        if (! fxLocked)
+        {
+            setParameterPlainValue(Parameters::ID::fxGuardEnabled, 1.0f);
+            setParameterPlainValue(Parameters::ID::fxGuardCeiling, 0.9f);
+        }
+        renderNotes.add(metrics.finite ? "render peak clamped" : "render non-finite reset");
+        metrics = renderRandomValidationSnippet();
+    }
+
+    if (metrics.rms < 0.0008f)
+    {
+        if (! isRandomLockEnabled(Parameters::ID::randomLockSource))
+        {
+            setParameterPlainValue(Parameters::ID::osc1Level,
+                                   juce::jmax(0.68f, getParameterPlainValue(Parameters::ID::osc1Level, 0.0f)));
+            setParameterPlainValue(Parameters::ID::ampSustain,
+                                   juce::jmax(0.35f, getParameterPlainValue(Parameters::ID::ampSustain, 0.55f)));
+            setParameterPlainValue(Parameters::ID::ampRelease,
+                                   juce::jmax(0.12f, getParameterPlainValue(Parameters::ID::ampRelease, 0.18f)));
+            setParameterPlainValue(Parameters::ID::outputGain,
+                                   juce::jmax(-10.0f, getParameterPlainValue(Parameters::ID::outputGain, -8.0f)));
+            renderNotes.add("render quiet boosted");
+            metrics = renderRandomValidationSnippet();
+        }
+
+        if (metrics.rms < 0.0008f)
+            renderNotes.add("render quiet warning");
+    }
+
+    if (! fxLocked && metrics.rms > 0.001f && metrics.tailRms > juce::jmax(0.08f, metrics.rms * 0.85f))
+    {
+        setParameterPlainValue(Parameters::ID::fxDelayFeedback,
+                               juce::jmin(0.45f, getParameterPlainValue(Parameters::ID::fxDelayFeedback, 0.35f)));
+        setParameterPlainValue(Parameters::ID::fxDelayMix,
+                               juce::jmin(0.28f, getParameterPlainValue(Parameters::ID::fxDelayMix, 0.0f)));
+        setParameterPlainValue(Parameters::ID::fxReverbMix,
+                               juce::jmin(0.32f, getParameterPlainValue(Parameters::ID::fxReverbMix, 0.0f)));
+        renderNotes.add("render tail contained");
+        metrics = renderRandomValidationSnippet();
+    }
+
+    if (metrics.finite && metrics.peak <= 1.02f && metrics.rms >= 0.0008f)
+    {
+        const auto peakDb = juce::Decibels::gainToDecibels(juce::jmax(metrics.peak, 0.000001f));
+        renderNotes.add("render ok " + juce::String(peakDb, 1) + "dB");
+    }
+
+    return renderNotes.joinIntoString(" / ");
+}
+
+NateVSTAudioProcessor::RandomRenderMetrics NateVSTAudioProcessor::renderRandomValidationSnippet()
+{
+    static constexpr auto validationNote = 48;
+    const auto sampleRate = meterSampleRate > 0.0 ? meterSampleRate : 44100.0;
+    const auto blockSize = juce::jmax(256, preparedSamplesPerBlock);
+    const auto outputChannels = getTotalNumOutputChannels();
+    const auto channelCount = outputChannels > 0 ? outputChannels : 2;
+    const auto noteLengthSamples = juce::jmax(1, static_cast<int>(std::round(sampleRate * 0.18)));
+    const auto totalSamples = juce::jmax(blockSize, static_cast<int>(std::round(sampleRate * 0.42)));
+    const auto tailStartSample = juce::jlimit(0, totalSamples - 1, totalSamples - static_cast<int>(std::round(sampleRate * 0.08)));
+
+    synthEngine.prepare(sampleRate, blockSize);
+    samplePlayer.prepare(sampleRate);
+    patternSequencer.prepare(sampleRate);
+    effectsRack.prepare(sampleRate, blockSize, channelCount);
+    resetRandomValidationRenderState();
+
+    RandomRenderMetrics metrics;
+    double sumSquares = 0.0;
+    double tailSquares = 0.0;
+    int sampleCount = 0;
+    int tailSampleCount = 0;
+
+    for (auto renderedSamples = 0; renderedSamples < totalSamples; renderedSamples += blockSize)
+    {
+        const auto currentBlockSize = juce::jmin(blockSize, totalSamples - renderedSamples);
+        juce::AudioBuffer<float> buffer(channelCount, currentBlockSize);
+        juce::MidiBuffer midi;
+
+        if (renderedSamples == 0)
+            midi.addEvent(juce::MidiMessage::noteOn(1, validationNote, static_cast<juce::uint8>(96)), 0);
+
+        if (renderedSamples <= noteLengthSamples && noteLengthSamples < renderedSamples + currentBlockSize)
+            midi.addEvent(juce::MidiMessage::noteOff(1, validationNote), noteLengthSamples - renderedSamples);
+
+        processBlock(buffer, midi);
+
+        for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            const auto* samples = buffer.getReadPointer(channel);
+            for (auto sample = 0; sample < currentBlockSize; ++sample)
+            {
+                const auto value = samples[sample];
+                if (! std::isfinite(value))
+                    metrics.finite = false;
+
+                const auto absolute = std::abs(value);
+                metrics.peak = juce::jmax(metrics.peak, absolute);
+                sumSquares += static_cast<double>(value) * static_cast<double>(value);
+                ++sampleCount;
+
+                if (renderedSamples + sample >= tailStartSample)
+                {
+                    tailSquares += static_cast<double>(value) * static_cast<double>(value);
+                    ++tailSampleCount;
+                }
+            }
+        }
+    }
+
+    metrics.rms = sampleCount > 0 ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(sampleCount))) : 0.0f;
+    metrics.tailRms = tailSampleCount > 0 ? static_cast<float>(std::sqrt(tailSquares / static_cast<double>(tailSampleCount))) : 0.0f;
+    resetRandomValidationRenderState();
+    return metrics;
+}
+
+void NateVSTAudioProcessor::resetRandomValidationRenderState()
+{
+    midiKeyboardState.allNotesOff(0);
+    synthEngine.allNotesOff();
+    samplePlayer.stopAllVoices();
+    effectsRack.reset();
+    patternSequencer.reset();
+    clearChordMemoryActiveNotes();
+    panicRequested.store(false, std::memory_order_release);
 }
 
 void NateVSTAudioProcessor::captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope)

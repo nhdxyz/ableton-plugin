@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Render Validation
+
+- Added a short internal render pass after random generation so useful-only validation can listen for inaudible patches, non-finite samples, clipped peaks, and heavy FX tails before candidate capture.
+- Render validation can lower output, enable Guard, boost quiet generated sources, contain delay/reverb tails, and append render feedback such as peak level or quiet warnings to LAB status, History, and generated preset notes.
+- Extended `RandomCandidateAudit` to require render validation feedback in generated candidate summaries.
+
 ### Random Lab Useful-Only Validation
 
 - Added a post-randomization validation pass that corrects silent generated sources, unsafe output gain, out-of-range bass/stab sequencer roots, too-wide bass patches, tiny sample windows, and missing Guard protection.

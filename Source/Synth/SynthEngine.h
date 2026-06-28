@@ -15,6 +15,7 @@ public:
     void prepare(double sampleRate, int maximumBlockSize);
     void setSequencerLock(int destinationIndex, float amount);
     void render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi, double bpm);
+    void allNotesOff();
 
 private:
     juce::Synthesiser synthesiser;

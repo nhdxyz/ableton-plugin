@@ -185,6 +185,14 @@ private:
         bool valid = false;
     };
 
+    struct RandomRenderMetrics
+    {
+        float peak = 0.0f;
+        float rms = 0.0f;
+        float tailRms = 0.0f;
+        bool finite = true;
+    };
+
     Parameters::APVTS parameters;
     Synth::SynthEngine synthEngine;
     Randomization::Randomizer randomizer;
@@ -217,6 +225,7 @@ private:
     float lowEndStateLeft = 0.0f;
     float lowEndStateRight = 0.0f;
     double meterSampleRate = 44100.0;
+    int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
@@ -243,6 +252,9 @@ private:
     juce::StringArray getRandomCandidateChangedSections(int slotIndex);
     juce::String currentRandomRecipeName() const;
     juce::String applyRandomGenerationGuardrails(RandomMutationScope mutationScope);
+    juce::String applyRandomRenderValidation(bool fxLocked);
+    RandomRenderMetrics renderRandomValidationSnippet();
+    void resetRandomValidationRenderState();
     void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
     float getParameterPlainValue(const juce::String& parameterID, float fallback) const;

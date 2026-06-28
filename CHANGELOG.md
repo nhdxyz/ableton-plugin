@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### HOME Output Oscilloscope
+
+- Added a reusable `OutputOscilloscopeDisplay` fed by the existing final-output snapshot so HOME now shows waveform shape, peak state, and transient punch alongside spectrum and stereo field analysis.
+- Rebalanced the HOME center analyzer stack into overview, oscilloscope, spectrum, and stereo field rows so house bass weight, pump curves, stabs, and clipping risk are easier to inspect without opening another panel.
+- Preserved existing audio, preset, and automation state by reusing editor-side snapshot reduction only.
+
 ### MOD Route Map Visualization
 
 - Added a reusable `ModRouteMapDisplay` that summarizes configured modulation routes as source-to-destination paths with polarity, depth, bypass state, and tooltips.

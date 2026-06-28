@@ -11,6 +11,7 @@
 #include "UI/ModRouteMapDisplay.h"
 #include "UI/ModSourceMeter.h"
 #include "UI/OutputMeter.h"
+#include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PumpCurveDisplay.h"
@@ -647,6 +648,7 @@ private:
     juce::TextEditor infoDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
+    UI::OutputOscilloscopeDisplay outputOscilloscopeDisplay;
     UI::OutputSpectrumDisplay outputSpectrumDisplay;
     UI::StereoFieldDisplay stereoFieldDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
@@ -750,6 +752,7 @@ private:
     void applyLfoCurveTool(LfoCurveTool tool);
     void updateOutputMeter();
     void updateOutputSpectrumDisplay();
+    void updateOutputOscilloscopeDisplay();
     void updateStereoFieldDisplay();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
@@ -863,6 +866,8 @@ private:
     float displayedRmsRight = 0.0f;
     std::array<float, NateVSTAudioProcessor::outputSpectrumSnapshotSize> outputSpectrumSnapshot {};
     UI::OutputSpectrumDisplay::BandArray displayedSpectrumBands {};
+    UI::OutputOscilloscopeDisplay::SampleArray displayedScopeSamples {};
+    float displayedScopeTransient = 0.0f;
     float displayedStereoCorrelation = 0.0f;
     float displayedStereoWidth = 0.0f;
     float displayedStereoBalance = 0.0f;

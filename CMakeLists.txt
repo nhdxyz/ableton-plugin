@@ -63,6 +63,7 @@ target_sources(NateVST
         Source/UI/ModRouteMapDisplay.cpp
         Source/UI/ModSourceMeter.cpp
         Source/UI/OutputMeter.cpp
+        Source/UI/OutputOscilloscopeDisplay.cpp
         Source/UI/OutputSpectrumDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp
         Source/UI/PumpCurveDisplay.cpp

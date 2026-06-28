@@ -763,6 +763,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffedf7f4));
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
+    addAndMakeVisible(outputOscilloscopeDisplay);
     addAndMakeVisible(outputSpectrumDisplay);
     addAndMakeVisible(stereoFieldDisplay);
     addAndMakeVisible(homeOverviewDisplay);
@@ -2815,6 +2816,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
+            outputOscilloscopeDisplay.setVisible(true);
             outputSpectrumDisplay.setVisible(true);
             stereoFieldDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
@@ -2844,9 +2846,10 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
 
-            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(166));
-            auto analysisRow = overviewArea.withTrimmedTop(8);
-            const auto stereoWidth = juce::jlimit(150, 210, analysisRow.getWidth() / 3);
+            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(126));
+            outputOscilloscopeDisplay.setBounds(overviewArea.removeFromTop(54).withTrimmedTop(6).reduced(4, 0));
+            auto analysisRow = overviewArea.withTrimmedTop(6);
+            const auto stereoWidth = juce::jlimit(112, 158, analysisRow.getWidth() / 3);
             stereoFieldDisplay.setBounds(analysisRow.removeFromRight(stereoWidth).reduced(4, 0));
             outputSpectrumDisplay.setBounds(analysisRow.reduced(4, 0));
 
@@ -7308,7 +7311,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -8624,6 +8627,53 @@ void NateVSTAudioProcessorEditor::updateOutputSpectrumDisplay()
     outputSpectrumDisplay.setLevels(nextBands, peak, active);
 }
 
+void NateVSTAudioProcessorEditor::updateOutputOscilloscopeDisplay()
+{
+    UI::OutputOscilloscopeDisplay::SampleArray nextSamples {};
+
+    auto peak = 0.0f;
+    auto rms = 0.0f;
+    auto maxStep = 0.0f;
+    auto previous = outputSpectrumSnapshot.front();
+
+    for (const auto sample : outputSpectrumSnapshot)
+    {
+        const auto absSample = std::abs(sample);
+        peak = juce::jmax(peak, absSample);
+        rms += sample * sample;
+        maxStep = juce::jmax(maxStep, std::abs(sample - previous));
+        previous = sample;
+    }
+
+    rms = std::sqrt(rms / static_cast<float>(outputSpectrumSnapshot.size()));
+    peak = juce::jlimit(0.0f, 1.0f, peak);
+    const auto active = peak > 0.0025f;
+    const auto transient = active
+        ? juce::jlimit(0.0f, 1.0f, ((peak - (rms * 1.55f)) * 1.85f) + (maxStep * 0.20f))
+        : 0.0f;
+
+    for (size_t index = 0; index < nextSamples.size(); ++index)
+    {
+        const auto start = (index * outputSpectrumSnapshot.size()) / nextSamples.size();
+        const auto end = ((index + 1) * outputSpectrumSnapshot.size()) / nextSamples.size();
+        auto selected = 0.0f;
+
+        for (auto sourceIndex = start; sourceIndex < end; ++sourceIndex)
+        {
+            const auto sample = outputSpectrumSnapshot[sourceIndex];
+            if (std::abs(sample) > std::abs(selected))
+                selected = sample;
+        }
+
+        const auto coefficient = active ? 0.50f : 0.20f;
+        displayedScopeSamples[index] += (juce::jlimit(-1.0f, 1.0f, selected) - displayedScopeSamples[index]) * coefficient;
+        nextSamples[index] = displayedScopeSamples[index];
+    }
+
+    displayedScopeTransient += (transient - displayedScopeTransient) * (transient > displayedScopeTransient ? 0.54f : 0.18f);
+    outputOscilloscopeDisplay.setSamples(nextSamples, peak, displayedScopeTransient, active);
+}
+
 void NateVSTAudioProcessorEditor::updateStereoFieldDisplay()
 {
     auto correlation = 0.0f;
@@ -8880,6 +8930,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateModDestinationIndicators();
     updateOutputMeter();
     updateOutputSpectrumDisplay();
+    updateOutputOscilloscopeDisplay();
     updateStereoFieldDisplay();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();

@@ -2,11 +2,39 @@
 
 #include <juce_core/juce_core.h>
 
+#include <cmath>
 #include <iostream>
+
+namespace
+{
+bool setPlainParameter(NateVSTAudioProcessor& processor, const juce::String& parameterID, float value)
+{
+    if (auto* parameter = processor.getValueTreeState().getParameter(parameterID))
+    {
+        parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+        return true;
+    }
+
+    return false;
+}
+}
 
 int main()
 {
     NateVSTAudioProcessor processor;
+
+    if (! setPlainParameter(processor, Parameters::ID::macroTone, 0.24f)
+        || ! setPlainParameter(processor, Parameters::ID::macroDirt, 0.12f)
+        || ! setPlainParameter(processor, Parameters::ID::macroMotion, 0.62f)
+        || ! setPlainParameter(processor, Parameters::ID::macroSpace, 0.48f)
+        || ! setPlainParameter(processor, Parameters::ID::macroWeight, 0.70f)
+        || ! setPlainParameter(processor, Parameters::ID::macroBounce, 0.36f)
+        || ! setPlainParameter(processor, Parameters::ID::macroWarp, 0.82f)
+        || ! setPlainParameter(processor, Parameters::ID::macroThrow, 0.28f))
+    {
+        std::cerr << "Could not seed macro preview parameters\n";
+        return 1;
+    }
 
     NateVSTAudioProcessor::PresetSaveOptions options;
     options.category = "UKG\\Bass";
@@ -92,7 +120,13 @@ int main()
             && preset.tags.contains("Random Lab")
             && preset.tags.contains("UKG Dred Bass")
             && preset.notes.contains("Custom audit notes")
-            && preset.notes.contains("dark UKG sub");
+            && preset.notes.contains("dark UKG sub")
+            && preset.macroSummary.contains("Warp 82")
+            && preset.macroSummary.contains("Weight 70")
+            && preset.macroValues.size() == 8
+            && std::abs(preset.macroValues[0] - 0.24f) < 0.002f
+            && std::abs(preset.macroValues[2] - 0.62f) < 0.002f
+            && std::abs(preset.macroValues[6] - 0.82f) < 0.002f;
         break;
     }
 

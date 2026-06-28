@@ -50,6 +50,7 @@ public:
         juce::String key;
         juce::String macroSummary;
         juce::String notes;
+        std::array<float, 8> macroValues {};
         int bpm = 0;
         int rating = 0;
         float macroIntensity = 0.0f;

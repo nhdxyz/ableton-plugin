@@ -66,6 +66,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Useful-only validation now renders a short internal audition through the synth/sample/FX chain to detect quiet, clipped, non-finite, or heavy-tail candidates before candidate capture, then appends render feedback to LAB status, History, and generated preset notes.
 - Random Lab now retries rejected render candidates before filling a candidate slot, restoring the original pre-random state between attempts and reporting retry exhaustion when locks make a bad result impossible to fix.
 - Random Lab now applies recipe-aware safe fallbacks after retry exhaustion, recovering from the original pre-random state with bass/mid/noise/general init shapes, relaxed Output/FX safety locks when needed, and explicit blocked-source-lock reporting.
+- Library scan results now keep all eight macro values per preset, and the Browser renders them as a compact Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw strip for faster performance-preset triage.
 
 ## Highest-Value Randomization Backlog
 
@@ -114,7 +115,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 9. Add missing sample/wavetable dependency warnings directly in Library rows.
 10. Add preset pack import/export with folder structure and metadata manifest.
 11. Add "collect and save" for samples/wavetables used by a preset pack.
-12. Add find-similar search based on tags, macro values, and parameter distance.
+12. Add find-similar search based on tags, the new macro value strip, and parameter distance.
 13. Add author/pack/category bulk edit for user presets.
 14. Add browser keyboard shortcuts for favorite, rating, load, save as, and audition.
 15. Add rating/favorite bias to random recipe selection.

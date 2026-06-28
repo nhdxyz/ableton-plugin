@@ -60,7 +60,7 @@ float readPresetParameterValue(const juce::ValueTree& state, const char* paramet
     return fallback;
 }
 
-juce::String presetMacroSummary(const juce::ValueTree& state, float& intensity)
+const std::array<const char*, 8>& presetMacroLabels()
 {
     static constexpr std::array<const char*, 8> labels {
         "Tone",
@@ -73,6 +73,11 @@ juce::String presetMacroSummary(const juce::ValueTree& state, float& intensity)
         "Throw"
     };
 
+    return labels;
+}
+
+const std::array<const char*, 8>& presetMacroParameterIDs()
+{
     static constexpr std::array<const char*, 8> ids {
         Parameters::ID::macroTone,
         Parameters::ID::macroDirt,
@@ -84,6 +89,22 @@ juce::String presetMacroSummary(const juce::ValueTree& state, float& intensity)
         Parameters::ID::macroThrow
     };
 
+    return ids;
+}
+
+std::array<float, 8> presetMacroValues(const juce::ValueTree& state)
+{
+    std::array<float, 8> values {};
+    const auto& ids = presetMacroParameterIDs();
+
+    for (size_t index = 0; index < ids.size(); ++index)
+        values[index] = juce::jlimit(0.0f, 1.0f, readPresetParameterValue(state, ids[index], 0.0f));
+
+    return values;
+}
+
+juce::String presetMacroSummary(const std::array<float, 8>& macroValues, float& intensity)
+{
     struct MacroPreview
     {
         juce::String label;
@@ -91,11 +112,12 @@ juce::String presetMacroSummary(const juce::ValueTree& state, float& intensity)
     };
 
     std::array<MacroPreview, 8> previews {};
+    const auto& labels = presetMacroLabels();
     intensity = 0.0f;
 
-    for (size_t index = 0; index < ids.size(); ++index)
+    for (size_t index = 0; index < macroValues.size(); ++index)
     {
-        const auto value = juce::jlimit(0.0f, 1.0f, readPresetParameterValue(state, ids[index], 0.0f));
+        const auto value = juce::jlimit(0.0f, 1.0f, macroValues[index]);
         previews[index] = { labels[index], value };
         intensity = juce::jmax(intensity, value);
     }
@@ -1869,6 +1891,7 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
             auto key = juce::String("Any Key");
             auto macroSummary = juce::String("Macros flat");
             juce::String notes;
+            std::array<float, 8> macroValues {};
             auto bpm = 0;
             auto macroIntensity = 0.0f;
             juce::String tags;
@@ -1913,7 +1936,8 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                     if (storedTags.isNotEmpty())
                         tags = storedTags;
 
-                    macroSummary = presetMacroSummary(state, macroIntensity);
+                    macroValues = presetMacroValues(state);
+                    macroSummary = presetMacroSummary(macroValues, macroIntensity);
 
                     const auto storedNotes = state.getProperty("preset_notes").toString().trim();
                     if (storedNotes.isNotEmpty())
@@ -1938,6 +1962,7 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                                 key,
                                 macroSummary,
                                 notes,
+                                macroValues,
                                 bpm,
                                 ratingForPreset(name),
                                 macroIntensity,

@@ -227,8 +227,8 @@ Implemented sampler sub-slice:
 
 Implemented library sub-slice:
 
-- Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, and a `Macros` sort mode. The broader browser-column request remains open for a fuller multi-column browser view.
-- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro summary with click-to-select and double-click-to-load behavior. A larger full-browser mode, smart folders, tag editing, and audio preview rendering remain open.
+- Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
+- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. A larger full-browser mode, smart folders, tag editing, and audio preview rendering remain open.
 
 ## Priority 8: Sound Quality And Safety
 

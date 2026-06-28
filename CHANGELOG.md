@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Macro Value Strip
+
+- Added structured per-preset macro values to Library scan results, preserving the existing top-macro summary while exposing all eight Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw values.
+- Replaced the Browser `MACROS` text cell with a compact eight-meter macro value strip and made the detailed values searchable in Library status/tooltips.
+- Extended `PresetSaveAudit` to save known macro values and verify the scanned Library preview data.
+
 ### MSEG Curve Tool Strip
 
 - Added direct MOD-panel MSEG tools for LFO 1 Curve: invert, reverse, smooth, quantize, controlled random dice, and a one-click UKG swing shape.

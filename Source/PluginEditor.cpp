@@ -330,7 +330,64 @@ juce::String formatPresetBpm(int bpm)
 juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& preset)
 {
     const auto summary = preset.macroSummary.trim();
-    return summary.isNotEmpty() ? "Macros: " + summary : juce::String("Macros: flat");
+    const auto values = [&preset]
+    {
+        static constexpr std::array<const char*, 8> labels { "T", "D", "M", "S", "W", "B", "Wr", "Th" };
+        juce::StringArray valueText;
+
+        for (size_t index = 0; index < labels.size(); ++index)
+            valueText.add(juce::String(labels[index]) + juce::String(juce::roundToInt(preset.macroValues[index] * 100.0f)));
+
+        return valueText.joinIntoString(" ");
+    }();
+
+    return (summary.isNotEmpty() ? "Macros: " + summary : juce::String("Macros: flat"))
+        + " | " + values;
+}
+
+void drawPresetMacroValueStrip(juce::Graphics& g,
+                               juce::Rectangle<int> area,
+                               const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    static constexpr std::array<const char*, 8> labels { "T", "D", "M", "S", "W", "B", "Wr", "Th" };
+
+    area = area.reduced(2, 2);
+    if (area.getWidth() <= 0 || area.getHeight() <= 0)
+        return;
+
+    const auto cellWidth = juce::jmax(16, area.getWidth() / static_cast<int>(labels.size()));
+    g.setFont(juce::FontOptions(area.getWidth() < 182 ? 8.2f : 8.8f, juce::Font::bold));
+
+    for (size_t index = 0; index < labels.size(); ++index)
+    {
+        auto cell = area.removeFromLeft(index + 1 == labels.size() ? area.getWidth() : cellWidth).reduced(1, 1);
+        if (cell.getWidth() <= 0)
+            continue;
+
+        const auto value = juce::jlimit(0.0f, 1.0f, preset.macroValues[index]);
+        const auto fill = juce::Colour(0xff8ee6c9).interpolatedWith(juce::Colour(0xffffd27a), juce::jlimit(0.0f, 1.0f, value * 0.8f));
+        auto meter = cell.reduced(1, 1).toFloat();
+        const auto activeHeight = meter.getHeight() * value;
+
+        g.setColour(juce::Colour(0xff172024));
+        g.fillRoundedRectangle(cell.toFloat(), 3.0f);
+
+        if (activeHeight > 0.5f)
+        {
+            auto active = meter.withY(meter.getBottom() - activeHeight).withHeight(activeHeight);
+            g.setColour(fill.withAlpha(0.62f));
+            g.fillRoundedRectangle(active, 2.0f);
+        }
+
+        g.setColour(value >= 0.30f ? fill : juce::Colour(0xff728083));
+        g.drawRoundedRectangle(cell.toFloat(), 3.0f, value >= 0.30f ? 1.1f : 0.8f);
+        g.setColour(value >= 0.30f ? juce::Colour(0xffedf7f4) : juce::Colour(0xffa8b6b8));
+        g.drawFittedText(juce::String(labels[index]) + juce::String(juce::roundToInt(value * 100.0f)),
+                         cell.reduced(1, 0),
+                         juce::Justification::centred,
+                         1,
+                         0.42f);
+    }
 }
 
 juce::StringArray presetTagChoices()
@@ -734,7 +791,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
-    presetBrowserHeaderLabel.setText("PRESET        CATEGORY      PACK        KEY     BPM   RATE  MACROS", juce::dontSendNotification);
+    presetBrowserHeaderLabel.setText("PRESET        CATEGORY      PACK        KEY     BPM   RATE  MACRO VALUES", juce::dontSendNotification);
     presetBrowserHeaderLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     presetBrowserHeaderLabel.setJustificationType(juce::Justification::centredLeft);
     presetBrowserHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
@@ -7834,7 +7891,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
     drawCell(row.removeFromLeft(76), preset.key, juce::Colour(0xffa8b6b8));
     drawCell(row.removeFromLeft(64), formatPresetBpm(preset.bpm), juce::Colour(0xffa8b6b8));
     drawCell(row.removeFromLeft(54), ratingText, juce::Colour(0xffd6e0dc), juce::Justification::centred);
-    drawCell(row, preset.macroSummary, preset.macroIntensity >= 0.30f ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff8c9a9d));
+    drawPresetMacroValueStrip(g, row, preset);
 }
 
 juce::String NateVSTAudioProcessorEditor::getNameForRow(int rowNumber)
@@ -7908,7 +7965,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         const auto bpmText = formatPresetBpm(preset.bpm);
         const auto searchable = preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
             + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
-            + preset.pack + " " + preset.key + " " + bpmText + " " + preset.macroSummary + " Macro Macros Performance"
+            + preset.pack + " " + preset.key + " " + bpmText + " " + preset.macroSummary + " "
+            + presetMacroPreviewText(preset) + " Macro Macros Performance"
             + " " + preset.notes
             + (preset.isFavorite ? " Favorite" : "");
 

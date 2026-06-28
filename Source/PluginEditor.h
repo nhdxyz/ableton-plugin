@@ -455,6 +455,8 @@ private:
     juce::TextButton sequencerTabButton { "SEQ" };
     juce::TextButton effectsTabButton { "FX" };
     juce::TextButton libraryTabButton { "LIBRARY" };
+    juce::TextButton selectedControlAddModButton { "MOD+" };
+    juce::TextButton selectedControlOpenModButton { "MOD" };
     juce::TextButton sineWaveButton { "Sine" };
     juce::TextButton sawWaveButton { "Saw" };
     juce::TextButton squareWaveButton { "Square" };
@@ -581,6 +583,9 @@ private:
     void updateMacroAssignmentEditorStatus();
     void updateModDestinationIndicators();
     void updateSelectedControlInspector(const juce::String& labelText, const juce::String& parameterID, double plainValue);
+    void updateSelectedControlActionState();
+    void addModRouteForSelectedControl();
+    void focusSelectedControlModDestination();
     juce::String formattedParameterValue(const juce::String& parameterID, double plainValue) const;
     juce::String modulationSummaryForParameter(const juce::String& parameterID) const;
     int modulationDestinationIndexForParameter(const juce::String& parameterID) const;

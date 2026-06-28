@@ -8,6 +8,7 @@
 - The strip now shows formatted value text, the automation parameter ID, and whether the parameter has active modulation routes.
 - Reused the existing modulation destination metadata so modulated targets show source names, per-route depth, and summed route amount while unassigned targets stay visually quiet.
 - Wired the inspector through the shared slider setup so new APVTS-backed controls inherit the same feedback behavior automatically.
+- Added global `MOD+` and `MOD` actions to the selected-control strip so touched modulatable controls can quickly receive the current MOD source or open the detailed MOD editor.
 
 ### Deep Research Expansion
 

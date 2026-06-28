@@ -1449,6 +1449,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     fxPresetBox.onChange = [this] { applySelectedFxPreset(); };
     modInspectorDestinationBox.onChange = [this] { updateModInspectorStatus(); };
+    modInspectorSourceBox.onChange = [this] { updateSelectedControlActionState(); };
     modMacroAssignSourceBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
     modMacroAssignDestinationBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
     modMacroAssignAmountSlider.onValueChange = [this] { updateMacroAssignmentEditorStatus(); };
@@ -1504,6 +1505,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorAddButton.onClick = [this] { addInspectedModRoute(); };
     modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
     modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
+    selectedControlAddModButton.setTooltip("Touch a modulatable control, then add the selected MOD source to it");
+    selectedControlAddModButton.onClick = [this] { addModRouteForSelectedControl(); };
+    selectedControlAddModButton.setEnabled(false);
+    selectedControlOpenModButton.setTooltip("Open the MOD panel focused on the selected control");
+    selectedControlOpenModButton.onClick = [this] { focusSelectedControlModDestination(); };
+    selectedControlOpenModButton.setEnabled(false);
     modMacroAssignAddButton.setTooltip("Add or update this macro assignment");
     modMacroAssignAddButton.onClick = [this] { addMacroAssignment(false); };
     modMacroAssignReplaceButton.setTooltip("Replace all assignments for the selected macro with this one destination");
@@ -1607,6 +1614,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
     addAndMakeVisible(modInspectorClearButton);
+    addAndMakeVisible(selectedControlAddModButton);
+    addAndMakeVisible(selectedControlOpenModButton);
     addAndMakeVisible(modMacroAssignAddButton);
     addAndMakeVisible(modMacroAssignReplaceButton);
     addAndMakeVisible(modMacroAssignClearButton);
@@ -1826,10 +1835,14 @@ void NateVSTAudioProcessorEditor::resized()
     updateTabButtons();
 
     auto selectedControlRow = content.withHeight(28);
-    auto selectedControlArea = selectedControlRow.removeFromRight(392).reduced(0, 2);
+    auto selectedControlArea = selectedControlRow.removeFromRight(520).reduced(0, 2);
     selectedControlHeaderLabel.setVisible(true);
     selectedControlStatusLabel.setVisible(true);
+    selectedControlAddModButton.setVisible(true);
+    selectedControlOpenModButton.setVisible(true);
     selectedControlHeaderLabel.setBounds(selectedControlArea.removeFromLeft(72).reduced(2, 0));
+    selectedControlAddModButton.setBounds(selectedControlArea.removeFromRight(58).reduced(2, 0));
+    selectedControlOpenModButton.setBounds(selectedControlArea.removeFromRight(50).reduced(2, 0));
     selectedControlStatusLabel.setBounds(selectedControlArea.reduced(2, 0));
 
     switch (activePanel)
@@ -2757,6 +2770,8 @@ void NateVSTAudioProcessorEditor::resized()
 
     selectedControlHeaderLabel.toFront(false);
     selectedControlStatusLabel.toFront(false);
+    selectedControlAddModButton.toFront(false);
+    selectedControlOpenModButton.toFront(false);
 }
 
 bool NateVSTAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
@@ -4286,6 +4301,60 @@ void NateVSTAudioProcessorEditor::updateSelectedControlInspector(const juce::Str
                                          hasActiveRoutes ? juce::Colour(0xffd9fff1) : juce::Colour(0xffa8b6b8));
     selectedControlStatusLabel.setColour(juce::Label::backgroundColourId,
                                          hasActiveRoutes ? juce::Colour(0xee10221e) : juce::Colour(0xee101619));
+    updateSelectedControlActionState();
+}
+
+void NateVSTAudioProcessorEditor::updateSelectedControlActionState()
+{
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationIndex = modulationDestinationIndexForParameter(selectedControlParameterID);
+    const auto canTarget = juce::isPositiveAndBelow(destinationIndex, destinationChoices.size());
+    const auto sourceIndex = juce::jlimit(1,
+                                         sourceChoices.size() - 1,
+                                         modInspectorSourceBox.getSelectedId() - 1);
+    const auto sourceName = juce::isPositiveAndBelow(sourceIndex, sourceChoices.size())
+        ? sourceChoices[sourceIndex]
+        : juce::String("selected source");
+    const auto destinationName = canTarget ? destinationChoices[destinationIndex] : juce::String("selected control");
+
+    selectedControlAddModButton.setEnabled(canTarget);
+    selectedControlOpenModButton.setEnabled(canTarget);
+    selectedControlAddModButton.setTooltip(canTarget
+                                               ? "Add " + sourceName + " to " + destinationName + " using the next free MOD slot"
+                                               : "Touch a control that is available in the MOD matrix");
+    selectedControlOpenModButton.setTooltip(canTarget
+                                                ? "Open MOD focused on " + destinationName
+                                                : "Touch a control that is available in the MOD matrix");
+}
+
+void NateVSTAudioProcessorEditor::addModRouteForSelectedControl()
+{
+    const auto destinationIndex = modulationDestinationIndexForParameter(selectedControlParameterID);
+    if (destinationIndex <= 0)
+    {
+        updateSelectedControlActionState();
+        return;
+    }
+
+    setModInspectorDestination(destinationIndex);
+    addInspectedModRoute();
+
+    if (selectedControlParameterID.isNotEmpty())
+        updateSelectedControlInspector(selectedControlName, selectedControlParameterID, selectedControlPlainValue);
+}
+
+void NateVSTAudioProcessorEditor::focusSelectedControlModDestination()
+{
+    const auto destinationIndex = modulationDestinationIndexForParameter(selectedControlParameterID);
+    if (destinationIndex <= 0)
+    {
+        updateSelectedControlActionState();
+        return;
+    }
+
+    setModInspectorDestination(destinationIndex);
+    setActivePanel(Panel::mod);
 }
 
 int NateVSTAudioProcessorEditor::selectedMacroAssignmentSourceIndex() const

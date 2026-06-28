@@ -2,6 +2,11 @@
 
 ## 2026-06-28
 
+### Generated Note Templates
+
+- Added reusable LAB Save note templates for macro intent, Ableton use, UKG variation notes, mix safety, and pack notes.
+- Template insertion appends to the editable generated notes field and marks the note as user-edited, so Save and Save Slot persist the added intent text.
+
 ### Editable Generated Notes
 
 - Added an editable multi-line notes field to LAB Save, auto-filled from generated recipe/scope/lock/candidate context while still preserving manual edits during an active generated draft.

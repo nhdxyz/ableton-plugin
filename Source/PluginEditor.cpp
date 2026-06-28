@@ -887,6 +887,36 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetNotesEditor.onTextChange = [this] { presetNotesIsRandomDraft = false; };
     addAndMakeVisible(presetNotesEditor);
 
+    presetNotesTemplateBox.addItem("Note Template", 1);
+    presetNotesTemplateBox.addItem("Macro Intent", 2);
+    presetNotesTemplateBox.addItem("Ableton Use", 3);
+    presetNotesTemplateBox.addItem("UKG Variation", 4);
+    presetNotesTemplateBox.addItem("Mix Safety", 5);
+    presetNotesTemplateBox.addItem("Pack Notes", 6);
+    presetNotesTemplateBox.setSelectedId(1, juce::dontSendNotification);
+    presetNotesTemplateBox.setTextWhenNothingSelected("Note Template");
+    presetNotesTemplateBox.setTooltip("Insert a reusable notes scaffold into the generated preset notes");
+    presetNotesTemplateBox.onChange = [this]
+    {
+        const auto templateId = presetNotesTemplateBox.getSelectedId();
+        if (templateId <= 1)
+            return;
+
+        const auto templateText = presetNoteTemplateForId(templateId).trim();
+        if (templateText.isEmpty())
+            return;
+
+        const auto currentText = presetNotesEditor.getText().trim();
+        presetNotesEditor.setText(currentText.isEmpty()
+                                      ? templateText
+                                      : currentText + "\n\n" + templateText,
+                                  juce::dontSendNotification);
+        presetNotesIsRandomDraft = false;
+        presetNotesTemplateBox.setSelectedId(1, juce::dontSendNotification);
+        presetStatusLabel.setText("Inserted note template", juce::dontSendNotification);
+    };
+    addAndMakeVisible(presetNotesTemplateBox);
+
     randomCandidateDetailEditor.setReadOnly(true);
     randomCandidateDetailEditor.setMultiLine(true, true);
     randomCandidateDetailEditor.setScrollbarsShown(false);
@@ -2806,6 +2836,7 @@ void NateVSTAudioProcessorEditor::resized()
                     presetPackBox.setVisible(true);
                     presetBpmBox.setVisible(true);
                     presetNotesEditor.setVisible(true);
+                    presetNotesTemplateBox.setVisible(true);
                     candidateRatingBox.setVisible(true);
                     candidateFavoriteButton.setVisible(true);
                     savePresetButton.setVisible(true);
@@ -2822,7 +2853,10 @@ void NateVSTAudioProcessorEditor::resized()
                     savePresetButton.setBounds(saveRow.removeFromLeft(72).reduced(4));
                     saveCandidateButton.setBounds(saveRow.removeFromLeft(100).reduced(4));
 
-                    presetNotesEditor.setBounds(content.removeFromTop(102).withTrimmedTop(6).reduced(4));
+                    auto notesToolRow = content.removeFromTop(38).withTrimmedTop(4);
+                    presetNotesTemplateBox.setBounds(notesToolRow.removeFromLeft(180).reduced(4));
+
+                    presetNotesEditor.setBounds(content.removeFromTop(78).withTrimmedTop(4).reduced(4));
                     presetStatusLabel.setBounds(content.removeFromTop(34).withTrimmedTop(6).reduced(4));
                     break;
                 }
@@ -4907,6 +4941,68 @@ juce::String NateVSTAudioProcessorEditor::generatedPresetNotes(const juce::Strin
     return lines.joinIntoString("\n");
 }
 
+juce::String NateVSTAudioProcessorEditor::presetNoteTemplateForId(int templateId) const
+{
+    const auto category = presetCategoryBox.getText().trim().isNotEmpty()
+        ? presetCategoryBox.getText().trim()
+        : suggestedPresetCategoryForRecipe();
+    const auto recipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
+        ? currentGeneratedPresetRecipe.trim()
+        : (recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab"));
+    const auto bpm = presetBpmBox.getText().trim().isNotEmpty()
+        ? presetBpmBox.getText().trim()
+        : formatPresetBpm(suggestedPresetBpmForCategory(category));
+
+    switch (templateId)
+    {
+        case 2:
+            return "Macro Intent:\n"
+                "Tone: brighten/darken core harmonics\n"
+                "Dirt: drive edge without clipping the sub\n"
+                "Motion: filter/warp movement for groove\n"
+                "Space: delay/reverb throw amount\n"
+                "Weight: mono low-end focus\n"
+                "Bounce: pump or swing feel\n"
+                "Warp: source movement amount\n"
+                "Throw: momentary FX send";
+
+        case 3:
+            return "Ableton Use:\n"
+                "Role: " + suggestedPresetUseForCategory(category) + "\n"
+                "Tempo: " + bpm + "\n"
+                "Clip idea: 4-bar loop, automate Motion and Throw\n"
+                "Arrangement: duplicate for breakdown and mute low end before drop";
+
+        case 4:
+            return "UKG Variation:\n"
+                "Groove: 2-step push with swung 16ths\n"
+                "Bass: mono sub, moving upper layer, short glide\n"
+                "Chop: pitched vocal or organ response on offbeats\n"
+                "FX: short delay throw, guarded reverb tail\n"
+                "Recipe source: " + recipe;
+
+        case 5:
+            return "Mix Safety:\n"
+                "Sub: mono below 120 Hz\n"
+                "Peak: leave headroom before Ableton group processing\n"
+                "Drive: check harshness after Dirt/Warp automation\n"
+                "Space: keep reverb low for bass presets\n"
+                "Compare: A/B against saved candidate before overwriting";
+
+        case 6:
+            return "Pack Notes:\n"
+                "Category: " + category + "\n"
+                "Recipe: " + recipe + "\n"
+                "Pack role: starter, variation, or performance macro patch\n"
+                "Tags to add: Generated, Random Lab, house, UKG, tech-house, minimal, techno";
+
+        default:
+            break;
+    }
+
+    return {};
+}
+
 juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() const
 {
     const auto recipe = recipeBox.getText().trim();
@@ -6357,7 +6453,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 

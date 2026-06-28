@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Preset Compare And Revert
+
+- Added Library `Before`/`Loaded` compare and `Revert` controls for the most recent explicit preset load, using full plugin state snapshots so modulation, sequencer, sampler, FX, and performance snapshot state are included.
+- Kept HOME preset recall uncluttered and placed the compare controls in the LIBRARY selection workflow beside Load, Audition, and Fav.
+- Cleared stale compare pairs after preset audition or global undo/redo so the browser controls do not restore an unrelated patch state.
+
 ### Expanded 40-Preset Factory Style Pack
 
 - Expanded the repo-managed factory pack from 32 to 40 presets with Afro House Perc Bell, Afro House Marimba Skank, Progressive House Rise Pad, Lo-Fi House Dust Keys, Detroit House Chord Stab, Melodic Techno Pluck Lead, Melodic Techno Dark Pulse, and Acid Minimal Squiggle.

@@ -581,6 +581,8 @@ private:
     juce::TextButton auditionPresetButton { "Audition" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton comparePresetButton { "Before" };
+    juce::TextButton revertPresetButton { "Revert" };
     std::array<juce::TextButton, 8> presetQuickFilterButtons;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
@@ -666,6 +668,10 @@ private:
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
     double presetAuditionNoteOffMs = 0.0;
+    juce::MemoryBlock presetCompareBeforeSnapshot;
+    juce::MemoryBlock presetCompareLoadedSnapshot;
+    juce::String presetCompareName;
+    bool presetCompareShowingLoaded = true;
     int activeRandomCandidateAuditionNote = -1;
     int activeRandomCandidateAuditionSlot = -1;
     double randomCandidateAuditionNoteOffMs = 0.0;
@@ -804,6 +810,14 @@ private:
     void loadPresetByOffset(int offset);
     void auditionSelectedPreset();
     void releasePresetAuditionNote();
+    bool hasPresetCompareSnapshots() const;
+    bool capturePresetCompareBefore(const juce::String& presetName);
+    void capturePresetCompareLoaded();
+    void clearPresetCompareState();
+    void updatePresetCompareButtons();
+    void togglePresetCompare();
+    void revertPresetCompare();
+    void restorePresetCompareSnapshot(const juce::MemoryBlock& snapshot, const juce::String& statusText);
     void toggleFavoritePreset();
     void setSelectedPresetRating();
     void updateFavoritePresetButton();

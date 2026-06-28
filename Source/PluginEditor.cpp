@@ -2176,6 +2176,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     auditionPresetButton.onClick = [this] { auditionSelectedPreset(); };
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
     favoritePresetButton.onClick = [this] { toggleFavoritePreset(); };
+    comparePresetButton.setTooltip("Load a preset to compare it against the sound that was active before loading");
+    comparePresetButton.onClick = [this] { togglePresetCompare(); };
+    revertPresetButton.setTooltip("Restore the sound from before the most recent Library preset load");
+    revertPresetButton.onClick = [this] { revertPresetCompare(); };
+    updatePresetCompareButtons();
     const std::array<juce::String, 8> quickFilterLabels { "All", "Fav", "House", "Tech", "Min", "UKG", "Techno", "Factory" };
     for (size_t index = 0; index < presetQuickFilterButtons.size(); ++index)
     {
@@ -2459,6 +2464,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(auditionPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
+    addAndMakeVisible(comparePresetButton);
+    addAndMakeVisible(revertPresetButton);
     addAndMakeVisible(candidateFavoriteButton);
     addAndMakeVisible(saveCandidateButton);
     addAndMakeVisible(fxMoveUpButton);
@@ -3994,6 +4001,8 @@ void NateVSTAudioProcessorEditor::resized()
             auditionPresetButton.setVisible(true);
             favoritePresetButton.setVisible(true);
             refreshPresetsButton.setVisible(true);
+            comparePresetButton.setVisible(true);
+            revertPresetButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             presetBrowserHeaderLabel.setVisible(true);
             presetBrowserList.setVisible(true);
@@ -4031,6 +4040,9 @@ void NateVSTAudioProcessorEditor::resized()
             loadPresetButton.setBounds(loadActions.removeFromLeft(72).reduced(2, 4));
             auditionPresetButton.setBounds(loadActions.removeFromLeft(86).reduced(2, 4));
             favoritePresetButton.setBounds(loadActions.reduced(2, 4));
+            auto compareActions = findArea.removeFromTop(38).withTrimmedTop(2);
+            comparePresetButton.setBounds(compareActions.removeFromLeft(100).reduced(2, 4));
+            revertPresetButton.setBounds(compareActions.reduced(2, 4));
             presetStatusLabel.setBounds(findArea.reduced(2, 4));
 
             libraryBrowserLabel.setBounds(browserArea.removeFromTop(24));
@@ -7059,6 +7071,7 @@ void NateVSTAudioProcessorEditor::triggerGlobalUndo()
         return;
     }
 
+    clearPresetCompareState();
     refreshAfterGlobalEditRestore("Undo edit");
 }
 
@@ -7073,6 +7086,7 @@ void NateVSTAudioProcessorEditor::triggerGlobalRedo()
         return;
     }
 
+    clearPresetCompareState();
     refreshAfterGlobalEditRestore("Redo edit");
 }
 
@@ -7301,7 +7315,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton, &candidateFavoriteButton,
+        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton, &comparePresetButton, &revertPresetButton, &candidateFavoriteButton,
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
@@ -9523,11 +9537,16 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
     releasePresetAuditionNote();
 
     const auto presetName = presetBox.getText().trim();
-    if (presetName.isNotEmpty() && audioProcessor.getPresetNames().contains(presetName))
+    const auto canLoadPreset = presetName.isNotEmpty() && audioProcessor.getPresetNames().contains(presetName);
+    if (canLoadPreset)
+    {
+        capturePresetCompareBefore(presetName);
         captureGlobalEdit("Load preset " + presetName);
+    }
 
     if (audioProcessor.loadPreset(presetName))
     {
+        capturePresetCompareLoaded();
         refreshPresetList();
         presetBox.setText(presetName, juce::dontSendNotification);
         presetNameEditor.setText(presetName, juce::dontSendNotification);
@@ -9543,13 +9562,16 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
         presetNotesIsRandomDraft = false;
         currentPresetDraftIsGenerated = false;
         currentGeneratedPresetRecipe.clear();
-        presetStatusLabel.setText("Loaded " + presetName, juce::dontSendNotification);
+        presetStatusLabel.setText("Loaded " + presetName + " | Compare ready", juce::dontSendNotification);
         updateFavoritePresetButton();
+        updatePresetCompareButtons();
         updateSampleNameLabel();
         sequencerGrid.repaint();
         return;
     }
 
+    if (canLoadPreset)
+        clearPresetCompareState();
     presetStatusLabel.setText("Select a preset to load", juce::dontSendNotification);
 }
 
@@ -9590,6 +9612,7 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
         return;
     }
 
+    clearPresetCompareState();
     refreshPresetList();
     presetBox.setText(presetName, juce::dontSendNotification);
     presetNameEditor.setText(presetName, juce::dontSendNotification);
@@ -9629,6 +9652,133 @@ void NateVSTAudioProcessorEditor::releasePresetAuditionNote()
     audioProcessor.getMidiKeyboardState().noteOff(1, activePresetAuditionNote, 0.0f);
     activePresetAuditionNote = -1;
     presetAuditionNoteOffMs = 0.0;
+}
+
+bool NateVSTAudioProcessorEditor::hasPresetCompareSnapshots() const
+{
+    return presetCompareBeforeSnapshot.getSize() > 0 && presetCompareLoadedSnapshot.getSize() > 0;
+}
+
+bool NateVSTAudioProcessorEditor::capturePresetCompareBefore(const juce::String& presetName)
+{
+    juce::MemoryBlock snapshot;
+    audioProcessor.getStateInformation(snapshot);
+
+    if (snapshot.getSize() == 0)
+    {
+        clearPresetCompareState();
+        return false;
+    }
+
+    presetCompareBeforeSnapshot = snapshot;
+    presetCompareLoadedSnapshot.setSize(0);
+    presetCompareName = presetName;
+    presetCompareShowingLoaded = true;
+    updatePresetCompareButtons();
+    return true;
+}
+
+void NateVSTAudioProcessorEditor::capturePresetCompareLoaded()
+{
+    if (presetCompareBeforeSnapshot.getSize() == 0)
+    {
+        clearPresetCompareState();
+        return;
+    }
+
+    juce::MemoryBlock snapshot;
+    audioProcessor.getStateInformation(snapshot);
+
+    if (snapshot.getSize() == 0)
+    {
+        clearPresetCompareState();
+        return;
+    }
+
+    presetCompareLoadedSnapshot = snapshot;
+    presetCompareShowingLoaded = true;
+    updatePresetCompareButtons();
+}
+
+void NateVSTAudioProcessorEditor::clearPresetCompareState()
+{
+    presetCompareBeforeSnapshot.setSize(0);
+    presetCompareLoadedSnapshot.setSize(0);
+    presetCompareName.clear();
+    presetCompareShowingLoaded = true;
+    updatePresetCompareButtons();
+}
+
+void NateVSTAudioProcessorEditor::updatePresetCompareButtons()
+{
+    const auto hasSnapshots = hasPresetCompareSnapshots();
+    comparePresetButton.setEnabled(hasSnapshots);
+    revertPresetButton.setEnabled(hasSnapshots);
+    comparePresetButton.setButtonText(presetCompareShowingLoaded ? "Before" : "Loaded");
+
+    if (! hasSnapshots)
+    {
+        comparePresetButton.setTooltip("Load a preset to compare it against the sound that was active before loading");
+        revertPresetButton.setTooltip("Restore becomes available after a Library preset load");
+        return;
+    }
+
+    comparePresetButton.setTooltip(presetCompareShowingLoaded
+                                       ? "Hear the sound that was active before loading " + presetCompareName
+                                       : "Return to the loaded preset " + presetCompareName);
+    revertPresetButton.setTooltip("Restore the sound from before loading " + presetCompareName + " and clear this compare pair");
+}
+
+void NateVSTAudioProcessorEditor::togglePresetCompare()
+{
+    if (! hasPresetCompareSnapshots())
+    {
+        presetStatusLabel.setText("Load a preset first to compare", juce::dontSendNotification);
+        updatePresetCompareButtons();
+        return;
+    }
+
+    if (presetCompareShowingLoaded)
+    {
+        presetCompareShowingLoaded = false;
+        restorePresetCompareSnapshot(presetCompareBeforeSnapshot, "Comparing previous sound before " + presetCompareName);
+        return;
+    }
+
+    presetCompareShowingLoaded = true;
+    restorePresetCompareSnapshot(presetCompareLoadedSnapshot, "Comparing loaded " + presetCompareName);
+}
+
+void NateVSTAudioProcessorEditor::revertPresetCompare()
+{
+    if (! hasPresetCompareSnapshots())
+    {
+        presetStatusLabel.setText("No preset load to revert", juce::dontSendNotification);
+        updatePresetCompareButtons();
+        return;
+    }
+
+    const auto presetName = presetCompareName;
+    juce::MemoryBlock snapshot = presetCompareBeforeSnapshot;
+    clearPresetCompareState();
+    restorePresetCompareSnapshot(snapshot, "Reverted load of " + presetName);
+}
+
+void NateVSTAudioProcessorEditor::restorePresetCompareSnapshot(const juce::MemoryBlock& snapshot, const juce::String& statusText)
+{
+    if (snapshot.getSize() == 0)
+    {
+        clearPresetCompareState();
+        presetStatusLabel.setText("Preset compare state unavailable", juce::dontSendNotification);
+        return;
+    }
+
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    audioProcessor.setStateInformation(snapshot.getData(), static_cast<int>(snapshot.getSize()));
+    refreshAfterGlobalEditRestore(statusText);
+    presetStatusLabel.setText(statusText, juce::dontSendNotification);
+    updatePresetCompareButtons();
 }
 
 void NateVSTAudioProcessorEditor::toggleFavoritePreset()

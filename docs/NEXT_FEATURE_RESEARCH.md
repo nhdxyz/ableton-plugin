@@ -106,7 +106,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 31. Add a focused 3-operator FM engine for UKG bells, pings, metallic stabs, and techno hits.
 32. Add an additive/drawbar-style organ source for speed garage and UKG bass.
 33. Add legal/original sampled-PCM starter sources for house piano/organ-style stabs.
-34. Add noise source colors: white, pink, brown, metallic, vinyl, air, digital hash.
+34. Add noise source colors: white, pink, brown, metallic, vinyl, air, digital hash. First pass implemented as White, Pink, Brown, Air, Tick, Vinyl, and Digital with Noise Decay; metallic/riser shaping and a dedicated lofi/noise FX module remain open.
 35. Add supersaw/unison improvements: detune curve, phase spread, stereo spread, and mono-safe mode.
 36. Add analog drift for pitch, phase, filter, envelope, and pan.
 37. Add a second synth layer with layer mute, solo, copy, blend, and routing.

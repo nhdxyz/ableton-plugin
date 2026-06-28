@@ -56,6 +56,7 @@ Research references:
 - Current stab and bell presets mostly stay on 12 dB slope so the transient and chord color remain open before delay, reverb, width, and pump processing.
 - Current stab and bass recipes seed Osc Warp conservatively so organ/chord hits gain edge without replacing the future organ/drawbar or M1-style source work.
 - The SEQ chord menu now includes Maj 7, Dom 7, Sus, House 9, and Dub colors, with Deep Chord and Dub Chord pattern starters for fast house/garage stab sketches.
+- SYNTH noise now includes Air, Tick, Vinyl, and Digital colors with Noise Decay, so UKG bells/stabs can get short attack clicks and garage texture without using an always-on generic hiss layer.
 
 ### Vocal And Sample Behavior
 
@@ -151,6 +152,7 @@ Research references:
 - Added SEQ pattern scenes for A/B/Fill/Drop variations, with scene state saved in plugin and preset state for house and UKG arrangement sketches.
 - Added appended house chord colors and Deep Chord, Dub Chord, Off Bass, and Rolling Bass pattern starters so chord/bass hooks can be sketched faster.
 - Added SEQ genre groove templates for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive. These shape per-step timing, velocity, probability, length, lock intensity, swing, gate, accent, and lock routing from one grouped action.
+- Added SYNTH noise colors and Noise Decay, with randomization biased toward short Air/Tick attacks for UKG bells and stabs, sub-safe bass recipes, and Vinyl/Digital texture for Noise FX.
 
 ## Next UKG Features
 

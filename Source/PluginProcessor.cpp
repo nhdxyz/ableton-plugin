@@ -2824,6 +2824,8 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
                     Parameters::ID::osc2Level,
                     Parameters::ID::subLevel,
                     Parameters::ID::noiseLevel,
+                    Parameters::ID::noiseType,
+                    Parameters::ID::noiseDecay,
                     Parameters::ID::oscWarp,
                     Parameters::ID::oscWavetablePosition,
                     Parameters::ID::osc2WavetablePosition,
@@ -3291,6 +3293,8 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
             setParameterPlainValue(Parameters::ID::osc2Level, 0.12f);
             setParameterPlainValue(Parameters::ID::subLevel, 0.0f);
             setParameterPlainValue(Parameters::ID::noiseLevel, 0.72f);
+            setParameterPlainValue(Parameters::ID::noiseType, 5.0f);
+            setParameterPlainValue(Parameters::ID::noiseDecay, 0.55f);
             setParameterPlainValue(Parameters::ID::oscWave, 0.0f);
             setParameterPlainValue(Parameters::ID::filterCutoff, 5200.0f);
             notes.add("fallback noise init");
@@ -3301,6 +3305,8 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
             setParameterPlainValue(Parameters::ID::osc2Level, 0.28f);
             setParameterPlainValue(Parameters::ID::subLevel, 0.52f);
             setParameterPlainValue(Parameters::ID::noiseLevel, 0.0f);
+            setParameterPlainValue(Parameters::ID::noiseType, 0.0f);
+            setParameterPlainValue(Parameters::ID::noiseDecay, 0.18f);
             setParameterPlainValue(Parameters::ID::oscWave, 1.0f);
             setParameterPlainValue(Parameters::ID::monoMode, 1.0f);
             setParameterPlainValue(Parameters::ID::glideTime, 0.055f);
@@ -3314,6 +3320,8 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
             setParameterPlainValue(Parameters::ID::osc2Level, 0.34f);
             setParameterPlainValue(Parameters::ID::subLevel, 0.06f);
             setParameterPlainValue(Parameters::ID::noiseLevel, 0.04f);
+            setParameterPlainValue(Parameters::ID::noiseType, 4.0f);
+            setParameterPlainValue(Parameters::ID::noiseDecay, 0.045f);
             setParameterPlainValue(Parameters::ID::oscWave, 2.0f);
             setParameterPlainValue(Parameters::ID::filterCutoff, 2400.0f);
             setParameterPlainValue(Parameters::ID::filterResonance, 0.38f);
@@ -3325,6 +3333,8 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
             setParameterPlainValue(Parameters::ID::osc2Level, 0.18f);
             setParameterPlainValue(Parameters::ID::subLevel, 0.18f);
             setParameterPlainValue(Parameters::ID::noiseLevel, 0.05f);
+            setParameterPlainValue(Parameters::ID::noiseType, 3.0f);
+            setParameterPlainValue(Parameters::ID::noiseDecay, 0.12f);
             setParameterPlainValue(Parameters::ID::filterCutoff, 1800.0f);
             notes.add("fallback safe init");
         }
@@ -3610,6 +3620,7 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::oscOctave,
                 Parameters::ID::osc2Wave,
                 Parameters::ID::osc2Octave,
+                Parameters::ID::noiseType,
                 Parameters::ID::monoMode,
                 Parameters::ID::unisonVoices
             }, intensity);
@@ -3620,6 +3631,7 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::osc2Level,
                 Parameters::ID::subLevel,
                 Parameters::ID::noiseLevel,
+                Parameters::ID::noiseDecay,
                 Parameters::ID::oscWarp,
                 Parameters::ID::oscWavetablePosition,
                 Parameters::ID::osc2WavetablePosition,
@@ -3861,6 +3873,8 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::osc2Level,
                 Parameters::ID::subLevel,
                 Parameters::ID::noiseLevel,
+                Parameters::ID::noiseType,
+                Parameters::ID::noiseDecay,
                 Parameters::ID::oscWarp,
                 Parameters::ID::oscWavetablePosition,
                 Parameters::ID::osc2WavetablePosition,
@@ -4093,6 +4107,8 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::osc2Level,
             Parameters::ID::subLevel,
             Parameters::ID::noiseLevel,
+            Parameters::ID::noiseType,
+            Parameters::ID::noiseDecay,
             Parameters::ID::oscWarp,
             Parameters::ID::oscWavetablePosition,
             Parameters::ID::osc2WavetablePosition,
@@ -4570,6 +4586,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
+    const auto hasNoiseSourceControls = stateForParameters.getChildWithProperty("id", Parameters::ID::noiseType).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::noiseDecay).isValid();
     const auto hasWavetablePositions = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWavetablePosition).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::osc2WavetablePosition).isValid();
     const auto hasSequencerLockControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDestination).isValid()
@@ -4639,6 +4657,11 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::filterSlope, 0.0f);
     if (! hasOscWarp)
         setParameterPlainValue(Parameters::ID::oscWarp, 0.0f);
+    if (! hasNoiseSourceControls)
+    {
+        setParameterPlainValue(Parameters::ID::noiseType, 0.0f);
+        setParameterPlainValue(Parameters::ID::noiseDecay, 0.18f);
+    }
     if (! hasWavetablePositions)
     {
         setParameterPlainValue(Parameters::ID::oscWavetablePosition, 0.0f);

@@ -19,6 +19,8 @@ DEFAULTS = {
     "osc2_level": 0.0,
     "sub_level": 0.0,
     "noise_level": 0.0,
+    "noise_type": 0,
+    "noise_decay": 0.18,
     "osc_warp": 0.0,
     "osc_wavetable_position": 0.0,
     "osc2_wavetable_position": 0.35,

@@ -121,18 +121,26 @@ Implemented movement sub-slices:
 42. Add ring modulation.
 43. Add frequency modulation or phase modulation between oscillators.
 44. Add a simple three-operator FM mode for UKG bells, metallic stabs, and techno pings.
+45. Add source-noise colors for air, vinyl, attack tick, rumble, and digital grit.
 
 Implemented wavetable sub-slice:
 
 - Added an internal generated wavetable mode as waveform index 4 for Osc 1 and Osc 2, preserving existing waveform indices.
 - Added Osc 1/Osc 2 wavetable position parameters and MOD destinations for WT position movement.
 - Added a compact SYNTH-panel wavetable display and seeded selected factory presets with the new source mode.
-45. Add supersaw/unison engine improvements with phase, detune curve, and stereo spread.
-46. Add analog drift with per-voice pitch, phase, and filter variation.
-47. Add a second full synth layer.
-48. Add per-layer mute/solo and blend controls.
-49. Add partial/layer performance macros inspired by workstation-style browsing, without copying ZEN-Core.
-50. Add source-level randomization locks.
+
+Implemented percussive noise sub-slice:
+
+- Added White, Pink, Brown, Air, Tick, Vinyl, and Digital noise colors with a Noise Decay parameter for transient ticks and longer texture layers.
+- Kept bass randomization sub-safe while giving UKG/house stabs, bells, minimal blips, and Noise FX role-aware attack/noise choices.
+- Added `NoiseSourceAudit` for choice stability, decaying Tick behavior, and sustained white/digital rendering.
+
+46. Add supersaw/unison engine improvements with phase, detune curve, and stereo spread.
+47. Add analog drift with per-voice pitch, phase, and filter variation.
+48. Add a second full synth layer.
+49. Add per-layer mute/solo and blend controls.
+50. Add partial/layer performance macros inspired by workstation-style browsing, without copying ZEN-Core.
+51. Add source-level randomization locks.
 
 ## Priority 3: Sampler, Chops, And UKG Tools
 

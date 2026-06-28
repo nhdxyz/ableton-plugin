@@ -71,8 +71,14 @@ private:
     float lfo2StepValue = 0.0f;
     float currentOsc2LevelOffset = 0.0f;
     float currentDriveOffset = 0.0f;
+    float noiseColourState = 0.0f;
+    float noiseBrownState = 0.0f;
+    float noiseCrackleState = 0.0f;
+    float noiseDigitalHeldSample = 0.0f;
     double currentSampleRate = 44100.0;
     double hostBpm = 124.0;
+    int noiseDigitalHoldSamples = 1;
+    int voiceAgeSamples = 0;
     int glideSamplesRemaining = 0;
     int glideTotalSamples = 0;
     int sequencerLockDestination = 0;
@@ -89,6 +95,8 @@ private:
     std::atomic<float>* osc2Level = nullptr;
     std::atomic<float>* subLevel = nullptr;
     std::atomic<float>* noiseLevel = nullptr;
+    std::atomic<float>* noiseType = nullptr;
+    std::atomic<float>* noiseDecay = nullptr;
     std::atomic<float>* oscWarp = nullptr;
     std::atomic<float>* oscWavetablePosition = nullptr;
     std::atomic<float>* osc2WavetablePosition = nullptr;
@@ -149,6 +157,7 @@ private:
     float evaluateLfoCurve(float phase) const;
     float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
     StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
+    float processNoiseSample(int noiseTypeIndex);
     int getUnisonVoiceCount() const;
     float getUnisonPosition(int voiceIndex, int voiceCount) const;
     float frequencyForNote(int midiNoteNumber) const;

@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Percussive Noise Source
+
+- Added dedicated noise source colors for `White`, `Pink`, `Brown`, `Air`, `Tick`, `Vinyl`, and `Digital`, plus a `Noise Decay` control for short attack ticks and longer texture beds.
+- Integrated the new source controls into the SYNTH source area without increasing the panel's vertical footprint, preserving the minimum-size layout audit.
+- Updated recipe-aware randomization so UKG bells/stabs get short air/tick transients, bass recipes stay sub-safe, and Noise FX can generate vinyl/digital/air textures.
+- Added legacy preset defaults, source-scope mutation/lock handling, factory generator defaults, and `NoiseSourceAudit` coverage for noise choices, tick decay, and sustained noise modes.
+
 ### Dedicated House Groove Engine
 
 - Appended new sequencer groove modes for `House Shuf`, `Tech`, `Minimal`, and `Drive`, preserving existing Classic/Selective/UKG Push/Tight saved indexes.

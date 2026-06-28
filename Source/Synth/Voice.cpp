@@ -41,6 +41,8 @@ Voice::Voice(Parameters::APVTS& state)
     osc2Level = parameters.getRawParameterValue(Parameters::ID::osc2Level);
     subLevel = parameters.getRawParameterValue(Parameters::ID::subLevel);
     noiseLevel = parameters.getRawParameterValue(Parameters::ID::noiseLevel);
+    noiseType = parameters.getRawParameterValue(Parameters::ID::noiseType);
+    noiseDecay = parameters.getRawParameterValue(Parameters::ID::noiseDecay);
     oscWarp = parameters.getRawParameterValue(Parameters::ID::oscWarp);
     oscWavetablePosition = parameters.getRawParameterValue(Parameters::ID::oscWavetablePosition);
     osc2WavetablePosition = parameters.getRawParameterValue(Parameters::ID::osc2WavetablePosition);
@@ -174,6 +176,12 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
     ampEnvelope.noteOn();
     modEnvelope.reset();
     modEnvelope.noteOn();
+    noiseColourState = 0.0f;
+    noiseBrownState = 0.0f;
+    noiseCrackleState = 0.0f;
+    noiseDigitalHeldSample = (noiseRandom.nextFloat() * 2.0f) - 1.0f;
+    noiseDigitalHoldSamples = 1;
+    voiceAgeSamples = 0;
 
     if (readParameter(lfo1Retrigger, 1.0f) >= 0.5f)
     {
@@ -232,7 +240,8 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
         const auto noiseGain = readParameter(noiseLevel, 0.0f);
         const auto sourceWeight = osc1Gain + osc2Gain + (subGain * 0.75f) + (noiseGain * 0.45f);
         const auto sourceCompensation = 1.0f / juce::jmax(1.0f, sourceWeight);
-        const auto noiseSample = (noiseRandom.nextFloat() * 2.0f) - 1.0f;
+        const auto noiseTypeIndex = juce::jlimit(0, 6, static_cast<int>(std::round(readParameter(noiseType, 0.0f))));
+        const auto noiseSample = processNoiseSample(noiseTypeIndex);
         const auto unisonSample = renderUnisonStack(osc1Gain, osc2Gain);
         const auto centeredSample = (subOscillator.process() * subGain * 0.75f)
             + (noiseSample * noiseGain * 0.45f);
@@ -260,6 +269,8 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
             for (auto channel = 2; channel < outputBuffer.getNumChannels(); ++channel)
                 outputBuffer.addSample(channel, startSample + sampleIndex, (leftSample + rightSample) * 0.5f);
         }
+
+        ++voiceAgeSamples;
 
         if (! ampEnvelope.isActive())
         {
@@ -630,6 +641,63 @@ Voice::StereoSample Voice::renderUnisonStack(float osc1Gain, float osc2Gain)
     }
 
     return sample;
+}
+
+float Voice::processNoiseSample(int noiseTypeIndex)
+{
+    const auto raw = (noiseRandom.nextFloat() * 2.0f) - 1.0f;
+
+    switch (noiseTypeIndex)
+    {
+        case 1: // Pink
+            noiseColourState += (raw - noiseColourState) * 0.045f;
+            return juce::jlimit(-1.0f, 1.0f, (noiseColourState * 1.8f) + (raw * 0.18f));
+
+        case 2: // Brown
+            noiseBrownState = juce::jlimit(-1.0f, 1.0f, (noiseBrownState * 0.996f) + (raw * 0.018f));
+            return noiseBrownState;
+
+        case 3: // Air
+        {
+            noiseColourState += (raw - noiseColourState) * 0.018f;
+            return juce::jlimit(-1.0f, 1.0f, (raw - noiseColourState) * 1.35f);
+        }
+
+        case 4: // Tick
+        {
+            noiseColourState += (raw - noiseColourState) * 0.018f;
+            const auto highPassed = juce::jlimit(-1.0f, 1.0f, (raw - noiseColourState) * 1.5f);
+            const auto decaySeconds = juce::jlimit(0.005f, 0.6f, readParameter(noiseDecay, 0.18f));
+            const auto decay = std::exp(-static_cast<float>(voiceAgeSamples)
+                                        / juce::jmax(1.0f, static_cast<float>(currentSampleRate) * decaySeconds));
+            return highPassed * decay;
+        }
+
+        case 5: // Vinyl
+        {
+            noiseColourState += (raw - noiseColourState) * 0.035f;
+            noiseCrackleState *= 0.90f;
+            if (noiseRandom.nextFloat() > 0.9965f)
+                noiseCrackleState += ((noiseRandom.nextFloat() * 2.0f) - 1.0f) * 0.9f;
+
+            return juce::jlimit(-1.0f, 1.0f, (noiseColourState * 0.55f) + (raw * 0.12f) + noiseCrackleState);
+        }
+
+        case 6: // Digital
+        {
+            if (--noiseDigitalHoldSamples <= 0)
+            {
+                noiseDigitalHeldSample = raw;
+                noiseDigitalHoldSamples = juce::jmax(1, static_cast<int>(currentSampleRate / 6500.0));
+            }
+
+            return juce::jlimit(-1.0f, 1.0f, std::round(noiseDigitalHeldSample * 9.0f) / 9.0f);
+        }
+
+        case 0:
+        default:
+            return raw;
+    }
 }
 
 int Voice::getUnisonVoiceCount() const

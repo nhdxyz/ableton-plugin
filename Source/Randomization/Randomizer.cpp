@@ -107,6 +107,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto osc2Level = 0.0f;
     auto subLevel = 0.0f;
     auto noiseLevel = 0.0f;
+    auto noiseTypeIndex = 0;
+    auto noiseDecay = 0.18f;
     auto oscWarpAmount = 0.0f;
     auto oscWavetablePosition = 0.0f;
     auto osc2WavetablePosition = 0.35f;
@@ -309,6 +311,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc1Level = randomFloat(0.55f, 1.0f);
             osc2Level = randomFloat(0.0f, 0.5f);
             noiseLevel = randomFloat(0.0f, 0.28f);
+            noiseTypeIndex = randomInt(3, 6);
+            noiseDecay = randomFloat(0.012f, 0.18f);
             cutoff = randomFloat(900.0f, 7000.0f);
             resonance = randomFloat(0.25f, 0.95f);
             envAmount = randomFloat(-0.15f, 0.45f);
@@ -358,6 +362,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc2Level = randomFloat(0.25f, 0.75f);
             subLevel = randomFloat(0.0f, 0.25f);
             noiseLevel = randomFloat(0.0f, 0.18f);
+            noiseTypeIndex = randomInt(3, 5);
+            noiseDecay = randomFloat(0.025f, 0.22f);
             cutoff = randomFloat(450.0f, 2800.0f);
             resonance = randomFloat(0.15f, 0.65f);
             envAmount = randomFloat(0.05f, 0.4f);
@@ -405,6 +411,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc2Level = randomFloat(0.0f, 0.65f);
             subLevel = randomFloat(0.0f, 0.35f);
             noiseLevel = randomFloat(0.35f, 1.0f);
+            noiseTypeIndex = randomInt(3, 6);
+            noiseDecay = randomFloat(0.12f, 1.4f);
             cutoff = randomFloat(250.0f, 12000.0f);
             resonance = randomFloat(0.15f, 1.15f);
             envAmount = randomFloat(-0.7f, 0.9f);
@@ -568,6 +576,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc2Level = randomFloat(0.28f, 0.62f);
             subLevel = randomFloat(0.0f, 0.18f);
             noiseLevel = randomFloat(0.0f, 0.08f);
+            noiseTypeIndex = randomInt(3, 4);
+            noiseDecay = randomFloat(0.018f, 0.12f);
             cutoff = randomFloat(1100.0f, 5200.0f);
             resonance = randomFloat(0.18f, 0.48f);
             envAmount = randomFloat(0.08f, 0.34f);
@@ -620,6 +630,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc2Level = randomFloat(0.35f, 0.78f);
             subLevel = randomFloat(0.0f, 0.16f);
             noiseLevel = randomFloat(0.0f, 0.1f);
+            noiseTypeIndex = randomInt(3, 5);
+            noiseDecay = randomFloat(0.018f, 0.16f);
             cutoff = randomFloat(1300.0f, 6500.0f);
             resonance = randomFloat(0.16f, 0.58f);
             envAmount = randomFloat(0.1f, 0.42f);
@@ -676,6 +688,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             osc2Level = randomFloat(0.22f, 0.58f);
             subLevel = 0.0f;
             noiseLevel = randomFloat(0.0f, 0.12f);
+            noiseTypeIndex = randomInt(3, 4);
+            noiseDecay = randomFloat(0.008f, 0.07f);
             cutoff = randomFloat(2200.0f, 11000.0f);
             resonance = randomFloat(0.32f, 0.85f);
             envAmount = randomFloat(0.22f, 0.68f);
@@ -942,6 +956,7 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = blend(Parameters::ID::osc2Level, osc2Level);
         subLevel = blend(Parameters::ID::subLevel, subLevel);
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
+        noiseDecay = blend(Parameters::ID::noiseDecay, noiseDecay);
         oscWarpAmount = blend(Parameters::ID::oscWarp, oscWarpAmount);
         oscWavetablePosition = blend(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
         osc2WavetablePosition = blend(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);
@@ -1003,6 +1018,10 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         const auto slopeChangeChance = juce::jlimit(0.04f, 0.32f, (amount * 0.75f) + (chaos * 0.08f));
         if (randomFloat(0.0f, 1.0f) > slopeChangeChance)
             filterSlope = readChoice(Parameters::ID::filterSlope);
+
+        const auto noiseTypeChangeChance = juce::jlimit(0.04f, 0.38f, (amount * 0.75f) + (chaos * 0.1f));
+        if (randomFloat(0.0f, 1.0f) > noiseTypeChangeChance)
+            noiseTypeIndex = readChoice(Parameters::ID::noiseType);
     }
 
     if (recipe == Recipe::ukgTwoStepBass || recipe == Recipe::ukgDredBass)
@@ -1015,6 +1034,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         osc2Level = juce::jlimit(0.12f, 0.48f, osc2Level);
         subLevel = juce::jlimit(0.42f, 0.74f, subLevel);
         noiseLevel = juce::jlimit(0.0f, 0.06f, noiseLevel);
+        noiseTypeIndex = 0;
+        noiseDecay = juce::jlimit(0.08f, 0.24f, noiseDecay);
         oscWarpAmount = juce::jlimit(0.04f, 0.3f, oscWarpAmount);
         unisonVoiceCount = juce::jlimit(1, 2, unisonVoiceCount);
         unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
@@ -1067,6 +1088,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::osc2Level, osc2Level);
     setParameter(Parameters::ID::subLevel, subLevel);
     setParameter(Parameters::ID::noiseLevel, noiseLevel);
+    setChoice(Parameters::ID::noiseType, juce::jlimit(0, 6, noiseTypeIndex));
+    setParameter(Parameters::ID::noiseDecay, noiseDecay);
     setParameter(Parameters::ID::oscWarp, oscWarpAmount);
     setParameter(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
     setParameter(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);

@@ -32,6 +32,11 @@ juce::StringArray filterSlopeChoices()
     return { "12 dB", "24 dB" };
 }
 
+juce::StringArray noiseTypeChoices()
+{
+    return { "White", "Pink", "Brown", "Air", "Tick", "Vinyl", "Digital" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -212,6 +217,19 @@ APVTS::ParameterLayout createLayout()
         "Noise Level",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::noiseType,
+        "Noise Type",
+        noiseTypeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::noiseDecay,
+        "Noise Decay",
+        skewedRange(0.005f, 2.0f, 0.12f),
+        0.18f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::oscWarp,

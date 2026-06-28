@@ -1084,6 +1084,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(osc2WaveBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2Wave, osc2WaveBox));
 
+    noiseTypeBox.addItemList(Parameters::noiseTypeChoices(), 1);
+    noiseTypeBox.setTextWhenNothingSelected("Noise Type");
+    noiseTypeBox.setTooltip("Choose the noise source color for attack ticks, air, vinyl texture, and digital grit");
+    addAndMakeVisible(noiseTypeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::noiseType, noiseTypeBox));
+
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     addAndMakeVisible(filterModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterMode, filterModeBox));
@@ -1576,6 +1582,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(osc2LevelSlider, osc2LevelLabel, "Osc 2", Parameters::ID::osc2Level);
     configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
+    configureSlider(noiseDecaySlider, noiseDecayLabel, "N Decay", Parameters::ID::noiseDecay);
     configureSlider(oscWarpSlider, oscWarpLabel, "Osc Warp", Parameters::ID::oscWarp);
     configureSlider(oscWavetablePositionSlider, oscWavetablePositionLabel, "WT 1", Parameters::ID::oscWavetablePosition);
     configureSlider(osc2WavetablePositionSlider, osc2WavetablePositionLabel, "WT 2", Parameters::ID::osc2WavetablePosition);
@@ -2789,6 +2796,7 @@ void NateVSTAudioProcessorEditor::resized()
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
+            noiseTypeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
@@ -2821,6 +2829,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
             setSliderVisible(subLevelSlider, subLevelLabel, true);
             setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
+            setSliderVisible(noiseDecaySlider, noiseDecayLabel, true);
             setSliderVisible(oscWarpSlider, oscWarpLabel, true);
             setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, true);
             setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, true);
@@ -2861,7 +2870,10 @@ void NateVSTAudioProcessorEditor::resized()
                 &subLevelSlider,
                 &noiseLevelSlider
             });
-            layoutKnobRow(sourceArea.removeFromTop(54).withTrimmedTop(2), {
+            auto sourceTextureRow = sourceArea.removeFromTop(54).withTrimmedTop(2);
+            noiseTypeBox.setBounds(sourceTextureRow.removeFromLeft(90).reduced(4, 8));
+            layoutKnobRow(sourceTextureRow, {
+                &noiseDecaySlider,
                 &oscWavetablePositionSlider,
                 &osc2WavetablePositionSlider
             });
@@ -6971,7 +6983,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -7054,6 +7066,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(osc2LevelSlider, osc2LevelLabel, false);
     setSliderVisible(subLevelSlider, subLevelLabel, false);
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
+    setSliderVisible(noiseDecaySlider, noiseDecayLabel, false);
     setSliderVisible(oscWarpSlider, oscWarpLabel, false);
     setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, false);
     setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, false);

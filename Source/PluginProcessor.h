@@ -242,6 +242,13 @@ private:
     float getParameterPlainValueFromState(const juce::ValueTree& state, const juce::String& parameterID, float fallback) const;
     void restoreParameterFromState(const juce::ValueTree& state, const juce::String& parameterID);
     void restoreParameterGroupFromState(const juce::ValueTree& state, std::initializer_list<const char*> parameterIDs);
+    void blendParameterFromState(const juce::ValueTree& state, const juce::String& parameterID, float intensity);
+    void blendParameterGroupFromState(const juce::ValueTree& state, std::initializer_list<const char*> parameterIDs, float intensity);
+    void restoreDiscreteParameterFromStateIfNeeded(const juce::ValueTree& state, const juce::String& parameterID, float intensity);
+    void restoreDiscreteParameterGroupFromStateIfNeeded(const juce::ValueTree& state, std::initializer_list<const char*> parameterIDs, float intensity);
+    float randomSectionIntensity(RandomMutationScope mutationScope) const;
+    void applyRandomSectionIntensities(const juce::ValueTree& state, RandomMutationScope mutationScope);
+    void applyRandomSectionIntensity(const juce::ValueTree& state, RandomMutationScope mutationScope, float intensity);
     void restoreSectionsOutsideMutationScope(const juce::ValueTree& state, RandomMutationScope mutationScope);
     void restoreMutationScopeFromState(const juce::ValueTree& state, RandomMutationScope mutationScope);
     void restoreModulationFromState(const juce::ValueTree& state);

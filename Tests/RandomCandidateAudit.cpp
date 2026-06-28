@@ -257,12 +257,36 @@ int main()
         }
     }
 
+    const auto protectedCutoff = 777.0f;
+    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, protectedCutoff)
+        || ! setPlainParameter(processor, Parameters::ID::randomFilterIntensity, 0.0f))
+    {
+        std::cerr << "Could not seed section intensity protection\n";
+        return 1;
+    }
+
+    processor.generateRandomPatch();
+
+    const auto cutoffAfterProtectedGenerate = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
+    if (std::abs(cutoffAfterProtectedGenerate - protectedCutoff) > 0.01f)
+    {
+        std::cerr << "Zero Filter random strength did not preserve cutoff. Expected "
+                  << protectedCutoff << " got " << cutoffAfterProtectedGenerate << '\n';
+        return 1;
+    }
+
+    if (! setPlainParameter(processor, Parameters::ID::randomFilterIntensity, 1.0f))
+    {
+        std::cerr << "Could not restore Filter random strength\n";
+        return 1;
+    }
+
     if (processor.recallRandomCandidate(7))
     {
         std::cerr << "Out-of-range candidate recall unexpectedly succeeded\n";
         return 1;
     }
 
-    std::cout << "Random candidate audit passed for capture, diff, cue, save, recall, and promotion.\n";
+    std::cout << "Random candidate audit passed for capture, diff, cue, save, recall, promotion, and section strength.\n";
     return 0;
 }

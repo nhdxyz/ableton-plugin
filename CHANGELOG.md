@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Section Strength
+
+- Added per-section Random Lab strength controls for Source, Env, Filter, Sample, FX, Seq, and Macros on the Generate and Mutate pages.
+- Random generation now blends each generated section back toward the previous patch by its section strength before scope restoration, locks, and candidate capture run.
+- Extended `RandomCandidateAudit` to verify that setting Filter strength to zero preserves cutoff during full random generation.
+
 ### Random Lab Recipe Guide
 
 - Added a LAB Recipe-page info strip that summarizes the selected recipe's genre, tempo range, best use case, and generator bias before creating a sound.

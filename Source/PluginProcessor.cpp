@@ -2198,6 +2198,7 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
             randomizeSampleCut();
     }
 
+    applyRandomSectionIntensities(snapshot, mutationScope);
     restoreSectionsOutsideMutationScope(snapshot, mutationScope);
     restoreLockedSectionsFromState(snapshot);
     captureRandomCandidateSnapshot(action, mutationScope);
@@ -2572,6 +2573,335 @@ void NateVSTAudioProcessor::restoreParameterGroupFromState(const juce::ValueTree
 {
     for (const auto* parameterID : parameterIDs)
         restoreParameterFromState(state, parameterID);
+}
+
+void NateVSTAudioProcessor::blendParameterFromState(const juce::ValueTree& state,
+                                                     const juce::String& parameterID,
+                                                     float intensity)
+{
+    intensity = juce::jlimit(0.0f, 1.0f, intensity);
+    if (intensity >= 0.995f)
+        return;
+
+    const auto parameterState = state.getChildWithProperty("id", parameterID);
+    if (! parameterState.isValid())
+        return;
+
+    const auto current = getParameterPlainValue(parameterID, 0.0f);
+    const auto previous = static_cast<float>(parameterState.getProperty("value", current));
+    setParameterPlainValue(parameterID, previous + ((current - previous) * intensity));
+}
+
+void NateVSTAudioProcessor::blendParameterGroupFromState(const juce::ValueTree& state,
+                                                          std::initializer_list<const char*> parameterIDs,
+                                                          float intensity)
+{
+    for (const auto* parameterID : parameterIDs)
+        blendParameterFromState(state, parameterID, intensity);
+}
+
+void NateVSTAudioProcessor::restoreDiscreteParameterFromStateIfNeeded(const juce::ValueTree& state,
+                                                                       const juce::String& parameterID,
+                                                                       float intensity)
+{
+    if (juce::jlimit(0.0f, 1.0f, intensity) < 0.5f)
+        restoreParameterFromState(state, parameterID);
+}
+
+void NateVSTAudioProcessor::restoreDiscreteParameterGroupFromStateIfNeeded(const juce::ValueTree& state,
+                                                                            std::initializer_list<const char*> parameterIDs,
+                                                                            float intensity)
+{
+    for (const auto* parameterID : parameterIDs)
+        restoreDiscreteParameterFromStateIfNeeded(state, parameterID, intensity);
+}
+
+float NateVSTAudioProcessor::randomSectionIntensity(RandomMutationScope mutationScope) const
+{
+    switch (mutationScope)
+    {
+        case RandomMutationScope::source:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomSourceIntensity, 1.0f));
+        case RandomMutationScope::envelope:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomEnvelopeIntensity, 1.0f));
+        case RandomMutationScope::filter:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomFilterIntensity, 1.0f));
+        case RandomMutationScope::sample:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomSampleIntensity, 1.0f));
+        case RandomMutationScope::effects:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomFxIntensity, 1.0f));
+        case RandomMutationScope::sequencer:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomSequencerIntensity, 1.0f));
+        case RandomMutationScope::macros:
+            return juce::jlimit(0.0f, 1.0f, getParameterPlainValue(Parameters::ID::randomMacroIntensity, 1.0f));
+        case RandomMutationScope::all:
+            break;
+    }
+
+    return 1.0f;
+}
+
+void NateVSTAudioProcessor::applyRandomSectionIntensities(const juce::ValueTree& state,
+                                                           RandomMutationScope mutationScope)
+{
+    if (mutationScope != RandomMutationScope::all)
+    {
+        applyRandomSectionIntensity(state, mutationScope, randomSectionIntensity(mutationScope));
+        return;
+    }
+
+    for (auto scopeIndex = 1; scopeIndex <= 7; ++scopeIndex)
+    {
+        const auto section = randomMutationScopeFromIndex(scopeIndex);
+        applyRandomSectionIntensity(state, section, randomSectionIntensity(section));
+    }
+}
+
+void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& state,
+                                                         RandomMutationScope mutationScope,
+                                                         float intensity)
+{
+    intensity = juce::jlimit(0.0f, 1.0f, intensity);
+    if (intensity >= 0.995f)
+        return;
+
+    auto blendArray = [&] (const auto& parameterIDs)
+    {
+        for (const auto* parameterID : parameterIDs)
+            blendParameterFromState(state, parameterID, intensity);
+    };
+
+    auto restoreDiscreteArray = [&] (const auto& parameterIDs)
+    {
+        for (const auto* parameterID : parameterIDs)
+            restoreDiscreteParameterFromStateIfNeeded(state, parameterID, intensity);
+    };
+
+    switch (mutationScope)
+    {
+        case RandomMutationScope::source:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::oscWave,
+                Parameters::ID::oscOctave,
+                Parameters::ID::osc2Wave,
+                Parameters::ID::osc2Octave,
+                Parameters::ID::monoMode,
+                Parameters::ID::unisonVoices
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::oscTune,
+                Parameters::ID::osc1Level,
+                Parameters::ID::osc2Tune,
+                Parameters::ID::osc2Level,
+                Parameters::ID::subLevel,
+                Parameters::ID::noiseLevel,
+                Parameters::ID::oscWarp,
+                Parameters::ID::oscWavetablePosition,
+                Parameters::ID::osc2WavetablePosition,
+                Parameters::ID::glideTime,
+                Parameters::ID::unisonDetune,
+                Parameters::ID::unisonBlend,
+                Parameters::ID::unisonSpread
+            }, intensity);
+            break;
+
+        case RandomMutationScope::envelope:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::lfo1Sync,
+                Parameters::ID::lfo1SyncRate,
+                Parameters::ID::lfo1Shape,
+                Parameters::ID::lfo1Retrigger,
+                Parameters::ID::lfo2Sync,
+                Parameters::ID::lfo2SyncRate,
+                Parameters::ID::lfo2Shape,
+                Parameters::ID::lfo2Retrigger
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::ampAttack,
+                Parameters::ID::ampDecay,
+                Parameters::ID::ampSustain,
+                Parameters::ID::ampRelease,
+                Parameters::ID::lfo1Rate,
+                Parameters::ID::lfo1Depth,
+                Parameters::ID::lfo1Phase,
+                Parameters::ID::lfo2Rate,
+                Parameters::ID::lfo2Depth,
+                Parameters::ID::lfo2Phase,
+                Parameters::ID::modEnv1Attack,
+                Parameters::ID::modEnv1Decay,
+                Parameters::ID::modEnv1Sustain,
+                Parameters::ID::modEnv1Release,
+                Parameters::ID::modEnv1Depth
+            }, intensity);
+            blendArray(Parameters::ID::lfo1Curve);
+            blendArray(Parameters::ID::modMatrixAmount);
+            restoreDiscreteArray(Parameters::ID::modMatrixSource);
+            restoreDiscreteArray(Parameters::ID::modMatrixDestination);
+            restoreDiscreteArray(Parameters::ID::modMatrixEnabled);
+            break;
+
+        case RandomMutationScope::filter:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::filterMode,
+                Parameters::ID::filterCharacter,
+                Parameters::ID::filterSlope
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::filterCutoff,
+                Parameters::ID::filterResonance,
+                Parameters::ID::filterEnvAmount,
+                Parameters::ID::driveAmount
+            }, intensity);
+            break;
+
+        case RandomMutationScope::sample:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::sampleEnabled,
+                Parameters::ID::sampleReverse,
+                Parameters::ID::samplePlaybackMode,
+                Parameters::ID::sampleStutterEnabled,
+                Parameters::ID::sampleStutterRate,
+                Parameters::ID::sampleSliceStyle
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::sampleStart,
+                Parameters::ID::sampleEnd,
+                Parameters::ID::sampleTranspose,
+                Parameters::ID::samplePitchRamp,
+                Parameters::ID::sampleGain,
+                Parameters::ID::sampleMix,
+                Parameters::ID::sampleStutterRepeats
+            }, intensity);
+            restoreDiscreteArray(Parameters::ID::sampleSliceCustom);
+            blendArray(Parameters::ID::sampleSliceStart);
+            blendArray(Parameters::ID::sampleSliceEnd);
+            restoreDiscreteArray(Parameters::ID::sampleSliceReverse);
+            blendArray(Parameters::ID::sampleSliceTranspose);
+            blendArray(Parameters::ID::sampleSliceGain);
+            blendArray(Parameters::ID::sampleSlicePan);
+            blendArray(Parameters::ID::sampleSliceProbability);
+            restoreDiscreteArray(Parameters::ID::sampleSliceStutter);
+            restoreDiscreteArray(Parameters::ID::sampleSliceChoke);
+            blendArray(Parameters::ID::sampleSliceStutterRepeats);
+            break;
+
+        case RandomMutationScope::effects:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::fxDistortionEnabled,
+                Parameters::ID::fxBitcrushEnabled,
+                Parameters::ID::fxPumpEnabled,
+                Parameters::ID::fxPumpRate,
+                Parameters::ID::fxPumpCurve,
+                Parameters::ID::fxTremoloEnabled,
+                Parameters::ID::fxTremoloRate,
+                Parameters::ID::fxRingEnabled,
+                Parameters::ID::fxCombEnabled,
+                Parameters::ID::fxChorusEnabled,
+                Parameters::ID::fxDelayEnabled,
+                Parameters::ID::fxDelaySync,
+                Parameters::ID::fxDelayRate,
+                Parameters::ID::fxReverbEnabled,
+                Parameters::ID::fxWidthEnabled,
+                Parameters::ID::fxToneEnabled,
+                Parameters::ID::fxEqEnabled,
+                Parameters::ID::fxPhaserEnabled,
+                Parameters::ID::fxFlangerEnabled,
+                Parameters::ID::fxGuardEnabled
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::fxDistortionAmount,
+                Parameters::ID::fxBitcrushBits,
+                Parameters::ID::fxBitcrushDownsample,
+                Parameters::ID::fxBitcrushMix,
+                Parameters::ID::fxPumpDepth,
+                Parameters::ID::fxPumpShape,
+                Parameters::ID::fxPumpPhase,
+                Parameters::ID::fxTremoloDepth,
+                Parameters::ID::fxTremoloPan,
+                Parameters::ID::fxTremoloShape,
+                Parameters::ID::fxTremoloPhase,
+                Parameters::ID::fxRingFrequency,
+                Parameters::ID::fxRingDepth,
+                Parameters::ID::fxRingMix,
+                Parameters::ID::fxRingBias,
+                Parameters::ID::fxCombFrequency,
+                Parameters::ID::fxCombFeedback,
+                Parameters::ID::fxCombDamping,
+                Parameters::ID::fxCombMix,
+                Parameters::ID::fxChorusRate,
+                Parameters::ID::fxChorusDepth,
+                Parameters::ID::fxChorusMix,
+                Parameters::ID::fxDelayTime,
+                Parameters::ID::fxDelayFeedback,
+                Parameters::ID::fxDelayMix,
+                Parameters::ID::fxReverbSize,
+                Parameters::ID::fxReverbDamping,
+                Parameters::ID::fxReverbMix,
+                Parameters::ID::fxWidthAmount,
+                Parameters::ID::fxWidthMonoCutoff,
+                Parameters::ID::fxToneTilt,
+                Parameters::ID::fxToneLowCut,
+                Parameters::ID::fxEqLowGain,
+                Parameters::ID::fxEqMidGain,
+                Parameters::ID::fxEqHighGain,
+                Parameters::ID::fxEqTrim,
+                Parameters::ID::fxPhaserRate,
+                Parameters::ID::fxPhaserDepth,
+                Parameters::ID::fxPhaserMix,
+                Parameters::ID::fxFlangerRate,
+                Parameters::ID::fxFlangerDepth,
+                Parameters::ID::fxFlangerFeedback,
+                Parameters::ID::fxFlangerMix,
+                Parameters::ID::fxGuardPush,
+                Parameters::ID::fxGuardCeiling,
+                Parameters::ID::outputGain
+            }, intensity);
+            blendArray(Parameters::ID::fxPumpCustomCurve);
+            restoreDiscreteArray(Parameters::ID::fxOrder);
+            break;
+
+        case RandomMutationScope::sequencer:
+            restoreDiscreteParameterGroupFromStateIfNeeded(state, {
+                Parameters::ID::sequencerEnabled,
+                Parameters::ID::sequencerRate,
+                Parameters::ID::sequencerRoot,
+                Parameters::ID::sequencerGrooveMode,
+                Parameters::ID::sequencerScale,
+                Parameters::ID::sequencerChordMode,
+                Parameters::ID::sequencerChordVoicing,
+                Parameters::ID::sequencerChordMemory,
+                Parameters::ID::sequencerOctave,
+                Parameters::ID::sequencerLockDestination
+            }, intensity);
+            blendParameterGroupFromState(state, {
+                Parameters::ID::sequencerGate,
+                Parameters::ID::sequencerSwing,
+                Parameters::ID::sequencerChordStrum,
+                Parameters::ID::sequencerAccent,
+                Parameters::ID::sequencerProbability,
+                Parameters::ID::sequencerRandomAmount,
+                Parameters::ID::sequencerLockDepth
+            }, intensity);
+            if (intensity < 0.5f)
+                restoreSequencerFromState(state);
+            break;
+
+        case RandomMutationScope::macros:
+            blendParameterGroupFromState(state, {
+                Parameters::ID::macroTone,
+                Parameters::ID::macroDirt,
+                Parameters::ID::macroMotion,
+                Parameters::ID::macroSpace,
+                Parameters::ID::macroWeight,
+                Parameters::ID::macroBounce,
+                Parameters::ID::macroWarp,
+                Parameters::ID::macroThrow
+            }, intensity);
+            break;
+
+        case RandomMutationScope::all:
+            break;
+    }
 }
 
 void NateVSTAudioProcessor::restoreSectionsOutsideMutationScope(const juce::ValueTree& state, RandomMutationScope mutationScope)

@@ -1445,6 +1445,29 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(brightnessSlider, brightnessLabel, "Bright", Parameters::ID::randomBrightnessBias);
     configureSlider(driveBiasSlider, driveBiasLabel, "Drive Bias", Parameters::ID::randomDriveBias);
     configureSlider(motionBiasSlider, motionBiasLabel, "Motion", Parameters::ID::randomMotionBias);
+    const std::array<const char*, 7> randomSectionIntensityIDs {
+        Parameters::ID::randomSourceIntensity,
+        Parameters::ID::randomEnvelopeIntensity,
+        Parameters::ID::randomFilterIntensity,
+        Parameters::ID::randomSampleIntensity,
+        Parameters::ID::randomFxIntensity,
+        Parameters::ID::randomSequencerIntensity,
+        Parameters::ID::randomMacroIntensity
+    };
+    const std::array<juce::String, 7> randomSectionIntensityNames {
+        "Source",
+        "Env",
+        "Filter",
+        "Sample",
+        "FX",
+        "Seq",
+        "Macros"
+    };
+    for (size_t index = 0; index < randomSectionIntensitySliders.size(); ++index)
+        configureRandomSectionSlider(randomSectionIntensitySliders[index],
+                                     randomSectionIntensityLabels[index],
+                                     randomSectionIntensityNames[index],
+                                     randomSectionIntensityIDs[index]);
     configureHorizontalSlider(sampleStartSlider, sampleStartLabel, "Start", Parameters::ID::sampleStart);
     configureHorizontalSlider(sampleEndSlider, sampleEndLabel, "End", Parameters::ID::sampleEnd);
     configureSlider(sampleTransposeSlider, sampleTransposeLabel, "Pitch", Parameters::ID::sampleTranspose);
@@ -2619,6 +2642,22 @@ void NateVSTAudioProcessorEditor::resized()
                 });
             };
 
+            auto showSectionIntensityControls = [&content, this]
+            {
+                auto row = content.removeFromTop(72).withTrimmedTop(6);
+                const auto count = static_cast<int>(randomSectionIntensitySliders.size());
+                const auto cellWidth = row.getWidth() / juce::jmax(1, count);
+
+                for (size_t index = 0; index < randomSectionIntensitySliders.size(); ++index)
+                {
+                    auto cell = row.removeFromLeft(cellWidth).reduced(4, 2);
+                    randomSectionIntensityLabels[index].setVisible(true);
+                    randomSectionIntensitySliders[index].setVisible(true);
+                    randomSectionIntensityLabels[index].setBounds(cell.removeFromTop(18));
+                    randomSectionIntensitySliders[index].setBounds(cell.removeFromTop(26));
+                }
+            };
+
             auto showCandidateRow = [&content, this] (bool includePromote)
             {
                 for (auto& button : randomCandidateButtons)
@@ -2664,6 +2703,7 @@ void NateVSTAudioProcessorEditor::resized()
                     showRecipeControls(true);
                     showSectionRolls();
                     showRandomBiasKnobs();
+                    showSectionIntensityControls();
                     showStatus();
                     break;
                 }
@@ -2687,6 +2727,7 @@ void NateVSTAudioProcessorEditor::resized()
                     undoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
                     redoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
                     showRandomBiasKnobs();
+                    showSectionIntensityControls();
                     showStatus();
                     break;
                 }
@@ -3676,6 +3717,48 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
     };
 
     registerModulationMenuTarget(slider, "Curve", parameterID);
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
+}
+
+void NateVSTAudioProcessorEditor::configureRandomSectionSlider(juce::Slider& slider,
+                                                                juce::Label& label,
+                                                                const juce::String& labelText,
+                                                                const juce::String& parameterID)
+{
+    slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setMouseDragSensitivity(140);
+    applyFineDragMode(slider, 0.36);
+    slider.setSliderSnapsToMousePosition(false);
+    slider.setScrollWheelEnabled(false);
+    slider.setPopupDisplayEnabled(true, true, this);
+    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
+    slider.setNumDecimalPlacesToDisplay(2);
+    const auto tooltipText = "Random Lab " + labelText
+        + " strength: drag to scale how far generated values move this section, Shift or Cmd for fine movement, double-click to reset.";
+    slider.setTooltip(tooltipText);
+    slider.getProperties().set("baseTooltip", tooltipText);
+    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
+    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    addAndMakeVisible(slider);
+
+    label.setText(labelText, juce::dontSendNotification);
+    label.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    label.setJustificationType(juce::Justification::centredLeft);
+    label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    addAndMakeVisible(label);
+
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+        slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
+
+    auto* sliderPointer = &slider;
+    slider.onValueChange = [this, sliderPointer, labelText, parameterID]
+    {
+        updateSelectedControlInspector("Rand " + labelText, parameterID, sliderPointer->getValue());
+    };
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -6214,6 +6297,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(brightnessSlider, brightnessLabel, false);
     setSliderVisible(driveBiasSlider, driveBiasLabel, false);
     setSliderVisible(motionBiasSlider, motionBiasLabel, false);
+    for (size_t index = 0; index < randomSectionIntensitySliders.size(); ++index)
+        setSliderVisible(randomSectionIntensitySliders[index], randomSectionIntensityLabels[index], false);
     setSliderVisible(sampleStartSlider, sampleStartLabel, false);
     setSliderVisible(sampleEndSlider, sampleEndLabel, false);
     setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, false);

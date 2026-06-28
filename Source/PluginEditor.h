@@ -285,6 +285,7 @@ private:
     juce::Slider brightnessSlider;
     juce::Slider driveBiasSlider;
     juce::Slider motionBiasSlider;
+    std::array<juce::Slider, 7> randomSectionIntensitySliders;
     juce::Slider sampleStartSlider;
     juce::Slider sampleEndSlider;
     juce::Slider sampleTransposeSlider;
@@ -397,6 +398,7 @@ private:
     juce::Label brightnessLabel;
     juce::Label driveBiasLabel;
     juce::Label motionBiasLabel;
+    std::array<juce::Label, 7> randomSectionIntensityLabels;
     juce::Label sampleStartLabel;
     juce::Label sampleEndLabel;
     juce::Label sampleTransposeLabel;
@@ -625,6 +627,7 @@ private:
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureHorizontalSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
+    void configureRandomSectionSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
     const ModulationMenuTarget* findModulationMenuTarget(const juce::Component* component) const;
     int findModRouteAmountIndex(const juce::Component* component) const;

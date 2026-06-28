@@ -511,6 +511,7 @@ Build the next larger slices in this order:
    First candidate-organization pass implemented LAB `Save Slot` favorite/rating controls that persist into Library filters and RandomCandidateAudit coverage for the stored candidate name.
    First focus-page pass implemented LAB `Generate`, `Mutate`, `Recipe`, `History`, and `Save` pages, with EditorLayoutAudit coverage for every Random Lab page.
    First recipe-guide pass implemented selected-recipe genre, tempo, good-for, and generator-bias summaries on the LAB Recipe page.
+   First section-strength pass implemented per-section Source, Env, Filter, Sample, FX, Seq, and Macro generation strength controls on LAB Generate/Mutate, with RandomCandidateAudit coverage for zero-strength Filter protection.
 
 8. Modulation visibility workflow: rings, route badges, source activity meters, drag assignment, hover inspection, macro assignment, and route processors.
    First source-meter pass implemented compact MOD source activity meters for LFO 1, Mod Env, Velocity, eight macros, S&H, Smooth, Chaos, and LFO 2 without adding new host parameters.

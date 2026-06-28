@@ -565,6 +565,48 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
         0.0f));
 
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomSourceIntensity,
+        "Random Source Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomEnvelopeIntensity,
+        "Random Env Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomFilterIntensity,
+        "Random Filter Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomSampleIntensity,
+        "Random Sample Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomFxIntensity,
+        "Random FX Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomSequencerIntensity,
+        "Random Seq Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::randomMacroIntensity,
+        "Random Macro Strength",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
+
     add(std::make_unique<juce::AudioParameterChoice>(
         ID::randomRecipe,
         "Random Recipe",

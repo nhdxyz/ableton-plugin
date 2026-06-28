@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Expanded 40-Preset Factory Style Pack
+
+- Expanded the repo-managed factory pack from 32 to 40 presets with Afro House Perc Bell, Afro House Marimba Skank, Progressive House Rise Pad, Lo-Fi House Dust Keys, Detroit House Chord Stab, Melodic Techno Pluck Lead, Melodic Techno Dark Pulse, and Acid Minimal Squiggle.
+- Added pack/key/BPM metadata, notes, macro seeds, modulation routes, FX defaults, and sequence data so the Library browser has broader house, melodic techno, minimal acid, Detroit, lo-fi, and afro-house starting points beyond UKG.
+- Updated `FactoryPresetLibraryAudit` to require and load-check the 40-preset expanded style pack.
+
 ### HOME Output Oscilloscope
 
 - Added a reusable `OutputOscilloscopeDisplay` fed by the existing final-output snapshot so HOME now shows waveform shape, peak state, and transient punch alongside spectrum and stereo field analysis.

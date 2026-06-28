@@ -93,6 +93,8 @@ public:
     juce::String getRandomCandidateCompareSummary(int slotIndex);
     int getActiveRandomCandidateIndex() const noexcept;
     bool recallRandomCandidate(int slotIndex);
+    bool beginRandomCandidateAudition(int slotIndex);
+    bool endRandomCandidateAudition();
     bool promoteRandomCandidateToPerformanceSnapshot(int candidateSlotIndex, int snapshotSlotIndex);
     bool loadSampleFile(const juce::File& file);
     void clearSample();
@@ -210,6 +212,7 @@ private:
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
     juce::ValueTree randomRedoState;
+    juce::ValueTree randomCandidateAuditionReturnState;
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
     std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
@@ -217,6 +220,7 @@ private:
     juce::String randomRedoLabel;
     int nextRandomCandidateSlot = 0;
     int activeRandomCandidateSlot = -1;
+    int auditioningRandomCandidateSlot = -1;
     bool hasRandomUndoState = false;
     bool hasRandomRedoState = false;
     bool hasSequencerUndoState = false;

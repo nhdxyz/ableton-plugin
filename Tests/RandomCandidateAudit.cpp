@@ -53,7 +53,8 @@ int main()
     }
 
     const auto generatedCutoff = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
-    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, juce::jmax(20.0f, generatedCutoff * 0.35f)))
+    const auto editedCutoff = juce::jmax(20.0f, generatedCutoff * 0.35f);
+    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, editedCutoff))
     {
         std::cerr << "Could not edit cutoff before candidate recall\n";
         return 1;
@@ -64,6 +65,34 @@ int main()
     {
         std::cerr << "Candidate compare summary did not report brightness: "
                   << compareSummary << '\n';
+        return 1;
+    }
+
+    if (! processor.beginRandomCandidateAudition(0))
+    {
+        std::cerr << "Candidate audition did not start\n";
+        return 1;
+    }
+
+    const auto auditionCutoff = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
+    if (std::abs(auditionCutoff - generatedCutoff) > 0.01f)
+    {
+        std::cerr << "Candidate audition did not apply candidate cutoff. Expected "
+                  << generatedCutoff << " got " << auditionCutoff << '\n';
+        return 1;
+    }
+
+    if (! processor.endRandomCandidateAudition())
+    {
+        std::cerr << "Candidate audition did not restore\n";
+        return 1;
+    }
+
+    const auto restoredCutoff = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
+    if (std::abs(restoredCutoff - editedCutoff) > 0.01f)
+    {
+        std::cerr << "Candidate audition did not restore edited cutoff. Expected "
+                  << editedCutoff << " got " << restoredCutoff << '\n';
         return 1;
     }
 
@@ -122,6 +151,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Random candidate audit passed for capture and recall.\n";
+    std::cout << "Random candidate audit passed for capture, cue, recall, and promotion.\n";
     return 0;
 }

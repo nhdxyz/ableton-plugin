@@ -455,6 +455,7 @@ private:
     juce::TextButton redoRandomButton { "Redo" };
     std::array<juce::TextButton, 7> randomSectionRollButtons;
     std::array<juce::TextButton, 4> randomCandidateButtons;
+    std::array<juce::TextButton, 4> randomCandidateAuditionButtons;
     juce::TextButton promoteCandidateAButton { "To A" };
     juce::TextButton promoteCandidateBButton { "To B" };
     juce::TextButton recallSnapshotAButton { "A" };
@@ -578,6 +579,9 @@ private:
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
     double presetAuditionNoteOffMs = 0.0;
+    int activeRandomCandidateAuditionNote = -1;
+    int activeRandomCandidateAuditionSlot = -1;
+    double randomCandidateAuditionNoteOffMs = 0.0;
     juce::String fxRackStatusOverride;
     double fxRackStatusOverrideUntilMs = 0.0;
     juce::String sampleWaveformKey;
@@ -676,6 +680,8 @@ private:
     void triggerRandomWild();
     void triggerRandomSectionRoll(size_t sectionIndex);
     void recallRandomCandidate(size_t slotIndex);
+    void auditionRandomCandidate(size_t slotIndex);
+    void releaseRandomCandidateAudition(bool updateStatus = false);
     void promoteActiveRandomCandidate(int snapshotSlotIndex);
     void updateRandomCandidateButtons();
     void prepareRandomPresetDraft(const juce::String& actionLabel);

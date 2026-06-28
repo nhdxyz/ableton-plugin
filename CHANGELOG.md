@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Random Candidate Quick Cue
+
+- Added per-slot LAB `Cue` buttons that preview generated candidates with a short note, then restore the current patch without recalling or saving the candidate.
+- Added processor-level begin/end candidate audition APIs so non-destructive preview can be verified outside the editor.
+- Guarded random, snapshot, preset, sample, and sequencer edit paths so an active candidate cue is restored before intentional state changes.
+- Extended `RandomCandidateAudit` to verify candidate audition applies the candidate state and restores the edited patch afterward.
+
 ### Random Candidate Compare And Snapshot Promotion
 
 - Added candidate compare summaries that describe saved random slots against the current patch as brighter/darker, dirtier/cleaner, wider/narrower, more/less motion, more/less space, and hotter/safer.

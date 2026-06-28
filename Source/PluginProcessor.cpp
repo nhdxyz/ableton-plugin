@@ -621,6 +621,31 @@ bool NateVSTAudioProcessor::recallRandomCandidate(int slotIndex)
     return true;
 }
 
+bool NateVSTAudioProcessor::beginRandomCandidateAudition(int slotIndex)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return false;
+
+    endRandomCandidateAudition();
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    randomCandidateAuditionReturnState = createPluginState(false);
+    restorePluginState(candidate.state.createCopy(), false);
+    auditioningRandomCandidateSlot = slotIndex;
+    return true;
+}
+
+bool NateVSTAudioProcessor::endRandomCandidateAudition()
+{
+    if (auditioningRandomCandidateSlot < 0 || ! randomCandidateAuditionReturnState.isValid())
+        return false;
+
+    restorePluginState(randomCandidateAuditionReturnState.createCopy(), false);
+    randomCandidateAuditionReturnState = {};
+    auditioningRandomCandidateSlot = -1;
+    return true;
+}
+
 bool NateVSTAudioProcessor::promoteRandomCandidateToPerformanceSnapshot(int candidateSlotIndex, int snapshotSlotIndex)
 {
     if (! hasRandomCandidate(candidateSlotIndex)

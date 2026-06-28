@@ -20,6 +20,17 @@ void ModCurveDisplay::setValues(const std::array<float, 8>& newValues, bool shou
     repaint();
 }
 
+void ModCurveDisplay::setPhase(float newPhase, bool shouldShowPhase)
+{
+    newPhase = juce::jlimit(0.0f, 1.0f, newPhase);
+    if (std::abs(phase - newPhase) < 0.003f && showPhase == shouldShowPhase)
+        return;
+
+    phase = newPhase;
+    showPhase = shouldShowPhase;
+    repaint();
+}
+
 void ModCurveDisplay::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat().reduced(1.0f);
@@ -67,6 +78,24 @@ void ModCurveDisplay::paint(juce::Graphics& g)
     g.fillPath(fillPath);
     g.setColour(accent);
     g.strokePath(linePath, juce::PathStrokeType(2.0f));
+
+    if (showPhase)
+    {
+        const auto cursorX = juce::jmap(phase, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        g.setColour(juce::Colour(0xffedf7f4).withAlpha(0.52f));
+        g.drawVerticalLine(static_cast<int>(std::round(cursorX)), plot.getY(), plot.getBottom());
+
+        const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * 8.0f;
+        const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % 8;
+        const auto rightIndex = (leftIndex + 1) % 8;
+        const auto fraction = scaledPhase - std::floor(scaledPhase);
+        const auto cursorValue = values[static_cast<size_t>(leftIndex)]
+            + ((values[static_cast<size_t>(rightIndex)] - values[static_cast<size_t>(leftIndex)]) * fraction);
+        const auto cursorY = yForValue(cursorValue);
+
+        g.setColour(juce::Colour(0xffedf7f4));
+        g.fillEllipse(juce::Rectangle<float> { 6.0f, 6.0f }.withCentre({ cursorX, cursorY }));
+    }
 
     for (size_t index = 0; index < values.size(); ++index)
     {

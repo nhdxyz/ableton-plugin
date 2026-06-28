@@ -15,6 +15,7 @@ public:
     ModCurveDisplay();
 
     void setValues(const std::array<float, 8>& newValues, bool shouldHighlight);
+    void setPhase(float newPhase, bool shouldShowPhase);
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
@@ -25,6 +26,8 @@ public:
 private:
     std::array<float, 8> values { 0.0f, 0.58f, 1.0f, 0.42f, -0.18f, -0.72f, -1.0f, -0.36f };
     bool highlighted = false;
+    bool showPhase = false;
+    float phase = 0.0f;
     int draggedIndex = -1;
     int hoveredIndex = -1;
 

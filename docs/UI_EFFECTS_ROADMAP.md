@@ -453,6 +453,7 @@ Build the next larger slices in this order:
    First sample-destination pass implemented as MOD matrix targets for Sample Start, Mix, Pitch, Ramp, and Stutter, with UKG Chop seeding empty slots for start and pitch/ramp motion.
    Current UI audit pass tightened the FX module-preset header and widened MOD destination boxes so Pump controls and long FX/sample destinations have more room.
    First route-edit pass implemented saved per-slot bypass and compact delete controls so users can A/B motion routes without clearing assignments.
+   First curve-preset and ring-badge pass implemented MOD-panel LFO curve presets, a host-aware curve phase cursor, current-value-relative modulation rings, route-count/depth badges, and source tooltips on modulated destination knobs.
 2. SEQ musical tools: key/scale quantize, chord modes, arp behavior, octave spread, latch/gate options, and UKG/house/techno templates.
    First SEQ visual pass implemented as beat-group headers, root-aware row labels, anchor-step dots, probability bars, and clearer four-beat dividers.
    First scale-helper pass implemented as saved Major, Minor, Dorian, and Minor Pent quantize modes with grid row highlighting.

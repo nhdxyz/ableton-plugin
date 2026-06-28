@@ -291,6 +291,48 @@ juce::String modSourceSummaryText(size_t index)
 
     return {};
 }
+
+juce::StringArray lfoCurvePresetChoices()
+{
+    return {
+        "Manual",
+        "Garage Push",
+        "Tight Duck",
+        "Offbeat Skank",
+        "Riser",
+        "Fall",
+        "Gate Steps",
+        "Wobble",
+        "Flat"
+    };
+}
+
+std::array<float, 8> lfoCurvePresetValues(int presetId)
+{
+    switch (presetId)
+    {
+        case 2: return { -0.10f, 0.38f, 0.98f, 0.54f, 0.08f, -0.30f, -0.78f, -0.22f };
+        case 3: return { -1.00f, -0.65f, -0.22f, 0.34f, 0.76f, 1.00f, 0.42f, -0.12f };
+        case 4: return { -0.36f, 0.14f, 0.82f, 0.26f, -0.22f, 0.58f, 1.00f, -0.48f };
+        case 5: return { -1.00f, -0.72f, -0.45f, -0.12f, 0.18f, 0.48f, 0.76f, 1.00f };
+        case 6: return { 1.00f, 0.72f, 0.45f, 0.12f, -0.18f, -0.48f, -0.76f, -1.00f };
+        case 7: return { 1.00f, 1.00f, -0.65f, -0.65f, 0.80f, 0.80f, -1.00f, -1.00f };
+        case 8: return { 0.00f, 1.00f, 0.00f, -1.00f, 0.00f, 0.72f, 0.00f, -0.72f };
+        case 9: return { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f };
+        default: return { 0.00f, 0.58f, 1.00f, 0.42f, -0.18f, -0.72f, -1.00f, -0.36f };
+    }
+}
+
+double lfoCyclesPerBeatForUi(int rateIndex)
+{
+    switch (rateIndex)
+    {
+        case 1: return 2.0;
+        case 2: return 3.0;
+        case 3: return 4.0;
+        default: return 1.0;
+    }
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -727,6 +769,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(lfo1SyncRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1SyncRate, lfo1SyncRateBox));
 
+    lfoCurvePresetBox.addItemList(lfoCurvePresetChoices(), 1);
+    lfoCurvePresetBox.setSelectedId(1, juce::dontSendNotification);
+    lfoCurvePresetBox.setTextWhenNothingSelected("Curve Preset");
+    lfoCurvePresetBox.setTooltip("Load an LFO curve shape for house, UKG, techno, and minimal movement");
+    addAndMakeVisible(lfoCurvePresetBox);
+
     for (size_t index = 0; index < modSourceBoxes.size(); ++index)
     {
         auto& sourceBox = modSourceBoxes[index];
@@ -912,7 +960,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     lfoCurveDisplay.onPointChange = [this] (size_t index, float value)
     {
         if (index < Parameters::ID::lfo1Curve.size())
+        {
+            lfoCurvePresetBox.setSelectedId(1, juce::dontSendNotification);
             setPlainParameterValue(Parameters::ID::lfo1Curve[index], value);
+        }
     };
     addAndMakeVisible(lfoCurveDisplay);
     pumpCurveDisplay.onPointChange = [this] (size_t index, float value)
@@ -1276,6 +1327,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     fxPresetBox.onChange = [this] { applySelectedFxPreset(); };
     modInspectorDestinationBox.onChange = [this] { updateModInspectorStatus(); };
+    lfoCurvePresetBox.onChange = [this]
+    {
+        const auto selectedId = lfoCurvePresetBox.getSelectedId();
+        if (selectedId > 1)
+            applyLfoCurvePreset(selectedId);
+    };
     fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
@@ -1923,6 +1980,7 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixLabel.setVisible(true);
             lfo1ShapeBox.setVisible(true);
             lfo1SyncRateBox.setVisible(true);
+            lfoCurvePresetBox.setVisible(true);
             lfo1SyncButton.setVisible(true);
             lfo1RetriggerButton.setVisible(true);
             lfoCurveDisplay.setVisible(true);
@@ -1993,10 +2051,11 @@ void NateVSTAudioProcessorEditor::resized()
 
             modLfoLabel.setBounds(lfoArea.removeFromTop(18));
             auto lfoModeRow = lfoArea.removeFromTop(24);
-            lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(118).reduced(3, 4));
-            lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(98).reduced(3, 4));
-            lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
-            lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(84).reduced(3, 4));
+            lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(86).reduced(3, 4));
+            lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(78).reduced(3, 4));
+            lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(58).reduced(3, 4));
+            lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
+            lfoCurvePresetBox.setBounds(lfoModeRow.removeFromLeft(130).reduced(3, 4));
             lfoCurveDisplay.setBounds(lfoArea.removeFromTop(42).withTrimmedTop(2));
 
             setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
@@ -3975,7 +4034,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -4207,6 +4266,41 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
         shapeIndex = static_cast<int>(value->load() + 0.5f);
 
     lfoCurveDisplay.setValues(values, shapeIndex == 5);
+
+    auto phase = readPlainParameterValue(Parameters::ID::lfo1Phase, 0.0f);
+    const auto syncEnabled = readPlainParameterValue(Parameters::ID::lfo1Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1SyncRate, 1.0f));
+    const auto hostStatus = audioProcessor.getHostSyncStatus();
+
+    if (syncEnabled && hostStatus.ppqAvailable)
+    {
+        phase += static_cast<float>(std::fmod(hostStatus.ppqPosition * lfoCyclesPerBeatForUi(syncRateIndex), 1.0));
+    }
+    else
+    {
+        const auto bpm = juce::jlimit(20.0, 300.0, hostStatus.bpm);
+        const auto rateHz = syncEnabled
+            ? static_cast<float>((bpm / 60.0) * lfoCyclesPerBeatForUi(syncRateIndex))
+            : readPlainParameterValue(Parameters::ID::lfo1Rate, 1.0f);
+        phase += static_cast<float>(std::fmod((juce::Time::getMillisecondCounterHiRes() * 0.001) * rateHz, 1.0));
+    }
+
+    phase = std::fmod(phase + 1.0f, 1.0f);
+    lfoCurveDisplay.setPhase(phase, shapeIndex == 5);
+}
+
+void NateVSTAudioProcessorEditor::applyLfoCurvePreset(int presetId)
+{
+    const auto values = lfoCurvePresetValues(presetId);
+    setPlainParameterValue(Parameters::ID::lfo1Shape, 5.0f);
+
+    for (size_t index = 0; index < values.size(); ++index)
+        setPlainParameterValue(Parameters::ID::lfo1Curve[index], values[index]);
+
+    updateLfoCurveDisplay();
+    updateModDestinationIndicators();
+    modMatrixStatusLabel.setText("Loaded LFO curve: " + lfoCurvePresetBox.getText(),
+                                 juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
@@ -4567,6 +4661,9 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
     std::array<float, 18> destinationDepths {};
+    std::array<int, 18> destinationRouteCounts {};
+    std::array<juce::StringArray, 18> destinationSources {};
+    const auto sourceChoices = Parameters::modulationSourceChoices();
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
@@ -4587,38 +4684,52 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
             continue;
 
         destinationDepths[static_cast<size_t>(destinationIndex)] += amount;
+        destinationRouteCounts[static_cast<size_t>(destinationIndex)] += 1;
+        if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+            destinationSources[static_cast<size_t>(destinationIndex)].addIfNotAlreadyThere(sourceChoices[sourceIndex]);
     }
 
-    auto setIndicator = [] (juce::Slider& slider, float amount)
+    auto setIndicator = [] (juce::Slider& slider, float amount, int routeCount, const juce::StringArray& sources)
     {
         amount = juce::jlimit(-1.0f, 1.0f, amount);
 
         auto& properties = slider.getProperties();
         const auto previous = static_cast<float>(static_cast<double>(properties.getWithDefault("modAmount", 0.0)));
-        if (std::abs(previous - amount) < 0.001f)
+        const auto previousCount = static_cast<int>(properties.getWithDefault("modRouteCount", 0));
+        const auto previousSources = properties.getWithDefault("modSourceSummary", {}).toString();
+        const auto sourceSummary = sources.joinIntoString(", ");
+        if (std::abs(previous - amount) < 0.001f
+            && previousCount == routeCount
+            && previousSources == sourceSummary)
             return;
 
         properties.set("modAmount", amount);
+        properties.set("modRouteCount", routeCount);
+        properties.set("modSourceSummary", sourceSummary);
+        slider.setTooltip(routeCount > 0
+                              ? "Modulated by " + sourceSummary
+                                  + " | Sum " + (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%"
+                              : juce::String {});
         slider.repaint();
     };
 
-    setIndicator(cutoffSlider, destinationDepths[1]);
-    setIndicator(resonanceSlider, destinationDepths[2]);
-    setIndicator(filterEnvSlider, destinationDepths[3]);
-    setIndicator(driveSlider, destinationDepths[4]);
-    setIndicator(osc2TuneSlider, destinationDepths[5]);
-    setIndicator(osc2LevelSlider, destinationDepths[6]);
-    setIndicator(fxPumpDepthSlider, destinationDepths[7]);
-    setIndicator(fxDelayMixSlider, destinationDepths[8]);
-    setIndicator(fxReverbMixSlider, destinationDepths[9]);
-    setIndicator(fxWidthAmountSlider, destinationDepths[10]);
-    setIndicator(fxDistortionAmountSlider, destinationDepths[11]);
-    setIndicator(sampleStartSlider, destinationDepths[12]);
-    setIndicator(sampleMixSlider, destinationDepths[13]);
-    setIndicator(sampleTransposeSlider, destinationDepths[14]);
-    setIndicator(samplePitchRampSlider, destinationDepths[15]);
-    setIndicator(sampleStutterRepeatsSlider, destinationDepths[16]);
-    setIndicator(oscWarpSlider, destinationDepths[17]);
+    setIndicator(cutoffSlider, destinationDepths[1], destinationRouteCounts[1], destinationSources[1]);
+    setIndicator(resonanceSlider, destinationDepths[2], destinationRouteCounts[2], destinationSources[2]);
+    setIndicator(filterEnvSlider, destinationDepths[3], destinationRouteCounts[3], destinationSources[3]);
+    setIndicator(driveSlider, destinationDepths[4], destinationRouteCounts[4], destinationSources[4]);
+    setIndicator(osc2TuneSlider, destinationDepths[5], destinationRouteCounts[5], destinationSources[5]);
+    setIndicator(osc2LevelSlider, destinationDepths[6], destinationRouteCounts[6], destinationSources[6]);
+    setIndicator(fxPumpDepthSlider, destinationDepths[7], destinationRouteCounts[7], destinationSources[7]);
+    setIndicator(fxDelayMixSlider, destinationDepths[8], destinationRouteCounts[8], destinationSources[8]);
+    setIndicator(fxReverbMixSlider, destinationDepths[9], destinationRouteCounts[9], destinationSources[9]);
+    setIndicator(fxWidthAmountSlider, destinationDepths[10], destinationRouteCounts[10], destinationSources[10]);
+    setIndicator(fxDistortionAmountSlider, destinationDepths[11], destinationRouteCounts[11], destinationSources[11]);
+    setIndicator(sampleStartSlider, destinationDepths[12], destinationRouteCounts[12], destinationSources[12]);
+    setIndicator(sampleMixSlider, destinationDepths[13], destinationRouteCounts[13], destinationSources[13]);
+    setIndicator(sampleTransposeSlider, destinationDepths[14], destinationRouteCounts[14], destinationSources[14]);
+    setIndicator(samplePitchRampSlider, destinationDepths[15], destinationRouteCounts[15], destinationSources[15]);
+    setIndicator(sampleStutterRepeatsSlider, destinationDepths[16], destinationRouteCounts[16], destinationSources[16]);
+    setIndicator(oscWarpSlider, destinationDepths[17], destinationRouteCounts[17], destinationSources[17]);
 }
 
 void NateVSTAudioProcessorEditor::updateOutputMeter()

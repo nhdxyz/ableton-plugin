@@ -223,8 +223,9 @@ Editable engine slice:
 9. Added the first global FX modulation destinations: Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. LFO 1 and macro sources drive these in the effects rack; Mod Env and Velocity remain per-voice synth-only sources.
 10. Added the first global sample modulation destinations: Sample Start, Mix, Pitch, Ramp, and Stutter. UKG Chop seeds empty routes for start and pitch/ramp movement when a sample workflow is active.
 11. Added saved per-slot route enable flags plus compact bypass/delete controls. Disabled routes keep their source/destination/amount for comparison but no longer affect synth, sample, FX, rings, or depth summaries.
+12. Added reusable LFO curve presets, a phase cursor on the curve display, current-value-relative destination rings, and compact route-count/depth badges on modulated knobs.
 
 Remaining modulation work:
 
 - Add a real global Mod Env/Velocity aggregation strategy before allowing those sources to drive sample or FX targets.
-- Expand draggable curve editing into reusable curve presets, per-slot curve modulation, and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.
+- Expand draggable curve editing into per-slot curve modulation and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.

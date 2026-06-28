@@ -36,6 +36,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     const auto knobBounds = juce::Rectangle<float>(radius * 2.0f, radius * 2.0f).withCentre(centre);
     const auto modulationAmount = static_cast<float>(static_cast<double>(slider.getProperties().getWithDefault("modAmount", 0.0)));
     const auto modulationDepth = juce::jlimit(0.0f, 1.0f, std::abs(modulationAmount));
+    const auto modulationRouteCount = static_cast<int>(slider.getProperties().getWithDefault("modRouteCount", 0));
 
     g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
     g.fillRoundedRectangle(cellBounds, 6.0f);
@@ -78,7 +79,10 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
         const auto ringRadius = radius + 2.5f;
         const auto ringColour = modulationAmount >= 0.0f ? juce::Colour(0xff8ee6c9)
                                                          : juce::Colour(0xffffa36f);
-        const auto ringEnd = rotaryStartAngle + ((rotaryEndAngle - rotaryStartAngle) * modulationDepth);
+        const auto ringTravel = (rotaryEndAngle - rotaryStartAngle) * modulationDepth;
+        const auto ringEnd = juce::jlimit(rotaryStartAngle,
+                                          rotaryEndAngle,
+                                          angle + (modulationAmount >= 0.0f ? ringTravel : -ringTravel));
 
         juce::Path modRail;
         modRail.addCentredArc(centre.x, centre.y, ringRadius, ringRadius, 0.0f,
@@ -88,9 +92,28 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
 
         juce::Path modArc;
         modArc.addCentredArc(centre.x, centre.y, ringRadius, ringRadius, 0.0f,
-                             rotaryStartAngle, ringEnd, true);
+                             juce::jmin(angle, ringEnd), juce::jmax(angle, ringEnd), true);
         g.setColour(ringColour);
         g.strokePath(modArc, juce::PathStrokeType(2.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        if (modulationRouteCount > 0)
+        {
+            auto badge = cellBounds.withSizeKeepingCentre(42.0f, 14.0f);
+            badge.setY(cellBounds.getY() + 4.0f);
+            badge.setX(cellBounds.getRight() - badge.getWidth() - 5.0f);
+
+            g.setColour(ringColour.withAlpha(0.18f));
+            g.fillRoundedRectangle(badge, 4.0f);
+            g.setColour(ringColour.withAlpha(0.72f));
+            g.drawRoundedRectangle(badge, 4.0f, 1.0f);
+
+            const auto percent = juce::roundToInt(modulationAmount * 100.0f);
+            auto badgeText = "M" + juce::String(modulationRouteCount) + " "
+                + (percent >= 0 ? "+" : "") + juce::String(percent);
+            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+            g.setColour(juce::Colour(0xffedf7f4));
+            g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
+        }
     }
 }
 

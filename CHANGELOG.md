@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### LFO Curve Presets And Modulation Ring Badges
+
+- Added a MOD-panel `Curve Preset` selector for saved LFO 1 curve-point parameters, covering garage push, ducking, offbeat, riser/fall, stepped, wobble, and flat movement shapes.
+- Added a moving phase cursor to the LFO curve editor when Curve mode is active, using host PPQ when available and a UI fallback phase otherwise.
+- Upgraded modulation-ring drawing so destination knobs show the modulated range around the current value instead of only from the minimum.
+- Added compact modulation badges and source tooltips on destination knobs, showing active route count and summed modulation depth.
+
 ### Library Pack Key And Tempo Metadata
 
 - Added preset metadata fields for author, pack, musical key, and target BPM, with user saves writing those values into `.natevstpreset` files.

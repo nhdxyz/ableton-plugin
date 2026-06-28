@@ -161,6 +161,7 @@ private:
     juce::ComboBox modInspectorSourceBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
+    juce::ComboBox lfoCurvePresetBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
     std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
@@ -554,6 +555,7 @@ private:
     void updateModMatrixRows();
     void updateModInspectorStatus();
     void updateModDestinationIndicators();
+    void applyLfoCurvePreset(int presetId);
     void updateOutputMeter();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();

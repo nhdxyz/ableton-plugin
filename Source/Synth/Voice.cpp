@@ -16,6 +16,16 @@ double cyclesPerBeatForLfoSync(int rateIndex)
         default: return 1.0; // 1/4
     }
 }
+
+float advanceChaosRandomWalk(float currentValue, juce::Random& random, float cyclesThisStep)
+{
+    const auto safeCycles = juce::jlimit(0.0f, 1.0f, cyclesThisStep);
+    const auto randomStep = ((random.nextFloat() * 2.0f) - 1.0f)
+        * juce::jlimit(0.00025f, 0.05f, std::sqrt(safeCycles) * 0.08f);
+    const auto damping = juce::jlimit(0.00001f, 0.45f, safeCycles * 0.35f);
+
+    return juce::jlimit(-1.0f, 1.0f, (currentValue * (1.0f - damping)) + randomStep);
+}
 }
 
 Voice::Voice(Parameters::APVTS& state)
@@ -155,6 +165,7 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
         lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
         lfoSmoothRandomStartValue = lfoStepValue;
         lfoSmoothRandomValue = lfoStepValue;
+        lfoChaosValue = ((modulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     }
 }
 
@@ -435,6 +446,9 @@ float Voice::processLfo()
                                         1.0f,
                                         lfoSmoothRandomStartValue
                                             + ((lfoStepValue - lfoSmoothRandomStartValue) * smoothProgress));
+    lfoChaosValue = advanceChaosRandomWalk(lfoChaosValue,
+                                           modulationRandom,
+                                           rateHz / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
     const auto previousPhase = lfoPhase;
     lfoPhase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
@@ -482,6 +496,7 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float mod
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return lfoStepValue;
         case 13: return lfoSmoothRandomValue;
+        case 14: return lfoChaosValue;
         default: return 0.0f;
     }
 }

@@ -37,6 +37,16 @@ double lfoCyclesPerBeat(int rateIndex)
     }
 }
 
+float advanceChaosRandomWalk(float currentValue, juce::Random& random, float cyclesThisStep)
+{
+    const auto safeCycles = juce::jlimit(0.0f, 1.0f, cyclesThisStep);
+    const auto randomStep = ((random.nextFloat() * 2.0f) - 1.0f)
+        * juce::jlimit(0.00025f, 0.05f, std::sqrt(safeCycles) * 0.08f);
+    const auto damping = juce::jlimit(0.00001f, 0.45f, safeCycles * 0.35f);
+
+    return juce::jlimit(-1.0f, 1.0f, (currentValue * (1.0f - damping)) + randomStep);
+}
+
 int boundaryFadeSamplesForSpan(int sourceSpan)
 {
     return juce::jlimit(8, chopFadeSamples, juce::jmax(1, sourceSpan / 4));
@@ -186,6 +196,7 @@ void SamplePlayer::prepare(double sampleRate)
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
     sampleModSmoothRandomValue = sampleModLfoStepValue;
+    sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
 }
 
 void SamplePlayer::clear()
@@ -198,6 +209,7 @@ void SamplePlayer::clear()
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
     sampleModSmoothRandomValue = sampleModLfoStepValue;
+    sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
 }
 
 bool SamplePlayer::loadFile(const juce::File& file)
@@ -450,6 +462,11 @@ float SamplePlayer::processSampleModulationLfo(int numSamples, double bpm, std::
                                               1.0f,
                                               sampleModSmoothRandomStartValue
                                                   + ((sampleModLfoStepValue - sampleModSmoothRandomStartValue) * smoothProgress));
+    sampleModChaosValue = advanceChaosRandomWalk(sampleModChaosValue,
+                                                 sampleModulationRandom,
+                                                 (juce::jlimit(0.01f, 80.0f, rateHz)
+                                                    * static_cast<float>(juce::jmax(1, numSamples)))
+                                                    / static_cast<float>(juce::jmax(1.0, playbackSampleRate)));
 
     const auto previousPhase = sampleModLfoPhase;
     sampleModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(playbackSampleRate);
@@ -495,6 +512,7 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return sampleModLfoStepValue;
         case 13: return sampleModSmoothRandomValue;
+        case 14: return sampleModChaosValue;
         default: return 0.0f;
     }
 }

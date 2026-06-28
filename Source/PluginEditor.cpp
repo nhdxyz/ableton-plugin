@@ -298,7 +298,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 13> sourceTexts {
+    static const std::array<const char*, 14> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -311,7 +311,8 @@ juce::String modSourceSummaryText(size_t index)
         "Warp: osc bend + harmonic edge",
         "Throw: delay + reverb push",
         "S&H: stepped random movement",
-        "Smooth: slewed random drift"
+        "Smooth: slewed random drift",
+        "Chaos: wandering random walk"
     };
 
     if (index < sourceTexts.size())

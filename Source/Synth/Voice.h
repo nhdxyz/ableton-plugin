@@ -65,6 +65,7 @@ private:
     float lfoStepValue = 0.0f;
     float lfoSmoothRandomStartValue = 0.0f;
     float lfoSmoothRandomValue = 0.0f;
+    float lfoChaosValue = 0.0f;
     float currentOsc2LevelOffset = 0.0f;
     float currentDriveOffset = 0.0f;
     double currentSampleRate = 44100.0;

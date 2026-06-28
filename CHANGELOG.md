@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Chaos Modulation Source
+
+- Added an appended `Chaos` source after `Smooth` so existing modulation source indices stay stable while adding random-walk motion.
+- Routed Chaos through synth, sample, and FX modulation paths with a bounded, mean-reverting walk that follows the existing LFO timing rate.
+- Expanded the MOD source summary area from 13 to 14 rows; the existing adaptive two-column source layout now balances seven rows per column.
+- Seeded `Techno Warehouse Stab` with a subtle Chaos-to-FX-Drive route for unstable warehouse edge without changing core pitch or cutoff.
+
 ### Smooth Random Modulation Source
 
 - Added an appended `Smooth` source after `S&H` so existing modulation source indices and saved presets stay compatible.

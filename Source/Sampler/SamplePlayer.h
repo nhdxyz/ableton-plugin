@@ -94,6 +94,7 @@ private:
     float sampleModLfoStepValue = 0.0f;
     float sampleModSmoothRandomStartValue = 0.0f;
     float sampleModSmoothRandomValue = 0.0f;
+    float sampleModChaosValue = 0.0f;
 
     struct SampleModulationOffsets
     {

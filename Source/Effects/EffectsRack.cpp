@@ -35,6 +35,16 @@ double lfoCyclesPerBeat(int rateIndex)
     }
 }
 
+float advanceChaosRandomWalk(float currentValue, juce::Random& random, float cyclesThisStep)
+{
+    const auto safeCycles = juce::jlimit(0.0f, 1.0f, cyclesThisStep);
+    const auto randomStep = ((random.nextFloat() * 2.0f) - 1.0f)
+        * juce::jlimit(0.00025f, 0.05f, std::sqrt(safeCycles) * 0.08f);
+    const auto damping = juce::jlimit(0.00001f, 0.45f, safeCycles * 0.35f);
+
+    return juce::jlimit(-1.0f, 1.0f, (currentValue * (1.0f - damping)) + randomStep);
+}
+
 double delaySecondsForRate(int rateIndex, double bpm)
 {
     const auto quarterNoteSeconds = 60.0 / juce::jlimit(20.0, 300.0, bpm);
@@ -265,6 +275,7 @@ void EffectsRack::reset()
     fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
     fxModSmoothRandomStartValue = fxModLfoStepValue;
     fxModSmoothRandomValue = fxModLfoStepValue;
+    fxModChaosValue = ((fxModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
@@ -370,6 +381,11 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
                                           1.0f,
                                           fxModSmoothRandomStartValue
                                               + ((fxModLfoStepValue - fxModSmoothRandomStartValue) * smoothProgress));
+    fxModChaosValue = advanceChaosRandomWalk(fxModChaosValue,
+                                             fxModulationRandom,
+                                             (juce::jlimit(0.01f, 80.0f, rateHz)
+                                                * static_cast<float>(juce::jmax(1, numSamples)))
+                                                / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
     const auto previousPhase = fxModLfoPhase;
     fxModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
@@ -415,6 +431,7 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) c
         case 11: return readParameter(macroThrow, 0.0f);
         case 12: return fxModLfoStepValue;
         case 13: return fxModSmoothRandomValue;
+        case 14: return fxModChaosValue;
         default: return 0.0f;
     }
 }

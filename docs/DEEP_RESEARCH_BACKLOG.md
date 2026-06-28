@@ -97,6 +97,7 @@ Implemented movement sub-slices:
 
 - `S&H` is now an appended MOD source for stepped random movement, routed through synth, sample, and FX modulation paths without changing existing source indices. Macro assignment editing remains limited to the eight performance macros.
 - `Smooth` is now an appended MOD source after `S&H` for slewed random drift across synth, sample, and FX destinations. It keeps old source indices intact and follows the existing LFO timing path while interpolating between held random targets.
+- `Chaos` is now an appended MOD source after `Smooth` for bounded random-walk movement across synth, sample, and FX destinations. LFO 2/3, true MSEG, route processors, drag assignment, and step-LFO work remain open.
 
 ## Priority 2: Oscillator And Source Engines
 

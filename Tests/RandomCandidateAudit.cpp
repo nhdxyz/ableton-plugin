@@ -28,6 +28,40 @@ bool setPlainParameter(NateVSTAudioProcessor& processor, const juce::String& par
 int main()
 {
     {
+        NateVSTAudioProcessor fallbackProcessor;
+        if (! setPlainParameter(fallbackProcessor, Parameters::ID::randomRecipe, 6.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::randomAmount, 0.72f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::randomChaos, 0.28f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::randomSourceIntensity, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::randomMacroIntensity, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::randomLockOutput, 1.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::osc1Level, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::osc2Level, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::subLevel, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::noiseLevel, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::macroWeight, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::sampleEnabled, 0.0f)
+            || ! setPlainParameter(fallbackProcessor, Parameters::ID::outputGain, -24.0f))
+        {
+            std::cerr << "Could not seed fallback audit parameters\n";
+            return 1;
+        }
+
+        fallbackProcessor.generateRandomPatch();
+        const auto fallbackSummary = fallbackProcessor.getRandomCandidateValidationSummary(0);
+        if (! fallbackProcessor.hasRandomCandidate(0)
+            || ! fallbackSummary.containsIgnoreCase("auto retry exhausted")
+            || ! fallbackSummary.containsIgnoreCase("fallback bass init")
+            || ! fallbackSummary.containsIgnoreCase("fallback relaxed Output lock")
+            || ! fallbackSummary.containsIgnoreCase("fallback accepted"))
+        {
+            std::cerr << "Random fallback audit did not report accepted safe fallback: "
+                      << fallbackSummary << '\n';
+            return 1;
+        }
+    }
+
+    {
         NateVSTAudioProcessor retryProcessor;
         if (! setPlainParameter(retryProcessor, Parameters::ID::randomRecipe, 6.0f)
             || ! setPlainParameter(retryProcessor, Parameters::ID::randomAmount, 0.72f)
@@ -51,6 +85,7 @@ int main()
         const auto retrySummary = retryProcessor.getRandomCandidateValidationSummary(0);
         if (! retryProcessor.hasRandomCandidate(0)
             || ! retrySummary.containsIgnoreCase("auto retry exhausted")
+            || ! retrySummary.containsIgnoreCase("fallback blocked by Source lock")
             || ! retrySummary.containsIgnoreCase("render quiet warning"))
         {
             std::cerr << "Random render retry audit did not report exhausted bad renders: "

@@ -2261,8 +2261,13 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
     }
     else if (acceptedAttempt == 0)
     {
+        const auto fallbackValidation = applyRandomExhaustionFallback(snapshot, mutationScope);
+        if (! fallbackValidation.shouldRetry)
+            acceptedAttempt = maxRandomValidationAttempts + 1;
+
         validation.summary = "auto retry exhausted " + juce::String(maxRandomValidationAttempts) + " attempts"
-            + (validation.summary.isNotEmpty() ? " / " + validation.summary : juce::String());
+            + (fallbackValidation.summary.isNotEmpty() ? " / " + fallbackValidation.summary : juce::String())
+            + (validation.summary.isNotEmpty() ? " / last rejected: " + validation.summary : juce::String());
     }
 
     lastRandomValidationSummary = validation.summary;
@@ -2710,6 +2715,7 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
 {
     static constexpr auto minimumUsefulRenderPeak = 0.01f;
     static constexpr auto minimumUsefulRenderRms = 0.0008f;
+    const auto outputLocked = isRandomLockEnabled(Parameters::ID::randomLockOutput);
     juce::StringArray renderNotes;
     auto metrics = renderRandomValidationSnippet();
 
@@ -2736,8 +2742,11 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
                                    juce::jmax(0.35f, getParameterPlainValue(Parameters::ID::ampSustain, 0.55f)));
             setParameterPlainValue(Parameters::ID::ampRelease,
                                    juce::jmax(0.12f, getParameterPlainValue(Parameters::ID::ampRelease, 0.18f)));
-            setParameterPlainValue(Parameters::ID::outputGain,
-                                   juce::jmax(-10.0f, getParameterPlainValue(Parameters::ID::outputGain, -8.0f)));
+            if (! outputLocked)
+            {
+                setParameterPlainValue(Parameters::ID::outputGain,
+                                       juce::jmax(-10.0f, getParameterPlainValue(Parameters::ID::outputGain, -8.0f)));
+            }
             renderNotes.add("render quiet boosted");
             metrics = renderRandomValidationSnippet();
         }
@@ -2790,6 +2799,117 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
     }
 
     return { renderNotes.joinIntoString(" / "), shouldRetry };
+}
+
+NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandomExhaustionFallback(const juce::ValueTree& originalState,
+                                                                                                   RandomMutationScope mutationScope)
+{
+    restorePluginState(originalState.createCopy());
+
+    juce::StringArray notes;
+    const auto recipeName = currentRandomRecipeName();
+    const auto sourceLocked = isRandomLockEnabled(Parameters::ID::randomLockSource);
+    const auto fxLocked = isRandomLockEnabled(Parameters::ID::randomLockFx);
+    const auto outputLocked = isRandomLockEnabled(Parameters::ID::randomLockOutput);
+    const auto bassRole = recipeName.containsIgnoreCase("Bass")
+        || recipeName.containsIgnoreCase("Dred")
+        || recipeName.containsIgnoreCase("Acid");
+    const auto midRole = recipeName.containsIgnoreCase("Stab")
+        || recipeName.containsIgnoreCase("Organ")
+        || recipeName.containsIgnoreCase("Chord")
+        || recipeName.containsIgnoreCase("Bell")
+        || recipeName.containsIgnoreCase("Blip");
+    const auto noiseRole = recipeName.containsIgnoreCase("Noise");
+
+    const auto sourceEnergy = getParameterPlainValue(Parameters::ID::osc1Level, 1.0f)
+        + getParameterPlainValue(Parameters::ID::osc2Level, 0.0f)
+        + getParameterPlainValue(Parameters::ID::subLevel, 0.0f)
+        + (getParameterPlainValue(Parameters::ID::noiseLevel, 0.0f) * 0.65f);
+
+    if (sourceLocked && sourceEnergy < 0.12f)
+        return { "fallback blocked by Source lock", true };
+
+    if (! sourceLocked)
+    {
+        if (mutationScope != RandomMutationScope::all && mutationScope != RandomMutationScope::source)
+            notes.add("fallback expanded Source scope");
+
+        if (noiseRole)
+        {
+            setParameterPlainValue(Parameters::ID::osc1Level, 0.28f);
+            setParameterPlainValue(Parameters::ID::osc2Level, 0.12f);
+            setParameterPlainValue(Parameters::ID::subLevel, 0.0f);
+            setParameterPlainValue(Parameters::ID::noiseLevel, 0.72f);
+            setParameterPlainValue(Parameters::ID::oscWave, 0.0f);
+            setParameterPlainValue(Parameters::ID::filterCutoff, 5200.0f);
+            notes.add("fallback noise init");
+        }
+        else if (bassRole)
+        {
+            setParameterPlainValue(Parameters::ID::osc1Level, 0.76f);
+            setParameterPlainValue(Parameters::ID::osc2Level, 0.28f);
+            setParameterPlainValue(Parameters::ID::subLevel, 0.52f);
+            setParameterPlainValue(Parameters::ID::noiseLevel, 0.0f);
+            setParameterPlainValue(Parameters::ID::oscWave, 1.0f);
+            setParameterPlainValue(Parameters::ID::monoMode, 1.0f);
+            setParameterPlainValue(Parameters::ID::glideTime, 0.055f);
+            setParameterPlainValue(Parameters::ID::filterCutoff, 980.0f);
+            setParameterPlainValue(Parameters::ID::filterResonance, 0.42f);
+            notes.add("fallback bass init");
+        }
+        else if (midRole)
+        {
+            setParameterPlainValue(Parameters::ID::osc1Level, 0.7f);
+            setParameterPlainValue(Parameters::ID::osc2Level, 0.34f);
+            setParameterPlainValue(Parameters::ID::subLevel, 0.06f);
+            setParameterPlainValue(Parameters::ID::noiseLevel, 0.04f);
+            setParameterPlainValue(Parameters::ID::oscWave, 2.0f);
+            setParameterPlainValue(Parameters::ID::filterCutoff, 2400.0f);
+            setParameterPlainValue(Parameters::ID::filterResonance, 0.38f);
+            notes.add("fallback mid init");
+        }
+        else
+        {
+            setParameterPlainValue(Parameters::ID::osc1Level, 0.68f);
+            setParameterPlainValue(Parameters::ID::osc2Level, 0.18f);
+            setParameterPlainValue(Parameters::ID::subLevel, 0.18f);
+            setParameterPlainValue(Parameters::ID::noiseLevel, 0.05f);
+            setParameterPlainValue(Parameters::ID::filterCutoff, 1800.0f);
+            notes.add("fallback safe init");
+        }
+
+        setParameterPlainValue(Parameters::ID::ampAttack, 0.004f);
+        setParameterPlainValue(Parameters::ID::ampDecay, bassRole ? 0.24f : 0.18f);
+        setParameterPlainValue(Parameters::ID::ampSustain, bassRole ? 0.52f : 0.42f);
+        setParameterPlainValue(Parameters::ID::ampRelease, bassRole ? 0.16f : 0.2f);
+        setParameterPlainValue(Parameters::ID::driveAmount, bassRole ? 0.18f : 0.12f);
+        setParameterPlainValue(Parameters::ID::macroWeight, bassRole ? 0.32f : 0.12f);
+    }
+
+    if (outputLocked)
+        notes.add("fallback relaxed Output lock");
+    setParameterPlainValue(Parameters::ID::outputGain, bassRole ? -10.0f : -8.0f);
+
+    if (fxLocked)
+        notes.add("fallback relaxed FX lock");
+    setParameterPlainValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::fxGuardCeiling, 0.9f);
+    setParameterPlainValue(Parameters::ID::fxDelayMix, juce::jmin(0.2f, getParameterPlainValue(Parameters::ID::fxDelayMix, 0.0f)));
+    setParameterPlainValue(Parameters::ID::fxDelayFeedback, juce::jmin(0.35f, getParameterPlainValue(Parameters::ID::fxDelayFeedback, 0.25f)));
+    setParameterPlainValue(Parameters::ID::fxReverbMix, juce::jmin(0.24f, getParameterPlainValue(Parameters::ID::fxReverbMix, 0.0f)));
+    setParameterPlainValue(Parameters::ID::fxWidthAmount, bassRole ? juce::jmin(1.08f, getParameterPlainValue(Parameters::ID::fxWidthAmount, 1.0f))
+                                                                  : getParameterPlainValue(Parameters::ID::fxWidthAmount, 1.0f));
+
+    const auto validation = applyRandomRenderValidation(false);
+    if (validation.shouldRetry)
+        notes.add("fallback still rejected");
+    else
+        notes.add("fallback accepted");
+
+    if (validation.summary.isNotEmpty())
+        notes.add(validation.summary);
+
+    return { notes.joinIntoString(" / "), validation.shouldRetry };
 }
 
 NateVSTAudioProcessor::RandomRenderMetrics NateVSTAudioProcessor::renderRandomValidationSnippet()

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Fallback Strategy
+
+- Added a recipe-aware safe fallback after render-validation retries exhaust, with bass, mid, noise, and general init shapes that recover from the original pre-random state instead of the last rejected attempt.
+- Fallbacks can relax non-critical Output and FX locks after repeated rejection, while still reporting blocked critical Source-lock cases instead of silently overriding them.
+- Extended `RandomCandidateAudit` to verify both accepted fallback recovery and blocked Source-lock exhaustion.
+
 ### Random Lab Auto Retry
 
 - Added automatic retry attempts before Random Lab candidate capture when render validation still reports quiet, clipped, non-finite, or heavy-tail output after correction.

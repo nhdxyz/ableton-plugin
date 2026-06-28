@@ -259,6 +259,8 @@ private:
     juce::String currentRandomRecipeName() const;
     RandomValidationResult applyRandomGenerationGuardrails(RandomMutationScope mutationScope);
     RandomValidationResult applyRandomRenderValidation(bool fxLocked);
+    RandomValidationResult applyRandomExhaustionFallback(const juce::ValueTree& originalState,
+                                                        RandomMutationScope mutationScope);
     RandomRenderMetrics renderRandomValidationSnippet();
     void resetRandomValidationRenderState();
     void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);

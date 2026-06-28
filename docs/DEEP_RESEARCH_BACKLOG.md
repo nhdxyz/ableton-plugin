@@ -199,6 +199,11 @@ Implemented sampler sub-slice:
 99. Add send-style delay/reverb throw bus inside the plugin.
 100. Add true slot-based FX instances only after fixed-module automation is proven stable.
 
+Implemented FX sub-slice:
+
+- Pump now publishes live phase, gain, peak reduction, and active-state telemetry from the DSP path, and the FX Pump curve display shows HOST/INT timing source, a moving phase marker, and a reduction meter. External Ableton sidechain input remains tracked separately because it requires bus-layout and host-validation work.
+- Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), and preset previews/construction kits (#68).
+
 ## Priority 6: Randomization And Sound Discovery
 
 101. Add per-section randomization scopes: Source, Filter, Motion, FX, Sequencer, Sample, Library metadata.

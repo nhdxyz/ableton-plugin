@@ -287,6 +287,10 @@ void EffectsRack::reset()
     sequencerLockDestination = 0;
     sequencerLockAmount = 0.0f;
     pumpSmoothedGain = 1.0f;
+    pumpMeterPhase.store(0.0f, std::memory_order_relaxed);
+    pumpMeterGain.store(1.0f, std::memory_order_relaxed);
+    pumpMeterReduction.store(0.0f, std::memory_order_relaxed);
+    pumpMeterActive.store(false, std::memory_order_relaxed);
     delayWritePosition = 0;
     combWritePosition = 0;
 }
@@ -306,6 +310,14 @@ void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, 
         processModule(moduleIndex, buffer, bpm, ppqPosition);
 
     applyOutputGainAndSafety(buffer, outputGainDb);
+}
+
+void EffectsRack::getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept
+{
+    phase = pumpMeterPhase.load(std::memory_order_relaxed);
+    gain = pumpMeterGain.load(std::memory_order_relaxed);
+    reduction = pumpMeterReduction.load(std::memory_order_relaxed);
+    active = pumpMeterActive.load(std::memory_order_relaxed);
 }
 
 void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
@@ -707,6 +719,10 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
     if (! isEnabled && bounce <= 0.001f)
     {
         pumpSmoothedGain = 1.0f;
+        pumpMeterPhase.store(static_cast<float>(pumpPhase), std::memory_order_relaxed);
+        pumpMeterGain.store(1.0f, std::memory_order_relaxed);
+        pumpMeterReduction.store(0.0f, std::memory_order_relaxed);
+        pumpMeterActive.store(false, std::memory_order_relaxed);
         return;
     }
 
@@ -735,6 +751,8 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
             pumpPhase += 1.0;
     }
 
+    auto peakReduction = 0.0f;
+
     for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
     {
         auto shapedPhase = std::fmod(pumpPhase + static_cast<double>(phaseOffset), 1.0);
@@ -745,6 +763,7 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
         const auto duckAmount = pumpDuckAmount(recovery, shape, curveIndex, customCurve);
         const auto targetGain = juce::jlimit(0.0f, 1.0f, 1.0f - (depth * duckAmount));
         pumpSmoothedGain += (targetGain - pumpSmoothedGain) * smoothing;
+        peakReduction = juce::jmax(peakReduction, 1.0f - pumpSmoothedGain);
 
         for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
             buffer.setSample(channel, sampleIndex, buffer.getSample(channel, sampleIndex) * pumpSmoothedGain);
@@ -753,6 +772,11 @@ void EffectsRack::processPump(juce::AudioBuffer<float>& buffer, double bpm, std:
         while (pumpPhase >= 1.0)
             pumpPhase -= 1.0;
     }
+
+    pumpMeterPhase.store(static_cast<float>(pumpPhase), std::memory_order_relaxed);
+    pumpMeterGain.store(juce::jlimit(0.0f, 1.0f, pumpSmoothedGain), std::memory_order_relaxed);
+    pumpMeterReduction.store(juce::jlimit(0.0f, 1.0f, peakReduction), std::memory_order_relaxed);
+    pumpMeterActive.store(depth > 0.001f, std::memory_order_relaxed);
 }
 
 void EffectsRack::processTremolo(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition)

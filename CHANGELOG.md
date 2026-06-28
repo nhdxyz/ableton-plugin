@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Pump Telemetry And House Sidechain Foundation
+
+- Added real-time-safe pump telemetry to the FX rack: live phase, current gain, peak reduction, and active state.
+- Updated the Pump curve display to show a moving phase marker, reduction meter, HOST/INT timing source, and current ducking percentage while keeping the existing custom curve editor.
+- Added `PumpTelemetryAudit` to verify active pump ducking reports meaningful telemetry and resets cleanly when Pump is disabled.
+- Opened GitHub implementation slices for sidechain/pump, mix-safety FX, pattern scenes/chord-stab tools, visual analysis meters, and preset preview/construction-kit workflow.
+
 ### INFO Panel And Expanded Editor
 
 - Increased the default editor size to 1040x760 while keeping 940x710 as the minimum host resize target.

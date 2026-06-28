@@ -2240,6 +2240,11 @@ void NateVSTAudioProcessor::getLowEndMeterLevels(float& subRms, float& lowStereo
     outputPeak = lowEndOutputPeak.load(std::memory_order_relaxed);
 }
 
+void NateVSTAudioProcessor::getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept
+{
+    effectsRack.getPumpMeterLevels(phase, gain, reduction, active);
+}
+
 NateVSTAudioProcessor::HostSyncStatus NateVSTAudioProcessor::getHostSyncStatus() const noexcept
 {
     HostSyncStatus status;

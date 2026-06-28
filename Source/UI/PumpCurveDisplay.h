@@ -17,6 +17,11 @@ public:
                   int newRateIndex,
                   bool newEnabled,
                   const std::array<float, 8>& newCustomValues);
+    void setLiveState(float newLivePhase,
+                      float newLiveGain,
+                      float newLiveReduction,
+                      bool newLiveActive,
+                      const juce::String& newSourceText);
 
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -36,6 +41,11 @@ private:
     float shape = 0.45f;
     float phase = 0.0f;
     bool enabled = false;
+    float livePhase = 0.0f;
+    float liveGain = 1.0f;
+    float liveReduction = 0.0f;
+    bool liveActive = false;
+    juce::String sourceText = "INT";
     std::array<float, 8> customValues { 1.0f, 0.82f, 0.62f, 0.44f, 0.28f, 0.16f, 0.07f, 0.0f };
     int hoveredIndex = -1;
     int draggedIndex = -1;

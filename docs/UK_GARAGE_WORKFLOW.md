@@ -71,7 +71,7 @@ Research references:
 - The FX page now has first-pass performance throw actions for delay, space, pump drops, and throw-off cleanup using the existing Delay, Reverb, Pump, Width, and Guard modules.
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
 - Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
-- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes.
+- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes. The Pump display now also shows HOST/INT timing, live phase, and ducking reduction, which is the first foundation for the later Ableton external-sidechain workflow.
 
 ## Sound Targets
 

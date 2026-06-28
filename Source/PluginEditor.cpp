@@ -7264,6 +7264,21 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
         juce::roundToInt(readPlainParameterValue(Parameters::ID::fxPumpRate, 0.0f)),
         moduleEnabled || bounce > 0.001f,
         customCurve);
+
+    auto pumpPhase = 0.0f;
+    auto pumpGain = 1.0f;
+    auto pumpReduction = 0.0f;
+    auto pumpActive = false;
+    audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, pumpActive);
+
+    const auto hostSync = audioProcessor.getHostSyncStatus();
+    const auto sourceText = hostSync.ppqAvailable ? juce::String("HOST")
+                                                  : juce::String("INT");
+    pumpCurveDisplay.setLiveState(pumpPhase,
+                                  pumpGain,
+                                  pumpReduction,
+                                  pumpActive && (moduleEnabled || bounce > 0.001f),
+                                  sourceText);
 }
 
 void NateVSTAudioProcessorEditor::updateWavetableDisplay()

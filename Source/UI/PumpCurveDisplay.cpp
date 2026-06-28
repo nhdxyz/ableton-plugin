@@ -52,6 +52,34 @@ void PumpCurveDisplay::setState(int newCurveIndex,
     repaint();
 }
 
+void PumpCurveDisplay::setLiveState(float newLivePhase,
+                                    float newLiveGain,
+                                    float newLiveReduction,
+                                    bool newLiveActive,
+                                    const juce::String& newSourceText)
+{
+    newLivePhase = juce::jlimit(0.0f, 1.0f, newLivePhase);
+    newLiveGain = juce::jlimit(0.0f, 1.0f, newLiveGain);
+    newLiveReduction = juce::jlimit(0.0f, 1.0f, newLiveReduction);
+    const auto nextSourceText = newSourceText.trim().isNotEmpty() ? newSourceText.trim() : juce::String("INT");
+
+    if (std::abs(livePhase - newLivePhase) < 0.002f
+        && std::abs(liveGain - newLiveGain) < 0.002f
+        && std::abs(liveReduction - newLiveReduction) < 0.002f
+        && liveActive == newLiveActive
+        && sourceText == nextSourceText)
+    {
+        return;
+    }
+
+    livePhase = newLivePhase;
+    liveGain = newLiveGain;
+    liveReduction = newLiveReduction;
+    liveActive = newLiveActive;
+    sourceText = nextSourceText;
+    repaint();
+}
+
 void PumpCurveDisplay::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
@@ -107,6 +135,23 @@ void PumpCurveDisplay::paint(juce::Graphics& g)
     g.setColour(accent);
     g.strokePath(linePath, juce::PathStrokeType(isCustom ? 2.4f : 2.0f));
 
+    if (liveActive)
+    {
+        const auto liveX = juce::jmap(livePhase, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        const auto liveY = juce::jmap(liveGain, 0.0f, 1.0f, plot.getBottom(), plot.getY());
+        g.setColour(juce::Colour(0xffffd27a).withAlpha(0.28f));
+        g.drawVerticalLine(static_cast<int>(std::round(liveX)), plot.getY(), plot.getBottom());
+        g.setColour(juce::Colour(0xffffd27a));
+        g.fillEllipse(liveX - 3.5f, liveY - 3.5f, 7.0f, 7.0f);
+
+        auto meter = bounds.withTrimmedLeft(bounds.getWidth() - 11.0f).withTrimmedTop(22.0f).reduced(2.0f, 0.0f);
+        g.setColour(juce::Colour(0xff263238));
+        g.fillRoundedRectangle(meter, 2.0f);
+        const auto reductionHeight = meter.getHeight() * liveReduction;
+        g.setColour(juce::Colour(0xffffd27a).withAlpha(0.74f));
+        g.fillRoundedRectangle(meter.withY(meter.getBottom() - reductionHeight).withHeight(reductionHeight), 2.0f);
+    }
+
     if (isCustom)
     {
         g.setColour(accent.withAlpha(0.28f));
@@ -135,7 +180,8 @@ void PumpCurveDisplay::paint(juce::Graphics& g)
     g.drawFittedText(curveName().toUpperCase(), header.toNearestInt(), juce::Justification::centredLeft, 1);
 
     g.setFont(juce::FontOptions(9.0f));
-    const auto detail = rateName() + " | " + juce::String(juce::roundToInt(depth * 100.0f)) + "%"
+    const auto detail = sourceText + " | " + rateName() + " | " + juce::String(juce::roundToInt(depth * 100.0f)) + "%"
+                      + (liveActive ? " | -" + juce::String(juce::roundToInt(liveReduction * 100.0f)) + "%" : "")
                       + (isCustom ? " | DRAG" : "");
     g.setColour(juce::Colour(0xff879299));
     g.drawFittedText(detail, header.toNearestInt(), juce::Justification::centredRight, 1);

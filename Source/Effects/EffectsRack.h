@@ -6,6 +6,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include <array>
+#include <atomic>
 #include <optional>
 #include <vector>
 
@@ -20,6 +21,7 @@ public:
     void reset();
     void setSequencerLock(int destinationIndex, float amount) noexcept;
     void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
+    void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
 
 private:
     static constexpr size_t fxModuleCount = 15;
@@ -46,6 +48,10 @@ private:
     double tremoloPhase = 0.0;
     double ringPhase = 0.0;
     float pumpSmoothedGain = 1.0f;
+    std::atomic<float> pumpMeterPhase { 0.0f };
+    std::atomic<float> pumpMeterGain { 1.0f };
+    std::atomic<float> pumpMeterReduction { 0.0f };
+    std::atomic<bool> pumpMeterActive { false };
     float fxModLfoPhase = 0.0f;
     float fxModLfoStepValue = 0.0f;
     float fxModSmoothRandomStartValue = 0.0f;

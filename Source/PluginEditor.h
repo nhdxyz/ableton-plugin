@@ -80,6 +80,13 @@ private:
         bool valid = false;
     };
 
+    struct ModulationMenuTarget
+    {
+        juce::Component* component = nullptr;
+        juce::String labelText;
+        juce::String parameterID;
+    };
+
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
@@ -563,6 +570,7 @@ private:
     juce::String selectedControlName;
     juce::String selectedControlParameterID;
     double selectedControlPlainValue = 0.0;
+    std::vector<ModulationMenuTarget> modulationMenuTargets;
     size_t selectedSampleSliceIndex = 0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
@@ -580,6 +588,11 @@ private:
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureHorizontalSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
+    void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
+    const ModulationMenuTarget* findModulationMenuTarget(const juce::Component* component) const;
+    void mouseUp(const juce::MouseEvent& event) override;
+    void showModulationMenuForControl(const ModulationMenuTarget& target, juce::Component& component);
+    void addModRouteForParameter(const juce::String& parameterID, const juce::String& labelText, int sourceIndex);
     void configureSectionLabel(juce::Label& label, const juce::String& text);
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);
     void chooseSampleFile();

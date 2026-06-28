@@ -77,7 +77,7 @@ Implemented UI test sub-slice:
 ## Priority 1: Modulation And Movement
 
 16. Add drag-style modulation assignment from source chips to destination controls.
-17. Add right-click or menu assignment from any automatable control.
+17. Add right-click or menu assignment from any automatable control. First pass implemented for MOD-targetable sliders.
 18. Add a macro assignment editor showing destination, amount, polarity, and range. First pass implemented for macro source, destination, amount, add/update, replace, clear, and summary; explicit min/max range editing remains open.
 19. Add per-route curve shaping.
 20. Add per-route unipolar/bipolar mode.
@@ -103,6 +103,7 @@ Implemented movement sub-slices:
 - `Smooth` is now an appended MOD source after `S&H` for slewed random drift across synth, sample, and FX destinations. It keeps old source indices intact and follows the existing LFO timing path while interpolating between held random targets.
 - `Chaos` is now an appended MOD source after `Smooth` for bounded random-walk movement across synth, sample, and FX destinations.
 - `LFO 2` is now an appended MOD source after `Chaos`, with independent compact controls and synth/sample/FX routing while preserving old source indices. LFO 3, true MSEG as a separate source, route processors, drag assignment, and step-LFO work remain open.
+- MOD-targetable sliders now expose right-click source assignment menus that reuse the existing matrix and inspector route allocation path. Drag-from-source assignment, route ranges, route curves, and route processors remain open.
 
 ## Priority 2: Oscillator And Source Engines
 

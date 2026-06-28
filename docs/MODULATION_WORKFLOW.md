@@ -165,6 +165,7 @@ MOD:
 - Assignment amount controls.
 - Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
 - Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
+- Current implementation includes right-click `Modulate` menus on matrix-targetable sliders, so producers can add LFO, macro, S&H, Smooth, Chaos, or LFO 2 routes directly from cutoff, drive, Osc Warp, sample chop, and FX movement controls.
 
 SEQ:
 
@@ -218,6 +219,14 @@ Macro assignment workflow slice:
 5. Added Clear behavior for all routes owned by the selected macro.
 6. Added a live macro summary showing the selected macro's active destinations and depths.
 7. Kept HOME as the performance surface while detailed macro editing stays in MOD.
+
+Right-click assignment workflow slice:
+
+1. Added a popup menu to MOD-targetable sliders.
+2. Listed compatible modulation sources from the existing matrix source list.
+3. Disabled voice-only Mod Env and Velocity choices for global sample/FX destinations.
+4. Reused the existing inspector destination and route-allocation path, so right-click assignment updates matrix rows, destination rings, route summaries, and saved preset state.
+5. Kept drag-from-source assignment, explicit route ranges, route curves, and route processors as future work.
 
 Editable engine slice:
 

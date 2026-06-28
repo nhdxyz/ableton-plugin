@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Right-Click Modulation Assignment
+
+- Added right-click modulation menus to MOD-targetable sliders so cutoff, drive, Osc Warp, sample chop controls, and FX movement controls can receive routes without first navigating to the MOD matrix.
+- The menu lists compatible sources, disables voice-only Mod Env/Velocity sources for global sample/FX destinations, and keeps `Open MOD focused here` available for deeper route editing.
+- Reused the existing eight-slot matrix, inspector, route summaries, destination rings, and preset state, so no new host parameter IDs or migration path were needed.
+
 ### Editor Layout Audit Test
 
 - Added a CTest-backed `NateVSTLayoutAudit` executable that instantiates the real processor/editor and audits every visible component across HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module.

@@ -134,7 +134,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 ### D. Modulation And Performance
 
 56. Add drag assignment from modulation source chips to controls.
-57. Add right-click "modulate with" menus on automatable controls.
+57. Add right-click "modulate with" menus on automatable controls. First pass implemented for MOD-targetable sliders.
 58. Add visible modulation rings around modulated knobs.
 59. Add source-colored modulation badges with route amount.
 60. Add hover-to-show routes for the parameter under the mouse.
@@ -327,7 +327,7 @@ Two focused research passes were run on 2026-06-28: one for modern synth/source 
 Top missing product capabilities:
 
 1. Source rack depth: true wavetable playback, sample/granular source options, focused FM/organ engines, second layer, per-layer mute/solo/blend, and source snippets.
-2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays.
+2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders.
 3. Serious UKG slicing: transient/beat/manual slice markers, per-slice start/end/nudge/pan/fades/probability/playback mode, slice-to-sequencer lanes, and missing-sample relink.
 4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
 5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills.
@@ -360,7 +360,7 @@ Reference URLs used for this refresh:
 ## Recommended Build Order
 
 1. Componentize the editor and expand the first CTest layout bounds audit into richer overlap checks.
-2. Add drag/menu modulation assignment plus modulation rings, hover route overlays, and per-route range editing.
+2. Expand the first right-click modulation assignment pass with drag-from-source assignment, hover route overlays, and per-route range editing.
 3. Add transient/manual sample slicing with per-slice start/end/nudge/pan/fades/probability and slice-to-sequencer lanes.
 4. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.
 5. Add a true wavetable oscillator with preview, position modulation, simple warp, and safe factory tables.

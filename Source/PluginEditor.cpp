@@ -3108,6 +3108,7 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
     };
 
+    registerModulationMenuTarget(slider, labelText, parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -3146,6 +3147,7 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
     };
 
+    registerModulationMenuTarget(slider, labelText, parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -3177,7 +3179,112 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
         updateSelectedControlInspector("Curve", parameterID, sliderPointer->getValue());
     };
 
+    registerModulationMenuTarget(slider, "Curve", parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
+}
+
+void NateVSTAudioProcessorEditor::registerModulationMenuTarget(juce::Component& component,
+                                                               const juce::String& labelText,
+                                                               const juce::String& parameterID)
+{
+    if (modulationDestinationIndexForParameter(parameterID) <= 0)
+        return;
+
+    component.addMouseListener(this, true);
+    modulationMenuTargets.push_back({ &component, labelText, parameterID });
+}
+
+const NateVSTAudioProcessorEditor::ModulationMenuTarget*
+NateVSTAudioProcessorEditor::findModulationMenuTarget(const juce::Component* component) const
+{
+    while (component != nullptr && component != this)
+    {
+        for (const auto& target : modulationMenuTargets)
+            if (target.component == component)
+                return &target;
+
+        component = component->getParentComponent();
+    }
+
+    return nullptr;
+}
+
+void NateVSTAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
+{
+    if (! event.mods.isPopupMenu())
+        return;
+
+    if (const auto* target = findModulationMenuTarget(event.originalComponent))
+        if (target->component != nullptr)
+            showModulationMenuForControl(*target, *target->component);
+}
+
+void NateVSTAudioProcessorEditor::showModulationMenuForControl(const ModulationMenuTarget& target,
+                                                               juce::Component& component)
+{
+    const auto destinationIndex = modulationDestinationIndexForParameter(target.parameterID);
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    if (! juce::isPositiveAndBelow(destinationIndex, destinationChoices.size()))
+        return;
+
+    juce::PopupMenu menu;
+    menu.addSectionHeader("Modulate " + destinationChoices[destinationIndex]);
+
+    const auto selectedSourceIndex = juce::jlimit(1,
+                                                  sourceChoices.size() - 1,
+                                                  modInspectorSourceBox.getSelectedId() - 1);
+    for (auto sourceIndex = 1; sourceIndex < sourceChoices.size(); ++sourceIndex)
+    {
+        const auto canUseSource = ! (destinationUsesGlobalModulationSources(destinationIndex)
+                                     && (sourceIndex == 2 || sourceIndex == 3));
+        menu.addItem(1000 + sourceIndex,
+                     sourceChoices[sourceIndex],
+                     canUseSource,
+                     sourceIndex == selectedSourceIndex);
+    }
+
+    menu.addSeparator();
+    menu.addItem(1, "Open MOD focused here");
+
+    const auto parameterID = target.parameterID;
+    const auto labelText = target.labelText;
+    juce::Component::SafePointer<NateVSTAudioProcessorEditor> safeEditor(this);
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&component),
+                       [safeEditor, parameterID, labelText] (int result)
+                       {
+                           auto* editor = safeEditor.getComponent();
+                           if (editor == nullptr)
+                               return;
+
+                           if (result == 1)
+                           {
+                               editor->selectedControlParameterID = parameterID;
+                               editor->selectedControlName = labelText;
+                               editor->selectedControlPlainValue = editor->readPlainParameterValue(parameterID, 0.0f);
+                               editor->focusSelectedControlModDestination();
+                               return;
+                           }
+
+                           if (result >= 1000)
+                               editor->addModRouteForParameter(parameterID, labelText, result - 1000);
+                       });
+}
+
+void NateVSTAudioProcessorEditor::addModRouteForParameter(const juce::String& parameterID,
+                                                          const juce::String& labelText,
+                                                          int sourceIndex)
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationIndex = modulationDestinationIndexForParameter(parameterID);
+    if (destinationIndex <= 0 || ! juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+        return;
+
+    setModInspectorDestination(destinationIndex);
+    modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+    addInspectedModRoute();
+
+    updateSelectedControlInspector(labelText, parameterID, readPlainParameterValue(parameterID, 0.0f));
 }
 
 void NateVSTAudioProcessorEditor::configureSectionLabel(juce::Label& label, const juce::String& text)

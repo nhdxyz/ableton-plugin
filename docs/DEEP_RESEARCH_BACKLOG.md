@@ -176,6 +176,11 @@ Implemented sampler sub-slice:
 79. Add humanize with separate timing, velocity, and gate controls.
 80. Add MIDI drag export from the internal sequencer into Ableton.
 
+Implemented sequencer sub-slice:
+
+- The SEQ panel now has four pattern scenes, `A`, `B`, `Fill`, and `Drop`, with capture/recall buttons that store the full 16-step pattern, per-step lanes, chord/voicing/strum settings, groove settings, rate/root/gate/accent/probability, and lock destination/depth.
+- Pattern scenes serialize into plugin state and preset state without becoming host automation parameters, and `SequencerPatternSceneAudit` verifies capture, recall, summary, and save/restore behavior.
+
 ## Priority 5: FX And Club Processing
 
 81. Add multi-band distortion.
@@ -203,7 +208,7 @@ Implemented FX sub-slice:
 
 - Pump now publishes live phase, gain, peak reduction, and active-state telemetry from the DSP path, and the FX Pump curve display shows HOST/INT timing source, a moving phase marker, and a reduction meter. External Ableton sidechain input remains tracked separately because it requires bus-layout and host-validation work.
 - The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction. This is the first visibility slice for the compressor/clipper/transient safety backlog before adding more dynamics modules.
-- Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), and preset previews/construction kits (#68).
+- Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), preset previews/construction kits (#68), percussive noise source (#69), send-style delay/reverb buses (#70), dedicated groove engine (#71), and chord/bassline designer (#72).
 
 ## Priority 6: Randomization And Sound Discovery
 

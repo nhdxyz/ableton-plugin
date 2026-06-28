@@ -519,6 +519,8 @@ private:
     juce::TextButton rotateSequencerRightButton { "Rot >" };
     juce::TextButton exportSequencerMidiButton { "MIDI" };
     juce::TextButton applyGrooveTransformButton { "Shape" };
+    std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
+    std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };
@@ -719,6 +721,7 @@ private:
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
+    void updateSequencerSceneButtons();
     void updateSequencerGridContext();
     void selectSampleSlice(size_t sliceIndex);
     void updateSampleSliceButtons();

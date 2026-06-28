@@ -2,6 +2,14 @@
 
 ## 2026-06-28
 
+### Sequencer Pattern Scenes
+
+- Added four saved SEQ pattern scenes: `A`, `B`, `Fill`, and `Drop`, each capturing the current 16-step pattern, velocity/probability/timing/length/lock lanes, chord/voicing/strum state, groove settings, rate, root, and lock destination/depth.
+- Added SEQ-panel recall/capture buttons for pattern scenes with compact summaries in tooltips, so house and UKG patterns can move between main groove, variation, fill, and drop ideas without leaving the plugin.
+- Serialized pattern scenes into plugin state and preset state while keeping them out of APVTS automation state, preserving old preset compatibility.
+- Added `SequencerPatternSceneAudit` to verify scene capture, recall, summaries, and save/restore through the normal plugin state path.
+- Opened GitHub issues for the remaining essential house additions: percussive noise source (#69), send-style delay/reverb throw buses (#70), dedicated groove engine (#71), and chord/bassline designer (#72).
+
 ### Guard Mix-Safety Visibility
 
 - Added always-visible output safety labels to the top-bar meter: `LOW`, `SAFE`, `HOT`, and `CLIP` are derived from current peak/RMS levels.

@@ -29,6 +29,7 @@ Research references:
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
 - Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
 - The SEQ grid now exposes editable Velocity, Probability, Late, and Len lanes under the piano roll so 2-step basslines, vocal triggers, and stab patterns can be shaped per step without leaving the grid.
+- The SEQ panel now stores A/B/Fill/Drop pattern scenes, so a UKG or house patch can keep a main groove, response variation, short fill, and drop pattern inside the preset.
 - The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
 - The SEQ and FX panels now show `LOCK`, `HOST`, or `INT` tempo status so Ableton transport lock, stopped-host state, and internal fallback are visible while editing skippy patterns and pump/delay movement.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
@@ -146,6 +147,7 @@ Research references:
 - Added Osc Warp as a saved source control and MOD destination, with UKG bass/stab presets seeded for restrained harmonic movement before the filter and FX rack.
 - Added visible host-sync badges to SEQ and FX so transport-locked garage patterns, Pump, Tremolo, and synced Delay state can be checked without leaving the panel.
 - Added a first assignable SEQ Lock lane so UKG bass, organ stabs, late stabs, and vocal-trigger patterns can push cutoff, drive, Osc Warp, pump, delay, reverb, or wavetable position per step without editing host automation.
+- Added SEQ pattern scenes for A/B/Fill/Drop variations, with scene state saved in plugin and preset state for house and UKG arrangement sketches.
 
 ## Next UKG Features
 

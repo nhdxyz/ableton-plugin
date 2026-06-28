@@ -121,6 +121,10 @@ public:
     bool applySequencerGrooveTransform(int transformIndex);
     void copySequencerFirstHalfToSecondHalf();
     void rotateSequencerPattern(int stepOffset);
+    void captureSequencerPatternScene(int slotIndex);
+    bool recallSequencerPatternScene(int slotIndex);
+    bool hasSequencerPatternScene(int slotIndex) const;
+    juce::String getSequencerPatternSceneSummary(int slotIndex) const;
     bool exportSequencerMidiFile(const juce::File& destination) const;
     void clearSequencerPattern();
     juce::String getActiveRandomizationLockSummary() const;
@@ -254,6 +258,7 @@ private:
     juce::ValueTree randomCandidateAuditionReturnState;
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
+    std::array<juce::ValueTree, 4> sequencerPatternScenes;
     std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
     std::vector<GlobalEditSnapshot> globalUndoStack;
     std::vector<GlobalEditSnapshot> globalRedoStack;
@@ -300,6 +305,10 @@ private:
     void restoreLockedSectionsFromState(const juce::ValueTree& state);
     void restoreSampleFromState(const juce::ValueTree& state);
     void restoreSequencerFromState(const juce::ValueTree& state);
+    juce::ValueTree createSequencerSceneState();
+    void restoreSequencerScenesFromState(const juce::ValueTree& state);
+    void appendSequencerScenesToState(juce::ValueTree& state) const;
+    void removeSequencerSceneChildren(juce::ValueTree& state) const;
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);

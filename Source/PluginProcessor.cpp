@@ -13,6 +13,7 @@ const juce::Identifier ratingsType { "Ratings" };
 const juce::Identifier recentType { "Recent" };
 const juce::Identifier presetRefType { "Preset" };
 const juce::Identifier performanceSnapshotType { "PerformanceSnapshot" };
+const juce::Identifier sequencerPatternSceneType { "SequencerPatternScene" };
 constexpr auto maxGlobalEditHistoryDepth = 24;
 
 juce::StringArray presetCategoryPathSegments(const juce::String& category)
@@ -91,6 +92,37 @@ const std::array<const char*, 8>& presetMacroParameterIDs()
     };
 
     return ids;
+}
+
+const std::array<const char*, 17>& sequencerSceneParameterIDs()
+{
+    static constexpr std::array<const char*, 17> ids {
+        Parameters::ID::sequencerEnabled,
+        Parameters::ID::sequencerRate,
+        Parameters::ID::sequencerRoot,
+        Parameters::ID::sequencerGate,
+        Parameters::ID::sequencerSwing,
+        Parameters::ID::sequencerGrooveMode,
+        Parameters::ID::sequencerScale,
+        Parameters::ID::sequencerChordMode,
+        Parameters::ID::sequencerChordVoicing,
+        Parameters::ID::sequencerChordStrum,
+        Parameters::ID::sequencerChordMemory,
+        Parameters::ID::sequencerAccent,
+        Parameters::ID::sequencerOctave,
+        Parameters::ID::sequencerProbability,
+        Parameters::ID::sequencerRandomAmount,
+        Parameters::ID::sequencerLockDestination,
+        Parameters::ID::sequencerLockDepth
+    };
+
+    return ids;
+}
+
+const std::array<const char*, 4>& sequencerPatternSceneLabels()
+{
+    static constexpr std::array<const char*, 4> labels { "A", "B", "Fill", "Drop" };
+    return labels;
 }
 
 std::array<float, 8> presetMacroValues(const juce::ValueTree& state)
@@ -1657,6 +1689,58 @@ void NateVSTAudioProcessor::rotateSequencerPattern(int stepOffset)
         const auto source = (destination + stepCount - offset) % stepCount;
         patternSequencer.setStep(destination, steps[static_cast<size_t>(source)]);
     }
+}
+
+void NateVSTAudioProcessor::captureSequencerPatternScene(int slotIndex)
+{
+    const auto safeSlot = juce::jlimit(0, static_cast<int>(sequencerPatternScenes.size()) - 1, slotIndex);
+    sequencerPatternScenes[static_cast<size_t>(safeSlot)] = createSequencerSceneState();
+}
+
+bool NateVSTAudioProcessor::recallSequencerPatternScene(int slotIndex)
+{
+    const auto safeSlot = juce::jlimit(0, static_cast<int>(sequencerPatternScenes.size()) - 1, slotIndex);
+    const auto& scene = sequencerPatternScenes[static_cast<size_t>(safeSlot)];
+    if (! scene.isValid())
+        return false;
+
+    captureSequencerUndoState();
+    restoreSequencerFromState(scene);
+    patternSequencer.reset();
+    return true;
+}
+
+bool NateVSTAudioProcessor::hasSequencerPatternScene(int slotIndex) const
+{
+    const auto safeSlot = juce::jlimit(0, static_cast<int>(sequencerPatternScenes.size()) - 1, slotIndex);
+    return sequencerPatternScenes[static_cast<size_t>(safeSlot)].isValid();
+}
+
+juce::String NateVSTAudioProcessor::getSequencerPatternSceneSummary(int slotIndex) const
+{
+    const auto safeSlot = juce::jlimit(0, static_cast<int>(sequencerPatternScenes.size()) - 1, slotIndex);
+    const auto& scene = sequencerPatternScenes[static_cast<size_t>(safeSlot)];
+    const auto label = sequencerPatternSceneLabels()[static_cast<size_t>(safeSlot)];
+    if (! scene.isValid())
+        return juce::String(label) + " empty";
+
+    auto enabledCount = 0;
+    auto lockCount = 0;
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+    {
+        const auto prefix = "seq_step_" + juce::String(stepIndex);
+        if (static_cast<bool>(scene.getProperty(prefix + "_enabled", false)))
+            ++enabledCount;
+        if (static_cast<float>(scene.getProperty(prefix + "_lock", 0.0f)) > 0.01f)
+            ++lockCount;
+    }
+
+    const auto chordMode = juce::roundToInt(readStateParameterValue(scene, Parameters::ID::sequencerChordMode, 0.0f));
+    const auto grooveMode = juce::roundToInt(readStateParameterValue(scene, Parameters::ID::sequencerGrooveMode, 0.0f));
+    return juce::String(label) + ": " + juce::String(enabledCount) + " steps"
+        + (chordMode > 0 ? " chord" : "")
+        + (grooveMode > 0 ? " groove" : "")
+        + (lockCount > 0 ? " " + juce::String(lockCount) + " locks" : "");
 }
 
 bool NateVSTAudioProcessor::exportSequencerMidiFile(const juce::File& destination) const
@@ -3978,6 +4062,81 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
     }
 }
 
+juce::ValueTree NateVSTAudioProcessor::createSequencerSceneState()
+{
+    auto scene = juce::ValueTree(parameters.state.getType());
+    scene.setProperty("nate_vst_scene_version", 1, nullptr);
+
+    const auto currentParameters = parameters.copyState();
+    for (const auto* parameterID : sequencerSceneParameterIDs())
+    {
+        const auto parameterChild = currentParameters.getChildWithProperty("id", parameterID);
+        if (parameterChild.isValid())
+            scene.addChild(parameterChild.createCopy(), -1, nullptr);
+    }
+
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+    {
+        const auto step = patternSequencer.getStep(stepIndex);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_enabled", step.enabled, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_note", step.noteOffset, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_velocity", step.velocity, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_probability", step.probability, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_timing", step.timing, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_length", step.length, nullptr);
+        scene.setProperty("seq_step_" + juce::String(stepIndex) + "_lock", step.lock, nullptr);
+    }
+
+    return scene;
+}
+
+void NateVSTAudioProcessor::restoreSequencerScenesFromState(const juce::ValueTree& state)
+{
+    for (auto& scene : sequencerPatternScenes)
+        scene = {};
+
+    for (auto childIndex = 0; childIndex < state.getNumChildren(); ++childIndex)
+    {
+        const auto child = state.getChild(childIndex);
+        if (! child.hasType(sequencerPatternSceneType))
+            continue;
+
+        const auto slotIndex = static_cast<int>(child.getProperty("slot", -1));
+        if (slotIndex < 0 || slotIndex >= static_cast<int>(sequencerPatternScenes.size()) || child.getNumChildren() <= 0)
+            continue;
+
+        auto scene = child.getChild(0).createCopy();
+        removePerformanceSnapshotChildren(scene);
+        removeSequencerSceneChildren(scene);
+
+        if (scene.isValid() && scene.hasType(parameters.state.getType()))
+            sequencerPatternScenes[static_cast<size_t>(slotIndex)] = scene;
+    }
+}
+
+void NateVSTAudioProcessor::appendSequencerScenesToState(juce::ValueTree& state) const
+{
+    for (size_t slotIndex = 0; slotIndex < sequencerPatternScenes.size(); ++slotIndex)
+    {
+        const auto& scene = sequencerPatternScenes[slotIndex];
+        if (! scene.isValid())
+            continue;
+
+        juce::ValueTree child(sequencerPatternSceneType);
+        child.setProperty("slot", static_cast<int>(slotIndex), nullptr);
+        child.setProperty("label", sequencerPatternSceneLabels()[slotIndex], nullptr);
+        child.addChild(scene.createCopy(), -1, nullptr);
+        state.addChild(child, -1, nullptr);
+    }
+}
+
+void NateVSTAudioProcessor::removeSequencerSceneChildren(juce::ValueTree& state) const
+{
+    for (auto childIndex = state.getNumChildren(); --childIndex >= 0;)
+        if (state.getChild(childIndex).hasType(sequencerPatternSceneType))
+            state.removeChild(childIndex, nullptr);
+}
+
 void NateVSTAudioProcessor::captureSequencerUndoState()
 {
     sequencerUndoState = createPluginState(false);
@@ -4118,6 +4277,7 @@ juce::ValueTree NateVSTAudioProcessor::createPluginState(bool includePerformance
 
     if (includePerformanceSnapshots)
         appendPerformanceSnapshotsToState(state);
+    appendSequencerScenesToState(state);
 
     return state;
 }
@@ -4131,6 +4291,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
 {
     auto stateForParameters = state.createCopy();
     removePerformanceSnapshotChildren(stateForParameters);
+    removeSequencerSceneChildren(stateForParameters);
     const auto hasSequencerChordMode = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMode).isValid();
     const auto hasSequencerChordVoicing = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordVoicing).isValid();
     const auto hasSequencerChordStrum = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid();
@@ -4153,6 +4314,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
+    restoreSequencerScenesFromState(state);
 
     loadedSamplePath = stateForParameters.getProperty("sample_file").toString();
     parameters.replaceState(stateForParameters);

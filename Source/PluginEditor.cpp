@@ -2017,6 +2017,47 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("Groove skipped");
         }
     };
+    const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
+    for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+    {
+        auto& recallButton = sequencerSceneRecallButtons[index];
+        auto& captureButton = sequencerSceneCaptureButtons[index];
+        const auto label = sceneLabels[index];
+        recallButton.setButtonText(label);
+        recallButton.setTooltip("Recall pattern scene " + label);
+        recallButton.onClick = [this, index, label]
+        {
+            releaseRandomCandidateAudition(false);
+            releasePresetAuditionNote();
+            if (audioProcessor.hasSequencerPatternScene(static_cast<int>(index)))
+                captureGlobalEdit("Recall pattern scene " + label);
+            if (audioProcessor.recallSequencerPatternScene(static_cast<int>(index)))
+            {
+                sequencerGrid.repaint();
+                updateSegmentedSelectors();
+                updateSequencerSceneButtons();
+                setRandomStatus("Scene " + label + " recalled");
+            }
+            else
+            {
+                setRandomStatus("Scene " + label + " empty");
+            }
+        };
+        addAndMakeVisible(recallButton);
+
+        captureButton.setButtonText("Set " + label);
+        captureButton.setTooltip("Capture the current sequencer pattern into scene " + label);
+        captureButton.onClick = [this, index, label]
+        {
+            releaseRandomCandidateAudition(false);
+            releasePresetAuditionNote();
+            captureGlobalEdit("Capture pattern scene " + label);
+            audioProcessor.captureSequencerPatternScene(static_cast<int>(index));
+            updateSequencerSceneButtons();
+            setRandomStatus("Scene " + label + " captured");
+        };
+        addAndMakeVisible(captureButton);
+    }
     homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
     synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
     labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
@@ -2499,7 +2540,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::sequencer)
     {
         auto sequencerContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto controlArea = sequencerContent.removeFromTop(230).reduced(5);
+        auto controlArea = sequencerContent.removeFromTop(262).reduced(5);
         auto gridArea = sequencerContent.reduced(5, 7);
 
         for (auto area : { controlArea, gridArea })
@@ -3413,6 +3454,10 @@ void NateVSTAudioProcessorEditor::resized()
             mutateSequencerButton.setVisible(true);
             undoSequencerButton.setVisible(true);
             clearSequencerButton.setVisible(true);
+            for (auto& button : sequencerSceneRecallButtons)
+                button.setVisible(true);
+            for (auto& button : sequencerSceneCaptureButtons)
+                button.setVisible(true);
             sequencerGrid.setVisible(true);
             sequencerSectionLabel.setBounds(content.removeFromTop(28));
             auto timingRow = content.removeFromTop(44);
@@ -3435,6 +3480,12 @@ void NateVSTAudioProcessorEditor::resized()
             mutateSequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
             undoSequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
             clearSequencerButton.setBounds(patternRow.removeFromLeft(82).reduced(4));
+            auto sceneRow = content.removeFromTop(32).withTrimmedTop(2);
+            for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+            {
+                sequencerSceneRecallButtons[index].setBounds(sceneRow.removeFromLeft(62).reduced(4));
+                sequencerSceneCaptureButtons[index].setBounds(sceneRow.removeFromLeft(78).reduced(4));
+            }
             auto utilityRow = content.removeFromTop(32).withTrimmedTop(2);
             copySequencerButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
             rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
@@ -6735,6 +6786,7 @@ void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::Stri
     updateModDestinationIndicators();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
+    updateSequencerSceneButtons();
     updateSequencerGridContext();
     updateSampleNameLabel();
     updateSampleSliceButtons();
@@ -6961,6 +7013,12 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : sampleSliceButtons)
+        button.setVisible(false);
+
+    for (auto& button : sequencerSceneRecallButtons)
+        button.setVisible(false);
+
+    for (auto& button : sequencerSceneCaptureButtons)
         button.setVisible(false);
 
     for (auto& label : modSourceRows)
@@ -8217,6 +8275,21 @@ void NateVSTAudioProcessorEditor::updatePerformanceXYPad()
 
     performanceXYPad.setValues(readParameter(Parameters::ID::macroMotion),
                                readParameter(Parameters::ID::macroSpace));
+}
+
+void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
+{
+    const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
+    for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+    {
+        const auto slot = static_cast<int>(index);
+        const auto hasScene = audioProcessor.hasSequencerPatternScene(slot);
+        const auto summary = audioProcessor.getSequencerPatternSceneSummary(slot);
+        sequencerSceneRecallButtons[index].setEnabled(hasScene);
+        sequencerSceneRecallButtons[index].setButtonText(sceneLabels[index] + (hasScene ? "*" : ""));
+        sequencerSceneRecallButtons[index].setTooltip(summary);
+        sequencerSceneCaptureButtons[index].setTooltip("Capture current pattern to " + sceneLabels[index] + " | " + summary);
+    }
 }
 
 void NateVSTAudioProcessorEditor::updateSequencerGridContext()

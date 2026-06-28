@@ -44,7 +44,7 @@ Nate VST already has a real foundation:
 - Eight performance macros plus an XY macro pad.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
-- 16-step piano-roll style sequencer with chord memory, templates, groove modes, velocity/probability/timing lanes, MIDI export, and host sync.
+- 16-step piano-roll style sequencer with chord memory, templates, groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Live pump phase/reduction feedback, top-bar output safety status, and Guard reduction telemetry for checking ducking and level risk while sound-designing.
 - Preset library with recursive folders, categories, search, sort, favorites, 1-5 rating, metadata, macro previews, filters, and audition.
@@ -185,8 +185,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 ### F. Sequencer, Piano Roll, And Groove
 
-101. Add multiple sequencer patterns per preset.
-102. Add pattern scenes: A, B, fill, drop, breakdown, transition.
+101. Add multiple sequencer patterns per preset. First four scene slots are implemented as A/B/Fill/Drop; chaining and more named sections remain open.
+102. Add pattern scenes: A, B, fill, drop, breakdown, transition. First A/B/Fill/Drop capture/recall pass implemented.
 103. Add pattern chaining.
 104. Add per-step note length. First saved lane/playback/export pass implemented.
 105. Add per-step ratchet/retrigger.

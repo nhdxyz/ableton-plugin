@@ -2197,6 +2197,7 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
 {
     const auto snapshot = createPluginState();
     const auto mutationScope = randomMutationScopeFromIndex(mutationScopeIndex);
+    static constexpr auto maxRandomValidationAttempts = 3;
     randomUndoState = snapshot.createCopy();
     randomUndoLabel = randomActionLabel(action);
     hasRandomUndoState = true;
@@ -2204,34 +2205,67 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
     randomRedoLabel.clear();
     hasRandomRedoState = false;
 
-    switch (action)
+    auto applyAction = [this, action]
     {
-        case RandomAction::generate:
-            randomizer.generate();
+        switch (action)
+        {
+            case RandomAction::generate:
+                randomizer.generate();
+                break;
+            case RandomAction::mutate:
+                randomizer.mutate();
+                break;
+            case RandomAction::wild:
+                randomizer.wildMutate();
+                break;
+            case RandomAction::variation:
+                randomizer.variation();
+                break;
+        }
+    };
+
+    RandomValidationResult validation;
+    auto acceptedAttempt = 0;
+
+    for (auto attempt = 1; attempt <= maxRandomValidationAttempts; ++attempt)
+    {
+        if (attempt > 1)
+            restorePluginState(snapshot.createCopy());
+
+        applyAction();
+
+        if (mutationScope == RandomMutationScope::sample)
+        {
+            if (action == RandomAction::wild)
+                randomizeUkgVocalChop();
+            else
+                randomizeSampleCut();
+        }
+
+        applyRandomSectionIntensities(snapshot, mutationScope);
+        restoreSectionsOutsideMutationScope(snapshot, mutationScope);
+        restoreLockedSectionsFromState(snapshot);
+        validation = applyRandomGenerationGuardrails(mutationScope);
+
+        if (! validation.shouldRetry)
+        {
+            acceptedAttempt = attempt;
             break;
-        case RandomAction::mutate:
-            randomizer.mutate();
-            break;
-        case RandomAction::wild:
-            randomizer.wildMutate();
-            break;
-        case RandomAction::variation:
-            randomizer.variation();
-            break;
+        }
     }
 
-    if (mutationScope == RandomMutationScope::sample)
+    if (acceptedAttempt > 1)
     {
-        if (action == RandomAction::wild)
-            randomizeUkgVocalChop();
-        else
-            randomizeSampleCut();
+        validation.summary = "auto retry accepted attempt " + juce::String(acceptedAttempt)
+            + (validation.summary.isNotEmpty() ? " / " + validation.summary : juce::String());
+    }
+    else if (acceptedAttempt == 0)
+    {
+        validation.summary = "auto retry exhausted " + juce::String(maxRandomValidationAttempts) + " attempts"
+            + (validation.summary.isNotEmpty() ? " / " + validation.summary : juce::String());
     }
 
-    applyRandomSectionIntensities(snapshot, mutationScope);
-    restoreSectionsOutsideMutationScope(snapshot, mutationScope);
-    restoreLockedSectionsFromState(snapshot);
-    lastRandomValidationSummary = applyRandomGenerationGuardrails(mutationScope);
+    lastRandomValidationSummary = validation.summary;
     captureRandomCandidateSnapshot(action, mutationScope);
 }
 
@@ -2547,7 +2581,7 @@ juce::String NateVSTAudioProcessor::currentRandomRecipeName() const
     return choices[recipeIndex];
 }
 
-juce::String NateVSTAudioProcessor::applyRandomGenerationGuardrails(RandomMutationScope)
+NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandomGenerationGuardrails(RandomMutationScope)
 {
     juce::StringArray fixes;
     const auto recipeName = currentRandomRecipeName();
@@ -2664,15 +2698,18 @@ juce::String NateVSTAudioProcessor::applyRandomGenerationGuardrails(RandomMutati
         }
     }
 
-    const auto renderSummary = applyRandomRenderValidation(fxLocked);
-    if (renderSummary.isNotEmpty())
-        fixes.add(renderSummary);
+    const auto renderResult = applyRandomRenderValidation(fxLocked);
+    if (renderResult.summary.isNotEmpty())
+        fixes.add(renderResult.summary);
 
-    return fixes.isEmpty() ? juce::String("checked") : fixes.joinIntoString(" / ");
+    return { fixes.isEmpty() ? juce::String("checked") : fixes.joinIntoString(" / "),
+             renderResult.shouldRetry };
 }
 
-juce::String NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
+NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
 {
+    static constexpr auto minimumUsefulRenderPeak = 0.01f;
+    static constexpr auto minimumUsefulRenderRms = 0.0008f;
     juce::StringArray renderNotes;
     auto metrics = renderRandomValidationSnippet();
 
@@ -2689,7 +2726,7 @@ juce::String NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
         metrics = renderRandomValidationSnippet();
     }
 
-    if (metrics.rms < 0.0008f)
+    if (metrics.rms < minimumUsefulRenderRms || metrics.peak < minimumUsefulRenderPeak)
     {
         if (! isRandomLockEnabled(Parameters::ID::randomLockSource))
         {
@@ -2705,7 +2742,7 @@ juce::String NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
             metrics = renderRandomValidationSnippet();
         }
 
-        if (metrics.rms < 0.0008f)
+        if (metrics.rms < minimumUsefulRenderRms || metrics.peak < minimumUsefulRenderPeak)
             renderNotes.add("render quiet warning");
     }
 
@@ -2721,13 +2758,38 @@ juce::String NateVSTAudioProcessor::applyRandomRenderValidation(bool fxLocked)
         metrics = renderRandomValidationSnippet();
     }
 
-    if (metrics.finite && metrics.peak <= 1.02f && metrics.rms >= 0.0008f)
+    auto shouldRetry = false;
+    const auto finalTailTooHeavy = metrics.rms > 0.001f
+        && metrics.tailRms > juce::jmax(0.08f, metrics.rms * 0.85f);
+
+    if (! metrics.finite)
+    {
+        renderNotes.add("render non-finite warning");
+        shouldRetry = true;
+    }
+
+    if (metrics.peak > 1.02f)
+    {
+        renderNotes.add("render peak warning");
+        shouldRetry = true;
+    }
+
+    if (metrics.rms < minimumUsefulRenderRms || metrics.peak < minimumUsefulRenderPeak)
+        shouldRetry = true;
+
+    if (finalTailTooHeavy)
+    {
+        renderNotes.add("render tail warning");
+        shouldRetry = true;
+    }
+
+    if (! shouldRetry)
     {
         const auto peakDb = juce::Decibels::gainToDecibels(juce::jmax(metrics.peak, 0.000001f));
         renderNotes.add("render ok " + juce::String(peakDb, 1) + "dB");
     }
 
-    return renderNotes.joinIntoString(" / ");
+    return { renderNotes.joinIntoString(" / "), shouldRetry };
 }
 
 NateVSTAudioProcessor::RandomRenderMetrics NateVSTAudioProcessor::renderRandomValidationSnippet()

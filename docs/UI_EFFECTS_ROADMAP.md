@@ -518,6 +518,7 @@ Build the next larger slices in this order:
    First note-template pass implemented reusable LAB Save templates for macro intent, Ableton use, UKG variation notes, mix safety, and pack organization.
    First useful-only validation pass implemented post-randomization guardrails for silent sources, unsafe output gain, bass/stab sequencer range, bass width, tiny sample windows, and candidate validation summaries.
    First render-validation pass implemented a short internal synth/sample/FX render after randomization to catch quiet, clipped, non-finite, and heavy-tail generated candidates before capture.
+   First auto-retry pass implemented rejected-render retry attempts that restore the pre-random state between attempts and report exhausted locked-silent cases.
 
 8. Modulation visibility workflow: rings, route badges, source activity meters, drag assignment, hover inspection, macro assignment, and route processors.
    First source-meter pass implemented compact MOD source activity meters for LFO 1, Mod Env, Velocity, eight macros, S&H, Smooth, Chaos, and LFO 2 without adding new host parameters.

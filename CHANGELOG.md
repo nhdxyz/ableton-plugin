@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Auto Retry
+
+- Added automatic retry attempts before Random Lab candidate capture when render validation still reports quiet, clipped, non-finite, or heavy-tail output after correction.
+- Failed attempts restore the original pre-random state before regenerating, so rejected render states do not leak into the accepted candidate.
+- Extended `RandomCandidateAudit` with an impossible locked-silent source case to verify retry exhaustion is reported instead of hidden.
+
 ### Random Lab Render Validation
 
 - Added a short internal render pass after random generation so useful-only validation can listen for inaudible patches, non-finite samples, clipped peaks, and heavy FX tails before candidate capture.

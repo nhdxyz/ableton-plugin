@@ -27,6 +27,38 @@ bool setPlainParameter(NateVSTAudioProcessor& processor, const juce::String& par
 
 int main()
 {
+    {
+        NateVSTAudioProcessor retryProcessor;
+        if (! setPlainParameter(retryProcessor, Parameters::ID::randomRecipe, 6.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::randomAmount, 0.72f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::randomChaos, 0.28f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::randomLockSource, 1.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::randomLockOutput, 1.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::randomMacroIntensity, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::osc1Level, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::osc2Level, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::subLevel, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::noiseLevel, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::macroWeight, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::sampleEnabled, 0.0f)
+            || ! setPlainParameter(retryProcessor, Parameters::ID::outputGain, -24.0f))
+        {
+            std::cerr << "Could not seed retry audit parameters\n";
+            return 1;
+        }
+
+        retryProcessor.generateRandomPatch();
+        const auto retrySummary = retryProcessor.getRandomCandidateValidationSummary(0);
+        if (! retryProcessor.hasRandomCandidate(0)
+            || ! retrySummary.containsIgnoreCase("auto retry exhausted")
+            || ! retrySummary.containsIgnoreCase("render quiet warning"))
+        {
+            std::cerr << "Random render retry audit did not report exhausted bad renders: "
+                      << retrySummary << '\n';
+            return 1;
+        }
+    }
+
     NateVSTAudioProcessor processor;
 
     if (! setPlainParameter(processor, Parameters::ID::randomRecipe, 6.0f)

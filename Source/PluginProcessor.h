@@ -193,6 +193,12 @@ private:
         bool finite = true;
     };
 
+    struct RandomValidationResult
+    {
+        juce::String summary;
+        bool shouldRetry = false;
+    };
+
     Parameters::APVTS parameters;
     Synth::SynthEngine synthEngine;
     Randomization::Randomizer randomizer;
@@ -251,8 +257,8 @@ private:
     static float readStateParameterValue(const juce::ValueTree& state, const char* parameterID, float fallback);
     juce::StringArray getRandomCandidateChangedSections(int slotIndex);
     juce::String currentRandomRecipeName() const;
-    juce::String applyRandomGenerationGuardrails(RandomMutationScope mutationScope);
-    juce::String applyRandomRenderValidation(bool fxLocked);
+    RandomValidationResult applyRandomGenerationGuardrails(RandomMutationScope mutationScope);
+    RandomValidationResult applyRandomRenderValidation(bool fxLocked);
     RandomRenderMetrics renderRandomValidationSnippet();
     void resetRandomValidationRenderState();
     void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);

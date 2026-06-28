@@ -332,6 +332,10 @@ juce::StringArray lfoCurvePresetChoices()
         "Fall",
         "Gate Steps",
         "Wobble",
+        "UKG Swing",
+        "Minimal Pulse",
+        "Techno Ramp",
+        "House Chug",
         "Flat"
     };
 }
@@ -347,7 +351,11 @@ std::array<float, 8> lfoCurvePresetValues(int presetId)
         case 6: return { 1.00f, 0.72f, 0.45f, 0.12f, -0.18f, -0.48f, -0.76f, -1.00f };
         case 7: return { 1.00f, 1.00f, -0.65f, -0.65f, 0.80f, 0.80f, -1.00f, -1.00f };
         case 8: return { 0.00f, 1.00f, 0.00f, -1.00f, 0.00f, 0.72f, 0.00f, -0.72f };
-        case 9: return { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f };
+        case 9: return { -0.54f, 0.82f, -0.18f, 0.58f, -0.70f, 1.00f, -0.30f, 0.34f };
+        case 10: return { -1.00f, -1.00f, 0.85f, -1.00f, -1.00f, -1.00f, 0.42f, -1.00f };
+        case 11: return { -0.80f, -0.58f, -0.24f, 0.18f, 0.56f, 0.88f, 1.00f, -0.20f };
+        case 12: return { -0.25f, 0.48f, 0.28f, -0.18f, 0.42f, 0.10f, -0.36f, 0.18f };
+        case 13: return { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f };
         default: return { 0.00f, 0.58f, 1.00f, 0.42f, -0.18f, -0.72f, -1.00f, -0.36f };
     }
 }
@@ -428,7 +436,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modSectionLabel, "MOD");
     configureSectionLabel(modSourceLabel, "SOURCES");
     configureSectionLabel(modMacroLabel, "MACROS");
-    configureSectionLabel(modLfoLabel, "LFO 1");
+    configureSectionLabel(modLfoLabel, "LFO 1 MSEG");
     configureSectionLabel(modEnvelopeLabel, "MOD ENV 1");
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
@@ -1051,6 +1059,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         {
             lfoCurvePresetBox.setSelectedId(1, juce::dontSendNotification);
             setPlainParameterValue(Parameters::ID::lfo1Curve[index], value);
+            updateSelectedControlInspector("MSEG P" + juce::String(static_cast<int>(index + 1)),
+                                           Parameters::ID::lfo1Curve[index],
+                                           value);
         }
     };
     addAndMakeVisible(lfoCurveDisplay);

@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### MSEG Curve Editor Pass
+
+- Upgraded the LFO custom curve display into a denser MSEG-style editor with segment lanes, stronger value guides, focused point readouts, and interpolated drag drawing across multiple points.
+- Added double-click point reset and Shift/Cmd quantized editing while keeping the existing eight saved `lfo1_curve_*` parameters intact for session compatibility.
+- Added new club-focused curve presets for UKG swing, minimal pulse, techno ramp, and house chug movement.
+- Curve edits now update the selected-control inspector so point values and automation IDs are visible while drawing modulation.
+
 ### Selected Control Inspector
 
 - Added a compact global `CONTROL` strip that follows the last changed knob or slider across Home, Synth, Lab, Mod, Sample, Seq, FX, and Library views.

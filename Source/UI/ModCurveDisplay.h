@@ -20,6 +20,7 @@ public:
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
+    void mouseDoubleClick(const juce::MouseEvent& event) override;
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
 
@@ -30,9 +31,12 @@ private:
     float phase = 0.0f;
     int draggedIndex = -1;
     int hoveredIndex = -1;
+    int lastEditedIndex = -1;
 
     juce::Rectangle<float> getPlotBounds() const;
     size_t pointIndexForX(float xPosition) const;
-    void updatePointFromPosition(juce::Point<float> position);
+    float valueForPosition(juce::Point<float> position, juce::ModifierKeys modifiers) const;
+    void applyPointValue(size_t index, float value);
+    void updatePointFromPosition(juce::Point<float> position, juce::ModifierKeys modifiers);
 };
 }

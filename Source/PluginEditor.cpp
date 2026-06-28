@@ -3215,6 +3215,14 @@ NateVSTAudioProcessorEditor::findModulationMenuTarget(const juce::Component* com
     return nullptr;
 }
 
+void NateVSTAudioProcessorEditor::mouseEnter(const juce::MouseEvent& event)
+{
+    if (const auto* target = findModulationMenuTarget(event.originalComponent))
+        updateSelectedControlInspector(target->labelText,
+                                       target->parameterID,
+                                       readPlainParameterValue(target->parameterID, 0.0f));
+}
+
 void NateVSTAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
 {
     if (! event.mods.isPopupMenu())

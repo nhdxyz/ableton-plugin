@@ -6,6 +6,7 @@
 
 - Added modulation stripes and compact route badges to horizontal sliders, so sample, FX, and matrix controls get visible route feedback instead of only rotary knobs.
 - Preserved each control's base tooltip when modulation indicators update, appending source/depth status instead of replacing the original control guidance.
+- MOD-targetable controls now update the selected-control inspector on hover, giving a first hover-to-show-routes workflow without needing to move the knob.
 
 ### Right-Click Modulation Assignment
 

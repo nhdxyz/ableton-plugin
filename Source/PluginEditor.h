@@ -590,6 +590,7 @@ private:
     void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
     void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
     const ModulationMenuTarget* findModulationMenuTarget(const juce::Component* component) const;
+    void mouseEnter(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void showModulationMenuForControl(const ModulationMenuTarget& target, juce::Component& component);
     void addModRouteForParameter(const juce::String& parameterID, const juce::String& labelText, int sourceIndex);

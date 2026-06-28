@@ -104,7 +104,7 @@ Implemented movement sub-slices:
 - `Chaos` is now an appended MOD source after `Smooth` for bounded random-walk movement across synth, sample, and FX destinations.
 - `LFO 2` is now an appended MOD source after `Chaos`, with independent compact controls and synth/sample/FX routing while preserving old source indices. LFO 3, true MSEG as a separate source, route processors, drag assignment, and step-LFO work remain open.
 - MOD-targetable sliders now expose right-click source assignment menus that reuse the existing matrix and inspector route allocation path. Drag-from-source assignment, route ranges, route curves, and route processors remain open.
-- Horizontal sample, FX, and matrix sliders now show modulation stripes/badges and preserve their original control tooltips while appending active route source/depth status. Hover route overlays and source activity meters remain open.
+- Horizontal sample, FX, and matrix sliders now show modulation stripes/badges and preserve their original control tooltips while appending active route source/depth status. MOD-targetable controls also update the selected-control route summary on hover. Graphical hover route overlays and source activity meters remain open.
 
 ## Priority 2: Oscillator And Source Engines
 

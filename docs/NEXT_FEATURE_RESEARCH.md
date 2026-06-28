@@ -191,7 +191,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 105. Add per-step ratchet/retrigger.
 106. Add per-step slide/glide.
 107. Add per-step accent tied to amp, filter, and drive.
-108. Add per-step modulation lanes assignable to safe destinations.
+108. Add per-step modulation lanes assignable to safe destinations. First single-destination Lock lane implemented for cutoff, drive, warp, pump, delay, reverb, and wavetable-position movement; multi-lane/sample-accurate locks remain open.
 109. Add per-step sample slice lane.
 110. Add per-step pump depth lane.
 111. Add per-step delay throw lane.

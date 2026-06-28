@@ -33,6 +33,7 @@ public:
 
     void prepare(double sampleRate, int maximumBlockSize);
     void setHostBpm(double bpm) noexcept;
+    void setSequencerLock(int destinationIndex, float amount) noexcept;
 
 private:
     static constexpr int maxUnisonVoices = 7;
@@ -74,6 +75,8 @@ private:
     double hostBpm = 124.0;
     int glideSamplesRemaining = 0;
     int glideTotalSamples = 0;
+    int sequencerLockDestination = 0;
+    float sequencerLockAmount = 0.0f;
     bool hasPreviousNoteFrequency = false;
 
     std::atomic<float>* oscWave = nullptr;

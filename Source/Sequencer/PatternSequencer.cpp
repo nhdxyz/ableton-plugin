@@ -37,6 +37,8 @@ void PatternSequencer::reset()
     samplesUntilNextStep = 0.0;
     pendingNoteOffSamples = -1.0;
     currentStep = 0;
+    activeStepLock.store(0.0f, std::memory_order_relaxed);
+    activeStepIndex.store(-1, std::memory_order_relaxed);
     activeNotes.fill(-1);
     activeNoteCount = 0;
     lastHostPpqPosition = std::nullopt;
@@ -58,7 +60,8 @@ Step PatternSequencer::getStep(int index) const
         stepVelocity[safeIndex].load(),
         stepProbability[safeIndex].load(),
         stepTiming[safeIndex].load(),
-        stepLengths[safeIndex].load()
+        stepLengths[safeIndex].load(),
+        stepLocks[safeIndex].load()
     };
 }
 
@@ -69,6 +72,7 @@ void PatternSequencer::setStep(int index, Step step)
     step.probability = juce::jlimit(0.0f, 1.0f, step.probability);
     step.timing = juce::jlimit(0.0f, 1.0f, step.timing);
     step.length = juce::jlimit(0.1f, 1.0f, step.length);
+    step.lock = juce::jlimit(0.0f, 1.0f, step.lock);
 
     const auto safeIndex = static_cast<size_t>(juce::jlimit(0, numSteps - 1, index));
     stepEnabled[safeIndex].store(step.enabled ? 1 : 0);
@@ -77,6 +81,7 @@ void PatternSequencer::setStep(int index, Step step)
     stepProbability[safeIndex].store(step.probability);
     stepTiming[safeIndex].store(step.timing);
     stepLengths[safeIndex].store(step.length);
+    stepLocks[safeIndex].store(step.lock);
 }
 
 int PatternSequencer::getQuantizedNoteOffset(int noteOffset) const
@@ -236,7 +241,11 @@ void PatternSequencer::clear()
         stepProbability[static_cast<size_t>(step)].store(1.0f);
         stepTiming[static_cast<size_t>(step)].store(0.0f);
         stepLengths[static_cast<size_t>(step)].store(1.0f);
+        stepLocks[static_cast<size_t>(step)].store(0.0f);
     }
+
+    activeStepLock.store(0.0f, std::memory_order_relaxed);
+    activeStepIndex.store(-1, std::memory_order_relaxed);
 }
 
 void PatternSequencer::randomize(float amount)
@@ -253,6 +262,7 @@ void PatternSequencer::randomize(float amount)
         newStep.probability = juce::jlimit(0.45f, 1.0f, 0.55f + (nextRandomFloat() * 0.45f));
         newStep.timing = (step % 4 == 0) ? 0.0f : juce::jlimit(0.0f, 1.0f, nextRandomFloat() * amount);
         newStep.length = juce::jlimit(0.18f, 1.0f, 0.36f + (nextRandomFloat() * 0.64f));
+        newStep.lock = newStep.enabled ? juce::jlimit(0.0f, 1.0f, nextRandomFloat() * amount) : 0.0f;
 
         if (step == 0 || step == 4 || step == 8 || step == 12)
         {
@@ -261,10 +271,21 @@ void PatternSequencer::randomize(float amount)
             newStep.probability = 1.0f;
             newStep.timing = 0.0f;
             newStep.length = juce::jmax(newStep.length, 0.72f);
+            newStep.lock = 0.0f;
         }
 
         setStep(step, newStep);
     }
+}
+
+float PatternSequencer::getActiveStepLock() const noexcept
+{
+    return activeStepLock.load(std::memory_order_relaxed);
+}
+
+int PatternSequencer::getActiveStepIndex() const noexcept
+{
+    return activeStepIndex.load(std::memory_order_relaxed);
 }
 
 void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bpm, HostPosition hostPosition)
@@ -283,6 +304,8 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
 
         pendingNoteOffSamples = -1.0;
         samplesUntilNextStep = 0.0;
+        activeStepLock.store(0.0f, std::memory_order_relaxed);
+        activeStepIndex.store(-1, std::memory_order_relaxed);
         lastHostPpqPosition = std::nullopt;
         wasHostPlaying = false;
         return;
@@ -295,6 +318,8 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
 
         pendingNoteOffSamples = -1.0;
         samplesUntilNextStep = 0.0;
+        activeStepLock.store(0.0f, std::memory_order_relaxed);
+        activeStepIndex.store(-1, std::memory_order_relaxed);
         lastHostPpqPosition = hostPosition.ppqPosition;
         wasHostPlaying = false;
         return;
@@ -323,6 +348,8 @@ void PatternSequencer::process(juce::MidiBuffer& midi, int numSamples, double bp
         const auto eventOffset = juce::jlimit(0, numSamples - 1, static_cast<int>(std::round(nextStepOffset)));
         const auto currentStepDuration = getStepDurationSamples(baseStepLengthSamples, currentStep);
         const auto step = getStep(currentStep);
+        activeStepLock.store(step.enabled ? step.lock : 0.0f, std::memory_order_relaxed);
+        activeStepIndex.store(currentStep, std::memory_order_relaxed);
         const auto gateAmount = juce::jlimit(0.05f,
                                              1.0f,
                                              readParameter(sequencerGate, 0.55f) * juce::jlimit(0.1f, 1.0f, step.length));

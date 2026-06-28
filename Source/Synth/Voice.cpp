@@ -130,6 +130,12 @@ void Voice::setHostBpm(double bpm) noexcept
     hostBpm = juce::jlimit(20.0, 300.0, bpm);
 }
 
+void Voice::setSequencerLock(int destinationIndex, float amount) noexcept
+{
+    sequencerLockDestination = destinationIndex;
+    sequencerLockAmount = juce::jlimit(0.0f, 1.0f, amount);
+}
+
 void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     noteVelocity = velocity;
@@ -321,7 +327,12 @@ void Voice::updateVoiceParameters(float envelopeValue)
     oscWarpMod = juce::jlimit(-1.0f, 1.0f, oscWarpMod);
     oscWavetablePositionMod = juce::jlimit(-1.0f, 1.0f, oscWavetablePositionMod);
     osc2WavetablePositionMod = juce::jlimit(-1.0f, 1.0f, osc2WavetablePositionMod);
-    currentDriveOffset = driveMod * 0.45f;
+    const auto sequenceCutoffMod = sequencerLockDestination == 1 ? sequencerLockAmount : 0.0f;
+    const auto sequenceDriveMod = sequencerLockDestination == 2 ? sequencerLockAmount : 0.0f;
+    const auto sequenceWarpMod = sequencerLockDestination == 3 ? sequencerLockAmount : 0.0f;
+    const auto sequenceWavetable1Mod = sequencerLockDestination == 7 ? sequencerLockAmount : 0.0f;
+    const auto sequenceWavetable2Mod = sequencerLockDestination == 8 ? sequencerLockAmount : 0.0f;
+    currentDriveOffset = (driveMod * 0.45f) + (sequenceDriveMod * 0.38f);
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
@@ -339,15 +350,17 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto warp = readParameter(macroWarp, 0.0f);
     const auto osc2TuneOffset = readParameter(osc2Tune, 0.0f) + (motion * 5.0f) + (warp * 7.0f) + (osc2TuneMod * 12.0f);
     const auto osc2PitchRatio = std::pow(2.0f, (osc2OctaveOffset + osc2TuneOffset + pitchBendSemitones) / 12.0f);
-    const auto oscillatorWarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(oscWarp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f));
+    const auto oscillatorWarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(oscWarp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f) + (sequenceWarpMod * 0.45f));
     const auto osc1WavetablePosition = juce::jlimit(0.0f, 1.0f, readParameter(oscWavetablePosition, 0.0f)
         + (motion * 0.16f)
         + (warp * 0.12f)
-        + (oscWavetablePositionMod * 0.5f));
+        + (oscWavetablePositionMod * 0.5f)
+        + (sequenceWavetable1Mod * 0.55f));
     const auto osc2WavetablePositionValue = juce::jlimit(0.0f, 1.0f, readParameter(osc2WavetablePosition, 0.35f)
         + (motion * 0.18f)
         + (warp * 0.14f)
-        + (osc2WavetablePositionMod * 0.5f));
+        + (osc2WavetablePositionMod * 0.5f)
+        + (sequenceWavetable2Mod * 0.55f));
 
     const auto activeUnisonVoices = getUnisonVoiceCount();
     const auto detuneCents = readParameter(unisonDetune, 0.0f) * 24.0f;
@@ -377,6 +390,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
     const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
     const auto matrixCutoffScale = std::pow(2.0f, cutoffMod * 4.0f);
+    const auto sequenceCutoffScale = std::pow(2.0f, sequenceCutoffMod * 3.0f);
     auto macroResonance = juce::jlimit(0.1f, 1.4f, readParameter(filterResonance, 0.45f) + (tone * 0.22f) + (warp * 0.14f) + (resonanceMod * 0.45f));
     const auto filterModeIndex = static_cast<int>(readParameter(filterMode, 0.0f));
     const auto mode = static_cast<Filter::Mode>(juce::jlimit(0, 2, filterModeIndex));
@@ -384,7 +398,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto character = static_cast<Filter::Character>(juce::jlimit(0, 3, filterCharacterIndex));
     const auto filterSlopeIndex = static_cast<int>(readParameter(filterSlope, 0.0f));
     const auto slope = static_cast<Filter::Slope>(juce::jlimit(0, 1, filterSlopeIndex));
-    auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale;
+    auto cutoff = readParameter(filterCutoff, 1800.0f) * cutoffScale * toneCutoffScale * matrixCutoffScale * sequenceCutoffScale;
     const auto baseDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + currentDriveOffset);
 
     switch (character)

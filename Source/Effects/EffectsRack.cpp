@@ -284,9 +284,17 @@ void EffectsRack::reset()
     fxModChaosValue = ((fxModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     fxModLfo2Phase = 0.0f;
     fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sequencerLockDestination = 0;
+    sequencerLockAmount = 0.0f;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
+}
+
+void EffectsRack::setSequencerLock(int destinationIndex, float amount) noexcept
+{
+    sequencerLockDestination = destinationIndex;
+    sequencerLockAmount = juce::jlimit(0.0f, 1.0f, amount);
 }
 
 void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
@@ -328,6 +336,15 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
             case 11: fxModulation.drive += contribution; break;
             default: break;
         }
+    }
+
+    switch (sequencerLockDestination)
+    {
+        case 2: fxModulation.drive += sequencerLockAmount; break;
+        case 4: fxModulation.pumpDepth += sequencerLockAmount; break;
+        case 5: fxModulation.delayMix += sequencerLockAmount; break;
+        case 6: fxModulation.reverbMix += sequencerLockAmount; break;
+        default: break;
     }
 
     fxModulation.drive = juce::jlimit(-1.0f, 1.0f, fxModulation.drive);

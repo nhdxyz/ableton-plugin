@@ -84,7 +84,7 @@ If we only pick the next 15 big work tracks, they should be:
 3. MSEG/curve editor usable as LFO, envelope, step motion, filter motion, and FX shaper source.
 4. Source rack with Layer A/B, mute/solo, pan, width, routing, copy/paste, and layer snippets.
 5. UKG organ/drawbar source, Reese/Dred bass builder, and mono-safe bass utility.
-6. Per-step modulation lanes for cutoff, drive, pump, delay throw, reverb throw, sample slice, and wavetable position.
+6. Per-step modulation lanes for cutoff, drive, pump, delay throw, reverb throw, sample slice, and wavetable position. First single-destination Lock lane implemented; multi-lane expansion remains open.
 7. Pattern scenes, pattern chaining, fills, and Ableton-friendly MIDI drag/export/import.
 8. Drag-and-drop audio import with transient/grid/manual slicing.
 9. Time-stretch, key/BPM detection, hot-swap, and formant-safe vocal chop investigation.

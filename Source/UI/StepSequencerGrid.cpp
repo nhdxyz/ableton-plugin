@@ -327,12 +327,13 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
 
     const auto laneHeight = static_cast<float>(lanes.getHeight()) / static_cast<float>(laneCount);
     const auto cellWidth = static_cast<float>(lanes.getWidth()) / static_cast<float>(Sequencer::PatternSequencer::numSteps);
-    const std::array<const char*, laneCount> laneNames { "Vel", "Prob", "Late", "Len" };
+    const std::array<const char*, laneCount> laneNames { "Vel", "Prob", "Late", "Len", "Lock" };
     const std::array<juce::Colour, laneCount> laneColours {
         juce::Colour(0xff8ee6c9),
         juce::Colour(0xffb7a4ff),
         juce::Colour(0xffffc857),
-        juce::Colour(0xff8fb7ff)
+        juce::Colour(0xff8fb7ff),
+        juce::Colour(0xffff8ba7)
     };
 
     g.setColour(juce::Colour(0xff101619));
@@ -353,7 +354,7 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
             static_cast<float>(labels.getWidth()),
             row.getHeight()).reduced(4.0f, 0.0f);
 
-        g.setColour(lane == 1 ? juce::Colour(0xff121920) : juce::Colour(0xff151e22));
+        g.setColour((lane % 2) != 0 ? juce::Colour(0xff121920) : juce::Colour(0xff151e22));
         g.fillRoundedRectangle(row, 3.0f);
         g.setColour(laneColours[static_cast<size_t>(lane)].withAlpha(0.72f));
         g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
@@ -372,6 +373,7 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
                 case 1: value = step.probability; break;
                 case 2: value = step.timing; break;
                 case 3: value = step.length; break;
+                case 4: value = step.lock; break;
                 default: break;
             }
 
@@ -425,6 +427,7 @@ void StepSequencerGrid::beginEditAt(juce::Point<int> position)
             case 1: dragMode = DragMode::probability; break;
             case 2: dragMode = DragMode::timing; break;
             case 3: dragMode = DragMode::length; break;
+            case 4: dragMode = DragMode::lock; break;
             default: dragMode = DragMode::none; break;
         }
 
@@ -454,7 +457,8 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
     if (dragMode == DragMode::velocity
         || dragMode == DragMode::probability
         || dragMode == DragMode::timing
-        || dragMode == DragMode::length)
+        || dragMode == DragMode::length
+        || dragMode == DragMode::lock)
     {
         editLaneAt(position);
         return;
@@ -490,6 +494,7 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
         step.probability = 1.0f;
         step.timing = (stepIndex % 2) != 0 ? 0.65f : 0.0f;
         step.length = 1.0f;
+        step.lock = 0.0f;
     }
 
     setStep(stepIndex, step);
@@ -518,6 +523,7 @@ void StepSequencerGrid::editLaneAt(juce::Point<int> position)
         step.probability = 1.0f;
         step.timing = 0.0f;
         step.length = 1.0f;
+        step.lock = 0.0f;
     }
 
     const auto laneHeight = static_cast<float>(lanes.getHeight()) / static_cast<float>(laneCount);
@@ -529,6 +535,8 @@ void StepSequencerGrid::editLaneAt(juce::Point<int> position)
         laneTop += laneHeight * 2.0f;
     else if (dragMode == DragMode::length)
         laneTop += laneHeight * 3.0f;
+    else if (dragMode == DragMode::lock)
+        laneTop += laneHeight * 4.0f;
 
     const auto normalisedY = (static_cast<float>(position.y) - laneTop) / juce::jmax(1.0f, laneHeight);
     const auto value = juce::jlimit(0.0f, 1.0f, 1.0f - normalisedY);
@@ -549,6 +557,10 @@ void StepSequencerGrid::editLaneAt(juce::Point<int> position)
 
         case DragMode::length:
             step.length = juce::jlimit(0.1f, 1.0f, value);
+            break;
+
+        case DragMode::lock:
+            step.lock = value;
             break;
 
         case DragMode::none:
@@ -633,6 +645,10 @@ void StepSequencerGrid::nudgeLaneAt(juce::Point<int> position, float delta)
 
         case 3:
             step.length = juce::jlimit(0.1f, 1.0f, step.length + delta);
+            break;
+
+        case 4:
+            step.lock = juce::jlimit(0.0f, 1.0f, step.lock + delta);
             break;
 
         default:

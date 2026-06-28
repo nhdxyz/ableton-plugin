@@ -831,6 +831,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerGrooveTransformBox.setTooltip("Choose a timing transform for the current sequence");
     addAndMakeVisible(sequencerGrooveTransformBox);
 
+    sequencerLockDestinationBox.addItemList(Parameters::sequencerLockDestinationChoices(), 1);
+    sequencerLockDestinationBox.setTextWhenNothingSelected("Lock");
+    sequencerLockDestinationBox.setTooltip("Choose which safe synth or FX destination the per-step Lock lane moves");
+    addAndMakeVisible(sequencerLockDestinationBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerLockDestination, sequencerLockDestinationBox));
+
     sampleModeBox.addItem("Gate", 1);
     sampleModeBox.addItem("One Shot", 2);
     sampleModeBox.addItem("Slice Keys", 3);
@@ -1319,6 +1325,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sequencerOctaveSlider, sequencerOctaveLabel, "Oct", Parameters::ID::sequencerOctave);
     configureSlider(sequencerProbabilitySlider, sequencerProbabilityLabel, "Prob", Parameters::ID::sequencerProbability);
     configureSlider(sequencerRandomSlider, sequencerRandomLabel, "Rand", Parameters::ID::sequencerRandomAmount);
+    configureSlider(sequencerLockDepthSlider, sequencerLockDepthLabel, "Lock Amt", Parameters::ID::sequencerLockDepth);
     configureSlider(fxDistortionAmountSlider, fxDistortionAmountLabel, "Drive", Parameters::ID::fxDistortionAmount);
     configureSlider(fxBitcrushBitsSlider, fxBitcrushBitsLabel, "Bits", Parameters::ID::fxBitcrushBits);
     configureSlider(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, "Down", Parameters::ID::fxBitcrushDownsample);
@@ -1968,7 +1975,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::sequencer)
     {
         auto sequencerContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto controlArea = sequencerContent.removeFromTop(202).reduced(5);
+        auto controlArea = sequencerContent.removeFromTop(230).reduced(5);
         auto gridArea = sequencerContent.reduced(5, 7);
 
         for (auto area : { controlArea, gridArea })
@@ -2642,6 +2649,7 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerChordMemoryButton.setVisible(true);
             sequencerPatternBox.setVisible(true);
             sequencerGrooveTransformBox.setVisible(true);
+            sequencerLockDestinationBox.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
             rotateSequencerLeftButton.setVisible(true);
@@ -2679,6 +2687,7 @@ void NateVSTAudioProcessorEditor::resized()
             rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            sequencerLockDestinationBox.setBounds(utilityRow.removeFromLeft(132).reduced(4));
             sequencerGrooveTransformBox.setBounds(utilityRow.removeFromLeft(184).reduced(4));
             applyGrooveTransformButton.setBounds(utilityRow.removeFromLeft(76).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
@@ -2689,6 +2698,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, true);
             setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
             setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
+            setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, true);
             layoutKnobRow(content.removeFromTop(84).withTrimmedTop(6), {
                 &sequencerRootSlider,
                 &sequencerGateSlider,
@@ -2697,7 +2707,8 @@ void NateVSTAudioProcessorEditor::resized()
                 &sequencerAccentSlider,
                 &sequencerOctaveSlider,
                 &sequencerProbabilitySlider,
-                &sequencerRandomSlider
+                &sequencerRandomSlider,
+                &sequencerLockDepthSlider
             });
             sequencerGrid.setBounds(content.reduced(4, 12));
             break;
@@ -5243,7 +5254,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &performanceStatusLabel,
-        &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -5361,6 +5372,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, false);
     setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, false);
     setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, false);
+    setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, false);
     setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, false);
     setSliderVisible(fxBitcrushBitsSlider, fxBitcrushBitsLabel, false);
     setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, false);

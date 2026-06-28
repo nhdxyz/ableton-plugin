@@ -20,6 +20,13 @@ void SynthEngine::prepare(double sampleRate, int maximumBlockSize)
             voice->prepare(sampleRate, maximumBlockSize);
 }
 
+void SynthEngine::setSequencerLock(int destinationIndex, float amount)
+{
+    for (auto voiceIndex = 0; voiceIndex < synthesiser.getNumVoices(); ++voiceIndex)
+        if (auto* voice = dynamic_cast<Voice*>(synthesiser.getVoice(voiceIndex)))
+            voice->setSequencerLock(destinationIndex, amount);
+}
+
 void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi, double bpm)
 {
     for (auto voiceIndex = 0; voiceIndex < synthesiser.getNumVoices(); ++voiceIndex)

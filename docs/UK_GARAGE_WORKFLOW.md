@@ -145,6 +145,7 @@ Research references:
 - Added SAMPLE modulation destinations for start, mix, pitch, ramp, and stutter, and made UKG Chop seed empty MOD slots with start and pitch/ramp motion.
 - Added Osc Warp as a saved source control and MOD destination, with UKG bass/stab presets seeded for restrained harmonic movement before the filter and FX rack.
 - Added visible host-sync badges to SEQ and FX so transport-locked garage patterns, Pump, Tremolo, and synced Delay state can be checked without leaving the panel.
+- Added a first assignable SEQ Lock lane so UKG bass, organ stabs, late stabs, and vocal-trigger patterns can push cutoff, drive, Osc Warp, pump, delay, reverb, or wavetable position per step without editing host automation.
 
 ## Next UKG Features
 
@@ -194,8 +195,8 @@ Reference-backed next passes:
 
 - Implemented as a compact SEQ-panel template selector.
 - Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
-- Per-template rate, gate, swing, groove mode, scale mode, per-step timing and length, accent, probability, octave, and random amount defaults are set when applied.
-- The grid now shows timing markers on pushed steps, probability bars, note-length width, beat-group dividers, and root-aware note rows, with editable Velocity, Probability, Late, and Len lanes for direct per-step groove edits.
+- Per-template rate, gate, swing, groove mode, scale mode, per-step timing, length, lock amount, accent, probability, octave, and random amount defaults are set when applied.
+- The grid now shows timing markers on pushed steps, probability bars, note-length width, lock bars, beat-group dividers, and root-aware note rows, with editable Velocity, Probability, Late, Len, and Lock lanes for direct per-step groove and throw edits.
 - The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 - The SEQ panel includes chord modes for fast 5th, minor, minor 7, major, and minor 9 stabs; Organ Skank, UKG Chord Stab, and Late Stab templates now use those modes by default.
 - The SEQ panel includes Close, Inv 1, Inv 2, Open, and Drop 2 voicings so short organ, chord, and late-stab patterns can sit in different registers without redrawing the grid.

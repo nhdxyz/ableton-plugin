@@ -156,6 +156,7 @@ private:
     juce::ComboBox sequencerVoicingBox;
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
+    juce::ComboBox sequencerLockDestinationBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleSliceStyleBox;
     juce::ComboBox sampleStutterRateBox;
@@ -287,6 +288,7 @@ private:
     juce::Slider sequencerOctaveSlider;
     juce::Slider sequencerProbabilitySlider;
     juce::Slider sequencerRandomSlider;
+    juce::Slider sequencerLockDepthSlider;
     juce::Slider fxDistortionAmountSlider;
     juce::Slider fxBitcrushBitsSlider;
     juce::Slider fxBitcrushDownsampleSlider;
@@ -398,6 +400,7 @@ private:
     juce::Label sequencerOctaveLabel;
     juce::Label sequencerProbabilityLabel;
     juce::Label sequencerRandomLabel;
+    juce::Label sequencerLockDepthLabel;
     juce::Label fxDistortionAmountLabel;
     juce::Label fxBitcrushBitsLabel;
     juce::Label fxBitcrushDownsampleLabel;

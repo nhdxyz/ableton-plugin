@@ -28,8 +28,8 @@ private:
     static constexpr int numRows = Sequencer::PatternSequencer::maxNoteOffset
                                  - Sequencer::PatternSequencer::minNoteOffset
                                  + 1;
-    static constexpr int laneCount = 4;
-    static constexpr int laneAreaHeight = 68;
+    static constexpr int laneCount = 5;
+    static constexpr int laneAreaHeight = 84;
     static constexpr int laneLabelWidth = 40;
     enum class DragMode
     {
@@ -39,7 +39,8 @@ private:
         velocity,
         probability,
         timing,
-        length
+        length,
+        lock
     };
 
     StepGetter getStep;

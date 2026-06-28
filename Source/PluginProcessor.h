@@ -173,6 +173,8 @@ private:
 
     std::atomic<float>* outputGain = nullptr;
     std::atomic<float>* sequencerChordMemory = nullptr;
+    std::atomic<float>* sequencerLockDestination = nullptr;
+    std::atomic<float>* sequencerLockDepth = nullptr;
     std::atomic<float> outputMeterPeakLeft { 0.0f };
     std::atomic<float> outputMeterPeakRight { 0.0f };
     std::atomic<float> outputMeterRmsLeft { 0.0f };

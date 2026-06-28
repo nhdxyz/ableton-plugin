@@ -18,6 +18,7 @@ public:
 
     void prepare(double sampleRate, int maximumBlockSize, int numChannels);
     void reset();
+    void setSequencerLock(int destinationIndex, float amount) noexcept;
     void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
 
 private:
@@ -52,6 +53,8 @@ private:
     float fxModChaosValue = 0.0f;
     float fxModLfo2Phase = 0.0f;
     float fxModLfo2StepValue = 0.0f;
+    int sequencerLockDestination = 0;
+    float sequencerLockAmount = 0.0f;
     int delayWritePosition = 0;
     int combWritePosition = 0;
     int preparedChannels = 2;

@@ -182,7 +182,7 @@ Implemented P0 sub-slice:
 110. Add per-step note length. First saved lane/playback/export pass implemented.
 111. Add per-step slide/glide.
 112. Add per-step accent tied to filter, amp, and drive.
-113. Add per-step modulation lanes assignable to any safe destination.
+113. Add per-step modulation lanes assignable to any safe destination. First single-destination Lock lane implemented; expand to multiple simultaneous lanes and sample-accurate lock events.
 114. Add per-step sample slice lane.
 115. Add per-step pump depth lane.
 116. Add per-step delay throw lane.

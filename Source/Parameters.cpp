@@ -74,6 +74,11 @@ juce::StringArray sequencerChordVoicingChoices()
     return { "Close", "Inv 1", "Inv 2", "Open", "Drop 2" };
 }
 
+juce::StringArray sequencerLockDestinationChoices()
+{
+    return { "Off", "Cutoff", "Drive", "Osc Warp", "Pump", "Delay", "Reverb", "WT 1", "WT 2" };
+}
+
 juce::StringArray sampleSliceStyleChoices()
 {
     return { "Clean", "Pitch", "Reverse", "Stutter", "Garage" };
@@ -1266,6 +1271,18 @@ APVTS::ParameterLayout createLayout()
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::osc2WavetablePosition,
         "Osc 2 Wavetable Position",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sequencerLockDestination,
+        "Sequencer Lock Destination",
+        sequencerLockDestinationChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sequencerLockDepth,
+        "Sequencer Lock Depth",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.35f));
 

@@ -18,6 +18,7 @@ struct Step
     float probability = 1.0f;
     float timing = 0.0f;
     float length = 1.0f;
+    float lock = 0.0f;
 };
 
 struct HostPosition
@@ -49,6 +50,8 @@ public:
     int getChordStrumOffset(int stepLength, int noteIndex, int noteCount) const;
     void clear();
     void randomize(float amount);
+    float getActiveStepLock() const noexcept;
+    int getActiveStepIndex() const noexcept;
 
     void process(juce::MidiBuffer& midi, int numSamples, double bpm, HostPosition hostPosition);
 
@@ -60,6 +63,9 @@ private:
     std::array<std::atomic<float>, numSteps> stepProbability {};
     std::array<std::atomic<float>, numSteps> stepTiming {};
     std::array<std::atomic<float>, numSteps> stepLengths {};
+    std::array<std::atomic<float>, numSteps> stepLocks {};
+    std::atomic<float> activeStepLock { 0.0f };
+    std::atomic<int> activeStepIndex { -1 };
     double currentSampleRate = 44100.0;
     double samplesUntilNextStep = 0.0;
     double pendingNoteOffSamples = -1.0;

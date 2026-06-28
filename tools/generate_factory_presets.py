@@ -125,6 +125,8 @@ DEFAULTS = {
     "sequencer_octave": 0,
     "sequencer_probability": 1.0,
     "sequencer_random_amount": 0.55,
+    "sequencer_lock_destination": 0,
+    "sequencer_lock_depth": 0.35,
     "fx_distortion_enabled": 0,
     "fx_distortion_amount": 0.2,
     "fx_bitcrush_enabled": 0,
@@ -301,8 +303,44 @@ FACTORY_METADATA = {
     "Techno Warehouse Stab": {"pack": "Techno Tools", "key": "C Min", "bpm": 132},
 }
 
+SEQUENCER_LOCK_SETTINGS = {
+    "UKG 2-Step Bass": {"destination": 1, "depth": 0.38},
+    "UKG Shuffle Bass": {"destination": 1, "depth": 0.36},
+    "UKG Dred Bass": {"destination": 3, "depth": 0.32},
+    "UKG Organ Stab": {"destination": 6, "depth": 0.22},
+    "UKG Chord Stab": {"destination": 5, "depth": 0.26},
+    "UKG Vocal Chop Starter": {"destination": 5, "depth": 0.34},
+    "UKG Late Stab": {"destination": 6, "depth": 0.24},
+    "House Chord Memory": {"destination": 4, "depth": 0.24},
+    "Deep House Sub Chug": {"destination": 1, "depth": 0.28},
+    "Tech House Rubber Bass": {"destination": 1, "depth": 0.32},
+    "Tech House Perc Pluck": {"destination": 3, "depth": 0.3},
+    "Minimal Click Pluck": {"destination": 7, "depth": 0.3},
+    "Minimal Sub Pulse": {"destination": 1, "depth": 0.26},
+    "Techno Pulse Bass": {"destination": 3, "depth": 0.28},
+    "Techno Warehouse Stab": {"destination": 6, "depth": 0.24},
+}
 
-def step(index, note, velocity, probability, timing=0.0, length=1.0):
+STEP_LOCKS_BY_PRESET = {
+    "UKG 2-Step Bass": {2: 0.16, 5: 0.44, 7: 0.32, 11: 0.38, 14: 0.2},
+    "UKG Shuffle Bass": {3: 0.5, 5: 0.36, 10: 0.22, 13: 0.42, 15: 0.48},
+    "UKG Dred Bass": {3: 0.34, 5: 0.46, 11: 0.38, 15: 0.5},
+    "UKG Organ Stab": {2: 0.18, 6: 0.36, 10: 0.22, 14: 0.4},
+    "UKG Chord Stab": {2: 0.22, 6: 0.34, 10: 0.28, 14: 0.42},
+    "UKG Vocal Chop Starter": {1: 0.32, 6: 0.18, 9: 0.42, 14: 0.28},
+    "UKG Late Stab": {3: 0.42, 7: 0.55, 10: 0.3, 15: 0.5},
+    "House Chord Memory": {2: 0.18, 6: 0.36, 10: 0.34, 14: 0.28},
+    "Deep House Sub Chug": {3: 0.2, 6: 0.32, 11: 0.24, 14: 0.36},
+    "Tech House Rubber Bass": {2: 0.24, 6: 0.38, 10: 0.28, 14: 0.42},
+    "Tech House Perc Pluck": {5: 0.34, 10: 0.42, 15: 0.26},
+    "Minimal Click Pluck": {5: 0.3, 10: 0.22, 15: 0.48},
+    "Minimal Sub Pulse": {4: 0.2, 8: 0.28, 12: 0.24, 14: 0.3},
+    "Techno Pulse Bass": {2: 0.24, 6: 0.38, 10: 0.28, 14: 0.42},
+    "Techno Warehouse Stab": {3: 0.26, 7: 0.42, 11: 0.32, 15: 0.5},
+}
+
+
+def step(index, note, velocity, probability, timing=0.0, length=1.0, lock=0.0):
     return {
         f"seq_step_{index}_enabled": "1",
         f"seq_step_{index}_note": str(note),
@@ -310,6 +348,7 @@ def step(index, note, velocity, probability, timing=0.0, length=1.0):
         f"seq_step_{index}_probability": str(probability),
         f"seq_step_{index}_timing": str(timing),
         f"seq_step_{index}_length": str(length),
+        f"seq_step_{index}_lock": str(lock),
     }
 
 
@@ -322,6 +361,7 @@ def blank_steps():
         props[f"seq_step_{index}_probability"] = "1"
         props[f"seq_step_{index}_timing"] = "0"
         props[f"seq_step_{index}_length"] = "1"
+        props[f"seq_step_{index}_lock"] = "0"
     return props
 
 
@@ -329,6 +369,15 @@ def sequence(*steps):
     props = blank_steps()
     for item in steps:
         props.update(item)
+    return props
+
+
+def apply_step_locks(preset_name, steps):
+    props = dict(steps)
+    for index, value in STEP_LOCKS_BY_PRESET.get(preset_name, {}).items():
+        enabled_key = f"seq_step_{index}_enabled"
+        if props.get(enabled_key, "0") == "1":
+            props[f"seq_step_{index}_lock"] = value_string(value)
     return props
 
 
@@ -1744,6 +1793,11 @@ def write_preset(preset):
         params["filter_slope"] = FILTER_SLOPE_BY_PRESET.get(preset["name"], 0)
     if "osc_warp" not in preset["params"]:
         params["osc_warp"] = OSC_WARP_BY_PRESET.get(preset["name"], 0.0)
+    lock_settings = SEQUENCER_LOCK_SETTINGS.get(preset["name"], {})
+    if "sequencer_lock_destination" not in preset["params"]:
+        params["sequencer_lock_destination"] = lock_settings.get("destination", 0)
+    if "sequencer_lock_depth" not in preset["params"]:
+        params["sequencer_lock_depth"] = lock_settings.get("depth", 0.35)
     if params.get("fx_pump_enabled", 0) and "fx_pump_curve" not in preset["params"]:
         category = preset.get("category", "UKG")
         params["fx_pump_curve"] = {
@@ -1757,6 +1811,7 @@ def write_preset(preset):
         params["fx_delay_sync"] = 1
         params["fx_delay_rate"] = preset["params"].get("fx_delay_rate", 1)
     params = derive_performance_macros(params, preset["params"])
+    steps = apply_step_locks(preset["name"], preset["steps"])
     root = ElementTree.Element(
         "PARAMETERS",
         {
@@ -1770,7 +1825,7 @@ def write_preset(preset):
             "preset_key": preset.get("key", metadata.get("key", "Any Key")),
             "preset_bpm": str(preset.get("bpm", metadata.get("bpm", 0))),
             "preset_tags": preset.get("tags", preset_tags(preset, params)),
-            **preset["steps"],
+            **steps,
         },
     )
 

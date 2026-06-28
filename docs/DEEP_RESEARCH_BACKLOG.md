@@ -163,7 +163,7 @@ Implemented sampler sub-slice:
 69. Add per-step ratchet/retrigger.
 70. Add per-step note length. First editable lane/playback/export pass implemented in the SEQ grid.
 71. Add per-step velocity lane. First editable lane pass implemented in the SEQ grid.
-72. Add per-step modulation lane assignments.
+72. Add per-step modulation lane assignments. First assignable Lock lane implemented; expand to multiple lanes, per-step destinations, and sample-accurate lock scheduling.
 73. Add per-step sample slice lane.
 74. Add per-step pump depth lane.
 75. Add per-step delay throw lane.

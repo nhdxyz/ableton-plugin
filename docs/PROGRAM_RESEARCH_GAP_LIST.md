@@ -157,7 +157,7 @@ Reference pattern:
 
 Nate VST gaps:
 
-- Sequencer has useful note lanes but no per-step modulation lanes yet.
+- Sequencer has useful note lanes plus a first assignable per-step Lock lane for safe cutoff, drive, warp, pump, delay, reverb, and wavetable-position movement; deeper multi-lane and sample-accurate modulation remains open.
 - No pattern scenes or pattern chaining.
 - No vector/motion recorder for XY gestures.
 - No motion lanes for wavetable/sample/filter/FX properties.
@@ -370,7 +370,7 @@ Nate VST gaps:
 111. Add per-step ratchet/retrigger.
 112. Add per-step slide/glide.
 113. Add per-step accent tied to amp, filter, and drive.
-114. Add per-step assignable modulation lane.
+114. Add per-step assignable modulation lane. First single-destination Lock lane implemented; multiple simultaneous lanes, per-step destination changes, and sample-accurate scheduling remain open.
 115. Add per-step sample slice lane.
 116. Add per-step pump lane.
 117. Add per-step delay throw lane.

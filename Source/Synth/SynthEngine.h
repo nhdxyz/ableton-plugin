@@ -13,6 +13,7 @@ public:
     explicit SynthEngine(Parameters::APVTS& parameters);
 
     void prepare(double sampleRate, int maximumBlockSize);
+    void setSequencerLock(int destinationIndex, float amount);
     void render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi, double bpm);
 
 private:

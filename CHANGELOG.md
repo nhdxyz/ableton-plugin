@@ -2,6 +2,15 @@
 
 ## 2026-06-28
 
+### Sequencer Parameter Lock Lane
+
+- Added a fifth SEQ lane, `Lock`, for per-step parameter-lock amounts alongside Velocity, Probability, Late, and Len.
+- Added global SEQ `Lock` destination and `Lock Amt` controls, with safe destinations for Cutoff, Drive, Osc Warp, Pump, Delay, Reverb, Osc 1 WT position, and Osc 2 WT position.
+- Routed step locks through internal synth/FX offsets after sequencer processing, avoiding audio-thread writes to host parameters while giving house, UKG, tech-house, minimal, and techno patterns rhythmic tone and throw movement.
+- Saved, restored, copied, rotated, randomized, mutated, and undo-restored per-step lock values, with old presets migrating to zero lock movement.
+- Regenerated factory presets with explicit lock state and seeded selected UKG, house, tech-house, minimal, and techno patterns with useful cutoff, warp, pump, delay, and reverb lock motion.
+- First implementation is block-rate and single-destination per pattern; multi-lane and sample-accurate parameter-lock scheduling remain future sequencer work.
+
 ### Internal Wavetable Oscillator Pass
 
 - Added a fifth `Wavetable` waveform mode for Osc 1 and Osc 2 while preserving the existing sine, saw, square, and triangle indices.

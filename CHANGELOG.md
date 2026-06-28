@@ -2,6 +2,14 @@
 
 ## 2026-06-28
 
+### INFO Panel And Expanded Editor
+
+- Increased the default editor size to 1040x760 while keeping 940x710 as the minimum host resize target.
+- Added a dedicated `INFO` panel with About, house/UKG workflow, topic-based detail notes, and quick jumps into LAB, MOD, FX, and LIBRARY.
+- Compactized the top tab widths and widened the selected-control strip dynamically at larger editor sizes to reduce header clutter.
+- Expanded `EditorLayoutAudit` to include the new INFO panel and the minimum/default/wide/max size sweep.
+- Stabilized the Random Candidate fallback audit by forcing the intended locked-filter fallback path instead of relying on random quiet-output behavior.
+
 ### Global Sound-Design Undo/Redo
 
 - Added a bounded global edit-history stack for sound-design edits, stored as full plugin state snapshots so APVTS parameters, sequencer steps, sample state, modulation routes, and performance snapshots restore together.

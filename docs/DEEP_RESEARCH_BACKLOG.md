@@ -51,7 +51,7 @@ See `docs/PROGRAM_RESEARCH_GAP_LIST.md` for the latest program-by-program resear
 ## Priority 0: UI And Workflow Corrections
 
 1. Extract HOME, SYNTH, SAMPLE, MOD, SEQ, FX, LAB, and LIBRARY panels into smaller editor components.
-2. Add automated layout overflow checks for every page and supported editor size. First CTest-backed editor bounds audit implemented for default, wide, and maximum editor sizes.
+2. Add automated layout overflow checks for every page and supported editor size. First CTest-backed editor bounds audit implemented for minimum, default, wide, and maximum editor sizes.
 3. Add screenshot-based UI regression checks for desktop scale factors.
 4. Add a debug overlay that marks component bounds when checking overlap.
 5. Standardize section headers, spacing, and row heights across pages.
@@ -73,8 +73,9 @@ Implemented control-feel sub-slice:
 Implemented UI test sub-slices:
 
 - `EditorLayoutAudit` now instantiates the real plugin editor and checks HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module for visible empty-bounds or editor-overflow failures through CTest.
-- The editor now exposes host resize limits from 940x710 to 1440x980, and `EditorLayoutAudit` sweeps default, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module.
+- The editor now opens at 1040x760, preserves 940x710 as the compact minimum, exposes host resize limits up to 1440x980, and `EditorLayoutAudit` sweeps minimum, default, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module.
 - First-pass global `Undo Edit`/`Redo Edit` is available from the persistent selected-control strip, with `GlobalEditHistoryAudit` verifying full-state restore across synth parameters, modulation routes, sequencer step data, and performance snapshots.
+- A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
 
 ## Priority 1: Modulation And Movement
 

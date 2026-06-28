@@ -44,7 +44,8 @@ private:
         sample,
         sequencer,
         effects,
-        library
+        library,
+        info
     };
 
     enum class RandomLabPage
@@ -156,6 +157,11 @@ private:
     juce::Label selectedControlStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
+    juce::Label infoSectionLabel;
+    juce::Label infoAboutLabel;
+    juce::Label infoWorkflowLabel;
+    juce::Label infoDetailsLabel;
+    juce::Label infoFocusLabel;
     juce::Label sampleNameLabel;
     juce::Label presetStatusLabel;
     juce::Label presetBrowserHeaderLabel;
@@ -191,6 +197,7 @@ private:
     juce::ComboBox presetPackBox;
     juce::ComboBox presetKeyBox;
     juce::ComboBox presetBpmBox;
+    juce::ComboBox infoTopicBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPresetBox;
     juce::ComboBox fxDelayRateBox;
@@ -520,6 +527,7 @@ private:
     juce::TextButton sequencerTabButton { "SEQ" };
     juce::TextButton effectsTabButton { "FX" };
     juce::TextButton libraryTabButton { "LIBRARY" };
+    juce::TextButton infoTabButton { "INFO" };
     juce::TextButton undoEditButton { "Undo Edit" };
     juce::TextButton redoEditButton { "Redo Edit" };
     juce::TextButton selectedControlAddModButton { "MOD+" };
@@ -573,6 +581,10 @@ private:
     juce::TextButton lfoCurveQuantizeButton { "1/8" };
     juce::TextButton lfoCurveRandomButton { "Dice" };
     juce::TextButton lfoCurveGarageButton { "UKG" };
+    juce::TextButton infoOpenLabButton { "Open Lab" };
+    juce::TextButton infoOpenModButton { "Open MOD" };
+    juce::TextButton infoOpenFxButton { "Open FX" };
+    juce::TextButton infoOpenLibraryButton { "Open Library" };
     std::array<juce::ToggleButton, 8> modSlotEnabledButtons;
     std::array<juce::TextButton, 8> modSlotDuplicateButtons;
     std::array<juce::TextButton, 8> modSlotDeleteButtons;
@@ -604,6 +616,9 @@ private:
     juce::TextEditor presetNotesEditor;
     juce::ComboBox presetNotesTemplateBox;
     juce::TextEditor randomCandidateDetailEditor;
+    juce::TextEditor infoAboutEditor;
+    juce::TextEditor infoWorkflowEditor;
+    juce::TextEditor infoDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
     UI::LowEndAssistant lowEndAssistant;
@@ -671,6 +686,8 @@ private:
     void updateTabButtons();
     void updateRandomLabPageButtons();
     void updateRandomRecipeInfo();
+    void updateInfoDetail();
+    juce::String infoDetailTextForTopic(int topicId) const;
     void hidePanelComponents();
     void setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible);
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);

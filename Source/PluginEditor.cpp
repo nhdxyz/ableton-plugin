@@ -8,8 +8,10 @@
 
 namespace
 {
-constexpr auto editorWidth = 940;
-constexpr auto editorHeight = 710;
+constexpr auto editorMinWidth = 940;
+constexpr auto editorMinHeight = 710;
+constexpr auto editorDefaultWidth = 1040;
+constexpr auto editorDefaultHeight = 760;
 constexpr auto editorMaxWidth = 1440;
 constexpr auto editorMaxHeight = 980;
 constexpr auto pianoKeyboardHeight = 58;
@@ -677,8 +679,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
-    setSize(editorWidth, editorHeight);
-    setResizeLimits(editorWidth, editorHeight, editorMaxWidth, editorMaxHeight);
+    setSize(editorDefaultWidth, editorDefaultHeight);
+    setResizeLimits(editorMinWidth, editorMinHeight, editorMaxWidth, editorMaxHeight);
     setResizable(true, true);
 
     titleLabel.setText("Nate VST", juce::dontSendNotification);
@@ -749,6 +751,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
     configureSectionLabel(librarySectionLabel, "LIBRARY");
+    configureSectionLabel(infoSectionLabel, "INFO");
+    configureSectionLabel(infoAboutLabel, "ABOUT");
+    configureSectionLabel(infoWorkflowLabel, "HOUSE WORKFLOW");
+    configureSectionLabel(infoDetailsLabel, "DETAILS");
+    configureSectionLabel(infoFocusLabel, "OPEN A WORK AREA");
 
     hostSyncStatusLabel.setText("INT 124 | FREE", juce::dontSendNotification);
     hostSyncStatusLabel.setFont(juce::FontOptions(11.0f, juce::Font::bold));
@@ -996,6 +1003,52 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomCandidateDetailEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
     randomCandidateDetailEditor.setColour(juce::TextEditor::highlightColourId, juce::Colour(0x558ee6c9));
     addAndMakeVisible(randomCandidateDetailEditor);
+
+    auto configureReadOnlyInfoEditor = [this] (juce::TextEditor& editor, const juce::String& text, const juce::String& tooltip)
+    {
+        editor.setReadOnly(true);
+        editor.setMultiLine(true, true);
+        editor.setReturnKeyStartsNewLine(false);
+        editor.setScrollbarsShown(true);
+        editor.setCaretVisible(false);
+        editor.setPopupMenuEnabled(false);
+        editor.setJustification(juce::Justification::topLeft);
+        editor.setFont(juce::FontOptions(12.5f));
+        editor.setIndents(10, 8);
+        editor.setText(text, juce::dontSendNotification);
+        editor.setTooltip(tooltip);
+        editor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
+        editor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff2b363c));
+        editor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
+        editor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+        editor.setColour(juce::TextEditor::highlightColourId, juce::Colour(0x558ee6c9));
+        addAndMakeVisible(editor);
+    };
+
+    configureReadOnlyInfoEditor(infoAboutEditor,
+                                "Nate VST is a club-focused synth and sample instrument for house, UK garage, tech house, techno, and minimal patches.\n\nThe main workflow is fast sound design: build a source, add motion, shape the groove, then save usable variations with category, pack, key, BPM, rating, and notes.",
+                                "About Nate VST");
+    configureReadOnlyInfoEditor(infoWorkflowEditor,
+                                "1. HOME: audition the current patch, balance macros, capture A/B snapshots, and grab a preset.\n2. LAB: generate recipe-aware ideas, lock sections, mutate only one area, then save the strongest candidate.\n3. SYNTH/SAMPLE: refine the source and chop movement.\n4. MOD/SEQ/FX: add groove, motion, throws, pump, width, and mix safety.\n5. LIBRARY: tag, rate, favorite, filter, and reload patches for Ableton sessions.",
+                                "Suggested sound-design workflow");
+    configureReadOnlyInfoEditor(infoDetailEditor,
+                                juce::String(),
+                                "Topic details for the selected Nate VST area");
+
+    infoTopicBox.addItem("Getting Started", 1);
+    infoTopicBox.addItem("Random Lab", 2);
+    infoTopicBox.addItem("Modulation", 3);
+    infoTopicBox.addItem("FX Rack", 4);
+    infoTopicBox.addItem("Preset Library", 5);
+    infoTopicBox.addItem("UKG + House Targets", 6);
+    infoTopicBox.addItem("Undo + Editing Feel", 7);
+    infoTopicBox.addItem("Planned Additions", 8);
+    infoTopicBox.setSelectedId(1, juce::dontSendNotification);
+    infoTopicBox.setTextWhenNothingSelected("Choose topic");
+    infoTopicBox.setTooltip("Choose a Nate VST area to explain");
+    infoTopicBox.onChange = [this] { updateInfoDetail(); };
+    addAndMakeVisible(infoTopicBox);
+    updateInfoDetail();
 
     waveformBox.addItemList(Parameters::waveformChoices(), 1);
     addAndMakeVisible(waveformBox);
@@ -1946,6 +1999,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerTabButton.onClick = [this] { setActivePanel(Panel::sequencer); };
     effectsTabButton.onClick = [this] { setActivePanel(Panel::effects); };
     libraryTabButton.onClick = [this] { setActivePanel(Panel::library); };
+    infoTabButton.onClick = [this] { setActivePanel(Panel::info); };
     sineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 0); };
     sawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 1); };
     squareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 2); };
@@ -2058,6 +2112,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorAddButton.onClick = [this] { addInspectedModRoute(); };
     modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
     modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
+    infoOpenLabButton.setTooltip("Open the Random Lab generation and mutation panel");
+    infoOpenLabButton.onClick = [this] { setActivePanel(Panel::lab); };
+    infoOpenModButton.setTooltip("Open modulation sources, MSEG, and routing");
+    infoOpenModButton.onClick = [this] { setActivePanel(Panel::mod); };
+    infoOpenFxButton.setTooltip("Open the slot-based FX rack");
+    infoOpenFxButton.onClick = [this] { setActivePanel(Panel::effects); };
+    infoOpenLibraryButton.setTooltip("Open preset save, search, categories, ratings, and browser tools");
+    infoOpenLibraryButton.onClick = [this] { setActivePanel(Panel::library); };
     undoEditButton.setTooltip("Undo the last captured sound-design edit");
     undoEditButton.onClick = [this] { triggerGlobalUndo(); };
     undoEditButton.setEnabled(false);
@@ -2214,6 +2276,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerTabButton);
     addAndMakeVisible(effectsTabButton);
     addAndMakeVisible(libraryTabButton);
+    addAndMakeVisible(infoTabButton);
     addAndMakeVisible(sineWaveButton);
     addAndMakeVisible(sawWaveButton);
     addAndMakeVisible(squareWaveButton);
@@ -2254,6 +2317,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
     addAndMakeVisible(modInspectorClearButton);
+    addAndMakeVisible(infoOpenLabButton);
+    addAndMakeVisible(infoOpenModButton);
+    addAndMakeVisible(infoOpenFxButton);
+    addAndMakeVisible(infoOpenLibraryButton);
     addAndMakeVisible(undoEditButton);
     addAndMakeVisible(redoEditButton);
     addAndMakeVisible(selectedControlAddModButton);
@@ -2441,6 +2508,26 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         g.drawText("RACK", rackArea.removeFromTop(24).reduced(12, 0), juce::Justification::centredLeft);
         g.drawText(fxModuleName(selectedFxModule).toUpperCase(), detailArea.removeFromTop(24).reduced(14, 0), juce::Justification::centredLeft);
     }
+
+    if (activePanel == Panel::info)
+    {
+        auto infoContent = contentArea.reduced(18).withTrimmedTop(36);
+        auto topRow = infoContent.removeFromTop(172);
+        auto aboutArea = topRow.removeFromLeft(352).reduced(5);
+        auto workflowArea = topRow.reduced(5);
+        infoContent.removeFromTop(10);
+        auto detailRow = infoContent;
+        auto focusArea = detailRow.removeFromRight(214).reduced(5);
+        auto detailArea = detailRow.reduced(5);
+
+        for (auto area : { aboutArea, workflowArea, detailArea, focusArea })
+        {
+            g.setColour(juce::Colour(0xff101619));
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
+            g.setColour(juce::Colour(0xff2b363c));
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        }
+    }
 }
 
 void NateVSTAudioProcessorEditor::resized()
@@ -2456,14 +2543,15 @@ void NateVSTAudioProcessorEditor::resized()
         button.setBounds(top.removeFromLeft(width).reduced(3, 4));
     };
 
-    placeTab(homeTabButton, 74);
-    placeTab(synthTabButton, 74);
-    placeTab(labTabButton, 60);
-    placeTab(modTabButton, 60);
-    placeTab(sampleTabButton, 84);
-    placeTab(sequencerTabButton, 62);
-    placeTab(effectsTabButton, 56);
-    placeTab(libraryTabButton, 96);
+    placeTab(homeTabButton, 64);
+    placeTab(synthTabButton, 64);
+    placeTab(labTabButton, 52);
+    placeTab(modTabButton, 52);
+    placeTab(sampleTabButton, 72);
+    placeTab(sequencerTabButton, 54);
+    placeTab(effectsTabButton, 48);
+    placeTab(libraryTabButton, 82);
+    placeTab(infoTabButton, 54);
 
     bounds.removeFromTop(14);
     auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
@@ -2479,7 +2567,8 @@ void NateVSTAudioProcessorEditor::resized()
     updateTabButtons();
 
     auto selectedControlRow = content.withHeight(28);
-    auto selectedControlArea = selectedControlRow.removeFromRight(520).reduced(0, 2);
+    const auto selectedControlWidth = juce::jlimit(520, content.getWidth(), content.getWidth() - 260);
+    auto selectedControlArea = selectedControlRow.removeFromRight(selectedControlWidth).reduced(0, 2);
     selectedControlHeaderLabel.setVisible(true);
     selectedControlStatusLabel.setVisible(true);
     undoEditButton.setVisible(true);
@@ -3673,10 +3762,58 @@ void NateVSTAudioProcessorEditor::resized()
             presetBrowserList.setBounds(content.reduced(6, 4));
             break;
         }
+
+        case Panel::info:
+        {
+            infoSectionLabel.setVisible(true);
+            infoAboutLabel.setVisible(true);
+            infoWorkflowLabel.setVisible(true);
+            infoDetailsLabel.setVisible(true);
+            infoFocusLabel.setVisible(true);
+            infoAboutEditor.setVisible(true);
+            infoWorkflowEditor.setVisible(true);
+            infoDetailEditor.setVisible(true);
+            infoTopicBox.setVisible(true);
+            infoOpenLabButton.setVisible(true);
+            infoOpenModButton.setVisible(true);
+            infoOpenFxButton.setVisible(true);
+            infoOpenLibraryButton.setVisible(true);
+
+            infoSectionLabel.setBounds(content.removeFromTop(28));
+            auto infoContent = content.withTrimmedTop(8);
+            auto topRow = infoContent.removeFromTop(172);
+            auto aboutArea = topRow.removeFromLeft(352).reduced(18, 12);
+            auto workflowArea = topRow.reduced(18, 12);
+            infoContent.removeFromTop(10);
+            auto detailRow = infoContent;
+            auto focusArea = detailRow.removeFromRight(214).reduced(18, 12);
+            auto detailArea = detailRow.reduced(18, 12);
+
+            infoAboutLabel.setBounds(aboutArea.removeFromTop(24));
+            infoAboutEditor.setBounds(aboutArea.reduced(2, 4));
+
+            infoWorkflowLabel.setBounds(workflowArea.removeFromTop(24));
+            infoWorkflowEditor.setBounds(workflowArea.reduced(2, 4));
+
+            auto detailHeader = detailArea.removeFromTop(38);
+            infoDetailsLabel.setBounds(detailHeader.removeFromLeft(94));
+            infoTopicBox.setBounds(detailHeader.removeFromLeft(240).reduced(4));
+            infoDetailEditor.setBounds(detailArea.withTrimmedTop(6).reduced(2, 4));
+
+            infoFocusLabel.setBounds(focusArea.removeFromTop(24));
+            auto focusButtonHeight = 38;
+            infoOpenLabButton.setBounds(focusArea.removeFromTop(focusButtonHeight).reduced(4));
+            infoOpenModButton.setBounds(focusArea.removeFromTop(focusButtonHeight).reduced(4));
+            infoOpenFxButton.setBounds(focusArea.removeFromTop(focusButtonHeight).reduced(4));
+            infoOpenLibraryButton.setBounds(focusArea.removeFromTop(focusButtonHeight).reduced(4));
+            break;
+        }
     }
 
     selectedControlHeaderLabel.toFront(false);
     selectedControlStatusLabel.toFront(false);
+    undoEditButton.toFront(false);
+    redoEditButton.toFront(false);
     selectedControlAddModButton.toFront(false);
     selectedControlOpenModButton.toFront(false);
 }
@@ -3719,11 +3856,11 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     struct LayoutSizeAuditSpec
     {
         const char* name = "";
-        int width = editorWidth;
-        int height = editorHeight;
+        int width = editorDefaultWidth;
+        int height = editorDefaultHeight;
     };
 
-    const std::array<PanelAuditSpec, 8> panels {
+    const std::array<PanelAuditSpec, 9> panels {
         PanelAuditSpec { Panel::home, "HOME" },
         PanelAuditSpec { Panel::synth, "SYNTH" },
         PanelAuditSpec { Panel::lab, "LAB" },
@@ -3731,7 +3868,8 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         PanelAuditSpec { Panel::sample, "SAMPLE" },
         PanelAuditSpec { Panel::sequencer, "SEQ" },
         PanelAuditSpec { Panel::effects, "FX" },
-        PanelAuditSpec { Panel::library, "LIBRARY" }
+        PanelAuditSpec { Panel::library, "LIBRARY" },
+        PanelAuditSpec { Panel::info, "INFO" }
     };
 
     const std::array<FxModule, 15> fxModules {
@@ -3760,8 +3898,9 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         std::pair<RandomLabPage, const char*> { RandomLabPage::save, "Save" }
     };
 
-    const std::array<LayoutSizeAuditSpec, 3> layoutSizes {
-        LayoutSizeAuditSpec { "Default", editorWidth, editorHeight },
+    const std::array<LayoutSizeAuditSpec, 4> layoutSizes {
+        LayoutSizeAuditSpec { "Min", editorMinWidth, editorMinHeight },
+        LayoutSizeAuditSpec { "Default", editorDefaultWidth, editorDefaultHeight },
         LayoutSizeAuditSpec { "Wide", 1180, 820 },
         LayoutSizeAuditSpec { "Max", editorMaxWidth, editorMaxHeight }
     };
@@ -6650,6 +6789,7 @@ void NateVSTAudioProcessorEditor::updateTabButtons()
     sequencerTabButton.setToggleState(activePanel == Panel::sequencer, juce::dontSendNotification);
     effectsTabButton.setToggleState(activePanel == Panel::effects, juce::dontSendNotification);
     libraryTabButton.setToggleState(activePanel == Panel::library, juce::dontSendNotification);
+    infoTabButton.setToggleState(activePanel == Panel::info, juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
@@ -6675,6 +6815,45 @@ void NateVSTAudioProcessorEditor::updateRandomRecipeInfo()
     randomRecipeInfoLabel.setTooltip(recipeName + "\n" + text);
 }
 
+void NateVSTAudioProcessorEditor::updateInfoDetail()
+{
+    const auto topicId = juce::jmax(1, infoTopicBox.getSelectedId());
+    const auto detailText = infoDetailTextForTopic(topicId);
+    infoDetailEditor.setText(detailText, juce::dontSendNotification);
+    infoDetailEditor.setTooltip(infoTopicBox.getText() + "\n" + detailText);
+}
+
+juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) const
+{
+    switch (topicId)
+    {
+        case 2:
+            return "Random Lab is the fastest way to make usable starting points. Pick a genre recipe, choose the scope, lock sections you want preserved, then Generate or Mutate.\n\nUse section rolls when a patch is close but one area is wrong: Source for oscillator/sample character, Filter for tone, FX for space/drive, Seq for groove, and Macros for performance movement.\n\nCandidate slots let you cue, recall, promote to A/B snapshots, rate, favorite, and save without losing the current sound.";
+
+        case 3:
+            return "MOD is where motion becomes visible. Source meters show activity for LFOs, macros, random sources, velocity, and envelopes. The matrix routes a source to a destination with bipolar amount control.\n\nTouch a knob first, then use CONTROL MOD+ to add a route quickly. Use the inspector to focus a destination, clear routes, or open the MOD panel from any sound-design page.\n\nFor house and UKG, start with small macro amounts on cutoff, drive, pump, delay mix, sample start, and wavetable position.";
+
+        case 4:
+            return "FX is a slot-based rack. Add modules from the dropdown, reorder them, remove weak links, and select a slot to edit only that module.\n\nFor club patches, useful chains are Tone -> Drive -> Pump -> Delay -> Reverb -> Width -> Guard. Guard belongs near the end for output safety.\n\nThrow buttons are performance moves: delay, space, pump drop, dry reset, and hold actions for fills and breakdowns.";
+
+        case 5:
+            return "LIBRARY stores the patch with category, pack, author, key, BPM, rating, favorite, notes, and searchable metadata.\n\nUse categories like UKG/Bass, UKG/Chops, House/Chords, Tech House/Bass, Minimal/Plucks, and Techno/Stabs so the browser behaves like a production crate.\n\nThe browser can filter by favorites, rating, generated status, category, tag, pack, tempo, and macro-rich patches. Macro previews help decide if a preset has usable performance movement before loading it.";
+
+        case 6:
+            return "UKG targets: 130-136 BPM, swung 16ths, short organ stabs, vocal chops, dred/Reese bass, clean mono subs, delay throws, tight room space, and shuffled call-response movement.\n\nHouse and tech-house targets: 120-130 BPM, rolling bass, warm filtered chords, restrained drive, pump, short plates, hook stabs, and macro-friendly cutoff/space control.\n\nMinimal and techno targets: sparse blips, darker stabs, resonant motion, noise layers, tighter envelopes, Guard safety, and controlled width.";
+
+        case 7:
+            return "Undo Edit and Redo Edit sit in the CONTROL strip. They restore full sound-design snapshots across synth parameters, modulation routes, sequencer steps, FX rack edits, sample edits, preset loads, and performance snapshots.\n\nKnobs support normal drag, fine drag with Shift or Cmd, double-click reset, text entry, and disabled scroll-wheel movement to avoid accidental jumps.\n\nThe CONTROL strip also shows the touched parameter, value, automation ID, and modulation summary.";
+
+        case 8:
+            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, per-step modulation lanes, transient sample slicing, time-stretch/warp, formant-safe vocal chops, multiband distortion, compressor/clipper metering, preset audio previews, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
+
+        case 1:
+        default:
+            return "Start on HOME to hear and balance the patch. Use the bottom keyboard for quick auditioning, the output meter for level, and the Low End Assistant for mono/sub guidance.\n\nMove to LAB when you want a fresh idea, SYNTH or SAMPLE when the source needs detail, MOD when it needs motion, SEQ when it needs rhythm, FX when it needs club processing, and LIBRARY when it is worth saving.\n\nUse INFO any time the UI feels dense and you want a quick reminder of what each area is for.";
+    }
+}
+
 void NateVSTAudioProcessorEditor::hidePanelComponents()
 {
     auto hide = [] (std::initializer_list<juce::Component*> components)
@@ -6690,9 +6869,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -6720,10 +6899,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
-        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
+        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 

@@ -2,6 +2,14 @@
 
 ## 2026-06-28
 
+### Sample Slice Pan And Ghost Probability
+
+- Added saved per-slice pan and trigger-probability parameters for all eight SAMPLE pads, with older presets migrating to center pan and 100% trigger chance.
+- Added compact SAMPLE-panel `Pan` and `Ghost` actions: Pan cycles center/left/right slice placement, and Ghost toggles skippy Slice Keys probability for UKG variation.
+- Made pad selection and slice edit actions audition through a slice-specific path, so stored region, pitch, gain, pan, reverse, stutter, and choke behavior are previewed together while manual audition bypasses probability.
+- Slice Keys MIDI playback now applies per-slice pan and probability, and `Dice` can create panned/ghosted chop variations.
+- Regenerated factory presets with explicit slice start/end/pan/probability state.
+
 ### Sample Slice Region Memory
 
 - Added saved start/end region parameters for all eight SAMPLE pads, extending per-slice memory beyond pitch, gain, reverse, stutter, and choke.

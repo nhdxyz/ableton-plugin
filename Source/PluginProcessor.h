@@ -91,6 +91,7 @@ public:
     bool randomizeSampleCut();
     bool randomizeUkgVocalChop();
     bool triggerSampleAudition();
+    bool triggerSampleSliceAudition(int sliceIndex);
     juce::String getLoadedSampleName() const;
     Sampler::SamplePeakOverview createSamplePeakOverview(int pointCount) const;
     Sequencer::Step getSequencerStep(int index) const;

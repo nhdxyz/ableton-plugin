@@ -162,8 +162,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 79. Add beat-grid slicing.
 80. Add equal-region slicing with user-selectable count.
 81. Add fully manual slice marker creation and editing.
-82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke. First stored start/end region plus pitch/gain/reverse/stutter/choke memory and Slice Keys playback pass implemented for eight pads; manual markers, nudge, pan, fades, and probability remain open.
-83. Add per-slice probability.
+82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke. First stored start/end region plus pitch/gain/pan/reverse/stutter/choke memory and Slice Keys playback pass implemented for eight pads; manual markers, nudge, and fades remain open.
+83. Add per-slice probability. First Slice Keys trigger-probability pass implemented with the SAMPLE `Ghost` action; deeper probability lanes and conditions remain open.
 84. Add per-slice stutter and retrigger.
 85. Add slice audition on hover/click.
 86. Add keyboard mapping display for slices.
@@ -328,7 +328,7 @@ Top missing product capabilities:
 
 1. Source rack depth: true wavetable playback, sample/granular source options, focused FM/organ engines, second layer, per-layer mute/solo/blend, and source snippets.
 2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, horizontal slider feedback now shows stripes/badges while preserving base tooltips, and MOD targets update the selected-control route summary on hover.
-3. Serious UKG slicing: transient/beat/manual slice markers, per-slice nudge/pan/fades/probability/playback mode beyond the first stored start/end region pass, slice-to-sequencer lanes, and missing-sample relink.
+3. Serious UKG slicing: transient/beat/manual slice markers, per-slice nudge/fades/playback mode beyond the first stored start/end/pan/probability pass, slice-to-sequencer lanes, and missing-sample relink.
 4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
 5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills.
 6. Preset discovery: audio previews, smart folders, custom tags, similar-preset search, construction-kit preset type, dependency warnings, and pack import/export.
@@ -361,7 +361,7 @@ Reference URLs used for this refresh:
 
 1. Componentize the editor and expand the first CTest layout bounds audit into richer overlap checks.
 2. Expand the first right-click modulation assignment and visual-feedback passes with drag-from-source assignment, hover route overlays, and per-route range editing.
-3. Add transient/manual sample slicing with per-slice nudge/pan/fades/probability beyond the first stored start/end region pass, plus slice-to-sequencer lanes.
+3. Add transient/manual sample slicing with per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass, plus slice-to-sequencer lanes.
 4. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.
 5. Add a true wavetable oscillator with preview, position modulation, simple warp, and safe factory tables.
 6. Add multiband drive with oversampling, gain compensation, and bass-safe routing.

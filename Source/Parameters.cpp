@@ -724,6 +724,18 @@ APVTS::ParameterLayout createLayout()
             -6.0f,
             juce::AudioParameterFloatAttributes().withLabel("dB")));
 
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSlicePan[index],
+            "Sample Slice " + labelIndex + " Pan",
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.01f },
+            0.0f));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceProbability[index],
+            "Sample Slice " + labelIndex + " Probability",
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+            1.0f));
+
         add(std::make_unique<juce::AudioParameterBool>(
             ID::sampleSliceStutter[index],
             "Sample Slice " + labelIndex + " Stutter",

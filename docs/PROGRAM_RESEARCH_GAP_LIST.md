@@ -49,7 +49,7 @@ Nate VST already has a useful skeleton:
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Performance macros, XY macro pad, randomization, A/B snapshots, and low-end guidance.
 - LFO curve editor, pump curve editor, modulation matrix, macro assignment editing, route bypass/delete, destination badges, and S&H/Smooth/Chaos movement.
-- Sample waveform area, chop window, phrase markers, slice pads, Slice Keys, per-slice region/pitch/gain/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
+- Sample waveform area, chop window, phrase markers, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
 - Piano-roll style 16-step sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
@@ -232,7 +232,7 @@ Reference pattern:
 
 Nate VST gaps:
 
-- Sample slicing has first Slice Keys and per-slice region/pitch/gain/reverse/stutter/choke memory; it still needs transient/manual markers, per-slice nudge/pan/fades/probability/playback modes, and slice lanes.
+- Sample slicing has first Slice Keys and per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory; it still needs transient/manual markers, per-slice nudge/fades/playback modes, and slice lanes.
 - Organ/drawbar-style source is missing.
 - Dred/Reese recipe tools are missing as first-class actions.
 - Groove templates need more microtiming and lane-specific swing.
@@ -343,8 +343,8 @@ Nate VST gaps:
 87. Add equal-region slicing.
 88. Add manual slice marker creation.
 89. Add per-slice start/end/nudge. First stored start/end region memory implemented; manual marker nudge remains open.
-90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pitch/reverse/stutter/choke memory pass implemented; pan/fades remain open.
-91. Add per-slice probability.
+90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pan/pitch/reverse/stutter/choke memory pass implemented; fades remain open.
+91. Add per-slice probability. First trigger-probability pass implemented with the SAMPLE `Ghost` action.
 92. Add per-slice stutter and retrigger.
 93. Add slice audition on click/hover.
 94. Add keyboard mapping display.

@@ -79,7 +79,7 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Subtractive synth core with oscillator mix, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
 - Genre-oriented randomization, A/B snapshots, macros, XY pad, and low-end guidance.
 - Modulation matrix, LFO/curve tools, macro assignment editor, destination badges, S&H/Smooth/Chaos/LFO 2 movement sources, and a first right-click assignment pass for MOD-targetable controls.
-- Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/reverse/stutter/choke memory, and UKG chop helpers.
+- Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, and UKG chop helpers.
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
@@ -109,7 +109,7 @@ The gap is now professional depth, sound quality, focus, and genre workflow.
 17. Direct MIDI drag export/import with Ableton-friendly behavior.
 18. Drag-and-drop WAV/AIFF import onto SAMPLE.
 19. Transient, beat-grid, equal-region, and manual slicing.
-20. Per-slice nudge/pan/fade/probability/playback mode, plus manual marker editing beyond the first stored region memory.
+20. Per-slice nudge/fade/playback mode, plus manual marker editing beyond the first stored region/pan/probability memory.
 21. Time-stretch/warp and formant-safe pitch investigation for vocal chops.
 22. Multiband distortion with gain compensation and oversampling.
 23. Drawable volume/filter/time/noise shaper modules.
@@ -391,11 +391,11 @@ These should stay near the top because every future feature becomes harder if th
 13. Add per-slice nudge.
 14. Add per-slice pitch.
 15. Add per-slice gain.
-16. Add per-slice pan.
+16. Add per-slice pan. First stored Slice Keys pan pass implemented.
 17. Add per-slice reverse.
 18. Add per-slice fade in/out.
 19. Add per-slice choke group.
-20. Add per-slice probability.
+20. Add per-slice probability. First stored Slice Keys trigger-probability pass implemented.
 21. Add per-slice stutter/retrigger.
 22. Add per-slice FX send.
 23. Add per-slice one-shot mode.
@@ -652,7 +652,7 @@ These should stay near the top because every future feature becomes harder if th
 3. Add selected-control inspector with route, value, automation name, reset, and modulation summary.
 4. Add drag-to-modulate plus modulation rings and hover route overlays.
 5. Add per-route range, curve, slew, invert, and polarity editing.
-6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice nudge/pan/fades/probability beyond the first stored start/end region pass.
+6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
 7. Add sequencer pattern scenes, ratchets, slide/accent, and per-step modulation lanes.
 8. Add full-browser mode with smart folders, tags, audio previews, construction kits, and dependency warnings.
 9. Add true wavetable oscillator with preview, position modulation, safe factory tables, and simple warp.
@@ -679,7 +679,7 @@ The strongest house/UKG sound slice after that is:
 
 1. Drag/drop sample import.
 2. Transient/manual slicing.
-3. Per-slice nudge/pan/fade/probability/playback mode plus transient/manual markers beyond the first stored start/end region pass.
+3. Per-slice nudge/fade/playback mode plus transient/manual markers beyond the first stored start/end/pan/probability pass.
 4. Slice-to-sequencer lane.
 5. UKG chop templates.
 

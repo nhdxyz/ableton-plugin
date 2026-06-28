@@ -24,6 +24,8 @@ struct SampleRegion
     bool reverse = false;
     float gain = 1.0f;
     float transposeSemitones = 0.0f;
+    float pan = 0.0f;
+    float probability = 1.0f;
 };
 
 struct SamplePeakOverview
@@ -55,6 +57,7 @@ public:
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
     bool triggerAudition(int midiNoteNumber, float velocity, double bpm);
+    bool triggerSliceAudition(int sliceIndex, int midiNoteNumber, float velocity, double bpm);
     void render(juce::AudioBuffer<float>& outputBuffer,
                 const juce::MidiBuffer& midi,
                 double bpm,
@@ -82,6 +85,7 @@ private:
         double stutterIntervalSamples = 1.0;
         double samplesUntilStutter = 0.0;
         float gain = 1.0f;
+        float pan = 0.0f;
         int sliceIndex = -1;
     };
 
@@ -114,6 +118,8 @@ private:
         bool reverse = false;
         float gainDb = -6.0f;
         float transposeSemitones = 0.0f;
+        float pan = 0.0f;
+        float probability = 1.0f;
         bool stutter = false;
         bool choke = false;
         int stutterRepeats = 3;
@@ -121,6 +127,7 @@ private:
 
     SampleModulationOffsets sampleModulation;
     juce::Random sampleModulationRandom;
+    juce::Random sliceTriggerRandom;
 
     std::atomic<float>* sampleEnabled = nullptr;
     std::atomic<float>* sampleStart = nullptr;
@@ -141,6 +148,8 @@ private:
     std::array<std::atomic<float>*, 8> sampleSliceReverse {};
     std::array<std::atomic<float>*, 8> sampleSliceTranspose {};
     std::array<std::atomic<float>*, 8> sampleSliceGain {};
+    std::array<std::atomic<float>*, 8> sampleSlicePan {};
+    std::array<std::atomic<float>*, 8> sampleSliceProbability {};
     std::array<std::atomic<float>*, 8> sampleSliceStutter {};
     std::array<std::atomic<float>*, 8> sampleSliceChoke {};
     std::array<std::atomic<float>*, 8> sampleSliceStutterRepeats {};
@@ -176,7 +185,7 @@ private:
     float evaluateSampleLfoCurve(float phase) const;
     float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const;
     int sliceIndexForMidiNote(int midiNoteNumber) const;
-    void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot);
+    void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot, int forcedSliceIndex = -1, bool ignoreSliceProbability = false);
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);

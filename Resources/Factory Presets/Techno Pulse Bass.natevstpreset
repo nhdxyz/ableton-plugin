@@ -212,58 +212,90 @@
   <PARAM id="mod_slot_8_destination" value="0" />
   <PARAM id="mod_slot_8_amount" value="0" />
   <PARAM id="sample_slice_1_custom" value="0" />
+  <PARAM id="sample_slice_1_start" value="0" />
+  <PARAM id="sample_slice_1_end" value="0.125" />
   <PARAM id="sample_slice_1_reverse" value="0" />
   <PARAM id="sample_slice_1_transpose" value="0" />
   <PARAM id="sample_slice_1_gain" value="-6" />
+  <PARAM id="sample_slice_1_pan" value="0" />
+  <PARAM id="sample_slice_1_probability" value="1" />
   <PARAM id="sample_slice_1_stutter" value="0" />
   <PARAM id="sample_slice_1_choke" value="0" />
   <PARAM id="sample_slice_1_stutter_repeats" value="3" />
   <PARAM id="sample_slice_2_custom" value="0" />
+  <PARAM id="sample_slice_2_start" value="0.125" />
+  <PARAM id="sample_slice_2_end" value="0.25" />
   <PARAM id="sample_slice_2_reverse" value="0" />
   <PARAM id="sample_slice_2_transpose" value="0" />
   <PARAM id="sample_slice_2_gain" value="-6" />
+  <PARAM id="sample_slice_2_pan" value="0" />
+  <PARAM id="sample_slice_2_probability" value="1" />
   <PARAM id="sample_slice_2_stutter" value="0" />
   <PARAM id="sample_slice_2_choke" value="0" />
   <PARAM id="sample_slice_2_stutter_repeats" value="3" />
   <PARAM id="sample_slice_3_custom" value="0" />
+  <PARAM id="sample_slice_3_start" value="0.25" />
+  <PARAM id="sample_slice_3_end" value="0.375" />
   <PARAM id="sample_slice_3_reverse" value="0" />
   <PARAM id="sample_slice_3_transpose" value="0" />
   <PARAM id="sample_slice_3_gain" value="-6" />
+  <PARAM id="sample_slice_3_pan" value="0" />
+  <PARAM id="sample_slice_3_probability" value="1" />
   <PARAM id="sample_slice_3_stutter" value="0" />
   <PARAM id="sample_slice_3_choke" value="0" />
   <PARAM id="sample_slice_3_stutter_repeats" value="3" />
   <PARAM id="sample_slice_4_custom" value="0" />
+  <PARAM id="sample_slice_4_start" value="0.375" />
+  <PARAM id="sample_slice_4_end" value="0.5" />
   <PARAM id="sample_slice_4_reverse" value="0" />
   <PARAM id="sample_slice_4_transpose" value="0" />
   <PARAM id="sample_slice_4_gain" value="-6" />
+  <PARAM id="sample_slice_4_pan" value="0" />
+  <PARAM id="sample_slice_4_probability" value="1" />
   <PARAM id="sample_slice_4_stutter" value="0" />
   <PARAM id="sample_slice_4_choke" value="0" />
   <PARAM id="sample_slice_4_stutter_repeats" value="3" />
   <PARAM id="sample_slice_5_custom" value="0" />
+  <PARAM id="sample_slice_5_start" value="0.5" />
+  <PARAM id="sample_slice_5_end" value="0.625" />
   <PARAM id="sample_slice_5_reverse" value="0" />
   <PARAM id="sample_slice_5_transpose" value="0" />
   <PARAM id="sample_slice_5_gain" value="-6" />
+  <PARAM id="sample_slice_5_pan" value="0" />
+  <PARAM id="sample_slice_5_probability" value="1" />
   <PARAM id="sample_slice_5_stutter" value="0" />
   <PARAM id="sample_slice_5_choke" value="0" />
   <PARAM id="sample_slice_5_stutter_repeats" value="3" />
   <PARAM id="sample_slice_6_custom" value="0" />
+  <PARAM id="sample_slice_6_start" value="0.625" />
+  <PARAM id="sample_slice_6_end" value="0.75" />
   <PARAM id="sample_slice_6_reverse" value="0" />
   <PARAM id="sample_slice_6_transpose" value="0" />
   <PARAM id="sample_slice_6_gain" value="-6" />
+  <PARAM id="sample_slice_6_pan" value="0" />
+  <PARAM id="sample_slice_6_probability" value="1" />
   <PARAM id="sample_slice_6_stutter" value="0" />
   <PARAM id="sample_slice_6_choke" value="0" />
   <PARAM id="sample_slice_6_stutter_repeats" value="3" />
   <PARAM id="sample_slice_7_custom" value="0" />
+  <PARAM id="sample_slice_7_start" value="0.75" />
+  <PARAM id="sample_slice_7_end" value="0.875" />
   <PARAM id="sample_slice_7_reverse" value="0" />
   <PARAM id="sample_slice_7_transpose" value="0" />
   <PARAM id="sample_slice_7_gain" value="-6" />
+  <PARAM id="sample_slice_7_pan" value="0" />
+  <PARAM id="sample_slice_7_probability" value="1" />
   <PARAM id="sample_slice_7_stutter" value="0" />
   <PARAM id="sample_slice_7_choke" value="0" />
   <PARAM id="sample_slice_7_stutter_repeats" value="3" />
   <PARAM id="sample_slice_8_custom" value="0" />
+  <PARAM id="sample_slice_8_start" value="0.875" />
+  <PARAM id="sample_slice_8_end" value="1" />
   <PARAM id="sample_slice_8_reverse" value="0" />
   <PARAM id="sample_slice_8_transpose" value="0" />
   <PARAM id="sample_slice_8_gain" value="-6" />
+  <PARAM id="sample_slice_8_pan" value="0" />
+  <PARAM id="sample_slice_8_probability" value="1" />
   <PARAM id="sample_slice_8_stutter" value="0" />
   <PARAM id="sample_slice_8_choke" value="0" />
   <PARAM id="sample_slice_8_stutter_repeats" value="3" />

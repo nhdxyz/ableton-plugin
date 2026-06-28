@@ -33,7 +33,7 @@ Nate VST already has a strong starter direction:
 - Subtractive synth core with oscillator 1, oscillator 2, sub, noise, unison, filter character/slope, drive, output guard, and bandlimited oscillator work.
 - Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, preset recall, and auditioning.
 - MOD panel with LFO, envelope, eight macros, matrix routes, macro assignment editor, curve presets, bypass/delete, and destination badges.
-- SAMPLE panel with waveform view, start/end handles, phrase markers, slice pads, stored slice regions, reverse, pitch, gain, mix, and UKG chop helpers.
+- SAMPLE panel with waveform view, start/end handles, phrase markers, slice pads, stored slice regions, pan, trigger probability, reverse, pitch, gain, mix, and UKG chop helpers.
 - SEQ panel with piano-roll editing, chord memory, scale/groove templates, velocity/probability/timing lanes, host sync, and MIDI export.
 - FX rack with add/select flow, reordering, delay, reverb, distortion, pump, tremolo, ring mod, comb, chorus, phaser, flanger, bitcrush, EQ/tone, width, guard, and throw controls.
 - LIBRARY panel with folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, recursive preset scanning, and macro previews.
@@ -149,12 +149,12 @@ Implemented P0 sub-slice:
 80. Add beat-grid slicing.
 81. Add equal-region slicing.
 82. Add fully manual slice markers.
-83. Add per-slice start, end, nudge, pitch, gain, pan, reverse, fade, and choke. First stored start/end region plus pitch/gain/reverse/stutter/choke memory pass implemented; manual marker nudge, pan, and fades remain open.
+83. Add per-slice start, end, nudge, pitch, gain, pan, reverse, fade, and choke. First stored start/end region plus pitch/gain/pan/reverse/stutter/choke memory pass implemented; manual marker nudge and fades remain open.
 84. Add slice audition on hover/click.
 85. Add slice keyboard mapping display.
 86. Add slice to sequencer lane.
 87. Add slice randomization with density and repetition guardrails.
-88. Add per-slice probability.
+88. Add per-slice probability. First Slice Keys trigger-probability pass implemented with the SAMPLE `Ghost` action.
 89. Add per-slice stutter/retrigger.
 90. Add one-shot, gate, loop, and thru playback modes.
 91. Add zero-crossing snap for chop boundaries.

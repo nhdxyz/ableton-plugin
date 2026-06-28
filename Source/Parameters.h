@@ -203,6 +203,26 @@ inline constexpr std::array<const char*, 8> sampleSliceGain {
     "sample_slice_7_gain",
     "sample_slice_8_gain"
 };
+inline constexpr std::array<const char*, 8> sampleSlicePan {
+    "sample_slice_1_pan",
+    "sample_slice_2_pan",
+    "sample_slice_3_pan",
+    "sample_slice_4_pan",
+    "sample_slice_5_pan",
+    "sample_slice_6_pan",
+    "sample_slice_7_pan",
+    "sample_slice_8_pan"
+};
+inline constexpr std::array<const char*, 8> sampleSliceProbability {
+    "sample_slice_1_probability",
+    "sample_slice_2_probability",
+    "sample_slice_3_probability",
+    "sample_slice_4_probability",
+    "sample_slice_5_probability",
+    "sample_slice_6_probability",
+    "sample_slice_7_probability",
+    "sample_slice_8_probability"
+};
 inline constexpr std::array<const char*, 8> sampleSliceStutter {
     "sample_slice_1_stutter",
     "sample_slice_2_stutter",

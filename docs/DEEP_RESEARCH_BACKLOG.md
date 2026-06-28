@@ -38,7 +38,7 @@ Primary FX, groove, and club-workflow references:
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
-- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys and first per-slice region/pitch/gain/reverse/stutter/choke memory.
+- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
 - Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, and recursive preset scanning.
 - Factory preset generator for genre-targeted packs.
 
@@ -145,8 +145,8 @@ Implemented movement sub-slices:
 
 Implemented sampler sub-slice:
 
-- Slice Keys mode maps the eight SAMPLE pads across C3-G3, reads per-slice region/pitch/gain/reverse/stutter/choke memory at trigger time, and falls back to equal regions plus the selected slice style for untouched pads.
-- The SAMPLE UI now exposes Store, Recall, Dice, Rev, and Choke actions with status/tooltips that show default or custom slice regions and behavior.
+- Slice Keys mode maps the eight SAMPLE pads across C3-G3, reads per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory at trigger time, and falls back to equal regions plus the selected slice style for untouched pads.
+- The SAMPLE UI now exposes Store, Recall, Dice, Rev, Choke, Pan, and Ghost actions with status/tooltips that show default or custom slice regions and behavior.
 - Factory presets now serialize the sample-slice state explicitly, and the UKG vocal chop starter opens in Slice Keys mode once a user loads a sample.
 
 ## Priority 4: Sequencer, Piano Roll, And Groove
@@ -257,7 +257,7 @@ Implemented library sub-slice:
 3. Grow the compact LIBRARY browser into a full browser with smart folders, tag editing, audio previews, and construction kits.
 4. Add drag/menu modulation assignment plus selected-parameter route views.
 5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
-6. Add transient/manual sample slice markers plus per-slice nudge/pan/fades/probability/playback modes beyond the first stored start/end region pass.
+6. Add transient/manual sample slice markers plus per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
 7. Add user tags, smart folders, and preset preview rendering in LIBRARY.
 8. Add wavetable oscillator playback after UI layout risk is reduced.
 9. Add multiband drive with oversampling, gain compensation, and loudness checks.

@@ -459,6 +459,8 @@ private:
     juce::TextButton sampleSliceDiceButton { "Dice" };
     juce::TextButton sampleSliceReverseEditButton { "Rev" };
     juce::TextButton sampleSliceChokeButton { "Choke" };
+    juce::TextButton sampleSlicePanButton { "Pan" };
+    juce::TextButton sampleSliceGhostButton { "Ghost" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
     juce::TextButton undoSequencerButton { "Undo" };
@@ -643,6 +645,8 @@ private:
     void randomizeSelectedSampleSliceSettings();
     void toggleSelectedSampleSliceReverse();
     void toggleSelectedSampleSliceChoke();
+    void cycleSelectedSampleSlicePan();
+    void toggleSelectedSampleSliceGhost();
     bool sampleSliceHasCustomSettings(size_t sliceIndex) const;
     void updateSampleWaveformDisplay();
     void timerCallback() override;

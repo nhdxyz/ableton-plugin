@@ -67,7 +67,25 @@ struct SampleSlicePreviewSettings
     bool stutter = false;
     bool choke = false;
     int repeats = 3;
+    float pan = 0.0f;
+    float probability = 1.0f;
 };
+
+juce::String slicePanText(float pan)
+{
+    pan = juce::jlimit(-1.0f, 1.0f, pan);
+    if (pan < -0.05f)
+        return "L" + juce::String(juce::roundToInt(std::abs(pan) * 100.0f));
+    if (pan > 0.05f)
+        return "R" + juce::String(juce::roundToInt(pan * 100.0f));
+
+    return "C";
+}
+
+juce::String sliceChanceText(float probability)
+{
+    return juce::String(juce::roundToInt(juce::jlimit(0.0f, 1.0f, probability) * 100.0f)) + "%";
+}
 
 SampleSlicePreviewSettings defaultSlicePreviewSettings(size_t sliceIndex, int styleIndex)
 {
@@ -1447,9 +1465,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         button.onClick = [this, index] { selectSampleSlice(index); };
         addAndMakeVisible(button);
     }
-    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, reverse, choke, and stutter settings into this slice");
+    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, pan, chance, reverse, choke, and stutter settings into this slice");
     sampleSliceStoreButton.onClick = [this] { storeSelectedSampleSliceSettings(); };
-    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, reverse, choke, and stutter settings");
+    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, pan, chance, reverse, choke, and stutter settings");
     sampleSliceRecallButton.onClick = [this] { recallSelectedSampleSliceSettings(); };
     sampleSliceDiceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
     sampleSliceDiceButton.onClick = [this] { randomizeSelectedSampleSliceSettings(); };
@@ -1457,6 +1475,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleSliceReverseEditButton.onClick = [this] { toggleSelectedSampleSliceReverse(); };
     sampleSliceChokeButton.setTooltip("Toggle slice-key choke for this slice, so choked slices cut each other off in Slice Keys mode");
     sampleSliceChokeButton.onClick = [this] { toggleSelectedSampleSliceChoke(); };
+    sampleSlicePanButton.setTooltip("Cycle this slice between center, left, and right pan for Slice Keys playback");
+    sampleSlicePanButton.onClick = [this] { cycleSelectedSampleSlicePan(); };
+    sampleSliceGhostButton.setTooltip("Toggle ghost probability for this slice so Slice Keys can skip it sometimes");
+    sampleSliceGhostButton.onClick = [this] { toggleSelectedSampleSliceGhost(); };
     randomSequencerButton.onClick = [this]
     {
         if (audioProcessor.randomizeSequencerPattern())
@@ -1730,6 +1752,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleSliceDiceButton);
     addAndMakeVisible(sampleSliceReverseEditButton);
     addAndMakeVisible(sampleSliceChokeButton);
+    addAndMakeVisible(sampleSlicePanButton);
+    addAndMakeVisible(sampleSliceGhostButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(mutateSequencerButton);
     addAndMakeVisible(undoSequencerButton);
@@ -2534,6 +2558,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceDiceButton.setVisible(true);
             sampleSliceReverseEditButton.setVisible(true);
             sampleSliceChokeButton.setVisible(true);
+            sampleSlicePanButton.setVisible(true);
+            sampleSliceGhostButton.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             sampleSourceLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
@@ -2563,6 +2589,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceDiceButton.setBounds(sliceEditRow.removeFromLeft(64).reduced(4));
             sampleSliceReverseEditButton.setBounds(sliceEditRow.removeFromLeft(58).reduced(4));
             sampleSliceChokeButton.setBounds(sliceEditRow.removeFromLeft(70).reduced(4));
+            sampleSlicePanButton.setBounds(sliceEditRow.removeFromLeft(58).reduced(4));
+            sampleSliceGhostButton.setBounds(sliceEditRow.removeFromLeft(72).reduced(4));
             auto cutRow = content.removeFromTop(42).withTrimmedTop(4);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -3519,7 +3547,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
         captureCurrentSampleSliceSettings(safeIndex, false);
     }
 
-    const auto didAudition = audioProcessor.triggerSampleAudition();
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
                     + (sampleSliceHasCustomSettings(safeIndex) ? " custom" : " " + sampleSliceStyleBox.getText())
                     + (didAudition ? " auditioned" : " selected"));
@@ -3603,6 +3631,8 @@ void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t slice
     setPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], readPlainParameterValue(Parameters::ID::sampleReverse, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], readPlainParameterValue(Parameters::ID::sampleTranspose, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], readPlainParameterValue(Parameters::ID::sampleGain, -6.0f));
+    setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], readPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f));
+    setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], readPlainParameterValue(Parameters::ID::sampleStutterEnabled, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], readPlainParameterValue(Parameters::ID::sampleStutterRepeats, 3.0f));
 }
@@ -3636,7 +3666,7 @@ void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
     recallSampleSliceSettings(safeIndex);
 
-    const auto didAudition = audioProcessor.triggerSampleAudition();
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Recalled slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -3654,6 +3684,8 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     const auto stutter = random.nextFloat() < 0.38f;
     const auto choke = stutter || random.nextFloat() < 0.62f;
     const auto repeats = static_cast<float>(2 + random.nextInt(5));
+    const auto pan = random.nextFloat() < 0.68f ? (random.nextFloat() * 0.9f) - 0.45f : 0.0f;
+    const auto probability = random.nextFloat() < 0.34f ? 0.62f + (random.nextFloat() * 0.28f) : 1.0f;
 
     setPlainParameterValue(Parameters::ID::sampleTranspose, pitch);
     setPlainParameterValue(Parameters::ID::sampleGain, gain);
@@ -3661,9 +3693,11 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     setPlainParameterValue(Parameters::ID::sampleStutterEnabled, stutter ? 1.0f : 0.0f);
     setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], choke ? 1.0f : 0.0f);
     setPlainParameterValue(Parameters::ID::sampleStutterRepeats, repeats);
+    setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], pan);
+    setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], probability);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
-    const auto didAudition = audioProcessor.triggerSampleAudition();
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Diced slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -3679,7 +3713,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
     setPlainParameterValue(Parameters::ID::sampleReverse, nextReverse ? 1.0f : 0.0f);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
-    const auto didAudition = audioProcessor.triggerSampleAudition();
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus((nextReverse ? "Reversed" : "Forward") + juce::String(" slice ") + juce::String(static_cast<int>(safeIndex + 1))
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
@@ -3694,9 +3728,49 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
         : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).choke;
     const auto nextChoke = ! currentChoke;
     setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], nextChoke ? 1.0f : 0.0f);
-    setPlainParameterValue(Parameters::ID::sampleSliceCustom[safeIndex], 1.0f);
+    captureCurrentSampleSliceSettings(safeIndex, true);
 
-    setRandomStatus((nextChoke ? "Choked" : "Open") + juce::String(" slice ") + juce::String(static_cast<int>(safeIndex + 1)));
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus((nextChoke ? "Choked" : "Open") + juce::String(" slice ") + juce::String(static_cast<int>(safeIndex + 1))
+                    + (didAudition ? " auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+}
+
+void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
+{
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto currentPan = sampleSliceHasCustomSettings(safeIndex)
+        ? readPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f)
+        : 0.0f;
+    const auto nextPan = currentPan < -0.2f ? 0.35f : currentPan > 0.2f ? 0.0f : -0.35f;
+
+    setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], nextPan);
+    captureCurrentSampleSliceSettings(safeIndex, true);
+
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus("Panned slice " + juce::String(static_cast<int>(safeIndex + 1))
+                    + " " + slicePanText(nextPan)
+                    + (didAudition ? " auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+}
+
+void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
+{
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto currentProbability = sampleSliceHasCustomSettings(safeIndex)
+        ? readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f)
+        : 1.0f;
+    const auto nextProbability = currentProbability < 0.995f ? 1.0f : 0.72f;
+
+    setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], nextProbability);
+    captureCurrentSampleSliceSettings(safeIndex, true);
+
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
+                    + " chance " + sliceChanceText(nextProbability)
+                    + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
 }
@@ -3724,16 +3798,18 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
                                                : defaultEnd);
     const auto regionLower = juce::jmin(regionStart, regionEnd);
     const auto regionUpper = juce::jmax(regionStart, regionEnd);
-    const auto preview = custom
-        ? SampleSlicePreviewSettings {
-            readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f),
-            readPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], -6.0f),
-            readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f,
-            readPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], 0.0f) >= 0.5f,
-            readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f,
-            juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f))
-        }
-        : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex());
+    auto preview = defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex());
+    if (custom)
+    {
+        preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f);
+        preview.gain = readPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], -6.0f);
+        preview.reverse = readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f;
+        preview.stutter = readPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], 0.0f) >= 0.5f;
+        preview.choke = readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f;
+        preview.repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f));
+        preview.pan = readPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f);
+        preview.probability = readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f);
+    }
     const auto sliceKeysMode = readPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f) >= 1.5f;
     const auto pitchText = (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1) + "st";
     const auto status = "S" + juce::String(static_cast<int>(safeIndex + 1))
@@ -3742,6 +3818,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
         + juce::String(juce::roundToInt(regionUpper * 100.0f)) + "%"
         + " | " + pitchText
         + " | " + juce::String(preview.gain, 1) + "dB"
+        + " | " + slicePanText(preview.pan)
+        + " " + sliceChanceText(preview.probability)
         + (preview.reverse ? " | rev" : " | fwd")
         + (preview.choke ? " | choke" : " | open")
         + (preview.stutter ? " | stut x" + juce::String(preview.repeats) : " | no stut")
@@ -3751,6 +3829,9 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
     sampleSliceStatusLabel.setTooltip("Selected slice memory: " + status);
     sampleSliceReverseEditButton.setToggleState(preview.reverse, juce::dontSendNotification);
     sampleSliceChokeButton.setToggleState(preview.choke, juce::dontSendNotification);
+    sampleSlicePanButton.setButtonText("Pan");
+    sampleSliceGhostButton.setButtonText("Ghost");
+    sampleSliceGhostButton.setToggleState(preview.probability < 0.995f, juce::dontSendNotification);
     sampleSliceRecallButton.setEnabled(custom);
 }
 
@@ -3787,16 +3868,18 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
         const auto orderedSliceEnd = juce::jmax(sliceStart, sliceEnd);
         const auto isSelected = std::abs(orderedStart - orderedSliceStart) < 0.005f
             && std::abs(orderedEnd - orderedSliceEnd) < 0.005f;
-        const auto preview = custom
-            ? SampleSlicePreviewSettings {
-                readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f),
-                readPlainParameterValue(Parameters::ID::sampleSliceGain[index], -6.0f),
-                readPlainParameterValue(Parameters::ID::sampleSliceReverse[index], 0.0f) >= 0.5f,
-                readPlainParameterValue(Parameters::ID::sampleSliceStutter[index], 0.0f) >= 0.5f,
-                readPlainParameterValue(Parameters::ID::sampleSliceChoke[index], 0.0f) >= 0.5f,
-                juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f))
-            }
-            : defaultSlicePreviewSettings(index, sampleSliceStyleBox.getSelectedItemIndex());
+        auto preview = defaultSlicePreviewSettings(index, sampleSliceStyleBox.getSelectedItemIndex());
+        if (custom)
+        {
+            preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
+            preview.gain = readPlainParameterValue(Parameters::ID::sampleSliceGain[index], -6.0f);
+            preview.reverse = readPlainParameterValue(Parameters::ID::sampleSliceReverse[index], 0.0f) >= 0.5f;
+            preview.stutter = readPlainParameterValue(Parameters::ID::sampleSliceStutter[index], 0.0f) >= 0.5f;
+            preview.choke = readPlainParameterValue(Parameters::ID::sampleSliceChoke[index], 0.0f) >= 0.5f;
+            preview.repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f));
+            preview.pan = readPlainParameterValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+            preview.probability = readPlainParameterValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+        }
         sampleSliceButtons[index].setToggleState(isSelected, juce::dontSendNotification);
         sampleSliceButtons[index].setButtonText(juce::String(static_cast<int>(index + 1)) + (custom ? "*" : ""));
         sampleSliceButtons[index].setTooltip("Slice " + juce::String(static_cast<int>(index + 1))
@@ -3805,7 +3888,9 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
                                              + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
                                              + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
                                              + " st | Gain " + juce::String(preview.gain, 1)
-                                             + " dB | " + (preview.reverse ? "Reverse" : "Forward")
+                                             + " dB | Pan " + slicePanText(preview.pan)
+                                             + " | Chance " + sliceChanceText(preview.probability)
+                                             + " | " + (preview.reverse ? "Reverse" : "Forward")
                                              + " | " + (preview.choke ? "Choke" : "Open")
                                              + " | " + (preview.stutter ? "Stutter" : "No stutter"));
     }
@@ -5148,7 +5233,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
-        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton,
+        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &applyGrooveTransformButton,

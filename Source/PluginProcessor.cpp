@@ -492,6 +492,8 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
         setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
+        setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
@@ -622,6 +624,15 @@ bool NateVSTAudioProcessor::triggerSampleAudition()
         return false;
 
     return samplePlayer.triggerAudition(60, 1.0f, getHostBpm());
+}
+
+bool NateVSTAudioProcessor::triggerSampleSliceAudition(int sliceIndex)
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    const auto safeSliceIndex = juce::jlimit(0, 7, sliceIndex);
+    return samplePlayer.triggerSliceAudition(safeSliceIndex, 60 + safeSliceIndex, 1.0f, getHostBpm());
 }
 
 juce::String NateVSTAudioProcessor::getLoadedSampleName() const
@@ -2242,6 +2253,8 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
     const auto hasSampleSliceRegions = state.getChildWithProperty("id", Parameters::ID::sampleSliceStart[0]).isValid()
         && state.getChildWithProperty("id", Parameters::ID::sampleSliceEnd[0]).isValid();
+    const auto hasSampleSlicePanProbability = state.getChildWithProperty("id", Parameters::ID::sampleSlicePan[0]).isValid()
+        && state.getChildWithProperty("id", Parameters::ID::sampleSliceProbability[0]).isValid();
 
     restoreParameterGroupFromState(state, {
         Parameters::ID::sampleEnabled,
@@ -2281,6 +2294,18 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
         restoreParameterFromState(state, parameterID);
     for (const auto* parameterID : Parameters::ID::sampleSliceGain)
         restoreParameterFromState(state, parameterID);
+    for (const auto* parameterID : Parameters::ID::sampleSlicePan)
+        restoreParameterFromState(state, parameterID);
+    for (const auto* parameterID : Parameters::ID::sampleSliceProbability)
+        restoreParameterFromState(state, parameterID);
+    if (! hasSampleSlicePanProbability)
+    {
+        for (size_t index = 0; index < Parameters::ID::sampleSlicePan.size(); ++index)
+        {
+            setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+        }
+    }
     for (const auto* parameterID : Parameters::ID::sampleSliceStutter)
         restoreParameterFromState(state, parameterID);
     for (const auto* parameterID : Parameters::ID::sampleSliceChoke)
@@ -2493,6 +2518,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSampleSliceEdits = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceCustom[0]).isValid();
     const auto hasSampleSliceRegions = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStart[0]).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceEnd[0]).isValid();
+    const auto hasSampleSlicePanProbability = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSlicePan[0]).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceProbability[0]).isValid();
     const auto hasSampleSliceChoke = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceChoke[0]).isValid();
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
@@ -2526,6 +2553,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
             setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
+            setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
@@ -2544,6 +2573,14 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     if (! hasSampleSliceChoke)
         for (const auto* parameterID : Parameters::ID::sampleSliceChoke)
             setParameterPlainValue(parameterID, 0.0f);
+    if (! hasSampleSlicePanProbability)
+    {
+        for (size_t index = 0; index < Parameters::ID::sampleSlicePan.size(); ++index)
+        {
+            setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+        }
+    }
 
     if (! hasFilterCharacter)
         setParameterPlainValue(Parameters::ID::filterCharacter, 0.0f);

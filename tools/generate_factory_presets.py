@@ -205,9 +205,13 @@ for slot_index in range(1, 9):
 
 for slice_index in range(1, 9):
     DEFAULTS[f"sample_slice_{slice_index}_custom"] = 0
+    DEFAULTS[f"sample_slice_{slice_index}_start"] = (slice_index - 1) / 8.0
+    DEFAULTS[f"sample_slice_{slice_index}_end"] = slice_index / 8.0
     DEFAULTS[f"sample_slice_{slice_index}_reverse"] = 0
     DEFAULTS[f"sample_slice_{slice_index}_transpose"] = 0.0
     DEFAULTS[f"sample_slice_{slice_index}_gain"] = -6.0
+    DEFAULTS[f"sample_slice_{slice_index}_pan"] = 0.0
+    DEFAULTS[f"sample_slice_{slice_index}_probability"] = 1.0
     DEFAULTS[f"sample_slice_{slice_index}_stutter"] = 0
     DEFAULTS[f"sample_slice_{slice_index}_choke"] = 0
     DEFAULTS[f"sample_slice_{slice_index}_stutter_repeats"] = 3

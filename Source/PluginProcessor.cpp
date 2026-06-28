@@ -2,6 +2,7 @@
 #include "PluginEditor.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace
@@ -44,6 +45,75 @@ juce::String presetTextOrFallback(const juce::String& text, const juce::String& 
 int normalisePresetBpm(int bpm)
 {
     return bpm >= 20 && bpm <= 300 ? bpm : 0;
+}
+
+float readPresetParameterValue(const juce::ValueTree& state, const char* parameterID, float fallback)
+{
+    if (const auto child = state.getChildWithProperty("id", parameterID); child.isValid())
+        return static_cast<float>(child.getProperty("value", fallback));
+
+    return fallback;
+}
+
+juce::String presetMacroSummary(const juce::ValueTree& state, float& intensity)
+{
+    static constexpr std::array<const char*, 8> labels {
+        "Tone",
+        "Dirt",
+        "Motion",
+        "Space",
+        "Weight",
+        "Bounce",
+        "Warp",
+        "Throw"
+    };
+
+    static constexpr std::array<const char*, 8> ids {
+        Parameters::ID::macroTone,
+        Parameters::ID::macroDirt,
+        Parameters::ID::macroMotion,
+        Parameters::ID::macroSpace,
+        Parameters::ID::macroWeight,
+        Parameters::ID::macroBounce,
+        Parameters::ID::macroWarp,
+        Parameters::ID::macroThrow
+    };
+
+    struct MacroPreview
+    {
+        juce::String label;
+        float value = 0.0f;
+    };
+
+    std::array<MacroPreview, 8> previews {};
+    intensity = 0.0f;
+
+    for (size_t index = 0; index < ids.size(); ++index)
+    {
+        const auto value = juce::jlimit(0.0f, 1.0f, readPresetParameterValue(state, ids[index], 0.0f));
+        previews[index] = { labels[index], value };
+        intensity = juce::jmax(intensity, value);
+    }
+
+    std::stable_sort(previews.begin(),
+                     previews.end(),
+                     [] (const auto& left, const auto& right)
+                     {
+                         return left.value > right.value;
+                     });
+
+    juce::StringArray summary;
+    for (const auto& preview : previews)
+    {
+        if (preview.value < 0.05f)
+            continue;
+
+        summary.add(preview.label + " " + juce::String(juce::roundToInt(preview.value * 100.0f)));
+        if (summary.size() >= 4)
+            break;
+    }
+
+    return summary.isEmpty() ? juce::String("Macros flat") : summary.joinIntoString(" ");
 }
 }
 
@@ -1342,7 +1412,9 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
             auto author = isFactory ? juce::String("Nate") : juce::String("User");
             auto pack = isFactory ? juce::String("Factory Pack") : juce::String("User Pack");
             auto key = juce::String("Any Key");
+            auto macroSummary = juce::String("Macros flat");
             auto bpm = 0;
+            auto macroIntensity = 0.0f;
             juce::String tags;
             juce::String folder;
             const auto parentPath = file.getParentDirectory().getFullPathName();
@@ -1385,6 +1457,8 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                     if (storedTags.isNotEmpty())
                         tags = storedTags;
 
+                    macroSummary = presetMacroSummary(state, macroIntensity);
+
                     const auto storedFolder = state.getProperty("preset_folder").toString().trim();
                     if (storedFolder.isNotEmpty())
                         folder = storedFolder.replaceCharacter('\\', '/');
@@ -1402,8 +1476,10 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                                 author,
                                 pack,
                                 key,
+                                macroSummary,
                                 bpm,
                                 ratingForPreset(name),
+                                macroIntensity,
                                 file.getLastModificationTime().toMilliseconds(),
                                 isFactory,
                                 favorites.contains(name) });

@@ -79,6 +79,7 @@ juce::StringArray presetFilterChoices()
         "Rated",
         "5 Stars",
         "4+ Stars",
+        "Macro Rich",
         "User",
         "Factory",
         "Bass",
@@ -110,7 +111,7 @@ juce::StringArray presetFilterChoices()
 
 juce::StringArray presetSortChoices()
 {
-    return { "Name", "Rating", "Newest", "Category", "Pack", "BPM", "Key", "Author", "Source" };
+    return { "Name", "Rating", "Newest", "Category", "Pack", "BPM", "Key", "Author", "Source", "Macros" };
 }
 
 juce::StringArray presetPackChoices()
@@ -174,6 +175,12 @@ int parsePresetBpm(const juce::String& text)
 juce::String formatPresetBpm(int bpm)
 {
     return bpm >= 20 && bpm <= 300 ? juce::String(bpm) + " BPM" : juce::String("Any Tempo");
+}
+
+juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    const auto summary = preset.macroSummary.trim();
+    return summary.isNotEmpty() ? "Macros: " + summary : juce::String("Macros: flat");
 }
 
 juce::StringArray presetTagChoices()
@@ -5166,7 +5173,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         const auto bpmText = formatPresetBpm(preset.bpm);
         const auto searchable = preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
             + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
-            + preset.pack + " " + preset.key + " " + bpmText
+            + preset.pack + " " + preset.key + " " + bpmText + " " + preset.macroSummary + " Macro Macros Performance"
             + (preset.isFavorite ? " Favorite" : "");
 
         for (const auto& term : searchTerms)
@@ -5245,6 +5252,9 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                                      return sourceCompare < 0;
                              }
 
+                             if (sortMode == "Macros" && std::abs(left.macroIntensity - right.macroIntensity) > 0.001f)
+                                 return left.macroIntensity > right.macroIntensity;
+
                              return left.name.compareIgnoreCase(right.name) < 0;
                          });
     };
@@ -5276,6 +5286,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || (filter == "Rated" && preset.rating > 0)
                 || (filter == "5 Stars" && preset.rating == 5)
                 || (filter == "4+ Stars" && preset.rating >= 4)
+                || (filter == "Macro Rich" && preset.macroIntensity >= 0.30f)
                 || (filter == "User" && ! preset.isFactory)
                 || (filter == "Factory" && preset.isFactory)
                 || (filter == "120-124 BPM" && preset.bpm >= 120 && preset.bpm <= 124)
@@ -5312,14 +5323,23 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     else if (presetBox.getNumItems() > 0)
         presetBox.setSelectedItemIndex(0, juce::dontSendNotification);
 
+    const auto* selectedPreset = findPreset(presetBox.getText());
     auto statusText = juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter;
     if (tagFilter != "All Tags")
         statusText += " | Tag: " + tagFilter;
     statusText += " | Sort: " + sortMode;
     if (searchText.isNotEmpty())
         statusText += " | Search: " + searchText;
+    if (selectedPreset != nullptr)
+        statusText += " | " + presetMacroPreviewText(*selectedPreset);
     statusText += " | User: " + audioProcessor.getPresetDirectory().getFullPathName();
     presetStatusLabel.setText(statusText, juce::dontSendNotification);
+    presetStatusLabel.setTooltip(selectedPreset != nullptr
+                                     ? presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + formatPresetBpm(selectedPreset->bpm)
+                                     : juce::String("Preset browser status"));
+    presetBox.setTooltip(selectedPreset != nullptr
+                             ? selectedPreset->name + " | " + presetMacroPreviewText(*selectedPreset)
+                             : juce::String("Select a preset"));
     updateFavoritePresetButton();
 }
 
@@ -5532,6 +5552,9 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
         presetPackBox.setText(preset.pack, juce::dontSendNotification);
         presetKeyBox.setText(preset.key, juce::dontSendNotification);
         presetBpmBox.setText(formatPresetBpm(preset.bpm), juce::dontSendNotification);
+        const auto preview = presetMacroPreviewText(preset);
+        presetBox.setTooltip(preset.name + " | " + preview);
+        presetStatusLabel.setTooltip(preview + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm));
         break;
     }
 }

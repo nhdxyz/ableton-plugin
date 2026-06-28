@@ -39,7 +39,7 @@ Primary FX, groove, and club-workflow references:
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
 - Sampler/chop workflow for UKG vocal and stab material.
-- Library with folders, categories, favorites, ratings, metadata, search, sort, and recursive preset scanning.
+- Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, and recursive preset scanning.
 - Factory preset generator for genre-targeted packs.
 
 ## Product Gaps
@@ -192,6 +192,10 @@ The largest remaining gap is no longer "does the plugin have enough controls." I
 121. Add library repair/reindex command.
 122. Add "find similar presets" using metadata and parameter distance.
 123. Add factory construction kits containing preset, sequence, macro, and recommended BPM/key metadata.
+
+Implemented library sub-slice:
+
+- Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, and a `Macros` sort mode. The broader browser-column request remains open for a fuller multi-column browser view.
 
 ## Priority 8: Sound Quality And Safety
 

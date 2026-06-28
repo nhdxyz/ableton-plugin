@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Preset Browser Macro Preview
+
+- Added saved-preset macro preview metadata for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw by parsing existing preset XML.
+- Added a `Macro Rich` Library filter and `Macros` sort mode for finding presets with more performance-macro movement.
+- Extended preset browser search, status text, and tooltips with macro summaries so house/UKG presets can be judged before loading.
+- Kept preset files and APVTS parameter IDs unchanged; old presets fall back to a flat macro preview.
+
 ### Sequencer Velocity Probability And Timing Lanes
 
 - Added three editable lane rows under the SEQ piano-roll grid for per-step velocity, probability, and late timing.

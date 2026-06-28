@@ -48,8 +48,10 @@ public:
         juce::String author;
         juce::String pack;
         juce::String key;
+        juce::String macroSummary;
         int bpm = 0;
         int rating = 0;
+        float macroIntensity = 0.0f;
         juce::int64 lastModifiedMs = 0;
         bool isFactory = false;
         bool isFavorite = false;

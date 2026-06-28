@@ -1002,6 +1002,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         addAndMakeVisible(row);
         row.toBack();
     }
+    addAndMakeVisible(modRouteMapDisplay);
 
     presetNameEditor.setTextToShowWhenEmpty("Preset name", juce::Colour(0xff617078));
     presetNameEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
@@ -3347,6 +3348,7 @@ void NateVSTAudioProcessorEditor::resized()
             modMatrixSourceHeaderB.setVisible(true);
             modMatrixDestinationHeaderB.setVisible(true);
             modMatrixAmountHeaderB.setVisible(true);
+            modRouteMapDisplay.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
             auto topRow = modContent.removeFromTop(modTopRowHeight);
@@ -3448,6 +3450,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             modContent.removeFromTop(modPanelGap);
             auto matrixArea = modContent.reduced(18, 0);
+            const auto canShowRouteMap = matrixArea.getHeight() >= 190;
             auto matrixTitleRow = matrixArea.removeFromTop(28);
             modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(5));
             modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(150).reduced(3, 5));
@@ -3459,6 +3462,17 @@ void NateVSTAudioProcessorEditor::resized()
             modInspectorSourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
             modInspectorAddButton.setBounds(inspectorRow.removeFromLeft(58).reduced(3, 4));
             modInspectorClearButton.setBounds(inspectorRow.removeFromLeft(66).reduced(3, 4));
+
+            if (canShowRouteMap)
+            {
+                auto routeMapRow = matrixArea.removeFromTop(46).withTrimmedTop(4);
+                modRouteMapDisplay.setVisible(true);
+                modRouteMapDisplay.setBounds(routeMapRow.reduced(3, 2));
+            }
+            else
+            {
+                modRouteMapDisplay.setVisible(false);
+            }
 
             auto matrixHeaderRow = matrixArea.removeFromTop(18).reduced(3, 1);
             auto leftHeader = matrixHeaderRow.removeFromLeft((matrixHeaderRow.getWidth() - 10) / 2);
@@ -7258,7 +7272,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
-        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
+        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
@@ -7847,6 +7861,7 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
     const auto destinationChoices = Parameters::modulationDestinationChoices();
     std::vector<int> sourceRouteCounts(static_cast<size_t>(sourceChoices.size()), 0);
     std::vector<float> sourceDepths(static_cast<size_t>(sourceChoices.size()), 0.0f);
+    std::vector<UI::ModRouteMapDisplay::Route> routeMapRoutes;
     auto activeRouteCount = 0;
     juce::String firstActiveRoute;
 
@@ -7882,6 +7897,8 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         const auto isActiveRoute = enabled && isConfiguredRoute;
 
         modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount, enabled);
+        if (isConfiguredRoute)
+            routeMapRoutes.push_back({ sourceText, destinationText, amount, enabled });
         modSlotEnabledButtons[index].setButtonText(enabled ? "On" : "Off");
         modSlotEnabledButtons[index].setEnabled(isConfiguredRoute);
         modSlotDuplicateButtons[index].setEnabled(isConfiguredRoute);
@@ -7911,6 +7928,7 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         ? juce::String("No active routes")
         : juce::String(activeRouteCount) + " active | " + firstActiveRoute;
     modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
+    modRouteMapDisplay.setRoutes(std::move(routeMapRoutes));
 
     for (size_t rowIndex = 0; rowIndex < modSourceRows.size(); ++rowIndex)
     {

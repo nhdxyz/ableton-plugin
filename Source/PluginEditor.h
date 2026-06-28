@@ -8,6 +8,7 @@
 #include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
+#include "UI/ModRouteMapDisplay.h"
 #include "UI/ModSourceMeter.h"
 #include "UI/OutputMeter.h"
 #include "UI/OutputSpectrumDisplay.h"
@@ -659,6 +660,7 @@ private:
     UI::WavetableDisplay wavetableDisplay;
     UI::FilterResponseDisplay filterResponseDisplay;
     UI::XYMacroPad performanceXYPad;
+    UI::ModRouteMapDisplay modRouteMapDisplay;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
     double presetAuditionNoteOffMs = 0.0;

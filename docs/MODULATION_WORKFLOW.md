@@ -171,6 +171,7 @@ MOD:
 - Current implementation includes per-slot route duplicate buttons in the MOD matrix, making it faster to copy a route and adjust the duplicate into a variation.
 - Current implementation includes right-click amount menus on MOD matrix amount sliders for quick invert, +/-25%, +/-50%, duplicate, and clear actions.
 - Current implementation includes a compact LFO 1 MSEG tool strip for invert, reverse, smooth, quantize, controlled random dice, and UKG swing curve shaping without adding new host parameters.
+- Current implementation includes a responsive route map above the MOD matrix at default and larger editor sizes. It summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while hiding at the minimum compact size to preserve editable row height.
 
 SEQ:
 

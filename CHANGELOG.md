@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### MOD Route Map Visualization
+
+- Added a reusable `ModRouteMapDisplay` that summarizes configured modulation routes as source-to-destination paths with polarity, depth, bypass state, and tooltips.
+- Wired the route map into the MOD routing section using the existing eight-slot matrix state, so house/UKG macro, LFO, S&H, Smooth, Chaos, sample, synth, and FX routes are easier to scan without changing APVTS parameters, preset format, or Ableton automation IDs.
+- Kept the route map responsive: it appears at default/larger editor sizes and hides at the minimum compact 940x710 host size so the editable route rows never collapse.
+
 ### HOME Stereo Field Visualization
 
 - Added real-time-safe stereo field telemetry for full-band correlation, stereo width, balance, and low-end side-risk values.

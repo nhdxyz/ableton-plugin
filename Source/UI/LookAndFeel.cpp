@@ -26,6 +26,47 @@ juce::String shortModSourceName(juce::String sourceName)
     return compact.isNotEmpty() ? compact : juce::String("MOD");
 }
 
+juce::String firstModSourceName(const juce::Slider& slider)
+{
+    const auto sourceSummary = slider.getProperties().getWithDefault("modSourceSummary", {}).toString();
+    juce::StringArray sources;
+    sources.addTokens(sourceSummary, ",", "");
+    sources.trim();
+    sources.removeEmptyStrings();
+
+    return sources.isEmpty() ? juce::String {} : sources[0];
+}
+
+juce::Colour modulationSourceColour(const juce::String& sourceName)
+{
+    if (sourceName == "LFO 1") return juce::Colour(0xff8ee6c9);
+    if (sourceName == "LFO 2") return juce::Colour(0xff7fb7ff);
+    if (sourceName == "Mod Env 1") return juce::Colour(0xffffd27a);
+    if (sourceName == "Velocity") return juce::Colour(0xff9be58f);
+    if (sourceName == "Tone") return juce::Colour(0xff8ee6c9);
+    if (sourceName == "Dirt") return juce::Colour(0xffff9f66);
+    if (sourceName == "Motion") return juce::Colour(0xff7fb7ff);
+    if (sourceName == "Space") return juce::Colour(0xffb8a1ff);
+    if (sourceName == "Weight") return juce::Colour(0xffa7d38b);
+    if (sourceName == "Bounce") return juce::Colour(0xffffd27a);
+    if (sourceName == "Warp") return juce::Colour(0xffff7d9e);
+    if (sourceName == "Throw") return juce::Colour(0xff9ce7ff);
+    if (sourceName == "S&H") return juce::Colour(0xffc0de73);
+    if (sourceName == "Smooth") return juce::Colour(0xff76d7c4);
+    if (sourceName == "Chaos") return juce::Colour(0xffff7a66);
+
+    return juce::Colour(0xff8ee6c9);
+}
+
+juce::Colour modulationAccentColour(const juce::Slider& slider, float modulationAmount)
+{
+    auto accent = modulationSourceColour(firstModSourceName(slider));
+    if (modulationAmount < 0.0f)
+        accent = accent.interpolatedWith(juce::Colour(0xffff7a66), 0.46f);
+
+    return accent;
+}
+
 juce::String modulationBadgeText(const juce::Slider& slider, float modulationAmount, int routeCount)
 {
     const auto sourceSummary = slider.getProperties().getWithDefault("modSourceSummary", {}).toString();
@@ -122,8 +163,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     if (modulationDepth > 0.001f)
     {
         const auto ringRadius = radius + 2.5f;
-        const auto ringColour = modulationAmount >= 0.0f ? juce::Colour(0xff8ee6c9)
-                                                         : juce::Colour(0xffffa36f);
+        const auto ringColour = modulationAccentColour(slider, modulationAmount);
         const auto ringTravel = (rotaryEndAngle - rotaryStartAngle) * modulationDepth;
         const auto ringEnd = juce::jlimit(rotaryStartAngle,
                                           rotaryEndAngle,
@@ -208,8 +248,7 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g,
 
     if (modulationDepth > 0.001f)
     {
-        const auto ringColour = modulationAmount >= 0.0f ? juce::Colour(0xff8ee6c9)
-                                                         : juce::Colour(0xffffa36f);
+        const auto ringColour = modulationAccentColour(slider, modulationAmount);
         const auto modulationEnd = juce::jlimit(trackStart,
                                                 trackEnd,
                                                 currentX + modulationAmount * (trackEnd - trackStart));

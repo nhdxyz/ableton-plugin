@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Source-Colored Modulation Rings
+
+- Updated rotary modulation rings and linear modulation badges to use the active modulation source color instead of only positive/negative polarity colors.
+- Kept negative modulation visibly warmer while preserving source identity, so macro, LFO, envelope, S&H, Smooth, Chaos, and LFO 2 routes scan faster in dense house/UKG patches.
+- Reused the existing MOD matrix route metadata, so no preset, automation, or audio-engine changes were required.
+
 ### Resizable Editor Layout Audit
 
 - Enabled host editor resizing from the current 940x710 compact layout up to a 1440x980 expanded workspace.

@@ -135,8 +135,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 56. Add drag assignment from modulation source chips to controls.
 57. Add right-click "modulate with" menus on automatable controls. First pass implemented for MOD-targetable sliders.
-58. Add visible modulation rings around modulated knobs and stripes/badges on modulated horizontal controls. First horizontal slider feedback and compact source-badge pass implemented.
-59. Add source-colored modulation badges with route amount.
+58. Add visible modulation rings around modulated knobs and stripes/badges on modulated horizontal controls. Rotary rings, horizontal slider feedback, compact source badges, and source-colored accents are implemented.
+59. Add source-colored modulation badges with route amount. First source-color pass implemented for macro, LFO, envelope, S&H, Smooth, Chaos, and LFO 2 routes.
 60. Add hover-to-show routes for the parameter under the mouse. First pass implemented through the selected-control inspector; graphical hover overlays remain open.
 61. Add route min/max range editing.
 62. Add per-route curve shaping.
@@ -327,7 +327,7 @@ Two focused research passes were run on 2026-06-28: one for modern synth/source 
 Top missing product capabilities:
 
 1. Source rack depth: true wavetable playback, sample/granular source options, focused FM/organ engines, second layer, per-layer mute/solo/blend, and source snippets.
-2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, horizontal slider feedback now shows stripes/badges while preserving base tooltips, and MOD targets update the selected-control route summary on hover.
+2. Fast visual modulation: drag-to-modulate, right-click assignment, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, rotary/linear modulation feedback now shows source-colored rings/badges while preserving base tooltips, and MOD targets update the selected-control route summary on hover.
 3. Serious UKG slicing: transient/beat/manual slice markers, per-slice nudge/fades/playback mode beyond the first stored start/end/pan/probability pass, slice-to-sequencer lanes, and missing-sample relink.
 4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
 5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills.

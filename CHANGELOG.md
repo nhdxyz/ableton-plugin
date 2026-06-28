@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### SYNTH Filter Response Visualization
+
+- Added a reusable `FilterResponseDisplay` component for the SYNTH page so cutoff, resonance, filter mode, slope, character, envelope amount, and drive are visible while shaping basses, stabs, plucks, and pads.
+- Rebalanced the SYNTH filter group to show one focused visual response area above the four core filter/drive knobs instead of adding more controls to an already dense page.
+- Wired the display into timer refresh and full edit-restore refresh paths so preset loads, global undo/redo, randomization recalls, and manual filter edits repaint the visible curve.
+- Kept the implementation JUCE-native and APVTS-driven, preserving current Ableton automation and saved-set compatibility.
+
 ### Library Save Redesign And Expanded Factory Pack
 
 - Reworked HOME preset access into recall-only controls, moving save metadata out of the default dashboard so HOME stays focused on performance, randomization, overview, and preset audition.

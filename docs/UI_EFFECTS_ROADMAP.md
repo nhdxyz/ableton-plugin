@@ -39,6 +39,7 @@ Implemented foundation pass:
 - HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
 - HOME preset access is now recall/audition-only, and the deeper save workflow lives in LIBRARY.
 - LIBRARY now uses Find, Browser, Save Patch, and Inspect work areas, plus a dedicated preset summary component with library stats, selected-preset metadata, macro shape, and notes.
+- SYNTH now includes a compact filter response display, giving the filter group a visual center for cutoff/resonance/mode edits instead of expanding the page with more always-visible controls.
 
 ## Current Problems
 
@@ -80,6 +81,7 @@ Modern synths and club tools are converging around a few product expectations th
 
 - Oscillator engines: wavetable position/warp, sample/granular style sources, and stronger FM/phase movement are common in Serum 2, Pigments, Phase Plant, Current, and modwave.
 - Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments. The first passes are implemented as Clean, Warm, Acid, and Dirty filter-drive modes plus selectable 12 dB/24 dB slope.
+- Filter visualization: modern synth workflows expect the tone-shaping curve to be visible while editing. Nate VST now has a first SYNTH-page filter response display; future work should add modulation range overlays, live envelope sweep traces, and spectrum context.
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.

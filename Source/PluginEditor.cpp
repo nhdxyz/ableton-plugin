@@ -929,6 +929,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(sampleWaveformDisplay);
     addAndMakeVisible(wavetableDisplay);
+    addAndMakeVisible(filterResponseDisplay);
 
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
     fxRackStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -2829,6 +2830,7 @@ void NateVSTAudioProcessorEditor::resized()
             synthSourceLabel.setVisible(true);
             synthVoiceLabel.setVisible(true);
             synthFilterLabel.setVisible(true);
+            filterResponseDisplay.setVisible(true);
             synthAmpLabel.setVisible(true);
             sineWaveButton.setVisible(true);
             sawWaveButton.setVisible(true);
@@ -2942,7 +2944,8 @@ void NateVSTAudioProcessorEditor::resized()
             });
 
             synthFilterLabel.setBounds(filterArea.removeFromTop(22));
-            layoutKnobRow(filterArea.removeFromTop(104).withTrimmedTop(5), {
+            filterResponseDisplay.setBounds(filterArea.removeFromTop(58).reduced(2, 4));
+            layoutKnobRow(filterArea.removeFromTop(72).withTrimmedTop(3), {
                 &cutoffSlider,
                 &resonanceSlider,
                 &filterEnvSlider,
@@ -6928,6 +6931,7 @@ void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::Stri
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateFilterResponseDisplay();
     updateModMatrixRows();
     updateModInspectorStatus();
     updateMacroAssignmentEditorStatus();
@@ -7142,7 +7146,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -7541,6 +7545,23 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
         readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
         osc1Wave == 4,
         osc2Wave == 4);
+}
+
+void NateVSTAudioProcessorEditor::updateFilterResponseDisplay()
+{
+    UI::FilterResponseDisplay::State state;
+    state.cutoffHz = readPlainParameterValue(Parameters::ID::filterCutoff, 1800.0f);
+    state.resonance = readPlainParameterValue(Parameters::ID::filterResonance, 0.45f);
+    state.envAmount = readPlainParameterValue(Parameters::ID::filterEnvAmount, 0.15f);
+    state.drive = juce::jlimit(0.0f, 1.0f,
+                               readPlainParameterValue(Parameters::ID::driveAmount, 0.18f)
+                                   + (readPlainParameterValue(Parameters::ID::macroDirt, 0.0f) * 0.35f)
+                                   + (readPlainParameterValue(Parameters::ID::macroWarp, 0.0f) * 0.16f));
+    state.mode = juce::roundToInt(readPlainParameterValue(Parameters::ID::filterMode, 0.0f));
+    state.character = juce::roundToInt(readPlainParameterValue(Parameters::ID::filterCharacter, 0.0f));
+    state.slope = juce::roundToInt(readPlainParameterValue(Parameters::ID::filterSlope, 0.0f));
+
+    filterResponseDisplay.setState(state);
 }
 
 void NateVSTAudioProcessorEditor::updateHostSyncStatus()
@@ -8555,6 +8576,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateFilterResponseDisplay();
     updateHostSyncStatus();
     updateModMatrixRows();
     updateModInspectorStatus();

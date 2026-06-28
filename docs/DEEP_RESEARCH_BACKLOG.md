@@ -78,6 +78,7 @@ Implemented UI test sub-slices:
 - A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
 - HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, reducing the need to show every sound-design control on the default dashboard.
 - LIBRARY now has dedicated Find, Browser, Save Patch, and Inspect work areas plus `PresetLibrarySummary`, while HOME keeps preset recall/audition only.
+- SYNTH now has a dedicated `FilterResponseDisplay` above the filter controls, making cutoff, resonance, mode, character, slope, envelope amount, and drive visible without adding another row of knobs.
 
 ## Priority 1: Modulation And Movement
 
@@ -130,6 +131,7 @@ Implemented wavetable sub-slice:
 - Added an internal generated wavetable mode as waveform index 4 for Osc 1 and Osc 2, preserving existing waveform indices.
 - Added Osc 1/Osc 2 wavetable position parameters and MOD destinations for WT position movement.
 - Added a compact SYNTH-panel wavetable display and seeded selected factory presets with the new source mode.
+- Added a compact SYNTH-panel filter response display for immediate visual feedback while shaping house basses, UKG organ stabs, minimal plucks, and techno filter sweeps.
 
 Implemented percussive noise sub-slice:
 

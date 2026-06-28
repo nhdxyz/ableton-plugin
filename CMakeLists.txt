@@ -53,6 +53,7 @@ target_sources(NateVST
         Source/Sampler/SamplePlayer.cpp
         Source/Sequencer/PatternSequencer.cpp
         Source/Effects/EffectsRack.cpp
+        Source/UI/FilterResponseDisplay.cpp
         Source/UI/FxRackRow.cpp
         Source/UI/HomeOverviewDisplay.cpp
         Source/UI/LookAndFeel.cpp

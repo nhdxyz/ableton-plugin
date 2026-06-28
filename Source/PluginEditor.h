@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "UI/FilterResponseDisplay.h"
 #include "UI/FxRackRow.h"
 #include "UI/HomeOverviewDisplay.h"
 #include "UI/LookAndFeel.h"
@@ -651,6 +652,7 @@ private:
     UI::SampleWaveformDisplay sampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
     UI::WavetableDisplay wavetableDisplay;
+    UI::FilterResponseDisplay filterResponseDisplay;
     UI::XYMacroPad performanceXYPad;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
     int activePresetAuditionNote = -1;
@@ -718,6 +720,7 @@ private:
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
+    void updateFilterResponseDisplay();
     void updateHostSyncStatus();
     void updateModMatrixRows();
     void updateModInspectorStatus();

@@ -58,12 +58,13 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - LAB now has focused `Generate`, `Mutate`, `Recipe`, `History`, and `Save` pages so randomization controls are grouped by task instead of shown as one dense control surface.
 - LAB Recipe now shows selected-recipe genre, tempo range, good-for intent, and generator-bias guidance for all current house, UKG, tech-house, minimal, techno, and FX recipes.
 - LAB Generate and Mutate now expose per-section Source, Env, Filter, Sample, FX, Seq, and Macro strength controls that scale generated changes before locks and candidate capture.
+- LAB History now has a visible active-candidate detail panel for slot label, changed sections, trait comparison, and old/new value diff summary.
 
 ## Highest-Value Randomization Backlog
 
 1. Add route-level locks for modulation matrix slots.
 2. Add target locks for specific controls by right-clicking a knob and choosing "Lock from Random".
-3. Add a larger visible mutation diff panel with changed parameters, old value, new value, and section.
+3. Expand the History detail panel into a scrollable all-parameter diff table with section grouping, changed parameters, old value, new value, and notes.
 4. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
 5. Add "promote variation" and "discard variation" actions.
 6. Add per-candidate row save/favorite/rating shortcuts so each generated slot can be organized without using the shared save strip.

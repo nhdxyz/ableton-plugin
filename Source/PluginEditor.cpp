@@ -872,6 +872,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetAuthorEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
     addAndMakeVisible(presetAuthorEditor);
 
+    randomCandidateDetailEditor.setReadOnly(true);
+    randomCandidateDetailEditor.setMultiLine(true, true);
+    randomCandidateDetailEditor.setScrollbarsShown(false);
+    randomCandidateDetailEditor.setCaretVisible(false);
+    randomCandidateDetailEditor.setPopupMenuEnabled(false);
+    randomCandidateDetailEditor.setJustification(juce::Justification::topLeft);
+    randomCandidateDetailEditor.setFont(juce::FontOptions(12.0f));
+    randomCandidateDetailEditor.setIndents(8, 6);
+    randomCandidateDetailEditor.setText("No active candidate\nSections: -\nTraits: -\nDiffs: -", juce::dontSendNotification);
+    randomCandidateDetailEditor.setTooltip("Active Random Lab candidate summary");
+    randomCandidateDetailEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xee101619));
+    randomCandidateDetailEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff263035));
+    randomCandidateDetailEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
+    randomCandidateDetailEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+    randomCandidateDetailEditor.setColour(juce::TextEditor::highlightColourId, juce::Colour(0x558ee6c9));
+    addAndMakeVisible(randomCandidateDetailEditor);
+
     waveformBox.addItemList(Parameters::waveformChoices(), 1);
     addAndMakeVisible(waveformBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWave, waveformBox));
@@ -2747,6 +2764,10 @@ void NateVSTAudioProcessorEditor::resized()
                 case RandomLabPage::history:
                 {
                     showCandidateRow(true);
+                    randomCandidateDetailEditor.setVisible(true);
+                    updateRandomCandidateDetail();
+                    randomCandidateDetailEditor.setBounds(content.removeFromTop(118).withTrimmedTop(6).reduced(4));
+
                     undoRandomButton.setVisible(true);
                     redoRandomButton.setVisible(true);
                     variationButton.setVisible(true);
@@ -4738,6 +4759,48 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
                                                             : "Generate, cue, or recall a candidate before starring a save");
     saveCandidateButton.setTooltip(activeCandidateReady ? "Save the active random candidate with the current category, pack, BPM, and generated-source metadata"
                                                         : "Generate, cue, or recall a random candidate before saving a slot");
+    updateRandomCandidateDetail();
+}
+
+void NateVSTAudioProcessorEditor::updateRandomCandidateDetail()
+{
+    auto detailSlot = audioProcessor.getActiveRandomCandidateIndex();
+    if (! audioProcessor.hasRandomCandidate(detailSlot))
+    {
+        detailSlot = -1;
+        for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
+        {
+            const auto slotIndex = static_cast<int>(index);
+            if (audioProcessor.hasRandomCandidate(slotIndex))
+            {
+                detailSlot = slotIndex;
+                break;
+            }
+        }
+    }
+
+    if (! audioProcessor.hasRandomCandidate(detailSlot))
+    {
+        const auto emptyText = juce::String("No active candidate\nSections: -\nTraits: -\nDiffs: -");
+        randomCandidateDetailEditor.setText(emptyText, juce::dontSendNotification);
+        randomCandidateDetailEditor.setTooltip(emptyText);
+        return;
+    }
+
+    const auto slotLabel = "Slot " + juce::String(detailSlot + 1);
+    const auto summary = audioProcessor.getRandomCandidateSummary(detailSlot);
+    const auto sections = audioProcessor.getRandomCandidateChangedSectionsSummary(detailSlot);
+    const auto compare = audioProcessor.getRandomCandidateCompareSummary(detailSlot);
+    const auto diffs = audioProcessor.getRandomCandidateDiffSummary(detailSlot);
+    const auto cueText = activeRandomCandidateAuditionSlot == detailSlot ? juce::String("\nCue: auditioning") : juce::String();
+    const auto detailText = slotLabel + " | " + summary
+        + "\nSections: " + sections
+        + "\nTraits: " + compare
+        + "\nDiffs: " + diffs
+        + cueText;
+
+    randomCandidateDetailEditor.setText(detailText, juce::dontSendNotification);
+    randomCandidateDetailEditor.setTooltip(detailText);
 }
 
 void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& actionLabel)
@@ -6210,7 +6273,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetBrowserList, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 

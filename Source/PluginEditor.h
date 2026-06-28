@@ -583,6 +583,7 @@ private:
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
     juce::TextEditor presetAuthorEditor;
+    juce::TextEditor randomCandidateDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
     UI::LowEndAssistant lowEndAssistant;
@@ -707,6 +708,7 @@ private:
     void releaseRandomCandidateAudition(bool updateStatus = false);
     void promoteActiveRandomCandidate(int snapshotSlotIndex);
     void updateRandomCandidateButtons();
+    void updateRandomCandidateDetail();
     void prepareRandomPresetDraft(const juce::String& actionLabel);
     juce::String suggestedPresetCategoryForRecipe() const;
     juce::String suggestedPresetPackForCategory(const juce::String& category) const;

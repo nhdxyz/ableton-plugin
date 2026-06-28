@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab History Detail
+
+- Added a read-only LAB History detail panel that shows the active candidate slot, action/recipe/scope label, changed sections, trait comparison, and old/new value diff summary.
+- Candidate detail updates alongside generate, recall, cue, promote, and audition restore flows, so important differences are visible without relying only on button tooltips.
+- The panel reuses the existing processor comparison and diff summaries, keeping History, cue, recall, save, and audit behavior aligned.
+
 ### Random Lab Section Strength
 
 - Added per-section Random Lab strength controls for Source, Env, Filter, Sample, FX, Seq, and Macros on the Generate and Mutate pages.

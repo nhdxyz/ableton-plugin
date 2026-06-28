@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### HOME Session Dashboard
+
+- Replaced the old HOME `PRESET RECALL` framing with a `SESSION` area and a reusable `HomeSessionDisplay` component.
+- The HOME session view now summarizes selected preset metadata, filter/library counts, source type, rating/favorite state, compare readiness, and active Random Lab candidate status above the compact recall/audition controls.
+- Kept full search, save, categories, and metadata editing in LIBRARY so HOME stays focused on performance decisions and quick sound recall.
+
 ### Library Save UI Preview
 
 - Added a dedicated `PresetSaveSummary` component to the LIBRARY Save Patch column so the target name, category path, pack/key/BPM, author, notes length, generated state, and overwrite state are visible before saving.
@@ -976,7 +982,7 @@
 
 - Added a `HOME` panel as the default first view.
 - Reworked the first screen into a practical dashboard with engine, shape, lab, and library areas.
-- Added quick access to waveform, filter mode, mono, tone-shaping knobs, recipe randomization, and preset load/save from the home panel.
+- Added quick access to waveform, filter mode, mono, tone-shaping knobs, recipe randomization, and early preset actions from the HOME panel; later passes moved full save and metadata workflow into LIBRARY.
 - Reduced rotary knob drag distance and enabled velocity mode so knobs respond with less physical mouse travel.
 - Added an automatable `filter_mode` parameter with low-pass, band-pass, and high-pass modes.
 - Wired randomization to use filter modes where it adds useful variation, especially minimal blips and noise FX.

@@ -923,6 +923,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(outputSpectrumDisplay);
     addAndMakeVisible(stereoFieldDisplay);
     addAndMakeVisible(homeOverviewDisplay);
+    addAndMakeVisible(homeSessionDisplay);
     addAndMakeVisible(lowEndAssistant);
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
@@ -964,7 +965,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeEngineLabel, "PERFORM");
     configureSectionLabel(homeShapeLabel, "MACROS");
     configureSectionLabel(homeLabLabel, "RANDOM LAB");
-    configureSectionLabel(homeLibraryLabel, "PRESET RECALL");
+    configureSectionLabel(homeLibraryLabel, "SESSION");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(synthSourceLabel, "SOURCE MIX");
     configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
@@ -3001,6 +3002,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
+            homeSessionDisplay.setVisible(true);
             outputOscilloscopeDisplay.setVisible(true);
             outputSpectrumDisplay.setVisible(true);
             stereoFieldDisplay.setVisible(true);
@@ -3081,11 +3083,12 @@ void NateVSTAudioProcessorEditor::resized()
             randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
-            auto loadRow = libraryArea.removeFromTop(42);
+            homeSessionDisplay.setBounds(libraryArea.removeFromTop(74).reduced(3, 5));
+            auto loadRow = libraryArea.removeFromTop(38).withTrimmedTop(2);
             previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
             presetBox.setBounds(loadRow.removeFromLeft(juce::jmax(120, loadRow.getWidth() - 42)).reduced(3, 4));
             nextPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
-            auto actionRow = libraryArea.removeFromTop(42).withTrimmedTop(4);
+            auto actionRow = libraryArea.removeFromTop(38).withTrimmedTop(3);
             loadPresetButton.setBounds(actionRow.removeFromLeft(88).reduced(3, 4));
             auditionPresetButton.setBounds(actionRow.removeFromLeft(96).reduced(3, 4));
             favoritePresetButton.setBounds(actionRow.removeFromLeft(68).reduced(3, 4));
@@ -5669,6 +5672,7 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
     saveCandidateButton.setTooltip(activeCandidateReady ? "Save the active random candidate with the current category, pack, BPM, and generated-source metadata"
                                                         : "Generate, cue, or recall a random candidate before saving a slot");
     updateRandomCandidateDetail();
+    updateHomeSessionDisplay();
 }
 
 void NateVSTAudioProcessorEditor::updateRandomCandidateDetail()
@@ -7507,7 +7511,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -9068,6 +9072,43 @@ void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
     homeOverviewDisplay.setState(state);
 }
 
+void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
+{
+    UI::HomeSessionDisplay::State state;
+    const auto library = audioProcessor.getPresetLibrary();
+    const auto selectedName = presetBox.getText().trim();
+
+    state.visibleCount = static_cast<int>(visiblePresetBrowserPresets.size());
+    state.totalCount = static_cast<int>(library.size());
+    state.filterName = presetFilterBox.getText().trim();
+    state.selectedName = selectedName.isNotEmpty() ? selectedName : juce::String("Choose a sound");
+    state.selectedMeta = "Use Library for full search and save";
+
+    for (const auto& preset : library)
+    {
+        if (preset.name != selectedName)
+            continue;
+
+        const auto category = preset.folder.isNotEmpty() ? preset.folder : preset.category;
+        state.selectedMeta = category + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm);
+        state.rating = preset.rating;
+        state.favorite = preset.isFavorite;
+        state.factory = preset.isFactory;
+        state.generated = preset.source.equalsIgnoreCase("Generated");
+        break;
+    }
+
+    state.compareReady = hasPresetCompareSnapshots();
+
+    const auto activeCandidate = audioProcessor.getActiveRandomCandidateIndex();
+    state.candidateReady = audioProcessor.hasRandomCandidate(activeCandidate);
+    state.candidateName = state.candidateReady
+        ? audioProcessor.getRandomCandidateSummary(activeCandidate)
+        : juce::String("No candidate");
+
+    homeSessionDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
 {
     const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
@@ -9542,6 +9583,7 @@ void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
 
     presetLibrarySummary.setState(state);
     updatePresetSaveSummary();
+    updateHomeSessionDisplay();
 }
 
 void NateVSTAudioProcessorEditor::updatePresetSaveSummary()
@@ -10123,6 +10165,7 @@ void NateVSTAudioProcessorEditor::updatePresetCompareButtons()
     {
         comparePresetButton.setTooltip("Load a preset to compare it against the sound that was active before loading");
         revertPresetButton.setTooltip("Restore becomes available after a Library preset load");
+        updateHomeSessionDisplay();
         return;
     }
 
@@ -10130,6 +10173,7 @@ void NateVSTAudioProcessorEditor::updatePresetCompareButtons()
                                        ? "Hear the sound that was active before loading " + presetCompareName
                                        : "Return to the loaded preset " + presetCompareName);
     revertPresetButton.setTooltip("Restore the sound from before loading " + presetCompareName + " and clear this compare pair");
+    updateHomeSessionDisplay();
 }
 
 void NateVSTAudioProcessorEditor::togglePresetCompare()

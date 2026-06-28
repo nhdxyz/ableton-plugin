@@ -37,7 +37,7 @@ Implemented foundation pass:
 - The editor now opens at the established 940x710 layout and can resize up to 1440x980 in hosts that expose plugin resize handles.
 - `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
 - HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
-- HOME preset access is now recall/audition-only, and the deeper save workflow lives in LIBRARY.
+- HOME preset access is now a compact Session view with selected-preset metadata, filter/library counts, favorite/rating/source state, compare readiness, active Random Lab candidate status, and recall/audition controls. The deeper save workflow lives in LIBRARY.
 - LIBRARY now uses Find, Browser, Save Patch, and Inspect work areas, plus dedicated preset summary and save-target summary components with library stats, selected-preset metadata, macro shape, notes, save path, metadata, generated/overwrite status, and clearer rating placement.
 - SYNTH now includes a compact filter response display, giving the filter group a visual center for cutoff/resonance/mode edits instead of expanding the page with more always-visible controls.
 - HOME now includes a compact output spectrum analyzer fed by final-output snapshot telemetry, so the dashboard distinguishes patch intent from actual low/mid/high energy.
@@ -321,9 +321,9 @@ Groups:
 - Perform: Sub, Cutoff, Drive, Output.
 - Macros: Tone, Dirt, Weight, Bounce, Warp, Throw, plus the Motion/Space XY pad.
 - Random Lab: recipe, generate, mutate, variation, undo, status.
-- Library: preset, favorite, and save/load workflow.
+- Session: selected preset, browser filter count, favorite/rating/source state, compare state, random-candidate status, and recall/audition controls.
 
-Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, and preset actions. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, and full envelope editing stay in focused panels.
+Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, session state, and preset recall/audition. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, full save metadata, and full envelope editing stay in focused panels.
 
 HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the most performance-critical macro controls plus the Motion/Space XY pad.
 
@@ -554,6 +554,6 @@ Build the next larger slices in this order:
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
 - Remaining UI polish: direct grid gestures now edit velocity, probability, timing, and length lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
-- HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
+- HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Session while keeping deeper controls on focused panels.
 - HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.
 - A clear path exists for adding more FX without redesigning the page again.

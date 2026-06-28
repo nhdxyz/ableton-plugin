@@ -77,7 +77,7 @@ Based on the local docs and current repo direction, Nate VST already has:
 - JUCE/CMake/VST3 foundation for macOS and Ableton.
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Subtractive synth core with oscillator mix, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
-- Genre-oriented randomization, A/B snapshots, macros, XY pad, and low-end guidance.
+- Genre-oriented randomization, A/B snapshots, macros, XY pad, low-end guidance, and HOME session state for preset recall, compare readiness, and active random candidates.
 - Modulation matrix, LFO/curve tools, macro assignment editor, destination badges, S&H/Smooth/Chaos/LFO 2 movement sources, and a first right-click assignment pass for MOD-targetable controls.
 - Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, and UKG chop helpers.
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.

@@ -4,6 +4,7 @@
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FxRackRow.h"
 #include "UI/HomeOverviewDisplay.h"
+#include "UI/HomeSessionDisplay.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
@@ -666,6 +667,7 @@ private:
     UI::OutputSpectrumDisplay outputSpectrumDisplay;
     UI::StereoFieldDisplay stereoFieldDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
+    UI::HomeSessionDisplay homeSessionDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::PresetSaveSummary presetSaveSummary;
     UI::LowEndAssistant lowEndAssistant;
@@ -779,6 +781,7 @@ private:
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
     void updateHomeOverviewDisplay();
+    void updateHomeSessionDisplay();
     void updateSequencerSceneButtons();
     void updateSequencerGridContext();
     void selectSampleSlice(size_t sliceIndex);

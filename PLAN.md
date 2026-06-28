@@ -54,7 +54,7 @@ Current UI research takeaway:
 - Short option sets should feel immediate, so segmented controls are preferred over dropdowns for choices like waveform and synced step rate.
 - Long option sets still belong in dropdowns or browser lists.
 - Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
-- The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset recall, randomization, and deeper-panel navigation should all be close at hand.
+- The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset session state, recall/audition, randomization, and deeper-panel navigation should all be close at hand while full save metadata stays in LIBRARY.
 - Latest reference review points to low-risk polish before new engines: per-control modulation inspection, deeper preset metadata/audition, tighter UKG chop trimming, selective groove transforms, editable macro assignments, FX module presets, and genre-specific init templates.
 - Larger engine tracks should stay deliberate: wavetable oscillator support, layered partials, motion sequencing lanes, advanced sampler slicing, character filter/drive models, FM/operator options, and vector morphing.
 - Current deep review says Nate VST is no longer missing the basics for a house-focused synth; the biggest remaining gaps are polish and depth: visual drag-style modulation, stronger source engines, per-slice chop lanes, construction-kit browsing, per-lane sequencer modulation, and oversampled nonlinear quality modes.
@@ -1022,13 +1022,13 @@ Possible long-term tab layout:
 
 Current implemented panel layout:
 
-- HOME: engine choices, core tone shaping, unison width, performance macros, randomization, and preset load/save in one dashboard.
-- SYNTH: oscillator waveform segment, mono toggle, unison controls, core filter/drive/output/amp controls.
-- LAB: recipe dropdown, generate, mutate, variation, undo, section locks, status, and randomization bias controls.
-- SAMPLE: sample load/clear, random cut, sample enable/reverse, cut range, pitch, gain, and mix.
-- SEQ: sequencer enable, segmented rate selector, pattern presets, copy/random/clear, groove/performance controls, and the 16-step grid.
-- FX: bypassable Tone, Dist, Phaser, Chorus, Delay, Reverb, and Guard modules.
-- LIBRARY: preset category, preset name entry, save, filter by favorites/recent/source/category, previous/next, preset selector, favorite toggle, load, refresh, and preset folder status.
+- HOME: performance shaping, macro/XY movement, compact Random Lab actions, output/low-end analysis, A/B snapshots, and a Session area for selected-preset metadata, compare state, active random-candidate state, recall, and audition.
+- SYNTH: oscillator waveform segments, source mix, mono/unison controls, Osc Warp, wavetable preview, filter response, filter character/slope, drive/output, and amp controls.
+- LAB: focused Generate, Mutate, Recipe, History, and Save pages with section locks, section strengths, candidate slots, cue/compare, save-from-slot, favorite/rating handoff, and generated-preset notes.
+- SAMPLE: sample load/clear, waveform region editing, phrase markers, slice pads, Slice Keys, reverse, pitch, gain, pan, probability, stutter, choke, and UKG chop helpers.
+- SEQ: piano-roll style sequencer, segmented rate selector, pattern/groove templates, chord memory, velocity/probability/timing/length lanes, A/B/Fill/Drop scenes, host-sync status, and MIDI export.
+- FX: addable/reorderable Tone, Distortion, Bitcrush, Pump, Tremolo, Ring, Comb, Phaser, Flanger, Chorus, Delay, Reverb, Width, and Guard modules with module presets and send-style throws.
+- LIBRARY: Find, Browser, Save Patch, and Inspect work areas with smart crates, search/sort/filter, previous/next/load/audition/favorite, compare/revert, ratings, recursive category/subfolder saves, author/pack/key/BPM metadata, notes/templates, visual Save Target preview, and preset folder status.
 - TOP BAR: panel tabs plus a compact stereo output meter.
 - BOTTOM BAR: persistent piano keyboard for mouse auditioning patches.
 

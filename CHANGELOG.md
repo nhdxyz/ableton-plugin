@@ -1,5 +1,14 @@
 # Nate VST Changelog
 
+## 2026-06-28
+
+### Competitor Gap Analysis Refresh
+
+- Added `docs/COMPETITOR_GAP_ANALYSIS.md`, a larger feature-gap review across Serum, Pigments, Phase Plant, Vital, u-he, Korg, Roland, Ableton, ShaperBox, Saturn, Portal-style granular FX, and UKG production references.
+- Expanded the future feature list across UI quality, source engines, filters, sampling, sequencing, modulation, FX routing, randomization, library, test coverage, and release/distribution.
+- Refreshed the shorter deep-research backlog so already-implemented basic FX work does not stay listed as a next action.
+- Linked the new gap-analysis document from the README.
+
 ## 2026-06-27
 
 ### Preset Browser Macro Preview

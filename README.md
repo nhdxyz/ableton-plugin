@@ -58,7 +58,7 @@ Factory presets can be placed separately at:
 ~/Library/Application Support/Nate VST/Factory Presets
 ```
 
-See [PLAN.md](./PLAN.md) for the full roadmap, [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design, [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md) for the next UI grouping and FX rack direction, and [docs/UK_GARAGE_WORKFLOW.md](./docs/UK_GARAGE_WORKFLOW.md) for the UK garage sound direction.
+See [PLAN.md](./PLAN.md) for the full roadmap, [docs/DEEP_RESEARCH_BACKLOG.md](./docs/DEEP_RESEARCH_BACKLOG.md) for the implementation backlog, [docs/COMPETITOR_GAP_ANALYSIS.md](./docs/COMPETITOR_GAP_ANALYSIS.md) for the expanded competitor gap list, [docs/MODULATION_WORKFLOW.md](./docs/MODULATION_WORKFLOW.md) for the first modulation/performance design, [docs/UI_EFFECTS_ROADMAP.md](./docs/UI_EFFECTS_ROADMAP.md) for the next UI grouping and FX rack direction, and [docs/UK_GARAGE_WORKFLOW.md](./docs/UK_GARAGE_WORKFLOW.md) for the UK garage sound direction.
 
 Current house/UKG workflow focus: cleaner oscillator sources, Osc Warp source motion, Filter Character/Slope modes for bass and stab color, HOME performance macros and club low-end guidance, MOD destination inspection with per-route bypass/delete, SEQ chord/voicing/strum plus one-finger Memory, host-sync status, and selective groove transforms, waveform-based sample chopping with click guards and slice styles, section-scoped randomization, and an addable FX rack with throw controls and module presets.
 

@@ -46,6 +46,8 @@ Primary FX, groove, and club-workflow references:
 
 The largest remaining gap is no longer "does the plugin have enough controls." It is now "does each control feel fast, visual, musical, and reliable inside Ableton." The next work should favor interaction quality, source depth, browser usefulness, and club-specific timing tools over adding more unfocused knobs.
 
+See `docs/COMPETITOR_GAP_ANALYSIS.md` for the expanded 2026-06-28 competitor refresh and a longer cross-product gap list. This file remains the shorter implementation backlog.
+
 ## Priority 0: UI And Workflow Corrections
 
 1. Extract HOME, SYNTH, SAMPLE, MOD, SEQ, FX, LAB, and LIBRARY panels into smaller editor components.
@@ -143,25 +145,25 @@ The largest remaining gap is no longer "does the plugin have enough controls." I
 
 ## Priority 5: FX And Club Processing
 
-81. Add flanger.
-82. Add phaser.
-83. Add bitcrusher/downsample.
-84. Add resonator/comb filter.
-85. Add multi-band distortion.
-86. Add amp/cabinet-style drive for rough warehouse tones.
-87. Add tape, tube, diode, foldback, and hard-clip drive characters.
-88. Add pre/post gain matching for drive modules.
-89. Add EQ module with low-cut, tilt, and presence controls.
-90. Add transient shaper for pluck/stab attack.
-91. Add compressor.
-92. Add sidechain-style ducking input for a future audio-effect build.
-93. Add frequency shifter for minimal and techno motion.
-94. Add chorus ensemble mode.
-95. Add shimmer or pitch reverb mode only if it stays useful for club sound design.
-96. Add delay diffusion mode.
-97. Add ping-pong and Haas-safe width options.
-98. Add FX module presets.
-99. Add parallel wet/dry routing for selected FX.
+81. Add multi-band distortion.
+82. Add movable crossovers and per-band mute/solo for drive.
+83. Add amp/cabinet-style drive for rough warehouse tones.
+84. Add tape, tube, diode, foldback, hard-clip, and sampler-rate drive characters.
+85. Add pre/post gain matching for drive modules.
+86. Add transient shaper for pluck/stab attack.
+87. Add compressor.
+88. Add sidechain-style ducking input for a future audio-effect build.
+89. Add frequency shifter for minimal and techno motion.
+90. Add resonator-bank module beyond the current single comb flavor.
+91. Add chorus ensemble mode.
+92. Add shimmer or pitch reverb mode only if it stays useful for club sound design.
+93. Add delay diffusion mode.
+94. Add reverse delay and tape delay color.
+95. Add ping-pong and Haas-safe width options.
+96. Add per-FX slot presets.
+97. Add whole-rack presets.
+98. Add parallel wet/dry routing for selected FX.
+99. Add send-style delay/reverb throw bus inside the plugin.
 100. Add true slot-based FX instances only after fixed-module automation is proven stable.
 
 ## Priority 6: Randomization And Sound Discovery
@@ -226,10 +228,12 @@ Implemented library sub-slice:
 ## Recommended Next Slices
 
 1. Build automated editor layout checks and component extraction for the largest pages.
-2. Build the macro assignment editor and drag/menu modulation assignment.
-3. Add per-step probability, ratchet, velocity, and modulation lanes.
-4. Add bitcrusher/downsample and flanger as the next two FX modules.
-5. Add sample slice markers and per-slice controls.
-6. Add user tags and smart folders in LIBRARY.
-7. Add wavetable oscillator playback after UI layout risk is reduced.
-8. Add oversampling quality modes after drive/filter behavior is stable.
+2. Fix rotary control feel with fine drag, double-click reset, and value popovers.
+3. Build a real multi-column LIBRARY browser from the existing metadata and macro previews.
+4. Add drag/menu modulation assignment plus selected-parameter route views.
+5. Add sequencer ratchets, note length, pattern slots, and chord paint.
+6. Add sample slice markers and per-slice controls.
+7. Add user tags, smart folders, and preset preview rendering in LIBRARY.
+8. Add wavetable oscillator playback after UI layout risk is reduced.
+9. Add multiband drive with oversampling, gain compensation, and loudness checks.
+10. Add UKG recipe tools for Dred bass, organ bass, late stabs, and vocal chop motifs.

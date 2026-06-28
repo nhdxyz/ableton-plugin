@@ -2,6 +2,12 @@
 
 ## 2026-06-27
 
+### Deep Research Backlog
+
+- Added `docs/DEEP_RESEARCH_BACKLOG.md`, a long feature inventory based on current synth, FX, groove, and UKG production references.
+- Grouped missing work into UI/workflow, modulation, source engines, sampler/chops, sequencer/groove, FX, randomization, library, quality, and Ableton/distribution tracks.
+- Linked the main plan to the new backlog so future implementation slices can be selected from one durable roadmap.
+
 ### LFO Curve Presets And Modulation Ring Badges
 
 - Added a MOD-panel `Curve Preset` selector for saved LFO 1 curve-point parameters, covering garage push, ducking, offbeat, riser/fall, stepped, wobble, and flat movement shapes.

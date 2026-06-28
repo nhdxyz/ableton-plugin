@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Per-Slice Sampler Edit Memory
+
+- Added persisted per-slice edit memory for the eight SAMPLE slice pads, covering custom/default state, pitch, gain, reverse, stutter enable, and stutter repeat count.
+- Added a compact slice edit row with Store, Recall, Dice, and Rev actions for UKG chop work without leaving the SAMPLE tab.
+- Slice pads now mark custom slices with `*` and expose stored pitch/gain/reverse/stutter details in their tooltips.
+- Selecting a custom slice recalls its stored edit values; untouched slices still follow the selected Clean, Pitch, Reverse, Stutter, or Garage style defaults.
+
 ### MSEG Curve Editor Pass
 
 - Upgraded the LFO custom curve display into a denser MSEG-style editor with segment lanes, stronger value guides, focused point readouts, and interpolated drag drawing across multiple points.

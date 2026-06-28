@@ -637,6 +637,46 @@ APVTS::ParameterLayout createLayout()
         sampleSliceStyleChoices(),
         0));
 
+    for (size_t index = 0; index < ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto labelIndex = juce::String(static_cast<int>(index + 1));
+        add(std::make_unique<juce::AudioParameterBool>(
+            ID::sampleSliceCustom[index],
+            "Sample Slice " + labelIndex + " Custom",
+            false));
+
+        add(std::make_unique<juce::AudioParameterBool>(
+            ID::sampleSliceReverse[index],
+            "Sample Slice " + labelIndex + " Reverse",
+            false));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceTranspose[index],
+            "Sample Slice " + labelIndex + " Transpose",
+            juce::NormalisableRange<float> { -24.0f, 24.0f, 0.01f },
+            0.0f,
+            juce::AudioParameterFloatAttributes().withLabel("st")));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceGain[index],
+            "Sample Slice " + labelIndex + " Gain",
+            juce::NormalisableRange<float> { -24.0f, 12.0f, 0.01f },
+            -6.0f,
+            juce::AudioParameterFloatAttributes().withLabel("dB")));
+
+        add(std::make_unique<juce::AudioParameterBool>(
+            ID::sampleSliceStutter[index],
+            "Sample Slice " + labelIndex + " Stutter",
+            false));
+
+        add(std::make_unique<juce::AudioParameterInt>(
+            ID::sampleSliceStutterRepeats[index],
+            "Sample Slice " + labelIndex + " Stutter Repeats",
+            1,
+            8,
+            3));
+    }
+
     add(std::make_unique<juce::AudioParameterBool>(
         ID::sequencerEnabled,
         "Sequencer Enabled",

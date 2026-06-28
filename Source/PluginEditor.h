@@ -119,6 +119,7 @@ private:
     juce::Label sampleSourceLabel;
     juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
+    juce::Label sampleSliceStatusLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
     juce::Label selectedControlHeaderLabel;
@@ -434,6 +435,10 @@ private:
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton ukgChopButton { "UKG Chop" };
     std::array<juce::TextButton, 8> sampleSliceButtons;
+    juce::TextButton sampleSliceStoreButton { "Store" };
+    juce::TextButton sampleSliceRecallButton { "Recall" };
+    juce::TextButton sampleSliceDiceButton { "Dice" };
+    juce::TextButton sampleSliceReverseEditButton { "Rev" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
     juce::TextButton undoSequencerButton { "Undo" };
@@ -545,6 +550,7 @@ private:
     juce::String selectedControlName;
     juce::String selectedControlParameterID;
     double selectedControlPlainValue = 0.0;
+    size_t selectedSampleSliceIndex = 0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -597,6 +603,15 @@ private:
     void updateSequencerGridContext();
     void selectSampleSlice(size_t sliceIndex);
     void updateSampleSliceButtons();
+    void updateSampleSliceEditorStatus();
+    void applySampleSliceStyleDefaults(size_t sliceIndex);
+    void captureCurrentSampleSliceSettings(size_t sliceIndex, bool markCustom);
+    void recallSampleSliceSettings(size_t sliceIndex);
+    void storeSelectedSampleSliceSettings();
+    void recallSelectedSampleSliceSettings();
+    void randomizeSelectedSampleSliceSettings();
+    void toggleSelectedSampleSliceReverse();
+    bool sampleSliceHasCustomSettings(size_t sliceIndex) const;
     void updateSampleWaveformDisplay();
     void timerCallback() override;
     void refreshPresetList();

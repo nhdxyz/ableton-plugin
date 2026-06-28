@@ -136,6 +136,66 @@ inline constexpr auto sampleStutterEnabled = "sample_stutter_enabled";
 inline constexpr auto sampleStutterRate = "sample_stutter_rate";
 inline constexpr auto sampleStutterRepeats = "sample_stutter_repeats";
 inline constexpr auto sampleSliceStyle = "sample_slice_style";
+inline constexpr std::array<const char*, 8> sampleSliceCustom {
+    "sample_slice_1_custom",
+    "sample_slice_2_custom",
+    "sample_slice_3_custom",
+    "sample_slice_4_custom",
+    "sample_slice_5_custom",
+    "sample_slice_6_custom",
+    "sample_slice_7_custom",
+    "sample_slice_8_custom"
+};
+inline constexpr std::array<const char*, 8> sampleSliceReverse {
+    "sample_slice_1_reverse",
+    "sample_slice_2_reverse",
+    "sample_slice_3_reverse",
+    "sample_slice_4_reverse",
+    "sample_slice_5_reverse",
+    "sample_slice_6_reverse",
+    "sample_slice_7_reverse",
+    "sample_slice_8_reverse"
+};
+inline constexpr std::array<const char*, 8> sampleSliceTranspose {
+    "sample_slice_1_transpose",
+    "sample_slice_2_transpose",
+    "sample_slice_3_transpose",
+    "sample_slice_4_transpose",
+    "sample_slice_5_transpose",
+    "sample_slice_6_transpose",
+    "sample_slice_7_transpose",
+    "sample_slice_8_transpose"
+};
+inline constexpr std::array<const char*, 8> sampleSliceGain {
+    "sample_slice_1_gain",
+    "sample_slice_2_gain",
+    "sample_slice_3_gain",
+    "sample_slice_4_gain",
+    "sample_slice_5_gain",
+    "sample_slice_6_gain",
+    "sample_slice_7_gain",
+    "sample_slice_8_gain"
+};
+inline constexpr std::array<const char*, 8> sampleSliceStutter {
+    "sample_slice_1_stutter",
+    "sample_slice_2_stutter",
+    "sample_slice_3_stutter",
+    "sample_slice_4_stutter",
+    "sample_slice_5_stutter",
+    "sample_slice_6_stutter",
+    "sample_slice_7_stutter",
+    "sample_slice_8_stutter"
+};
+inline constexpr std::array<const char*, 8> sampleSliceStutterRepeats {
+    "sample_slice_1_stutter_repeats",
+    "sample_slice_2_stutter_repeats",
+    "sample_slice_3_stutter_repeats",
+    "sample_slice_4_stutter_repeats",
+    "sample_slice_5_stutter_repeats",
+    "sample_slice_6_stutter_repeats",
+    "sample_slice_7_stutter_repeats",
+    "sample_slice_8_stutter_repeats"
+};
 inline constexpr auto sequencerEnabled = "sequencer_enabled";
 inline constexpr auto sequencerRate = "sequencer_rate";
 inline constexpr auto sequencerRoot = "sequencer_root";

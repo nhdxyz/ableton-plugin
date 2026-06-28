@@ -872,6 +872,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetAuthorEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
     addAndMakeVisible(presetAuthorEditor);
 
+    presetNotesEditor.setTextToShowWhenEmpty("Generated notes, macro intent, use case, or Ableton idea", juce::Colour(0xff617078));
+    presetNotesEditor.setMultiLine(true, true);
+    presetNotesEditor.setReturnKeyStartsNewLine(true);
+    presetNotesEditor.setScrollbarsShown(true);
+    presetNotesEditor.setFont(juce::FontOptions(12.0f));
+    presetNotesEditor.setIndents(8, 6);
+    presetNotesEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff101619));
+    presetNotesEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
+    presetNotesEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
+    presetNotesEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+    presetNotesEditor.setColour(juce::TextEditor::highlightColourId, juce::Colour(0x558ee6c9));
+    presetNotesEditor.setTooltip("Editable notes saved into preset metadata and included in Library search");
+    presetNotesEditor.onTextChange = [this] { presetNotesIsRandomDraft = false; };
+    addAndMakeVisible(presetNotesEditor);
+
     randomCandidateDetailEditor.setReadOnly(true);
     randomCandidateDetailEditor.setMultiLine(true, true);
     randomCandidateDetailEditor.setScrollbarsShown(false);
@@ -2790,6 +2805,7 @@ void NateVSTAudioProcessorEditor::resized()
                     presetNameEditor.setVisible(true);
                     presetPackBox.setVisible(true);
                     presetBpmBox.setVisible(true);
+                    presetNotesEditor.setVisible(true);
                     candidateRatingBox.setVisible(true);
                     candidateFavoriteButton.setVisible(true);
                     savePresetButton.setVisible(true);
@@ -2806,6 +2822,7 @@ void NateVSTAudioProcessorEditor::resized()
                     savePresetButton.setBounds(saveRow.removeFromLeft(72).reduced(4));
                     saveCandidateButton.setBounds(saveRow.removeFromLeft(100).reduced(4));
 
+                    presetNotesEditor.setBounds(content.removeFromTop(102).withTrimmedTop(6).reduced(4));
                     presetStatusLabel.setBounds(content.removeFromTop(34).withTrimmedTop(6).reduced(4));
                     break;
                 }
@@ -4808,6 +4825,7 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
     const auto category = suggestedPresetCategoryForRecipe();
     const auto pack = suggestedPresetPackForCategory(category);
     const auto bpm = suggestedPresetBpmForCategory(category);
+    const auto previousDraftWasGenerated = currentPresetDraftIsGenerated;
     currentPresetDraftIsGenerated = true;
     currentGeneratedPresetRecipe = recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab");
 
@@ -4842,6 +4860,19 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
     const auto currentBpm = presetBpmBox.getText().trim();
     if (currentBpm.isEmpty() || currentBpm == "Any Tempo" || presetNameIsRandomDraft)
         presetBpmBox.setText(formatPresetBpm(bpm), juce::dontSendNotification);
+
+    const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
+    const auto shouldWriteDraftNotes = presetNotesEditor.getText().trim().isEmpty()
+        || presetNotesIsRandomDraft
+        || ! previousDraftWasGenerated;
+    if (shouldWriteDraftNotes)
+    {
+        presetNotesEditor.setText(generatedPresetNotes(category,
+                                                       currentGeneratedPresetRecipe,
+                                                       activeSlot),
+                                  juce::dontSendNotification);
+        presetNotesIsRandomDraft = true;
+    }
 
     presetStatusLabel.setText("Draft -> " + category + " / " + pack + " / " + formatPresetBpm(bpm),
                               juce::dontSendNotification);
@@ -6326,7 +6357,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &randomCandidateDetailEditor, &presetBrowserList, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
@@ -7869,7 +7900,15 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     options.generated = currentPresetDraftIsGenerated;
     options.generatedRecipe = currentGeneratedPresetRecipe;
     if (options.generated)
-        options.notes = generatedPresetNotes(options.category, options.generatedRecipe, -1);
+    {
+        options.notes = presetNotesIsRandomDraft
+            ? generatedPresetNotes(options.category, options.generatedRecipe, audioProcessor.getActiveRandomCandidateIndex())
+            : presetNotesEditor.getText().trim();
+    }
+    else
+    {
+        options.notes = presetNotesEditor.getText().trim();
+    }
 
     if (audioProcessor.savePreset(presetName, options))
     {
@@ -7883,6 +7922,7 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         presetBox.setText(storedName, juce::dontSendNotification);
         presetNameEditor.setText(storedName, juce::dontSendNotification);
         presetNameIsRandomDraft = false;
+        presetNotesIsRandomDraft = false;
         currentPresetDraftIsGenerated = false;
         currentGeneratedPresetRecipe.clear();
         updateFavoritePresetButton();
@@ -7924,7 +7964,9 @@ void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
     options.generatedRecipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
         ? currentGeneratedPresetRecipe
         : audioProcessor.getRandomCandidateSummary(activeSlot);
-    options.notes = generatedPresetNotes(options.category, options.generatedRecipe, activeSlot);
+    options.notes = presetNotesIsRandomDraft || presetNotesEditor.getText().trim().isEmpty()
+        ? generatedPresetNotes(options.category, options.generatedRecipe, activeSlot)
+        : presetNotesEditor.getText().trim();
 
     if (audioProcessor.saveRandomCandidatePreset(activeSlot, presetName, options))
     {
@@ -7947,6 +7989,7 @@ void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
         presetBox.setText(storedName, juce::dontSendNotification);
         presetNameEditor.setText(storedName, juce::dontSendNotification);
         presetNameIsRandomDraft = false;
+        presetNotesIsRandomDraft = false;
         currentPresetDraftIsGenerated = false;
         currentGeneratedPresetRecipe.clear();
         updateFavoritePresetButton();
@@ -7969,7 +8012,16 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
         refreshPresetList();
         presetBox.setText(presetName, juce::dontSendNotification);
         presetNameEditor.setText(presetName, juce::dontSendNotification);
+        for (const auto& preset : audioProcessor.getPresetLibrary())
+        {
+            if (preset.name == presetName)
+            {
+                presetNotesEditor.setText(preset.notes, juce::dontSendNotification);
+                break;
+            }
+        }
         presetNameIsRandomDraft = false;
+        presetNotesIsRandomDraft = false;
         currentPresetDraftIsGenerated = false;
         currentGeneratedPresetRecipe.clear();
         presetStatusLabel.setText("Loaded " + presetName, juce::dontSendNotification);

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Editable Generated Notes
+
+- Added an editable multi-line notes field to LAB Save, auto-filled from generated recipe/scope/lock/candidate context while still preserving manual edits during an active generated draft.
+- Save and Save Slot now use the edited notes field when present, while untouched generated drafts refresh notes at save time.
+- Loaded presets can populate the notes field from saved Library metadata, making the Save page a lightweight notes inspector as well as a write surface.
+
 ### Generated Preset Notes
 
 - Added `preset_notes` metadata to generated preset saves so Random Lab presets can carry recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.

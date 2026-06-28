@@ -583,6 +583,7 @@ private:
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
     juce::TextEditor presetAuthorEditor;
+    juce::TextEditor presetNotesEditor;
     juce::TextEditor randomCandidateDetailEditor;
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
@@ -769,6 +770,7 @@ private:
     Panel activePanel = Panel::home;
     RandomLabPage activeRandomLabPage = RandomLabPage::generate;
     bool presetNameIsRandomDraft = false;
+    bool presetNotesIsRandomDraft = false;
     bool currentPresetDraftIsGenerated = false;
     juce::String currentGeneratedPresetRecipe;
     FxModule selectedFxModule = FxModule::guard;

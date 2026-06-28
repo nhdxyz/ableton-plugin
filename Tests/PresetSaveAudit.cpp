@@ -16,6 +16,7 @@ int main()
     options.bpm = 132;
     options.generated = true;
     options.generatedRecipe = "UKG Dred Bass";
+    options.notes = "Custom audit notes\nMacro intent: dark UKG sub";
 
     const auto presetName = "Preset Save Audit " + juce::String(static_cast<int>(juce::Time::getMillisecondCounter() % 1000000));
     auto legalName = juce::File::createLegalFileName(presetName);
@@ -63,8 +64,8 @@ int main()
             || static_cast<int>(state.getProperty("preset_bpm")) != 132
             || state.getProperty("preset_source").toString() != "Generated"
             || state.getProperty("preset_generated_recipe").toString() != "UKG Dred Bass"
-            || ! state.getProperty("preset_notes").toString().contains("Recipe: UKG Dred Bass")
-            || ! state.getProperty("preset_notes").toString().contains("Category: UKG/Bass")
+            || ! state.getProperty("preset_notes").toString().contains("Custom audit notes")
+            || ! state.getProperty("preset_notes").toString().contains("Macro intent: dark UKG sub")
             || ! state.getProperty("preset_tags").toString().contains("Generated")
             || ! state.getProperty("preset_tags").toString().contains("Random Lab"))
         {
@@ -90,7 +91,8 @@ int main()
             && preset.tags.contains("Generated")
             && preset.tags.contains("Random Lab")
             && preset.tags.contains("UKG Dred Bass")
-            && preset.notes.contains("Recipe: UKG Dred Bass");
+            && preset.notes.contains("Custom audit notes")
+            && preset.notes.contains("dark UKG sub");
         break;
     }
 

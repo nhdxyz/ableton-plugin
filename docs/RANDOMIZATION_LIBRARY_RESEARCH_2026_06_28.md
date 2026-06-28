@@ -60,6 +60,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - LAB Generate and Mutate now expose per-section Source, Env, Filter, Sample, FX, Seq, and Macro strength controls that scale generated changes before locks and candidate capture.
 - LAB History now has a visible active-candidate detail panel for slot label, changed sections, trait comparison, and old/new value diff summary.
 - Generated preset saves now write searchable `preset_notes` with recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
+- LAB Save now includes an editable notes field that auto-fills from generated context but preserves user notes before Save or Save Slot.
 
 ## Highest-Value Randomization Backlog
 
@@ -78,7 +79,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 13. Add musical note-range validation for bass, stab, pluck, and FX recipes.
 14. Add recipe-specific chord/scale seeding.
 15. Add macro naming and macro range generation per recipe.
-16. Expand generated notes into editable user notes with macro intent and custom comments before save.
+16. Add macro intent suggestions to generated notes and allow reusable note templates.
 17. Add one-click "save generated pack" for a set of variations.
 18. Add a full recipe browser/table with search, genre filters, favorites, and custom user recipes.
 

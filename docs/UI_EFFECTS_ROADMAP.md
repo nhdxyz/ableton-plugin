@@ -514,6 +514,7 @@ Build the next larger slices in this order:
    First section-strength pass implemented per-section Source, Env, Filter, Sample, FX, Seq, and Macro generation strength controls on LAB Generate/Mutate, with RandomCandidateAudit coverage for zero-strength Filter protection.
    First history-detail pass implemented a visible LAB History active-candidate panel for slot label, changed sections, trait comparison, and old/new value diff summary.
    First generated-notes pass implemented searchable `preset_notes` for generated preset saves with recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
+   First editable-notes pass implemented a LAB Save notes editor that auto-fills generated context, preserves user edits, and reloads saved Library notes for inspection.
 
 8. Modulation visibility workflow: rings, route badges, source activity meters, drag assignment, hover inspection, macro assignment, and route processors.
    First source-meter pass implemented compact MOD source activity meters for LFO 1, Mod Env, Velocity, eight macros, S&H, Smooth, Chaos, and LFO 2 without adding new host parameters.

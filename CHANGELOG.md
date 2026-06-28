@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Focus Pages
+
+- Added a LAB page row with focused `Generate`, `Mutate`, `Recipe`, `History`, and `Save` work areas so randomization no longer exposes every control at once.
+- Kept the existing recipe, scope, lock, candidate, mutation, and save behaviors intact while grouping controls by the current sound-design task.
+- Expanded `EditorLayoutAudit` to verify every Random Lab page in addition to all main panels and FX detail modules.
+
 ### Random Candidate Rating Handoff
 
 - Added LAB save-strip controls for marking `Save Slot` exports as starred and assigning a 1-5 star rating before they enter the Library.

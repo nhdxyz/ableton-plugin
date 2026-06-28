@@ -46,6 +46,15 @@ private:
         library
     };
 
+    enum class RandomLabPage
+    {
+        generate = 0,
+        mutate,
+        recipe,
+        history,
+        save
+    };
+
     enum class FxModule
     {
         tone = 0,
@@ -454,6 +463,7 @@ private:
     juce::TextButton wildMutateButton { "Wild" };
     juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton redoRandomButton { "Redo" };
+    std::array<juce::TextButton, 5> randomLabPageButtons;
     std::array<juce::TextButton, 7> randomSectionRollButtons;
     std::array<juce::TextButton, 4> randomCandidateButtons;
     std::array<juce::TextButton, 4> randomCandidateAuditionButtons;
@@ -630,8 +640,10 @@ private:
     void updateSampleNameLabel();
     void setRandomStatus(const juce::String& action);
     void setActivePanel(Panel panel);
+    void setActiveRandomLabPage(RandomLabPage page);
     void updatePanelVisibility();
     void updateTabButtons();
+    void updateRandomLabPageButtons();
     void hidePanelComponents();
     void setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible);
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);
@@ -744,6 +756,7 @@ private:
     int selectedMacroAssignmentDestinationIndex() const;
 
     Panel activePanel = Panel::home;
+    RandomLabPage activeRandomLabPage = RandomLabPage::generate;
     bool presetNameIsRandomDraft = false;
     bool currentPresetDraftIsGenerated = false;
     juce::String currentGeneratedPresetRecipe;

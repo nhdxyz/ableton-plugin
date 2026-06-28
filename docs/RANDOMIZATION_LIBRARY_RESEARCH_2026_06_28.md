@@ -55,29 +55,29 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - LAB `Save Slot` now writes the active generated candidate into the recursive preset library with generated-source metadata, category folder, pack, key, BPM, and source-recipe tags without recalling the candidate first.
 - Candidate buttons now show changed-section count badges, and recall/cue tooltips include changed sections plus old/new value diffs for the most important sound-shaping controls.
 - LAB `Save Slot` now has candidate-specific favorite and 1-5 star rating controls, and the saved generated preset is immediately available to Library favorite/rating filters.
+- LAB now has focused `Generate`, `Mutate`, `Recipe`, `History`, and `Save` pages so randomization controls are grouped by task instead of shown as one dense control surface.
 
 ## Highest-Value Randomization Backlog
 
-1. Add a Random Lab sub-tab model: `Generate`, `Mutate`, `Recipe`, `History`, and `Save`.
-2. Add a recipe browser with descriptions, intended genres, BPM range, and "good for" tags.
-3. Add randomization intensity per section, not only one global Amount and Chaos.
-4. Add route-level locks for modulation matrix slots.
-5. Add target locks for specific controls by right-clicking a knob and choosing "Lock from Random".
-6. Add a larger visible mutation diff panel with changed parameters, old value, new value, and section.
-7. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
-8. Add "promote variation" and "discard variation" actions.
-9. Add per-candidate row save/favorite/rating shortcuts so each generated slot can be organized without using the shared save strip.
-10. Add favorite-aware randomization seeded from 4-5 star presets.
-11. Add "more like selected preset" using parameter-distance mutation.
-12. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.
-13. Add safety meters during randomization: output peak, sub stereo risk, drive risk, FX tail risk.
-14. Add a loudness-normalized audition note after randomization.
-15. Add randomizer output validation that rejects silent, clipping, or inaudible patches.
-16. Add musical note-range validation for bass, stab, pluck, and FX recipes.
-17. Add recipe-specific chord/scale seeding.
-18. Add macro naming and macro range generation per recipe.
-19. Add generated preset notes: recipe, scope, locks, date, macro intent, and suggested Ableton use.
-20. Add one-click "save generated pack" for a set of variations.
+1. Add a recipe browser with descriptions, intended genres, BPM range, and "good for" tags.
+2. Add randomization intensity per section, not only one global Amount and Chaos.
+3. Add route-level locks for modulation matrix slots.
+4. Add target locks for specific controls by right-clicking a knob and choosing "Lock from Random".
+5. Add a larger visible mutation diff panel with changed parameters, old value, new value, and section.
+6. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
+7. Add "promote variation" and "discard variation" actions.
+8. Add per-candidate row save/favorite/rating shortcuts so each generated slot can be organized without using the shared save strip.
+9. Add favorite-aware randomization seeded from 4-5 star presets.
+10. Add "more like selected preset" using parameter-distance mutation.
+11. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.
+12. Add safety meters during randomization: output peak, sub stereo risk, drive risk, FX tail risk.
+13. Add a loudness-normalized audition note after randomization.
+14. Add randomizer output validation that rejects silent, clipping, or inaudible patches.
+15. Add musical note-range validation for bass, stab, pluck, and FX recipes.
+16. Add recipe-specific chord/scale seeding.
+17. Add macro naming and macro range generation per recipe.
+18. Add generated preset notes: recipe, scope, locks, date, macro intent, and suggested Ableton use.
+19. Add one-click "save generated pack" for a set of variations.
 
 ## House And UKG-Specific Generator Ideas
 

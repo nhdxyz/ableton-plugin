@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 
 namespace
@@ -1820,6 +1821,34 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomLockOutputButton.onClick = updateLockStatus;
     randomLockSequencerButton.onClick = updateLockStatus;
 
+    const std::array<juce::String, 5> randomLabPageLabels {
+        "Generate",
+        "Mutate",
+        "Recipe",
+        "History",
+        "Save"
+    };
+
+    const std::array<juce::String, 5> randomLabPageTooltips {
+        "Generate fresh house and UKG-ready ideas",
+        "Vary or push the current generated sound",
+        "Tune recipe, scope, locks, and generation bias",
+        "Cue, recall, and promote generated candidate slots",
+        "Name, categorize, star, rate, and save generated patches"
+    };
+
+    for (size_t index = 0; index < randomLabPageButtons.size(); ++index)
+    {
+        auto& button = randomLabPageButtons[index];
+        button.setButtonText(randomLabPageLabels[index]);
+        button.setTooltip(randomLabPageTooltips[index]);
+        button.onClick = [this, index]
+        {
+            setActiveRandomLabPage(static_cast<RandomLabPage>(index));
+        };
+        addAndMakeVisible(button);
+    }
+
     const std::array<juce::String, 7> sectionRollLabels {
         "Source",
         "Env",
@@ -2421,95 +2450,208 @@ void NateVSTAudioProcessorEditor::resized()
         case Panel::lab:
         {
             randomSectionLabel.setVisible(true);
-            recipeBox.setVisible(true);
-            randomScopeBox.setVisible(true);
-            generateButton.setVisible(true);
-            mutateButton.setVisible(true);
-            variationButton.setVisible(true);
-            wildMutateButton.setVisible(true);
-            undoRandomButton.setVisible(true);
-            redoRandomButton.setVisible(true);
-            randomLockPitchButton.setVisible(true);
-            randomLockEnvelopeButton.setVisible(true);
-            randomLockFilterButton.setVisible(true);
-            randomLockSourceButton.setVisible(true);
-            randomLockSampleButton.setVisible(true);
-            randomLockFxButton.setVisible(true);
-            randomLockOutputButton.setVisible(true);
-            randomLockSequencerButton.setVisible(true);
-            randomStatusLabel.setVisible(true);
-            presetCategoryBox.setVisible(true);
-            presetNameEditor.setVisible(true);
-            presetPackBox.setVisible(true);
-            presetBpmBox.setVisible(true);
-            candidateRatingBox.setVisible(true);
-            candidateFavoriteButton.setVisible(true);
-            savePresetButton.setVisible(true);
-            saveCandidateButton.setVisible(true);
-            presetStatusLabel.setVisible(true);
-            for (auto& button : randomSectionRollButtons)
-                button.setVisible(true);
-            for (auto& button : randomCandidateButtons)
-                button.setVisible(true);
-            for (auto& button : randomCandidateAuditionButtons)
-                button.setVisible(true);
-            promoteCandidateAButton.setVisible(true);
-            promoteCandidateBButton.setVisible(true);
-            updateRandomCandidateButtons();
             randomSectionLabel.setBounds(content.removeFromTop(28));
-            auto actionRow = content.removeFromTop(48);
-            recipeBox.setBounds(actionRow.removeFromLeft(210).reduced(4));
-            randomScopeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            generateButton.setBounds(actionRow.removeFromLeft(96).reduced(4));
-            mutateButton.setBounds(actionRow.removeFromLeft(96).reduced(4));
-            variationButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
-            wildMutateButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
-            undoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
-            redoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
-            auto sectionRollRow = content.removeFromTop(40).withTrimmedTop(4);
-            const auto sectionButtonWidth = sectionRollRow.getWidth() / static_cast<int>(randomSectionRollButtons.size());
-            for (auto& button : randomSectionRollButtons)
-                button.setBounds(sectionRollRow.removeFromLeft(sectionButtonWidth).reduced(4));
-            auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
-            const auto lockButtonWidth = lockRow.getWidth() / 8;
-            randomLockPitchButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockEnvelopeButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockFilterButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockSourceButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockSampleButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockFxButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockOutputButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
-            randomLockSequencerButton.setBounds(lockRow.reduced(4));
-            randomStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
-            auto candidateRow = content.removeFromTop(40).withTrimmedTop(6);
-            auto promoteArea = candidateRow.removeFromRight(104);
-            promoteCandidateAButton.setBounds(promoteArea.removeFromLeft(52).reduced(4));
-            promoteCandidateBButton.setBounds(promoteArea.removeFromLeft(52).reduced(4));
-            const auto candidateButtonWidth = candidateRow.getWidth() / static_cast<int>(randomCandidateButtons.size());
-            for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
+
+            auto pageRow = content.removeFromTop(42).withTrimmedTop(4);
+            const auto pageButtonWidth = pageRow.getWidth() / static_cast<int>(randomLabPageButtons.size());
+            for (auto& button : randomLabPageButtons)
             {
-                auto candidateCell = candidateRow.removeFromLeft(candidateButtonWidth).reduced(4);
-                randomCandidateAuditionButtons[index].setBounds(candidateCell.removeFromRight(44).withTrimmedLeft(3));
-                randomCandidateButtons[index].setBounds(candidateCell);
+                button.setVisible(true);
+                button.setBounds(pageRow.removeFromLeft(pageButtonWidth).reduced(4));
             }
-            content.removeFromTop(6);
-            setSliderVisible(randomAmountSlider, randomAmountLabel, true);
-            setSliderVisible(randomChaosSlider, randomChaosLabel, true);
-            setSliderVisible(brightnessSlider, brightnessLabel, true);
-            setSliderVisible(driveBiasSlider, driveBiasLabel, true);
-            setSliderVisible(motionBiasSlider, motionBiasLabel, true);
-            layoutKnobRow(content.removeFromTop(112), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
-            content.removeFromTop(8);
-            auto saveRow = content.removeFromTop(42);
-            presetCategoryBox.setBounds(saveRow.removeFromLeft(136).reduced(4));
-            presetNameEditor.setBounds(saveRow.removeFromLeft(194).reduced(4));
-            presetPackBox.setBounds(saveRow.removeFromLeft(126).reduced(4));
-            presetBpmBox.setBounds(saveRow.removeFromLeft(78).reduced(4));
-            candidateRatingBox.setBounds(saveRow.removeFromLeft(96).reduced(4));
-            candidateFavoriteButton.setBounds(saveRow.removeFromLeft(54).reduced(4));
-            savePresetButton.setBounds(saveRow.removeFromLeft(72).reduced(4));
-            saveCandidateButton.setBounds(saveRow.removeFromLeft(100).reduced(4));
-            presetStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
+            updateRandomLabPageButtons();
+
+            auto showRecipeControls = [&content, this] (bool includeGenerate)
+            {
+                recipeBox.setVisible(true);
+                randomScopeBox.setVisible(true);
+                if (includeGenerate)
+                    generateButton.setVisible(true);
+
+                auto row = content.removeFromTop(48).withTrimmedTop(4);
+                recipeBox.setBounds(row.removeFromLeft(240).reduced(4));
+                randomScopeBox.setBounds(row.removeFromLeft(132).reduced(4));
+                if (includeGenerate)
+                    generateButton.setBounds(row.removeFromLeft(112).reduced(4));
+            };
+
+            auto showSectionRolls = [&content, this]
+            {
+                auto row = content.removeFromTop(42).withTrimmedTop(6);
+                const auto buttonWidth = row.getWidth() / static_cast<int>(randomSectionRollButtons.size());
+                for (auto& button : randomSectionRollButtons)
+                {
+                    button.setVisible(true);
+                    button.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                }
+            };
+
+            auto showLockRow = [&content, this]
+            {
+                randomLockPitchButton.setVisible(true);
+                randomLockEnvelopeButton.setVisible(true);
+                randomLockFilterButton.setVisible(true);
+                randomLockSourceButton.setVisible(true);
+                randomLockSampleButton.setVisible(true);
+                randomLockFxButton.setVisible(true);
+                randomLockOutputButton.setVisible(true);
+                randomLockSequencerButton.setVisible(true);
+
+                auto row = content.removeFromTop(44).withTrimmedTop(6);
+                const auto buttonWidth = row.getWidth() / 8;
+                randomLockPitchButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockEnvelopeButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockFilterButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockSourceButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockSampleButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockFxButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockOutputButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
+                randomLockSequencerButton.setBounds(row.reduced(4));
+            };
+
+            auto showRandomBiasKnobs = [&content, this]
+            {
+                setSliderVisible(randomAmountSlider, randomAmountLabel, true);
+                setSliderVisible(randomChaosSlider, randomChaosLabel, true);
+                setSliderVisible(brightnessSlider, brightnessLabel, true);
+                setSliderVisible(driveBiasSlider, driveBiasLabel, true);
+                setSliderVisible(motionBiasSlider, motionBiasLabel, true);
+                layoutKnobRow(content.removeFromTop(112).withTrimmedTop(8), {
+                    &randomAmountSlider,
+                    &randomChaosSlider,
+                    &brightnessSlider,
+                    &driveBiasSlider,
+                    &motionBiasSlider
+                });
+            };
+
+            auto showCandidateRow = [&content, this] (bool includePromote)
+            {
+                for (auto& button : randomCandidateButtons)
+                    button.setVisible(true);
+                for (auto& button : randomCandidateAuditionButtons)
+                    button.setVisible(true);
+
+                if (includePromote)
+                {
+                    promoteCandidateAButton.setVisible(true);
+                    promoteCandidateBButton.setVisible(true);
+                }
+
+                updateRandomCandidateButtons();
+
+                auto row = content.removeFromTop(54).withTrimmedTop(8);
+                if (includePromote)
+                {
+                    auto promoteArea = row.removeFromRight(112);
+                    promoteCandidateAButton.setBounds(promoteArea.removeFromLeft(56).reduced(4));
+                    promoteCandidateBButton.setBounds(promoteArea.removeFromLeft(56).reduced(4));
+                }
+
+                const auto buttonWidth = row.getWidth() / static_cast<int>(randomCandidateButtons.size());
+                for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
+                {
+                    auto candidateCell = row.removeFromLeft(buttonWidth).reduced(4);
+                    randomCandidateAuditionButtons[index].setBounds(candidateCell.removeFromRight(44).withTrimmedLeft(3));
+                    randomCandidateButtons[index].setBounds(candidateCell);
+                }
+            };
+
+            auto showStatus = [&content, this]
+            {
+                randomStatusLabel.setVisible(true);
+                randomStatusLabel.setBounds(content.removeFromTop(34).withTrimmedTop(6).reduced(4));
+            };
+
+            switch (activeRandomLabPage)
+            {
+                case RandomLabPage::generate:
+                {
+                    showRecipeControls(true);
+                    showSectionRolls();
+                    showRandomBiasKnobs();
+                    showStatus();
+                    break;
+                }
+
+                case RandomLabPage::mutate:
+                {
+                    recipeBox.setVisible(true);
+                    randomScopeBox.setVisible(true);
+                    variationButton.setVisible(true);
+                    mutateButton.setVisible(true);
+                    wildMutateButton.setVisible(true);
+                    undoRandomButton.setVisible(true);
+                    redoRandomButton.setVisible(true);
+
+                    auto row = content.removeFromTop(48).withTrimmedTop(4);
+                    recipeBox.setBounds(row.removeFromLeft(220).reduced(4));
+                    randomScopeBox.setBounds(row.removeFromLeft(118).reduced(4));
+                    variationButton.setBounds(row.removeFromLeft(84).reduced(4));
+                    mutateButton.setBounds(row.removeFromLeft(96).reduced(4));
+                    wildMutateButton.setBounds(row.removeFromLeft(76).reduced(4));
+                    undoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
+                    redoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
+                    showRandomBiasKnobs();
+                    showStatus();
+                    break;
+                }
+
+                case RandomLabPage::recipe:
+                {
+                    showRecipeControls(true);
+                    showLockRow();
+                    showRandomBiasKnobs();
+                    showStatus();
+                    break;
+                }
+
+                case RandomLabPage::history:
+                {
+                    showCandidateRow(true);
+                    undoRandomButton.setVisible(true);
+                    redoRandomButton.setVisible(true);
+                    variationButton.setVisible(true);
+                    mutateButton.setVisible(true);
+
+                    auto row = content.removeFromTop(46).withTrimmedTop(6);
+                    undoRandomButton.setBounds(row.removeFromLeft(90).reduced(4));
+                    redoRandomButton.setBounds(row.removeFromLeft(90).reduced(4));
+                    variationButton.setBounds(row.removeFromLeft(90).reduced(4));
+                    mutateButton.setBounds(row.removeFromLeft(100).reduced(4));
+                    showStatus();
+                    break;
+                }
+
+                case RandomLabPage::save:
+                {
+                    showCandidateRow(false);
+
+                    presetCategoryBox.setVisible(true);
+                    presetNameEditor.setVisible(true);
+                    presetPackBox.setVisible(true);
+                    presetBpmBox.setVisible(true);
+                    candidateRatingBox.setVisible(true);
+                    candidateFavoriteButton.setVisible(true);
+                    savePresetButton.setVisible(true);
+                    saveCandidateButton.setVisible(true);
+                    presetStatusLabel.setVisible(true);
+
+                    auto saveRow = content.removeFromTop(48).withTrimmedTop(6);
+                    presetCategoryBox.setBounds(saveRow.removeFromLeft(136).reduced(4));
+                    presetNameEditor.setBounds(saveRow.removeFromLeft(194).reduced(4));
+                    presetPackBox.setBounds(saveRow.removeFromLeft(126).reduced(4));
+                    presetBpmBox.setBounds(saveRow.removeFromLeft(78).reduced(4));
+                    candidateRatingBox.setBounds(saveRow.removeFromLeft(96).reduced(4));
+                    candidateFavoriteButton.setBounds(saveRow.removeFromLeft(54).reduced(4));
+                    savePresetButton.setBounds(saveRow.removeFromLeft(72).reduced(4));
+                    saveCandidateButton.setBounds(saveRow.removeFromLeft(100).reduced(4));
+
+                    presetStatusLabel.setBounds(content.removeFromTop(34).withTrimmedTop(6).reduced(4));
+                    break;
+                }
+            }
+
             break;
         }
 
@@ -3270,8 +3412,17 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         FxModule::guard
     };
 
+    const std::array<std::pair<RandomLabPage, const char*>, 5> randomLabPages {
+        std::pair<RandomLabPage, const char*> { RandomLabPage::generate, "Generate" },
+        std::pair<RandomLabPage, const char*> { RandomLabPage::mutate, "Mutate" },
+        std::pair<RandomLabPage, const char*> { RandomLabPage::recipe, "Recipe" },
+        std::pair<RandomLabPage, const char*> { RandomLabPage::history, "History" },
+        std::pair<RandomLabPage, const char*> { RandomLabPage::save, "Save" }
+    };
+
     const auto originalPanel = activePanel;
     const auto originalFxModule = selectedFxModule;
+    const auto originalRandomLabPage = activeRandomLabPage;
     juce::StringArray issues;
 
     auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
@@ -3293,6 +3444,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 auditCurrentLayout(juce::String(panel.name) + "/" + fxModuleName(module));
             }
         }
+        else if (panel.panel == Panel::lab)
+        {
+            for (const auto& page : randomLabPages)
+            {
+                activeRandomLabPage = page.first;
+                auditCurrentLayout(juce::String(panel.name) + "/" + page.second);
+            }
+        }
         else
         {
             auditCurrentLayout(panel.name);
@@ -3301,6 +3460,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
 
     activePanel = originalPanel;
     selectedFxModule = originalFxModule;
+    activeRandomLabPage = originalRandomLabPage;
     updatePanelVisibility();
     resized();
 
@@ -5774,10 +5934,19 @@ void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
     repaint();
 }
 
+void NateVSTAudioProcessorEditor::setActiveRandomLabPage(RandomLabPage page)
+{
+    activeRandomLabPage = page;
+    updateRandomLabPageButtons();
+    resized();
+    repaint();
+}
+
 void NateVSTAudioProcessorEditor::updatePanelVisibility()
 {
     hidePanelComponents();
     updateTabButtons();
+    updateRandomLabPageButtons();
 }
 
 void NateVSTAudioProcessorEditor::updateTabButtons()
@@ -5790,6 +5959,13 @@ void NateVSTAudioProcessorEditor::updateTabButtons()
     sequencerTabButton.setToggleState(activePanel == Panel::sequencer, juce::dontSendNotification);
     effectsTabButton.setToggleState(activePanel == Panel::effects, juce::dontSendNotification);
     libraryTabButton.setToggleState(activePanel == Panel::library, juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
+{
+    for (size_t index = 0; index < randomLabPageButtons.size(); ++index)
+        randomLabPageButtons[index].setToggleState(activeRandomLabPage == static_cast<RandomLabPage>(index),
+                                                   juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::hidePanelComponents()
@@ -5844,6 +6020,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     for (auto& slider : lfoCurveSliders)
         slider.setVisible(false);
+
+    for (auto& button : randomLabPageButtons)
+        button.setVisible(false);
 
     for (auto& button : randomSectionRollButtons)
         button.setVisible(false);

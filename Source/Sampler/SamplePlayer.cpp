@@ -239,6 +239,12 @@ void SamplePlayer::clear()
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
 }
 
+void SamplePlayer::stopAllVoices()
+{
+    const juce::SpinLock::ScopedLockType lock(sampleLock);
+    voices = {};
+}
+
 bool SamplePlayer::loadFile(const juce::File& file)
 {
     if (! file.existsAsFile())
@@ -407,6 +413,8 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer,
             startVoice(*sampleData, message.getNoteNumber(), message.getFloatVelocity(), bpm, false);
         else if (message.isNoteOff())
             stopVoicesForNote(message.getNoteNumber());
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+            voices = {};
     }
 
     if (cursor < outputBuffer.getNumSamples())

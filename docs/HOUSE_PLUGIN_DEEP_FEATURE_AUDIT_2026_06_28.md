@@ -71,7 +71,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 13. Add optional mousewheel editing, disabled by default for trackpad safety.
 14. Add icon buttons for save, load, favorite, audition, undo, redo, copy, paste, clear, up, down, and random.
 15. Add clearer inactive/disabled styling for controls that do not affect the current mode.
-16. Add a global panic/all-notes-off button.
+16. Add a global panic/all-notes-off button. First bottom-keyboard panic pass implemented for keyboard, chord memory, synth MIDI, and sampler voices.
 17. Add top-bar CPU estimate, voice count, output guard, and oversampling status.
 18. Add a first-run "compact help" overlay only if it can be dismissed permanently.
 

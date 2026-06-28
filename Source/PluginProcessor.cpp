@@ -177,6 +177,18 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     buffer.clear();
 
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
+    if (panicRequested.exchange(false, std::memory_order_acq_rel))
+    {
+        clearChordMemoryActiveNotes();
+        samplePlayer.stopAllVoices();
+
+        for (auto channel = 1; channel <= 16; ++channel)
+        {
+            midiMessages.addEvent(juce::MidiMessage::allNotesOff(channel), 0);
+            midiMessages.addEvent(juce::MidiMessage::allSoundOff(channel), 0);
+        }
+    }
+
     applyChordMemoryToMidi(midiMessages);
     const auto hostBpm = getHostBpm();
     const auto hostPosition = getHostPosition();
@@ -1696,6 +1708,12 @@ void NateVSTAudioProcessor::notePresetLoaded(const juce::String& presetName)
 juce::MidiKeyboardState& NateVSTAudioProcessor::getMidiKeyboardState() noexcept
 {
     return midiKeyboardState;
+}
+
+void NateVSTAudioProcessor::panicAllNotesOff()
+{
+    midiKeyboardState.allNotesOff(0);
+    panicRequested.store(true, std::memory_order_release);
 }
 
 void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,

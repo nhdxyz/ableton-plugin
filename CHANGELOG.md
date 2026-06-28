@@ -30,6 +30,11 @@
 - Preserved each control's base tooltip when modulation indicators update, appending source/depth status instead of replacing the original control guidance.
 - MOD-targetable controls now update the selected-control inspector on hover, giving a first hover-to-show-routes workflow without needing to move the knob.
 
+### Panic Stop Workflow
+
+- Upgraded the bottom keyboard `Panic` action so it queues all-notes-off/all-sound-off across MIDI channels, clears chord-memory held notes, and stops active sampler voices.
+- Sampler playback now responds to incoming all-notes-off and all-sound-off messages, so Slice Keys and auditioned chops can be stopped predictably while iterating.
+
 ### Right-Click Modulation Assignment
 
 - Added right-click modulation menus to MOD-targetable sliders so cutoff, drive, Osc Warp, sample chop controls, and FX movement controls can receive routes without first navigating to the MOD matrix.

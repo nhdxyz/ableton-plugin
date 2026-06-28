@@ -125,6 +125,7 @@ public:
     bool recallPerformanceSnapshot(int slotIndex);
     bool hasPerformanceSnapshot(int slotIndex) const;
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
+    void panicAllNotesOff();
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
     struct HostSyncStatus
@@ -184,6 +185,7 @@ private:
     std::atomic<bool> hostSyncPositionAvailable { false };
     std::atomic<bool> hostSyncPlaying { false };
     std::atomic<bool> hostSyncPpqAvailable { false };
+    std::atomic<bool> panicRequested { false };
     float lowEndStateLeft = 0.0f;
     float lowEndStateRight = 0.0f;
     double meterSampleRate = 44100.0;

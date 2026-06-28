@@ -531,11 +531,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
 
-    keyboardPanicButton.setTooltip("Release all audition notes");
+    keyboardPanicButton.setTooltip("Stop held keyboard, chord-memory, synth, and sample voices");
     keyboardPanicButton.onClick = [this]
     {
         releasePresetAuditionNote();
-        audioProcessor.getMidiKeyboardState().allNotesOff(0);
+        audioProcessor.panicAllNotesOff();
+        setRandomStatus("Panic: all notes off");
     };
     addAndMakeVisible(keyboardPanicButton);
 

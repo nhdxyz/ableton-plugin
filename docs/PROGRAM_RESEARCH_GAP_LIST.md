@@ -259,7 +259,7 @@ Nate VST gaps:
 15. Add icon buttons for common actions.
 16. Add stronger hover/active/disabled states.
 17. Add output, voice count, and CPU estimate in the top bar.
-18. Add global panic/all-notes-off.
+18. Add global panic/all-notes-off. First bottom-keyboard panic pass implemented for keyboard, chord memory, synth MIDI, and sampler voices.
 19. Add Guard activity telemetry in the UI.
 20. Add a signal-flow mini-map across source, sample, filter, FX, and output.
 21. Add routing visualization for inserts, throws, sends, safety/Guard, and future parallel paths.

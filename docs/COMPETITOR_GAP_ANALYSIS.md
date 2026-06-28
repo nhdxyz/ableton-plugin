@@ -80,7 +80,7 @@ Nate VST should become a fast club-music instrument, not a generic copy of every
 24. Add signal-flow mini-map across synth, sample, FX, and output.
 25. Add mini level meters for synth layer, sample layer, FX input, FX output, and final output.
 26. Add CPU/voice count indicators in the top bar.
-27. Add a global panic/all-notes-off button.
+27. Add a global panic/all-notes-off button. First bottom-keyboard panic pass implemented for keyboard, chord memory, synth MIDI, and sampler voices.
 28. Add a safe-output warning when Guard is working too often.
 29. Add consistent visual language for source, modulation, sequence, effect, and library surfaces.
 30. Add a dedicated visual design pass after component extraction.

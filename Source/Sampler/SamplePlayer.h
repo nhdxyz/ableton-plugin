@@ -49,6 +49,7 @@ public:
 
     void prepare(double sampleRate);
     void clear();
+    void stopAllVoices();
 
     bool loadFile(const juce::File& file);
     bool hasSample() const;

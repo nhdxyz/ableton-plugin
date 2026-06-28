@@ -314,7 +314,7 @@ Implemented P5 sub-slice:
 223. Add folder tree view for user and factory libraries.
 224. Add pack manager with import/export.
 225. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
-226. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
+226. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 227. Add preset version history for user saves.
 228. Add missing sample warnings in browser rows.
 229. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.

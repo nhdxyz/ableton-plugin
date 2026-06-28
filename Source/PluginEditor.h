@@ -14,6 +14,7 @@
 #include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
 #include "UI/PresetLibrarySummary.h"
+#include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StereoFieldDisplay.h"
@@ -666,6 +667,7 @@ private:
     UI::StereoFieldDisplay stereoFieldDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
+    UI::PresetSaveSummary presetSaveSummary;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
@@ -797,6 +799,7 @@ private:
     void timerCallback() override;
     void refreshPresetList();
     void updatePresetLibrarySummary();
+    void updatePresetSaveSummary();
     bool isPresetOverwriteArmed(const juce::String& presetName, const juce::String& category) const;
     void armPresetOverwrite(const juce::String& presetName, const juce::String& category);
     void clearPresetOverwriteWarning();

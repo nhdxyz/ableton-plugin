@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Save UI Preview
+
+- Added a dedicated `PresetSaveSummary` component to the LIBRARY Save Patch column so the target name, category path, pack/key/BPM, author, notes length, generated state, and overwrite state are visible before saving.
+- Moved the selected-preset rating dropdown out of the Save metadata row and into the browser action area beside compare/revert, making rating clearly part of preset inspection instead of save-file metadata.
+- Kept the change UI-only: no preset XML schema, APVTS parameter, automation ID, or audio-engine behavior changes.
+
 ### Expanded 48-Preset House Factory Pack
 
 - Expanded the repo-managed factory pack from 40 to 48 presets with Piano House Riff Keys, Disco House Filter Stab, Latin House Perc Organ, Organic House Kalimba Pluck, Dub Techno Chord Wash, Warehouse Techno Rumble Hit, Breakbeat Garage Reese, and Electro House Sync Lead.

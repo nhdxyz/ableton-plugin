@@ -533,7 +533,7 @@ These should stay near the top because every future feature becomes harder if th
 6. Add tag editor for existing presets.
 7. Add multi-select metadata editing.
 8. Expand preset notes into structured production tips, source-recipe context, and batch-editable metadata.
-9. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
+9. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 10. Add preset version history for user saves.
 11. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
 12. Add library repair/reindex command.

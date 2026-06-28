@@ -38,7 +38,7 @@ Implemented foundation pass:
 - `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
 - HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
 - HOME preset access is now recall/audition-only, and the deeper save workflow lives in LIBRARY.
-- LIBRARY now uses Find, Browser, Save Patch, and Inspect work areas, plus a dedicated preset summary component with library stats, selected-preset metadata, macro shape, and notes.
+- LIBRARY now uses Find, Browser, Save Patch, and Inspect work areas, plus dedicated preset summary and save-target summary components with library stats, selected-preset metadata, macro shape, notes, save path, metadata, generated/overwrite status, and clearer rating placement.
 - SYNTH now includes a compact filter response display, giving the filter group a visual center for cutoff/resonance/mode edits instead of expanding the page with more always-visible controls.
 - HOME now includes a compact output spectrum analyzer fed by final-output snapshot telemetry, so the dashboard distinguishes patch intent from actual low/mid/high energy.
 - The filter response display now includes modulation range overlays for filter destinations, making MOD assignments visible directly in the sound-shaping view.
@@ -92,6 +92,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
 - Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
 - Browser workflow: large synths make preset search, tags, categories, favorites, ratings, sort modes, folders, and per-section browsing feel central rather than secondary.
+- Latest UI reference pass: Serum 2 emphasizes a visual creative workflow and large genre-organized preset ecosystem; Pigments emphasizes color-coded drag-and-drop modulation, Play View, and generative sequencing; Hive emphasizes rearrangeable/modulatable FX, a deep matrix that does not get in the way, XY pads, and scope feedback; Korg modwave emphasizes Kaoss-style gesture control and multi-lane Motion Sequencing. Nate VST should keep adding visual state summaries, motion views, and organized house-focused content rather than returning to dense control grids.
 - Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. SEQ and FX now expose a compact host-sync status badge for lock/stopped/internal fallback state. Remaining work is deeper per-lane modulation sync and richer phase visualization.
 - Audio quality: oscillator and drive stages need bandlimiting/oversampling attention before the synth can compete with polished commercial dance plugins at bright high-note settings. The first oscillator pass is implemented with polyBLEP saw/square generation, an integrated bandlimited triangle, and safer upper-register phase increments.
 
@@ -533,6 +534,7 @@ Build the next larger slices in this order:
    First history-detail pass implemented a visible LAB History active-candidate panel for slot label, changed sections, trait comparison, and old/new value diff summary.
    First generated-notes pass implemented searchable `preset_notes` for generated preset saves with recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
    First editable-notes pass implemented a LAB Save notes editor that auto-fills generated context, preserves user edits, and reloads saved Library notes for inspection.
+   First save-target visualization pass implemented a `PresetSaveSummary` card in LIBRARY with path, metadata, generated/new/existing/overwrite status, notes length, and browser-rating separation.
    First note-template pass implemented reusable LAB Save templates for macro intent, Ableton use, UKG variation notes, mix safety, and pack organization.
    First useful-only validation pass implemented post-randomization guardrails for silent sources, unsafe output gain, bass/stab sequencer range, bass width, tiny sample windows, and candidate validation summaries.
    First render-validation pass implemented a short internal synth/sample/FX render after randomization to catch quiet, clipped, non-finite, and heavy-tail generated candidates before capture.

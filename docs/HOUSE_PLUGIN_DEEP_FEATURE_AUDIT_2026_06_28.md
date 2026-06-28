@@ -237,7 +237,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 158. Add editable user tag manager.
 159. Add pack installer/exporter.
 160. Add construction-kit presets storing patch, sample, sequence, key, BPM, macro intent, and recommended FX.
-161. Extend preset compare/revert into visual overwrite, generated-slot, and edited-vs-saved workflows. First explicit Library load compare/revert and same-folder overwrite guard passes are implemented.
+161. Extend preset compare/revert into generated-slot and edited-vs-saved workflows. First explicit Library load compare/revert, same-folder overwrite guard, and Save Target visual preview passes are implemented.
 162. Add random mutation history.
 163. Add "similar preset" later using metadata first, audio fingerprinting later.
 164. Add sample folder indexing.

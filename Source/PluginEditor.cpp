@@ -1061,6 +1061,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetBrowserList.setTooltip("Click a preset row to select it. Double-click a row to load it.");
     addAndMakeVisible(presetBrowserList);
     addAndMakeVisible(presetLibrarySummary);
+    addAndMakeVisible(presetSaveSummary);
 
     randomStatusLabel.setText("Ready", juce::dontSendNotification);
     randomStatusLabel.setJustificationType(juce::Justification::centredLeft);
@@ -1170,6 +1171,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         presetNameIsRandomDraft = false;
         clearPresetOverwriteWarning();
+        updatePresetSaveSummary();
     };
     addAndMakeVisible(presetNameEditor);
 
@@ -1186,6 +1188,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetAuthorEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
     presetAuthorEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
     presetAuthorEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+    presetAuthorEditor.onTextChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetAuthorEditor);
 
     presetNotesEditor.setTextToShowWhenEmpty("Generated notes, macro intent, use case, or Ableton idea", juce::Colour(0xff617078));
@@ -1200,7 +1203,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetNotesEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
     presetNotesEditor.setColour(juce::TextEditor::highlightColourId, juce::Colour(0x558ee6c9));
     presetNotesEditor.setTooltip("Editable notes saved into preset metadata and included in Library search");
-    presetNotesEditor.onTextChange = [this] { presetNotesIsRandomDraft = false; };
+    presetNotesEditor.onTextChange = [this]
+    {
+        presetNotesIsRandomDraft = false;
+        updatePresetSaveSummary();
+    };
     addAndMakeVisible(presetNotesEditor);
 
     presetNotesTemplateBox.addItem("Note Template", 1);
@@ -1230,6 +1237,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         presetNotesIsRandomDraft = false;
         presetNotesTemplateBox.setSelectedId(1, juce::dontSendNotification);
         presetStatusLabel.setText("Inserted note template", juce::dontSendNotification);
+        updatePresetSaveSummary();
     };
     addAndMakeVisible(presetNotesTemplateBox);
 
@@ -1429,7 +1437,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetCategoryBox.setEditableText(true);
     presetCategoryBox.setTextWhenNothingSelected("Category / Folder");
     presetCategoryBox.setTooltip("Choose or type a save category. Use slashes for subfolders, like UKG/Bass.");
-    presetCategoryBox.onChange = [this] { clearPresetOverwriteWarning(); };
+    presetCategoryBox.onChange = [this]
+    {
+        clearPresetOverwriteWarning();
+        updatePresetSaveSummary();
+    };
     addAndMakeVisible(presetCategoryBox);
 
     presetFilterBox.addItemList(presetFilterChoices(), 1);
@@ -1454,8 +1466,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetRatingBox.addItem("4 Stars", 5);
     presetRatingBox.addItem("5 Stars", 6);
     presetRatingBox.setSelectedId(1, juce::dontSendNotification);
-    presetRatingBox.setTextWhenNothingSelected("Rating");
-    presetRatingBox.setTooltip("Rate the selected preset from 1 to 5 stars");
+    presetRatingBox.setTextWhenNothingSelected("Preset Rating");
+    presetRatingBox.setTooltip("Rate the selected browser preset from 1 to 5 stars");
     addAndMakeVisible(presetRatingBox);
 
     candidateRatingBox.addItem("No Stars", 1);
@@ -1474,6 +1486,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetPackBox.setEditableText(true);
     presetPackBox.setTextWhenNothingSelected("Pack");
     presetPackBox.setTooltip("Choose or type a preset pack name");
+    presetPackBox.onChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetPackBox);
 
     presetKeyBox.addItemList(presetKeyChoices(), 1);
@@ -1481,6 +1494,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetKeyBox.setEditableText(true);
     presetKeyBox.setTextWhenNothingSelected("Key");
     presetKeyBox.setTooltip("Store the musical key for browser search and sorting");
+    presetKeyBox.onChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetKeyBox);
 
     presetBpmBox.addItemList(presetBpmChoices(), 1);
@@ -1488,6 +1502,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetBpmBox.setEditableText(true);
     presetBpmBox.setTextWhenNothingSelected("BPM");
     presetBpmBox.setTooltip("Store the target tempo for browser search, filtering, and sorting");
+    presetBpmBox.onChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetBpmBox);
 
     fxAddBox.addSectionHeading("Tone & Drive");
@@ -2854,8 +2869,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
 
-        auto saveArea = inspectorArea.reduced(10).removeFromTop(314);
-        auto inspectArea = inspectorArea.reduced(10).withTrimmedTop(326);
+        const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
+        auto saveArea = inspectorArea.reduced(10).removeFromTop(savePanelHeight);
+        auto inspectArea = inspectorArea.reduced(10).withTrimmedTop(savePanelHeight + 12);
         auto drawInset = [&g] (juce::Rectangle<int> area, juce::Colour accent)
         {
             auto inset = area.toFloat();
@@ -4169,6 +4185,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetBrowserHeaderLabel.setVisible(true);
             presetBrowserList.setVisible(true);
             presetLibrarySummary.setVisible(true);
+            presetSaveSummary.setVisible(true);
             for (auto& button : presetQuickFilterButtons)
                 button.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
@@ -4203,7 +4220,8 @@ void NateVSTAudioProcessorEditor::resized()
             auditionPresetButton.setBounds(loadActions.removeFromLeft(86).reduced(2, 4));
             favoritePresetButton.setBounds(loadActions.reduced(2, 4));
             auto compareActions = findArea.removeFromTop(38).withTrimmedTop(2);
-            comparePresetButton.setBounds(compareActions.removeFromLeft(100).reduced(2, 4));
+            presetRatingBox.setBounds(compareActions.removeFromLeft(88).reduced(2, 4));
+            comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
             revertPresetButton.setBounds(compareActions.reduced(2, 4));
             presetStatusLabel.setBounds(findArea.reduced(2, 4));
 
@@ -4211,8 +4229,10 @@ void NateVSTAudioProcessorEditor::resized()
             presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(34).reduced(6, 5));
             presetBrowserList.setBounds(browserArea.reduced(2, 5));
 
-            auto saveArea = inspectorArea.removeFromTop(314).reduced(10, 8);
+            const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
+            auto saveArea = inspectorArea.removeFromTop(savePanelHeight).reduced(10, 8);
             librarySaveLabel.setBounds(saveArea.removeFromTop(24));
+            presetSaveSummary.setBounds(saveArea.removeFromTop(118).reduced(2, 5));
             auto nameRow = saveArea.removeFromTop(38).withTrimmedTop(2);
             presetNameEditor.setBounds(nameRow.reduced(2, 4));
             auto folderRow = saveArea.removeFromTop(36);
@@ -4221,10 +4241,9 @@ void NateVSTAudioProcessorEditor::resized()
             presetAuthorEditor.setBounds(metadataRow.removeFromLeft(metadataRow.getWidth() / 2).reduced(2, 4));
             presetPackBox.setBounds(metadataRow.reduced(2, 4));
             auto keyRow = saveArea.removeFromTop(36);
-            const auto keyCellWidth = keyRow.getWidth() / 3;
+            const auto keyCellWidth = keyRow.getWidth() / 2;
             presetKeyBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
-            presetBpmBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
-            presetRatingBox.setBounds(keyRow.reduced(2, 4));
+            presetBpmBox.setBounds(keyRow.reduced(2, 4));
             auto saveActionRow = saveArea.removeFromTop(38).withTrimmedTop(4);
             presetNotesTemplateBox.setBounds(saveActionRow.removeFromLeft(154).reduced(2, 4));
             savePresetButton.setBounds(saveActionRow.reduced(2, 4));
@@ -5751,6 +5770,7 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
 
     presetStatusLabel.setText("Draft -> " + category + " / " + pack + " / " + formatPresetBpm(bpm),
                               juce::dontSendNotification);
+    updatePresetSaveSummary();
 }
 
 juce::String NateVSTAudioProcessorEditor::generatedPresetNotes(const juce::String& category,
@@ -7487,7 +7507,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -9521,6 +9541,34 @@ void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
     }
 
     presetLibrarySummary.setState(state);
+    updatePresetSaveSummary();
+}
+
+void NateVSTAudioProcessorEditor::updatePresetSaveSummary()
+{
+    UI::PresetSaveSummary::State state;
+
+    auto presetName = presetNameEditor.getText().trim();
+    if (presetName.isEmpty())
+        presetName = presetBox.getText().trim();
+
+    state.hasName = presetName.isNotEmpty();
+    state.name = state.hasName ? presetName : juce::String("Untitled patch");
+    state.category = presetCategoryBox.getText().trim();
+    state.author = presetAuthorEditor.getText().trim();
+    state.pack = presetPackBox.getText().trim();
+    state.key = presetKeyBox.getText().trim();
+    state.bpm = presetBpmBox.getText().trim();
+    state.notesCharacters = presetNotesEditor.getText().length();
+    state.generated = currentPresetDraftIsGenerated;
+
+    if (state.hasName)
+    {
+        state.overwriteExists = audioProcessor.userPresetExists(presetName, state.category);
+        state.overwriteArmed = isPresetOverwriteArmed(presetName, state.category);
+    }
+
+    presetSaveSummary.setState(state);
 }
 
 void NateVSTAudioProcessorEditor::applyPresetQuickFilter(size_t index)
@@ -9585,6 +9633,7 @@ void NateVSTAudioProcessorEditor::armPresetOverwrite(const juce::String& presetN
     savePresetButton.setButtonText("Overwrite");
     savePresetButton.setTooltip("Press again to replace " + pendingOverwritePresetName + " in "
                                     + (pendingOverwriteCategory.isNotEmpty() ? pendingOverwriteCategory : juce::String("User")));
+    updatePresetSaveSummary();
 }
 
 void NateVSTAudioProcessorEditor::clearPresetOverwriteWarning()
@@ -9594,6 +9643,7 @@ void NateVSTAudioProcessorEditor::clearPresetOverwriteWarning()
     pendingOverwriteUntilMs = 0.0;
     savePresetButton.setButtonText("Save");
     savePresetButton.setTooltip("Save the current patch into the selected category folder");
+    updatePresetSaveSummary();
 }
 
 void NateVSTAudioProcessorEditor::saveCurrentPreset()
@@ -9664,6 +9714,7 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         currentPresetDraftIsGenerated = false;
         currentGeneratedPresetRecipe.clear();
         updateFavoritePresetButton();
+        updatePresetSaveSummary();
         return;
     }
 
@@ -10202,7 +10253,10 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
                                   juce::dontSendNotification);
 
     if (presetName.isEmpty())
+    {
+        updatePresetSaveSummary();
         return;
+    }
 
     for (const auto& preset : audioProcessor.getPresetLibrary())
     {
@@ -10222,4 +10276,5 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
     }
 
     updatePresetLibrarySummary();
+    updatePresetSaveSummary();
 }

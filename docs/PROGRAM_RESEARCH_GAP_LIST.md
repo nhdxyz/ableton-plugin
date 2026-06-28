@@ -446,7 +446,7 @@ Nate VST gaps:
 178. Expand implemented preset notes into structured production tips and batch-editable metadata.
 179. Add pack manager import/export.
 180. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
-181. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
+181. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 182. Add preset version history.
 183. Add missing sample and wavetable warnings in browser rows.
 184. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.

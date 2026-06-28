@@ -396,7 +396,7 @@ If we only pick the next 15 big work tracks, they should be:
 265. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
 266. Add find-similar preset by metadata and parameter distance.
 267. Add favorites-aware random preset suggestions.
-268. Extend the implemented Library load compare/revert and two-click overwrite guard into generated-slot, edited-vs-saved, and visual safe-overwrite workflows.
+268. Extend the implemented Library load compare/revert, save-target preview, and two-click overwrite guard into generated-slot and edited-vs-saved workflows.
 269. Add preset mutation history.
 270. Add section presets: source, filter, modulation, sequence, sampler, FX, and macros.
 271. Add construction-kit browser packs.

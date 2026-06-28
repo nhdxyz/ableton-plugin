@@ -256,7 +256,7 @@ Implemented FX sub-slice:
 115. Add pack artwork or pack color markers if the UI can support it cleanly.
 116. Expand the implemented smart-crate filter pass into a full browser sidebar with editable user crates, New This Week, and pack crates.
 117. Add audition auto-advance.
-118. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare.
+118. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 119. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
 120. Add import/export preset pack bundles.
 121. Add library repair/reindex command.

@@ -75,6 +75,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - The Library filter menu now has first-pass smart crate matching for Five Star, Club Bass, Chord Stabs, Dub Stabs, UKG Basslines, Garage Chops, House Chords, Tech House Tools, Minimal Plucks, Techno Stabs, Dirty Tools, Mono Safe, and Sequenced Grooves using existing metadata and macro values.
 - Library Audition now uses short role-aware MIDI phrases inferred from preset metadata, so bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general patches get more useful house-focused preview gestures than a single sustained note.
 - Library Save now protects same-folder overwrites with a two-click confirmation and preserves same-name presets in different category folders instead of deleting older folder copies.
+- Library Save now has a visual Save Target summary for name, category path, pack, key, BPM, author, notes length, generated state, and overwrite status, while selected-preset rating lives with browser inspect actions instead of the save metadata row.
 
 ## Highest-Value Randomization Backlog
 
@@ -114,7 +115,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 1. Extend compare/revert into generated-preset slots and richer source-recipe notes.
 2. Expand smart crates into a full browser sidebar with editable user crates, New This Week, pack crates, and multi-select metadata actions.
-3. Extend the implemented preset-load compare/revert and two-click overwrite guard into visual safe-overwrite compare before replacing an existing preset.
+3. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare before replacing an existing preset.
 4. Expand duplicate handling with rename-as-copy, version history, and duplicate/near-duplicate detection beyond the implemented same-folder overwrite guard.
 5. Add preset version history for user presets.
 6. Add per-preset notes and "source recipe" metadata.

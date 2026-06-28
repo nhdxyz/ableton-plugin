@@ -50,6 +50,8 @@ private:
     float fxModSmoothRandomStartValue = 0.0f;
     float fxModSmoothRandomValue = 0.0f;
     float fxModChaosValue = 0.0f;
+    float fxModLfo2Phase = 0.0f;
+    float fxModLfo2StepValue = 0.0f;
     int delayWritePosition = 0;
     int combWritePosition = 0;
     int preparedChannels = 2;
@@ -152,12 +154,19 @@ private:
     std::atomic<float>* lfo1Depth = nullptr;
     std::atomic<float>* lfo1Phase = nullptr;
     std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
+    std::atomic<float>* lfo2Rate = nullptr;
+    std::atomic<float>* lfo2Sync = nullptr;
+    std::atomic<float>* lfo2SyncRate = nullptr;
+    std::atomic<float>* lfo2Shape = nullptr;
+    std::atomic<float>* lfo2Depth = nullptr;
+    std::atomic<float>* lfo2Phase = nullptr;
 
     std::array<int, fxModuleCount> orderedModuleIndices() const;
     void updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float processFxModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateFxLfoCurve(float phase) const;
-    float evaluateFxModulationSource(int sourceIndex, float lfoValue) const;
+    float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const;
     void processModule(int moduleIndex,
                        juce::AudioBuffer<float>& buffer,
                        double bpm,

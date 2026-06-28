@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### LFO 2 Modulation Source
+
+- Added an appended `LFO 2` source after `Chaos`, preserving all existing modulation source indices for saved projects and Ableton automation.
+- Added independent LFO 2 rate, sync, synced rate, shape, depth, phase, and retrigger parameters with a compact MOD-panel editor.
+- Routed LFO 2 through synth, sample, and FX modulation paths so it can drive filter, Osc Warp, sample start/pitch/ramp/stutter, pump depth, delay/reverb mix, width, and FX drive destinations.
+- Expanded the MOD source summary from 14 to 15 rows so LFO 2 routes show active count and summed depth like the existing sources.
+
 ### Slice Keys Playback Mode
 
 - Added a third sample playback mode, `Slice Keys`, while preserving the existing `Gate` and `One Shot` indices for saved projects.

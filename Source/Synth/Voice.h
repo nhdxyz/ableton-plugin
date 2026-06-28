@@ -66,6 +66,8 @@ private:
     float lfoSmoothRandomStartValue = 0.0f;
     float lfoSmoothRandomValue = 0.0f;
     float lfoChaosValue = 0.0f;
+    float lfo2Phase = 0.0f;
+    float lfo2StepValue = 0.0f;
     float currentOsc2LevelOffset = 0.0f;
     float currentDriveOffset = 0.0f;
     double currentSampleRate = 44100.0;
@@ -118,6 +120,13 @@ private:
     std::atomic<float>* lfo1Phase = nullptr;
     std::atomic<float>* lfo1Retrigger = nullptr;
     std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
+    std::atomic<float>* lfo2Rate = nullptr;
+    std::atomic<float>* lfo2Sync = nullptr;
+    std::atomic<float>* lfo2SyncRate = nullptr;
+    std::atomic<float>* lfo2Shape = nullptr;
+    std::atomic<float>* lfo2Depth = nullptr;
+    std::atomic<float>* lfo2PhaseParam = nullptr;
+    std::atomic<float>* lfo2Retrigger = nullptr;
     std::atomic<float>* modEnv1Attack = nullptr;
     std::atomic<float>* modEnv1Decay = nullptr;
     std::atomic<float>* modEnv1Sustain = nullptr;
@@ -131,8 +140,9 @@ private:
     void updateVoiceParameters(float envelopeValue);
     void updateGlide();
     float processLfo();
+    float processLfo2();
     float evaluateLfoCurve(float phase) const;
-    float evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const;
+    float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
     StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
     int getUnisonVoiceCount() const;
     float getUnisonPosition(int voiceIndex, int voiceCount) const;

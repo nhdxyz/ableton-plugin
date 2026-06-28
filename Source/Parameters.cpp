@@ -84,6 +84,11 @@ juce::StringArray lfoShapeChoices()
     return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
 }
 
+juce::StringArray lfo2ShapeChoices()
+{
+    return { "Sine", "Triangle", "Saw", "Square", "Step" };
+}
+
 juce::StringArray lfoSyncRateChoices()
 {
     return { "1/4", "1/8", "1/8T", "1/16" };
@@ -101,7 +106,7 @@ juce::StringArray pumpCurveChoices()
 
 juce::StringArray modulationSourceChoices()
 {
-    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw", "S&H", "Smooth", "Chaos" };
+    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw", "S&H", "Smooth", "Chaos", "LFO 2" };
 }
 
 juce::StringArray modulationDestinationChoices()
@@ -422,6 +427,47 @@ APVTS::ParameterLayout createLayout()
             juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
             defaultLfoCurve[index]));
     }
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo2Rate,
+        "LFO 2 Rate",
+        skewedRange(0.05f, 20.0f, 1.0f),
+        1.5f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::lfo2Sync,
+        "LFO 2 Sync",
+        true));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::lfo2SyncRate,
+        "LFO 2 Sync Rate",
+        lfoSyncRateChoices(),
+        3));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::lfo2Shape,
+        "LFO 2 Shape",
+        lfo2ShapeChoices(),
+        1));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo2Depth,
+        "LFO 2 Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.25f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::lfo2Phase,
+        "LFO 2 Phase",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.25f));
+
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::lfo2Retrigger,
+        "LFO 2 Retrigger",
+        true));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::modEnv1Attack,

@@ -298,7 +298,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 14> sourceTexts {
+    static const std::array<const char*, 15> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -312,7 +312,8 @@ juce::String modSourceSummaryText(size_t index)
         "Throw: delay + reverb push",
         "S&H: stepped random movement",
         "Smooth: slewed random drift",
-        "Chaos: wandering random walk"
+        "Chaos: wandering random walk",
+        "LFO 2: secondary groove motion"
     };
 
     if (index < sourceTexts.size())
@@ -437,6 +438,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modSourceLabel, "SOURCES");
     configureSectionLabel(modMacroLabel, "MACROS");
     configureSectionLabel(modLfoLabel, "LFO 1 MSEG");
+    configureSectionLabel(modLfo2Label, "LFO 2");
     configureSectionLabel(modEnvelopeLabel, "MOD ENV 1");
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
@@ -875,6 +877,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(lfo1SyncRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1SyncRate, lfo1SyncRateBox));
 
+    lfo2ShapeBox.addItemList(Parameters::lfo2ShapeChoices(), 1);
+    lfo2ShapeBox.setTextWhenNothingSelected("LFO 2 Shape");
+    lfo2ShapeBox.setTooltip("Choose the secondary LFO shape for extra groove, chop, and FX motion");
+    addAndMakeVisible(lfo2ShapeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo2Shape, lfo2ShapeBox));
+
+    lfo2SyncRateBox.addItemList(Parameters::lfoSyncRateChoices(), 1);
+    lfo2SyncRateBox.setTextWhenNothingSelected("LFO 2 Rate");
+    addAndMakeVisible(lfo2SyncRateBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo2SyncRate, lfo2SyncRateBox));
+
     lfoCurvePresetBox.addItemList(lfoCurvePresetChoices(), 1);
     lfoCurvePresetBox.setSelectedId(1, juce::dontSendNotification);
     lfoCurvePresetBox.setTextWhenNothingSelected("Curve Preset");
@@ -1038,6 +1051,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(lfo1RetriggerButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo1Retrigger, lfo1RetriggerButton));
 
+    lfo2SyncButton.setButtonText("Sync");
+    addAndMakeVisible(lfo2SyncButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo2Sync, lfo2SyncButton));
+
+    lfo2RetriggerButton.setButtonText("Retrig");
+    addAndMakeVisible(lfo2RetriggerButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo2Retrigger, lfo2RetriggerButton));
+
     configureSlider(octaveSlider, octaveLabel, "Oct", Parameters::ID::oscOctave);
     configureSlider(tuneSlider, tuneLabel, "Tune", Parameters::ID::oscTune);
     configureSlider(osc1LevelSlider, osc1LevelLabel, "Osc 1", Parameters::ID::osc1Level);
@@ -1063,6 +1084,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(lfo1RateSlider, lfo1RateLabel, "Rate", Parameters::ID::lfo1Rate);
     configureSlider(lfo1DepthSlider, lfo1DepthLabel, "Depth", Parameters::ID::lfo1Depth);
     configureSlider(lfo1PhaseSlider, lfo1PhaseLabel, "Phase", Parameters::ID::lfo1Phase);
+    configureSlider(lfo2RateSlider, lfo2RateLabel, "L2 Rate", Parameters::ID::lfo2Rate);
+    configureSlider(lfo2DepthSlider, lfo2DepthLabel, "L2 Depth", Parameters::ID::lfo2Depth);
+    configureSlider(lfo2PhaseSlider, lfo2PhaseLabel, "L2 Phase", Parameters::ID::lfo2Phase);
     lfoCurveDisplay.onPointChange = [this] (size_t index, float value)
     {
         if (index < Parameters::ID::lfo1Curve.size())
@@ -2165,13 +2189,18 @@ void NateVSTAudioProcessorEditor::resized()
             modSourceLabel.setVisible(true);
             modMacroLabel.setVisible(true);
             modLfoLabel.setVisible(true);
+            modLfo2Label.setVisible(true);
             modEnvelopeLabel.setVisible(true);
             modMatrixLabel.setVisible(true);
             lfo1ShapeBox.setVisible(true);
             lfo1SyncRateBox.setVisible(true);
+            lfo2ShapeBox.setVisible(true);
+            lfo2SyncRateBox.setVisible(true);
             lfoCurvePresetBox.setVisible(true);
             lfo1SyncButton.setVisible(true);
             lfo1RetriggerButton.setVisible(true);
+            lfo2SyncButton.setVisible(true);
+            lfo2RetriggerButton.setVisible(true);
             lfoCurveDisplay.setVisible(true);
 
             modSectionLabel.setBounds(content.removeFromTop(28));
@@ -2256,7 +2285,9 @@ void NateVSTAudioProcessorEditor::resized()
             modContent.removeFromTop(modPanelGap);
             auto generatorRow = modContent.removeFromTop(modGeneratorRowHeight);
             auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
-            auto envelopeArea = generatorRow.reduced(18, 8);
+            auto rightGeneratorArea = generatorRow.reduced(18, 8);
+            auto lfo2Area = rightGeneratorArea.removeFromLeft(212);
+            auto envelopeArea = rightGeneratorArea.withTrimmedLeft(10);
 
             modLfoLabel.setBounds(lfoArea.removeFromTop(18));
             auto lfoModeRow = lfoArea.removeFromTop(24);
@@ -2272,16 +2303,30 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
             layoutKnobRow(lfoArea.removeFromTop(50).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
 
+            modLfo2Label.setBounds(lfo2Area.removeFromTop(18));
+            auto lfo2ModeRow = lfo2Area.removeFromTop(48);
+            lfo2ShapeBox.setBounds(lfo2ModeRow.removeFromTop(24).reduced(3, 4));
+            auto lfo2SyncRow = lfo2ModeRow;
+            lfo2SyncRateBox.setBounds(lfo2SyncRow.removeFromLeft(72).reduced(3, 4));
+            lfo2SyncButton.setBounds(lfo2SyncRow.removeFromLeft(55).reduced(3, 4));
+            lfo2RetriggerButton.setBounds(lfo2SyncRow.removeFromLeft(70).reduced(3, 4));
+            setSliderVisible(lfo2RateSlider, lfo2RateLabel, true);
+            setSliderVisible(lfo2DepthSlider, lfo2DepthLabel, true);
+            setSliderVisible(lfo2PhaseSlider, lfo2PhaseLabel, true);
+            layoutKnobRow(lfo2Area.removeFromTop(58).withTrimmedTop(4), { &lfo2RateSlider, &lfo2DepthSlider, &lfo2PhaseSlider });
+
             modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(18));
             setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
             setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
             setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
             setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
             setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-            layoutKnobRow(envelopeArea.removeFromTop(78).withTrimmedTop(2), {
+            layoutKnobRow(envelopeArea.removeFromTop(58).withTrimmedTop(2), {
                 &modEnv1AttackSlider,
                 &modEnv1DecaySlider,
-                &modEnv1SustainSlider,
+                &modEnv1SustainSlider
+            });
+            layoutKnobRow(envelopeArea.removeFromTop(54).withTrimmedTop(2), {
                 &modEnv1ReleaseSlider,
                 &modEnv1DepthSlider
             });
@@ -4600,20 +4645,20 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     hide({
         &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
         &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
-        &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modEnvelopeLabel, &modMatrixLabel,
+        &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfoCurvePresetBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &fxFlangerEnabledButton,
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
-        &lfo1SyncButton, &lfo1RetriggerButton,
+        &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
@@ -4683,6 +4728,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(lfo1RateSlider, lfo1RateLabel, false);
     setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, false);
     setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, false);
+    setSliderVisible(lfo2RateSlider, lfo2RateLabel, false);
+    setSliderVisible(lfo2DepthSlider, lfo2DepthLabel, false);
+    setSliderVisible(lfo2PhaseSlider, lfo2PhaseLabel, false);
     setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, false);
     setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, false);
     setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, false);

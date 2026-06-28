@@ -77,6 +77,14 @@ Voice::Voice(Parameters::APVTS& state)
     for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
         lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
 
+    lfo2Rate = parameters.getRawParameterValue(Parameters::ID::lfo2Rate);
+    lfo2Sync = parameters.getRawParameterValue(Parameters::ID::lfo2Sync);
+    lfo2SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo2SyncRate);
+    lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
+    lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
+    lfo2PhaseParam = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    lfo2Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo2Retrigger);
+
     modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
     modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
     modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
@@ -166,6 +174,12 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
         lfoSmoothRandomStartValue = lfoStepValue;
         lfoSmoothRandomValue = lfoStepValue;
         lfoChaosValue = ((modulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    }
+
+    if (readParameter(lfo2Retrigger, 1.0f) >= 0.5f)
+    {
+        lfo2Phase = 0.0f;
+        lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
     }
 }
 
@@ -257,6 +271,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
         readParameter(modEnv1Release, 0.12f));
 
     const auto lfoValue = processLfo() * readParameter(lfo1Depth, 0.45f);
+    const auto lfo2Value = processLfo2() * readParameter(lfo2Depth, 0.25f);
     const auto modEnvelopeValue = modEnvelope.process() * readParameter(modEnv1Depth, 0.5f);
     auto cutoffMod = 0.0f;
     auto resonanceMod = 0.0f;
@@ -276,7 +291,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
         if (! enabled || sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateModulationSource(sourceIndex, lfoValue, modEnvelopeValue) * amount;
+        const auto contribution = evaluateModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
 
         switch (destinationIndex)
         {
@@ -466,6 +481,55 @@ float Voice::processLfo()
     return juce::jlimit(-1.0f, 1.0f, value);
 }
 
+float Voice::processLfo2()
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
+    const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeatForLfoSync(static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)))))
+        : readParameter(lfo2Rate, 1.5f);
+    const auto phaseOffset = readParameter(lfo2PhaseParam, 0.25f);
+    const auto phase = std::fmod(lfo2Phase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = lfo2StepValue;
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = lfo2Phase;
+    lfo2Phase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
+
+    if (lfo2Phase >= 1.0f)
+    {
+        lfo2Phase -= std::floor(lfo2Phase);
+        if (previousPhase < 1.0f)
+            lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value);
+}
+
 float Voice::evaluateLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -479,7 +543,7 @@ float Voice::evaluateLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float modEnvelopeValue) const
+float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
@@ -497,6 +561,7 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float mod
         case 12: return lfoStepValue;
         case 13: return lfoSmoothRandomValue;
         case 14: return lfoChaosValue;
+        case 15: return lfo2Value;
         default: return 0.0f;
     }
 }

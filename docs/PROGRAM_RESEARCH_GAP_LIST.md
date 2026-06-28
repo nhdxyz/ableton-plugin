@@ -285,7 +285,7 @@ Nate VST gaps:
 68. Add per-route mute, solo, duplicate, copy, and paste.
 69. Add per-route velocity scaling.
 70. Add per-route keytracking scaling.
-71. Add LFO 2 and LFO 3.
+71. Add LFO 2 and LFO 3. First LFO 2 source pass implemented; LFO 3 remains open.
 72. Add smooth random modulation source. First source pass implemented.
 73. Add chaos/random-walk modulation source. First bounded source pass implemented.
 74. Add MSEG multi-point envelope source.
@@ -686,7 +686,7 @@ Key extra lessons:
 1. Componentize `PluginEditor` and add layout-overlap checks.
 2. Add selected-control inspector, stronger group focus, and UI scale modes.
 3. Add drag/menu modulation assignment, selected-route view, and route min/max editing.
-4. Add deeper random-walk controls, LFO 2/3, MSEG, and route movement processors after the first Chaos pass.
+4. Add deeper random-walk controls, LFO 3, MSEG, and route movement processors after the first Chaos and LFO 2 passes.
 5. Add multiple sequencer patterns, ratchets, per-step modulation, and chord paint.
 6. Add transient/manual slicing with per-slice controls.
 7. Add UKG recipe tools for organ bass, Dred/Reese, late stabs, and vocal chop motifs.

@@ -64,6 +64,13 @@ inline constexpr std::array<const char*, 8> lfo1Curve {
     "lfo1_curve_7",
     "lfo1_curve_8"
 };
+inline constexpr auto lfo2Rate = "lfo2_rate";
+inline constexpr auto lfo2Sync = "lfo2_sync";
+inline constexpr auto lfo2SyncRate = "lfo2_sync_rate";
+inline constexpr auto lfo2Shape = "lfo2_shape";
+inline constexpr auto lfo2Depth = "lfo2_depth";
+inline constexpr auto lfo2Phase = "lfo2_phase";
+inline constexpr auto lfo2Retrigger = "lfo2_retrigger";
 inline constexpr auto modEnv1Attack = "mod_env1_attack";
 inline constexpr auto modEnv1Decay = "mod_env1_decay";
 inline constexpr auto modEnv1Sustain = "mod_env1_sustain";
@@ -317,6 +324,7 @@ juce::StringArray sequencerChordModeChoices();
 juce::StringArray sequencerChordVoicingChoices();
 juce::StringArray sampleSliceStyleChoices();
 juce::StringArray lfoShapeChoices();
+juce::StringArray lfo2ShapeChoices();
 juce::StringArray lfoSyncRateChoices();
 juce::StringArray delayRateChoices();
 juce::StringArray pumpCurveChoices();

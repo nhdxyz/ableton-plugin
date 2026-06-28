@@ -222,6 +222,12 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
     lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
     lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
+    lfo2Rate = parameters.getRawParameterValue(Parameters::ID::lfo2Rate);
+    lfo2Sync = parameters.getRawParameterValue(Parameters::ID::lfo2Sync);
+    lfo2SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo2SyncRate);
+    lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
+    lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
+    lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
 }
 
 void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChannels)
@@ -276,6 +282,8 @@ void EffectsRack::reset()
     fxModSmoothRandomStartValue = fxModLfoStepValue;
     fxModSmoothRandomValue = fxModLfoStepValue;
     fxModChaosValue = ((fxModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    fxModLfo2Phase = 0.0f;
+    fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
@@ -297,6 +305,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
     fxModulation = {};
 
     const auto lfoValue = processFxModulationLfo(numSamples, bpm, ppqPosition);
+    const auto lfo2Value = processFxModulationLfo2(numSamples, bpm, ppqPosition);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -308,7 +317,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         if (! enabled || sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue) * amount;
+        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value) * amount;
 
         switch (destinationIndex)
         {
@@ -403,6 +412,64 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
 }
 
+float EffectsRack::processFxModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
+    const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)));
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(syncRateIndex))
+        : readParameter(lfo2Rate, 1.5f);
+    const auto phaseOffset = readParameter(lfo2Phase, 0.25f);
+
+    if (syncEnabled && ppqPosition.has_value())
+    {
+        fxModLfo2Phase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(syncRateIndex), 1.0));
+        if (fxModLfo2Phase < 0.0f)
+            fxModLfo2Phase += 1.0f;
+    }
+
+    const auto phase = std::fmod(fxModLfo2Phase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = fxModLfo2StepValue;
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = fxModLfo2Phase;
+    fxModLfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
+
+    if (fxModLfo2Phase >= 1.0f)
+    {
+        fxModLfo2Phase -= std::floor(fxModLfo2Phase);
+        if (previousPhase < 1.0f)
+            fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo2Depth, 0.25f);
+}
+
 float EffectsRack::evaluateFxLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -416,7 +483,7 @@ float EffectsRack::evaluateFxLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) const
+float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const
 {
     switch (sourceIndex)
     {
@@ -432,6 +499,7 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) c
         case 12: return fxModLfoStepValue;
         case 13: return fxModSmoothRandomValue;
         case 14: return fxModChaosValue;
+        case 15: return lfo2Value;
         default: return 0.0f;
     }
 }

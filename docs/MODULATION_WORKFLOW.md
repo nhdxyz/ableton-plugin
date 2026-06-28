@@ -42,6 +42,7 @@ Start with a small set:
 - `S&H`: stepped random movement clocked from the LFO timing path, usable for small UKG, minimal, and techno instability.
 - `Smooth`: slewed random drift clocked from the same LFO timing path, better for organic cutoff, warp, pitch, sample-start, and FX movement.
 - `Chaos`: bounded random-walk movement clocked by LFO timing, useful for subtle warehouse drive instability, minimal pitch edge, and evolving sample/FX motion.
+- `LFO 2`: secondary synced/free LFO for independent groove, chop, and FX motion without stealing the main MSEG-style LFO.
 - `seq_lane_1`: a later per-step modulation lane tied to the existing sequencer.
 
 Avoid adding every possible source at once. More sources can follow after the matrix and UI prove stable.
@@ -86,7 +87,7 @@ Initial macro behavior should be explicit and simple:
 - Each assignment stores source, destination, bipolar amount, and optional curve later.
 - Randomization may move macro assignments, but should preserve output safety.
 - Warp now affects oscillator bend and Osc Warp source harmonics, so it can push bass and stab character before filter/FX processing.
-- Osc Warp is a per-voice synth destination, so LFO 1, Mod Env 1, Velocity, macro sources, S&H, Smooth, and Chaos can all target it. The FX and sample destinations currently use global LFO, macro, S&H, Smooth, and Chaos sources until a proper global Mod Env/Velocity strategy exists.
+- Osc Warp is a per-voice synth destination, so LFO 1, LFO 2, Mod Env 1, Velocity, macro sources, S&H, Smooth, and Chaos can all target it. The FX and sample destinations currently use global LFO 1, LFO 2, macro, S&H, Smooth, and Chaos sources until a proper global Mod Env/Velocity strategy exists.
 
 Possible parameter IDs:
 
@@ -125,7 +126,7 @@ Initial shapes:
 - random stepped
 - editable 8-point curve for pump, wobble, and off-grid filter movement
 
-Start with one LFO before building LFO 2.
+LFO 2 is now implemented as a compact secondary source with its own rate, sync, synced rate, shape, depth, phase, and retrigger controls. It intentionally reuses simple shapes first; a second drawable curve editor should wait until the MOD page is componentized.
 
 ## Modulation Matrix
 

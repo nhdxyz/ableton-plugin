@@ -198,6 +198,12 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
     lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
     lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
+    lfo2Rate = parameters.getRawParameterValue(Parameters::ID::lfo2Rate);
+    lfo2Sync = parameters.getRawParameterValue(Parameters::ID::lfo2Sync);
+    lfo2SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo2SyncRate);
+    lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
+    lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
+    lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
 }
 
 void SamplePlayer::prepare(double sampleRate)
@@ -207,6 +213,7 @@ void SamplePlayer::prepare(double sampleRate)
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
     sampleModSmoothRandomValue = sampleModLfoStepValue;
     sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
 }
 
 void SamplePlayer::clear()
@@ -220,6 +227,8 @@ void SamplePlayer::clear()
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
     sampleModSmoothRandomValue = sampleModLfoStepValue;
     sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    sampleModLfo2Phase = 0.0f;
+    sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
 }
 
 bool SamplePlayer::loadFile(const juce::File& file)
@@ -387,6 +396,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
     sampleModulation = {};
 
     const auto lfoValue = processSampleModulationLfo(numSamples, bpm, ppqPosition);
+    const auto lfo2Value = processSampleModulationLfo2(numSamples, bpm, ppqPosition);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -398,7 +408,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
         if (! enabled || sourceIndex == 0 || destinationIndex < 12 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue) * amount;
+        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value) * amount;
 
         switch (destinationIndex)
         {
@@ -494,6 +504,64 @@ float SamplePlayer::processSampleModulationLfo(int numSamples, double bpm, std::
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
 }
 
+float SamplePlayer::processSampleModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
+    const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)));
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(syncRateIndex))
+        : readParameter(lfo2Rate, 1.5f);
+    const auto phaseOffset = readParameter(lfo2Phase, 0.25f);
+
+    if (syncEnabled && ppqPosition.has_value())
+    {
+        sampleModLfo2Phase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(syncRateIndex), 1.0));
+        if (sampleModLfo2Phase < 0.0f)
+            sampleModLfo2Phase += 1.0f;
+    }
+
+    const auto phase = std::fmod(sampleModLfo2Phase + phaseOffset + 1.0f, 1.0f);
+    auto value = 0.0f;
+
+    switch (shapeIndex)
+    {
+        case 1:
+            value = phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+            break;
+
+        case 2:
+            value = (phase * 2.0f) - 1.0f;
+            break;
+
+        case 3:
+            value = phase < 0.5f ? 1.0f : -1.0f;
+            break;
+
+        case 4:
+            value = sampleModLfo2StepValue;
+            break;
+
+        default:
+            value = std::sin(juce::MathConstants<float>::twoPi * phase);
+            break;
+    }
+
+    const auto previousPhase = sampleModLfo2Phase;
+    sampleModLfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(playbackSampleRate);
+
+    if (sampleModLfo2Phase >= 1.0f)
+    {
+        sampleModLfo2Phase -= std::floor(sampleModLfo2Phase);
+        if (previousPhase < 1.0f)
+            sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
+    return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo2Depth, 0.25f);
+}
+
 float SamplePlayer::evaluateSampleLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -507,7 +575,7 @@ float SamplePlayer::evaluateSampleLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue) const
+float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const
 {
     switch (sourceIndex)
     {
@@ -523,6 +591,7 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 12: return sampleModLfoStepValue;
         case 13: return sampleModSmoothRandomValue;
         case 14: return sampleModChaosValue;
+        case 15: return lfo2Value;
         default: return 0.0f;
     }
 }

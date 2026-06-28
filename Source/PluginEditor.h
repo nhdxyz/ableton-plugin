@@ -102,6 +102,7 @@ private:
     juce::Label modSourceLabel;
     juce::Label modMacroLabel;
     juce::Label modLfoLabel;
+    juce::Label modLfo2Label;
     juce::Label modEnvelopeLabel;
     juce::Label modMatrixLabel;
     juce::Label modMatrixStatusLabel;
@@ -170,6 +171,8 @@ private:
     juce::ComboBox modMacroAssignDestinationBox;
     juce::ComboBox lfo1ShapeBox;
     juce::ComboBox lfo1SyncRateBox;
+    juce::ComboBox lfo2ShapeBox;
+    juce::ComboBox lfo2SyncRateBox;
     juce::ComboBox lfoCurvePresetBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
     std::array<juce::ComboBox, 8> modDestinationBoxes;
@@ -205,6 +208,8 @@ private:
     juce::ToggleButton randomLockSequencerButton;
     juce::ToggleButton lfo1SyncButton;
     juce::ToggleButton lfo1RetriggerButton;
+    juce::ToggleButton lfo2SyncButton;
+    juce::ToggleButton lfo2RetriggerButton;
 
     juce::Slider octaveSlider;
     juce::Slider tuneSlider;
@@ -231,6 +236,9 @@ private:
     juce::Slider lfo1RateSlider;
     juce::Slider lfo1DepthSlider;
     juce::Slider lfo1PhaseSlider;
+    juce::Slider lfo2RateSlider;
+    juce::Slider lfo2DepthSlider;
+    juce::Slider lfo2PhaseSlider;
     std::array<juce::Slider, 8> lfoCurveSliders;
     juce::Slider modEnv1AttackSlider;
     juce::Slider modEnv1DecaySlider;
@@ -339,6 +347,9 @@ private:
     juce::Label lfo1RateLabel;
     juce::Label lfo1DepthLabel;
     juce::Label lfo1PhaseLabel;
+    juce::Label lfo2RateLabel;
+    juce::Label lfo2DepthLabel;
+    juce::Label lfo2PhaseLabel;
     juce::Label modEnv1AttackLabel;
     juce::Label modEnv1DecayLabel;
     juce::Label modEnv1SustainLabel;
@@ -523,7 +534,7 @@ private:
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
     juce::Label fxRackStatusLabel;
-    std::array<juce::Label, 14> modSourceRows;
+    std::array<juce::Label, 15> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;

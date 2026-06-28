@@ -97,6 +97,8 @@ private:
     float sampleModSmoothRandomStartValue = 0.0f;
     float sampleModSmoothRandomValue = 0.0f;
     float sampleModChaosValue = 0.0f;
+    float sampleModLfo2Phase = 0.0f;
+    float sampleModLfo2StepValue = 0.0f;
 
     struct SampleModulationOffsets
     {
@@ -147,11 +149,18 @@ private:
     std::atomic<float>* lfo1Depth = nullptr;
     std::atomic<float>* lfo1Phase = nullptr;
     std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
+    std::atomic<float>* lfo2Rate = nullptr;
+    std::atomic<float>* lfo2Sync = nullptr;
+    std::atomic<float>* lfo2SyncRate = nullptr;
+    std::atomic<float>* lfo2Shape = nullptr;
+    std::atomic<float>* lfo2Depth = nullptr;
+    std::atomic<float>* lfo2Phase = nullptr;
 
     void updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float processSampleModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateSampleLfoCurve(float phase) const;
-    float evaluateSampleModulationSource(int sourceIndex, float lfoValue) const;
+    float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const;
     int sliceIndexForMidiNote(int midiNoteNumber) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot);
     void stopVoicesForNote(int midiNoteNumber);

@@ -143,7 +143,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 63. Add per-route smoothing and slew.
 64. Add per-route unipolar/bipolar and invert.
 65. Add per-route mute, solo, duplicate, copy, and paste.
-66. Add LFO 2 and LFO 3.
+66. Add LFO 2 and LFO 3. First LFO 2 source pass implemented; LFO 3 remains open.
 67. Add smooth random and chaos sources in addition to current S&H. First Smooth and Chaos source passes implemented; deeper random-walk controls remain open.
 68. Add a true MSEG source with multi-point draw/edit.
 69. Add step LFO with per-step hold, slew, probability, and shape.

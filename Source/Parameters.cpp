@@ -691,6 +691,20 @@ APVTS::ParameterLayout createLayout()
             "Sample Slice " + labelIndex + " Custom",
             false));
 
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(ID::sampleSliceStart.size());
+        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(ID::sampleSliceEnd.size());
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceStart[index],
+            "Sample Slice " + labelIndex + " Start",
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            equalStart));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceEnd[index],
+            "Sample Slice " + labelIndex + " End",
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            equalEnd));
+
         add(std::make_unique<juce::AudioParameterBool>(
             ID::sampleSliceReverse[index],
             "Sample Slice " + labelIndex + " Reverse",

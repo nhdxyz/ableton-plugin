@@ -153,6 +153,26 @@ inline constexpr std::array<const char*, 8> sampleSliceCustom {
     "sample_slice_7_custom",
     "sample_slice_8_custom"
 };
+inline constexpr std::array<const char*, 8> sampleSliceStart {
+    "sample_slice_1_start",
+    "sample_slice_2_start",
+    "sample_slice_3_start",
+    "sample_slice_4_start",
+    "sample_slice_5_start",
+    "sample_slice_6_start",
+    "sample_slice_7_start",
+    "sample_slice_8_start"
+};
+inline constexpr std::array<const char*, 8> sampleSliceEnd {
+    "sample_slice_1_end",
+    "sample_slice_2_end",
+    "sample_slice_3_end",
+    "sample_slice_4_end",
+    "sample_slice_5_end",
+    "sample_slice_6_end",
+    "sample_slice_7_end",
+    "sample_slice_8_end"
+};
 inline constexpr std::array<const char*, 8> sampleSliceReverse {
     "sample_slice_1_reverse",
     "sample_slice_2_reverse",

@@ -171,6 +171,8 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     for (size_t index = 0; index < sampleSliceCustom.size(); ++index)
     {
         sampleSliceCustom[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceCustom[index]);
+        sampleSliceStart[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStart[index]);
+        sampleSliceEnd[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceEnd[index]);
         sampleSliceReverse[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceReverse[index]);
         sampleSliceTranspose[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceTranspose[index]);
         sampleSliceGain[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceGain[index]);
@@ -771,11 +773,21 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceInd
 {
     const auto numSamples = data.buffer.getNumSamples();
     const auto sliceMode = sliceIndex >= 0;
+    const auto safeSliceIndex = juce::jlimit(0, 7, sliceIndex);
+    const auto customSlice = sliceMode && sliceHasCustomSettings(safeSliceIndex);
     const auto startNorm = sliceMode
-        ? juce::jlimit(0.0f, 1.0f, static_cast<float>(sliceIndex) / 8.0f)
+        ? juce::jlimit(0.0f,
+                       1.0f,
+                       customSlice
+                           ? readParameter(sampleSliceStart[static_cast<size_t>(safeSliceIndex)], static_cast<float>(safeSliceIndex) / 8.0f)
+                           : static_cast<float>(safeSliceIndex) / 8.0f)
         : juce::jlimit(0.0f, 1.0f, readParameter(sampleStart, 0.0f) + (sampleModulation.start * 0.25f));
     const auto endNorm = sliceMode
-        ? juce::jlimit(0.0f, 1.0f, static_cast<float>(sliceIndex + 1) / 8.0f)
+        ? juce::jlimit(0.0f,
+                       1.0f,
+                       customSlice
+                           ? readParameter(sampleSliceEnd[static_cast<size_t>(safeSliceIndex)], static_cast<float>(safeSliceIndex + 1) / 8.0f)
+                           : static_cast<float>(safeSliceIndex + 1) / 8.0f)
         : juce::jlimit(0.0f, 1.0f, readParameter(sampleEnd, 1.0f));
     const auto orderedStart = juce::jmin(startNorm, endNorm);
     const auto orderedEnd = juce::jmax(startNorm, endNorm);

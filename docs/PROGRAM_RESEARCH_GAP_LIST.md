@@ -29,6 +29,10 @@ FX, browser, and motion references:
 - FabFilter Saturn 2: https://www.fabfilter.com/products/saturn-2-multiband-distortion-saturation-plug-in
 - Output Portal: https://output.com/products/portal
 - Devious Machines Infiltrator: https://deviousmachines.com/product/infiltrator/
+- Serato Sample: https://serato.com/sample
+- Native Instruments Kontakt browser/preset workflow: https://www.native-instruments.com/ni-tech-manuals/kontakt-manual/en/browser-and-presets
+- XLN Audio XO: https://www.xlnaudio.com/products/xo
+- Algonaut Atlas: https://algonaut.audio/
 
 UK garage and club-production references:
 
@@ -45,7 +49,7 @@ Nate VST already has a useful skeleton:
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Performance macros, XY macro pad, randomization, A/B snapshots, and low-end guidance.
 - LFO curve editor, pump curve editor, modulation matrix, macro assignment editing, route bypass/delete, destination badges, and S&H/Smooth/Chaos movement.
-- Sample waveform area, chop window, phrase markers, slice pads, Slice Keys, per-slice pitch/gain/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
+- Sample waveform area, chop window, phrase markers, slice pads, Slice Keys, per-slice region/pitch/gain/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
 - Piano-roll style 16-step sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
@@ -164,14 +168,46 @@ Nate VST gaps:
 Reference pattern:
 
 - Ableton workflows reward drag-and-drop, automation-safe names, rack-style macro thinking, MIDI clip exchange, and fast save/reopen reliability.
+- Ableton's own sampling devices reinforce that sample loading should be immediate, visible, and drag/drop friendly.
 
 Nate VST gaps:
 
 - MIDI drag export is not direct from the UI into Ableton yet.
 - MIDI drag import is missing.
+- Audio drag/drop into SAMPLE and sample replacement are still missing.
 - Ableton save/reopen/freeze/flatten checklist should become a repeatable release test.
 - Automation naming and parameter migration need an audit before adding many engines.
 - AU support, signing, notarization, installer/copy script, and release notes need a release workflow.
+
+### Serato Sample Pattern
+
+Reference pattern:
+
+- Fast sampling tools prioritize tempo/key detection, playable cue pads, quick chopping, pitch/time controls, and immediate MIDI triggering.
+- Newer sampling workflows increasingly include stem-style isolation and confidence-aware metadata, even if Nate VST should start with simpler legal/user-provided sample workflows.
+
+Nate VST gaps:
+
+- No drag/drop audio loading onto the waveform yet.
+- No sample key/BPM detection or confidence display.
+- No fast cue-style chop map with color labels, pad roles, and per-slice audition.
+- No preserve-settings sample replacement for trying different vocals or stabs inside the same chop pattern.
+- No audio drag-out/render-to-audio workflow for moving a generated chop back into Ableton.
+
+### Kontakt, XO, And Atlas Browser Pattern
+
+Reference pattern:
+
+- Kontakt shows the value of tag filters and structured browsing for huge libraries.
+- XO and Atlas show that visual sample discovery, similarity search, sample maps, quick audition, and context-aware replacement can become creative composition tools.
+
+Nate VST gaps:
+
+- Library metadata is stronger for presets than samples.
+- No sample-folder indexing, descriptors, duplicate detection, or similarity search.
+- No sample map or visual "nearby sounds" workflow.
+- No audition-in-context against the internal sequencer or a standard house/UKG phrase.
+- No sample dependency report that can explain which presets, construction kits, and chop maps need a missing file.
 
 ### ShaperBox, Saturn, Portal, And Infiltrator Pattern
 
@@ -196,7 +232,7 @@ Reference pattern:
 
 Nate VST gaps:
 
-- Sample slicing has first Slice Keys and per-slice pitch/gain/reverse/stutter/choke memory; it still needs transient/manual markers, per-slice start/end/nudge/pan/fades/probability/playback modes, and slice lanes.
+- Sample slicing has first Slice Keys and per-slice region/pitch/gain/reverse/stutter/choke memory; it still needs transient/manual markers, per-slice nudge/pan/fades/probability/playback modes, and slice lanes.
 - Organ/drawbar-style source is missing.
 - Dred/Reese recipe tools are missing as first-class actions.
 - Groove templates need more microtiming and lane-specific swing.
@@ -306,8 +342,8 @@ Nate VST gaps:
 86. Add beat-grid slicing.
 87. Add equal-region slicing.
 88. Add manual slice marker creation.
-89. Add per-slice start/end/nudge.
-90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pitch/reverse/stutter/choke memory pass implemented; pan/fades/start/end remain open.
+89. Add per-slice start/end/nudge. First stored start/end region memory implemented; manual marker nudge remains open.
+90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pitch/reverse/stutter/choke memory pass implemented; pan/fades remain open.
 91. Add per-slice probability.
 92. Add per-slice stutter and retrigger.
 93. Add slice audition on click/hover.

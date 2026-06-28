@@ -484,7 +484,11 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
     setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
     for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
     {
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
         setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
         setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
@@ -2236,6 +2240,8 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
 
     if (! state.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid())
         setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
+    const auto hasSampleSliceRegions = state.getChildWithProperty("id", Parameters::ID::sampleSliceStart[0]).isValid()
+        && state.getChildWithProperty("id", Parameters::ID::sampleSliceEnd[0]).isValid();
 
     restoreParameterGroupFromState(state, {
         Parameters::ID::sampleEnabled,
@@ -2255,6 +2261,20 @@ void NateVSTAudioProcessor::restoreSampleFromState(const juce::ValueTree& state)
 
     for (const auto* parameterID : Parameters::ID::sampleSliceCustom)
         restoreParameterFromState(state, parameterID);
+    for (const auto* parameterID : Parameters::ID::sampleSliceStart)
+        restoreParameterFromState(state, parameterID);
+    for (const auto* parameterID : Parameters::ID::sampleSliceEnd)
+        restoreParameterFromState(state, parameterID);
+    if (! hasSampleSliceRegions)
+    {
+        for (size_t index = 0; index < Parameters::ID::sampleSliceStart.size(); ++index)
+        {
+            const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceStart.size());
+            const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceStart.size());
+            setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+            setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
+        }
+    }
     for (const auto* parameterID : Parameters::ID::sampleSliceReverse)
         restoreParameterFromState(state, parameterID);
     for (const auto* parameterID : Parameters::ID::sampleSliceTranspose)
@@ -2471,6 +2491,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
     const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
     const auto hasSampleSliceEdits = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceCustom[0]).isValid();
+    const auto hasSampleSliceRegions = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStart[0]).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceEnd[0]).isValid();
     const auto hasSampleSliceChoke = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceChoke[0]).isValid();
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
@@ -2496,13 +2518,27 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     {
         for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
         {
+            const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+            const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
             setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+            setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
             setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
             setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
+        }
+    }
+    if (! hasSampleSliceRegions)
+    {
+        for (size_t index = 0; index < Parameters::ID::sampleSliceStart.size(); ++index)
+        {
+            const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceStart.size());
+            const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceStart.size());
+            setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+            setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
         }
     }
     if (! hasSampleSliceChoke)

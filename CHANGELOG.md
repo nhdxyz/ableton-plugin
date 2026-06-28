@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Sample Slice Region Memory
+
+- Added saved start/end region parameters for all eight SAMPLE pads, extending per-slice memory beyond pitch, gain, reverse, stutter, and choke.
+- Store/Recall now captures and restores the current waveform region, and Slice Keys playback uses the stored region for customized pads while untouched pads keep equal-region defaults.
+- New sample loads and old preset/session restores migrate missing slice regions to equal eighths, keeping earlier patches compatible.
+- Updated SAMPLE status text and pad tooltips to show each slice region percentage alongside pitch, gain, reverse, choke, and stutter state.
+
 ### Modulation Route Editing
 
 - Added per-slot duplicate buttons to the MOD matrix so producers can quickly copy a source/destination/amount route into the next free slot and make variations.

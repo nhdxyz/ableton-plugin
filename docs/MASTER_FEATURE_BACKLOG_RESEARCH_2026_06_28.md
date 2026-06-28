@@ -32,6 +32,10 @@ Primary FX, sampler, and motion references:
 - Devious Machines Infiltrator: https://deviousmachines.com/product/infiltrator/
 - Output Portal: https://output.com/products/portal
 - Ableton Simpler slicing reference: https://www.ableton.com/en/manual/live-instrument-reference/
+- Serato Sample: https://serato.com/sample
+- Native Instruments Kontakt browser/preset workflow: https://www.native-instruments.com/ni-tech-manuals/kontakt-manual/en/browser-and-presets
+- XLN Audio XO: https://www.xlnaudio.com/products/xo
+- Algonaut Atlas: https://algonaut.audio/
 
 UK garage and club-production references:
 
@@ -60,7 +64,10 @@ UK garage and club-production references:
 6. The browser and content system should become part of the instrument.
    Preset search is not enough. Mature plugins lean on smart folders, pack organization, audio previews, macro intent, construction kits, and fast preset-first play views.
 
-7. The UI should show less at once.
+7. Sample discovery should be treated as a creative instrument, not a file picker.
+   Serato Sample, Kontakt, XO, Atlas, and Ableton's own sampling devices point toward fast audition, key/BPM confidence, waveform feedback, drag/drop loading, tag filters, similarity search, and context-aware sample replacement.
+
+8. The UI should show less at once.
    Nate VST has many good parts, but it should become more modular: page components, focused panels, collapsible groups, selected-control inspector, signal-flow view, and dedicated performance/browser views.
 
 ## Current Nate VST Baseline
@@ -72,7 +79,7 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Subtractive synth core with oscillator mix, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
 - Genre-oriented randomization, A/B snapshots, macros, XY pad, and low-end guidance.
 - Modulation matrix, LFO/curve tools, macro assignment editor, destination badges, S&H/Smooth/Chaos/LFO 2 movement sources, and a first right-click assignment pass for MOD-targetable controls.
-- Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice pitch/gain/reverse/stutter/choke memory, and UKG chop helpers.
+- Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/reverse/stutter/choke memory, and UKG chop helpers.
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
@@ -102,7 +109,7 @@ The gap is now professional depth, sound quality, focus, and genre workflow.
 17. Direct MIDI drag export/import with Ableton-friendly behavior.
 18. Drag-and-drop WAV/AIFF import onto SAMPLE.
 19. Transient, beat-grid, equal-region, and manual slicing.
-20. Per-slice start/end/nudge/pan/fade/probability/playback mode.
+20. Per-slice nudge/pan/fade/probability/playback mode, plus manual marker editing beyond the first stored region memory.
 21. Time-stretch/warp and formant-safe pitch investigation for vocal chops.
 22. Multiband distortion with gain compensation and oversampling.
 23. Drawable volume/filter/time/noise shaper modules.
@@ -379,8 +386,8 @@ These should stay near the top because every future feature becomes harder if th
 8. Add fully manual slice markers.
 9. Add marker add, remove, drag, and snap.
 10. Add zero-cross snap.
-11. Add per-slice start.
-12. Add per-slice end.
+11. Add per-slice start. First stored start-region memory implemented for custom pads.
+12. Add per-slice end. First stored end-region memory implemented for custom pads.
 13. Add per-slice nudge.
 14. Add per-slice pitch.
 15. Add per-slice gain.
@@ -419,6 +426,16 @@ These should stay near the top because every future feature becomes harder if th
 48. Add per-sample notes.
 49. Add sample dependency tracking in preset files.
 50. Add non-destructive crop/export helpers.
+51. Add waveform thumbnails in the sample browser.
+52. Add one-click sample audition with output normalization.
+53. Add audition-in-context against the current sequence or MIDI phrase.
+54. Add key and BPM confidence indicators so detection never pretends to be certain.
+55. Add sample descriptors: transient strength, brightness, low-end weight, pitch confidence, tempo confidence, length, stereo width, and noisiness.
+56. Add sample similarity search for vocal chops, bass hits, stabs, and one-shots.
+57. Add duplicate and near-duplicate sample detection.
+58. Add sample replacement that preserves slice markers, pitch, envelopes, and per-slice settings where possible.
+59. Add a visual sample-map view for large one-shot and chop folders after descriptors are stable.
+60. Add sample-folder indexing rules with include/exclude paths, refresh, and broken-file reporting.
 
 ## Priority 8: FX, Routing, And Club Processing
 
@@ -635,7 +652,7 @@ These should stay near the top because every future feature becomes harder if th
 3. Add selected-control inspector with route, value, automation name, reset, and modulation summary.
 4. Add drag-to-modulate plus modulation rings and hover route overlays.
 5. Add per-route range, curve, slew, invert, and polarity editing.
-6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice start/end/nudge/pan/fades/probability.
+6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice nudge/pan/fades/probability beyond the first stored start/end region pass.
 7. Add sequencer pattern scenes, ratchets, slide/accent, and per-step modulation lanes.
 8. Add full-browser mode with smart folders, tags, audio previews, construction kits, and dependency warnings.
 9. Add true wavetable oscillator with preview, position modulation, safe factory tables, and simple warp.
@@ -662,7 +679,7 @@ The strongest house/UKG sound slice after that is:
 
 1. Drag/drop sample import.
 2. Transient/manual slicing.
-3. Per-slice start/end/nudge/pan/fade/probability/playback mode.
+3. Per-slice nudge/pan/fade/probability/playback mode plus transient/manual markers beyond the first stored start/end region pass.
 4. Slice-to-sequencer lane.
 5. UKG chop templates.
 

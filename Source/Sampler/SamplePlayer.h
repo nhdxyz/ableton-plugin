@@ -136,6 +136,8 @@ private:
     std::atomic<float>* sampleStutterRepeats = nullptr;
     std::atomic<float>* sampleSliceStyle = nullptr;
     std::array<std::atomic<float>*, 8> sampleSliceCustom {};
+    std::array<std::atomic<float>*, 8> sampleSliceStart {};
+    std::array<std::atomic<float>*, 8> sampleSliceEnd {};
     std::array<std::atomic<float>*, 8> sampleSliceReverse {};
     std::array<std::atomic<float>*, 8> sampleSliceTranspose {};
     std::array<std::atomic<float>*, 8> sampleSliceGain {};

@@ -96,9 +96,9 @@ Research references:
 
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
-- Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, Slice Keys C3-G3 triggering, per-slice pitch/gain/reverse/stutter/choke memory, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, Slice Keys C3-G3 triggering, per-slice region/pitch/gain/reverse/stutter/choke memory, pitch ramp, reverse, stutter, and rhythmic triggering.
 - Reverse chop playback now uses corrected continuous-position interpolation, so Garage slice style and reversed/pitch-ramped phrase auditions stay cleaner.
-- Later: add transient-ish slicing, manual markers, per-slice start/end/nudge/pan/fades/probability/playback mode, and sequencer-triggered slice lanes.
+- Later: add transient-ish slicing, manual markers, per-slice nudge/pan/fades/probability/playback mode, and sequencer-triggered slice lanes.
 
 ### Groove
 
@@ -150,7 +150,7 @@ Research references:
 
 Reference-backed next passes:
 
-- Expand the first stored per-slice pitch/gain/reverse/stutter/choke pass into full slice lanes with start/end/nudge/pan/fades/probability, transient/manual markers, and sequencer-triggered slice playback.
+- Expand the first stored per-slice region/pitch/gain/reverse/stutter/choke pass into full slice lanes with nudge/pan/fades/probability, transient/manual markers, and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector beyond the implemented per-route bypass/delete controls into richer route editing and macro assignment views.
 - Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.
@@ -167,8 +167,8 @@ Reference-backed next passes:
 - UKG Chop now sets a short delay throw when FX locking is off.
 - The SAMPLE panel now includes eight numbered slice pads for jumping and auditioning a loaded phrase in equal chop windows before applying stutter, reverse, pitch, ramp, or sequencer triggering.
 - The SAMPLE panel now includes a waveform display with draggable start/end handles, visible phrase markers, and selection readout for faster vocal chop trimming.
-- Slice Keys mode now maps the eight pads across C3-G3 for MIDI-triggered chops, and untouched pads follow the selected Clean/Pitch/Reverse/Stutter/Garage style until a slice is manually stored.
-- The SAMPLE panel now stores per-slice pitch, gain, reverse, stutter, stutter repeats, and choke state, with a Choke action for cutting overlapping UKG vocal slices.
+- Slice Keys mode now maps the eight pads across C3-G3 for MIDI-triggered chops, and untouched pads follow equal regions plus the selected Clean/Pitch/Reverse/Stutter/Garage style until a slice is manually stored.
+- The SAMPLE panel now stores per-slice region, pitch, gain, reverse, stutter, stutter repeats, and choke state, with a Choke action for cutting overlapping UKG vocal slices.
 
 2. Pump/Duck FX.
 

@@ -588,12 +588,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(sampleNameLabel);
 
-    sampleSliceStatusLabel.setText("S1 default | pitch 0 st | gain -6 dB", juce::dontSendNotification);
+    sampleSliceStatusLabel.setText("S1 default | 0-13% | pitch 0 st | gain -6 dB", juce::dontSendNotification);
     sampleSliceStatusLabel.setJustificationType(juce::Justification::centredLeft);
     sampleSliceStatusLabel.setFont(juce::FontOptions(11.0f));
     sampleSliceStatusLabel.setMinimumHorizontalScale(0.62f);
     sampleSliceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
-    sampleSliceStatusLabel.setTooltip("Selected slice memory: store or recall pitch, gain, reverse, choke, and stutter edits");
+    sampleSliceStatusLabel.setTooltip("Selected slice memory: store or recall region, pitch, gain, reverse, choke, and stutter edits");
     addAndMakeVisible(sampleSliceStatusLabel);
 
     presetStatusLabel.setJustificationType(juce::Justification::centredLeft);
@@ -1447,9 +1447,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         button.onClick = [this, index] { selectSampleSlice(index); };
         addAndMakeVisible(button);
     }
-    sampleSliceStoreButton.setTooltip("Store the current sample pitch, gain, reverse, choke, and stutter settings into this slice");
+    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, reverse, choke, and stutter settings into this slice");
     sampleSliceStoreButton.onClick = [this] { storeSelectedSampleSliceSettings(); };
-    sampleSliceRecallButton.setTooltip("Recall this slice's stored pitch, gain, reverse, choke, and stutter settings");
+    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, reverse, choke, and stutter settings");
     sampleSliceRecallButton.onClick = [this] { recallSelectedSampleSliceSettings(); };
     sampleSliceDiceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
     sampleSliceDiceButton.onClick = [this] { randomizeSelectedSampleSliceSettings(); };
@@ -3496,8 +3496,13 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
         return;
 
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
-    const auto start = static_cast<float>(safeIndex) / sliceCount;
-    const auto end = static_cast<float>(safeIndex + 1) / sliceCount;
+    const auto hasCustomSettings = sampleSliceHasCustomSettings(safeIndex);
+    const auto start = hasCustomSettings
+        ? readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], static_cast<float>(safeIndex) / sliceCount)
+        : static_cast<float>(safeIndex) / sliceCount;
+    const auto end = hasCustomSettings
+        ? readPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex], static_cast<float>(safeIndex + 1) / sliceCount)
+        : static_cast<float>(safeIndex + 1) / sliceCount;
     selectedSampleSliceIndex = safeIndex;
 
     setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
@@ -3506,7 +3511,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     if (readPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f) < 1.5f)
         setPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f);
 
-    if (sampleSliceHasCustomSettings(safeIndex))
+    if (hasCustomSettings)
         recallSampleSliceSettings(safeIndex);
     else
     {
@@ -3589,7 +3594,12 @@ void NateVSTAudioProcessorEditor::applySampleSliceStyleDefaults(size_t sliceInde
 void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t sliceIndex, bool markCustom)
 {
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
     setPlainParameterValue(Parameters::ID::sampleSliceCustom[safeIndex], markCustom ? 1.0f : 0.0f);
+    setPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex],
+                           readPlainParameterValue(Parameters::ID::sampleStart, static_cast<float>(safeIndex) / sliceCount));
+    setPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex],
+                           readPlainParameterValue(Parameters::ID::sampleEnd, static_cast<float>(safeIndex + 1) / sliceCount));
     setPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], readPlainParameterValue(Parameters::ID::sampleReverse, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], readPlainParameterValue(Parameters::ID::sampleTranspose, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], readPlainParameterValue(Parameters::ID::sampleGain, -6.0f));
@@ -3600,6 +3610,11 @@ void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t slice
 void NateVSTAudioProcessorEditor::recallSampleSliceSettings(size_t sliceIndex)
 {
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    setPlainParameterValue(Parameters::ID::sampleStart,
+                           readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], static_cast<float>(safeIndex) / sliceCount));
+    setPlainParameterValue(Parameters::ID::sampleEnd,
+                           readPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex], static_cast<float>(safeIndex + 1) / sliceCount));
     setPlainParameterValue(Parameters::ID::sampleReverse, readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f));
     setPlainParameterValue(Parameters::ID::sampleTranspose, readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f));
     setPlainParameterValue(Parameters::ID::sampleGain, readPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], -6.0f));
@@ -3613,14 +3628,12 @@ void NateVSTAudioProcessorEditor::storeSelectedSampleSliceSettings()
     setRandomStatus("Stored slice " + juce::String(static_cast<int>(selectedSampleSliceIndex + 1)));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
 {
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
-    setPlainParameterValue(Parameters::ID::sampleStart, static_cast<float>(safeIndex) / sliceCount);
-    setPlainParameterValue(Parameters::ID::sampleEnd, static_cast<float>(safeIndex + 1) / sliceCount);
     recallSampleSliceSettings(safeIndex);
 
     const auto didAudition = audioProcessor.triggerSampleAudition();
@@ -3698,6 +3711,19 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
 {
     const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
     const auto custom = sampleSliceHasCustomSettings(safeIndex);
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto defaultStart = static_cast<float>(safeIndex) / sliceCount;
+    const auto defaultEnd = static_cast<float>(safeIndex + 1) / sliceCount;
+    const auto regionStart = juce::jlimit(0.0f,
+                                          1.0f,
+                                          custom ? readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], defaultStart)
+                                                 : defaultStart);
+    const auto regionEnd = juce::jlimit(0.0f,
+                                        1.0f,
+                                        custom ? readPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex], defaultEnd)
+                                               : defaultEnd);
+    const auto regionLower = juce::jmin(regionStart, regionEnd);
+    const auto regionUpper = juce::jmax(regionStart, regionEnd);
     const auto preview = custom
         ? SampleSlicePreviewSettings {
             readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f),
@@ -3712,6 +3738,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
     const auto pitchText = (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1) + "st";
     const auto status = "S" + juce::String(static_cast<int>(safeIndex + 1))
         + (custom ? " custom" : " default")
+        + " | " + juce::String(juce::roundToInt(regionLower * 100.0f)) + "-"
+        + juce::String(juce::roundToInt(regionUpper * 100.0f)) + "%"
         + " | " + pitchText
         + " | " + juce::String(preview.gain, 1) + "dB"
         + (preview.reverse ? " | rev" : " | fwd")
@@ -3744,11 +3772,21 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
 
     for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
     {
-        const auto sliceStart = static_cast<float>(index) / sliceCount;
-        const auto sliceEnd = static_cast<float>(index + 1) / sliceCount;
-        const auto isSelected = std::abs(orderedStart - sliceStart) < 0.005f
-            && std::abs(orderedEnd - sliceEnd) < 0.005f;
         const auto custom = sampleSliceHasCustomSettings(index);
+        const auto defaultStart = static_cast<float>(index) / sliceCount;
+        const auto defaultEnd = static_cast<float>(index + 1) / sliceCount;
+        const auto sliceStart = juce::jlimit(0.0f,
+                                             1.0f,
+                                             custom ? readPlainParameterValue(Parameters::ID::sampleSliceStart[index], defaultStart)
+                                                    : defaultStart);
+        const auto sliceEnd = juce::jlimit(0.0f,
+                                           1.0f,
+                                           custom ? readPlainParameterValue(Parameters::ID::sampleSliceEnd[index], defaultEnd)
+                                                  : defaultEnd);
+        const auto orderedSliceStart = juce::jmin(sliceStart, sliceEnd);
+        const auto orderedSliceEnd = juce::jmax(sliceStart, sliceEnd);
+        const auto isSelected = std::abs(orderedStart - orderedSliceStart) < 0.005f
+            && std::abs(orderedEnd - orderedSliceEnd) < 0.005f;
         const auto preview = custom
             ? SampleSlicePreviewSettings {
                 readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f),
@@ -3763,6 +3801,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
         sampleSliceButtons[index].setButtonText(juce::String(static_cast<int>(index + 1)) + (custom ? "*" : ""));
         sampleSliceButtons[index].setTooltip("Slice " + juce::String(static_cast<int>(index + 1))
                                              + (custom ? " custom" : " default")
+                                             + " | Region " + juce::String(juce::roundToInt(orderedSliceStart * 100.0f))
+                                             + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
                                              + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
                                              + " st | Gain " + juce::String(preview.gain, 1)
                                              + " dB | " + (preview.reverse ? "Reverse" : "Forward")

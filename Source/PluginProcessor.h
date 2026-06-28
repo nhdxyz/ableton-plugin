@@ -86,6 +86,10 @@ public:
     void createRandomVariation(int mutationScopeIndex);
     bool undoRandomization();
     bool redoRandomization();
+    bool hasRandomCandidate(int slotIndex) const;
+    juce::String getRandomCandidateSummary(int slotIndex) const;
+    int getActiveRandomCandidateIndex() const noexcept;
+    bool recallRandomCandidate(int slotIndex);
     bool loadSampleFile(const juce::File& file);
     void clearSample();
     bool randomizeSampleCut();
@@ -159,6 +163,13 @@ private:
         macros
     };
 
+    struct RandomCandidateSnapshot
+    {
+        juce::ValueTree state;
+        juce::String label;
+        bool valid = false;
+    };
+
     Parameters::APVTS parameters;
     Synth::SynthEngine synthEngine;
     Randomization::Randomizer randomizer;
@@ -197,15 +208,21 @@ private:
     juce::ValueTree randomRedoState;
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
+    std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
     juce::String randomUndoLabel;
     juce::String randomRedoLabel;
+    int nextRandomCandidateSlot = 0;
+    int activeRandomCandidateSlot = -1;
     bool hasRandomUndoState = false;
     bool hasRandomRedoState = false;
     bool hasSequencerUndoState = false;
 
     void runRandomAction(RandomAction action, int mutationScopeIndex = 0);
     static juce::String randomActionLabel(RandomAction action);
+    static juce::String randomMutationScopeLabel(RandomMutationScope mutationScope);
     static RandomMutationScope randomMutationScopeFromIndex(int mutationScopeIndex);
+    juce::String currentRandomRecipeName() const;
+    void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
     float getParameterPlainValue(const juce::String& parameterID, float fallback) const;
     float getParameterPlainValueFromState(const juce::ValueTree& state, const juce::String& parameterID, float fallback) const;

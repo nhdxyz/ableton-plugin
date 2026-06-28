@@ -454,6 +454,7 @@ private:
     juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton redoRandomButton { "Redo" };
     std::array<juce::TextButton, 7> randomSectionRollButtons;
+    std::array<juce::TextButton, 4> randomCandidateButtons;
     juce::TextButton recallSnapshotAButton { "A" };
     juce::TextButton captureSnapshotAButton { "Set A" };
     juce::TextButton recallSnapshotBButton { "B" };
@@ -672,6 +673,8 @@ private:
     void triggerRandomVariation();
     void triggerRandomWild();
     void triggerRandomSectionRoll(size_t sectionIndex);
+    void recallRandomCandidate(size_t slotIndex);
+    void updateRandomCandidateButtons();
     void prepareRandomPresetDraft(const juce::String& actionLabel);
     juce::String suggestedPresetCategoryForRecipe() const;
     juce::String suggestedPresetPackForCategory(const juce::String& category) const;

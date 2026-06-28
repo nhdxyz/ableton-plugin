@@ -1406,6 +1406,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         setRandomStatus(audioProcessor.undoRandomization() ? "Undo restored" : "Nothing to undo");
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
+        updateWavetableDisplay();
+        updateRandomCandidateButtons();
         sequencerGrid.repaint();
     };
     redoRandomButton.setTooltip("Redo the last undone randomization action");
@@ -1414,6 +1416,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         setRandomStatus(audioProcessor.redoRandomization() ? "Redo restored" : "Nothing to redo");
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
+        updateWavetableDisplay();
+        updateRandomCandidateButtons();
         sequencerGrid.repaint();
     };
     recallSnapshotAButton.setTooltip("Recall performance snapshot A");
@@ -1770,6 +1774,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         button.setButtonText(sectionRollLabels[index]);
         button.setTooltip("Mutate only the " + sectionRollLabels[index] + " section while preserving the rest of the patch");
         button.onClick = [this, index] { triggerRandomSectionRoll(index); };
+        addAndMakeVisible(button);
+    }
+
+    for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
+    {
+        auto& button = randomCandidateButtons[index];
+        button.setButtonText("Slot " + juce::String(static_cast<int>(index + 1)));
+        button.setTooltip("Recall this generated random candidate");
+        button.onClick = [this, index] { recallRandomCandidate(index); };
         addAndMakeVisible(button);
     }
 
@@ -2354,6 +2367,9 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             for (auto& button : randomSectionRollButtons)
                 button.setVisible(true);
+            for (auto& button : randomCandidateButtons)
+                button.setVisible(true);
+            updateRandomCandidateButtons();
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
             recipeBox.setBounds(actionRow.removeFromLeft(210).reduced(4));
@@ -2379,13 +2395,17 @@ void NateVSTAudioProcessorEditor::resized()
             randomLockOutputButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
             randomLockSequencerButton.setBounds(lockRow.reduced(4));
             randomStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
-            content.removeFromTop(12);
+            auto candidateRow = content.removeFromTop(40).withTrimmedTop(6);
+            const auto candidateButtonWidth = candidateRow.getWidth() / static_cast<int>(randomCandidateButtons.size());
+            for (auto& button : randomCandidateButtons)
+                button.setBounds(candidateRow.removeFromLeft(candidateButtonWidth).reduced(4));
+            content.removeFromTop(6);
             setSliderVisible(randomAmountSlider, randomAmountLabel, true);
             setSliderVisible(randomChaosSlider, randomChaosLabel, true);
             setSliderVisible(brightnessSlider, brightnessLabel, true);
             setSliderVisible(driveBiasSlider, driveBiasLabel, true);
             setSliderVisible(motionBiasSlider, motionBiasLabel, true);
-            layoutKnobRow(content.removeFromTop(132), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
+            layoutKnobRow(content.removeFromTop(112), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
             content.removeFromTop(8);
             auto saveRow = content.removeFromTop(42);
             presetCategoryBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
@@ -4016,6 +4036,7 @@ void NateVSTAudioProcessorEditor::triggerRandomGenerate()
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
     sequencerGrid.repaint();
+    updateRandomCandidateButtons();
     setRandomStatus("Generated");
 }
 
@@ -4028,6 +4049,7 @@ void NateVSTAudioProcessorEditor::triggerRandomMutate()
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
     sequencerGrid.repaint();
+    updateRandomCandidateButtons();
     setRandomStatus("Mutated");
 }
 
@@ -4040,6 +4062,7 @@ void NateVSTAudioProcessorEditor::triggerRandomVariation()
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
     sequencerGrid.repaint();
+    updateRandomCandidateButtons();
     setRandomStatus("Variation");
 }
 
@@ -4052,6 +4075,7 @@ void NateVSTAudioProcessorEditor::triggerRandomWild()
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
     sequencerGrid.repaint();
+    updateRandomCandidateButtons();
     setRandomStatus("Wild");
 }
 
@@ -4071,7 +4095,46 @@ void NateVSTAudioProcessorEditor::triggerRandomSectionRoll(size_t sectionIndex)
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
     sequencerGrid.repaint();
+    updateRandomCandidateButtons();
     setRandomStatus("Rolled " + sectionName);
+}
+
+void NateVSTAudioProcessorEditor::recallRandomCandidate(size_t slotIndex)
+{
+    if (! audioProcessor.recallRandomCandidate(static_cast<int>(slotIndex)))
+    {
+        setRandomStatus("Candidate empty");
+        updateRandomCandidateButtons();
+        return;
+    }
+
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    updateRandomCandidateButtons();
+    prepareRandomPresetDraft("Candidate " + juce::String(static_cast<int>(slotIndex + 1)));
+    setRandomStatus("Recalled candidate " + juce::String(static_cast<int>(slotIndex + 1)));
+}
+
+void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
+{
+    const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
+
+    for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
+    {
+        const auto slotIndex = static_cast<int>(index);
+        const auto hasCandidate = audioProcessor.hasRandomCandidate(slotIndex);
+        auto& button = randomCandidateButtons[index];
+        const auto prefix = juce::String(static_cast<int>(index + 1)) + ". ";
+        const auto summary = hasCandidate ? audioProcessor.getRandomCandidateSummary(slotIndex) : juce::String("Empty");
+
+        button.setEnabled(hasCandidate);
+        button.setToggleState(hasCandidate && activeSlot == slotIndex, juce::dontSendNotification);
+        button.setButtonText(prefix + summary);
+        button.setTooltip(hasCandidate ? "Recall " + summary : "Generate or mutate a patch to fill this candidate slot");
+    }
 }
 
 void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& actionLabel)
@@ -5516,6 +5579,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         slider.setVisible(false);
 
     for (auto& button : randomSectionRollButtons)
+        button.setVisible(false);
+
+    for (auto& button : randomCandidateButtons)
         button.setVisible(false);
 
     for (auto& button : sampleSliceButtons)

@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Random Candidate History Slots
+
+- Added four processor-backed Random Lab candidate slots that capture full patch/sample/sequencer snapshots after Generate, Mutate, Vary, Wild, and section-roll actions.
+- Added LAB candidate recall buttons with compact action/recipe/scope labels, active-slot highlighting, and disabled empty-slot states.
+- Candidate recall restores the saved sound state, refreshes selector, waveform, wavetable, and sequencer feedback, and participates in random undo.
+- Added `RandomCandidateAudit` to CTest to verify candidate capture, recall, all-slot fill behavior, and out-of-range recall rejection.
+
 ### Random Lab Section Rolls And Safer Preset Saves
 
 - Added one-click LAB section-roll buttons for Source, Env, Filter, Sample, FX, Seq, and Macros so a generated patch can be refined section by section without replacing the whole sound.

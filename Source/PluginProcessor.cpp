@@ -500,6 +500,46 @@ bool NateVSTAudioProcessor::redoRandomization()
     return true;
 }
 
+bool NateVSTAudioProcessor::hasRandomCandidate(int slotIndex) const
+{
+    if (slotIndex < 0 || slotIndex >= static_cast<int>(randomCandidateSnapshots.size()))
+        return false;
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    return candidate.valid && candidate.state.isValid();
+}
+
+juce::String NateVSTAudioProcessor::getRandomCandidateSummary(int slotIndex) const
+{
+    if (! hasRandomCandidate(slotIndex))
+        return {};
+
+    return randomCandidateSnapshots[static_cast<size_t>(slotIndex)].label;
+}
+
+int NateVSTAudioProcessor::getActiveRandomCandidateIndex() const noexcept
+{
+    return activeRandomCandidateSlot;
+}
+
+bool NateVSTAudioProcessor::recallRandomCandidate(int slotIndex)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return false;
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    randomUndoState = createPluginState(false);
+    randomUndoLabel = "Recall " + juce::String(slotIndex + 1);
+    hasRandomUndoState = true;
+    randomRedoState = {};
+    randomRedoLabel.clear();
+    hasRandomRedoState = false;
+
+    restorePluginState(candidate.state.createCopy(), false);
+    activeRandomCandidateSlot = slotIndex;
+    return true;
+}
+
 bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
 {
     if (! samplePlayer.loadFile(file))
@@ -1895,6 +1935,7 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
 
     restoreSectionsOutsideMutationScope(snapshot, mutationScope);
     restoreLockedSectionsFromState(snapshot);
+    captureRandomCandidateSnapshot(action, mutationScope);
 }
 
 juce::String NateVSTAudioProcessor::randomActionLabel(RandomAction action)
@@ -1910,6 +1951,23 @@ juce::String NateVSTAudioProcessor::randomActionLabel(RandomAction action)
     return "Random";
 }
 
+juce::String NateVSTAudioProcessor::randomMutationScopeLabel(RandomMutationScope mutationScope)
+{
+    switch (mutationScope)
+    {
+        case RandomMutationScope::source: return "Source";
+        case RandomMutationScope::envelope: return "Env";
+        case RandomMutationScope::filter: return "Filter";
+        case RandomMutationScope::sample: return "Sample";
+        case RandomMutationScope::effects: return "FX";
+        case RandomMutationScope::sequencer: return "Seq";
+        case RandomMutationScope::macros: return "Macros";
+        case RandomMutationScope::all: return "All";
+    }
+
+    return "All";
+}
+
 NateVSTAudioProcessor::RandomMutationScope NateVSTAudioProcessor::randomMutationScopeFromIndex(int mutationScopeIndex)
 {
     switch (mutationScopeIndex)
@@ -1923,6 +1981,34 @@ NateVSTAudioProcessor::RandomMutationScope NateVSTAudioProcessor::randomMutation
         case 7: return RandomMutationScope::macros;
         default: return RandomMutationScope::all;
     }
+}
+
+juce::String NateVSTAudioProcessor::currentRandomRecipeName() const
+{
+    const auto choices = Parameters::randomRecipeChoices();
+    if (choices.isEmpty())
+        return "Random";
+
+    const auto recipeIndex = juce::jlimit(0,
+                                         choices.size() - 1,
+                                         juce::roundToInt(getParameterPlainValue(Parameters::ID::randomRecipe, 0.0f)));
+    return choices[recipeIndex];
+}
+
+void NateVSTAudioProcessor::captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope)
+{
+    const auto slot = static_cast<size_t>(juce::jlimit(0,
+                                                       static_cast<int>(randomCandidateSnapshots.size()) - 1,
+                                                       nextRandomCandidateSlot));
+    auto& candidate = randomCandidateSnapshots[slot];
+    candidate.state = createPluginState(false);
+    candidate.label = randomActionLabel(action) + ": " + currentRandomRecipeName();
+    if (mutationScope != RandomMutationScope::all)
+        candidate.label += " / " + randomMutationScopeLabel(mutationScope);
+    candidate.valid = true;
+
+    activeRandomCandidateSlot = static_cast<int>(slot);
+    nextRandomCandidateSlot = (static_cast<int>(slot) + 1) % static_cast<int>(randomCandidateSnapshots.size());
 }
 
 bool NateVSTAudioProcessor::isRandomLockEnabled(const juce::String& parameterID) const

@@ -522,6 +522,51 @@ double lfoCyclesPerBeatForUi(int rateIndex)
         default: return 1.0;
     }
 }
+
+float evaluateLfoCurveForUi(const std::array<float, 8>& values, float phase)
+{
+    constexpr auto pointCount = 8;
+    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
+    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
+    const auto rightIndex = (leftIndex + 1) % pointCount;
+    const auto fraction = scaledPhase - std::floor(scaledPhase);
+
+    return juce::jlimit(-1.0f,
+                        1.0f,
+                        values[static_cast<size_t>(leftIndex)]
+                            + ((values[static_cast<size_t>(rightIndex)] - values[static_cast<size_t>(leftIndex)]) * fraction));
+}
+
+float lfoShapeValueForUi(int shapeIndex, float phase, const std::array<float, 8>& curveValues)
+{
+    phase = std::fmod(phase + 1.0f, 1.0f);
+
+    switch (shapeIndex)
+    {
+        case 1:
+            return phase < 0.25f ? phase * 4.0f
+                : phase < 0.75f ? 2.0f - (phase * 4.0f)
+                : (phase * 4.0f) - 4.0f;
+
+        case 2:
+            return (phase * 2.0f) - 1.0f;
+
+        case 3:
+            return phase < 0.5f ? 1.0f : -1.0f;
+
+        case 4:
+            return phase < 0.25f ? 1.0f
+                : phase < 0.5f ? -0.35f
+                : phase < 0.75f ? 0.55f
+                : -1.0f;
+
+        case 5:
+            return evaluateLfoCurveForUi(curveValues, phase);
+
+        default:
+            return std::sin(juce::MathConstants<float>::twoPi * phase);
+    }
+}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -732,13 +777,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     for (size_t index = 0; index < modSourceRows.size(); ++index)
     {
-        auto& label = modSourceRows[index];
-        label.setText(modSourceSummaryText(index), juce::dontSendNotification);
-        label.setFont(juce::FontOptions(10.5f));
-        label.setJustificationType(juce::Justification::centredLeft);
-        label.setColour(juce::Label::textColourId, juce::Colour(0xffc7d7d4));
-        label.setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
-        addAndMakeVisible(label);
+        auto& meter = modSourceRows[index];
+        meter.setComponentID("ModSource" + juce::String(static_cast<int>(index + 1)));
+        meter.setState(modSourceSummaryText(index), 0, 0.0f, 0.0f, modSourceSummaryText(index));
+        addAndMakeVisible(meter);
     }
 
     for (size_t index = 0; index < modSlotRows.size(); ++index)
@@ -6432,31 +6474,132 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         const auto depth = juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
             ? sourceDepths[sourceIndex]
             : 0.0f;
-        auto text = modSourceSummaryText(rowIndex);
+        const auto activity = modulationSourceActivityForUi(sourceChoiceIndex);
+        const auto text = modSourceSummaryText(rowIndex);
 
+        juce::String routeSummary;
         if (routeCount > 0)
         {
             const auto percent = juce::roundToInt(depth * 100.0f);
-            text += " | " + juce::String(routeCount) + " route" + (routeCount == 1 ? "" : "s")
+            routeSummary = juce::String(routeCount) + " route" + (routeCount == 1 ? "" : "s")
                 + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
         }
+        else
+        {
+            routeSummary = "no active routes";
+        }
 
-        auto& label = modSourceRows[rowIndex];
-        label.setText(text, juce::dontSendNotification);
-        label.setColour(juce::Label::textColourId,
-                        routeCount > 0
-                            ? (depth < 0.0f ? juce::Colour(0xffffc29a) : juce::Colour(0xffd9fff1))
-                            : juce::Colour(0xffc7d7d4));
-        label.setColour(juce::Label::backgroundColourId,
-                        routeCount > 0
-                            ? (depth < 0.0f ? juce::Colour(0x22ff8a4d) : juce::Colour(0x223bcfa7))
-                            : juce::Colours::transparentBlack);
-        label.setTooltip(routeCount > 0
-                             ? sourceChoices[sourceChoiceIndex] + ": " + juce::String(routeCount)
-                                + " active route" + (routeCount == 1 ? "" : "s")
-                             : juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
-                                 ? sourceChoices[sourceChoiceIndex] + ": no active routes"
-                                 : juce::String("No source"));
+        auto& meter = modSourceRows[rowIndex];
+        meter.setState(text,
+                       routeCount,
+                       depth,
+                       activity,
+                       juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
+                           ? sourceChoices[sourceChoiceIndex] + ": " + routeSummary
+                                + " | activity " + juce::String(juce::roundToInt(activity * 100.0f)) + "%"
+                           : juce::String("No source"));
+    }
+}
+
+float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex) const
+{
+    auto lfoPhase = [this] (bool syncEnabled, int syncRateIndex, float freeRateHz, float phaseOffset)
+    {
+        auto phase = phaseOffset;
+        const auto hostStatus = audioProcessor.getHostSyncStatus();
+
+        if (syncEnabled && hostStatus.ppqAvailable)
+        {
+            phase += static_cast<float>(std::fmod(hostStatus.ppqPosition * lfoCyclesPerBeatForUi(syncRateIndex), 1.0));
+        }
+        else
+        {
+            const auto bpm = juce::jlimit(20.0, 300.0, hostStatus.bpm);
+            const auto rateHz = syncEnabled
+                ? static_cast<float>((bpm / 60.0) * lfoCyclesPerBeatForUi(syncRateIndex))
+                : freeRateHz;
+            phase += static_cast<float>(std::fmod((juce::Time::getMillisecondCounterHiRes() * 0.001) * rateHz, 1.0));
+        }
+
+        return std::fmod(phase + 1.0f, 1.0f);
+    };
+
+    std::array<float, 8> curveValues {};
+    for (size_t index = 0; index < curveValues.size(); ++index)
+        curveValues[index] = readPlainParameterValue(Parameters::ID::lfo1Curve[index], 0.0f);
+
+    auto bipolarActivity = [] (float value, float scale = 1.0f)
+    {
+        return juce::jlimit(0.0f, 1.0f, std::abs(value) * juce::jlimit(0.0f, 1.0f, scale));
+    };
+
+    auto macroActivity = [this] (const juce::String& parameterID)
+    {
+        return juce::jlimit(0.0f, 1.0f, readPlainParameterValue(parameterID, 0.0f));
+    };
+
+    switch (sourceIndex)
+    {
+        case 1:
+        {
+            const auto phase = lfoPhase(readPlainParameterValue(Parameters::ID::lfo1Sync, 1.0f) >= 0.5f,
+                                        juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1SyncRate, 1.0f)),
+                                        readPlainParameterValue(Parameters::ID::lfo1Rate, 1.0f),
+                                        readPlainParameterValue(Parameters::ID::lfo1Phase, 0.0f));
+            const auto value = lfoShapeValueForUi(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1Shape, 0.0f)),
+                                                  phase,
+                                                  curveValues);
+            return bipolarActivity(value, readPlainParameterValue(Parameters::ID::lfo1Depth, 0.45f));
+        }
+
+        case 2:
+            return juce::jlimit(0.0f,
+                                1.0f,
+                                readPlainParameterValue(Parameters::ID::modEnv1Depth, 0.4f)
+                                    * juce::jmax(0.25f, readPlainParameterValue(Parameters::ID::modEnv1Sustain, 0.55f)));
+
+        case 3:
+            return 0.72f;
+
+        case 4: return macroActivity(Parameters::ID::macroTone);
+        case 5: return macroActivity(Parameters::ID::macroDirt);
+        case 6: return macroActivity(Parameters::ID::macroMotion);
+        case 7: return macroActivity(Parameters::ID::macroSpace);
+        case 8: return macroActivity(Parameters::ID::macroWeight);
+        case 9: return macroActivity(Parameters::ID::macroBounce);
+        case 10: return macroActivity(Parameters::ID::macroWarp);
+        case 11: return macroActivity(Parameters::ID::macroThrow);
+
+        case 12:
+        {
+            const auto phase = lfoPhase(true, 2, 2.0f, 0.0f);
+            return phase < 0.5f ? 0.82f : 0.28f;
+        }
+
+        case 13:
+            return 0.5f + (0.5f * std::sin(static_cast<float>(juce::Time::getMillisecondCounterHiRes() * 0.0011)));
+
+        case 14:
+            return juce::jlimit(0.0f,
+                                1.0f,
+                                0.26f
+                                    + (0.38f * std::abs(std::sin(static_cast<float>(juce::Time::getMillisecondCounterHiRes() * 0.0017))))
+                                    + (0.24f * std::abs(std::sin(static_cast<float>(juce::Time::getMillisecondCounterHiRes() * 0.0041)))));
+
+        case 15:
+        {
+            const auto phase = lfoPhase(readPlainParameterValue(Parameters::ID::lfo2Sync, 1.0f) >= 0.5f,
+                                        juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo2SyncRate, 3.0f)),
+                                        readPlainParameterValue(Parameters::ID::lfo2Rate, 1.5f),
+                                        readPlainParameterValue(Parameters::ID::lfo2Phase, 0.25f));
+            const auto value = lfoShapeValueForUi(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo2Shape, 1.0f)),
+                                                  phase,
+                                                  curveValues);
+            return bipolarActivity(value, readPlainParameterValue(Parameters::ID::lfo2Depth, 0.25f));
+        }
+
+        default:
+            return 0.0f;
     }
 }
 

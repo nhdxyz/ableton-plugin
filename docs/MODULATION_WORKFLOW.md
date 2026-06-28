@@ -160,10 +160,10 @@ MOD:
 
 - LFO controls.
 - Mod envelope controls.
-- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, Smooth, and Chaos.
+- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, Smooth, and Chaos, each with route count/depth and a compact activity meter.
 - Matrix rows.
 - Assignment amount controls.
-- Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
+- Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, live source activity meters, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
 - Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
 - Current implementation includes right-click `Modulate` menus on matrix-targetable sliders, so producers can add LFO, macro, S&H, Smooth, Chaos, or LFO 2 routes directly from cutoff, drive, Osc Warp, sample chop, and FX movement controls.
 - Current implementation now shows modulation feedback on both rotary and horizontal sliders: knobs draw amount rings, while horizontal sample/FX/matrix controls draw modulation stripes and compact route badges. Tooltips keep the normal control guidance and append active source/depth status.

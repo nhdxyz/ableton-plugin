@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Mod Source Activity Meters
+
+- Replaced the MOD source list labels with compact source-meter components that show route count, summed depth direction, and a live activity bar for LFOs, macros, random sources, Velocity, and Mod Env.
+- The source meters reuse existing modulation state and UI timing, so no new preset parameters or Ableton automation IDs were added.
+- Kept source tooltips tied to route count/depth plus current activity percentage for faster inspection while building house, UKG, tech-house, minimal, and techno motion patches.
+
 ### Random Lab Focus Pages
 
 - Added a LAB page row with focused `Generate`, `Mutate`, `Recipe`, `History`, and `Save` work areas so randomization no longer exposes every control at once.

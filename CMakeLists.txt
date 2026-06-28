@@ -58,6 +58,7 @@ target_sources(NateVST
         Source/UI/LowEndAssistant.cpp
         Source/UI/ModCurveDisplay.cpp
         Source/UI/ModMatrixRow.cpp
+        Source/UI/ModSourceMeter.cpp
         Source/UI/OutputMeter.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/SampleWaveformDisplay.cpp

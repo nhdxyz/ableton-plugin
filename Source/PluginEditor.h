@@ -6,6 +6,7 @@
 #include "UI/LowEndAssistant.h"
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
+#include "UI/ModSourceMeter.h"
 #include "UI/OutputMeter.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
@@ -574,7 +575,7 @@ private:
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
     juce::Label fxRackStatusLabel;
-    std::array<juce::Label, 15> modSourceRows;
+    std::array<UI::ModSourceMeter, 15> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
@@ -656,6 +657,7 @@ private:
     void updateModInspectorStatus();
     void updateMacroAssignmentEditorStatus();
     void updateModDestinationIndicators();
+    float modulationSourceActivityForUi(int sourceIndex) const;
     void updateSelectedControlInspector(const juce::String& labelText, const juce::String& parameterID, double plainValue);
     void updateSelectedControlActionState();
     void addModRouteForSelectedControl();

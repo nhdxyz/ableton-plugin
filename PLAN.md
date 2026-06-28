@@ -60,6 +60,10 @@ Current UI research takeaway:
 - Current deep review says Nate VST is no longer missing the basics for a house-focused synth; the biggest remaining gaps are polish and depth: visual drag-style modulation, stronger source engines, per-slice chop lanes, construction-kit browsing, per-lane sequencer modulation, and oversampled nonlinear quality modes.
 - UI status should make timing trust obvious. SEQ and FX now show host-sync state so Ableton BPM/PPQ lock, stopped-host state, and internal fallback are visible while building groove-heavy patches.
 
+Current add-list research:
+
+- The current prioritized research list lives in `docs/NEXT_FEATURE_RESEARCH.md`. Use it to choose the next issue slices after each deep review. It maps the current competitor/product findings to concrete Nate VST work and existing GitHub issues.
+
 Deep backlog:
 
 - The current research-backed feature inventory lives in `docs/DEEP_RESEARCH_BACKLOG.md`. Use that file as the working backlog for future UI, modulation, oscillator, sampler, sequencer, FX, library, quality, and Ableton-distribution slices.

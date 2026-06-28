@@ -323,6 +323,10 @@ Implemented P0 sub-slice:
 239. Add library repair/reindex command.
 240. Add preset migration tests for future format changes.
 
+Implemented P8 sub-slice:
+
+- LIBRARY now has a compact multi-column preset browser list that uses the active search, filter, sort, recents, rating, favorite, and macro metadata path. It shows the preset name, category/folder, pack, key, BPM, rating, favorite marker, and macro summary before loading. Remaining browser work includes a full-size browser mode, custom tag editing, smart folder tree, multi-select metadata editing, audio previews, and construction-kit dependency tracking.
+
 ### P9 - Audio Quality, Stability, And Testing
 
 241. Add denormal protection audit.

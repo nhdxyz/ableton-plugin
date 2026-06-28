@@ -9,6 +9,13 @@
 - Kept scroll-wheel changes disabled to avoid accidental Ableton trackpad edits, while preserving drag popups, typed values, and double-click reset.
 - Added control tooltips that call out drag, fine-adjust, reset, and value typing behavior.
 
+### Library Browser Table
+
+- Added a compact multi-column LIBRARY preset browser list under the existing save/search/load controls.
+- Browser rows now show preset name, category/folder, pack, key, BPM, rating, favorite marker, and saved macro summary before loading.
+- Kept the existing preset combo box workflow intact while syncing combo and browser-row selection both ways.
+- Added double-click row loading for faster audition/load flow when browsing house, UKG, tech-house, minimal, and techno presets.
+
 ### Competitor Gap Analysis Refresh
 
 - Added `docs/COMPETITOR_GAP_ANALYSIS.md`, a larger feature-gap review across Serum, Pigments, Phase Plant, Vital, u-he, Korg, Roland, Ableton, ShaperBox, Saturn, Portal-style granular FX, and UKG production references.

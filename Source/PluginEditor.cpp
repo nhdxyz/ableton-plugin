@@ -454,6 +454,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
+    presetBrowserHeaderLabel.setText("PRESET        CATEGORY      PACK        KEY     BPM   RATE  MACROS", juce::dontSendNotification);
+    presetBrowserHeaderLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    presetBrowserHeaderLabel.setJustificationType(juce::Justification::centredLeft);
+    presetBrowserHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
+    presetBrowserHeaderLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
+    presetBrowserHeaderLabel.setTooltip("Visible preset browser columns");
+    addAndMakeVisible(presetBrowserHeaderLabel);
+
+    presetBrowserList.setModel(this);
+    presetBrowserList.setRowHeight(28);
+    presetBrowserList.setMultipleSelectionEnabled(false);
+    presetBrowserList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101619));
+    presetBrowserList.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff344047));
+    presetBrowserList.setColour(juce::ListBox::textColourId, juce::Colour(0xffdce7e4));
+    presetBrowserList.setOutlineThickness(1);
+    presetBrowserList.setTooltip("Click a preset row to select it. Double-click a row to load it.");
+    addAndMakeVisible(presetBrowserList);
+
     randomStatusLabel.setText("Ready", juce::dontSendNotification);
     randomStatusLabel.setJustificationType(juce::Justification::centredLeft);
     randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -1383,7 +1401,22 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetSortBox.onChange = [this] { refreshPresetList(); };
     presetRatingBox.onChange = [this] { setSelectedPresetRating(); };
     presetSearchEditor.onTextChange = [this] { refreshPresetList(); };
-    presetBox.onChange = [this] { updateFavoritePresetButton(); };
+    presetBox.onChange = [this]
+    {
+        updateFavoritePresetButton();
+
+        const auto selectedName = presetBox.getText();
+        for (auto index = 0; index < getNumRows(); ++index)
+        {
+            if (visiblePresetBrowserPresets[static_cast<size_t>(index)].name != selectedName)
+                continue;
+
+            ignorePresetBrowserSelection = true;
+            presetBrowserList.selectRow(index);
+            ignorePresetBrowserSelection = false;
+            break;
+        }
+    };
     fxAddBox.onChange = [this]
     {
         const auto selectedId = fxAddBox.getSelectedId();
@@ -1584,6 +1617,7 @@ NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
     restoreFxMomentarySnapshot(fxMomentarySnapshot);
     releasePresetAuditionNote();
     stopTimer();
+    presetBrowserList.setModel(nullptr);
     setLookAndFeel(nullptr);
 }
 
@@ -2655,6 +2689,8 @@ void NateVSTAudioProcessorEditor::resized()
             favoritePresetButton.setVisible(true);
             refreshPresetsButton.setVisible(true);
             presetStatusLabel.setVisible(true);
+            presetBrowserHeaderLabel.setVisible(true);
+            presetBrowserList.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
             auto saveRow = content.removeFromTop(48);
             presetCategoryBox.setBounds(saveRow.removeFromLeft(172).reduced(4));
@@ -2680,6 +2716,8 @@ void NateVSTAudioProcessorEditor::resized()
             auditionPresetButton.setBounds(loadRow.removeFromLeft(88).reduced(4));
             favoritePresetButton.setBounds(loadRow.removeFromLeft(62).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(36).reduced(6, 4));
+            presetBrowserHeaderLabel.setBounds(content.removeFromTop(24).reduced(8, 2));
+            presetBrowserList.setBounds(content.reduced(6, 4));
             break;
         }
     }
@@ -4146,7 +4184,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &randomStatusLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -4174,7 +4212,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
-        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &fxRackStatusLabel,
+        &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetBrowserList, &fxRackStatusLabel,
         &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
@@ -5162,10 +5200,95 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateFxRackControls();
 }
 
+int NateVSTAudioProcessorEditor::getNumRows()
+{
+    return static_cast<int>(visiblePresetBrowserPresets.size());
+}
+
+void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
+                                                    juce::Graphics& g,
+                                                    int width,
+                                                    int height,
+                                                    bool rowIsSelected)
+{
+    if (rowNumber < 0 || rowNumber >= getNumRows())
+        return;
+
+    const auto& preset = visiblePresetBrowserPresets[static_cast<size_t>(rowNumber)];
+    const auto rowFill = rowIsSelected
+        ? juce::Colour(0xff21342f)
+        : (rowNumber % 2 == 0 ? juce::Colour(0xff101619) : juce::Colour(0xff121b1e));
+
+    g.fillAll(rowFill);
+    g.setColour(rowIsSelected ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff253036));
+    g.drawHorizontalLine(height - 1, 0.0f, static_cast<float>(width));
+
+    auto row = juce::Rectangle<int>(0, 0, width, height).reduced(8, 3);
+    auto drawCell = [&g] (juce::Rectangle<int> area,
+                          const juce::String& text,
+                          juce::Colour colour,
+                          juce::Justification justification = juce::Justification::centredLeft)
+    {
+        g.setColour(colour);
+        g.drawFittedText(text, area.reduced(3, 0), justification, 1);
+    };
+
+    const auto categoryText = preset.folder.isNotEmpty() ? preset.folder : preset.category;
+    const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("-");
+    const auto sourcePrefix = preset.isFavorite ? juce::String("F ") : juce::String();
+    const auto nameColour = preset.isFavorite ? juce::Colour(0xffffd27a) : juce::Colour(0xffedf7f4);
+
+    g.setFont(juce::FontOptions(11.0f, juce::Font::plain));
+    drawCell(row.removeFromLeft(218), sourcePrefix + preset.name, nameColour);
+    drawCell(row.removeFromLeft(112), categoryText, juce::Colour(0xffb7c5c7));
+    drawCell(row.removeFromLeft(126), preset.pack, juce::Colour(0xffa8b6b8));
+    drawCell(row.removeFromLeft(76), preset.key, juce::Colour(0xffa8b6b8));
+    drawCell(row.removeFromLeft(64), formatPresetBpm(preset.bpm), juce::Colour(0xffa8b6b8));
+    drawCell(row.removeFromLeft(54), ratingText, juce::Colour(0xffd6e0dc), juce::Justification::centred);
+    drawCell(row, preset.macroSummary, preset.macroIntensity >= 0.30f ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff8c9a9d));
+}
+
+juce::String NateVSTAudioProcessorEditor::getNameForRow(int rowNumber)
+{
+    if (rowNumber < 0 || rowNumber >= getNumRows())
+        return {};
+
+    return visiblePresetBrowserPresets[static_cast<size_t>(rowNumber)].name;
+}
+
+void NateVSTAudioProcessorEditor::selectedRowsChanged(int lastRowSelected)
+{
+    if (ignorePresetBrowserSelection
+        || lastRowSelected < 0
+        || lastRowSelected >= getNumRows())
+    {
+        return;
+    }
+
+    const auto& preset = visiblePresetBrowserPresets[static_cast<size_t>(lastRowSelected)];
+    presetBox.setSelectedItemIndex(lastRowSelected, juce::dontSendNotification);
+    presetNameEditor.setText(preset.name, juce::dontSendNotification);
+    updateFavoritePresetButton();
+    presetStatusLabel.setText("Selected " + preset.name + " | " + preset.pack + " | "
+                                  + preset.key + " | " + formatPresetBpm(preset.bpm)
+                                  + " | " + presetMacroPreviewText(preset),
+                              juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::listBoxItemDoubleClicked(int row, const juce::MouseEvent&)
+{
+    if (row < 0 || row >= getNumRows())
+        return;
+
+    selectedRowsChanged(row);
+    loadSelectedPreset();
+}
+
 void NateVSTAudioProcessorEditor::refreshPresetList()
 {
     const auto previousSelection = presetBox.getText();
     presetBox.clear(juce::dontSendNotification);
+    visiblePresetBrowserPresets.clear();
 
     const auto library = audioProcessor.getPresetLibrary();
     const auto recentNames = audioProcessor.getRecentPresetNames();
@@ -5223,6 +5346,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     auto addPreset = [this, &nextItemId] (const NateVSTAudioProcessor::PresetInfo& preset)
     {
         presetBox.addItem(preset.name, nextItemId++);
+        visiblePresetBrowserPresets.push_back(preset);
     };
 
     auto sortPresets = [&sortMode] (std::vector<NateVSTAudioProcessor::PresetInfo>& presetsToSort)
@@ -5345,6 +5469,24 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         presetBox.setSelectedItemIndex(previousIndex, juce::dontSendNotification);
     else if (presetBox.getNumItems() > 0)
         presetBox.setSelectedItemIndex(0, juce::dontSendNotification);
+
+    presetBrowserList.updateContent();
+    auto selectedBrowserRow = -1;
+    for (auto index = 0; index < getNumRows(); ++index)
+    {
+        if (visiblePresetBrowserPresets[static_cast<size_t>(index)].name == presetBox.getText())
+        {
+            selectedBrowserRow = index;
+            break;
+        }
+    }
+
+    ignorePresetBrowserSelection = true;
+    if (selectedBrowserRow >= 0)
+        presetBrowserList.selectRow(selectedBrowserRow);
+    else
+        presetBrowserList.deselectAllRows();
+    ignorePresetBrowserSelection = false;
 
     const auto* selectedPreset = findPreset(presetBox.getText());
     auto statusText = juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter;

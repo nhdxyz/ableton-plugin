@@ -19,7 +19,8 @@
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
-                                           private juce::Timer
+                                           private juce::Timer,
+                                           private juce::ListBoxModel
 {
 public:
     explicit NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processor);
@@ -124,6 +125,7 @@ private:
     juce::Label librarySectionLabel;
     juce::Label sampleNameLabel;
     juce::Label presetStatusLabel;
+    juce::Label presetBrowserHeaderLabel;
     juce::Label randomStatusLabel;
     juce::Label performanceStatusLabel;
 
@@ -517,6 +519,7 @@ private:
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
     juce::TextEditor presetAuthorEditor;
+    juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
@@ -533,12 +536,20 @@ private:
     juce::String sampleWaveformKey;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
+    std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
+    bool ignorePresetBrowserSelection = false;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
     std::vector<std::unique_ptr<SliderAttachment>> sliderAttachments;
     std::vector<std::unique_ptr<ComboBoxAttachment>> comboAttachments;
     std::vector<std::unique_ptr<ButtonAttachment>> buttonAttachments;
+
+    int getNumRows() override;
+    void paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
+    juce::String getNameForRow(int rowNumber) override;
+    void selectedRowsChanged(int lastRowSelected) override;
+    void listBoxItemDoubleClicked(int row, const juce::MouseEvent&) override;
 
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureHorizontalSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);

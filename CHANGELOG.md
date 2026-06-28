@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Wavetable Modulation Range Overlay
+
+- Extended the SYNTH wavetable display with modulation range overlays for existing Osc 1 WT Pos and Osc 2 WT Pos MOD matrix destinations.
+- Added per-oscillator range shading, ghost waveform paths, route-count/source badges, and depth readouts so wavetable movement is visible while designing house basses, garage organs, plucks, and techno sweeps.
+- Reused existing modulation parameters only, preserving preset/state compatibility and Ableton automation IDs.
+
 ### Filter Modulation Range Overlay
 
 - Extended the SYNTH filter response display with a modulation overlay fed by existing MOD matrix destinations for Filter Cutoff, Filter Res, Filter Env, and Drive.

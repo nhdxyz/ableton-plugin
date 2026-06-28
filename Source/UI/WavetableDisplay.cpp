@@ -55,13 +55,28 @@ float drawFrame(int frameIndex, float phase)
 }
 }
 
-void WavetableDisplay::setState(float newOsc1Position, float newOsc2Position, bool newOsc1Active, bool newOsc2Active)
+void WavetableDisplay::setState(float newOsc1Position,
+                                float newOsc2Position,
+                                bool newOsc1Active,
+                                bool newOsc2Active,
+                                float newOsc1ModAmount,
+                                float newOsc2ModAmount,
+                                int newModRouteCount,
+                                juce::String newModSourceSummary)
 {
     newOsc1Position = juce::jlimit(0.0f, 1.0f, newOsc1Position);
     newOsc2Position = juce::jlimit(0.0f, 1.0f, newOsc2Position);
+    newOsc1ModAmount = juce::jlimit(-1.0f, 1.0f, newOsc1ModAmount);
+    newOsc2ModAmount = juce::jlimit(-1.0f, 1.0f, newOsc2ModAmount);
+    newModRouteCount = juce::jmax(0, newModRouteCount);
+    newModSourceSummary = newModSourceSummary.trim();
 
     if (std::abs(osc1Position - newOsc1Position) < 0.001f
         && std::abs(osc2Position - newOsc2Position) < 0.001f
+        && std::abs(osc1ModAmount - newOsc1ModAmount) < 0.001f
+        && std::abs(osc2ModAmount - newOsc2ModAmount) < 0.001f
+        && modRouteCount == newModRouteCount
+        && modSourceSummary == newModSourceSummary
         && osc1Active == newOsc1Active
         && osc2Active == newOsc2Active)
     {
@@ -70,6 +85,10 @@ void WavetableDisplay::setState(float newOsc1Position, float newOsc2Position, bo
 
     osc1Position = newOsc1Position;
     osc2Position = newOsc2Position;
+    osc1ModAmount = newOsc1ModAmount;
+    osc2ModAmount = newOsc2ModAmount;
+    modRouteCount = newModRouteCount;
+    modSourceSummary = std::move(newModSourceSummary);
     osc1Active = newOsc1Active;
     osc2Active = newOsc2Active;
     repaint();
@@ -95,6 +114,31 @@ void WavetableDisplay::paint(juce::Graphics& g)
 
     g.setColour(juce::Colour(0x335b6e75));
     g.drawLine(plot.getX(), plot.getCentreY(), plot.getRight(), plot.getCentreY(), 1.0f);
+
+    const auto drawModRange = [&] (float position, float amount, juce::Colour colour)
+    {
+        if (std::abs(amount) < 0.01f)
+            return;
+
+        const auto lowPosition = juce::jlimit(0.0f, 1.0f, position + (juce::jmin(0.0f, amount) * 0.36f));
+        const auto highPosition = juce::jlimit(0.0f, 1.0f, position + (juce::jmax(0.0f, amount) * 0.36f));
+        const auto lowX = plot.getX() + (plot.getWidth() * lowPosition);
+        const auto highX = plot.getX() + (plot.getWidth() * highPosition);
+        const auto leftX = juce::jmin(lowX, highX);
+        const auto width = juce::jmax(2.0f, std::abs(highX - lowX));
+
+        g.setColour(colour.withAlpha(0.12f));
+        g.fillRoundedRectangle(juce::Rectangle<float>(leftX, plot.getY() + 1.0f, width, plot.getHeight() - 2.0f), 3.0f);
+        g.setColour(colour.withAlpha(0.48f));
+        g.strokePath(makePath(plot, lowPosition), juce::PathStrokeType(0.9f));
+        g.strokePath(makePath(plot, highPosition), juce::PathStrokeType(0.9f));
+    };
+
+    if (osc2Active)
+        drawModRange(osc2Position, osc2ModAmount, juce::Colour(0xffc4a2ff));
+
+    if (osc1Active)
+        drawModRange(osc1Position, osc1ModAmount, juce::Colour(0xff8ee6c9));
 
     const auto drawPath = [&] (float position, juce::Colour colour, float thickness)
     {
@@ -133,6 +177,35 @@ void WavetableDisplay::paint(juce::Graphics& g)
                        labelBounds,
                        juce::Justification::centredRight);
         }
+
+        if (modRouteCount > 0)
+        {
+            auto modBadge = getLocalBounds().withSizeKeepingCentre(102, 14).withY(2);
+            g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
+            g.fillRoundedRectangle(modBadge.toFloat(), 3.0f);
+            g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.72f));
+            g.drawRoundedRectangle(modBadge.toFloat(), 3.0f, 1.0f);
+            g.setColour(juce::Colour(0xffd7e3e6));
+            g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+            const auto mainAmount = std::abs(osc1ModAmount) >= std::abs(osc2ModAmount) ? osc1ModAmount : osc2ModAmount;
+            g.drawFittedText("WT MOD " + modulationText(mainAmount),
+                             modBadge.reduced(4, 0),
+                             juce::Justification::centred,
+                             1,
+                             0.72f);
+
+            auto detail = getLocalBounds().reduced(8, 2).removeFromBottom(11);
+            const auto sourceText = modSourceSummary.isNotEmpty() ? modSourceSummary : "Routes";
+            g.setColour(juce::Colour(0xff8a989e));
+            g.setFont(juce::FontOptions(8.0f));
+            g.drawFittedText("O1 " + modulationText(osc1ModAmount)
+                                 + "  O2 " + modulationText(osc2ModAmount)
+                                 + "  " + sourceText,
+                             detail,
+                             juce::Justification::centredLeft,
+                             1,
+                             0.72f);
+        }
     }
 }
 
@@ -169,5 +242,11 @@ juce::Path WavetableDisplay::makePath(juce::Rectangle<float> bounds, float posit
     }
 
     return path;
+}
+
+juce::String WavetableDisplay::modulationText(float amount)
+{
+    amount = juce::jlimit(-1.0f, 1.0f, amount);
+    return (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%";
 }
 }

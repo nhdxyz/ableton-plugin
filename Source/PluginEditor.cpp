@@ -7586,11 +7586,51 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
 {
     const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
     const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+
+    auto osc1WtModAmount = 0.0f;
+    auto osc2WtModAmount = 0.0f;
+    auto wtRouteCount = 0;
+    juce::StringArray wtSources;
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto destinationIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+
+        if (! enabled || sourceIndex <= 0)
+            continue;
+
+        if (destinationIndex == 18)
+            osc1WtModAmount += amount;
+        else if (destinationIndex == 19)
+            osc2WtModAmount += amount;
+        else
+            continue;
+
+        ++wtRouteCount;
+        if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+            wtSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
+    }
+
     wavetableDisplay.setState(
         readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
         readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
         osc1Wave == 4,
-        osc2Wave == 4);
+        osc2Wave == 4,
+        juce::jlimit(-1.0f, 1.0f, osc1WtModAmount),
+        juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
+        wtRouteCount,
+        wtSources.joinIntoString(", "));
 }
 
 void NateVSTAudioProcessorEditor::updateFilterResponseDisplay()

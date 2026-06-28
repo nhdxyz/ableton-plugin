@@ -43,6 +43,7 @@ void StepSequencerGrid::paint(juce::Graphics& g)
     g.fillRoundedRectangle(bounds.toFloat(), 6.0f);
     g.fillRoundedRectangle(noteLabels.toFloat(), 5.0f);
     g.fillRoundedRectangle(header.toFloat(), 5.0f);
+    paintLaneRows(g);
 
     g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
     for (auto step = 0; step < Sequencer::PatternSequencer::numSteps; ++step)
@@ -170,6 +171,12 @@ void StepSequencerGrid::mouseUp(const juce::MouseEvent&)
 
 void StepSequencerGrid::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
+    if (laneForPosition(event.getPosition()) >= 0)
+    {
+        nudgeLaneAt(event.getPosition(), wheel.deltaY >= 0.0f ? 0.05f : -0.05f);
+        return;
+    }
+
     nudgeTimingAt(event.getPosition(), wheel.deltaY >= 0.0f ? 0.1f : -0.1f);
 }
 
@@ -177,7 +184,8 @@ juce::Rectangle<int> StepSequencerGrid::gridBounds() const
 {
     auto bounds = getLocalBounds().reduced(2);
     bounds.removeFromTop(18);
-    bounds.removeFromLeft(44);
+    bounds.removeFromLeft(laneLabelWidth + 4);
+    bounds.removeFromBottom(laneAreaHeight + 4);
     return bounds;
 }
 
@@ -185,13 +193,31 @@ juce::Rectangle<int> StepSequencerGrid::noteLabelBounds() const
 {
     auto bounds = getLocalBounds().reduced(2);
     bounds.removeFromTop(18);
-    return bounds.removeFromLeft(40);
+    auto labels = bounds.removeFromLeft(laneLabelWidth);
+    labels.removeFromBottom(laneAreaHeight + 4);
+    return labels;
+}
+
+juce::Rectangle<int> StepSequencerGrid::laneBounds() const
+{
+    auto bounds = getLocalBounds().reduced(2);
+    bounds.removeFromTop(18);
+    bounds.removeFromLeft(laneLabelWidth + 4);
+    return bounds.removeFromBottom(laneAreaHeight);
+}
+
+juce::Rectangle<int> StepSequencerGrid::laneLabelBounds() const
+{
+    auto bounds = getLocalBounds().reduced(2);
+    bounds.removeFromTop(18);
+    auto labels = bounds.removeFromLeft(laneLabelWidth);
+    return labels.removeFromBottom(laneAreaHeight);
 }
 
 juce::Rectangle<int> StepSequencerGrid::stepHeaderBounds() const
 {
     auto bounds = getLocalBounds().reduced(2);
-    bounds.removeFromLeft(44);
+    bounds.removeFromLeft(laneLabelWidth + 4);
     return bounds.removeFromTop(16);
 }
 
@@ -204,6 +230,28 @@ int StepSequencerGrid::stepForPosition(juce::Point<int> position) const
     const auto normalised = static_cast<float>(position.x - bounds.getX()) / static_cast<float>(bounds.getWidth());
     return juce::jlimit(0, Sequencer::PatternSequencer::numSteps - 1,
                         static_cast<int>(normalised * static_cast<float>(Sequencer::PatternSequencer::numSteps)));
+}
+
+int StepSequencerGrid::laneStepForPosition(juce::Point<int> position) const
+{
+    const auto bounds = laneBounds();
+    if (bounds.isEmpty())
+        return -1;
+
+    const auto normalised = static_cast<float>(position.x - bounds.getX()) / static_cast<float>(juce::jmax(1, bounds.getWidth()));
+    return juce::jlimit(0, Sequencer::PatternSequencer::numSteps - 1,
+                        static_cast<int>(normalised * static_cast<float>(Sequencer::PatternSequencer::numSteps)));
+}
+
+int StepSequencerGrid::laneForPosition(juce::Point<int> position) const
+{
+    const auto bounds = laneBounds();
+    if (! bounds.contains(position))
+        return -1;
+
+    const auto laneHeight = static_cast<float>(bounds.getHeight()) / 3.0f;
+    const auto normalised = static_cast<float>(position.y - bounds.getY()) / juce::jmax(1.0f, laneHeight);
+    return juce::jlimit(0, 2, static_cast<int>(normalised));
 }
 
 int StepSequencerGrid::rowForPosition(juce::Point<int> position) const
@@ -257,10 +305,116 @@ bool StepSequencerGrid::isOffsetInScale(int noteOffset) const
     }
 }
 
+void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
+{
+    const auto lanes = laneBounds();
+    const auto labels = laneLabelBounds();
+    if (lanes.isEmpty() || labels.isEmpty())
+        return;
+
+    const auto laneHeight = static_cast<float>(lanes.getHeight()) / 3.0f;
+    const auto cellWidth = static_cast<float>(lanes.getWidth()) / static_cast<float>(Sequencer::PatternSequencer::numSteps);
+    const std::array<const char*, 3> laneNames { "Vel", "Prob", "Late" };
+    const std::array<juce::Colour, 3> laneColours {
+        juce::Colour(0xff8ee6c9),
+        juce::Colour(0xffb7a4ff),
+        juce::Colour(0xffffc857)
+    };
+
+    g.setColour(juce::Colour(0xff101619));
+    g.fillRoundedRectangle(lanes.toFloat(), 5.0f);
+    g.fillRoundedRectangle(labels.toFloat(), 5.0f);
+
+    for (auto lane = 0; lane < 3; ++lane)
+    {
+        auto row = juce::Rectangle<float>(
+            static_cast<float>(lanes.getX()),
+            static_cast<float>(lanes.getY()) + (static_cast<float>(lane) * laneHeight),
+            static_cast<float>(lanes.getWidth()),
+            laneHeight).reduced(1.0f, 1.0f);
+
+        auto labelRow = juce::Rectangle<float>(
+            static_cast<float>(labels.getX()),
+            row.getY(),
+            static_cast<float>(labels.getWidth()),
+            row.getHeight()).reduced(4.0f, 0.0f);
+
+        g.setColour(lane == 1 ? juce::Colour(0xff121920) : juce::Colour(0xff151e22));
+        g.fillRoundedRectangle(row, 3.0f);
+        g.setColour(laneColours[static_cast<size_t>(lane)].withAlpha(0.72f));
+        g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+        g.drawFittedText(laneNames[static_cast<size_t>(lane)], labelRow.toNearestInt(), juce::Justification::centredRight, 1);
+
+        if (! getStep)
+            continue;
+
+        for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+        {
+            const auto step = getStep(stepIndex);
+            auto value = 0.0f;
+            switch (lane)
+            {
+                case 0: value = step.velocity; break;
+                case 1: value = step.probability; break;
+                case 2: value = step.timing; break;
+                default: break;
+            }
+
+            value = juce::jlimit(0.0f, 1.0f, value);
+            auto cell = juce::Rectangle<float>(
+                static_cast<float>(lanes.getX()) + (static_cast<float>(stepIndex) * cellWidth),
+                row.getY(),
+                cellWidth,
+                row.getHeight()).reduced(2.0f, 2.0f);
+
+            g.setColour(juce::Colour(0xff273238));
+            g.fillRoundedRectangle(cell, 2.0f);
+
+            const auto barHeight = juce::jmax(1.0f, cell.getHeight() * value);
+            auto bar = cell.withY(cell.getBottom() - barHeight).withHeight(barHeight);
+            g.setColour(laneColours[static_cast<size_t>(lane)].withAlpha(step.enabled ? 0.86f : 0.24f));
+            g.fillRoundedRectangle(bar, 2.0f);
+        }
+    }
+
+    g.setColour(juce::Colour(0xff344047));
+    for (auto step = 0; step <= Sequencer::PatternSequencer::numSteps; ++step)
+    {
+        const auto x = lanes.getX() + (static_cast<float>(step) * cellWidth);
+        g.drawVerticalLine(static_cast<int>(std::round(x)),
+                           static_cast<float>(lanes.getY()),
+                           static_cast<float>(lanes.getBottom()));
+    }
+
+    for (auto lane = 1; lane < 3; ++lane)
+    {
+        const auto y = lanes.getY() + static_cast<int>(std::round(static_cast<float>(lane) * laneHeight));
+        g.drawHorizontalLine(y, static_cast<float>(labels.getX()), static_cast<float>(lanes.getRight()));
+    }
+
+    g.drawRoundedRectangle(lanes.toFloat(), 5.0f, 1.0f);
+    g.drawRoundedRectangle(labels.toFloat(), 5.0f, 1.0f);
+}
+
 void StepSequencerGrid::beginEditAt(juce::Point<int> position)
 {
     if (! getStep)
         return;
+
+    const auto lane = laneForPosition(position);
+    if (lane >= 0)
+    {
+        switch (lane)
+        {
+            case 0: dragMode = DragMode::velocity; break;
+            case 1: dragMode = DragMode::probability; break;
+            case 2: dragMode = DragMode::timing; break;
+            default: dragMode = DragMode::none; break;
+        }
+
+        editLaneAt(position);
+        return;
+    }
 
     const auto stepIndex = stepForPosition(position);
     const auto row = rowForPosition(position);
@@ -280,6 +434,14 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
 {
     if (! getStep || ! setStep || dragMode == DragMode::none)
         return;
+
+    if (dragMode == DragMode::velocity
+        || dragMode == DragMode::probability
+        || dragMode == DragMode::timing)
+    {
+        editLaneAt(position);
+        return;
+    }
 
     const auto stepIndex = stepForPosition(position);
     const auto row = rowForPosition(position);
@@ -310,6 +472,64 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
         step.velocity = 0.85f;
         step.probability = 1.0f;
         step.timing = (stepIndex % 2) != 0 ? 0.65f : 0.0f;
+    }
+
+    setStep(stepIndex, step);
+    repaint();
+}
+
+void StepSequencerGrid::editLaneAt(juce::Point<int> position)
+{
+    if (! getStep || ! setStep)
+        return;
+
+    const auto lanes = laneBounds();
+    if (lanes.isEmpty())
+        return;
+
+    const auto stepIndex = laneStepForPosition(position);
+    if (stepIndex < 0)
+        return;
+
+    auto step = getStep(stepIndex);
+    if (! step.enabled)
+    {
+        step.enabled = true;
+        step.noteOffset = 0;
+        step.velocity = 0.82f;
+        step.probability = 1.0f;
+        step.timing = 0.0f;
+    }
+
+    const auto laneHeight = static_cast<float>(lanes.getHeight()) / 3.0f;
+    auto laneTop = static_cast<float>(lanes.getY());
+
+    if (dragMode == DragMode::probability)
+        laneTop += laneHeight;
+    else if (dragMode == DragMode::timing)
+        laneTop += laneHeight * 2.0f;
+
+    const auto normalisedY = (static_cast<float>(position.y) - laneTop) / juce::jmax(1.0f, laneHeight);
+    const auto value = juce::jlimit(0.0f, 1.0f, 1.0f - normalisedY);
+
+    switch (dragMode)
+    {
+        case DragMode::velocity:
+            step.velocity = juce::jlimit(0.1f, 1.0f, value);
+            break;
+
+        case DragMode::probability:
+            step.probability = value;
+            break;
+
+        case DragMode::timing:
+            step.timing = value;
+            break;
+
+        case DragMode::none:
+        case DragMode::paint:
+        case DragMode::erase:
+            return;
     }
 
     setStep(stepIndex, step);
@@ -354,6 +574,42 @@ void StepSequencerGrid::nudgeTimingAt(juce::Point<int> position, float delta)
         return;
 
     step.timing = juce::jlimit(0.0f, 1.0f, step.timing + delta);
+    setStep(stepIndex, step);
+    repaint();
+}
+
+void StepSequencerGrid::nudgeLaneAt(juce::Point<int> position, float delta)
+{
+    if (! getStep || ! setStep)
+        return;
+
+    const auto lane = laneForPosition(position);
+    const auto stepIndex = laneStepForPosition(position);
+    if (lane < 0 || stepIndex < 0)
+        return;
+
+    auto step = getStep(stepIndex);
+    if (! step.enabled)
+        return;
+
+    switch (lane)
+    {
+        case 0:
+            step.velocity = juce::jlimit(0.1f, 1.0f, step.velocity + delta);
+            break;
+
+        case 1:
+            step.probability = juce::jlimit(0.0f, 1.0f, step.probability + delta);
+            break;
+
+        case 2:
+            step.timing = juce::jlimit(0.0f, 1.0f, step.timing + delta);
+            break;
+
+        default:
+            return;
+    }
+
     setStep(stepIndex, step);
     repaint();
 }

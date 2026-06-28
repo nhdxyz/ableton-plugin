@@ -2,6 +2,13 @@
 
 ## 2026-06-27
 
+### Sequencer Velocity Probability And Timing Lanes
+
+- Added three editable lane rows under the SEQ piano-roll grid for per-step velocity, probability, and late timing.
+- Lane bars now show each step's playback strength, ghost-note chance, and pushed-groove amount without relying only on small note-cell markers.
+- Clicking or dragging a lane row edits the matching per-step value, and mouse-wheel nudging works directly over lane rows.
+- Reused the existing saved sequencer step state, so presets, undo snapshots, MIDI export, and host/project recall keep the same persistence path.
+
 ### Macro Assignment Editor
 
 - Added a compact MOD-panel macro assignment lane for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.

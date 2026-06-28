@@ -28,11 +28,16 @@ private:
     static constexpr int numRows = Sequencer::PatternSequencer::maxNoteOffset
                                  - Sequencer::PatternSequencer::minNoteOffset
                                  + 1;
+    static constexpr int laneAreaHeight = 54;
+    static constexpr int laneLabelWidth = 40;
     enum class DragMode
     {
         none,
         paint,
-        erase
+        erase,
+        velocity,
+        probability,
+        timing
     };
 
     StepGetter getStep;
@@ -45,15 +50,22 @@ private:
 
     juce::Rectangle<int> gridBounds() const;
     juce::Rectangle<int> noteLabelBounds() const;
+    juce::Rectangle<int> laneBounds() const;
+    juce::Rectangle<int> laneLabelBounds() const;
     juce::Rectangle<int> stepHeaderBounds() const;
     int stepForPosition(juce::Point<int> position) const;
+    int laneStepForPosition(juce::Point<int> position) const;
+    int laneForPosition(juce::Point<int> position) const;
     int rowForPosition(juce::Point<int> position) const;
     int noteOffsetForRow(int row) const;
     int rowForNoteOffset(int noteOffset) const;
     bool isOffsetInScale(int noteOffset) const;
+    void paintLaneRows(juce::Graphics& g) const;
     void beginEditAt(juce::Point<int> position);
     void editAt(juce::Point<int> position);
+    void editLaneAt(juce::Point<int> position);
     void cycleTimingAt(juce::Point<int> position);
     void nudgeTimingAt(juce::Point<int> position, float delta);
+    void nudgeLaneAt(juce::Point<int> position, float delta);
 };
 }

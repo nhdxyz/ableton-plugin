@@ -28,6 +28,7 @@ Research references:
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
 - Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, and Tight applies only conservative per-step delay.
+- The SEQ grid now exposes editable Velocity, Probability, and Late lanes under the piano roll so 2-step basslines, vocal triggers, and stab patterns can be shaped per step without leaving the grid.
 - The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
 - The SEQ and FX panels now show `LOCK`, `HOST`, or `INT` tempo status so Ableton transport lock, stopped-host state, and internal fallback are visible while editing skippy patterns and pump/delay movement.
 - Drum-adjacent synth patterns should leave gaps for rim shots, shakers, and chopped hats instead of filling every 16th.
@@ -192,7 +193,7 @@ Reference-backed next passes:
 - Implemented as a compact SEQ-panel template selector.
 - Templates include `UKG 2-Step`, `Shuffle Bass`, `Organ Skank`, `Vocal Chop`, and `Late Stab`.
 - Per-template rate, gate, swing, groove mode, scale mode, per-step timing, accent, probability, octave, and random amount defaults are set when applied.
-- The grid now shows timing markers on pushed steps, probability bars, beat-group dividers, and root-aware note rows, with mouse-wheel nudging and right-click/command-click cycling for direct per-step groove edits.
+- The grid now shows timing markers on pushed steps, probability bars, beat-group dividers, and root-aware note rows, with editable Velocity, Probability, and Late lanes for direct per-step groove edits.
 - The SEQ panel includes Major, Minor, Dorian, and Minor Pent scale modes for keeping garage basslines, stabs, and generated patterns in key.
 - The SEQ panel includes chord modes for fast 5th, minor, minor 7, major, and minor 9 stabs; Organ Skank, UKG Chord Stab, and Late Stab templates now use those modes by default.
 - The SEQ panel includes Close, Inv 1, Inv 2, Open, and Drop 2 voicings so short organ, chord, and late-stab patterns can sit in different registers without redrawing the grid.

@@ -508,7 +508,7 @@ Build the next larger slices in this order:
 - Add FX workflow can reveal existing modules without changing parameter IDs and is grouped by production task.
 - Current modules can be selected and edited in a focused detail area.
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
-- Remaining UI polish: direct grid gestures should eventually edit velocity/probability as well as timing, and dense knob rows still need a larger-control design pass rather than only shorter drag travel.
+- Remaining UI polish: direct grid gestures now edit velocity, probability, and timing lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
 - HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.

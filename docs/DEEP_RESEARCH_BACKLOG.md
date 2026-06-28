@@ -37,7 +37,7 @@ Primary FX, groove, and club-workflow references:
 - Oscillator warp control.
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
-- Sequencer with piano-roll editing, chord memory, groove timing, templates, and host transport sync.
+- Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
 - Sampler/chop workflow for UKG vocal and stab material.
 - Library with folders, categories, favorites, ratings, metadata, search, sort, and recursive preset scanning.
 - Factory preset generator for genre-targeted packs.
@@ -127,10 +127,10 @@ The largest remaining gap is no longer "does the plugin have enough controls." I
 
 66. Add multiple sequencer patterns per preset.
 67. Add pattern chaining.
-68. Add per-step probability.
+68. Add per-step probability. First editable lane pass implemented in the SEQ grid.
 69. Add per-step ratchet/retrigger.
 70. Add per-step note length.
-71. Add per-step velocity lane.
+71. Add per-step velocity lane. First editable lane pass implemented in the SEQ grid.
 72. Add per-step modulation lane assignments.
 73. Add per-step sample slice lane.
 74. Add per-step pump depth lane.

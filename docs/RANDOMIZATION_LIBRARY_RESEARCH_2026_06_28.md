@@ -52,6 +52,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Candidate tooltips now summarize whether each slot is brighter/darker, dirtier/cleaner, wider/narrower, more/less motion, more/less space, and hotter/safer than the current patch.
 - Active candidates can be promoted directly to performance snapshot A or B from LAB, and `RandomCandidateAudit` verifies promotion and recall.
 - Per-slot candidate `Cue` buttons now preview generated ideas with a short note and restore the current patch afterward; `RandomCandidateAudit` verifies that preview state is non-destructive.
+- LAB `Save Slot` now writes the active generated candidate into the recursive preset library with generated-source metadata, category folder, pack, key, BPM, and source-recipe tags without recalling the candidate first.
 
 ## Highest-Value Randomization Backlog
 
@@ -63,7 +64,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 6. Add a visible mutation diff panel with changed parameters, old value, new value, and section.
 7. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
 8. Add "promote variation" and "discard variation" actions.
-9. Add save-from-slot actions for generated candidates without requiring recall.
+9. Add save/favorite/rating handoff from generated candidate rows.
 10. Add favorite-aware randomization seeded from 4-5 star presets.
 11. Add "more like selected preset" using parameter-distance mutation.
 12. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.
@@ -121,16 +122,15 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 ## Next Implementation Slice
 
-Best next slice: add generated-candidate save-from-slot polish and visible mutation diffs.
+Best next slice: add visible generated-candidate mutation diffs and changed-section counts.
 
 Why:
 - It directly supports randomization as the best feature.
 - It keeps users from losing good ideas while exploring.
-- It naturally connects candidate slots to save, favorite, diff, and browser organization.
+- It naturally connects candidate slots to compare, favorite, diff, and browser organization.
 - It can be implemented without changing plugin parameter IDs.
 
 Candidate polish behavior:
-- Each candidate can be saved directly with the same recipe-aware category, pack, BPM, and generated-source metadata.
 - Candidate rows can show a compact changed-section count in addition to the current trait summary.
 - Candidate rows can show old/new value diffs for the most important changed controls.
 - Library can group generated preset variants into a smart collection once generated-save metadata exists.

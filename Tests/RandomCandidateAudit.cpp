@@ -96,6 +96,78 @@ int main()
         return 1;
     }
 
+    NateVSTAudioProcessor::PresetSaveOptions candidateSaveOptions;
+    candidateSaveOptions.category = "UKG\\Bass";
+    candidateSaveOptions.author = "Random Candidate Audit";
+    candidateSaveOptions.pack = "UKG Basslines";
+    candidateSaveOptions.key = "C Min";
+    candidateSaveOptions.bpm = 132;
+    candidateSaveOptions.generated = true;
+    candidateSaveOptions.generatedRecipe = "Candidate Save Audit";
+
+    const auto candidatePresetName = "Candidate Save Audit "
+        + juce::String(static_cast<int>(juce::Time::getMillisecondCounter() % 1000000));
+    auto candidateLegalName = juce::File::createLegalFileName(candidatePresetName);
+    if (candidateLegalName.isEmpty())
+        candidateLegalName = "Untitled";
+
+    const auto candidatePresetFile = processor.getPresetDirectory()
+                                         .getChildFile("UKG")
+                                         .getChildFile("Bass")
+                                         .getChildFile(candidateLegalName)
+                                         .withFileExtension(".natevstpreset");
+
+    if (! processor.saveRandomCandidatePreset(0, candidatePresetName, candidateSaveOptions))
+    {
+        std::cerr << "Candidate preset save returned false\n";
+        return 1;
+    }
+
+    const auto cutoffAfterCandidateSave = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
+    if (std::abs(cutoffAfterCandidateSave - editedCutoff) > 0.01f)
+    {
+        std::cerr << "Candidate preset save changed current cutoff. Expected "
+                  << editedCutoff << " got " << cutoffAfterCandidateSave << '\n';
+        candidatePresetFile.deleteFile();
+        return 1;
+    }
+
+    if (! candidatePresetFile.existsAsFile())
+    {
+        std::cerr << "Candidate preset file was not created: "
+                  << candidatePresetFile.getFullPathName() << '\n';
+        return 1;
+    }
+
+    if (auto xml = juce::XmlDocument::parse(candidatePresetFile))
+    {
+        const auto state = juce::ValueTree::fromXml(*xml);
+        const auto cutoffState = state.getChildWithProperty("id", Parameters::ID::filterCutoff);
+        const auto savedCutoff = static_cast<float>(cutoffState.getProperty("value", -1.0f));
+
+        if (! state.isValid()
+            || state.getProperty("preset_category").toString() != "UKG/Bass"
+            || state.getProperty("preset_folder").toString() != "UKG/Bass"
+            || state.getProperty("preset_source").toString() != "Generated"
+            || state.getProperty("preset_generated_recipe").toString() != "Candidate Save Audit"
+            || ! state.getProperty("preset_tags").toString().contains("Generated")
+            || ! state.getProperty("preset_tags").toString().contains("Random Lab")
+            || std::abs(savedCutoff - generatedCutoff) > 0.01f)
+        {
+            std::cerr << "Saved candidate preset did not preserve generated metadata or candidate cutoff\n";
+            candidatePresetFile.deleteFile();
+            return 1;
+        }
+    }
+    else
+    {
+        std::cerr << "Candidate preset XML could not be parsed\n";
+        candidatePresetFile.deleteFile();
+        return 1;
+    }
+
+    candidatePresetFile.deleteFile();
+
     if (! processor.recallRandomCandidate(0))
     {
         std::cerr << "Candidate recall failed\n";
@@ -151,6 +223,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Random candidate audit passed for capture, cue, recall, and promotion.\n";
+    std::cout << "Random candidate audit passed for capture, cue, save, recall, and promotion.\n";
     return 0;
 }

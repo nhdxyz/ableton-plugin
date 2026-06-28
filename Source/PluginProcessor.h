@@ -120,6 +120,7 @@ public:
     bool savePreset(const juce::String& presetName);
     bool savePreset(const juce::String& presetName, const juce::String& category);
     bool savePreset(const juce::String& presetName, const PresetSaveOptions& options);
+    bool saveRandomCandidatePreset(int slotIndex, const juce::String& presetName, const PresetSaveOptions& options);
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     std::vector<PresetInfo> getPresetLibrary() const;
@@ -251,6 +252,7 @@ private:
     double getHostBpm() const;
     Sequencer::HostPosition getHostPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
+    bool savePresetState(const juce::String& presetName, const PresetSaveOptions& options, juce::ValueTree state);
     juce::ValueTree createPluginState();
     juce::ValueTree createPluginState(bool includePerformanceSnapshots);
     void restorePluginState(const juce::ValueTree& state);

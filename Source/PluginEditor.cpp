@@ -1678,6 +1678,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     previousPresetButton.onClick = [this] { loadPresetByOffset(-1); };
     nextPresetButton.onClick = [this] { loadPresetByOffset(1); };
     savePresetButton.onClick = [this] { saveCurrentPreset(); };
+    saveCandidateButton.setTooltip("Save the active random candidate into the Library without recalling it");
+    saveCandidateButton.onClick = [this] { saveActiveRandomCandidatePreset(); };
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
     auditionPresetButton.onClick = [this] { auditionSelectedPreset(); };
     refreshPresetsButton.onClick = [this] { refreshPresetList(); };
@@ -1912,6 +1914,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(auditionPresetButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
+    addAndMakeVisible(saveCandidateButton);
     addAndMakeVisible(fxMoveUpButton);
     addAndMakeVisible(fxMoveDownButton);
     addAndMakeVisible(fxResetOrderButton);
@@ -2426,6 +2429,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetPackBox.setVisible(true);
             presetBpmBox.setVisible(true);
             savePresetButton.setVisible(true);
+            saveCandidateButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             for (auto& button : randomSectionRollButtons)
                 button.setVisible(true);
@@ -2486,6 +2490,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetPackBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
             presetBpmBox.setBounds(saveRow.removeFromLeft(100).reduced(4));
             savePresetButton.setBounds(saveRow.removeFromLeft(82).reduced(4));
+            saveCandidateButton.setBounds(saveRow.removeFromLeft(112).reduced(4));
             presetStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
             break;
         }
@@ -4351,10 +4356,13 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
 
     promoteCandidateAButton.setEnabled(activeCandidateReady);
     promoteCandidateBButton.setEnabled(activeCandidateReady);
+    saveCandidateButton.setEnabled(activeCandidateReady);
     promoteCandidateAButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot A"
                                                             : "Recall or generate a candidate before promoting");
     promoteCandidateBButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot B"
                                                             : "Recall or generate a candidate before promoting");
+    saveCandidateButton.setTooltip(activeCandidateReady ? "Save the active random candidate with the current category, pack, BPM, and generated-source metadata"
+                                                        : "Generate, cue, or recall a random candidate before saving a slot");
 }
 
 void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& actionLabel)
@@ -5787,6 +5795,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
@@ -7247,6 +7256,62 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     }
 
     presetStatusLabel.setText("Preset name required", juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
+    if (! audioProcessor.hasRandomCandidate(activeSlot))
+    {
+        presetStatusLabel.setText("Generate or cue a candidate first", juce::dontSendNotification);
+        updateRandomCandidateButtons();
+        return;
+    }
+
+    auto presetName = presetNameEditor.getText().trim();
+    if (presetName.isEmpty())
+    {
+        presetName = "Candidate " + juce::String(activeSlot + 1) + " "
+            + juce::String(static_cast<int>(juce::Time::getMillisecondCounter() % 1000000));
+        presetNameEditor.setText(presetName, juce::dontSendNotification);
+        presetNameIsRandomDraft = true;
+    }
+
+    NateVSTAudioProcessor::PresetSaveOptions options;
+    options.category = presetCategoryBox.getText().trim();
+    options.author = presetAuthorEditor.getText().trim();
+    options.pack = presetPackBox.getText().trim();
+    options.key = presetKeyBox.getText().trim();
+    options.bpm = parsePresetBpm(presetBpmBox.getText());
+    options.generated = true;
+    options.generatedRecipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
+        ? currentGeneratedPresetRecipe
+        : audioProcessor.getRandomCandidateSummary(activeSlot);
+
+    if (audioProcessor.saveRandomCandidatePreset(activeSlot, presetName, options))
+    {
+        auto storedName = juce::File::createLegalFileName(presetName);
+        if (storedName.isEmpty())
+            storedName = "Untitled";
+
+        presetStatusLabel.setText("Saved candidate " + storedName,
+                                  juce::dontSendNotification);
+        refreshPresetList();
+        presetBox.setText(storedName, juce::dontSendNotification);
+        presetNameEditor.setText(storedName, juce::dontSendNotification);
+        presetNameIsRandomDraft = false;
+        currentPresetDraftIsGenerated = false;
+        currentGeneratedPresetRecipe.clear();
+        updateFavoritePresetButton();
+        updateRandomCandidateButtons();
+        return;
+    }
+
+    presetStatusLabel.setText("Candidate save skipped", juce::dontSendNotification);
+    updateRandomCandidateButtons();
 }
 
 void NateVSTAudioProcessorEditor::loadSelectedPreset()

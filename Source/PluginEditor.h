@@ -520,6 +520,7 @@ private:
     juce::TextButton auditionPresetButton { "Audition" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    juce::TextButton saveCandidateButton { "Save Slot" };
     juce::TextButton fxMoveUpButton { "Up" };
     juce::TextButton fxMoveDownButton { "Down" };
     juce::TextButton fxResetOrderButton { "Reset" };
@@ -672,6 +673,7 @@ private:
     void timerCallback() override;
     void refreshPresetList();
     void saveCurrentPreset();
+    void saveActiveRandomCandidatePreset();
     void loadSelectedPreset();
     int selectedRandomMutationScope() const;
     void triggerRandomGenerate();

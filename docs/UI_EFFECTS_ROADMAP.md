@@ -506,6 +506,7 @@ Build the next larger slices in this order:
    First generated-library pass implemented generated-source preset metadata, Generated/Random Lab tags, source-recipe metadata, a Library `Generated` filter, and PresetSaveAudit coverage for generated library scanning.
    First candidate-compare pass implemented trait summaries for random candidates, LAB `To A`/`To B` promotion to performance snapshots, and RandomCandidateAudit coverage for compare and promotion recall.
    First candidate-cue pass implemented per-slot LAB `Cue` buttons that preview generated candidates, restore the current patch afterward, and verify non-destructive preview in `RandomCandidateAudit`.
+   First candidate-save pass implemented LAB `Save Slot`, processor-level candidate snapshot preset writes, generated metadata/category folder preservation, and RandomCandidateAudit coverage that saving a candidate leaves the current patch unchanged.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

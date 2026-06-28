@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Random Candidate Save From Slot
+
+- Added LAB `Save Slot` for saving the active generated candidate into the preset library without recalling it into the current patch.
+- Added `saveRandomCandidatePreset` so candidate snapshots reuse the normal category folder, generated metadata, tag, BPM, key, pack, and temporary-file preset write flow.
+- Candidate cue now marks the cued slot active, so auditioning an older idea makes it eligible for `Save Slot`, `To A`, or `To B` after restore.
+- Extended `RandomCandidateAudit` to verify candidate save-from-slot preserves generated metadata, writes into nested category folders, stores candidate sound state, and leaves the current patch unchanged.
+
 ### Random Candidate Quick Cue
 
 - Added per-slot LAB `Cue` buttons that preview generated candidates with a short note, then restore the current patch without recalling or saving the candidate.

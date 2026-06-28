@@ -631,6 +631,7 @@ bool NateVSTAudioProcessor::beginRandomCandidateAudition(int slotIndex)
     const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
     randomCandidateAuditionReturnState = createPluginState(false);
     restorePluginState(candidate.state.createCopy(), false);
+    activeRandomCandidateSlot = slotIndex;
     auditioningRandomCandidateSlot = slotIndex;
     return true;
 }
@@ -1566,6 +1567,30 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const juc
 
 bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const PresetSaveOptions& options)
 {
+    return savePresetState(presetName, options, createPluginState());
+}
+
+bool NateVSTAudioProcessor::saveRandomCandidatePreset(int slotIndex,
+                                                      const juce::String& presetName,
+                                                      const PresetSaveOptions& options)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return false;
+
+    auto candidateOptions = options;
+    candidateOptions.generated = true;
+    if (candidateOptions.generatedRecipe.trim().isEmpty())
+        candidateOptions.generatedRecipe = randomCandidateSnapshots[static_cast<size_t>(slotIndex)].label;
+
+    return savePresetState(presetName,
+                           candidateOptions,
+                           randomCandidateSnapshots[static_cast<size_t>(slotIndex)].state.createCopy());
+}
+
+bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
+                                            const PresetSaveOptions& options,
+                                            juce::ValueTree state)
+{
     const auto trimmedName = presetName.trim();
     if (trimmedName.isEmpty())
         return false;
@@ -1580,7 +1605,6 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
     if (! directory.createDirectory())
         return false;
 
-    auto state = createPluginState();
     state.setProperty("preset_name", trimmedName, nullptr);
     state.setProperty("preset_category", storedCategory, nullptr);
     state.setProperty("preset_author", storedAuthor, nullptr);

@@ -66,6 +66,7 @@ target_sources(NateVST
         Source/UI/PresetLibrarySummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/SampleWaveformDisplay.cpp
+        Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
         Source/UI/WavetableDisplay.cpp
         Source/UI/XYMacroPad.cpp
@@ -262,6 +263,19 @@ target_link_libraries(NateVSTSpectrumSnapshotAudit
 )
 
 add_test(NAME SpectrumSnapshotAudit COMMAND NateVSTSpectrumSnapshotAudit)
+
+add_executable(NateVSTStereoFieldTelemetryAudit Tests/StereoFieldTelemetryAudit.cpp)
+
+target_link_libraries(NateVSTStereoFieldTelemetryAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME StereoFieldTelemetryAudit COMMAND NateVSTStereoFieldTelemetryAudit)
 
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")

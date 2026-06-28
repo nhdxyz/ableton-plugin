@@ -70,6 +70,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - LIBRARY now separates Find, Browser, Save Patch, and Inspect areas, shows selected-preset notes and macro shape in a dedicated summary component, and keeps HOME preset access to recall/audition instead of save metadata.
 - The repo-managed factory pack now covers 32 UKG, house, tech-house, minimal, and techno starter presets, with newer presets carrying curated `preset_notes` for the Library inspector.
 - The LIBRARY panel now has a preset-vault polish pass with quick genre/source filter buttons, a denser central crate, and a clearer right-side save metadata flow while preserving existing preset files and metadata.
+- HOME now includes stereo field/correlation visualization beside the spectrum display, exposing full-band width, balance, correlation, and low-end side risk for mono-safe house and club mix decisions.
 
 ## Highest-Value Randomization Backlog
 

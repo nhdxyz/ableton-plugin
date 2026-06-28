@@ -764,6 +764,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(titleLabel);
     addAndMakeVisible(outputMeter);
     addAndMakeVisible(outputSpectrumDisplay);
+    addAndMakeVisible(stereoFieldDisplay);
     addAndMakeVisible(homeOverviewDisplay);
     addAndMakeVisible(lowEndAssistant);
 
@@ -2814,6 +2815,7 @@ void NateVSTAudioProcessorEditor::resized()
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
             outputSpectrumDisplay.setVisible(true);
+            stereoFieldDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
@@ -2842,7 +2844,10 @@ void NateVSTAudioProcessorEditor::resized()
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
 
             homeOverviewDisplay.setBounds(overviewArea.removeFromTop(166));
-            outputSpectrumDisplay.setBounds(overviewArea.withTrimmedTop(8));
+            auto analysisRow = overviewArea.withTrimmedTop(8);
+            const auto stereoWidth = juce::jlimit(150, 210, analysisRow.getWidth() / 3);
+            stereoFieldDisplay.setBounds(analysisRow.removeFromRight(stereoWidth).reduced(4, 0));
+            outputSpectrumDisplay.setBounds(analysisRow.reduced(4, 0));
 
             homeShapeLabel.setBounds(macroArea.removeFromTop(24));
             setSliderVisible(macroToneSlider, macroToneLabel, true);
@@ -7289,7 +7294,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &outputSpectrumDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -8601,6 +8606,28 @@ void NateVSTAudioProcessorEditor::updateOutputSpectrumDisplay()
     outputSpectrumDisplay.setLevels(nextBands, peak, active);
 }
 
+void NateVSTAudioProcessorEditor::updateStereoFieldDisplay()
+{
+    auto correlation = 0.0f;
+    auto width = 0.0f;
+    auto balance = 0.0f;
+    auto lowStereoRisk = 0.0f;
+    audioProcessor.getStereoFieldLevels(correlation, width, balance, lowStereoRisk);
+
+    displayedStereoCorrelation += (correlation - displayedStereoCorrelation) * 0.38f;
+    displayedStereoWidth += (width - displayedStereoWidth) * 0.34f;
+    displayedStereoBalance += (balance - displayedStereoBalance) * 0.34f;
+    displayedLowStereoRisk += (lowStereoRisk - displayedLowStereoRisk) * 0.36f;
+
+    UI::StereoFieldDisplay::State state;
+    state.correlation = displayedStereoCorrelation;
+    state.width = displayedStereoWidth;
+    state.balance = displayedStereoBalance;
+    state.lowStereoRisk = displayedLowStereoRisk;
+    state.active = juce::jmax(displayedPeakLeft, displayedPeakRight) > 0.0025f;
+    stereoFieldDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updateLowEndAssistant()
 {
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -8835,6 +8862,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateModDestinationIndicators();
     updateOutputMeter();
     updateOutputSpectrumDisplay();
+    updateStereoFieldDisplay();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();

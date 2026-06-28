@@ -206,6 +206,9 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
+    stereoFieldCorrelation.store(0.0f, std::memory_order_relaxed);
+    stereoFieldWidth.store(0.0f, std::memory_order_relaxed);
+    stereoFieldBalance.store(0.0f, std::memory_order_relaxed);
     lowEndSubRms.store(0.0f, std::memory_order_relaxed);
     lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
     lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
@@ -2601,6 +2604,17 @@ void NateVSTAudioProcessor::getOutputSpectrumSnapshot(std::array<float, outputSp
     }
 }
 
+void NateVSTAudioProcessor::getStereoFieldLevels(float& correlation,
+                                                 float& width,
+                                                 float& balance,
+                                                 float& lowStereoRisk) const noexcept
+{
+    correlation = stereoFieldCorrelation.load(std::memory_order_relaxed);
+    width = stereoFieldWidth.load(std::memory_order_relaxed);
+    balance = stereoFieldBalance.load(std::memory_order_relaxed);
+    lowStereoRisk = lowEndStereoRisk.load(std::memory_order_relaxed);
+}
+
 void NateVSTAudioProcessor::getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept
 {
     subRms = lowEndSubRms.load(std::memory_order_relaxed);
@@ -4523,6 +4537,9 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
         outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
         outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
         outputMeterRmsRight.store(0.0f, std::memory_order_relaxed);
+        stereoFieldCorrelation.store(0.0f, std::memory_order_relaxed);
+        stereoFieldWidth.store(0.0f, std::memory_order_relaxed);
+        stereoFieldBalance.store(0.0f, std::memory_order_relaxed);
         lowEndSubRms.store(0.0f, std::memory_order_relaxed);
         lowEndStereoRisk.store(0.0f, std::memory_order_relaxed);
         lowEndOutputPeak.store(0.0f, std::memory_order_relaxed);
@@ -4563,21 +4580,45 @@ void NateVSTAudioProcessor::updateOutputMeters(const juce::AudioBuffer<float>& b
     const auto* rightSamples = buffer.getReadPointer(numChannels > 1 ? 1 : 0);
     auto monoLowSquares = 0.0;
     auto sideLowSquares = 0.0;
+    auto crossSum = 0.0;
+    auto midSquares = 0.0;
+    auto sideSquares = 0.0;
 
     for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
-        lowEndStateLeft += lowAlpha * (leftSamples[sampleIndex] - lowEndStateLeft);
-        lowEndStateRight += lowAlpha * (rightSamples[sampleIndex] - lowEndStateRight);
+        const auto left = leftSamples[sampleIndex];
+        const auto right = rightSamples[sampleIndex];
+        lowEndStateLeft += lowAlpha * (left - lowEndStateLeft);
+        lowEndStateRight += lowAlpha * (right - lowEndStateRight);
 
         const auto monoLow = (lowEndStateLeft + lowEndStateRight) * 0.5f;
         const auto sideLow = (lowEndStateLeft - lowEndStateRight) * 0.5f;
         monoLowSquares += static_cast<double>(monoLow) * static_cast<double>(monoLow);
         sideLowSquares += static_cast<double>(sideLow) * static_cast<double>(sideLow);
+
+        const auto mid = (left + right) * 0.5f;
+        const auto side = (left - right) * 0.5f;
+        crossSum += static_cast<double>(left) * static_cast<double>(right);
+        midSquares += static_cast<double>(mid) * static_cast<double>(mid);
+        sideSquares += static_cast<double>(side) * static_cast<double>(side);
     }
 
+    const auto leftSquares = static_cast<double>(rmsLeft) * static_cast<double>(rmsLeft) * static_cast<double>(numSamples);
+    const auto rightSquares = static_cast<double>(rmsRight) * static_cast<double>(rmsRight) * static_cast<double>(numSamples);
+    const auto correlationDenominator = std::sqrt(juce::jmax(0.0, leftSquares * rightSquares));
+    const auto correlation = correlationDenominator > 0.0000001
+        ? static_cast<float>(crossSum / correlationDenominator)
+        : 0.0f;
+    const auto midRms = static_cast<float>(std::sqrt(midSquares / static_cast<double>(numSamples)));
+    const auto sideRmsFullBand = static_cast<float>(std::sqrt(sideSquares / static_cast<double>(numSamples)));
+    const auto stereoWidth = sideRmsFullBand / juce::jmax(0.00001f, midRms + sideRmsFullBand);
+    const auto balance = (rmsRight - rmsLeft) / juce::jmax(0.00001f, rmsRight + rmsLeft);
     const auto subRms = static_cast<float>(std::sqrt(monoLowSquares / static_cast<double>(numSamples)));
     const auto sideRms = static_cast<float>(std::sqrt(sideLowSquares / static_cast<double>(numSamples)));
     const auto stereoRisk = sideRms / juce::jmax(0.00001f, subRms + sideRms);
+    stereoFieldCorrelation.store(juce::jlimit(-1.0f, 1.0f, correlation), std::memory_order_relaxed);
+    stereoFieldWidth.store(juce::jlimit(0.0f, 1.0f, stereoWidth), std::memory_order_relaxed);
+    stereoFieldBalance.store(juce::jlimit(-1.0f, 1.0f, balance), std::memory_order_relaxed);
     lowEndSubRms.store(juce::jlimit(0.0f, 2.0f, subRms), std::memory_order_relaxed);
     lowEndStereoRisk.store(juce::jlimit(0.0f, 1.0f, stereoRisk), std::memory_order_relaxed);
     lowEndOutputPeak.store(juce::jlimit(0.0f, 2.0f, juce::jmax(peakLeft, peakRight)), std::memory_order_relaxed);

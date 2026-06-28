@@ -159,6 +159,7 @@ public:
     void panicAllNotesOff();
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getOutputSpectrumSnapshot(std::array<float, outputSpectrumSnapshotSize>& destination) const noexcept;
+    void getStereoFieldLevels(float& correlation, float& width, float& balance, float& lowStereoRisk) const noexcept;
     void getLowEndMeterLevels(float& subRms, float& lowStereoRisk, float& outputPeak) const noexcept;
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
     void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
@@ -242,6 +243,9 @@ private:
     std::atomic<float> outputMeterPeakRight { 0.0f };
     std::atomic<float> outputMeterRmsLeft { 0.0f };
     std::atomic<float> outputMeterRmsRight { 0.0f };
+    std::atomic<float> stereoFieldCorrelation { 0.0f };
+    std::atomic<float> stereoFieldWidth { 0.0f };
+    std::atomic<float> stereoFieldBalance { 0.0f };
     std::atomic<float> lowEndSubRms { 0.0f };
     std::atomic<float> lowEndStereoRisk { 0.0f };
     std::atomic<float> lowEndOutputPeak { 0.0f };

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### HOME Stereo Field Visualization
+
+- Added real-time-safe stereo field telemetry for full-band correlation, stereo width, balance, and low-end side-risk values.
+- Added a reusable `StereoFieldDisplay` on HOME beside the output spectrum so house, UKG, techno, and minimal patches show mono compatibility and wide-stab/pad risk without opening another panel.
+- Added `StereoFieldTelemetryAudit` to verify stereo field telemetry resets cleanly and remains finite/in range after rendered output.
+
 ### Library Preset Vault UI Polish
 
 - Reworked the LIBRARY panel into a clearer preset-vault workflow with wider left/right rails, a denser central crate, and separated save/inspect cards.

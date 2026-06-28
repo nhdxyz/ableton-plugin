@@ -14,6 +14,7 @@
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
+#include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/WavetableDisplay.h"
 #include "UI/XYMacroPad.h"
@@ -646,6 +647,7 @@ private:
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
     UI::OutputSpectrumDisplay outputSpectrumDisplay;
+    UI::StereoFieldDisplay stereoFieldDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::LowEndAssistant lowEndAssistant;
@@ -746,6 +748,7 @@ private:
     void applyLfoCurveTool(LfoCurveTool tool);
     void updateOutputMeter();
     void updateOutputSpectrumDisplay();
+    void updateStereoFieldDisplay();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
@@ -858,6 +861,10 @@ private:
     float displayedRmsRight = 0.0f;
     std::array<float, NateVSTAudioProcessor::outputSpectrumSnapshotSize> outputSpectrumSnapshot {};
     UI::OutputSpectrumDisplay::BandArray displayedSpectrumBands {};
+    float displayedStereoCorrelation = 0.0f;
+    float displayedStereoWidth = 0.0f;
+    float displayedStereoBalance = 0.0f;
+    float displayedLowStereoRisk = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NateVSTAudioProcessorEditor)
 };

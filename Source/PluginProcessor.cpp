@@ -36,6 +36,11 @@ juce::StringArray presetCategoryPathSegments(const juce::String& category)
     return segments;
 }
 
+juce::String normalisedPresetCategory(const juce::String& category)
+{
+    return presetCategoryPathSegments(category).joinIntoString("/");
+}
+
 juce::String presetTextOrFallback(const juce::String& text, const juce::String& fallback)
 {
     const auto trimmed = text.trim();
@@ -1407,7 +1412,7 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
     if (trimmedName.isEmpty())
         return false;
 
-    const auto storedCategory = presetTextOrFallback(options.category, "User");
+    const auto storedCategory = normalisedPresetCategory(presetTextOrFallback(options.category, "User"));
     const auto storedAuthor = presetTextOrFallback(options.author, "User");
     const auto storedPack = presetTextOrFallback(options.pack, "User Pack");
     const auto storedKey = presetTextOrFallback(options.key, "Any Key");
@@ -1433,6 +1438,17 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
         auto legalName = juce::File::createLegalFileName(trimmedName);
         if (legalName.isEmpty())
             legalName = "Untitled";
+
+        juce::TemporaryFile temporaryFile(destination);
+        if (! xml->writeTo(temporaryFile.getFile()))
+            return false;
+
+        if (! temporaryFile.getFile().existsAsFile() || temporaryFile.getFile().getSize() == 0)
+            return false;
+
+        if (! temporaryFile.overwriteTargetFileWithTemporary())
+            return false;
+
         const auto existingFiles = getPresetDirectory().findChildFiles(juce::File::findFiles, true, "*.natevstpreset");
         for (const auto& file : existingFiles)
             if (file.getFileNameWithoutExtension() == legalName
@@ -1441,7 +1457,7 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
                 file.deleteFile();
             }
 
-        return xml->writeTo(destination);
+        return true;
     }
 
     return false;

@@ -97,6 +97,19 @@ target_link_libraries(NateVSTLayoutAudit
 
 add_test(NAME EditorLayoutAudit COMMAND NateVSTLayoutAudit)
 
+add_executable(NateVSTPresetSaveAudit Tests/PresetSaveAudit.cpp)
+
+target_link_libraries(NateVSTPresetSaveAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME PresetSaveAudit COMMAND NateVSTPresetSaveAudit)
+
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")
 

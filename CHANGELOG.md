@@ -2,6 +2,17 @@
 
 ## 2026-06-28
 
+### Random Lab Section Rolls And Safer Preset Saves
+
+- Added one-click LAB section-roll buttons for Source, Env, Filter, Sample, FX, Seq, and Macros so a generated patch can be refined section by section without replacing the whole sound.
+- Moved generated-preset save flow directly into LAB with category, preset name, pack, BPM, and Save controls visible under the randomizer.
+- Random Generate, Mutate, Vary, Wild, and section-roll actions now refresh visible selector, sample waveform, wavetable, and sequencer feedback after applying changes.
+- Added generated preset draft naming when the name is empty or still matches the loaded preset, reducing accidental overwrites while exploring random ideas.
+- Added recipe-based category, pack, and BPM suggestions for UKG, house, tech-house, minimal, techno, and FX recipes.
+- Normalized preset category paths before saving metadata, so slash/backslash folder paths store consistently as values like `UKG/Bass`.
+- Switched preset writing to a temporary-file replace path and added a `PresetSaveAudit` CTest that verifies nested category save, metadata normalization, and load-by-name.
+- Added `docs/RANDOMIZATION_LIBRARY_RESEARCH_2026_06_28.md` with a focused backlog for making randomization and generated-preset saving a flagship workflow.
+
 ### Sequencer Parameter Lock Lane
 
 - Added a fifth SEQ lane, `Lock`, for per-step parameter-lock amounts alongside Velocity, Probability, Late, and Len.

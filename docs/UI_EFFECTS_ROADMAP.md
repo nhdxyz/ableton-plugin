@@ -501,6 +501,7 @@ Build the next larger slices in this order:
    First history pass implemented as one-slot global randomization Undo/Redo with visible `Undo:` and `Redo:` labels in HOME/LAB status.
    First mutation-strength pass implemented as `Vary`, `Mutate`, and `Wild` actions that share the recipe engine, respect locks, and participate in Undo/Redo history.
    First section-scope pass implemented as a HOME/LAB `Scope` selector for All, Source, Env, Filter, Sample, FX, Seq, and Macros, restoring unselected sections plus hidden modulation/output state after recipe generation.
+   First generated-save handoff pass implemented as LAB section-roll buttons, generated preset draft naming, recipe-aware category/pack/BPM suggestions, direct LAB save controls, normalized category folder metadata, temporary-file preset writes, and a `PresetSaveAudit` CTest.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

@@ -453,6 +453,7 @@ private:
     juce::TextButton wildMutateButton { "Wild" };
     juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton redoRandomButton { "Redo" };
+    std::array<juce::TextButton, 7> randomSectionRollButtons;
     juce::TextButton recallSnapshotAButton { "A" };
     juce::TextButton captureSnapshotAButton { "Set A" };
     juce::TextButton recallSnapshotBButton { "B" };
@@ -666,6 +667,15 @@ private:
     void saveCurrentPreset();
     void loadSelectedPreset();
     int selectedRandomMutationScope() const;
+    void triggerRandomGenerate();
+    void triggerRandomMutate();
+    void triggerRandomVariation();
+    void triggerRandomWild();
+    void triggerRandomSectionRoll(size_t sectionIndex);
+    void prepareRandomPresetDraft(const juce::String& actionLabel);
+    juce::String suggestedPresetCategoryForRecipe() const;
+    juce::String suggestedPresetPackForCategory(const juce::String& category) const;
+    int suggestedPresetBpmForCategory(const juce::String& category) const;
     void loadPresetByOffset(int offset);
     void auditionSelectedPreset();
     void releasePresetAuditionNote();
@@ -718,6 +728,7 @@ private:
     int selectedMacroAssignmentDestinationIndex() const;
 
     Panel activePanel = Panel::home;
+    bool presetNameIsRandomDraft = false;
     FxModule selectedFxModule = FxModule::guard;
     FxModule fxPresetBoxModule = FxModule::guard;
     float displayedPeakLeft = 0.0f;

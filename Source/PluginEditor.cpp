@@ -190,7 +190,30 @@ juce::Colour panelColour()
 
 juce::StringArray presetCategoryChoices()
 {
-    return { "User", "Bass", "Stab", "Lead", "House", "Tech House", "Techno", "Minimal", "UKG", "UKG/Bass", "UKG/Chops", "House/Chords", "Tech House/Bass", "FX", "Sequence", "Sample" };
+    return {
+        "User",
+        "Bass",
+        "Stab",
+        "Lead",
+        "House",
+        "House/Bass",
+        "House/Chords",
+        "Tech House",
+        "Tech House/Bass",
+        "Techno",
+        "Techno/Stabs",
+        "Minimal",
+        "Minimal/Plucks",
+        "UKG",
+        "UKG/Bass",
+        "UKG/Chops",
+        "UKG/Organ",
+        "UKG/Stabs",
+        "UKG/Bells",
+        "FX",
+        "Sequence",
+        "Sample"
+    };
 }
 
 juce::StringArray presetFilterChoices()
@@ -732,6 +755,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetNameEditor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff344047));
     presetNameEditor.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colour(0xff8ee6c9));
     presetNameEditor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffdce7e4));
+    presetNameEditor.onTextChange = [this] { presetNameIsRandomDraft = false; };
     addAndMakeVisible(presetNameEditor);
 
     presetSearchEditor.setTextToShowWhenEmpty("Search presets", juce::Colour(0xff617078));
@@ -1372,27 +1396,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxGuardPushSlider, fxGuardPushLabel, "Push", Parameters::ID::fxGuardPush);
     configureSlider(fxGuardCeilingSlider, fxGuardCeilingLabel, "Ceil", Parameters::ID::fxGuardCeiling);
 
-    generateButton.onClick = [this]
-    {
-        audioProcessor.generateRandomPatch(selectedRandomMutationScope());
-        setRandomStatus("Generated");
-    };
-    mutateButton.onClick = [this]
-    {
-        audioProcessor.mutateRandomPatch(selectedRandomMutationScope());
-        setRandomStatus("Mutated");
-    };
-    variationButton.onClick = [this]
-    {
-        audioProcessor.createRandomVariation(selectedRandomMutationScope());
-        setRandomStatus("Variation");
-    };
+    generateButton.onClick = [this] { triggerRandomGenerate(); };
+    mutateButton.onClick = [this] { triggerRandomMutate(); };
+    variationButton.onClick = [this] { triggerRandomVariation(); };
     wildMutateButton.setTooltip("Make a stronger recipe-aware mutation while respecting active locks");
-    wildMutateButton.onClick = [this]
-    {
-        audioProcessor.wildMutateRandomPatch(selectedRandomMutationScope());
-        setRandomStatus("Wild");
-    };
+    wildMutateButton.onClick = [this] { triggerRandomWild(); };
     undoRandomButton.onClick = [this]
     {
         setRandomStatus(audioProcessor.undoRandomization() ? "Undo restored" : "Nothing to undo");
@@ -1745,6 +1753,25 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomLockFxButton.onClick = updateLockStatus;
     randomLockOutputButton.onClick = updateLockStatus;
     randomLockSequencerButton.onClick = updateLockStatus;
+
+    const std::array<juce::String, 7> sectionRollLabels {
+        "Source",
+        "Env",
+        "Filter",
+        "Sample",
+        "FX",
+        "Seq",
+        "Macros"
+    };
+
+    for (size_t index = 0; index < randomSectionRollButtons.size(); ++index)
+    {
+        auto& button = randomSectionRollButtons[index];
+        button.setButtonText(sectionRollLabels[index]);
+        button.setTooltip("Mutate only the " + sectionRollLabels[index] + " section while preserving the rest of the patch");
+        button.onClick = [this, index] { triggerRandomSectionRoll(index); };
+        addAndMakeVisible(button);
+    }
 
     addAndMakeVisible(generateButton);
     addAndMakeVisible(mutateButton);
@@ -2319,6 +2346,14 @@ void NateVSTAudioProcessorEditor::resized()
             randomLockOutputButton.setVisible(true);
             randomLockSequencerButton.setVisible(true);
             randomStatusLabel.setVisible(true);
+            presetCategoryBox.setVisible(true);
+            presetNameEditor.setVisible(true);
+            presetPackBox.setVisible(true);
+            presetBpmBox.setVisible(true);
+            savePresetButton.setVisible(true);
+            presetStatusLabel.setVisible(true);
+            for (auto& button : randomSectionRollButtons)
+                button.setVisible(true);
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
             recipeBox.setBounds(actionRow.removeFromLeft(210).reduced(4));
@@ -2329,6 +2364,10 @@ void NateVSTAudioProcessorEditor::resized()
             wildMutateButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
             undoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
             redoRandomButton.setBounds(actionRow.removeFromLeft(82).reduced(4));
+            auto sectionRollRow = content.removeFromTop(40).withTrimmedTop(4);
+            const auto sectionButtonWidth = sectionRollRow.getWidth() / static_cast<int>(randomSectionRollButtons.size());
+            for (auto& button : randomSectionRollButtons)
+                button.setBounds(sectionRollRow.removeFromLeft(sectionButtonWidth).reduced(4));
             auto lockRow = content.removeFromTop(42).withTrimmedTop(4);
             const auto lockButtonWidth = lockRow.getWidth() / 8;
             randomLockPitchButton.setBounds(lockRow.removeFromLeft(lockButtonWidth).reduced(4));
@@ -2346,7 +2385,15 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(brightnessSlider, brightnessLabel, true);
             setSliderVisible(driveBiasSlider, driveBiasLabel, true);
             setSliderVisible(motionBiasSlider, motionBiasLabel, true);
-            layoutKnobRow(content.removeFromTop(150), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
+            layoutKnobRow(content.removeFromTop(132), { &randomAmountSlider, &randomChaosSlider, &brightnessSlider, &driveBiasSlider, &motionBiasSlider });
+            content.removeFromTop(8);
+            auto saveRow = content.removeFromTop(42);
+            presetCategoryBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
+            presetNameEditor.setBounds(saveRow.removeFromLeft(236).reduced(4));
+            presetPackBox.setBounds(saveRow.removeFromLeft(156).reduced(4));
+            presetBpmBox.setBounds(saveRow.removeFromLeft(100).reduced(4));
+            savePresetButton.setBounds(saveRow.removeFromLeft(82).reduced(4));
+            presetStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
             break;
         }
 
@@ -3960,6 +4007,185 @@ int NateVSTAudioProcessorEditor::selectedRandomMutationScope() const
     return juce::jmax(0, randomScopeBox.getSelectedId() - 1);
 }
 
+void NateVSTAudioProcessorEditor::triggerRandomGenerate()
+{
+    audioProcessor.generateRandomPatch(selectedRandomMutationScope());
+    prepareRandomPresetDraft("Generate");
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    setRandomStatus("Generated");
+}
+
+void NateVSTAudioProcessorEditor::triggerRandomMutate()
+{
+    audioProcessor.mutateRandomPatch(selectedRandomMutationScope());
+    prepareRandomPresetDraft("Mutate");
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    setRandomStatus("Mutated");
+}
+
+void NateVSTAudioProcessorEditor::triggerRandomVariation()
+{
+    audioProcessor.createRandomVariation(selectedRandomMutationScope());
+    prepareRandomPresetDraft("Vary");
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    setRandomStatus("Variation");
+}
+
+void NateVSTAudioProcessorEditor::triggerRandomWild()
+{
+    audioProcessor.wildMutateRandomPatch(selectedRandomMutationScope());
+    prepareRandomPresetDraft("Wild");
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    setRandomStatus("Wild");
+}
+
+void NateVSTAudioProcessorEditor::triggerRandomSectionRoll(size_t sectionIndex)
+{
+    if (sectionIndex >= randomSectionRollButtons.size())
+        return;
+
+    const auto scopeIndex = static_cast<int>(sectionIndex + 1);
+    randomScopeBox.setSelectedId(scopeIndex + 1, juce::dontSendNotification);
+
+    const auto sectionName = randomSectionRollButtons[sectionIndex].getButtonText();
+    audioProcessor.mutateRandomPatch(scopeIndex);
+    prepareRandomPresetDraft(sectionName + " Roll");
+    updateSegmentedSelectors();
+    updateSampleNameLabel();
+    updateSampleWaveformDisplay();
+    updateWavetableDisplay();
+    sequencerGrid.repaint();
+    setRandomStatus("Rolled " + sectionName);
+}
+
+void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& actionLabel)
+{
+    const auto category = suggestedPresetCategoryForRecipe();
+    const auto pack = suggestedPresetPackForCategory(category);
+    const auto bpm = suggestedPresetBpmForCategory(category);
+
+    const auto currentName = presetNameEditor.getText().trim();
+    const auto selectedPresetName = presetBox.getText().trim();
+    const auto shouldWriteDraftName = currentName.isEmpty()
+        || presetNameIsRandomDraft
+        || (selectedPresetName.isNotEmpty() && currentName == selectedPresetName);
+
+    if (shouldWriteDraftName)
+    {
+        const auto recipeName = recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random");
+        const auto scopeName = randomScopeBox.getText().trim();
+        juce::StringArray nameParts;
+        nameParts.add(recipeName);
+        if (scopeName.isNotEmpty() && scopeName != "All")
+            nameParts.add(scopeName);
+        nameParts.add(actionLabel);
+        nameParts.add(juce::String(static_cast<int>(juce::Time::getMillisecondCounter() % 1000000)));
+        presetNameEditor.setText(nameParts.joinIntoString(" "), juce::dontSendNotification);
+        presetNameIsRandomDraft = true;
+    }
+
+    const auto currentCategory = presetCategoryBox.getText().trim();
+    if (currentCategory.isEmpty() || currentCategory == "User" || presetNameIsRandomDraft)
+        presetCategoryBox.setText(category, juce::dontSendNotification);
+
+    const auto currentPack = presetPackBox.getText().trim();
+    if (currentPack.isEmpty() || currentPack == "User Pack" || presetNameIsRandomDraft)
+        presetPackBox.setText(pack, juce::dontSendNotification);
+
+    const auto currentBpm = presetBpmBox.getText().trim();
+    if (currentBpm.isEmpty() || currentBpm == "Any Tempo" || presetNameIsRandomDraft)
+        presetBpmBox.setText(formatPresetBpm(bpm), juce::dontSendNotification);
+
+    presetStatusLabel.setText("Draft -> " + category + " / " + pack + " / " + formatPresetBpm(bpm),
+                              juce::dontSendNotification);
+}
+
+juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() const
+{
+    const auto recipe = recipeBox.getText().trim();
+
+    if (recipe.containsIgnoreCase("Dred") || recipe.containsIgnoreCase("2-Step Bass"))
+        return "UKG/Bass";
+    if (recipe.containsIgnoreCase("Organ"))
+        return "UKG/Organ";
+    if (recipe.containsIgnoreCase("Chord"))
+        return "UKG/Stabs";
+    if (recipe.containsIgnoreCase("Bell"))
+        return "UKG/Bells";
+    if (recipe.containsIgnoreCase("Deep House"))
+        return "House/Bass";
+    if (recipe.containsIgnoreCase("Rolling Tech"))
+        return "Tech House/Bass";
+    if (recipe.containsIgnoreCase("Minimal"))
+        return "Minimal/Plucks";
+    if (recipe.containsIgnoreCase("Dark Stab"))
+        return "Techno/Stabs";
+    if (recipe.containsIgnoreCase("Acid"))
+        return "Techno";
+    if (recipe.containsIgnoreCase("Noise"))
+        return "FX";
+
+    return "User";
+}
+
+juce::String NateVSTAudioProcessorEditor::suggestedPresetPackForCategory(const juce::String& category) const
+{
+    const auto recipe = recipeBox.getText().trim();
+
+    if (recipe.containsIgnoreCase("Dred") || recipe.containsIgnoreCase("2-Step Bass"))
+        return "UKG Basslines";
+    if (category.startsWithIgnoreCase("UKG"))
+        return "UKG Essentials";
+    if (category.startsWithIgnoreCase("House"))
+        return "House Tools";
+    if (category.startsWithIgnoreCase("Tech House"))
+        return "Tech House Tools";
+    if (category.startsWithIgnoreCase("Minimal"))
+        return "Minimal Tools";
+    if (category.startsWithIgnoreCase("Techno"))
+        return "Techno Tools";
+    if (category == "FX")
+        return "Project Pack";
+
+    return "User Pack";
+}
+
+int NateVSTAudioProcessorEditor::suggestedPresetBpmForCategory(const juce::String& category) const
+{
+    const auto recipe = recipeBox.getText().trim();
+
+    if (category.startsWithIgnoreCase("UKG"))
+        return recipe.containsIgnoreCase("Dred") ? 134 : 132;
+    if (category.startsWithIgnoreCase("Tech House"))
+        return 126;
+    if (category.startsWithIgnoreCase("House"))
+        return 124;
+    if (category.startsWithIgnoreCase("Techno"))
+        return recipe.containsIgnoreCase("Acid") ? 130 : 132;
+    if (category.startsWithIgnoreCase("Minimal"))
+        return 125;
+    if (category == "FX")
+        return 128;
+
+    return 0;
+}
+
 void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 {
     const auto locks = audioProcessor.getActiveRandomizationLockSummary();
@@ -5288,6 +5514,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     for (auto& slider : lfoCurveSliders)
         slider.setVisible(false);
+
+    for (auto& button : randomSectionRollButtons)
+        button.setVisible(false);
 
     for (auto& button : sampleSliceButtons)
         button.setVisible(false);
@@ -6705,6 +6934,7 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         refreshPresetList();
         presetBox.setText(storedName, juce::dontSendNotification);
         presetNameEditor.setText(storedName, juce::dontSendNotification);
+        presetNameIsRandomDraft = false;
         updateFavoritePresetButton();
         return;
     }
@@ -6722,6 +6952,7 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
         refreshPresetList();
         presetBox.setText(presetName, juce::dontSendNotification);
         presetNameEditor.setText(presetName, juce::dontSendNotification);
+        presetNameIsRandomDraft = false;
         presetStatusLabel.setText("Loaded " + presetName, juce::dontSendNotification);
         updateFavoritePresetButton();
         updateSampleNameLabel();

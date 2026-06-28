@@ -522,6 +522,7 @@ private:
     juce::TextButton modMacroAssignReplaceButton { "Replace" };
     juce::TextButton modMacroAssignClearButton { "Clear" };
     std::array<juce::ToggleButton, 8> modSlotEnabledButtons;
+    std::array<juce::TextButton, 8> modSlotDuplicateButtons;
     std::array<juce::TextButton, 8> modSlotDeleteButtons;
     UI::FxRackRow fxToneSlotButton { "Tone" };
     UI::FxRackRow fxEqSlotButton { "EQ" };
@@ -673,6 +674,7 @@ private:
     void addInspectedModRoute();
     void addMacroAssignment(bool replaceExisting);
     void clearSelectedMacroAssignments();
+    void duplicateModRoute(size_t slotIndex);
     void deleteModRoute(size_t slotIndex);
     void clearInspectedModRoutes();
     FxMomentarySnapshot captureFxMomentarySnapshot() const;

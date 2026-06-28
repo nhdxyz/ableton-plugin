@@ -2,6 +2,11 @@
 
 ## 2026-06-28
 
+### Modulation Route Editing
+
+- Added per-slot duplicate buttons to the MOD matrix so producers can quickly copy a source/destination/amount route into the next free slot and make variations.
+- Duplicate actions refresh matrix rows, modulation indicators, inspector summaries, and macro assignment summaries without adding host parameters.
+
 ### Modulation Visibility Polish
 
 - Added modulation stripes and compact route badges to horizontal sliders, so sample, FX, and matrix controls get visible route feedback instead of only rotary knobs.

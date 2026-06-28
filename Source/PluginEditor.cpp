@@ -1018,6 +1018,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         addAndMakeVisible(enabledButton);
         buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::modMatrixEnabled[index], enabledButton));
 
+        auto& duplicateButton = modSlotDuplicateButtons[index];
+        duplicateButton.setButtonText("+");
+        duplicateButton.setTooltip("Duplicate modulation slot " + juce::String(static_cast<int>(index + 1)) + " to the next free slot");
+        duplicateButton.onClick = [this, index] { duplicateModRoute(index); };
+        addAndMakeVisible(duplicateButton);
+
         auto& deleteButton = modSlotDeleteButtons[index];
         deleteButton.setButtonText("X");
         deleteButton.setTooltip("Delete modulation slot " + juce::String(static_cast<int>(index + 1)));
@@ -2324,6 +2330,7 @@ void NateVSTAudioProcessorEditor::resized()
                 modAmountLabels[index].setVisible(false);
                 modMatrixRows[index].setVisible(true);
                 modSlotEnabledButtons[index].setVisible(true);
+                modSlotDuplicateButtons[index].setVisible(true);
                 modSlotDeleteButtons[index].setVisible(true);
             }
             modMatrixStatusLabel.setVisible(true);
@@ -2462,7 +2469,7 @@ void NateVSTAudioProcessorEditor::resized()
                                    juce::Label& amount)
             {
                 header.removeFromLeft(26);
-                header.removeFromRight(52);
+                header.removeFromRight(74);
                 source.setBounds(header.removeFromLeft(100).reduced(5, 0));
                 destination.setBounds(header.removeFromLeft(138).reduced(5, 0));
                 amount.setBounds(header.reduced(5, 0));
@@ -2483,8 +2490,9 @@ void NateVSTAudioProcessorEditor::resized()
                 modSlotRows[index].setBounds(row.removeFromLeft(26).reduced(2, 0));
                 modSourceBoxes[index].setBounds(row.removeFromLeft(100).reduced(3, 0));
                 modDestinationBoxes[index].setBounds(row.removeFromLeft(138).reduced(3, 0));
-                auto actionArea = row.removeFromRight(52);
+                auto actionArea = row.removeFromRight(74);
                 modSlotEnabledButtons[index].setBounds(actionArea.removeFromLeft(31).reduced(1, 0));
+                modSlotDuplicateButtons[index].setBounds(actionArea.removeFromLeft(22).reduced(1, 0));
                 modSlotDeleteButtons[index].setBounds(actionArea.reduced(1, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
             };
@@ -5041,6 +5049,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         modSourceBoxes[index].setVisible(false);
         modDestinationBoxes[index].setVisible(false);
         modSlotEnabledButtons[index].setVisible(false);
+        modSlotDuplicateButtons[index].setVisible(false);
         modSlotDeleteButtons[index].setVisible(false);
         setSliderVisible(modAmountSliders[index], modAmountLabels[index], false);
     }
@@ -5372,6 +5381,7 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount, enabled);
         modSlotEnabledButtons[index].setButtonText(enabled ? "On" : "Off");
         modSlotEnabledButtons[index].setEnabled(isConfiguredRoute);
+        modSlotDuplicateButtons[index].setEnabled(isConfiguredRoute);
         modSlotDeleteButtons[index].setEnabled(isConfiguredRoute);
 
         if (isActiveRoute)
@@ -5722,6 +5732,69 @@ void NateVSTAudioProcessorEditor::clearSelectedMacroAssignments()
                                      ? "Cleared " + juce::String(clearedCount) + " " + sourceChoices[sourceIndex] + " route"
                                         + (clearedCount == 1 ? "" : "s")
                                      : sourceChoices[sourceIndex] + " had no routes",
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::duplicateModRoute(size_t slotIndex)
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return;
+
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto sourceIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f));
+    const auto destinationIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f));
+    const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+    const auto enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+
+    if (sourceIndex <= 0 || destinationIndex <= 0 || std::abs(amount) <= 0.001f)
+    {
+        modMatrixStatusLabel.setText("Slot " + juce::String(static_cast<int>(slotIndex + 1)) + " has no route to duplicate",
+                                     juce::dontSendNotification);
+        return;
+    }
+
+    auto targetSlot = -1;
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        if (index == slotIndex)
+            continue;
+
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto currentAmount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        if (currentSource <= 0 || currentDestination <= 0 || std::abs(currentAmount) <= 0.001f)
+        {
+            targetSlot = static_cast<int>(index);
+            break;
+        }
+    }
+
+    if (targetSlot < 0)
+    {
+        modMatrixStatusLabel.setText("No free modulation slot to duplicate S" + juce::String(static_cast<int>(slotIndex + 1)),
+                                     juce::dontSendNotification);
+        return;
+    }
+
+    const auto targetIndex = static_cast<size_t>(targetSlot);
+    setPlainParameterValue(Parameters::ID::modMatrixSource[targetIndex], static_cast<float>(sourceIndex));
+    setPlainParameterValue(Parameters::ID::modMatrixDestination[targetIndex], static_cast<float>(destinationIndex));
+    setPlainParameterValue(Parameters::ID::modMatrixAmount[targetIndex], amount);
+    setPlainParameterValue(Parameters::ID::modMatrixEnabled[targetIndex], enabled >= 0.5f ? 1.0f : 0.0f);
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+
+    const auto sourceName = juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()) ? sourceChoices[sourceIndex] : juce::String("Source");
+    const auto destinationName = juce::isPositiveAndBelow(destinationIndex, destinationChoices.size()) ? destinationChoices[destinationIndex] : juce::String("Destination");
+    const auto percent = juce::roundToInt(amount * 100.0f);
+    modMatrixStatusLabel.setText("Duplicated S" + juce::String(static_cast<int>(slotIndex + 1))
+                                     + " to S" + juce::String(targetSlot + 1)
+                                     + " | " + sourceName + " -> " + destinationName
+                                     + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%",
                                  juce::dontSendNotification);
 }
 

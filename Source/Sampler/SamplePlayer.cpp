@@ -183,6 +183,7 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
 void SamplePlayer::prepare(double sampleRate)
 {
     playbackSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
+    sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
 }
 
 void SamplePlayer::clear()
@@ -192,7 +193,7 @@ void SamplePlayer::clear()
     voices = {};
     region = {};
     sampleModLfoPhase = 0.0f;
-    sampleModLfoStepValue = 0.0f;
+    sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
 }
 
 bool SamplePlayer::loadFile(const juce::File& file)
@@ -479,6 +480,7 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 9: return readParameter(macroBounce, 0.0f);
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
+        case 12: return sampleModLfoStepValue;
         default: return 0.0f;
     }
 }

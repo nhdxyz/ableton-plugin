@@ -514,7 +514,7 @@ private:
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::Label keyboardRangeLabel;
     juce::Label fxRackStatusLabel;
-    std::array<juce::Label, 11> modSourceRows;
+    std::array<juce::Label, 12> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;

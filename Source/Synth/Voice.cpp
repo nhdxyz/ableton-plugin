@@ -469,6 +469,7 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float mod
         case 9: return readParameter(macroBounce, 0.0f);
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
+        case 12: return lfoStepValue;
         default: return 0.0f;
     }
 }

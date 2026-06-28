@@ -262,7 +262,7 @@ void EffectsRack::reset()
     tremoloPhase = 0.0;
     ringPhase = 0.0;
     fxModLfoPhase = 0.0f;
-    fxModLfoStepValue = 0.0f;
+    fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
     pumpSmoothedGain = 1.0f;
     delayWritePosition = 0;
     combWritePosition = 0;
@@ -402,6 +402,7 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue) c
         case 9: return readParameter(macroBounce, 0.0f);
         case 10: return readParameter(macroWarp, 0.0f);
         case 11: return readParameter(macroThrow, 0.0f);
+        case 12: return fxModLfoStepValue;
         default: return 0.0f;
     }
 }

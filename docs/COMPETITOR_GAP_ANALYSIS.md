@@ -239,6 +239,10 @@ Implemented P0 sub-slice:
 164. Add MIDI learn if it can coexist cleanly with Ableton automation.
 165. Add automation-safe parameter naming audit.
 
+Implemented P5 sub-slice:
+
+- Added `S&H` as an appended modulation source for stepped random movement across synth, sample, and FX destinations. This covers the first sample-and-hold source pass while leaving additional smooth-random, chaos, LFO 2/3, and step-LFO work open.
+
 ### P6 - FX, Routing, And Club Processing
 
 166. Add multiband distortion with movable crossovers.

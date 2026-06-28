@@ -93,6 +93,10 @@ Implemented control-feel sub-slice:
 34. Add global "show routes for selected parameter" mode.
 35. Add macro snapshots for eight performance macro states.
 
+Implemented movement sub-slice:
+
+- `S&H` is now an appended MOD source for stepped random movement, routed through synth, sample, and FX modulation paths without changing existing source indices. Macro assignment editing remains limited to the eight performance macros.
+
 ## Priority 2: Oscillator And Source Engines
 
 36. Add a true wavetable oscillator.

@@ -54,6 +54,7 @@ constexpr std::array<const char*, 31> momentaryFxParameterIDs {
     Parameters::ID::fxGuardCeiling,
     Parameters::ID::outputGain
 };
+constexpr auto lastMacroModSourceIndex = 11;
 
 juce::Colour backgroundColour()
 {
@@ -297,7 +298,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 11> sourceTexts {
+    static const std::array<const char*, 12> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -308,7 +309,8 @@ juce::String modSourceSummaryText(size_t index)
         "Weight: sub + low-end support",
         "Bounce: pump depth + groove",
         "Warp: osc bend + harmonic edge",
-        "Throw: delay + reverb push"
+        "Throw: delay + reverb push",
+        "S&H: stepped random movement"
     };
 
     if (index < sourceTexts.size())
@@ -809,7 +811,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modInspectorSourceBox.setTooltip("Choose a modulation source to add to the inspected destination");
     addAndMakeVisible(modInspectorSourceBox);
 
-    for (auto index = firstMacroModSourceIndex; index < modSourceChoices.size(); ++index)
+    for (auto index = firstMacroModSourceIndex; index <= lastMacroModSourceIndex && index < modSourceChoices.size(); ++index)
         modMacroAssignSourceBox.addItem(modSourceChoices[index], index + 1);
     modMacroAssignSourceBox.setSelectedId(firstMacroModSourceIndex + 1, juce::dontSendNotification);
     modMacroAssignSourceBox.setTextWhenNothingSelected("Macro");
@@ -4133,7 +4135,9 @@ int NateVSTAudioProcessorEditor::selectedMacroAssignmentSourceIndex() const
 {
     const auto sourceChoices = Parameters::modulationSourceChoices();
     const auto selectedSource = modMacroAssignSourceBox.getSelectedId() - 1;
-    return juce::jlimit(firstMacroModSourceIndex, sourceChoices.size() - 1, selectedSource);
+    return juce::jlimit(firstMacroModSourceIndex,
+                        juce::jmin(lastMacroModSourceIndex, sourceChoices.size() - 1),
+                        selectedSource);
 }
 
 int NateVSTAudioProcessorEditor::selectedMacroAssignmentDestinationIndex() const
@@ -4521,8 +4525,8 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
 {
     const auto sourceChoices = Parameters::modulationSourceChoices();
     const auto destinationChoices = Parameters::modulationDestinationChoices();
-    std::array<int, 12> sourceRouteCounts {};
-    std::array<float, 12> sourceDepths {};
+    std::vector<int> sourceRouteCounts(static_cast<size_t>(sourceChoices.size()), 0);
+    std::vector<float> sourceDepths(static_cast<size_t>(sourceChoices.size()), 0.0f);
     auto activeRouteCount = 0;
     juce::String firstActiveRoute;
 
@@ -4565,10 +4569,13 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         if (isActiveRoute)
         {
             ++activeRouteCount;
-            sourceRouteCounts[static_cast<size_t>(sourceIndex)] += 1;
-            sourceDepths[static_cast<size_t>(sourceIndex)] = juce::jlimit(-1.0f,
-                                                                          1.0f,
-                                                                          sourceDepths[static_cast<size_t>(sourceIndex)] + amount);
+            if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+            {
+                sourceRouteCounts[static_cast<size_t>(sourceIndex)] += 1;
+                sourceDepths[static_cast<size_t>(sourceIndex)] = juce::jlimit(-1.0f,
+                                                                              1.0f,
+                                                                              sourceDepths[static_cast<size_t>(sourceIndex)] + amount);
+            }
 
             if (firstActiveRoute.isEmpty())
             {
@@ -4587,8 +4594,13 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
     for (size_t rowIndex = 0; rowIndex < modSourceRows.size(); ++rowIndex)
     {
         const auto sourceIndex = rowIndex + 1;
-        const auto routeCount = sourceRouteCounts[sourceIndex];
-        const auto depth = sourceDepths[sourceIndex];
+        const auto sourceChoiceIndex = static_cast<int>(sourceIndex);
+        const auto routeCount = juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
+            ? sourceRouteCounts[sourceIndex]
+            : 0;
+        const auto depth = juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
+            ? sourceDepths[sourceIndex]
+            : 0.0f;
         auto text = modSourceSummaryText(rowIndex);
 
         if (routeCount > 0)
@@ -4609,9 +4621,11 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
                             ? (depth < 0.0f ? juce::Colour(0x22ff8a4d) : juce::Colour(0x223bcfa7))
                             : juce::Colours::transparentBlack);
         label.setTooltip(routeCount > 0
-                             ? sourceChoices[static_cast<int>(sourceIndex)] + ": " + juce::String(routeCount)
+                             ? sourceChoices[sourceChoiceIndex] + ": " + juce::String(routeCount)
                                 + " active route" + (routeCount == 1 ? "" : "s")
-                             : sourceChoices[static_cast<int>(sourceIndex)] + ": no active routes");
+                             : juce::isPositiveAndBelow(sourceChoiceIndex, sourceChoices.size())
+                                 ? sourceChoices[sourceChoiceIndex] + ": no active routes"
+                                 : juce::String("No source"));
     }
 }
 

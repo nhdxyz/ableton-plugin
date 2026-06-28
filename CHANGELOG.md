@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Sample And Hold Modulation Source
+
+- Added an appended `S&H` source to the MOD matrix for stepped random movement without shifting existing modulation source indices.
+- Routed `S&H` through synth, FX, and sample modulation paths, using the existing LFO timing as the hold clock while staying independent from the selected LFO shape and depth.
+- Expanded MOD source summaries to include the new source and kept the macro assignment editor limited to Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
+- Seeded global FX/sample held values on reset/prepare so S&H routes produce movement immediately.
+
 ### Control Feel Pass
 
 - Reduced rotary drag distance for the main knob groups so common house/UKG shaping controls respond with less dragging.

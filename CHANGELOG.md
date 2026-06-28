@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Deep Research Expansion
+
+- Expanded `docs/PROGRAM_RESEARCH_GAP_LIST.md` with a second research pass covering Vital, Korg opsix native, XO, Sononym, Ableton Live 12 MIDI/browser workflows, and updated lessons from Serum 2, Pigments, Phase Plant, Korg modwave, ZENOLOGY Pro, ShaperBox, Saturn 2, Infiltrator, and UK garage production references.
+- Added 160 additional feature ideas, extending the backlog from 232 to 392 items across hybrid source racks, wavetable/spectral depth, FM/organ/partial sources, sampler discovery, sequencer/MIDI tools, modulation visualization, rhythmic FX, preset discovery, and house/UKG content packs.
+- Added a refreshed next-build order that puts editor componentization, layout tests, modulation rings, pattern lanes, UKG slicing, wavetable playback, multiband drive, MSEG movement, full-browser discovery, and Ableton workflow validation in priority order.
+
 ### Chaos Modulation Source
 
 - Added an appended `Chaos` source after `Smooth` so existing modulation source indices stay stable while adding random-walk motion.

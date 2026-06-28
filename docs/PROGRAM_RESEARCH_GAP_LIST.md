@@ -469,6 +469,218 @@ Nate VST gaps:
 231. Add user manual pages.
 232. Add release checklist for Ableton Live versions.
 
+## 2026-06-28 Deeper Research Expansion
+
+This pass extends the first 232-item list after checking more current product pages and adjacent production tools. It is additive: keep the earlier priorities, but treat this section as the next source of feature tickets once the current UI, modulation, sampler, sequencer, and browser foundations are stable.
+
+Additional references reviewed:
+
+- Vital: https://vital.audio/
+- Korg opsix native: https://www.korg.com/us/products/software/opsix_native/
+- XLN Audio XO: https://www.xlnaudio.com/products/xo
+- Sononym: https://sononym.net/
+- Ableton Live 12 MIDI Tools: https://www.ableton.com/en/live-manual/12/midi-tools/
+- Ableton Live 12 file/browser workflows: https://www.ableton.com/en/live-manual/12/managing-files-and-sets/
+
+Key extra lessons:
+
+- Serum 2 and Pigments are no longer just "wavetable synth" references. The bigger pattern is hybrid source engines: wavetable, sample, granular, spectral, analog, harmonic/modal, and sequencing living in one instrument.
+- Phase Plant, modwave, opsix, and ZENOLOGY show that deeper engines need readable structure: generator lanes, partials, operator mixers, motion lanes, or source racks. Nate VST should not keep adding everything to one fixed subtractive page.
+- Vital, Saturn 2, and modwave show that visual feedback matters as much as the feature itself: animated waveforms, filter responses, live modulation visualization, source movement, and per-band displays make dense sound design understandable.
+- ShaperBox and Infiltrator show that club tools win through rhythmic control: drawable curves, step activation, swing, multiband routing, quick preset macros, random patterns, and tempo-locked performance movement.
+- XO and Sononym point to the next browser leap: similarity, audio-derived descriptors, duplicate detection, fast audition, recently used sources, sample maps, and "find similar" discovery.
+- Ableton Live 12 raises the workflow bar around scale-aware transformations, generative MIDI tools, MPE lanes, clip export/import, browser tags, and drag-to-save musical ideas.
+- UK garage remains a product filter, not just a preset category. Features should bias toward shuffled 2-step timing, late stabs, organ and Reese/Dred bass, vocal chops, sub control, call/response hooks, and fast clip export to Ableton.
+
+## Additional Long Add List
+
+### 12. Hybrid Source Engine And Layer Architecture
+
+233. Add a source rack with slots for Synth, Wavetable, Sample, Granular, FM, Organ, Noise, and Resample sources.
+234. Add source-slot enable, mute, solo, level, pan, width, tune, transpose, and phase controls.
+235. Add source-slot reorder once automation and preset migration are designed.
+236. Add layer A/B architecture with independent source, filter, amp, envelope, modulation receive, and FX-send controls.
+237. Add a Layer Blend macro for quick house chord/body balancing.
+238. Add a Layer Spread macro that widens only safe upper harmonics while leaving mono sub centered.
+239. Add layer copy, paste, duplicate, reset, and randomize commands.
+240. Add layer freeze/resample to capture CPU-heavy hybrid patches as a sample layer.
+241. Add a source browser by role: Sub, Rubber Bass, Organ, Chord, Pluck, Stab, Bell, Vocal, Noise, Texture.
+242. Add source snippets so users can save only the oscillator/source setup separate from the whole preset.
+243. Add legal factory PCM snippets for original house organ, garage organ, rave stab, piano stab, string stab, and noise hits.
+244. Add a "club mono source" mode that forces pitch/sub fundamentals through a mono-safe path.
+245. Add source dependency tracking for samples, future wavetables, and resampled layers.
+246. Add missing-source warnings directly in the source rack and preset browser.
+247. Add per-source quality mode so granular/wavetable/FM sources can scale CPU.
+248. Add per-source randomization locks so useful core identity survives mutation.
+249. Add source-level undo snapshots for fast compare after deep edits.
+250. Add source output meters before the shared filter/FX chain.
+
+### 13. Wavetable, Spectral, And Visual Oscillator Depth
+
+251. Add a true wavetable oscillator with stable phase, interpolation, anti-aliasing, and position modulation.
+252. Add a wavetable display with current frame, table index, playhead, and modulation overlay.
+253. Add a small waveform editor for normalizing, smoothing, phase rotating, and trimming imported tables.
+254. Add safe factory tables focused on house bass, UKG organ/bell, dub stab, garage vocal-ish formants, techno noise, and minimal plucks.
+255. Add wavetable import from WAV tables after the playback engine is stable.
+256. Add table folders, favorites, tags, and recently used wavetables.
+257. Add warp modes: bend, mirror, fold, phase skew, hard sync style, harmonic tilt, odd/even emphasis, quantize, and formant tilt.
+258. Add dual warp slots with independent modulation amounts.
+259. Add oscillator FM and phase distortion depth controls with safety limiting.
+260. Add ring modulation and amplitude modulation between source slots.
+261. Add a spectral tilt stage for bright, clean modern plucks without overusing EQ.
+262. Add transient-safe spectral smear only for texture sources, not bass.
+263. Add harmonic mask presets for hollow garage organ, nasal bass, dark dub stab, and metallic techno hit.
+264. Add an oscilloscope/spectrogram switch in SYNTH so waveform changes are visible while tuning.
+265. Add oscillator keytracking and note-dependent warp for basses that open up higher on the keyboard.
+266. Add retrigger/free-run phase modes per oscillator and per layer.
+267. Add per-voice drift for pitch, phase, filter cutoff, envelope time, and stereo placement.
+268. Add oscillator aliasing tests for high notes, unison, FM, sync, and warp modes.
+
+### 14. FM, Organ, Partial, And Classic Club Sources
+
+269. Add a three-operator quick FM engine for UKG bells, pings, metallic stabs, and short bass knocks.
+270. Add a six-operator advanced FM mode only after the quick FM path is musical.
+271. Add an operator mixer view inspired by clear per-operator level/route feedback, not by copying a specific UI.
+272. Add operator output scopes so users can see which operator is moving.
+273. Add FM algorithms for organ, bell, hollow bass, metallic stab, and techno hit.
+274. Add FM randomization by algorithm, operator ratio, envelope shape, and safe output.
+275. Add a drawbar-style organ source with click, leakage, foldback, percussion, key click, and vibrato/chorus.
+276. Add garage organ recipes: clean organ stab, dark organ bass, speed-garage organ lead, and clipped organ chord.
+277. Add a partial/additive bank for bell, glass, chord shimmer, and synthetic vocal tones.
+278. Add partial-level randomization with harmonic locks.
+279. Add "M1-style" and "classic workstation-style" recipe workflows using original/legal source material only.
+280. Add a Reese/Dred source recipe that layers detuned mid harmonics over a protected centered sub.
+281. Add bass phase-scope warnings when a Reese layer weakens the mono low end.
+282. Add FM/organ/source presets as first-class browser items.
+
+### 15. Sampler, Resampling, And Sample Discovery
+
+283. Add drag audio from Finder or Ableton-exported files directly onto SAMPLE.
+284. Add a sample-file browser with waveform thumbnails and quick audition.
+285. Add sample similarity clustering for user one-shots after a lightweight descriptor pipeline exists.
+286. Add audio descriptors: brightness, transient strength, length, loop/one-shot, pitch confidence, tempo confidence, noisiness, and low-end weight.
+287. Add "find similar sample" from the current chop or one-shot.
+288. Add duplicate and near-duplicate sample detection for the user sample folder.
+289. Add sample pack indexing with folder include/exclude rules.
+290. Add "recently used samples" and "missing in this set" browser filters.
+291. Add one-shot maps for kick, clap, snare, hat, perc, vocal, stab, bass hit, and noise categories.
+292. Add a sample-map view for large chop/one-shot libraries without turning Nate VST into a drum machine first.
+293. Add transient slicing with sensitivity, minimum slice length, and silence rejection.
+294. Add beat-grid, equal-region, manual, and detected-transient slice modes.
+295. Add per-slice pitch, formant, gain, pan, fade in/out, reverse, choke, probability, stutter, and FX send.
+296. Add per-slice color/tag labels: Ghost, Main, Pickup, Response, Reverse, Fill, Dirty, Clean.
+297. Add zero-cross snap and automatic micro-fades for every slice.
+298. Add vocal chop templates: late pickup, call/response, two-note hook, reverse tag, stutter fill, and sparse ghost chop.
+299. Add sample start modulation per sequencer step for vocal chop rolls.
+300. Add resample current synth, current sequence, or current macro gesture into the sampler.
+301. Add render-to-audio export for Ableton drag-out.
+302. Add time-stretch modes: one-shot, repitch, beats, texture/grain, and future formant-safe vocal.
+303. Add BPM/key detection only if confidence can be shown and low-confidence values do not mislead the user.
+304. Add sample dependency packing for construction kits.
+
+### 16. Sequencer, MIDI Tools, And Groove Generation
+
+305. Add multiple pattern slots per preset: A, B, Fill, Break, Drop, Alt, and Init.
+306. Add pattern chaining with per-pattern length, repeat count, and follow probability.
+307. Add pattern clip export by dragging MIDI from the SEQ panel to Ableton.
+308. Add MIDI import by dropping a MIDI file into the sequencer.
+309. Add scale-aware note generation like Seed/Rhythm-style tools, biased toward club patterns.
+310. Add transform tools: chop, connect, recombine, span/gate, strum, time warp, quantize, velocity shape, and rotate.
+311. Add UKG transform presets: late snare ghost, shuffled hats, short organ stab, swung bass pickup, and reverse vocal lead-in.
+312. Add house transform presets: offbeat chord, rolling bass, filtered stab, and sidechain-aware gate.
+313. Add techno/minimal transform presets: pulse, skip, sparse pluck, delayed hit, and machine repeat.
+314. Add Euclidean rhythm generation for plucks, percussive synth hits, and FX triggers.
+315. Add density, accent, split, shift, and probability controls for generated patterns.
+316. Add per-step ratchet/retrigger with repeat count, repeat curve, and velocity falloff.
+317. Add per-step slide/glide for basslines.
+318. Add per-step chord type and inversion locks.
+319. Add per-step modulation lanes assignable to cutoff, drive, warp, sample start, pump, delay throw, reverb throw, width, and pitch.
+320. Add per-step FX activation lanes for Infiltrator-style rhythmic throws inside Nate VST.
+321. Add per-lane swing amounts rather than only global swing.
+322. Add MPE lanes for pressure, slide, pitch bend, and per-note expression later.
+323. Add a groove library with named templates and editable microtiming offsets.
+324. Add pattern mutation history with before/after audition.
+325. Add "keep rhythm/change notes" and "keep notes/change rhythm" recombine tools.
+326. Add pattern safety checks to avoid stuck notes, all-silence patterns, and unusably dense MIDI exports.
+
+### 17. Modulation, MSEG, And Movement Visualization
+
+327. Add MSEG/function generators with breakpoint curves, loop regions, one-shot mode, and sync/free timing.
+328. Add step-LFO mode with per-step value, curve, glide, probability, skip, and randomize.
+329. Add multiple LFOs with names, colors, and clear target summaries.
+330. Add LFO-to-LFO and modulation-processor routing only after the UI can explain it.
+331. Add modulation processors: scale, offset, invert, rectify, smooth, lag, clamp, quantize, sample/hold, slew, and curve remap.
+332. Add per-route min/max range editing on destination controls.
+333. Add per-route unipolar/bipolar, additive/multiply, and pre/post behavior labels.
+334. Add visible modulation rings around important knobs.
+335. Add hover route overlays: source, destination, amount, range, and active value.
+336. Add source activity meters for macros, envelopes, LFOs, random sources, sequencer lanes, and future audio follower.
+337. Add drag-to-modulate from source chips to controls.
+338. Add right-click "modulate with" menus on automatable controls.
+339. Add a modulation assignment browser sorted by source, destination, page, amount, and active status.
+340. Add macro scenes: A, B, C, D, Drop, Break, Fill, and Clean.
+341. Add XY gesture recording into motion lanes.
+342. Add morph pad between snapshots with per-parameter locks.
+343. Add envelope follower from sample/synth output for movement-driven effects.
+344. Add note source modulation: keytrack, note random, note age, legato state, and voice index.
+
+### 18. FX, Routing, And Club Performance Processing
+
+345. Add multiband distortion with at least low/mid/high bands, crossover display, per-band drive, tone, mix, and gain compensation.
+346. Add HQ oversampling modes for nonlinear FX, with CPU and latency notes.
+347. Add dynamic drive that responds to envelope follower or sidechain input.
+348. Add clipper/limiter with true output ceiling and oversampled peak protection.
+349. Add transient shaper with attack, sustain, tone, and mix.
+350. Add compressor with sidechain input support after host sidechain routing is designed.
+351. Add sidechain ducking from actual Ableton sidechain input, not only internal pump.
+352. Add volume shaper with drawable curve, phase display, and MIDI/host retrigger.
+353. Add filter shaper with drawable curves, multiple filter types, resonance safety, and per-band option.
+354. Add time shaper for reverse, tape stop, half-time, stutter, and glitch fills.
+355. Add pitch shaper for short risers, garage tape-ups, and octave throw effects.
+356. Add noise shaper for vinyl, air, hiss, rumble, crowd/noise swells, and gated texture.
+357. Add width shaper that animates stereo image while preserving mono bass.
+358. Add pan shaper for syncopated stereo percussion and stab movement.
+359. Add reverb shaper with rhythmic gated tails and ducking.
+360. Add rhythmic FX sequencer where each enabled effect can be turned on/off per step.
+361. Add FX macro lane controls for Amount, Tone, Motion, Space, Width, and Throw.
+362. Add per-effect presets and whole-rack presets.
+363. Add serial, parallel, send, and split-band rack routing.
+364. Add granular FX for vocal fills, shimmer fragments, and transition texture.
+365. Add DJ-style loop/beat-repeat throw with timed release and restore.
+366. Add performance latch/momentary modes for throws, with clear Ableton automation behavior.
+
+### 19. Browser, Presets, Packs, And Discovery
+
+367. Add full-screen or wide browser mode with tree, results, details, macro preview, and audio preview.
+368. Add rendered preset audio previews using standard house/UKG/techno MIDI phrases.
+369. Add auto-preview with output safety and host-transport awareness.
+370. Add smart collections: Five Star, Favorites, Recent, Macro Rich, UKG Bass, UKG Chops, House Chords, Tech House Bass, Minimal Plucks, Dirty Techno, Clean Subs.
+371. Add editable user tags with batch metadata editing.
+372. Add search tokens for source type, modulation count, FX type, sequencer type, sample dependencies, BPM, key, pack, rating, author, and date.
+373. Add "find similar preset" using parameter distance, macro roles, tags, and future audio preview descriptors.
+374. Add "more like this" randomization seeded from favorites or high-rated presets.
+375. Add compare/revert for loaded preset vs edited state.
+376. Add preset version history for user saves.
+377. Add safe overwrite flow with rename, duplicate, and compare.
+378. Add pack manager with import/export, missing dependency report, and pack validation.
+379. Add construction-kit preset type that bundles patch, sequence, sample references, MIDI phrase, macro intent, BPM, key, and suggested Ableton use.
+380. Add subfolder templates for UKG/Bass, UKG/Vocal Chops, UKG/Organ, House/Chords, Tech House/Bass, Techno/Stabs, Minimal/Plucks.
+381. Add preset notes and production tips field for factory content.
+382. Add "used in current project" or "recent in this session" collection if host-safe state tracking is practical.
+
+### 20. House And UKG Content Direction
+
+383. Add UKG Essentials construction-kit pack with bass, organ, vocal, stab, and groove variants.
+384. Add Speed Garage pack with organ bass, clipped bass, shuffled drums, late stabs, and siren/noise throws.
+385. Add Deep House pack with warm chord stabs, plucks, sub chugs, pads, and mellow macro maps.
+386. Add Tech House pack with rubber bass, perc plucks, short stabs, tight pump, and low CPU presets.
+387. Add Minimal pack with clicks, short resonant plucks, microtimed bass pulses, and sparse FX.
+388. Add Warehouse Techno pack with stabs, drones, noise hits, acid-ish pulses, and guarded distortion.
+389. Add Dub Techno pack with chord echoes, filtered noise, slow modulation, and space macros.
+390. Add Organ House pack with original organ source material, chord memory, and drawbar macro assignments.
+391. Add vocal chop starter kits with legal/original vocal snippets or user-drop placeholders.
+392. Add genre QA passes: every factory preset should have macro names, macro ranges, output safety, mono-bass check, and Ableton audition notes.
+
 ## Best Next Build Order
 
 1. Componentize `PluginEditor` and add layout-overlap checks.
@@ -483,6 +695,20 @@ Nate VST gaps:
 10. Add full-browser mode, smart folders, tag editing, audio previews, and construction kits.
 11. Add randomizer guardrails, transforms, history, and favorites-aware generation.
 12. Add Ableton save/reopen/freeze/flatten release validation.
+
+## Best Next Build Order After This Expansion
+
+1. Componentize the editor, add screenshot/layout regression checks, and introduce UI scale modes before adding more dense panels.
+2. Add selected-control inspector, modulation rings, drag/right-click modulation assignment, and per-route min/max editing.
+3. Add pattern slots, ratchets, per-step modulation lanes, and MIDI drag export/import so the sequencer becomes Ableton-useful.
+4. Add transient/manual slicing, per-slice controls, zero-cross snap, and UKG vocal-chop templates.
+5. Add true wavetable playback, visual table display, safe factory tables, and oscillator aliasing tests.
+6. Add multiband drive, oversampling, gain compensation, clipper/limiter, and drive loudness tests.
+7. Add MSEG/function generators, step LFO, route processors, and source activity meters.
+8. Add source rack/layer architecture before adding granular, FM, organ, and partial engines.
+9. Add full browser mode, audio previews, smart collections, tag editing, find-similar, and construction-kit metadata.
+10. Add UKG/house factory content packs with macro QA, output QA, mono-bass QA, and Ableton audition notes.
+11. Add real Ableton workflow validation: scan, load, automate, save/reopen, duplicate track, freeze, flatten, export, and reopen.
 
 ## Issue Mapping
 

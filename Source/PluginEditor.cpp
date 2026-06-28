@@ -5079,6 +5079,58 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
 
 void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
 {
+    auto startModAmount = 0.0f;
+    auto mixModAmount = 0.0f;
+    auto pitchModAmount = 0.0f;
+    auto rampModAmount = 0.0f;
+    auto stutterModAmount = 0.0f;
+    auto sampleRouteCount = 0;
+    juce::StringArray sampleSources;
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto destinationIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+
+        if (! enabled || sourceIndex <= 0)
+            continue;
+
+        if (destinationIndex == 12)
+            startModAmount += amount;
+        else if (destinationIndex == 13)
+            mixModAmount += amount;
+        else if (destinationIndex == 14)
+            pitchModAmount += amount;
+        else if (destinationIndex == 15)
+            rampModAmount += amount;
+        else if (destinationIndex == 16)
+            stutterModAmount += amount;
+        else
+            continue;
+
+        ++sampleRouteCount;
+        if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+            sampleSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
+    }
+
+    sampleWaveformDisplay.setModulationState(juce::jlimit(-1.0f, 1.0f, startModAmount),
+                                             juce::jlimit(-1.0f, 1.0f, mixModAmount),
+                                             juce::jlimit(-1.0f, 1.0f, pitchModAmount),
+                                             juce::jlimit(-1.0f, 1.0f, rampModAmount),
+                                             juce::jlimit(-1.0f, 1.0f, stutterModAmount),
+                                             sampleRouteCount,
+                                             sampleSources.joinIntoString(", "));
+
     const auto sampleName = audioProcessor.getLoadedSampleName();
     if (sampleName.isEmpty())
     {

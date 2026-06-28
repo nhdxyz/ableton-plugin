@@ -43,6 +43,7 @@ Implemented foundation pass:
 - HOME now includes a compact output spectrum analyzer fed by final-output snapshot telemetry, so the dashboard distinguishes patch intent from actual low/mid/high energy.
 - The filter response display now includes modulation range overlays for filter destinations, making MOD assignments visible directly in the sound-shaping view.
 - The wavetable display now includes Osc 1/Osc 2 position modulation range overlays, extending graph-level MOD feedback into the source area.
+- The sample waveform display now includes Sample Start modulation range overlays and compact route summaries for Mix, Pitch, Ramp, and Stutter, extending graph-level MOD feedback into UKG chop work.
 
 ## Current Problems
 
@@ -85,7 +86,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Oscillator engines: wavetable position/warp, sample/granular style sources, and stronger FM/phase movement are common in Serum 2, Pigments, Phase Plant, Current, and modwave.
 - Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments. The first passes are implemented as Clean, Warm, Acid, and Dirty filter-drive modes plus selectable 12 dB/24 dB slope.
 - Filter visualization: modern synth workflows expect the tone-shaping curve to be visible while editing. Nate VST now has a SYNTH-page filter response display with first-pass modulation range overlays; future work should add live envelope sweep traces and spectrum context.
-- Modulation visualization: filter and wavetable position range overlays are implemented for first graph-level MOD feedback. Future work should extend this pattern to sample start, send FX, pump, and sequencer lock lanes.
+- Modulation visualization: filter, wavetable position, and sample chop range overlays are implemented for first graph-level MOD feedback. Future work should extend this pattern to send FX, pump, and sequencer lock lanes.
 - Spectrum visualization: first HOME analyzer implemented with final-output snapshot telemetry. Future work should add switchable oscilloscope/spectrum modes, freeze/hold, stereo correlation overlay, and optional FFT detail in an expanded analyzer page.
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.

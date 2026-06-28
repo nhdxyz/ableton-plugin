@@ -42,6 +42,43 @@ void SampleWaveformDisplay::setRange(float newStart, float newEnd)
     repaint();
 }
 
+void SampleWaveformDisplay::setModulationState(float startAmount,
+                                               float mixAmount,
+                                               float pitchAmount,
+                                               float rampAmount,
+                                               float stutterAmount,
+                                               int routeCount,
+                                               juce::String sourceSummary)
+{
+    startAmount = juce::jlimit(-1.0f, 1.0f, startAmount);
+    mixAmount = juce::jlimit(-1.0f, 1.0f, mixAmount);
+    pitchAmount = juce::jlimit(-1.0f, 1.0f, pitchAmount);
+    rampAmount = juce::jlimit(-1.0f, 1.0f, rampAmount);
+    stutterAmount = juce::jlimit(-1.0f, 1.0f, stutterAmount);
+    routeCount = juce::jmax(0, routeCount);
+    sourceSummary = sourceSummary.trim();
+
+    if (std::abs(startModAmount - startAmount) < 0.001f
+        && std::abs(mixModAmount - mixAmount) < 0.001f
+        && std::abs(pitchModAmount - pitchAmount) < 0.001f
+        && std::abs(rampModAmount - rampAmount) < 0.001f
+        && std::abs(stutterModAmount - stutterAmount) < 0.001f
+        && modRouteCount == routeCount
+        && modSourceSummary == sourceSummary)
+    {
+        return;
+    }
+
+    startModAmount = startAmount;
+    mixModAmount = mixAmount;
+    pitchModAmount = pitchAmount;
+    rampModAmount = rampAmount;
+    stutterModAmount = stutterAmount;
+    modRouteCount = routeCount;
+    modSourceSummary = std::move(sourceSummary);
+    repaint();
+}
+
 juce::String SampleWaveformDisplay::getTooltip()
 {
     if (! overview.isValid())
@@ -51,7 +88,16 @@ juce::String SampleWaveformDisplay::getTooltip()
         ? static_cast<double>(overview.totalSamples) / overview.sourceSampleRate
         : 0.0;
     const auto selectedPercent = juce::roundToInt(std::abs(endNormalised - startNormalised) * 100.0f);
-    return overview.fileName + " | " + juce::String(seconds, 1) + "s | " + juce::String(selectedPercent) + "% selected";
+    auto tooltip = overview.fileName + " | " + juce::String(seconds, 1) + "s | " + juce::String(selectedPercent) + "% selected";
+    if (modRouteCount > 0)
+        tooltip += "\nModulated: Start " + modulationText(startModAmount)
+            + " Mix " + modulationText(mixModAmount)
+            + " Pitch " + modulationText(pitchModAmount)
+            + " Ramp " + modulationText(rampModAmount)
+            + " Stutter " + modulationText(stutterModAmount)
+            + (modSourceSummary.isNotEmpty() ? " | " + modSourceSummary : juce::String {});
+
+    return tooltip;
 }
 
 void SampleWaveformDisplay::paint(juce::Graphics& g)
@@ -115,6 +161,23 @@ void SampleWaveformDisplay::paint(juce::Graphics& g)
     g.setColour(regionColour.withAlpha(0.8f));
     g.drawRoundedRectangle(selection, 3.0f, 1.2f);
 
+    if (std::abs(startModAmount) > 0.01f)
+    {
+        const auto modLow = juce::jlimit(0.0f, 1.0f, orderedStart + (juce::jmin(0.0f, startModAmount) * 0.36f));
+        const auto modHigh = juce::jlimit(0.0f, 1.0f, orderedStart + (juce::jmax(0.0f, startModAmount) * 0.36f));
+        const auto modLowX = juce::jmap(modLow, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        const auto modHighX = juce::jmap(modHigh, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        const auto rangeX = juce::jmin(modLowX, modHighX);
+        const auto rangeWidth = juce::jmax(2.0f, std::abs(modHighX - modLowX));
+        auto modRange = juce::Rectangle<float>(rangeX, plot.getY() + 2.0f, rangeWidth, plot.getHeight() - 4.0f);
+
+        g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.14f));
+        g.fillRoundedRectangle(modRange, 3.0f);
+        g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.68f));
+        g.drawVerticalLine(static_cast<int>(std::round(modLowX)), plot.getY(), plot.getBottom());
+        g.drawVerticalLine(static_cast<int>(std::round(modHighX)), plot.getY(), plot.getBottom());
+    }
+
     for (auto sliceIndex = 1; sliceIndex < 8; ++sliceIndex)
     {
         const auto sliceX = juce::jmap(static_cast<float>(sliceIndex), 0.0f, 8.0f, plot.getX(), plot.getRight());
@@ -147,6 +210,35 @@ void SampleWaveformDisplay::paint(juce::Graphics& g)
                      getLocalBounds().reduced(8, 5).removeFromTop(14),
                      juce::Justification::centredRight,
                      1);
+
+    if (modRouteCount > 0)
+    {
+        auto modBadge = getLocalBounds().reduced(8, 4).removeFromTop(14).removeFromLeft(142);
+        g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
+        g.fillRoundedRectangle(modBadge.toFloat(), 3.0f);
+        g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.72f));
+        g.drawRoundedRectangle(modBadge.toFloat(), 3.0f, 1.0f);
+        g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+        g.setColour(juce::Colour(0xffd7e3e6));
+        g.drawFittedText("CHOP MOD " + modulationText(startModAmount)
+                             + (modRouteCount > 1 ? " " + juce::String(modRouteCount) + "R" : ""),
+                         modBadge.reduced(4, 0),
+                         juce::Justification::centred,
+                         1,
+                         0.72f);
+
+        auto detail = getLocalBounds().reduced(10, 4).removeFromBottom(11);
+        const auto sourceText = modSourceSummary.isNotEmpty() ? modSourceSummary : "Routes";
+        const auto detailText = "START " + modulationText(startModAmount)
+            + "  MIX " + modulationText(mixModAmount)
+            + "  PITCH " + modulationText(pitchModAmount)
+            + "  RAMP " + modulationText(rampModAmount)
+            + "  STUT " + modulationText(stutterModAmount)
+            + "  " + sourceText;
+        g.setFont(juce::FontOptions(8.0f));
+        g.setColour(juce::Colour(0xff8a989e));
+        g.drawFittedText(detailText, detail, juce::Justification::centredLeft, 1, 0.72f);
+    }
 }
 
 void SampleWaveformDisplay::mouseDown(const juce::MouseEvent& event)
@@ -221,5 +313,11 @@ void SampleWaveformDisplay::applyRange(float start, float end)
 
     if (onRangeChange)
         onRangeChange(startNormalised, endNormalised);
+}
+
+juce::String SampleWaveformDisplay::modulationText(float amount)
+{
+    amount = juce::jlimit(-1.0f, 1.0f, amount);
+    return (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%";
 }
 }

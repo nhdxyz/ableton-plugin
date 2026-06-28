@@ -82,6 +82,7 @@ Implemented UI test sub-slices:
 - HOME now includes `OutputSpectrumDisplay` fed by a real-time-safe final-output snapshot ring, making sub/low/mid/presence/air energy visible without opening a separate analysis page.
 - The filter response display now shows MOD-matrix route depth for Filter Cutoff, Filter Res, Filter Env, and Drive, including cutoff range shading and source summaries.
 - The wavetable display now shows MOD-matrix route depth for Osc 1/Osc 2 WT position, including per-oscillator range shading, ghost waveforms, and source summaries.
+- The sample waveform display now shows MOD-matrix route depth for Sample Start, Mix, Pitch, Ramp, and Stutter, including start-range shading and source summaries for chop motion.
 
 ## Priority 1: Modulation And Movement
 
@@ -138,6 +139,7 @@ Implemented wavetable sub-slice:
 - Added a HOME output spectrum analyzer for actual rendered audio energy across sub, low, mid, presence, and air ranges.
 - Added the first modulation overlay on the filter response display so movement assigned in MOD is visible on the tone-shaping graph.
 - Added wavetable position modulation overlays so Osc 1/Osc 2 WT movement can be read directly from the source graph.
+- Added sample chop modulation overlays so Sample Start movement and related chop route depths can be read directly on the waveform.
 
 Implemented percussive noise sub-slice:
 

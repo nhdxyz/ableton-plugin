@@ -18,6 +18,13 @@ public:
 
     void setOverview(Sampler::SamplePeakOverview newOverview);
     void setRange(float newStart, float newEnd);
+    void setModulationState(float startAmount,
+                            float mixAmount,
+                            float pitchAmount,
+                            float rampAmount,
+                            float stutterAmount,
+                            int routeCount,
+                            juce::String sourceSummary);
     juce::String getTooltip() override;
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
@@ -36,11 +43,19 @@ private:
     Sampler::SamplePeakOverview overview;
     float startNormalised = 0.0f;
     float endNormalised = 1.0f;
+    float startModAmount = 0.0f;
+    float mixModAmount = 0.0f;
+    float pitchModAmount = 0.0f;
+    float rampModAmount = 0.0f;
+    float stutterModAmount = 0.0f;
+    int modRouteCount = 0;
+    juce::String modSourceSummary;
     float dragAnchor = 0.0f;
     DragMode dragMode = DragMode::none;
 
     juce::Rectangle<float> plotBounds() const;
     float positionToNormalised(float xPosition) const;
     void applyRange(float start, float end);
+    static juce::String modulationText(float amount);
 };
 }

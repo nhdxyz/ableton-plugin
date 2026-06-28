@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Sample Chop Modulation Overlay
+
+- Extended the SAMPLE waveform display with modulation overlays for existing Sample Start, Mix, Pitch, Ramp, and Stutter MOD matrix destinations.
+- Added start-range shading, modulation route/depth badges, source summaries, and tooltip details so UKG vocal chop movement is visible directly on the waveform.
+- Reused the current modulation matrix parameters and sample display refresh path, preserving preset/state compatibility and Ableton automation IDs.
+
 ### Wavetable Modulation Range Overlay
 
 - Extended the SYNTH wavetable display with modulation range overlays for existing Osc 1 WT Pos and Osc 2 WT Pos MOD matrix destinations.

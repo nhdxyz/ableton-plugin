@@ -1717,6 +1717,14 @@ bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
     const auto storedKey = presetTextOrFallback(options.key, "Any Key");
     const auto storedBpm = normalisePresetBpm(options.bpm);
     const auto storedGeneratedRecipe = presetTextOrFallback(options.generatedRecipe, "Random Lab");
+    const auto storedNotes = options.notes.trim().isNotEmpty()
+        ? options.notes.trim()
+        : (options.generated
+               ? "Recipe: " + storedGeneratedRecipe
+                    + "\nSource: Random Lab"
+                    + "\nCategory: " + storedCategory
+                    + "\nPack: " + storedPack
+               : juce::String());
     const auto directory = presetDirectoryForCategory(storedCategory);
     if (! directory.createDirectory())
         return false;
@@ -1736,6 +1744,8 @@ bool NateVSTAudioProcessor::savePresetState(const juce::String& presetName,
     state.setProperty("preset_folder", presetCategoryPathSegments(storedCategory).joinIntoString("/"), nullptr);
     if (options.generated)
         state.setProperty("preset_generated_recipe", storedGeneratedRecipe, nullptr);
+    if (storedNotes.isNotEmpty())
+        state.setProperty("preset_notes", storedNotes, nullptr);
 
     if (auto xml = state.createXml())
     {
@@ -1844,6 +1854,7 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
             auto pack = isFactory ? juce::String("Factory Pack") : juce::String("User Pack");
             auto key = juce::String("Any Key");
             auto macroSummary = juce::String("Macros flat");
+            juce::String notes;
             auto bpm = 0;
             auto macroIntensity = 0.0f;
             juce::String tags;
@@ -1890,6 +1901,10 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
 
                     macroSummary = presetMacroSummary(state, macroIntensity);
 
+                    const auto storedNotes = state.getProperty("preset_notes").toString().trim();
+                    if (storedNotes.isNotEmpty())
+                        notes = storedNotes;
+
                     const auto storedFolder = state.getProperty("preset_folder").toString().trim();
                     if (storedFolder.isNotEmpty())
                         folder = storedFolder.replaceCharacter('\\', '/');
@@ -1908,6 +1923,7 @@ std::vector<NateVSTAudioProcessor::PresetInfo> NateVSTAudioProcessor::getPresetL
                                 pack,
                                 key,
                                 macroSummary,
+                                notes,
                                 bpm,
                                 ratingForPreset(name),
                                 macroIntensity,

@@ -176,6 +176,7 @@ int main()
             || state.getProperty("preset_folder").toString() != "UKG/Bass"
             || state.getProperty("preset_source").toString() != "Generated"
             || state.getProperty("preset_generated_recipe").toString() != "Candidate Save Audit"
+            || ! state.getProperty("preset_notes").toString().contains("Recipe: Candidate Save Audit")
             || ! state.getProperty("preset_tags").toString().contains("Generated")
             || ! state.getProperty("preset_tags").toString().contains("Random Lab")
             || std::abs(savedCutoff - generatedCutoff) > 0.01f)

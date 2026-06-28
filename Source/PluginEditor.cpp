@@ -4847,6 +4847,35 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
                               juce::dontSendNotification);
 }
 
+juce::String NateVSTAudioProcessorEditor::generatedPresetNotes(const juce::String& category,
+                                                                const juce::String& recipe,
+                                                                int candidateSlotIndex)
+{
+    juce::StringArray lines;
+    const auto recipeName = recipe.trim().isNotEmpty() ? recipe.trim() : juce::String("Random Lab");
+    const auto categoryName = category.trim().isNotEmpty() ? category.trim() : suggestedPresetCategoryForRecipe();
+    const auto scopeName = randomScopeBox.getText().trim().isNotEmpty() ? randomScopeBox.getText().trim() : juce::String("All");
+    const auto locks = audioProcessor.getActiveRandomizationLockSummary();
+
+    lines.add("Recipe: " + recipeName);
+    lines.add("Scope: " + scopeName);
+    lines.add("Category: " + categoryName);
+    if (locks.isNotEmpty() && ! locks.equalsIgnoreCase("No locks"))
+        lines.add("Locks: " + locks);
+    lines.add("Use: " + suggestedPresetUseForCategory(categoryName));
+
+    if (candidateSlotIndex >= 0 && audioProcessor.hasRandomCandidate(candidateSlotIndex))
+    {
+        lines.add("Candidate: Slot " + juce::String(candidateSlotIndex + 1));
+        lines.add("Sections: " + audioProcessor.getRandomCandidateChangedSectionsSummary(candidateSlotIndex));
+        lines.add("Traits: " + audioProcessor.getRandomCandidateCompareSummary(candidateSlotIndex));
+        lines.add("Diffs: " + audioProcessor.getRandomCandidateDiffSummary(candidateSlotIndex));
+    }
+
+    lines.add("Saved: " + juce::Time::getCurrentTime().formatted("%Y-%m-%d %H:%M"));
+    return lines.joinIntoString("\n");
+}
+
 juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() const
 {
     const auto recipe = recipeBox.getText().trim();
@@ -4873,6 +4902,30 @@ juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() con
         return "FX";
 
     return "User";
+}
+
+juce::String NateVSTAudioProcessorEditor::suggestedPresetUseForCategory(const juce::String& category) const
+{
+    if (category.startsWithIgnoreCase("UKG/Bass"))
+        return "UKG bassline or Dred/Reese layer around 130-136 BPM";
+    if (category.startsWithIgnoreCase("UKG/Organ"))
+        return "short organ stab for 2-step or speed-garage hooks";
+    if (category.startsWithIgnoreCase("UKG/Stabs"))
+        return "minor chord stab or shuffled garage response";
+    if (category.startsWithIgnoreCase("UKG/Bells"))
+        return "bright garage pluck, fill, or call-response hook";
+    if (category.startsWithIgnoreCase("House"))
+        return "warm house bass or chord layer around 120-126 BPM";
+    if (category.startsWithIgnoreCase("Tech House"))
+        return "rolling bass or mid punch around 124-130 BPM";
+    if (category.startsWithIgnoreCase("Minimal"))
+        return "short pluck or sparse rhythmic top line";
+    if (category.startsWithIgnoreCase("Techno"))
+        return "warehouse stab, acid line, or darker riff";
+    if (category == "FX")
+        return "transition, riser, fill, or noisy impact";
+
+    return "generated patch starting point";
 }
 
 juce::String NateVSTAudioProcessorEditor::suggestedPresetPackForCategory(const juce::String& category) const
@@ -7606,6 +7659,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         const auto searchable = preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
             + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
             + preset.pack + " " + preset.key + " " + bpmText + " " + preset.macroSummary + " Macro Macros Performance"
+            + " " + preset.notes
             + (preset.isFavorite ? " Favorite" : "");
 
         for (const auto& term : searchTerms)
@@ -7625,6 +7679,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
             || preset.pack.equalsIgnoreCase(tagFilter)
             || preset.key.equalsIgnoreCase(tagFilter)
             || preset.author.equalsIgnoreCase(tagFilter)
+            || preset.notes.containsIgnoreCase(tagFilter)
             || preset.name.containsIgnoreCase(tagFilter);
     };
 
@@ -7789,6 +7844,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     presetStatusLabel.setText(statusText, juce::dontSendNotification);
     presetStatusLabel.setTooltip(selectedPreset != nullptr
                                      ? presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + formatPresetBpm(selectedPreset->bpm)
+                                           + (selectedPreset->notes.trim().isNotEmpty() ? " | " + selectedPreset->notes.replaceCharacter('\n', ' ') : juce::String())
                                      : juce::String("Preset browser status"));
     presetBox.setTooltip(selectedPreset != nullptr
                              ? selectedPreset->name + " | " + presetMacroPreviewText(*selectedPreset)
@@ -7812,6 +7868,8 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     options.bpm = parsePresetBpm(presetBpmBox.getText());
     options.generated = currentPresetDraftIsGenerated;
     options.generatedRecipe = currentGeneratedPresetRecipe;
+    if (options.generated)
+        options.notes = generatedPresetNotes(options.category, options.generatedRecipe, -1);
 
     if (audioProcessor.savePreset(presetName, options))
     {
@@ -7866,6 +7924,7 @@ void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
     options.generatedRecipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
         ? currentGeneratedPresetRecipe
         : audioProcessor.getRandomCandidateSummary(activeSlot);
+    options.notes = generatedPresetNotes(options.category, options.generatedRecipe, activeSlot);
 
     if (audioProcessor.saveRandomCandidatePreset(activeSlot, presetName, options))
     {

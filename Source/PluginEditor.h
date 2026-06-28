@@ -710,7 +710,9 @@ private:
     void updateRandomCandidateButtons();
     void updateRandomCandidateDetail();
     void prepareRandomPresetDraft(const juce::String& actionLabel);
+    juce::String generatedPresetNotes(const juce::String& category, const juce::String& recipe, int candidateSlotIndex);
     juce::String suggestedPresetCategoryForRecipe() const;
+    juce::String suggestedPresetUseForCategory(const juce::String& category) const;
     juce::String suggestedPresetPackForCategory(const juce::String& category) const;
     int suggestedPresetBpmForCategory(const juce::String& category) const;
     void loadPresetByOffset(int offset);

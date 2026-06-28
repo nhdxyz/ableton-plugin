@@ -59,6 +59,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - LAB Recipe now shows selected-recipe genre, tempo range, good-for intent, and generator-bias guidance for all current house, UKG, tech-house, minimal, techno, and FX recipes.
 - LAB Generate and Mutate now expose per-section Source, Env, Filter, Sample, FX, Seq, and Macro strength controls that scale generated changes before locks and candidate capture.
 - LAB History now has a visible active-candidate detail panel for slot label, changed sections, trait comparison, and old/new value diff summary.
+- Generated preset saves now write searchable `preset_notes` with recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
 
 ## Highest-Value Randomization Backlog
 
@@ -77,7 +78,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 13. Add musical note-range validation for bass, stab, pluck, and FX recipes.
 14. Add recipe-specific chord/scale seeding.
 15. Add macro naming and macro range generation per recipe.
-16. Add generated preset notes: recipe, scope, locks, date, macro intent, and suggested Ableton use.
+16. Expand generated notes into editable user notes with macro intent and custom comments before save.
 17. Add one-click "save generated pack" for a set of variations.
 18. Add a full recipe browser/table with search, genre filters, favorites, and custom user recipes.
 

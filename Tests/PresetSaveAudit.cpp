@@ -63,6 +63,8 @@ int main()
             || static_cast<int>(state.getProperty("preset_bpm")) != 132
             || state.getProperty("preset_source").toString() != "Generated"
             || state.getProperty("preset_generated_recipe").toString() != "UKG Dred Bass"
+            || ! state.getProperty("preset_notes").toString().contains("Recipe: UKG Dred Bass")
+            || ! state.getProperty("preset_notes").toString().contains("Category: UKG/Bass")
             || ! state.getProperty("preset_tags").toString().contains("Generated")
             || ! state.getProperty("preset_tags").toString().contains("Random Lab"))
         {
@@ -87,7 +89,8 @@ int main()
         foundInLibrary = preset.source == "Generated"
             && preset.tags.contains("Generated")
             && preset.tags.contains("Random Lab")
-            && preset.tags.contains("UKG Dred Bass");
+            && preset.tags.contains("UKG Dred Bass")
+            && preset.notes.contains("Recipe: UKG Dred Bass");
         break;
     }
 

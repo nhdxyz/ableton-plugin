@@ -49,6 +49,7 @@ public:
         juce::String pack;
         juce::String key;
         juce::String macroSummary;
+        juce::String notes;
         int bpm = 0;
         int rating = 0;
         float macroIntensity = 0.0f;
@@ -66,6 +67,7 @@ public:
         int bpm = 0;
         bool generated = false;
         juce::String generatedRecipe;
+        juce::String notes;
     };
 
     int getNumPrograms() override;

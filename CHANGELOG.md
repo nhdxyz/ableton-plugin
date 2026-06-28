@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Generated Preset Notes
+
+- Added `preset_notes` metadata to generated preset saves so Random Lab presets can carry recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
+- Library scanning now reads notes, includes them in search/tag matching, and exposes them in preset status tooltips for generated-preset context.
+- Extended `PresetSaveAudit` and `RandomCandidateAudit` to verify generated notes are written for direct generated saves and candidate Save Slot exports.
+
 ### Random Lab History Detail
 
 - Added a read-only LAB History detail panel that shows the active candidate slot, action/recipe/scope label, changed sections, trait comparison, and old/new value diff summary.

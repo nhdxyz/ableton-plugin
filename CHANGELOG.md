@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Recipe Guide
+
+- Added a LAB Recipe-page info strip that summarizes the selected recipe's genre, tempo range, best use case, and generator bias before creating a sound.
+- Added metadata for all current recipes, including UKG 2-step bass, Dred bass, organ/chord stabs, bell plucks, house bass, tech bass, acid, minimal, dark stab, and noise FX recipes.
+- The guide is display-only and reuses existing recipe selection state, so no preset migration or Ableton automation changes were introduced.
+
 ### Mod Source Activity Meters
 
 - Replaced the MOD source list labels with compact source-meter components that show route count, summed depth direction, and a live activity bar for LFOs, macros, random sources, Velocity, and Mod Env.

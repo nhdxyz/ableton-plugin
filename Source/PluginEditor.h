@@ -150,6 +150,7 @@ private:
     juce::Label presetStatusLabel;
     juce::Label presetBrowserHeaderLabel;
     juce::Label randomStatusLabel;
+    juce::Label randomRecipeInfoLabel;
     juce::Label performanceStatusLabel;
 
     juce::ComboBox waveformBox;
@@ -645,6 +646,7 @@ private:
     void updatePanelVisibility();
     void updateTabButtons();
     void updateRandomLabPageButtons();
+    void updateRandomRecipeInfo();
     void hidePanelComponents();
     void setSliderVisible(juce::Slider& slider, juce::Label& label, bool shouldBeVisible);
     void setChoiceParameter(const juce::String& parameterID, int choiceIndex);

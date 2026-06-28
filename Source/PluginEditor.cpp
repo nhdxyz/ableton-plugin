@@ -473,6 +473,47 @@ juce::String modSourceSummaryText(size_t index)
     return {};
 }
 
+struct RandomRecipeInfo
+{
+    const char* name = "";
+    const char* genre = "";
+    const char* tempo = "";
+    const char* goodFor = "";
+    const char* bias = "";
+};
+
+RandomRecipeInfo randomRecipeInfoForName(const juce::String& recipeName)
+{
+    static const std::array<RandomRecipeInfo, 11> recipes {
+        RandomRecipeInfo { "Deep House Bass", "Deep House", "120-126 BPM", "round basslines, warm chords, low drive", "sub weight, warm filter, light pump" },
+        RandomRecipeInfo { "Rolling Tech Bass", "Tech House", "124-130 BPM", "rolling bass, tight groove, mid punch", "short envelope, drive, 24 dB filter motion" },
+        RandomRecipeInfo { "Acid Line", "Acid / Techno", "128-134 BPM", "rubber riffs, resonant hooks, automation", "acid character, resonance, sync movement" },
+        RandomRecipeInfo { "Minimal Blip", "Minimal", "124-130 BPM", "short plucks, sparse riffs, percussive tops", "fast envelope, step motion, restrained space" },
+        RandomRecipeInfo { "Dark Stab", "Techno", "128-138 BPM", "warehouse hits, chord stabs, tense movement", "dirty filter, darker WT edge, Guard safety" },
+        RandomRecipeInfo { "Noise FX", "Techno / FX", "Any Tempo", "risers, impacts, fills, noisy transitions", "noise source, wide FX, stepped motion" },
+        RandomRecipeInfo { "UKG 2-Step Bass", "UKG", "130-134 BPM", "swung bass, skippy garage drops, mono subs", "centered sub, garage pump, safe width" },
+        RandomRecipeInfo { "UKG Organ Stab", "UKG", "130-134 BPM", "short organ hits, speed-garage stabs", "warm filter, quick amp, delay/room space" },
+        RandomRecipeInfo { "UKG Chord Stab", "UKG", "130-134 BPM", "minor stabs, late chords, shuffled hooks", "chord color, strum-friendly motion, pump" },
+        RandomRecipeInfo { "UKG Bell Pluck", "UKG", "130-136 BPM", "bright plucks, metallic hooks, call-response", "clean transient, WT brightness, short tails" },
+        RandomRecipeInfo { "UKG Dred Bass", "UKG / Speed Garage", "132-136 BPM", "Dred/Reese bass, darker 2-step pressure", "mono sub, detuned upper bass, slow filter pull" }
+    };
+
+    for (const auto& recipe : recipes)
+        if (recipeName.equalsIgnoreCase(recipe.name))
+            return recipe;
+
+    return recipes.front();
+}
+
+juce::String randomRecipeInfoText(const juce::String& recipeName)
+{
+    const auto info = randomRecipeInfoForName(recipeName.trim().isNotEmpty() ? recipeName.trim()
+                                                                             : juce::String("Deep House Bass"));
+    return juce::String(info.genre) + " | " + info.tempo
+        + " | Good for: " + info.goodFor
+        + " | Bias: " + info.bias;
+}
+
 juce::StringArray lfoCurvePresetChoices()
 {
     return {
@@ -716,6 +757,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(randomStatusLabel);
 
+    randomRecipeInfoLabel.setText(randomRecipeInfoText("Deep House Bass"), juce::dontSendNotification);
+    randomRecipeInfoLabel.setJustificationType(juce::Justification::centredLeft);
+    randomRecipeInfoLabel.setFont(juce::FontOptions(11.0f));
+    randomRecipeInfoLabel.setMinimumHorizontalScale(0.58f);
+    randomRecipeInfoLabel.setColour(juce::Label::textColourId, juce::Colour(0xffd9fff1));
+    randomRecipeInfoLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xee101619));
+    randomRecipeInfoLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
+    randomRecipeInfoLabel.setTooltip("Selected Random Lab recipe intent, tempo range, use case, and generator bias");
+    addAndMakeVisible(randomRecipeInfoLabel);
+
     modMatrixStatusLabel.setJustificationType(juce::Justification::centredRight);
     modMatrixStatusLabel.setFont(juce::FontOptions(11.0f));
     modMatrixStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -848,6 +899,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     recipeBox.addItemList(Parameters::randomRecipeChoices(), 1);
     addAndMakeVisible(recipeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomRecipe, recipeBox));
+    recipeBox.onChange = [this] { updateRandomRecipeInfo(); };
 
     randomScopeBox.addItemList({ "All", "Source", "Env", "Filter", "Sample", "FX", "Seq", "Macros" }, 1);
     randomScopeBox.setSelectedId(1, juce::dontSendNotification);
@@ -2642,6 +2694,9 @@ void NateVSTAudioProcessorEditor::resized()
                 case RandomLabPage::recipe:
                 {
                     showRecipeControls(true);
+                    randomRecipeInfoLabel.setVisible(true);
+                    updateRandomRecipeInfo();
+                    randomRecipeInfoLabel.setBounds(content.removeFromTop(46).withTrimmedTop(6).reduced(4));
                     showLockRow();
                     showRandomBiasKnobs();
                     showStatus();
@@ -6010,6 +6065,22 @@ void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
                                                    juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::updateRandomRecipeInfo()
+{
+    auto recipeName = recipeBox.getText().trim();
+    if (recipeName.isEmpty())
+    {
+        const auto choices = Parameters::randomRecipeChoices();
+        const auto index = juce::roundToInt(readPlainParameterValue(Parameters::ID::randomRecipe, 0.0f));
+        recipeName = choices.isEmpty() ? juce::String("Deep House Bass")
+                                        : (juce::isPositiveAndBelow(index, choices.size()) ? choices[index] : choices[0]);
+    }
+
+    const auto text = randomRecipeInfoText(recipeName);
+    randomRecipeInfoLabel.setText(text, juce::dontSendNotification);
+    randomRecipeInfoLabel.setTooltip(recipeName + "\n" + text);
+}
+
 void NateVSTAudioProcessorEditor::hidePanelComponents()
 {
     auto hide = [] (std::initializer_list<juce::Component*> components)
@@ -6025,7 +6096,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,

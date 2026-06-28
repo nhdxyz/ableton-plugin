@@ -707,7 +707,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     sampleModeBox.addItem("Gate", 1);
     sampleModeBox.addItem("One Shot", 2);
+    sampleModeBox.addItem("Slice Keys", 3);
     sampleModeBox.setTextWhenNothingSelected("Mode");
+    sampleModeBox.setTooltip("Gate follows note-off, One Shot plays the selected range, Slice Keys maps MIDI notes C3-G3 across the eight stored slice pads and repeats every octave");
     addAndMakeVisible(sampleModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
 
@@ -3049,7 +3051,8 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::sampleStart, start);
     setPlainParameterValue(Parameters::ID::sampleEnd, end);
-    setPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    if (readPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f) < 1.5f)
+        setPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f);
 
     if (sampleSliceHasCustomSettings(safeIndex))
         recallSampleSliceSettings(safeIndex);
@@ -3223,13 +3226,15 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
     const auto reverse = readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f;
     const auto stutter = readPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], 0.0f) >= 0.5f;
     const auto repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f));
+    const auto sliceKeysMode = readPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f) >= 1.5f;
     const auto pitchText = (pitch >= 0.0f ? "+" : "") + juce::String(pitch, 1) + "st";
     const auto status = "S" + juce::String(static_cast<int>(safeIndex + 1))
         + (custom ? " custom" : " default")
         + " | " + pitchText
         + " | " + juce::String(gain, 1) + "dB"
         + (reverse ? " | rev" : " | fwd")
-        + (stutter ? " | stut x" + juce::String(repeats) : " | no stut");
+        + (stutter ? " | stut x" + juce::String(repeats) : " | no stut")
+        + (sliceKeysMode ? " | C3-G3" : "");
 
     sampleSliceStatusLabel.setText(status, juce::dontSendNotification);
     sampleSliceStatusLabel.setTooltip("Selected slice memory: " + status);

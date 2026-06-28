@@ -583,7 +583,7 @@ APVTS::ParameterLayout createLayout()
     add(std::make_unique<juce::AudioParameterChoice>(
         ID::samplePlaybackMode,
         "Sample Playback Mode",
-        juce::StringArray { "Gate", "One Shot" },
+        juce::StringArray { "Gate", "One Shot", "Slice Keys" },
         1));
 
     add(std::make_unique<juce::AudioParameterFloat>(

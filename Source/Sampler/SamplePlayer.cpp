@@ -9,6 +9,7 @@ namespace
 constexpr auto chopFadeSamples = 64;
 constexpr auto stutterFadeSamples = 48;
 constexpr auto zeroCrossSearchSamples = 256;
+constexpr auto sliceKeyRootNote = 60;
 
 double stutterIntervalSamplesForRate(int rateIndex, double bpm, double sampleRate)
 {
@@ -164,6 +165,15 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleStutterEnabled = parameters.getRawParameterValue(Parameters::ID::sampleStutterEnabled);
     sampleStutterRate = parameters.getRawParameterValue(Parameters::ID::sampleStutterRate);
     sampleStutterRepeats = parameters.getRawParameterValue(Parameters::ID::sampleStutterRepeats);
+    for (size_t index = 0; index < sampleSliceCustom.size(); ++index)
+    {
+        sampleSliceCustom[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceCustom[index]);
+        sampleSliceReverse[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceReverse[index]);
+        sampleSliceTranspose[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceTranspose[index]);
+        sampleSliceGain[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceGain[index]);
+        sampleSliceStutter[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutter[index]);
+        sampleSliceStutterRepeats[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutterRepeats[index]);
+    }
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
         modMatrixSources[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSource[index]);
@@ -517,6 +527,12 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
     }
 }
 
+int SamplePlayer::sliceIndexForMidiNote(int midiNoteNumber) const
+{
+    const auto offset = midiNoteNumber - sliceKeyRootNote;
+    return (offset % 8 + 8) % 8;
+}
+
 void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot)
 {
     auto* voiceToUse = std::find_if(voices.begin(), voices.end(), [] (const Voice& voice)
@@ -527,13 +543,15 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     if (voiceToUse == voices.end())
         voiceToUse = voices.begin();
 
-    const auto currentRegion = currentRegionFor(data);
+    const auto playbackMode = static_cast<int>(std::round(readParameter(samplePlaybackMode, 1.0f)));
+    const auto sliceIndex = (! forceOneShot && playbackMode == 2) ? sliceIndexForMidiNote(midiNoteNumber) : -1;
+    const auto currentRegion = currentRegionFor(data, sliceIndex);
     if (currentRegion.endSample <= currentRegion.startSample + 1)
         return;
 
     const auto reverse = currentRegion.reverse;
     const auto transpose = currentRegion.transposeSemitones
-        + static_cast<float>(midiNoteNumber - 60)
+        + (sliceIndex >= 0 ? 0.0f : static_cast<float>(midiNoteNumber - 60))
         + (sampleModulation.pitch * 12.0f);
     const auto sourceRatio = data.sourceSampleRate / playbackSampleRate;
     const auto pitchRatio = std::pow(2.0, static_cast<double>(transpose) / 12.0);
@@ -542,18 +560,25 @@ void SamplePlayer::startVoice(const SampleData& data, int midiNoteNumber, float 
     voiceToUse->startSample = currentRegion.startSample;
     voiceToUse->endSample = currentRegion.endSample;
     voiceToUse->midiNoteNumber = midiNoteNumber;
+    voiceToUse->sliceIndex = sliceIndex;
     voiceToUse->reverse = reverse;
-    voiceToUse->gated = ! forceOneShot && readParameter(samplePlaybackMode, 1.0f) < 0.5f;
+    voiceToUse->gated = ! forceOneShot && playbackMode == 0;
     voiceToUse->velocity = velocity;
+    voiceToUse->gain = currentRegion.gain;
     voiceToUse->sourceRatio = sourceRatio;
     voiceToUse->baseTransposeSemitones = transpose;
     voiceToUse->pitchRampSemitones = juce::jlimit(-24.0f, 24.0f, readParameter(samplePitchRamp, 0.0f) + (sampleModulation.ramp * 12.0f));
     voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
-    voiceToUse->stutterEnabled = readParameter(sampleStutterEnabled, 0.0f) >= 0.5f || sampleModulation.stutter > 0.05f;
+    voiceToUse->stutterEnabled = (sliceIndex >= 0 ? sliceStutterEnabled(sliceIndex) : readParameter(sampleStutterEnabled, 0.0f) >= 0.5f)
+        || sampleModulation.stutter > 0.05f;
     voiceToUse->stutterRepeatsRemaining = voiceToUse->stutterEnabled
-        ? juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleStutterRepeats, 3.0f) + (sampleModulation.stutter * 4.0f))))
+        ? juce::jlimit(1,
+                       8,
+                       (sliceIndex >= 0 ? sliceStutterRepeats(sliceIndex)
+                                        : static_cast<int>(std::round(readParameter(sampleStutterRepeats, 3.0f))))
+                           + static_cast<int>(std::round(sampleModulation.stutter * 4.0f)))
         : 0;
     voiceToUse->stutterIntervalSamples = stutterIntervalSamplesForRate(
         juce::jlimit(0, 2, static_cast<int>(std::round(readParameter(sampleStutterRate, 1.0f)))),
@@ -592,7 +617,7 @@ void SamplePlayer::renderVoice(Voice& voice,
 {
     const auto sourceChannels = data.buffer.getNumChannels();
     const auto outputChannels = outputBuffer.getNumChannels();
-    const auto gain = juce::Decibels::decibelsToGain(readParameter(sampleGain, -6.0f))
+    const auto gain = voice.gain
                     * juce::jlimit(0.0f, 1.0f, readParameter(sampleMix, 0.75f) + (sampleModulation.mix * 0.45f))
                     * voice.velocity;
 
@@ -662,11 +687,16 @@ void SamplePlayer::renderVoice(Voice& voice,
     }
 }
 
-SampleRegion SamplePlayer::currentRegionFor(const SampleData& data) const
+SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceIndex) const
 {
     const auto numSamples = data.buffer.getNumSamples();
-    const auto startNorm = juce::jlimit(0.0f, 1.0f, readParameter(sampleStart, 0.0f) + (sampleModulation.start * 0.25f));
-    const auto endNorm = juce::jlimit(0.0f, 1.0f, readParameter(sampleEnd, 1.0f));
+    const auto sliceMode = sliceIndex >= 0;
+    const auto startNorm = sliceMode
+        ? juce::jlimit(0.0f, 1.0f, static_cast<float>(sliceIndex) / 8.0f)
+        : juce::jlimit(0.0f, 1.0f, readParameter(sampleStart, 0.0f) + (sampleModulation.start * 0.25f));
+    const auto endNorm = sliceMode
+        ? juce::jlimit(0.0f, 1.0f, static_cast<float>(sliceIndex + 1) / 8.0f)
+        : juce::jlimit(0.0f, 1.0f, readParameter(sampleEnd, 1.0f));
     const auto orderedStart = juce::jmin(startNorm, endNorm);
     const auto orderedEnd = juce::jmax(startNorm, endNorm);
     const auto minimumWindow = juce::jmin(numSamples, 64);
@@ -674,10 +704,28 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data) const
     SampleRegion currentRegion;
     currentRegion.startSample = juce::jlimit(0, juce::jmax(0, numSamples - minimumWindow), static_cast<int>(orderedStart * static_cast<float>(numSamples)));
     currentRegion.endSample = juce::jlimit(currentRegion.startSample + minimumWindow, numSamples, static_cast<int>(orderedEnd * static_cast<float>(numSamples)));
-    currentRegion.reverse = readParameter(sampleReverse, 0.0f) > 0.5f;
-    currentRegion.gain = juce::Decibels::decibelsToGain(readParameter(sampleGain, -6.0f));
-    currentRegion.transposeSemitones = readParameter(sampleTranspose, 0.0f);
+    currentRegion.reverse = sliceMode
+        ? readParameter(sampleSliceReverse[static_cast<size_t>(sliceIndex)], 0.0f) > 0.5f
+        : readParameter(sampleReverse, 0.0f) > 0.5f;
+    currentRegion.gain = juce::Decibels::decibelsToGain(sliceMode
+                                                            ? readParameter(sampleSliceGain[static_cast<size_t>(sliceIndex)], -6.0f)
+                                                            : readParameter(sampleGain, -6.0f));
+    currentRegion.transposeSemitones = sliceMode
+        ? readParameter(sampleSliceTranspose[static_cast<size_t>(sliceIndex)], 0.0f)
+        : readParameter(sampleTranspose, 0.0f);
     return snapRegionToCleanBoundaries(data.buffer, currentRegion);
+}
+
+bool SamplePlayer::sliceStutterEnabled(int sliceIndex) const
+{
+    sliceIndex = juce::jlimit(0, 7, sliceIndex);
+    return readParameter(sampleSliceStutter[static_cast<size_t>(sliceIndex)], 0.0f) >= 0.5f;
+}
+
+int SamplePlayer::sliceStutterRepeats(int sliceIndex) const
+{
+    sliceIndex = juce::jlimit(0, 7, sliceIndex);
+    return juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleSliceStutterRepeats[static_cast<size_t>(sliceIndex)], 3.0f))));
 }
 
 double SamplePlayer::incrementForVoice(const Voice& voice) const

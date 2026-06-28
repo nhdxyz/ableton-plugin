@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Slice Keys Playback Mode
+
+- Added a third sample playback mode, `Slice Keys`, while preserving the existing `Gate` and `One Shot` indices for saved projects.
+- In Slice Keys mode, MIDI notes C3-G3 map across the eight stored slice pads and repeat every octave for drum-rack-style UKG chop playing.
+- Slice-key voices now use each pad's stored pitch, gain, reverse, stutter enable, and stutter repeat settings directly at trigger time.
+- SAMPLE pad selection no longer forces the playback mode out of Slice Keys, and the slice status row calls out the key-map mode when active.
+
 ### Per-Slice Sampler Edit Memory
 
 - Added persisted per-slice edit memory for the eight SAMPLE slice pads, covering custom/default state, pitch, gain, reverse, stutter enable, and stutter repeat count.

@@ -81,6 +81,8 @@ private:
         int fadeInTotalSamples = 0;
         double stutterIntervalSamples = 1.0;
         double samplesUntilStutter = 0.0;
+        float gain = 1.0f;
+        int sliceIndex = -1;
     };
 
     Parameters::APVTS& parameters;
@@ -120,6 +122,12 @@ private:
     std::atomic<float>* sampleStutterEnabled = nullptr;
     std::atomic<float>* sampleStutterRate = nullptr;
     std::atomic<float>* sampleStutterRepeats = nullptr;
+    std::array<std::atomic<float>*, 8> sampleSliceCustom {};
+    std::array<std::atomic<float>*, 8> sampleSliceReverse {};
+    std::array<std::atomic<float>*, 8> sampleSliceTranspose {};
+    std::array<std::atomic<float>*, 8> sampleSliceGain {};
+    std::array<std::atomic<float>*, 8> sampleSliceStutter {};
+    std::array<std::atomic<float>*, 8> sampleSliceStutterRepeats {};
     std::array<std::atomic<float>*, 8> modMatrixSources {};
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
     std::array<std::atomic<float>*, 8> modMatrixAmounts {};
@@ -144,11 +152,14 @@ private:
     float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateSampleLfoCurve(float phase) const;
     float evaluateSampleModulationSource(int sourceIndex, float lfoValue) const;
+    int sliceIndexForMidiNote(int midiNoteNumber) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot);
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
-    SampleRegion currentRegionFor(const SampleData& data) const;
+    SampleRegion currentRegionFor(const SampleData& data, int sliceIndex) const;
+    bool sliceStutterEnabled(int sliceIndex) const;
+    int sliceStutterRepeats(int sliceIndex) const;
     double incrementForVoice(const Voice& voice) const;
     double rampProgressForVoice(const Voice& voice) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;

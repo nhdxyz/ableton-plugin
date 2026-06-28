@@ -121,6 +121,8 @@ private:
     juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
+    juce::Label selectedControlHeaderLabel;
+    juce::Label selectedControlStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
     juce::Label sampleNameLabel;
@@ -538,6 +540,9 @@ private:
     FxMomentarySnapshot fxMomentarySnapshot;
     std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
     bool ignorePresetBrowserSelection = false;
+    juce::String selectedControlName;
+    juce::String selectedControlParameterID;
+    double selectedControlPlainValue = 0.0;
 
     std::unique_ptr<juce::FileChooser> fileChooser;
 
@@ -575,6 +580,10 @@ private:
     void updateModInspectorStatus();
     void updateMacroAssignmentEditorStatus();
     void updateModDestinationIndicators();
+    void updateSelectedControlInspector(const juce::String& labelText, const juce::String& parameterID, double plainValue);
+    juce::String formattedParameterValue(const juce::String& parameterID, double plainValue) const;
+    juce::String modulationSummaryForParameter(const juce::String& parameterID) const;
+    int modulationDestinationIndexForParameter(const juce::String& parameterID) const;
     void applyLfoCurvePreset(int presetId);
     void updateOutputMeter();
     void updateLowEndAssistant();

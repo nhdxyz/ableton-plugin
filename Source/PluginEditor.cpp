@@ -449,6 +449,26 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     hostSyncStatusLabel.setTooltip("Host tempo and transport phase status for sequencer and tempo-synced FX");
     addAndMakeVisible(hostSyncStatusLabel);
 
+    selectedControlHeaderLabel.setText("CONTROL", juce::dontSendNotification);
+    selectedControlHeaderLabel.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+    selectedControlHeaderLabel.setJustificationType(juce::Justification::centred);
+    selectedControlHeaderLabel.setMinimumHorizontalScale(0.72f);
+    selectedControlHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
+    selectedControlHeaderLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0x33141a1d));
+    selectedControlHeaderLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
+    selectedControlHeaderLabel.setTooltip("Last changed control, automation ID, and modulation route status");
+    addAndMakeVisible(selectedControlHeaderLabel);
+
+    selectedControlStatusLabel.setText("Touch a control for value, automation ID, and modulation routes", juce::dontSendNotification);
+    selectedControlStatusLabel.setFont(juce::FontOptions(11.0f));
+    selectedControlStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    selectedControlStatusLabel.setMinimumHorizontalScale(0.62f);
+    selectedControlStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xee101619));
+    selectedControlStatusLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
+    selectedControlStatusLabel.setTooltip("Last changed control, automation ID, value, and active modulation routes");
+    addAndMakeVisible(selectedControlStatusLabel);
+
     sampleNameLabel.setText("No sample", juce::dontSendNotification);
     sampleNameLabel.setJustificationType(juce::Justification::centredLeft);
     sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -1805,6 +1825,13 @@ void NateVSTAudioProcessorEditor::resized()
     hidePanelComponents();
     updateTabButtons();
 
+    auto selectedControlRow = content.withHeight(28);
+    auto selectedControlArea = selectedControlRow.removeFromRight(392).reduced(0, 2);
+    selectedControlHeaderLabel.setVisible(true);
+    selectedControlStatusLabel.setVisible(true);
+    selectedControlHeaderLabel.setBounds(selectedControlArea.removeFromLeft(72).reduced(2, 0));
+    selectedControlStatusLabel.setBounds(selectedControlArea.reduced(2, 0));
+
     switch (activePanel)
     {
         case Panel::home:
@@ -2727,6 +2754,9 @@ void NateVSTAudioProcessorEditor::resized()
             break;
         }
     }
+
+    selectedControlHeaderLabel.toFront(false);
+    selectedControlStatusLabel.toFront(false);
 }
 
 bool NateVSTAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
@@ -2784,6 +2814,12 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
+    auto* sliderPointer = &slider;
+    slider.onValueChange = [this, sliderPointer, labelText, parameterID]
+    {
+        updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
+    };
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -2816,6 +2852,12 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
 
+    auto* sliderPointer = &slider;
+    slider.onValueChange = [this, sliderPointer, labelText, parameterID]
+    {
+        updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
+    };
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
 
@@ -2840,6 +2882,12 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
 
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
         slider.setDoubleClickReturnValue(true, parameter->convertFrom0to1(parameter->getDefaultValue()));
+
+    auto* sliderPointer = &slider;
+    slider.onValueChange = [this, sliderPointer, parameterID]
+    {
+        updateSelectedControlInspector("Curve", parameterID, sliderPointer->getValue());
+    };
 
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
@@ -4135,6 +4183,111 @@ void NateVSTAudioProcessorEditor::setPlainParameterValue(const juce::String& par
     }
 }
 
+juce::String NateVSTAudioProcessorEditor::formattedParameterValue(const juce::String& parameterID, double plainValue) const
+{
+    if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
+    {
+        auto text = parameter->getText(parameter->convertTo0to1(static_cast<float>(plainValue)), 64).trim();
+        if (text.isNotEmpty())
+            return text;
+    }
+
+    return juce::String(plainValue, 2);
+}
+
+int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const juce::String& parameterID) const
+{
+    if (parameterID == Parameters::ID::filterCutoff) return 1;
+    if (parameterID == Parameters::ID::filterResonance) return 2;
+    if (parameterID == Parameters::ID::filterEnvAmount) return 3;
+    if (parameterID == Parameters::ID::driveAmount) return 4;
+    if (parameterID == Parameters::ID::osc2Tune) return 5;
+    if (parameterID == Parameters::ID::osc2Level) return 6;
+    if (parameterID == Parameters::ID::fxPumpDepth) return 7;
+    if (parameterID == Parameters::ID::fxDelayMix) return 8;
+    if (parameterID == Parameters::ID::fxReverbMix) return 9;
+    if (parameterID == Parameters::ID::fxWidthAmount) return 10;
+    if (parameterID == Parameters::ID::fxDistortionAmount) return 11;
+    if (parameterID == Parameters::ID::sampleStart) return 12;
+    if (parameterID == Parameters::ID::sampleMix) return 13;
+    if (parameterID == Parameters::ID::sampleTranspose) return 14;
+    if (parameterID == Parameters::ID::samplePitchRamp) return 15;
+    if (parameterID == Parameters::ID::sampleStutterRepeats) return 16;
+    if (parameterID == Parameters::ID::oscWarp) return 17;
+
+    return 0;
+}
+
+juce::String NateVSTAudioProcessorEditor::modulationSummaryForParameter(const juce::String& parameterID) const
+{
+    const auto destinationIndex = modulationDestinationIndexForParameter(parameterID);
+    if (destinationIndex <= 0)
+        return "No MOD target";
+
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    if (! juce::isPositiveAndBelow(destinationIndex, destinationChoices.size()))
+        return "No MOD target";
+
+    juce::StringArray routes;
+    auto summedDepth = 0.0f;
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = juce::jlimit(0,
+                                             sourceChoices.size() - 1,
+                                             juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f)));
+        const auto currentDestination = juce::jlimit(0,
+                                                     destinationChoices.size() - 1,
+                                                     juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f)));
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+
+        if (! enabled || sourceIndex <= 0 || currentDestination != destinationIndex || std::abs(amount) <= 0.001f)
+            continue;
+
+        summedDepth += amount;
+        const auto percent = juce::roundToInt(amount * 100.0f);
+        routes.add(sourceChoices[sourceIndex] + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%");
+    }
+
+    if (routes.isEmpty())
+        return "No routes";
+
+    const auto summedPercent = juce::roundToInt(juce::jlimit(-1.0f, 1.0f, summedDepth) * 100.0f);
+    auto routeText = routes.joinIntoString(", ");
+    if (routes.size() > 3)
+        routeText = routes[0] + ", " + routes[1] + ", " + routes[2] + " +" + juce::String(routes.size() - 3);
+
+    return juce::String(routes.size()) + " route" + (routes.size() == 1 ? " " : "s ")
+        + routeText + " | Sum " + (summedPercent >= 0 ? "+" : "") + juce::String(summedPercent) + "%";
+}
+
+void NateVSTAudioProcessorEditor::updateSelectedControlInspector(const juce::String& labelText,
+                                                                 const juce::String& parameterID,
+                                                                 double plainValue)
+{
+    selectedControlName = labelText;
+    selectedControlParameterID = parameterID;
+    selectedControlPlainValue = plainValue;
+
+    const auto valueText = formattedParameterValue(parameterID, plainValue);
+    const auto routeText = modulationSummaryForParameter(parameterID);
+    const auto isAutomatable = audioProcessor.getValueTreeState().getParameter(parameterID) != nullptr;
+    const auto parameterText = isAutomatable ? parameterID : juce::String("local control");
+    const auto summary = labelText + " " + valueText + " | " + parameterText + " | " + routeText;
+    const auto hasActiveRoutes = ! routeText.startsWith("No ");
+
+    selectedControlStatusLabel.setText(summary, juce::dontSendNotification);
+    selectedControlStatusLabel.setTooltip(labelText + "\nValue: " + valueText
+                                          + "\nAutomation ID: " + parameterText
+                                          + "\n" + routeText);
+    selectedControlStatusLabel.setColour(juce::Label::textColourId,
+                                         hasActiveRoutes ? juce::Colour(0xffd9fff1) : juce::Colour(0xffa8b6b8));
+    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId,
+                                         hasActiveRoutes ? juce::Colour(0xee10221e) : juce::Colour(0xee101619));
+}
+
 int NateVSTAudioProcessorEditor::selectedMacroAssignmentSourceIndex() const
 {
     const auto sourceChoices = Parameters::modulationSourceChoices();
@@ -5053,6 +5206,9 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(samplePitchRampSlider, destinationDepths[15], destinationRouteCounts[15], destinationSources[15]);
     setIndicator(sampleStutterRepeatsSlider, destinationDepths[16], destinationRouteCounts[16], destinationSources[16]);
     setIndicator(oscWarpSlider, destinationDepths[17], destinationRouteCounts[17], destinationSources[17]);
+
+    if (selectedControlParameterID.isNotEmpty())
+        updateSelectedControlInspector(selectedControlName, selectedControlParameterID, selectedControlPlainValue);
 }
 
 void NateVSTAudioProcessorEditor::updateOutputMeter()

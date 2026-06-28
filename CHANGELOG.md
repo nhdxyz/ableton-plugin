@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Selected Control Inspector
+
+- Added a compact global `CONTROL` strip that follows the last changed knob or slider across Home, Synth, Lab, Mod, Sample, Seq, FX, and Library views.
+- The strip now shows formatted value text, the automation parameter ID, and whether the parameter has active modulation routes.
+- Reused the existing modulation destination metadata so modulated targets show source names, per-route depth, and summed route amount while unassigned targets stay visually quiet.
+- Wired the inspector through the shared slider setup so new APVTS-backed controls inherit the same feedback behavior automatically.
+
 ### Deep Research Expansion
 
 - Expanded `docs/PROGRAM_RESEARCH_GAP_LIST.md` with a second research pass covering Vital, Korg opsix native, XO, Sononym, Ableton Live 12 MIDI/browser workflows, and updated lessons from Serum 2, Pigments, Phase Plant, Korg modwave, ZENOLOGY Pro, ShaperBox, Saturn 2, Infiltrator, and UK garage production references.

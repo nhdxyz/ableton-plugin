@@ -139,7 +139,7 @@ Implemented movement sub-slice:
 67. Add pattern chaining.
 68. Add per-step probability. First editable lane pass implemented in the SEQ grid.
 69. Add per-step ratchet/retrigger.
-70. Add per-step note length.
+70. Add per-step note length. First editable lane/playback/export pass implemented in the SEQ grid.
 71. Add per-step velocity lane. First editable lane pass implemented in the SEQ grid.
 72. Add per-step modulation lane assignments.
 73. Add per-step sample slice lane.

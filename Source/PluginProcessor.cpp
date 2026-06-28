@@ -696,6 +696,7 @@ bool NateVSTAudioProcessor::mutateSequencerPattern()
 
             step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + smallMove(sampleRandomEngine) * amount * 0.16f);
             step.probability = juce::jlimit(0.35f, 1.0f, step.probability + smallMove(sampleRandomEngine) * amount * 0.18f);
+            step.length = juce::jlimit(0.18f, 1.0f, step.length + smallMove(sampleRandomEngine) * amount * 0.16f);
 
             if (! isAnchorStep)
                 step.timing = juce::jlimit(0.0f, 1.0f, step.timing + smallMove(sampleRandomEngine) * amount * 0.18f);
@@ -710,6 +711,7 @@ bool NateVSTAudioProcessor::mutateSequencerPattern()
             step.velocity = juce::jlimit(0.25f, 0.82f, 0.42f + chance(sampleRandomEngine) * 0.24f);
             step.probability = juce::jlimit(0.35f, 0.92f, 0.48f + chance(sampleRandomEngine) * 0.3f);
             step.timing = (stepIndex % 2) != 0 ? juce::jlimit(0.0f, 1.0f, 0.28f + chance(sampleRandomEngine) * 0.48f) : 0.0f;
+            step.length = juce::jlimit(0.18f, 1.0f, 0.32f + chance(sampleRandomEngine) * 0.55f);
         }
 
         patternSequencer.setStep(stepIndex, step);
@@ -757,7 +759,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
     setParameterPlainValue(Parameters::ID::sequencerChordVoicing, 0.0f);
     setParameterPlainValue(Parameters::ID::sequencerChordStrum, 0.0f);
 
-    auto setStep = [this] (int index, int noteOffset, float velocity, float probability, float timing = 0.0f)
+    auto setStep = [this] (int index, int noteOffset, float velocity, float probability, float timing = 0.0f, float length = 1.0f)
     {
         Sequencer::Step step;
         step.enabled = true;
@@ -765,6 +767,7 @@ void NateVSTAudioProcessor::applySequencerPatternPreset(int presetIndex)
         step.velocity = velocity;
         step.probability = probability;
         step.timing = timing;
+        step.length = length;
         patternSequencer.setStep(index, step);
     };
 
@@ -1022,6 +1025,7 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                     step.timing = 0.0f;
                     step.probability = 1.0f;
                     step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.08f);
+                    step.length = juce::jmax(step.length, 0.72f);
                 }
                 break;
 
@@ -1037,6 +1041,7 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                     {
                         step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity * 0.88f);
                         step.probability = juce::jlimit(0.35f, 1.0f, step.probability * 0.86f);
+                        step.length = juce::jlimit(0.18f, 1.0f, step.length * 0.82f);
                     }
                 }
                 break;
@@ -1047,6 +1052,7 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                     step.timing = juce::jmax(step.timing, isLateStabStep(stepIndex) ? 0.64f : 0.42f);
                     step.probability = juce::jlimit(0.5f, 1.0f, step.probability + 0.06f);
                     step.velocity = juce::jlimit(0.0f, 1.0f, step.velocity + 0.04f);
+                    step.length = juce::jlimit(0.28f, 1.0f, juce::jmin(step.length, 0.72f));
                 }
                 break;
 
@@ -1055,10 +1061,12 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                 {
                     step.timing = juce::jmax(step.timing, 0.78f);
                     step.probability = juce::jlimit(0.35f, 0.92f, step.probability * 0.9f);
+                    step.length = juce::jlimit(0.18f, 1.0f, juce::jmin(step.length, 0.58f));
                 }
                 else if (! isAnchorStep(stepIndex))
                 {
                     step.timing = juce::jmax(step.timing, isOffbeatStep(stepIndex) ? 0.42f : 0.16f);
+                    step.length = juce::jlimit(0.18f, 1.0f, step.length * 0.9f);
                 }
                 break;
 
@@ -1071,6 +1079,7 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
                 {
                     step.timing = juce::jlimit(0.0f, 1.0f, step.timing + humanize(sampleRandomEngine) * 0.09f);
                     step.probability = juce::jlimit(0.35f, 1.0f, step.probability + humanize(sampleRandomEngine) * 0.045f);
+                    step.length = juce::jlimit(0.18f, 1.0f, step.length + humanize(sampleRandomEngine) * 0.065f);
                 }
 
                 step.velocity = juce::jlimit(0.25f, 1.0f, step.velocity + humanize(sampleRandomEngine) * 0.055f);
@@ -1080,6 +1089,7 @@ bool NateVSTAudioProcessor::applySequencerGrooveTransform(int transformIndex)
             default:
                 step.timing = isAnchorStep(stepIndex) ? 0.0f : step.timing * 0.32f;
                 step.probability = juce::jlimit(0.55f, 1.0f, step.probability + 0.08f);
+                step.length = juce::jlimit(0.2f, 1.0f, juce::jmin(step.length, isAnchorStep(stepIndex) ? 0.86f : 0.64f));
                 break;
         }
 
@@ -1233,8 +1243,9 @@ bool NateVSTAudioProcessor::exportSequencerMidiFile(const juce::File& destinatio
         const auto delayTicks = stepDelayTicks(stepIndex);
         const auto nextDelayTicks = stepDelayTicks((stepIndex + 1) % stepCount);
         const auto durationTicks = juce::jmax(1, stepTicks + nextDelayTicks - delayTicks);
+        const auto stepGate = juce::jlimit(0.05f, 1.0f, gate * juce::jlimit(0.1f, 1.0f, step.length));
         const auto gateTicks = juce::jlimit(1, juce::jmax(1, durationTicks - 1),
-                                           juce::roundToInt(static_cast<float>(durationTicks) * gate));
+                                           juce::roundToInt(static_cast<float>(durationTicks) * stepGate));
         const auto isAnchorStep = stepIndex == 0 || stepIndex == 4 || stepIndex == 8 || stepIndex == 12;
         const auto velocity = isAnchorStep
             ? juce::jlimit(0.0f, 1.0f, step.velocity + ((1.0f - step.velocity) * accent))
@@ -2265,6 +2276,7 @@ void NateVSTAudioProcessor::restoreSequencerFromState(const juce::ValueTree& sta
         step.velocity = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_velocity", 0.8f));
         step.probability = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_probability", 1.0f));
         step.timing = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_timing", 0.0f));
+        step.length = static_cast<float>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_length", 1.0f));
         patternSequencer.setStep(stepIndex, step);
     }
 }
@@ -2403,6 +2415,7 @@ juce::ValueTree NateVSTAudioProcessor::createPluginState(bool includePerformance
         state.setProperty("seq_step_" + juce::String(stepIndex) + "_velocity", step.velocity, nullptr);
         state.setProperty("seq_step_" + juce::String(stepIndex) + "_probability", step.probability, nullptr);
         state.setProperty("seq_step_" + juce::String(stepIndex) + "_timing", step.timing, nullptr);
+        state.setProperty("seq_step_" + juce::String(stepIndex) + "_length", step.length, nullptr);
     }
 
     if (includePerformanceSnapshots)
@@ -2468,6 +2481,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         step.velocity = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_velocity", 0.8f));
         step.probability = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_probability", 1.0f));
         step.timing = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_timing", 0.0f));
+        step.length = static_cast<float>(stateForParameters.getProperty("seq_step_" + juce::String(stepIndex) + "_length", 1.0f));
         patternSequencer.setStep(stepIndex, step);
     }
 }

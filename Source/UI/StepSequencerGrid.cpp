@@ -110,10 +110,23 @@ void StepSequencerGrid::paint(juce::Graphics& g)
                 cellWidth,
                 cellHeight).reduced(cellWidth > 24.0f ? 3.0f : 2.0f,
                                     cellHeight > 12.0f ? 2.0f : 1.0f);
+            const auto fullCell = cell;
+            const auto noteLength = juce::jlimit(0.1f, 1.0f, step.length);
+            cell.setWidth(juce::jmax(4.0f, fullCell.getWidth() * noteLength));
 
             const auto alpha = juce::jlimit(0.35f, 1.0f, step.velocity);
             g.setColour(juce::Colour(0xff8ee6c9).withAlpha(alpha));
             g.fillRoundedRectangle(cell, 3.0f);
+            if (noteLength < 0.995f)
+            {
+                auto remainder = juce::Rectangle<float>(
+                    cell.getRight(),
+                    fullCell.getY(),
+                    fullCell.getRight() - cell.getRight(),
+                    fullCell.getHeight());
+                g.setColour(juce::Colour(0xff273238).withAlpha(0.42f));
+                g.fillRoundedRectangle(remainder, 3.0f);
+            }
             if (step.timing > 0.0f)
             {
                 const auto timingWidth = juce::jmax(3.0f, cell.getWidth() * juce::jlimit(0.0f, 1.0f, step.timing));
@@ -249,9 +262,9 @@ int StepSequencerGrid::laneForPosition(juce::Point<int> position) const
     if (! bounds.contains(position))
         return -1;
 
-    const auto laneHeight = static_cast<float>(bounds.getHeight()) / 3.0f;
+    const auto laneHeight = static_cast<float>(bounds.getHeight()) / static_cast<float>(laneCount);
     const auto normalised = static_cast<float>(position.y - bounds.getY()) / juce::jmax(1.0f, laneHeight);
-    return juce::jlimit(0, 2, static_cast<int>(normalised));
+    return juce::jlimit(0, laneCount - 1, static_cast<int>(normalised));
 }
 
 int StepSequencerGrid::rowForPosition(juce::Point<int> position) const
@@ -312,20 +325,21 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
     if (lanes.isEmpty() || labels.isEmpty())
         return;
 
-    const auto laneHeight = static_cast<float>(lanes.getHeight()) / 3.0f;
+    const auto laneHeight = static_cast<float>(lanes.getHeight()) / static_cast<float>(laneCount);
     const auto cellWidth = static_cast<float>(lanes.getWidth()) / static_cast<float>(Sequencer::PatternSequencer::numSteps);
-    const std::array<const char*, 3> laneNames { "Vel", "Prob", "Late" };
-    const std::array<juce::Colour, 3> laneColours {
+    const std::array<const char*, laneCount> laneNames { "Vel", "Prob", "Late", "Len" };
+    const std::array<juce::Colour, laneCount> laneColours {
         juce::Colour(0xff8ee6c9),
         juce::Colour(0xffb7a4ff),
-        juce::Colour(0xffffc857)
+        juce::Colour(0xffffc857),
+        juce::Colour(0xff8fb7ff)
     };
 
     g.setColour(juce::Colour(0xff101619));
     g.fillRoundedRectangle(lanes.toFloat(), 5.0f);
     g.fillRoundedRectangle(labels.toFloat(), 5.0f);
 
-    for (auto lane = 0; lane < 3; ++lane)
+    for (auto lane = 0; lane < laneCount; ++lane)
     {
         auto row = juce::Rectangle<float>(
             static_cast<float>(lanes.getX()),
@@ -357,6 +371,7 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
                 case 0: value = step.velocity; break;
                 case 1: value = step.probability; break;
                 case 2: value = step.timing; break;
+                case 3: value = step.length; break;
                 default: break;
             }
 
@@ -386,7 +401,7 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
                            static_cast<float>(lanes.getBottom()));
     }
 
-    for (auto lane = 1; lane < 3; ++lane)
+    for (auto lane = 1; lane < laneCount; ++lane)
     {
         const auto y = lanes.getY() + static_cast<int>(std::round(static_cast<float>(lane) * laneHeight));
         g.drawHorizontalLine(y, static_cast<float>(labels.getX()), static_cast<float>(lanes.getRight()));
@@ -409,6 +424,7 @@ void StepSequencerGrid::beginEditAt(juce::Point<int> position)
             case 0: dragMode = DragMode::velocity; break;
             case 1: dragMode = DragMode::probability; break;
             case 2: dragMode = DragMode::timing; break;
+            case 3: dragMode = DragMode::length; break;
             default: dragMode = DragMode::none; break;
         }
 
@@ -437,7 +453,8 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
 
     if (dragMode == DragMode::velocity
         || dragMode == DragMode::probability
-        || dragMode == DragMode::timing)
+        || dragMode == DragMode::timing
+        || dragMode == DragMode::length)
     {
         editLaneAt(position);
         return;
@@ -472,6 +489,7 @@ void StepSequencerGrid::editAt(juce::Point<int> position)
         step.velocity = 0.85f;
         step.probability = 1.0f;
         step.timing = (stepIndex % 2) != 0 ? 0.65f : 0.0f;
+        step.length = 1.0f;
     }
 
     setStep(stepIndex, step);
@@ -499,15 +517,18 @@ void StepSequencerGrid::editLaneAt(juce::Point<int> position)
         step.velocity = 0.82f;
         step.probability = 1.0f;
         step.timing = 0.0f;
+        step.length = 1.0f;
     }
 
-    const auto laneHeight = static_cast<float>(lanes.getHeight()) / 3.0f;
+    const auto laneHeight = static_cast<float>(lanes.getHeight()) / static_cast<float>(laneCount);
     auto laneTop = static_cast<float>(lanes.getY());
 
     if (dragMode == DragMode::probability)
         laneTop += laneHeight;
     else if (dragMode == DragMode::timing)
         laneTop += laneHeight * 2.0f;
+    else if (dragMode == DragMode::length)
+        laneTop += laneHeight * 3.0f;
 
     const auto normalisedY = (static_cast<float>(position.y) - laneTop) / juce::jmax(1.0f, laneHeight);
     const auto value = juce::jlimit(0.0f, 1.0f, 1.0f - normalisedY);
@@ -524,6 +545,10 @@ void StepSequencerGrid::editLaneAt(juce::Point<int> position)
 
         case DragMode::timing:
             step.timing = value;
+            break;
+
+        case DragMode::length:
+            step.length = juce::jlimit(0.1f, 1.0f, value);
             break;
 
         case DragMode::none:
@@ -604,6 +629,10 @@ void StepSequencerGrid::nudgeLaneAt(juce::Point<int> position, float delta)
 
         case 2:
             step.timing = juce::jlimit(0.0f, 1.0f, step.timing + delta);
+            break;
+
+        case 3:
+            step.length = juce::jlimit(0.1f, 1.0f, step.length + delta);
             break;
 
         default:

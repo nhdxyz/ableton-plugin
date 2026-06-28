@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Sequencer Step Length Lane
+
+- Added a saved per-step `length` value to the internal sequencer, with old presets and sessions defaulting to full length so existing patterns keep their previous playback.
+- Added a fourth SEQ grid lane, `Len`, for drawing or mouse-wheel nudging step gate length alongside Velocity, Probability, and Late timing.
+- Made playback and MIDI export multiply the existing global Gate by each step's length, so short UKG stabs, vocal triggers, and minimal plucks export the same way they sound.
+- Included step length in sequencer undo snapshots, preset/session state, random patterns, mutations, groove transforms, and factory preset generation.
+
 ### Sample And Hold Modulation Source
 
 - Added an appended `S&H` source to the MOD matrix for stepped random movement without shifting existing modulation source indices.

@@ -280,13 +280,14 @@ FACTORY_METADATA = {
 }
 
 
-def step(index, note, velocity, probability, timing=0.0):
+def step(index, note, velocity, probability, timing=0.0, length=1.0):
     return {
         f"seq_step_{index}_enabled": "1",
         f"seq_step_{index}_note": str(note),
         f"seq_step_{index}_velocity": str(velocity),
         f"seq_step_{index}_probability": str(probability),
         f"seq_step_{index}_timing": str(timing),
+        f"seq_step_{index}_length": str(length),
     }
 
 
@@ -298,6 +299,7 @@ def blank_steps():
         props[f"seq_step_{index}_velocity"] = "0.8"
         props[f"seq_step_{index}_probability"] = "1"
         props[f"seq_step_{index}_timing"] = "0"
+        props[f"seq_step_{index}_length"] = "1"
     return props
 
 

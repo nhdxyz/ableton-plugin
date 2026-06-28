@@ -205,7 +205,7 @@ The general club roadmap should bias the next few effects and workflows toward U
    The first UKG factory pack now includes organ stab, chord stab, bell pluck, late stab, vocal chop starter, and bass presets generated from repo-managed XML definitions.
 5. Swing and chop sequencer templates.
    Implemented in the SEQ panel. Templates cover 2-step bass, shuffle bass, organ skank, vocal chop triggers, and late offbeat stabs.
-   Selective groove is now implemented with Classic, Selective, UKG Push, and Tight modes plus a per-step timing lane shown directly in the grid.
+   Selective groove is now implemented with Classic, Selective, UKG Push, and Tight modes plus per-step timing and length lanes shown directly in the grid.
 
 ### High Priority
 
@@ -460,8 +460,8 @@ Build the next larger slices in this order:
    First chord/stab pass implemented as saved Off, 5th, Minor, Minor 7, Major, and Minor 9 sequencer chord modes shared by playback and MIDI export.
    Second chord/stab pass implemented as saved Close, Inv 1, Inv 2, Open, and Drop 2 voicings; scale mode quantizes the step/root before chord quality and voicing are applied.
    Third chord/stab pass implemented as a saved Strum amount that spreads chord note-ons in playback and exported MIDI clips.
-   First utility pass implemented as `Rot <` / `Rot >` pattern rotation that preserves each step's note, velocity, probability, and timing.
-   First variation pass implemented as a SEQ-panel `Vary` action that mutates notes, velocity, probability, timing, and ghost steps without replacing the pattern.
+   First utility pass implemented as `Rot <` / `Rot >` pattern rotation that preserves each step's note, velocity, probability, timing, and length.
+   First variation pass implemented as a SEQ-panel `Vary` action that mutates notes, velocity, probability, timing, length, and ghost steps without replacing the pattern.
    First safety pass implemented as a SEQ-panel `Undo` action that restores the prior generated, varied, template, copy, rotate, or clear state.
    First broader club-template pass implemented as `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates in the SEQ pattern selector.
 	   First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
@@ -508,7 +508,7 @@ Build the next larger slices in this order:
 - Add FX workflow can reveal existing modules without changing parameter IDs and is grouped by production task.
 - Current modules can be selected and edited in a focused detail area.
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
-- Remaining UI polish: direct grid gestures now edit velocity, probability, and timing lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
+- Remaining UI polish: direct grid gestures now edit velocity, probability, timing, and length lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, and Library while keeping deeper controls on focused panels.
 - HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.

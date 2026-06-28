@@ -179,7 +179,7 @@ Implemented P0 sub-slice:
 107. Add pattern chaining.
 108. Add pattern scene buttons for A, B, fill, drop, breakdown, and transition.
 109. Add per-step ratchet/retrigger.
-110. Add per-step note length.
+110. Add per-step note length. First saved lane/playback/export pass implemented.
 111. Add per-step slide/glide.
 112. Add per-step accent tied to filter, amp, and drive.
 113. Add per-step modulation lanes assignable to any safe destination.

@@ -17,6 +17,7 @@ struct Step
     float velocity = 0.8f;
     float probability = 1.0f;
     float timing = 0.0f;
+    float length = 1.0f;
 };
 
 struct HostPosition
@@ -58,6 +59,7 @@ private:
     std::array<std::atomic<float>, numSteps> stepVelocity {};
     std::array<std::atomic<float>, numSteps> stepProbability {};
     std::array<std::atomic<float>, numSteps> stepTiming {};
+    std::array<std::atomic<float>, numSteps> stepLengths {};
     double currentSampleRate = 44100.0;
     double samplesUntilNextStep = 0.0;
     double pendingNoteOffSamples = -1.0;

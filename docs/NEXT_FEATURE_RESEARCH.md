@@ -185,7 +185,7 @@ The missing work is not "add one more page of knobs." The missing work is depth,
 101. Add multiple sequencer patterns per preset.
 102. Add pattern scenes: A, B, fill, drop, breakdown, transition.
 103. Add pattern chaining.
-104. Add per-step note length.
+104. Add per-step note length. First saved lane/playback/export pass implemented.
 105. Add per-step ratchet/retrigger.
 106. Add per-step slide/glide.
 107. Add per-step accent tied to amp, filter, and drive.

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Random Lab Useful-Only Validation
+
+- Added a post-randomization validation pass that corrects silent generated sources, unsafe output gain, out-of-range bass/stab sequencer roots, too-wide bass patches, tiny sample windows, and missing Guard protection.
+- Random candidates now store a validation summary that appears in LAB status, History detail, and generated preset notes for searchable "why this is safe/useful" metadata.
+- Extended `RandomCandidateAudit` to force a bad pre-generate state and verify that UKG bass generation restores an audible source, clamps output, and corrects the bass note range.
+
 ### Generated Note Templates
 
 - Added reusable LAB Save note templates for macro intent, Ableton use, UKG variation notes, mix safety, and pack notes.

@@ -714,6 +714,19 @@ juce::String NateVSTAudioProcessor::getRandomCandidateDiffSummary(int slotIndex)
     return diffs.isEmpty() ? juce::String("no major value diff") : diffs.joinIntoString(", ");
 }
 
+juce::String NateVSTAudioProcessor::getRandomCandidateValidationSummary(int slotIndex) const
+{
+    if (! hasRandomCandidate(slotIndex))
+        return {};
+
+    return randomCandidateSnapshots[static_cast<size_t>(slotIndex)].validationSummary;
+}
+
+juce::String NateVSTAudioProcessor::getLastRandomValidationSummary() const
+{
+    return lastRandomValidationSummary;
+}
+
 int NateVSTAudioProcessor::getActiveRandomCandidateIndex() const noexcept
 {
     return activeRandomCandidateSlot;
@@ -2217,6 +2230,7 @@ void NateVSTAudioProcessor::runRandomAction(RandomAction action, int mutationSco
     applyRandomSectionIntensities(snapshot, mutationScope);
     restoreSectionsOutsideMutationScope(snapshot, mutationScope);
     restoreLockedSectionsFromState(snapshot);
+    lastRandomValidationSummary = applyRandomGenerationGuardrails(mutationScope);
     captureRandomCandidateSnapshot(action, mutationScope);
 }
 
@@ -2532,6 +2546,126 @@ juce::String NateVSTAudioProcessor::currentRandomRecipeName() const
     return choices[recipeIndex];
 }
 
+juce::String NateVSTAudioProcessor::applyRandomGenerationGuardrails(RandomMutationScope)
+{
+    juce::StringArray fixes;
+    const auto recipeName = currentRandomRecipeName();
+    const auto bassRole = recipeName.containsIgnoreCase("Bass")
+        || recipeName.containsIgnoreCase("Dred")
+        || recipeName.containsIgnoreCase("Acid");
+    const auto pitchedMidRole = recipeName.containsIgnoreCase("Stab")
+        || recipeName.containsIgnoreCase("Organ")
+        || recipeName.containsIgnoreCase("Chord")
+        || recipeName.containsIgnoreCase("Bell")
+        || recipeName.containsIgnoreCase("Blip");
+
+    const auto sourceLocked = isRandomLockEnabled(Parameters::ID::randomLockSource);
+    const auto sequencerLocked = isRandomLockEnabled(Parameters::ID::randomLockSequencer);
+    const auto fxLocked = isRandomLockEnabled(Parameters::ID::randomLockFx);
+
+    const auto osc1 = getParameterPlainValue(Parameters::ID::osc1Level, 1.0f);
+    const auto osc2 = getParameterPlainValue(Parameters::ID::osc2Level, 0.0f);
+    const auto sub = getParameterPlainValue(Parameters::ID::subLevel, 0.0f);
+    const auto noise = getParameterPlainValue(Parameters::ID::noiseLevel, 0.0f);
+    const auto sampleContribution = getParameterPlainValue(Parameters::ID::sampleEnabled, 0.0f) > 0.5f
+            && loadedSamplePath.isNotEmpty()
+        ? getParameterPlainValue(Parameters::ID::sampleMix, 0.0f)
+            * juce::Decibels::decibelsToGain(getParameterPlainValue(Parameters::ID::sampleGain, -6.0f))
+        : 0.0f;
+    const auto sourceEnergy = osc1 + osc2 + sub + (noise * 0.65f);
+
+    if (! sourceLocked && sourceEnergy < 0.12f && sampleContribution < 0.08f)
+    {
+        setParameterPlainValue(Parameters::ID::osc1Level, 0.56f);
+        setParameterPlainValue(Parameters::ID::ampSustain,
+                               juce::jmax(0.28f, getParameterPlainValue(Parameters::ID::ampSustain, 0.55f)));
+        setParameterPlainValue(Parameters::ID::ampRelease,
+                               juce::jmax(0.08f, getParameterPlainValue(Parameters::ID::ampRelease, 0.18f)));
+        fixes.add("source restored");
+    }
+
+    if (! sequencerLocked && getParameterPlainValue(Parameters::ID::sequencerEnabled, 0.0f) > 0.5f)
+    {
+        const auto root = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerRoot, 36.0f));
+        const auto octave = juce::roundToInt(getParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f));
+        const auto effectiveRoot = root + (octave * 12);
+
+        if (bassRole && (effectiveRoot < 24 || effectiveRoot > 48))
+        {
+            setParameterPlainValue(Parameters::ID::sequencerRoot,
+                                   static_cast<float>(juce::jlimit(36, 48, effectiveRoot)));
+            setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+            fixes.add("bass range corrected");
+        }
+        else if (pitchedMidRole && (effectiveRoot < 48 || effectiveRoot > 76))
+        {
+            setParameterPlainValue(Parameters::ID::sequencerRoot,
+                                   static_cast<float>(juce::jlimit(48, 72, effectiveRoot)));
+            setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+            fixes.add("mid range corrected");
+        }
+    }
+
+    if (bassRole && ! fxLocked)
+    {
+        if (getParameterPlainValue(Parameters::ID::fxWidthEnabled, 0.0f) > 0.5f
+            && getParameterPlainValue(Parameters::ID::fxWidthAmount, 1.0f) > 1.12f)
+        {
+            setParameterPlainValue(Parameters::ID::fxWidthAmount, 1.12f);
+            fixes.add("bass width contained");
+        }
+
+        if (getParameterPlainValue(Parameters::ID::fxWidthEnabled, 0.0f) > 0.5f
+            && getParameterPlainValue(Parameters::ID::fxWidthMonoCutoff, 120.0f) < 120.0f)
+            setParameterPlainValue(Parameters::ID::fxWidthMonoCutoff, 120.0f);
+    }
+
+    if (! fxLocked)
+    {
+        const auto driveLoad = juce::jlimit(0.0f, 1.0f,
+            getParameterPlainValue(Parameters::ID::driveAmount, 0.18f)
+            + (getParameterPlainValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.4f)
+            + (getParameterPlainValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
+
+        if (driveLoad > 0.36f && getParameterPlainValue(Parameters::ID::fxGuardEnabled, 0.0f) < 0.5f)
+        {
+            setParameterPlainValue(Parameters::ID::fxGuardEnabled, 1.0f);
+            fixes.add("Guard enabled");
+        }
+
+        const auto maxCeiling = driveLoad > 0.62f ? 0.92f : 0.95f;
+        if (getParameterPlainValue(Parameters::ID::fxGuardEnabled, 0.0f) > 0.5f
+            && getParameterPlainValue(Parameters::ID::fxGuardCeiling, 0.92f) > maxCeiling)
+            setParameterPlainValue(Parameters::ID::fxGuardCeiling, maxCeiling);
+    }
+
+    const auto driveForGain = juce::jlimit(0.0f, 1.0f,
+        getParameterPlainValue(Parameters::ID::driveAmount, 0.18f)
+        + (getParameterPlainValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.45f)
+        + (getParameterPlainValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
+    const auto maxOutputGain = driveForGain > 0.62f ? -10.0f : -6.0f;
+    if (getParameterPlainValue(Parameters::ID::outputGain, -8.0f) > maxOutputGain)
+    {
+        setParameterPlainValue(Parameters::ID::outputGain, maxOutputGain);
+        fixes.add("output clamped");
+    }
+
+    if (getParameterPlainValue(Parameters::ID::sampleEnabled, 0.0f) > 0.5f)
+    {
+        const auto start = getParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
+        const auto end = getParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
+        if (end - start < 0.04f)
+        {
+            const auto safeStart = juce::jlimit(0.0f, 0.92f, start);
+            setParameterPlainValue(Parameters::ID::sampleStart, safeStart);
+            setParameterPlainValue(Parameters::ID::sampleEnd, juce::jmin(1.0f, safeStart + 0.08f));
+            fixes.add("sample window widened");
+        }
+    }
+
+    return fixes.isEmpty() ? juce::String("checked") : fixes.joinIntoString(" / ");
+}
+
 void NateVSTAudioProcessor::captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope)
 {
     const auto slot = static_cast<size_t>(juce::jlimit(0,
@@ -2540,6 +2674,7 @@ void NateVSTAudioProcessor::captureRandomCandidateSnapshot(RandomAction action, 
     auto& candidate = randomCandidateSnapshots[slot];
     candidate.state = createPluginState(false);
     candidate.label = randomActionLabel(action) + ": " + currentRandomRecipeName();
+    candidate.validationSummary = lastRandomValidationSummary;
     if (mutationScope != RandomMutationScope::all)
         candidate.label += " / " + randomMutationScopeLabel(mutationScope);
     candidate.valid = true;

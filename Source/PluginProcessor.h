@@ -96,6 +96,8 @@ public:
     juce::String getRandomCandidateChangedSectionsSummary(int slotIndex);
     int getRandomCandidateChangedSectionCount(int slotIndex);
     juce::String getRandomCandidateDiffSummary(int slotIndex);
+    juce::String getRandomCandidateValidationSummary(int slotIndex) const;
+    juce::String getLastRandomValidationSummary() const;
     int getActiveRandomCandidateIndex() const noexcept;
     bool recallRandomCandidate(int slotIndex);
     bool beginRandomCandidateAudition(int slotIndex);
@@ -179,6 +181,7 @@ private:
     {
         juce::ValueTree state;
         juce::String label;
+        juce::String validationSummary;
         bool valid = false;
     };
 
@@ -224,6 +227,7 @@ private:
     std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
     juce::String randomUndoLabel;
     juce::String randomRedoLabel;
+    juce::String lastRandomValidationSummary;
     int nextRandomCandidateSlot = 0;
     int activeRandomCandidateSlot = -1;
     int auditioningRandomCandidateSlot = -1;
@@ -238,6 +242,7 @@ private:
     static float readStateParameterValue(const juce::ValueTree& state, const char* parameterID, float fallback);
     juce::StringArray getRandomCandidateChangedSections(int slotIndex);
     juce::String currentRandomRecipeName() const;
+    juce::String applyRandomGenerationGuardrails(RandomMutationScope mutationScope);
     void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);
     bool isRandomLockEnabled(const juce::String& parameterID) const;
     float getParameterPlainValue(const juce::String& parameterID, float fallback) const;

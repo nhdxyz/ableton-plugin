@@ -62,6 +62,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Generated preset saves now write searchable `preset_notes` with recipe, source/category/pack, scope, locks, candidate sections, traits, diffs, use hints, and save time.
 - LAB Save now includes an editable notes field that auto-fills from generated context but preserves user notes before Save or Save Slot.
 - LAB Save now includes reusable note templates for macro intent, Ableton use, UKG variation notes, mix safety, and pack notes.
+- Random generation now runs a useful-only validation pass that can restore silent sources, clamp unsafe output gain, correct bass/stab sequencer range, contain bass width, widen tiny sample windows, and surface the validation summary in LAB status, History, and generated preset notes.
 
 ## Highest-Value Randomization Backlog
 
@@ -76,8 +77,8 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 9. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.
 10. Add safety meters during randomization: output peak, sub stereo risk, drive risk, FX tail risk.
 11. Add a loudness-normalized audition note after randomization.
-12. Add randomizer output validation that rejects silent, clipping, or inaudible patches.
-13. Add musical note-range validation for bass, stab, pluck, and FX recipes.
+12. Expand output validation into a render-based check that can reject clipping, inaudible, or overly long-tail patches before candidate capture.
+13. Expand musical note-range validation from root/octave guards into per-step bass, stab, pluck, and FX role checks.
 14. Add recipe-specific chord/scale seeding.
 15. Add macro naming and macro range generation per recipe.
 16. Add favorite/recent note templates and let users edit their template library.

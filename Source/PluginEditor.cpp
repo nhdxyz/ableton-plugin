@@ -4843,11 +4843,13 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateDetail()
     const auto sections = audioProcessor.getRandomCandidateChangedSectionsSummary(detailSlot);
     const auto compare = audioProcessor.getRandomCandidateCompareSummary(detailSlot);
     const auto diffs = audioProcessor.getRandomCandidateDiffSummary(detailSlot);
+    const auto validation = audioProcessor.getRandomCandidateValidationSummary(detailSlot);
     const auto cueText = activeRandomCandidateAuditionSlot == detailSlot ? juce::String("\nCue: auditioning") : juce::String();
     const auto detailText = slotLabel + " | " + summary
         + "\nSections: " + sections
         + "\nTraits: " + compare
         + "\nDiffs: " + diffs
+        + (validation.isNotEmpty() ? "\nValidation: " + validation : juce::String())
         + cueText;
 
     randomCandidateDetailEditor.setText(detailText, juce::dontSendNotification);
@@ -4935,6 +4937,9 @@ juce::String NateVSTAudioProcessorEditor::generatedPresetNotes(const juce::Strin
         lines.add("Sections: " + audioProcessor.getRandomCandidateChangedSectionsSummary(candidateSlotIndex));
         lines.add("Traits: " + audioProcessor.getRandomCandidateCompareSummary(candidateSlotIndex));
         lines.add("Diffs: " + audioProcessor.getRandomCandidateDiffSummary(candidateSlotIndex));
+        const auto validation = audioProcessor.getRandomCandidateValidationSummary(candidateSlotIndex);
+        if (validation.isNotEmpty())
+            lines.add("Validation: " + validation);
     }
 
     lines.add("Saved: " + juce::Time::getCurrentTime().formatted("%Y-%m-%d %H:%M"));
@@ -5107,6 +5112,9 @@ void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
     if (randomScopeBox.getSelectedId() > 1)
         details.add("Scope: " + randomScopeBox.getText());
     details.add(locks.isNotEmpty() ? "Locked: " + locks : "No locks");
+    const auto validation = audioProcessor.getLastRandomValidationSummary();
+    if (validation.isNotEmpty())
+        details.add("Validation: " + validation);
     randomStatusLabel.setText(action + " | " + details.joinIntoString(" | "), juce::dontSendNotification);
 }
 

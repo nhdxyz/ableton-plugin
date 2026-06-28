@@ -31,7 +31,19 @@ int main()
 
     if (! setPlainParameter(processor, Parameters::ID::randomRecipe, 6.0f)
         || ! setPlainParameter(processor, Parameters::ID::randomAmount, 0.72f)
-        || ! setPlainParameter(processor, Parameters::ID::randomChaos, 0.28f))
+        || ! setPlainParameter(processor, Parameters::ID::randomChaos, 0.28f)
+        || ! setPlainParameter(processor, Parameters::ID::randomSourceIntensity, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::randomFxIntensity, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::randomSequencerIntensity, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::outputGain, 6.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerRoot, 84.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f))
     {
         std::cerr << "Could not seed randomizer parameters\n";
         return 1;
@@ -44,6 +56,30 @@ int main()
         std::cerr << "First random candidate was not captured\n";
         return 1;
     }
+
+    const auto validationSummary = processor.getRandomCandidateValidationSummary(0);
+    const auto generatedOutput = readPlainParameter(processor, Parameters::ID::outputGain, 6.0f);
+    const auto generatedOsc1 = readPlainParameter(processor, Parameters::ID::osc1Level, 0.0f);
+    const auto generatedSeqRoot = readPlainParameter(processor, Parameters::ID::sequencerRoot, 84.0f);
+    const auto generatedSeqOctave = readPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f);
+    const auto generatedEffectiveRoot = generatedSeqRoot + (generatedSeqOctave * 12.0f);
+    if (! validationSummary.containsIgnoreCase("source restored")
+        || ! validationSummary.containsIgnoreCase("output clamped")
+        || ! validationSummary.containsIgnoreCase("bass range corrected")
+        || generatedOutput > -6.0f
+        || generatedOsc1 < 0.5f
+        || generatedEffectiveRoot > 48.0f)
+    {
+        std::cerr << "Random validation did not correct unsafe generated state. Summary: "
+                  << validationSummary << " output " << generatedOutput
+                  << " osc1 " << generatedOsc1
+                  << " effective root " << generatedEffectiveRoot << '\n';
+        return 1;
+    }
+
+    setPlainParameter(processor, Parameters::ID::randomSourceIntensity, 1.0f);
+    setPlainParameter(processor, Parameters::ID::randomFxIntensity, 1.0f);
+    setPlainParameter(processor, Parameters::ID::randomSequencerIntensity, 1.0f);
 
     const auto firstSummary = processor.getRandomCandidateSummary(0);
     if (! firstSummary.containsIgnoreCase("Generate") || ! firstSummary.containsIgnoreCase("UKG"))

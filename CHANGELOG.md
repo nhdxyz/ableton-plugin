@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### House Chord And Bassline Presets
+
+- Added appended sequencer chord colors for `Maj 7`, `Dom 7`, `Sus`, `House 9`, and `Dub`, preserving existing saved chord-mode indexes.
+- Added SEQ pattern presets for `Deep Chord`, `Dub Chord`, `Off Bass`, and `Rolling Bass`, with genre-tuned groove, gate, strum, octave, lock, and probability settings.
+- Added `SequencerHousePatternAudit` to verify the new chord intervals and house-focused pattern presets.
+
 ### Sequencer Pattern Scenes
 
 - Added four saved SEQ pattern scenes: `A`, `B`, `Fill`, and `Drop`, each capturing the current 16-step pattern, velocity/probability/timing/length/lock lanes, chord/voicing/strum state, groove settings, rate, root, and lock destination/depth.

@@ -180,6 +180,7 @@ Implemented sequencer sub-slice:
 
 - The SEQ panel now has four pattern scenes, `A`, `B`, `Fill`, and `Drop`, with capture/recall buttons that store the full 16-step pattern, per-step lanes, chord/voicing/strum settings, groove settings, rate/root/gate/accent/probability, and lock destination/depth.
 - Pattern scenes serialize into plugin state and preset state without becoming host automation parameters, and `SequencerPatternSceneAudit` verifies capture, recall, summary, and save/restore behavior.
+- Chord mode choices now include appended Maj 7, Dom 7, Sus, House 9, and Dub colors, and the SEQ preset menu includes Deep Chord, Dub Chord, Off Bass, and Rolling Bass starters. `SequencerHousePatternAudit` verifies these chord colors and presets.
 
 ## Priority 5: FX And Club Processing
 

@@ -144,6 +144,26 @@ int PatternSequencer::getChordIntervalCount(std::array<int, maxChordNotes>& inte
             intervals = { 0, 3, 7, 10, 14 };
             return 5;
 
+        case 6:
+            intervals = { 0, 4, 7, 11, 0 };
+            return 4;
+
+        case 7:
+            intervals = { 0, 4, 7, 10, 0 };
+            return 4;
+
+        case 8:
+            intervals = { 0, 5, 7, 0, 0 };
+            return 3;
+
+        case 9:
+            intervals = { 0, 4, 7, 10, 14 };
+            return 5;
+
+        case 10:
+            intervals = { 0, 7, 10, 14, 17 };
+            return 5;
+
         case 0:
         default:
             intervals = { 0, 0, 0, 0, 0 };

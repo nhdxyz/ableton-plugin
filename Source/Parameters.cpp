@@ -66,7 +66,7 @@ juce::StringArray sequencerScaleChoices()
 
 juce::StringArray sequencerChordModeChoices()
 {
-    return { "Off", "5th", "Minor", "Minor 7", "Major", "Minor 9" };
+    return { "Off", "5th", "Minor", "Minor 7", "Major", "Minor 9", "Maj 7", "Dom 7", "Sus", "House 9", "Dub" };
 }
 
 juce::StringArray sequencerChordVoicingChoices()

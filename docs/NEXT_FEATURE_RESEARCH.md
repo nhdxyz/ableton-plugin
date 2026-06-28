@@ -44,7 +44,7 @@ Nate VST already has a real foundation:
 - Eight performance macros plus an XY macro pad.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
-- 16-step piano-roll style sequencer with chord memory, templates, groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
+- 16-step piano-roll style sequencer with chord memory, expanded house/dub chord colors, templates, groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Live pump phase/reduction feedback, top-bar output safety status, and Guard reduction telemetry for checking ducking and level risk while sound-designing.
 - Preset library with recursive folders, categories, search, sort, favorites, 1-5 rating, metadata, macro previews, filters, and audition.
@@ -199,14 +199,14 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 112. Add per-step reverb throw lane.
 113. Add probability ranges and step conditions such as first, not first, fill, every 2, every 4, and random.
 114. Add scale quantize and key lock in the piano roll.
-115. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ stabs, and dub chords.
+115. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ stabs, and dub chords. First Maj 7, Dom 7, Sus, House 9, and Dub chord colors plus house/dub chord pattern starters are implemented.
 116. Add voicing spread and inversion tools.
 117. Add humanize with timing, velocity, gate, and pitch amount.
 118. Add groove template library: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, and broken percussion.
 119. Add groove amount per lane.
 120. Add swing microtiming visualization.
 121. Add Euclidean generator for minimal blips, hats, and percussion-style synth hits.
-122. Add bassline contour generator for rolling tech-house and UKG movement.
+122. Add bassline contour generator for rolling tech-house and UKG movement. First Off Bass and Rolling Bass pattern starters are implemented; deeper contour transforms remain open.
 123. Add recombine tool: keep rhythm, change notes.
 124. Add MIDI drag export directly from the plugin UI into Ableton.
 125. Add MIDI drag import from dropped MIDI files/clips.

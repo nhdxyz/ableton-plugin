@@ -1146,6 +1146,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerPatternBox.addItem("Tech Bass", 9);
     sequencerPatternBox.addItem("Minimal Pluck", 10);
     sequencerPatternBox.addItem("Techno Pulse", 11);
+    sequencerPatternBox.addItem("Deep Chord", 12);
+    sequencerPatternBox.addItem("Dub Chord", 13);
+    sequencerPatternBox.addItem("Off Bass", 14);
+    sequencerPatternBox.addItem("Rolling Bass", 15);
     sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
     addAndMakeVisible(sequencerPatternBox);
 

@@ -49,12 +49,13 @@ Research references:
 
 ### Stabs, Keys, And Leads
 
-- Common colors to support: organ stabs, M1-ish house chords, short bell/pluck phrases, bright minor chord stabs, and simple repeating lead hooks.
+- Common colors to support: organ stabs, M1-ish house chords, short bell/pluck phrases, bright minor chord stabs, major/dominant house chords, dub chords, and simple repeating lead hooks.
 - These need short envelopes, cleaner transients than techno stabs, optional chorus/width, and a quick low-cut/tone path.
 - A future organ/stab source should start as recipes and presets before adding a dedicated drawbar-style oscillator mode.
 - Current recipes and factory presets now seed Filter Character so organ/chord patches open warmer while bell/pluck patches can stay cleaner.
 - Current stab and bell presets mostly stay on 12 dB slope so the transient and chord color remain open before delay, reverb, width, and pump processing.
 - Current stab and bass recipes seed Osc Warp conservatively so organ/chord hits gain edge without replacing the future organ/drawbar or M1-style source work.
+- The SEQ chord menu now includes Maj 7, Dom 7, Sus, House 9, and Dub colors, with Deep Chord and Dub Chord pattern starters for fast house/garage stab sketches.
 
 ### Vocal And Sample Behavior
 
@@ -148,6 +149,7 @@ Research references:
 - Added visible host-sync badges to SEQ and FX so transport-locked garage patterns, Pump, Tremolo, and synced Delay state can be checked without leaving the panel.
 - Added a first assignable SEQ Lock lane so UKG bass, organ stabs, late stabs, and vocal-trigger patterns can push cutoff, drive, Osc Warp, pump, delay, reverb, or wavetable position per step without editing host automation.
 - Added SEQ pattern scenes for A/B/Fill/Drop variations, with scene state saved in plugin and preset state for house and UKG arrangement sketches.
+- Added appended house chord colors and Deep Chord, Dub Chord, Off Bass, and Rolling Bass pattern starters so chord/bass hooks can be sketched faster.
 
 ## Next UKG Features
 

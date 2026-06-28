@@ -69,6 +69,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Library scan results now keep all eight macro values per preset, and the Browser renders them as a compact Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw strip for faster performance-preset triage.
 - LIBRARY now separates Find, Browser, Save Patch, and Inspect areas, shows selected-preset notes and macro shape in a dedicated summary component, and keeps HOME preset access to recall/audition instead of save metadata.
 - The repo-managed factory pack now covers 32 UKG, house, tech-house, minimal, and techno starter presets, with newer presets carrying curated `preset_notes` for the Library inspector.
+- The LIBRARY panel now has a preset-vault polish pass with quick genre/source filter buttons, a denser central crate, and a clearer right-side save metadata flow while preserving existing preset files and metadata.
 
 ## Highest-Value Randomization Backlog
 

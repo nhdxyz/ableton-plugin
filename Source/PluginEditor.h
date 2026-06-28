@@ -578,6 +578,7 @@ private:
     juce::TextButton auditionPresetButton { "Audition" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
+    std::array<juce::TextButton, 8> presetQuickFilterButtons;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
     juce::TextButton fxMoveUpButton { "Up" };
@@ -771,6 +772,7 @@ private:
     void updatePresetLibrarySummary();
     void saveCurrentPreset();
     void saveActiveRandomCandidatePreset();
+    void applyPresetQuickFilter(size_t index);
     void loadSelectedPreset();
     int selectedRandomMutationScope() const;
     void triggerRandomGenerate();

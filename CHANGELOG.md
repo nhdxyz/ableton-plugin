@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Library Preset Vault UI Polish
+
+- Reworked the LIBRARY panel into a clearer preset-vault workflow with wider left/right rails, a denser central crate, and separated save/inspect cards.
+- Added quick filter buttons for All, Favorites, House, Tech House, Minimal, UKG, Techno, and Factory presets so the 32-preset factory pack is easier to browse without opening dropdowns.
+- Rebalanced the save area into preset name, folder, author/pack, key/BPM/rating, note template, and save action rows while preserving the existing `.natevstpreset` metadata format.
+- Increased browser row height and updated the browser header language around production-patch auditioning and performance macros.
+
 ### Expanded 32-Preset Factory Style Pack
 
 - Expanded the repo-managed factory preset pack from 24 to 32 presets with additional house, tech-house, minimal, and techno starters: Deep House Seventh Stab, Deep House Mellow Keys, Tech House Acid Roller, Tech House Top Pluck, Minimal Hypno Sequence, Minimal Glass Pluck, Warehouse Riser Noise, and Techno Metallic Ping.

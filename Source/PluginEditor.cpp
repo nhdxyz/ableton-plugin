@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <typeinfo>
 #include <vector>
 
 namespace
@@ -110,6 +111,53 @@ SampleSlicePreviewSettings defaultSlicePreviewSettings(size_t sliceIndex, int st
     }
 
     return settings;
+}
+
+juce::String layoutAuditComponentName(const juce::Component& component, int siblingIndex)
+{
+    if (component.getName().isNotEmpty())
+        return component.getName();
+
+    if (component.getComponentID().isNotEmpty())
+        return component.getComponentID();
+
+    return juce::String(typeid(component).name()) + "#" + juce::String(siblingIndex);
+}
+
+void appendVisibleLayoutIssues(const juce::Component& root,
+                               const juce::Component& component,
+                               const juce::String& panelName,
+                               const juce::String& parentPath,
+                               juce::StringArray& issues)
+{
+    const auto editorBounds = root.getLocalBounds();
+
+    for (auto childIndex = 0; childIndex < component.getNumChildComponents(); ++childIndex)
+    {
+        const auto* child = component.getChildComponent(childIndex);
+        if (child == nullptr || ! child->isVisible())
+            continue;
+
+        const auto childName = layoutAuditComponentName(*child, childIndex);
+        const auto childPath = parentPath.isEmpty() ? childName : parentPath + "/" + childName;
+        const auto* parent = child->getParentComponent();
+        const auto boundsInEditor = parent != nullptr
+            ? root.getLocalArea(parent, child->getBounds())
+            : child->getBounds();
+
+        if (boundsInEditor.isEmpty())
+        {
+            issues.add(panelName + ": " + childPath + " has empty bounds "
+                       + boundsInEditor.toString());
+        }
+        else if (! editorBounds.contains(boundsInEditor))
+        {
+            issues.add(panelName + ": " + childPath + " overflows editor bounds "
+                       + boundsInEditor.toString() + " outside " + editorBounds.toString());
+        }
+
+        appendVisibleLayoutIssues(root, *child, panelName, childPath, issues);
+    }
 }
 
 juce::Colour backgroundColour()
@@ -2950,6 +2998,80 @@ void NateVSTAudioProcessorEditor::filesDropped(const juce::StringArray& files, i
             return;
         }
     }
+}
+
+juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
+{
+    struct PanelAuditSpec
+    {
+        Panel panel;
+        const char* name = "";
+    };
+
+    const std::array<PanelAuditSpec, 8> panels {
+        PanelAuditSpec { Panel::home, "HOME" },
+        PanelAuditSpec { Panel::synth, "SYNTH" },
+        PanelAuditSpec { Panel::lab, "LAB" },
+        PanelAuditSpec { Panel::mod, "MOD" },
+        PanelAuditSpec { Panel::sample, "SAMPLE" },
+        PanelAuditSpec { Panel::sequencer, "SEQ" },
+        PanelAuditSpec { Panel::effects, "FX" },
+        PanelAuditSpec { Panel::library, "LIBRARY" }
+    };
+
+    const std::array<FxModule, 15> fxModules {
+        FxModule::tone,
+        FxModule::eq,
+        FxModule::distortion,
+        FxModule::bitcrush,
+        FxModule::pump,
+        FxModule::tremolo,
+        FxModule::ring,
+        FxModule::comb,
+        FxModule::phaser,
+        FxModule::flanger,
+        FxModule::chorus,
+        FxModule::delay,
+        FxModule::reverb,
+        FxModule::width,
+        FxModule::guard
+    };
+
+    const auto originalPanel = activePanel;
+    const auto originalFxModule = selectedFxModule;
+    juce::StringArray issues;
+
+    auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
+    {
+        resized();
+        appendVisibleLayoutIssues(*this, *this, panelName, {}, issues);
+    };
+
+    for (const auto& panel : panels)
+    {
+        activePanel = panel.panel;
+        updatePanelVisibility();
+
+        if (panel.panel == Panel::effects)
+        {
+            for (const auto module : fxModules)
+            {
+                selectedFxModule = module;
+                auditCurrentLayout(juce::String(panel.name) + "/" + fxModuleName(module));
+            }
+        }
+        else
+        {
+            auditCurrentLayout(panel.name);
+        }
+    }
+
+    activePanel = originalPanel;
+    selectedFxModule = originalFxModule;
+    updatePanelVisibility();
+    resized();
+
+    return issues;
 }
 
 void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,

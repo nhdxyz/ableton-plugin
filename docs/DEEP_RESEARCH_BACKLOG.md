@@ -51,7 +51,7 @@ See `docs/PROGRAM_RESEARCH_GAP_LIST.md` for the latest program-by-program resear
 ## Priority 0: UI And Workflow Corrections
 
 1. Extract HOME, SYNTH, SAMPLE, MOD, SEQ, FX, LAB, and LIBRARY panels into smaller editor components.
-2. Add automated layout overflow checks for every page at the fixed plugin size.
+2. Add automated layout overflow checks for every page at the fixed plugin size. First CTest-backed editor bounds audit implemented.
 3. Add screenshot-based UI regression checks for desktop scale factors.
 4. Add a debug overlay that marks component bounds when checking overlap.
 5. Standardize section headers, spacing, and row heights across pages.
@@ -69,6 +69,10 @@ See `docs/PROGRAM_RESEARCH_GAP_LIST.md` for the latest program-by-program resear
 Implemented control-feel sub-slice:
 
 - Rotary, horizontal, compact curve, and macro-assignment amount sliders now expose Shift/Cmd fine adjustment, value popups, typed values, and double-click reset through a shared slider setup path. Rotary drag distance was reduced so primary sound-shaping controls move with less effort while scroll-wheel editing stays disabled to prevent accidental trackpad changes inside Ableton.
+
+Implemented UI test sub-slice:
+
+- `EditorLayoutAudit` now instantiates the real plugin editor and checks HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module for visible empty-bounds or editor-overflow failures through CTest.
 
 ## Priority 1: Modulation And Movement
 

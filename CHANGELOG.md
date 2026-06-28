@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Editor Layout Audit Test
+
+- Added a CTest-backed `NateVSTLayoutAudit` executable that instantiates the real processor/editor and audits every visible component across HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module.
+- The audit now fails on visible controls with empty bounds or bounds that overflow the fixed editor surface, giving future UI-heavy feature work a repeatable local safety check.
+- Added an editor-side `runLayoutAudit()` hook so the same bounds audit can be reused as the UI is componentized.
+
 ### Per-Slice Choke And Slice-Key Style Fallback
 
 - Added a saved `Sample Slice N Choke` parameter for all eight SAMPLE pads, with old presets and sessions migrating to open slices by default.

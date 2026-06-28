@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(FetchContent)
+include(CTest)
 
 set(JUCE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(JUCE_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
@@ -19,6 +20,8 @@ FetchContent_Declare(
 )
 
 FetchContent_MakeAvailable(JUCE)
+
+enable_testing()
 
 juce_add_plugin(NateVST
     COMPANY_NAME "Nate"
@@ -78,6 +81,20 @@ target_link_libraries(NateVST
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
 )
+
+add_executable(NateVSTLayoutAudit Tests/EditorLayoutAudit.cpp)
+
+target_link_libraries(NateVSTLayoutAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME EditorLayoutAudit COMMAND NateVSTLayoutAudit)
 
 set(NATE_VST_FACTORY_PRESETS_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets")
 set(NATE_VST_FACTORY_PRESETS_DEST "$ENV{HOME}/Library/Application Support/Nate VST/Factory Presets")

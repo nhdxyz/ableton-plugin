@@ -81,7 +81,10 @@ Once CMake is installed:
 ```sh
 cmake -S . -B build -G Ninja
 cmake --build build --config Debug
+ctest --test-dir build --output-on-failure
 ```
+
+The current test suite includes `EditorLayoutAudit`, which opens the real plugin editor and checks all panels plus FX detail views for visible controls with empty or out-of-bounds layouts.
 
 The generated VST3 can be copied to:
 

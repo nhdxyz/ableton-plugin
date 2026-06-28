@@ -30,6 +30,7 @@ public:
     void resized() override;
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
+    juce::StringArray runLayoutAudit();
 
 private:
     enum class Panel

@@ -70,7 +70,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 ### A. UI, Layout, And Interaction
 
 1. Split `PluginEditor` into one component per page: HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, top bar, and keyboard.
-2. Add an automated component-overlap test for every panel at the current plugin size.
+2. Add an automated component-overlap test for every panel at the current plugin size. First editor bounds audit implemented through CTest; component extraction and richer overlap rules remain open.
 3. Add screenshot regression captures for every panel after each significant UI change.
 4. Add a debug bounds overlay toggle for manual layout reviews.
 5. Add UI scale choices: 85%, 100%, 125%, and 150%.
@@ -359,7 +359,7 @@ Reference URLs used for this refresh:
 
 ## Recommended Build Order
 
-1. Componentize the editor and add layout-overlap checks.
+1. Componentize the editor and expand the first CTest layout bounds audit into richer overlap checks.
 2. Add drag/menu modulation assignment plus modulation rings, hover route overlays, and per-route range editing.
 3. Add transient/manual sample slicing with per-slice start/end/nudge/pan/fades/probability and slice-to-sequencer lanes.
 4. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.

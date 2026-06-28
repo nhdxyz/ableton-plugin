@@ -48,6 +48,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - `PresetSaveAudit` verifies nested category save, metadata normalization, and load-by-name.
 - Four Random Lab candidate slots now capture full patch/sample/sequencer snapshots after Generate, Mutate, Vary, Wild, and section rolls.
 - Candidate buttons show compact action/recipe/scope labels, highlight the active slot, recall saved generated states, and are covered by `RandomCandidateAudit`.
+- Generated Random Lab saves now store `Generated` source metadata, `Generated`/`Random Lab` tags, and the source recipe, and Library can filter/tag-search generated presets.
 
 ## Highest-Value Randomization Backlog
 
@@ -87,7 +88,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 ## Browser And Save Backlog
 
-1. Add a generated preset collection filter.
+1. Add generated-preset compare/revert and richer source-recipe notes.
 2. Add smart folders for Five Star, Favorites, Recent, Generated, UKG Bass, UKG Chops, House Chords, Tech House Bass, Minimal Plucks, and Dirty Techno.
 3. Add preset compare/revert before overwriting an existing preset.
 4. Add duplicate-name prompt instead of silently replacing older folder copies.

@@ -503,6 +503,7 @@ Build the next larger slices in this order:
    First section-scope pass implemented as a HOME/LAB `Scope` selector for All, Source, Env, Filter, Sample, FX, Seq, and Macros, restoring unselected sections plus hidden modulation/output state after recipe generation.
    First generated-save handoff pass implemented as LAB section-roll buttons, generated preset draft naming, recipe-aware category/pack/BPM suggestions, direct LAB save controls, normalized category folder metadata, temporary-file preset writes, and a `PresetSaveAudit` CTest.
    First candidate-history pass implemented as four processor-backed LAB slots that capture generated patch/sample/sequencer snapshots, recall them with UI refresh, expose compact action/recipe/scope labels, and verify capture/recall through `RandomCandidateAudit`.
+   First generated-library pass implemented generated-source preset metadata, Generated/Random Lab tags, source-recipe metadata, a Library `Generated` filter, and PresetSaveAudit coverage for generated library scanning.
 
 ## Acceptance Criteria For The Next Big UI Pass
 

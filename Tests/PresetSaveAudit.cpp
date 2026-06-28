@@ -14,6 +14,8 @@ int main()
     options.pack = "UKG Basslines";
     options.key = "C Min";
     options.bpm = 132;
+    options.generated = true;
+    options.generatedRecipe = "UKG Dred Bass";
 
     const auto presetName = "Preset Save Audit " + juce::String(static_cast<int>(juce::Time::getMillisecondCounter() % 1000000));
     auto legalName = juce::File::createLegalFileName(presetName);
@@ -58,7 +60,11 @@ int main()
             || state.getProperty("preset_folder").toString() != "UKG/Bass"
             || state.getProperty("preset_pack").toString() != "UKG Basslines"
             || state.getProperty("preset_key").toString() != "C Min"
-            || static_cast<int>(state.getProperty("preset_bpm")) != 132)
+            || static_cast<int>(state.getProperty("preset_bpm")) != 132
+            || state.getProperty("preset_source").toString() != "Generated"
+            || state.getProperty("preset_generated_recipe").toString() != "UKG Dred Bass"
+            || ! state.getProperty("preset_tags").toString().contains("Generated")
+            || ! state.getProperty("preset_tags").toString().contains("Random Lab"))
         {
             std::cerr << "Saved preset metadata was not normalized correctly\n";
             cleanup();
@@ -68,6 +74,26 @@ int main()
     else
     {
         std::cerr << "Saved preset XML could not be parsed\n";
+        cleanup();
+        return 1;
+    }
+
+    auto foundInLibrary = false;
+    for (const auto& preset : processor.getPresetLibrary())
+    {
+        if (preset.name != legalName)
+            continue;
+
+        foundInLibrary = preset.source == "Generated"
+            && preset.tags.contains("Generated")
+            && preset.tags.contains("Random Lab")
+            && preset.tags.contains("UKG Dred Bass");
+        break;
+    }
+
+    if (! foundInLibrary)
+    {
+        std::cerr << "Generated preset metadata was not visible through the library scan\n";
         cleanup();
         return 1;
     }

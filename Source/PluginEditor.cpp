@@ -226,6 +226,7 @@ juce::StringArray presetFilterChoices()
         "5 Stars",
         "4+ Stars",
         "Macro Rich",
+        "Generated",
         "User",
         "Factory",
         "Bass",
@@ -342,6 +343,8 @@ juce::StringArray presetTagChoices()
         "Pump",
         "Wide",
         "FX",
+        "Generated",
+        "Random Lab",
         "Vocal Chop",
         "Sample",
         "House",
@@ -4142,6 +4145,8 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
     const auto category = suggestedPresetCategoryForRecipe();
     const auto pack = suggestedPresetPackForCategory(category);
     const auto bpm = suggestedPresetBpmForCategory(category);
+    currentPresetDraftIsGenerated = true;
+    currentGeneratedPresetRecipe = recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab");
 
     const auto currentName = presetNameEditor.getText().trim();
     const auto selectedPresetName = presetBox.getText().trim();
@@ -6903,6 +6908,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || (filter == "5 Stars" && preset.rating == 5)
                 || (filter == "4+ Stars" && preset.rating >= 4)
                 || (filter == "Macro Rich" && preset.macroIntensity >= 0.30f)
+                || (filter == "Generated" && (preset.source.equalsIgnoreCase("Generated")
+                                               || preset.tags.containsIgnoreCase("Generated")))
                 || (filter == "User" && ! preset.isFactory)
                 || (filter == "Factory" && preset.isFactory)
                 || (filter == "120-124 BPM" && preset.bpm >= 120 && preset.bpm <= 124)
@@ -6989,6 +6996,8 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     options.pack = presetPackBox.getText().trim();
     options.key = presetKeyBox.getText().trim();
     options.bpm = parsePresetBpm(presetBpmBox.getText());
+    options.generated = currentPresetDraftIsGenerated;
+    options.generatedRecipe = currentGeneratedPresetRecipe;
 
     if (audioProcessor.savePreset(presetName, options))
     {
@@ -6996,11 +7005,14 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
         if (storedName.isEmpty())
             storedName = "Untitled";
 
-        presetStatusLabel.setText("Saved " + storedName, juce::dontSendNotification);
+        presetStatusLabel.setText(options.generated ? "Saved generated " + storedName : "Saved " + storedName,
+                                  juce::dontSendNotification);
         refreshPresetList();
         presetBox.setText(storedName, juce::dontSendNotification);
         presetNameEditor.setText(storedName, juce::dontSendNotification);
         presetNameIsRandomDraft = false;
+        currentPresetDraftIsGenerated = false;
+        currentGeneratedPresetRecipe.clear();
         updateFavoritePresetButton();
         return;
     }
@@ -7019,6 +7031,8 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
         presetBox.setText(presetName, juce::dontSendNotification);
         presetNameEditor.setText(presetName, juce::dontSendNotification);
         presetNameIsRandomDraft = false;
+        currentPresetDraftIsGenerated = false;
+        currentGeneratedPresetRecipe.clear();
         presetStatusLabel.setText("Loaded " + presetName, juce::dontSendNotification);
         updateFavoritePresetButton();
         updateSampleNameLabel();

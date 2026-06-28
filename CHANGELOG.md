@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Generated Preset Metadata And Filter
+
+- Added generated-preset metadata for Random Lab saves, including `preset_source="Generated"`, `Generated`/`Random Lab` tags, and the originating random recipe.
+- Added `Generated` to the Library preset filter and `Generated`/`Random Lab` to tag filters so saved random ideas can be found quickly.
+- Kept generated presets in the user preset folder and User filter while exposing Generated as an additional source/tag layer.
+- Extended `PresetSaveAudit` to verify generated XML metadata and scanned Library metadata.
+
 ### Random Candidate History Slots
 
 - Added four processor-backed Random Lab candidate slots that capture full patch/sample/sequencer snapshots after Generate, Mutate, Vary, Wild, and section-roll actions.

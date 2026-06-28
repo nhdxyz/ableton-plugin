@@ -1457,6 +1457,7 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
     const auto storedPack = presetTextOrFallback(options.pack, "User Pack");
     const auto storedKey = presetTextOrFallback(options.key, "Any Key");
     const auto storedBpm = normalisePresetBpm(options.bpm);
+    const auto storedGeneratedRecipe = presetTextOrFallback(options.generatedRecipe, "Random Lab");
     const auto directory = presetDirectoryForCategory(storedCategory);
     if (! directory.createDirectory())
         return false;
@@ -1465,12 +1466,18 @@ bool NateVSTAudioProcessor::savePreset(const juce::String& presetName, const Pre
     state.setProperty("preset_name", trimmedName, nullptr);
     state.setProperty("preset_category", storedCategory, nullptr);
     state.setProperty("preset_author", storedAuthor, nullptr);
-    state.setProperty("preset_source", "User", nullptr);
+    state.setProperty("preset_source", options.generated ? "Generated" : "User", nullptr);
     state.setProperty("preset_pack", storedPack, nullptr);
     state.setProperty("preset_key", storedKey, nullptr);
     state.setProperty("preset_bpm", storedBpm, nullptr);
-    state.setProperty("preset_tags", storedPack.equalsIgnoreCase(storedCategory) ? storedCategory : storedCategory + ", " + storedPack, nullptr);
+    state.setProperty("preset_tags",
+                      storedPack.equalsIgnoreCase(storedCategory)
+                          ? storedCategory + (options.generated ? ", Generated, Random Lab, " + storedGeneratedRecipe : "")
+                          : storedCategory + ", " + storedPack + (options.generated ? ", Generated, Random Lab, " + storedGeneratedRecipe : ""),
+                      nullptr);
     state.setProperty("preset_folder", presetCategoryPathSegments(storedCategory).joinIntoString("/"), nullptr);
+    if (options.generated)
+        state.setProperty("preset_generated_recipe", storedGeneratedRecipe, nullptr);
 
     if (auto xml = state.createXml())
     {

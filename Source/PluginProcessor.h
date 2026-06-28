@@ -64,6 +64,8 @@ public:
         juce::String pack;
         juce::String key;
         int bpm = 0;
+        bool generated = false;
+        juce::String generatedRecipe;
     };
 
     int getNumPrograms() override;

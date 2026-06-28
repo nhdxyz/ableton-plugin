@@ -732,6 +732,8 @@ private:
 
     Panel activePanel = Panel::home;
     bool presetNameIsRandomDraft = false;
+    bool currentPresetDraftIsGenerated = false;
+    juce::String currentGeneratedPresetRecipe;
     FxModule selectedFxModule = FxModule::guard;
     FxModule fxPresetBoxModule = FxModule::guard;
     float displayedPeakLeft = 0.0f;

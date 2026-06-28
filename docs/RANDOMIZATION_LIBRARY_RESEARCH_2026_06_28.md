@@ -53,6 +53,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Active candidates can be promoted directly to performance snapshot A or B from LAB, and `RandomCandidateAudit` verifies promotion and recall.
 - Per-slot candidate `Cue` buttons now preview generated ideas with a short note and restore the current patch afterward; `RandomCandidateAudit` verifies that preview state is non-destructive.
 - LAB `Save Slot` now writes the active generated candidate into the recursive preset library with generated-source metadata, category folder, pack, key, BPM, and source-recipe tags without recalling the candidate first.
+- Candidate buttons now show changed-section count badges, and recall/cue tooltips include changed sections plus old/new value diffs for the most important sound-shaping controls.
 
 ## Highest-Value Randomization Backlog
 
@@ -61,7 +62,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 3. Add randomization intensity per section, not only one global Amount and Chaos.
 4. Add route-level locks for modulation matrix slots.
 5. Add target locks for specific controls by right-clicking a knob and choosing "Lock from Random".
-6. Add a visible mutation diff panel with changed parameters, old value, new value, and section.
+6. Add a larger visible mutation diff panel with changed parameters, old value, new value, and section.
 7. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
 8. Add "promote variation" and "discard variation" actions.
 9. Add save/favorite/rating handoff from generated candidate rows.
@@ -122,15 +123,16 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 ## Next Implementation Slice
 
-Best next slice: add visible generated-candidate mutation diffs and changed-section counts.
+Best next slice: add deeper generated-candidate history and candidate-row favorite/rating handoff.
 
 Why:
 - It directly supports randomization as the best feature.
 - It keeps users from losing good ideas while exploring.
-- It naturally connects candidate slots to compare, favorite, diff, and browser organization.
+- It naturally connects candidate slots to favorite, rating, notes, and browser organization.
 - It can be implemented without changing plugin parameter IDs.
 
 Candidate polish behavior:
-- Candidate rows can show a compact changed-section count in addition to the current trait summary.
-- Candidate rows can show old/new value diffs for the most important changed controls.
+- Expand four candidate slots into a scrollable history once the compact slot workflow is stable.
+- Candidate rows can carry favorite/rating actions before or after save-from-slot.
+- Candidate rows can carry short notes such as "best bass", "too bright", or "save for B".
 - Library can group generated preset variants into a smart collection once generated-save metadata exists.

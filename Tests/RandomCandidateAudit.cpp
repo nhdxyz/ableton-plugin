@@ -68,6 +68,20 @@ int main()
         return 1;
     }
 
+    const auto changedSections = processor.getRandomCandidateChangedSectionsSummary(0);
+    const auto changedSectionCount = processor.getRandomCandidateChangedSectionCount(0);
+    const auto diffSummary = processor.getRandomCandidateDiffSummary(0);
+    if (changedSectionCount < 1
+        || ! changedSections.containsIgnoreCase("Filter")
+        || ! diffSummary.containsIgnoreCase("Cutoff")
+        || ! diffSummary.contains("->"))
+    {
+        std::cerr << "Candidate diff summary was not descriptive. Sections: "
+                  << changedSections << " count " << changedSectionCount
+                  << " diff " << diffSummary << '\n';
+        return 1;
+    }
+
     if (! processor.beginRandomCandidateAudition(0))
     {
         std::cerr << "Candidate audition did not start\n";
@@ -223,6 +237,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Random candidate audit passed for capture, cue, save, recall, and promotion.\n";
+    std::cout << "Random candidate audit passed for capture, diff, cue, save, recall, and promotion.\n";
     return 0;
 }

@@ -598,6 +598,122 @@ juce::String NateVSTAudioProcessor::getRandomCandidateCompareSummary(int slotInd
     return changes.isEmpty() ? juce::String("similar") : changes.joinIntoString(", ");
 }
 
+juce::String NateVSTAudioProcessor::getRandomCandidateChangedSectionsSummary(int slotIndex)
+{
+    const auto sections = getRandomCandidateChangedSections(slotIndex);
+    return sections.isEmpty() ? juce::String("No section changes") : sections.joinIntoString(", ");
+}
+
+int NateVSTAudioProcessor::getRandomCandidateChangedSectionCount(int slotIndex)
+{
+    return getRandomCandidateChangedSections(slotIndex).size();
+}
+
+juce::String NateVSTAudioProcessor::getRandomCandidateDiffSummary(int slotIndex)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return {};
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    const auto current = createPluginState(false);
+    juce::StringArray diffs;
+
+    auto formatPercent = [] (float value)
+    {
+        return juce::String(juce::roundToInt(juce::jlimit(0.0f, 1.0f, value) * 100.0f)) + "%";
+    };
+
+    auto formatHz = [] (float value)
+    {
+        if (value >= 1000.0f)
+            return juce::String(value / 1000.0f, 1) + "k";
+
+        return juce::String(juce::roundToInt(value));
+    };
+
+    auto formatDb = [] (float value)
+    {
+        return juce::String(value, 1) + "dB";
+    };
+
+    auto formatSemitone = [] (float value)
+    {
+        const auto rounded = juce::roundToInt(value);
+        return (rounded >= 0 ? juce::String("+") : juce::String()) + juce::String(rounded) + "st";
+    };
+
+    auto addDiff = [&] (const juce::String& label,
+                        const char* parameterID,
+                        float fallback,
+                        float threshold,
+                        auto formatValue)
+    {
+        if (diffs.size() >= 5)
+            return;
+
+        const auto currentValue = readStateParameterValue(current, parameterID, fallback);
+        const auto candidateValue = readStateParameterValue(candidate.state, parameterID, fallback);
+        if (std::abs(candidateValue - currentValue) <= threshold)
+            return;
+
+        diffs.add(label + " " + formatValue(currentValue) + "->" + formatValue(candidateValue));
+    };
+
+    const auto currentCutoff = readStateParameterValue(current, Parameters::ID::filterCutoff, 1000.0f);
+    const auto candidateCutoff = readStateParameterValue(candidate.state, Parameters::ID::filterCutoff, 1000.0f);
+    if (std::abs(candidateCutoff - currentCutoff) > juce::jmax(120.0f, currentCutoff * 0.08f))
+        diffs.add("Cutoff " + formatHz(currentCutoff) + "->" + formatHz(candidateCutoff));
+
+    addDiff("Drive", Parameters::ID::driveAmount, 0.0f, 0.05f, formatPercent);
+    addDiff("FX drive", Parameters::ID::fxDistortionAmount, 0.0f, 0.05f, formatPercent);
+    addDiff("Motion", Parameters::ID::macroMotion, 0.0f, 0.08f, formatPercent);
+    addDiff("LFO", Parameters::ID::lfo1Depth, 0.0f, 0.08f, formatPercent);
+    addDiff("Delay", Parameters::ID::fxDelayMix, 0.0f, 0.05f, formatPercent);
+    addDiff("Reverb", Parameters::ID::fxReverbMix, 0.0f, 0.05f, formatPercent);
+    addDiff("Width", Parameters::ID::fxWidthAmount, 1.0f, 0.08f, formatPercent);
+    addDiff("Output", Parameters::ID::outputGain, 0.8f, 0.05f, formatPercent);
+
+    if (diffs.size() < 5)
+    {
+        const auto currentStart = readStateParameterValue(current, Parameters::ID::sampleStart, 0.0f);
+        const auto currentEnd = readStateParameterValue(current, Parameters::ID::sampleEnd, 1.0f);
+        const auto candidateStart = readStateParameterValue(candidate.state, Parameters::ID::sampleStart, 0.0f);
+        const auto candidateEnd = readStateParameterValue(candidate.state, Parameters::ID::sampleEnd, 1.0f);
+        if (std::abs(candidateStart - currentStart) > 0.03f || std::abs(candidateEnd - currentEnd) > 0.03f)
+        {
+            diffs.add("Sample "
+                      + formatPercent(currentStart) + "-" + formatPercent(currentEnd)
+                      + "->" + formatPercent(candidateStart) + "-" + formatPercent(candidateEnd));
+        }
+    }
+
+    addDiff("Pitch", Parameters::ID::sampleTranspose, 0.0f, 0.5f, formatSemitone);
+    addDiff("Gain", Parameters::ID::sampleGain, -6.0f, 0.75f, formatDb);
+
+    if (diffs.size() < 5)
+    {
+        auto enabledSteps = [] (const juce::ValueTree& state)
+        {
+            auto count = 0;
+            for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+                if (static_cast<bool>(state.getProperty("seq_step_" + juce::String(stepIndex) + "_enabled", false)))
+                    ++count;
+
+            return count;
+        };
+
+        const auto currentSteps = enabledSteps(current);
+        const auto candidateSteps = enabledSteps(candidate.state);
+        if (currentSteps != candidateSteps)
+            diffs.add("Seq " + juce::String(currentSteps) + "->" + juce::String(candidateSteps) + " steps");
+    }
+
+    while (diffs.size() > 5)
+        diffs.remove(diffs.size() - 1);
+
+    return diffs.isEmpty() ? juce::String("no major value diff") : diffs.joinIntoString(", ");
+}
+
 int NateVSTAudioProcessor::getActiveRandomCandidateIndex() const noexcept
 {
     return activeRandomCandidateSlot;
@@ -2141,6 +2257,250 @@ float NateVSTAudioProcessor::readStateParameterValue(const juce::ValueTree& stat
         return static_cast<float>(parameterState.getProperty("value", fallback));
 
     return fallback;
+}
+
+juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int slotIndex)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return {};
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    const auto current = createPluginState(false);
+    juce::StringArray sections;
+
+    auto parameterChanged = [&] (const char* parameterID, float fallback, float threshold = 0.001f)
+    {
+        return std::abs(readStateParameterValue(candidate.state, parameterID, fallback)
+                        - readStateParameterValue(current, parameterID, fallback)) > threshold;
+    };
+
+    auto anyChanged = [&] (std::initializer_list<const char*> parameterIDs, float threshold = 0.001f)
+    {
+        for (const auto* parameterID : parameterIDs)
+            if (parameterChanged(parameterID, 0.0f, threshold))
+                return true;
+
+        return false;
+    };
+
+    auto anyArrayChanged = [&] (const auto& parameterIDs, float threshold = 0.001f)
+    {
+        for (const auto* parameterID : parameterIDs)
+            if (parameterChanged(parameterID, 0.0f, threshold))
+                return true;
+
+        return false;
+    };
+
+    if (anyChanged({ Parameters::ID::oscWave,
+                    Parameters::ID::oscOctave,
+                    Parameters::ID::oscTune,
+                    Parameters::ID::osc1Level,
+                    Parameters::ID::osc2Wave,
+                    Parameters::ID::osc2Octave,
+                    Parameters::ID::osc2Tune,
+                    Parameters::ID::osc2Level,
+                    Parameters::ID::subLevel,
+                    Parameters::ID::noiseLevel,
+                    Parameters::ID::oscWarp,
+                    Parameters::ID::oscWavetablePosition,
+                    Parameters::ID::osc2WavetablePosition,
+                    Parameters::ID::monoMode,
+                    Parameters::ID::glideTime,
+                    Parameters::ID::unisonVoices,
+                    Parameters::ID::unisonDetune,
+                    Parameters::ID::unisonBlend,
+                    Parameters::ID::unisonSpread }))
+        sections.add("Source");
+
+    if (anyChanged({ Parameters::ID::ampAttack,
+                    Parameters::ID::ampDecay,
+                    Parameters::ID::ampSustain,
+                    Parameters::ID::ampRelease,
+                    Parameters::ID::lfo1Rate,
+                    Parameters::ID::lfo1Sync,
+                    Parameters::ID::lfo1SyncRate,
+                    Parameters::ID::lfo1Shape,
+                    Parameters::ID::lfo1Depth,
+                    Parameters::ID::lfo1Phase,
+                    Parameters::ID::lfo1Retrigger,
+                    Parameters::ID::lfo2Rate,
+                    Parameters::ID::lfo2Sync,
+                    Parameters::ID::lfo2SyncRate,
+                    Parameters::ID::lfo2Shape,
+                    Parameters::ID::lfo2Depth,
+                    Parameters::ID::lfo2Phase,
+                    Parameters::ID::lfo2Retrigger,
+                    Parameters::ID::modEnv1Attack,
+                    Parameters::ID::modEnv1Decay,
+                    Parameters::ID::modEnv1Sustain,
+                    Parameters::ID::modEnv1Release,
+                    Parameters::ID::modEnv1Depth })
+        || anyArrayChanged(Parameters::ID::lfo1Curve))
+        sections.add("Env");
+
+    if (anyChanged({ Parameters::ID::filterCutoff,
+                    Parameters::ID::filterResonance,
+                    Parameters::ID::filterEnvAmount,
+                    Parameters::ID::filterMode,
+                    Parameters::ID::filterCharacter,
+                    Parameters::ID::filterSlope,
+                    Parameters::ID::driveAmount }))
+        sections.add("Filter");
+
+    if (anyChanged({ Parameters::ID::sampleEnabled,
+                    Parameters::ID::sampleStart,
+                    Parameters::ID::sampleEnd,
+                    Parameters::ID::sampleReverse,
+                    Parameters::ID::samplePlaybackMode,
+                    Parameters::ID::sampleTranspose,
+                    Parameters::ID::samplePitchRamp,
+                    Parameters::ID::sampleGain,
+                    Parameters::ID::sampleMix,
+                    Parameters::ID::sampleStutterEnabled,
+                    Parameters::ID::sampleStutterRate,
+                    Parameters::ID::sampleStutterRepeats,
+                    Parameters::ID::sampleSliceStyle })
+        || anyArrayChanged(Parameters::ID::sampleSliceCustom)
+        || anyArrayChanged(Parameters::ID::sampleSliceStart)
+        || anyArrayChanged(Parameters::ID::sampleSliceEnd)
+        || anyArrayChanged(Parameters::ID::sampleSliceReverse)
+        || anyArrayChanged(Parameters::ID::sampleSliceTranspose)
+        || anyArrayChanged(Parameters::ID::sampleSliceGain)
+        || anyArrayChanged(Parameters::ID::sampleSlicePan)
+        || anyArrayChanged(Parameters::ID::sampleSliceProbability)
+        || anyArrayChanged(Parameters::ID::sampleSliceStutter)
+        || anyArrayChanged(Parameters::ID::sampleSliceChoke)
+        || anyArrayChanged(Parameters::ID::sampleSliceStutterRepeats))
+        sections.add("Sample");
+
+    if (anyChanged({ Parameters::ID::fxDistortionEnabled,
+                    Parameters::ID::fxDistortionAmount,
+                    Parameters::ID::fxBitcrushEnabled,
+                    Parameters::ID::fxBitcrushBits,
+                    Parameters::ID::fxBitcrushDownsample,
+                    Parameters::ID::fxBitcrushMix,
+                    Parameters::ID::fxPumpEnabled,
+                    Parameters::ID::fxPumpRate,
+                    Parameters::ID::fxPumpCurve,
+                    Parameters::ID::fxPumpDepth,
+                    Parameters::ID::fxPumpShape,
+                    Parameters::ID::fxPumpPhase,
+                    Parameters::ID::fxTremoloEnabled,
+                    Parameters::ID::fxTremoloRate,
+                    Parameters::ID::fxTremoloDepth,
+                    Parameters::ID::fxTremoloPan,
+                    Parameters::ID::fxTremoloShape,
+                    Parameters::ID::fxTremoloPhase,
+                    Parameters::ID::fxRingEnabled,
+                    Parameters::ID::fxRingFrequency,
+                    Parameters::ID::fxRingDepth,
+                    Parameters::ID::fxRingMix,
+                    Parameters::ID::fxRingBias,
+                    Parameters::ID::fxCombEnabled,
+                    Parameters::ID::fxCombFrequency,
+                    Parameters::ID::fxCombFeedback,
+                    Parameters::ID::fxCombDamping,
+                    Parameters::ID::fxCombMix,
+                    Parameters::ID::fxChorusEnabled,
+                    Parameters::ID::fxChorusRate,
+                    Parameters::ID::fxChorusDepth,
+                    Parameters::ID::fxChorusMix,
+                    Parameters::ID::fxDelayEnabled,
+                    Parameters::ID::fxDelaySync,
+                    Parameters::ID::fxDelayRate,
+                    Parameters::ID::fxDelayTime,
+                    Parameters::ID::fxDelayFeedback,
+                    Parameters::ID::fxDelayMix,
+                    Parameters::ID::fxReverbEnabled,
+                    Parameters::ID::fxReverbSize,
+                    Parameters::ID::fxReverbDamping,
+                    Parameters::ID::fxReverbMix,
+                    Parameters::ID::fxWidthEnabled,
+                    Parameters::ID::fxWidthAmount,
+                    Parameters::ID::fxWidthMonoCutoff,
+                    Parameters::ID::fxToneEnabled,
+                    Parameters::ID::fxToneTilt,
+                    Parameters::ID::fxToneLowCut,
+                    Parameters::ID::fxEqEnabled,
+                    Parameters::ID::fxEqLowGain,
+                    Parameters::ID::fxEqMidGain,
+                    Parameters::ID::fxEqHighGain,
+                    Parameters::ID::fxEqTrim,
+                    Parameters::ID::fxPhaserEnabled,
+                    Parameters::ID::fxPhaserRate,
+                    Parameters::ID::fxPhaserDepth,
+                    Parameters::ID::fxPhaserMix,
+                    Parameters::ID::fxGuardEnabled,
+                    Parameters::ID::fxGuardPush,
+                    Parameters::ID::fxGuardCeiling,
+                    Parameters::ID::fxFlangerEnabled,
+                    Parameters::ID::fxFlangerRate,
+                    Parameters::ID::fxFlangerDepth,
+                    Parameters::ID::fxFlangerFeedback,
+                    Parameters::ID::fxFlangerMix,
+                    Parameters::ID::outputGain })
+        || anyArrayChanged(Parameters::ID::fxPumpCustomCurve)
+        || anyArrayChanged(Parameters::ID::fxOrder))
+        sections.add("FX");
+
+    auto sequencerStepsChanged = [&]
+    {
+        static constexpr std::array<const char*, 7> suffixes {
+            "_enabled",
+            "_note",
+            "_velocity",
+            "_probability",
+            "_timing",
+            "_length",
+            "_lock"
+        };
+
+        for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+        {
+            for (const auto* suffix : suffixes)
+            {
+                const auto key = "seq_step_" + juce::String(stepIndex) + suffix;
+                if (std::abs(static_cast<double>(candidate.state.getProperty(key, 0.0))
+                             - static_cast<double>(current.getProperty(key, 0.0))) > 0.001)
+                    return true;
+            }
+        }
+
+        return false;
+    };
+
+    if (anyChanged({ Parameters::ID::sequencerEnabled,
+                    Parameters::ID::sequencerRate,
+                    Parameters::ID::sequencerRoot,
+                    Parameters::ID::sequencerGate,
+                    Parameters::ID::sequencerSwing,
+                    Parameters::ID::sequencerGrooveMode,
+                    Parameters::ID::sequencerScale,
+                    Parameters::ID::sequencerChordMode,
+                    Parameters::ID::sequencerChordVoicing,
+                    Parameters::ID::sequencerChordStrum,
+                    Parameters::ID::sequencerChordMemory,
+                    Parameters::ID::sequencerAccent,
+                    Parameters::ID::sequencerOctave,
+                    Parameters::ID::sequencerProbability,
+                    Parameters::ID::sequencerRandomAmount,
+                    Parameters::ID::sequencerLockDestination,
+                    Parameters::ID::sequencerLockDepth })
+        || sequencerStepsChanged())
+        sections.add("Seq");
+
+    if (anyChanged({ Parameters::ID::macroTone,
+                    Parameters::ID::macroDirt,
+                    Parameters::ID::macroMotion,
+                    Parameters::ID::macroSpace,
+                    Parameters::ID::macroWeight,
+                    Parameters::ID::macroBounce,
+                    Parameters::ID::macroWarp,
+                    Parameters::ID::macroThrow }))
+        sections.add("Macros");
+
+    return sections;
 }
 
 juce::String NateVSTAudioProcessor::currentRandomRecipeName() const

@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Random Candidate Diff Badges
+
+- Added generated-candidate changed-section counts so LAB slot buttons can show how many areas differ from the current patch.
+- Added candidate changed-section summaries and old/new value diffs for important controls such as cutoff, drive, motion, space, width, sample window, pitch, gain, and sequencer density.
+- Candidate recall and cue tooltips now include changed sections and value diffs alongside the existing trait summary.
+- Extended `RandomCandidateAudit` to verify candidate diff summaries report changed sections and cutoff old/new values.
+
 ### Random Candidate Save From Slot
 
 - Added LAB `Save Slot` for saving the active generated candidate into the preset library without recalling it into the current patch.

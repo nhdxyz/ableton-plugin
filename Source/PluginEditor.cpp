@@ -4337,20 +4337,31 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
         const auto prefix = juce::String(static_cast<int>(index + 1)) + ". ";
         const auto summary = hasCandidate ? audioProcessor.getRandomCandidateSummary(slotIndex) : juce::String("Empty");
         const auto compare = hasCandidate ? audioProcessor.getRandomCandidateCompareSummary(slotIndex) : juce::String();
+        const auto sectionCount = hasCandidate ? audioProcessor.getRandomCandidateChangedSectionCount(slotIndex) : 0;
+        const auto sectionSummary = hasCandidate ? audioProcessor.getRandomCandidateChangedSectionsSummary(slotIndex) : juce::String();
+        const auto diffSummary = hasCandidate ? audioProcessor.getRandomCandidateDiffSummary(slotIndex) : juce::String();
+        const auto sectionBadge = hasCandidate && sectionCount > 0
+            ? " [" + juce::String(sectionCount) + "]"
+            : juce::String();
         auto& auditionButton = randomCandidateAuditionButtons[index];
 
         button.setEnabled(hasCandidate);
         button.setToggleState(hasCandidate && activeSlot == slotIndex, juce::dontSendNotification);
-        button.setButtonText(prefix + summary);
+        button.setButtonText(prefix + summary + sectionBadge);
         button.setTooltip(hasCandidate
-                              ? "Recall " + summary + " | Compared with current: " + compare
+                              ? "Recall " + summary
+                                    + " | Compared with current: " + compare
+                                    + " | Changed sections: " + sectionSummary
+                                    + " | Diff: " + diffSummary
                               : "Generate or mutate a patch to fill this candidate slot");
 
         auditionButton.setEnabled(hasCandidate);
         auditionButton.setToggleState(hasCandidate && activeRandomCandidateAuditionSlot == slotIndex,
                                       juce::dontSendNotification);
         auditionButton.setTooltip(hasCandidate
-                                      ? "Cue " + summary + " without committing the current patch | Compared with current: " + compare
+                                      ? "Cue " + summary
+                                            + " without committing the current patch | Sections: " + sectionSummary
+                                            + " | Diff: " + diffSummary
                                       : "Generate or mutate a patch before cueing this slot");
     }
 

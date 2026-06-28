@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Program Research Gap List
+
+- Added `docs/PROGRAM_RESEARCH_GAP_LIST.md`, a deeper program-by-program research matrix covering Serum 2, Pigments, Phase Plant, Current, ZENOLOGY Pro, u-he, Korg, Ableton, ShaperBox, Saturn, Portal, Infiltrator, and UK garage production patterns.
+- Expanded the next-add backlog into 232 concrete feature ideas across UI, source engines, drive/filter tone, modulation, sampler chops, sequencer/groove, FX routing, randomization, library, factory content, and release quality.
+- Linked the new research artifact from the README, plan, next-feature research, and deep backlog so future feature work has one current comparison point.
+
 ### Sequencer Step Length Lane
 
 - Added a saved per-step `length` value to the internal sequencer, with old presets and sessions defaulting to full length so existing patterns keep their previous playback.

@@ -50,6 +50,8 @@ Nate VST already has a real foundation:
 
 The missing work is not "add one more page of knobs." The missing work is depth, visual feedback, source quality, library maturity, and genre-specific generation.
 
+For the latest program-by-program comparison against Serum 2, Pigments, Phase Plant, Current, ZENOLOGY Pro, u-he, Korg, Ableton, ShaperBox, Saturn, Portal, Infiltrator, and UK garage production references, see `docs/PROGRAM_RESEARCH_GAP_LIST.md`. That document is the longer research matrix; this file remains the shorter prioritized add list.
+
 ## Highest-Level Gaps
 
 1. The synth source engine is still shallow compared with modern hybrid synths.
@@ -321,7 +323,7 @@ The missing work is not "add one more page of knobs." The missing work is depth,
 ## Recommended Build Order
 
 1. Componentize the editor and add layout-overlap checks.
-2. Add per-step sequencer note length, ratchets, and pattern slots.
+2. Add per-step sequencer ratchets, pattern slots, chord paint, and assignable modulation lanes.
 3. Add transient/manual sample slicing with per-slice controls.
 4. Add drag/menu modulation assignment plus modulation rings.
 5. Add a true wavetable oscillator with preview and safe factory tables.

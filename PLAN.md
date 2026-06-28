@@ -67,6 +67,7 @@ Current add-list research:
 Deep backlog:
 
 - The current research-backed feature inventory lives in `docs/DEEP_RESEARCH_BACKLOG.md`. Use that file as the working backlog for future UI, modulation, oscillator, sampler, sequencer, FX, library, quality, and Ableton-distribution slices.
+- The latest program-by-program gap map lives in `docs/PROGRAM_RESEARCH_GAP_LIST.md`. Use it when deciding whether a new feature should come from synth-engine depth, visual modulation, Korg-style motion, UKG chop workflow, library/discovery, club FX, or Ableton release quality.
 
 ### What To Learn From ZENOLOGY
 

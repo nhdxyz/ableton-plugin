@@ -31,7 +31,7 @@ Primary FX, groove, and club-workflow references:
 ## Current Nate VST Strengths
 
 - Focused house, UKG, tech-house, techno, and minimal direction.
-- Stable JUCE/VST3 foundation with pluginval validation.
+- Stable JUCE/VST3 foundation with local pluginval validation used during feature slices.
 - PolyBLEP oscillator pass for better bright-note behavior.
 - Filter character and slope options.
 - Oscillator warp control.
@@ -46,7 +46,7 @@ Primary FX, groove, and club-workflow references:
 
 The largest remaining gap is no longer "does the plugin have enough controls." It is now "does each control feel fast, visual, musical, and reliable inside Ableton." The next work should favor interaction quality, source depth, browser usefulness, and club-specific timing tools over adding more unfocused knobs.
 
-See `docs/COMPETITOR_GAP_ANALYSIS.md` for the expanded 2026-06-28 competitor refresh and a longer cross-product gap list. This file remains the shorter implementation backlog.
+See `docs/PROGRAM_RESEARCH_GAP_LIST.md` for the latest program-by-program research matrix and `docs/COMPETITOR_GAP_ANALYSIS.md` for the expanded 2026-06-28 competitor refresh. This file remains the shorter implementation backlog.
 
 ## Priority 0: UI And Workflow Corrections
 
@@ -237,10 +237,10 @@ Implemented library sub-slice:
 ## Recommended Next Slices
 
 1. Build automated editor layout checks and component extraction for the largest pages.
-2. Fix rotary control feel with fine drag, double-click reset, and value popovers.
-3. Build a real multi-column LIBRARY browser from the existing metadata and macro previews.
+2. Expand the completed control-feel pass with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
+3. Grow the compact LIBRARY browser into a full browser with smart folders, tag editing, audio previews, and construction kits.
 4. Add drag/menu modulation assignment plus selected-parameter route views.
-5. Add sequencer ratchets, note length, pattern slots, and chord paint.
+5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
 6. Add sample slice markers and per-slice controls.
 7. Add user tags, smart folders, and preset preview rendering in LIBRARY.
 8. Add wavetable oscillator playback after UI layout risk is reduced.

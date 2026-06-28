@@ -184,7 +184,7 @@ Reference-backed next passes:
 
 - Implemented first as curated randomization recipes: `UKG Organ Stab`, `UKG Chord Stab`, and `UKG Bell Pluck`.
 - Later add organ-style oscillator mix or drawbar-inspired mode.
-- Factory preset files should be added in a later preset-pack pass.
+- First factory preset files exist; the next preset-pack pass should add deeper UKG construction kits, more organ/drawbar character, and more Dred/Reese bass coverage.
 - The first oscillator quality pass now reduces aliasing in the existing saw/square/triangle sources; the next source pass should add more distinct UKG organ, bell, and Reese character rather than only more filtering.
 - The first Filter Character pass adds Warm defaults to UKG organ/chord presets, but a dedicated organ/drawbar source is still the better long-term answer for convincing garage keys.
 

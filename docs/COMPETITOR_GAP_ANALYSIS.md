@@ -29,7 +29,7 @@ Do not copy proprietary UI layouts, presets, wavetables, samples, DSP code, bran
 
 Nate VST already has a strong starter direction:
 
-- JUCE/VST3 foundation with Ableton-focused validation and pluginval checks.
+- JUCE/VST3 foundation with Ableton-focused validation and local pluginval checks.
 - Subtractive synth core with oscillator 1, oscillator 2, sub, noise, unison, filter character/slope, drive, output guard, and bandlimited oscillator work.
 - Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, preset recall, and auditioning.
 - MOD panel with LFO, envelope, eight macros, matrix routes, macro assignment editor, curve presets, bypass/delete, and destination badges.
@@ -377,10 +377,10 @@ Implemented P8 sub-slice:
 The best next slices are the ones that improve professional feel before adding another large engine:
 
 1. Componentize the editor and add layout-overlap tests.
-2. Fix knob drag behavior, double-click reset, value popovers, and fine adjustment.
-3. Build a real multi-column LIBRARY browser using the existing metadata and macro previews.
+2. Expand control feel with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
+3. Grow the compact LIBRARY table into a full browser with smart folders, custom tags, audio previews, and construction kits.
 4. Add a focused modulation-routing UX: drag assignment, visible rings, selected-parameter route view, and route range editing.
-5. Add multiple SEQ patterns, ratchet, note length, and scale-locked chord paint.
+5. Add multiple SEQ patterns, ratchets, scale-locked chord paint, and per-step modulation lanes.
 6. Add transient/manual sample slicing with per-slice controls.
 7. Add wavetable oscillator playback with preview before import/editor work.
 8. Add multiband drive with oversampling and gain compensation.
@@ -397,7 +397,7 @@ Track the backlog through one umbrella issue plus focused child issues. Good fir
 - Improve rotary controls with fine drag, double-click reset, and value popovers.
 - Build multi-column preset browser with smart folders.
 - Add drag-and-drop modulation assignment and visible modulation rings.
-- Add sequencer pattern chaining, ratchets, note length, and chord paint.
+- Add sequencer pattern chaining, ratchets, chord paint, and per-step modulation lanes.
 - Add transient/manual slicing with per-slice controls.
 - Add wavetable oscillator playback and preview display.
 - Add multiband distortion with oversampling and gain compensation.

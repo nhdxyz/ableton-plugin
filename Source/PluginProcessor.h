@@ -90,8 +90,10 @@ public:
     bool redoRandomization();
     bool hasRandomCandidate(int slotIndex) const;
     juce::String getRandomCandidateSummary(int slotIndex) const;
+    juce::String getRandomCandidateCompareSummary(int slotIndex);
     int getActiveRandomCandidateIndex() const noexcept;
     bool recallRandomCandidate(int slotIndex);
+    bool promoteRandomCandidateToPerformanceSnapshot(int candidateSlotIndex, int snapshotSlotIndex);
     bool loadSampleFile(const juce::File& file);
     void clearSample();
     bool randomizeSampleCut();
@@ -223,6 +225,7 @@ private:
     static juce::String randomActionLabel(RandomAction action);
     static juce::String randomMutationScopeLabel(RandomMutationScope mutationScope);
     static RandomMutationScope randomMutationScopeFromIndex(int mutationScopeIndex);
+    static float readStateParameterValue(const juce::ValueTree& state, const char* parameterID, float fallback);
     juce::String currentRandomRecipeName() const;
     void captureRandomCandidateSnapshot(RandomAction action, RandomMutationScope mutationScope);
     bool isRandomLockEnabled(const juce::String& parameterID) const;

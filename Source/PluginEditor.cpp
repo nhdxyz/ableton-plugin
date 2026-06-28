@@ -1789,6 +1789,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         addAndMakeVisible(button);
     }
 
+    promoteCandidateAButton.setTooltip("Promote the active random candidate to performance snapshot A");
+    promoteCandidateAButton.onClick = [this] { promoteActiveRandomCandidate(0); };
+    addAndMakeVisible(promoteCandidateAButton);
+
+    promoteCandidateBButton.setTooltip("Promote the active random candidate to performance snapshot B");
+    promoteCandidateBButton.onClick = [this] { promoteActiveRandomCandidate(1); };
+    addAndMakeVisible(promoteCandidateBButton);
+
     addAndMakeVisible(generateButton);
     addAndMakeVisible(mutateButton);
     addAndMakeVisible(variationButton);
@@ -2372,6 +2380,8 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             for (auto& button : randomCandidateButtons)
                 button.setVisible(true);
+            promoteCandidateAButton.setVisible(true);
+            promoteCandidateBButton.setVisible(true);
             updateRandomCandidateButtons();
             randomSectionLabel.setBounds(content.removeFromTop(28));
             auto actionRow = content.removeFromTop(48);
@@ -2399,6 +2409,9 @@ void NateVSTAudioProcessorEditor::resized()
             randomLockSequencerButton.setBounds(lockRow.reduced(4));
             randomStatusLabel.setBounds(content.removeFromTop(30).reduced(4));
             auto candidateRow = content.removeFromTop(40).withTrimmedTop(6);
+            auto promoteArea = candidateRow.removeFromRight(104);
+            promoteCandidateAButton.setBounds(promoteArea.removeFromLeft(52).reduced(4));
+            promoteCandidateBButton.setBounds(promoteArea.removeFromLeft(52).reduced(4));
             const auto candidateButtonWidth = candidateRow.getWidth() / static_cast<int>(randomCandidateButtons.size());
             for (auto& button : randomCandidateButtons)
                 button.setBounds(candidateRow.removeFromLeft(candidateButtonWidth).reduced(4));
@@ -4121,9 +4134,26 @@ void NateVSTAudioProcessorEditor::recallRandomCandidate(size_t slotIndex)
     setRandomStatus("Recalled candidate " + juce::String(static_cast<int>(slotIndex + 1)));
 }
 
+void NateVSTAudioProcessorEditor::promoteActiveRandomCandidate(int snapshotSlotIndex)
+{
+    const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
+    if (! audioProcessor.promoteRandomCandidateToPerformanceSnapshot(activeSlot, snapshotSlotIndex))
+    {
+        setRandomStatus("No active candidate");
+        updateRandomCandidateButtons();
+        updatePerformanceSnapshotButtons();
+        return;
+    }
+
+    updateRandomCandidateButtons();
+    updatePerformanceSnapshotButtons();
+    setRandomStatus("Candidate -> " + juce::String(snapshotSlotIndex == 0 ? "A" : "B"));
+}
+
 void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
 {
     const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
+    const auto activeCandidateReady = audioProcessor.hasRandomCandidate(activeSlot);
 
     for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
     {
@@ -4132,12 +4162,22 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
         auto& button = randomCandidateButtons[index];
         const auto prefix = juce::String(static_cast<int>(index + 1)) + ". ";
         const auto summary = hasCandidate ? audioProcessor.getRandomCandidateSummary(slotIndex) : juce::String("Empty");
+        const auto compare = hasCandidate ? audioProcessor.getRandomCandidateCompareSummary(slotIndex) : juce::String();
 
         button.setEnabled(hasCandidate);
         button.setToggleState(hasCandidate && activeSlot == slotIndex, juce::dontSendNotification);
         button.setButtonText(prefix + summary);
-        button.setTooltip(hasCandidate ? "Recall " + summary : "Generate or mutate a patch to fill this candidate slot");
+        button.setTooltip(hasCandidate
+                              ? "Recall " + summary + " | Compared with current: " + compare
+                              : "Generate or mutate a patch to fill this candidate slot");
     }
+
+    promoteCandidateAButton.setEnabled(activeCandidateReady);
+    promoteCandidateBButton.setEnabled(activeCandidateReady);
+    promoteCandidateAButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot A"
+                                                            : "Recall or generate a candidate before promoting");
+    promoteCandidateBButton.setTooltip(activeCandidateReady ? "Promote active random candidate to performance snapshot B"
+                                                            : "Recall or generate a candidate before promoting");
 }
 
 void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& actionLabel)
@@ -5570,6 +5610,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton,
+        &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,

@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Random Candidate Compare And Snapshot Promotion
+
+- Added candidate compare summaries that describe saved random slots against the current patch as brighter/darker, dirtier/cleaner, wider/narrower, more/less motion, more/less space, and hotter/safer.
+- Added LAB `To A` and `To B` actions that promote the active random candidate directly into performance snapshot A or B without requiring a recall first.
+- Candidate tooltips now include the compare summary so generated ideas can be judged before recalling them.
+- Extended `RandomCandidateAudit` to verify compare summaries and candidate promotion to performance snapshots.
+
 ### Generated Preset Metadata And Filter
 
 - Added generated-preset metadata for Random Lab saves, including `preset_source="Generated"`, `Generated`/`Random Lab` tags, and the originating random recipe.

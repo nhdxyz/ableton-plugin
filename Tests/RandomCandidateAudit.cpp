@@ -53,9 +53,17 @@ int main()
     }
 
     const auto generatedCutoff = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
-    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, 5432.0f))
+    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, juce::jmax(20.0f, generatedCutoff * 0.35f)))
     {
         std::cerr << "Could not edit cutoff before candidate recall\n";
+        return 1;
+    }
+
+    const auto compareSummary = processor.getRandomCandidateCompareSummary(0);
+    if (! compareSummary.containsIgnoreCase("brighter"))
+    {
+        std::cerr << "Candidate compare summary did not report brightness: "
+                  << compareSummary << '\n';
         return 1;
     }
 
@@ -70,6 +78,28 @@ int main()
     {
         std::cerr << "Candidate recall did not restore cutoff. Expected "
                   << generatedCutoff << " got " << recalledCutoff << '\n';
+        return 1;
+    }
+
+    if (! processor.promoteRandomCandidateToPerformanceSnapshot(0, 0)
+        || ! processor.hasPerformanceSnapshot(0))
+    {
+        std::cerr << "Candidate promotion to snapshot A failed\n";
+        return 1;
+    }
+
+    if (! setPlainParameter(processor, Parameters::ID::filterCutoff, juce::jmax(20.0f, generatedCutoff * 0.45f))
+        || ! processor.recallPerformanceSnapshot(0))
+    {
+        std::cerr << "Promoted candidate snapshot could not be recalled\n";
+        return 1;
+    }
+
+    const auto promotedCutoff = readPlainParameter(processor, Parameters::ID::filterCutoff, -1.0f);
+    if (std::abs(promotedCutoff - generatedCutoff) > 0.01f)
+    {
+        std::cerr << "Promoted candidate snapshot did not restore cutoff. Expected "
+                  << generatedCutoff << " got " << promotedCutoff << '\n';
         return 1;
     }
 

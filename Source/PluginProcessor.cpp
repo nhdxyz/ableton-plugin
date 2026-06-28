@@ -517,6 +517,87 @@ juce::String NateVSTAudioProcessor::getRandomCandidateSummary(int slotIndex) con
     return randomCandidateSnapshots[static_cast<size_t>(slotIndex)].label;
 }
 
+juce::String NateVSTAudioProcessor::getRandomCandidateCompareSummary(int slotIndex)
+{
+    if (! hasRandomCandidate(slotIndex))
+        return {};
+
+    const auto& candidate = randomCandidateSnapshots[static_cast<size_t>(slotIndex)];
+    const auto current = createPluginState(false);
+    juce::StringArray changes;
+
+    auto addDirection = [&changes] (float candidateValue,
+                                    float currentValue,
+                                    float threshold,
+                                    const juce::String& higher,
+                                    const juce::String& lower)
+    {
+        const auto delta = candidateValue - currentValue;
+        if (delta > threshold)
+            changes.add(higher);
+        else if (delta < -threshold)
+            changes.add(lower);
+    };
+
+    const auto candidateCutoff = readStateParameterValue(candidate.state, Parameters::ID::filterCutoff, 1000.0f);
+    const auto currentCutoff = readStateParameterValue(current, Parameters::ID::filterCutoff, 1000.0f);
+    if (candidateCutoff > currentCutoff * 1.25f)
+        changes.add("brighter");
+    else if (candidateCutoff < currentCutoff * 0.80f)
+        changes.add("darker");
+
+    const auto candidateDirt = readStateParameterValue(candidate.state, Parameters::ID::driveAmount, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::fxDistortionAmount, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::fxBitcrushMix, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::macroDirt, 0.0f);
+    const auto currentDirt = readStateParameterValue(current, Parameters::ID::driveAmount, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::fxDistortionAmount, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::fxBitcrushMix, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::macroDirt, 0.0f);
+    addDirection(candidateDirt, currentDirt, 0.20f, "dirtier", "cleaner");
+
+    const auto candidateMotion = readStateParameterValue(candidate.state, Parameters::ID::macroMotion, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::lfo1Depth, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::lfo2Depth, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::fxPumpDepth, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::sequencerRandomAmount, 0.0f);
+    const auto currentMotion = readStateParameterValue(current, Parameters::ID::macroMotion, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::lfo1Depth, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::lfo2Depth, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::fxPumpDepth, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::sequencerRandomAmount, 0.0f);
+    addDirection(candidateMotion, currentMotion, 0.25f, "more motion", "less motion");
+
+    const auto candidateSpace = readStateParameterValue(candidate.state, Parameters::ID::macroSpace, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::macroThrow, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::fxDelayMix, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::fxReverbMix, 0.0f);
+    const auto currentSpace = readStateParameterValue(current, Parameters::ID::macroSpace, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::macroThrow, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::fxDelayMix, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::fxReverbMix, 0.0f);
+    addDirection(candidateSpace, currentSpace, 0.20f, "more space", "drier");
+
+    const auto candidateWidth = readStateParameterValue(candidate.state, Parameters::ID::fxWidthAmount, 1.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::unisonSpread, 0.0f)
+        + readStateParameterValue(candidate.state, Parameters::ID::macroBounce, 0.0f);
+    const auto currentWidth = readStateParameterValue(current, Parameters::ID::fxWidthAmount, 1.0f)
+        + readStateParameterValue(current, Parameters::ID::unisonSpread, 0.0f)
+        + readStateParameterValue(current, Parameters::ID::macroBounce, 0.0f);
+    addDirection(candidateWidth, currentWidth, 0.18f, "wider", "narrower");
+
+    addDirection(readStateParameterValue(candidate.state, Parameters::ID::outputGain, 0.8f),
+                 readStateParameterValue(current, Parameters::ID::outputGain, 0.8f),
+                 0.08f,
+                 "hotter",
+                 "safer level");
+
+    while (changes.size() > 4)
+        changes.remove(changes.size() - 1);
+
+    return changes.isEmpty() ? juce::String("similar") : changes.joinIntoString(", ");
+}
+
 int NateVSTAudioProcessor::getActiveRandomCandidateIndex() const noexcept
 {
     return activeRandomCandidateSlot;
@@ -537,6 +618,18 @@ bool NateVSTAudioProcessor::recallRandomCandidate(int slotIndex)
 
     restorePluginState(candidate.state.createCopy(), false);
     activeRandomCandidateSlot = slotIndex;
+    return true;
+}
+
+bool NateVSTAudioProcessor::promoteRandomCandidateToPerformanceSnapshot(int candidateSlotIndex, int snapshotSlotIndex)
+{
+    if (! hasRandomCandidate(candidateSlotIndex)
+        || snapshotSlotIndex < 0
+        || snapshotSlotIndex >= static_cast<int>(performanceSnapshots.size()))
+        return false;
+
+    performanceSnapshots[static_cast<size_t>(snapshotSlotIndex)] =
+        randomCandidateSnapshots[static_cast<size_t>(candidateSlotIndex)].state.createCopy();
     return true;
 }
 
@@ -1988,6 +2081,17 @@ NateVSTAudioProcessor::RandomMutationScope NateVSTAudioProcessor::randomMutation
         case 7: return RandomMutationScope::macros;
         default: return RandomMutationScope::all;
     }
+}
+
+float NateVSTAudioProcessor::readStateParameterValue(const juce::ValueTree& state,
+                                                     const char* parameterID,
+                                                     float fallback)
+{
+    const auto parameterState = state.getChildWithProperty("id", parameterID);
+    if (parameterState.isValid())
+        return static_cast<float>(parameterState.getProperty("value", fallback));
+
+    return fallback;
 }
 
 juce::String NateVSTAudioProcessor::currentRandomRecipeName() const

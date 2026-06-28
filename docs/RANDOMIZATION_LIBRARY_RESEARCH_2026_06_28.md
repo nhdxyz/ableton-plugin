@@ -49,6 +49,8 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Four Random Lab candidate slots now capture full patch/sample/sequencer snapshots after Generate, Mutate, Vary, Wild, and section rolls.
 - Candidate buttons show compact action/recipe/scope labels, highlight the active slot, recall saved generated states, and are covered by `RandomCandidateAudit`.
 - Generated Random Lab saves now store `Generated` source metadata, `Generated`/`Random Lab` tags, and the source recipe, and Library can filter/tag-search generated presets.
+- Candidate tooltips now summarize whether each slot is brighter/darker, dirtier/cleaner, wider/narrower, more/less motion, more/less space, and hotter/safer than the current patch.
+- Active candidates can be promoted directly to performance snapshot A or B from LAB, and `RandomCandidateAudit` verifies promotion and recall.
 
 ## Highest-Value Randomization Backlog
 
@@ -57,10 +59,10 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 3. Add randomization intensity per section, not only one global Amount and Chaos.
 4. Add route-level locks for modulation matrix slots.
 5. Add target locks for specific controls by right-clicking a knob and choosing "Lock from Random".
-6. Add a visible mutation diff: changed parameters, old value, new value, and section.
+6. Add a visible mutation diff panel with changed parameters, old value, new value, and section.
 7. Expand randomization history beyond the first four candidate slots into a scrollable list with search and notes.
 8. Add "promote variation" and "discard variation" actions.
-9. Add quick audition and promote-to-A/B snapshot actions for generated candidates.
+9. Add quick audition for generated candidates without fully committing the patch.
 10. Add favorite-aware randomization seeded from 4-5 star presets.
 11. Add "more like selected preset" using parameter-distance mutation.
 12. Add genre transforms: More UKG, More Deep House, More Minimal, More Warehouse, More Tech House.
@@ -118,17 +120,16 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 ## Next Implementation Slice
 
-Best next slice: add generated-candidate compare/diff and save-from-slot polish.
+Best next slice: add generated-candidate quick audition and save-from-slot polish.
 
 Why:
 - It directly supports randomization as the best feature.
 - It keeps users from losing good ideas while exploring.
-- It naturally connects candidate slots to save, favorite, compare, and browser organization.
+- It naturally connects candidate slots to save, favorite, audition, and browser organization.
 - It can be implemented without changing plugin parameter IDs.
 
-Candidate compare behavior:
-- LAB shows whether the active candidate is brighter/darker, dirtier/cleaner, wider/narrower, more/less motion-heavy, and safer/riskier than the current loaded preset.
-- Each candidate can be promoted to A/B performance snapshot.
-- Each candidate can be saved directly with the same recipe-aware category, pack, and BPM suggestions.
-- Library can filter `Generated` presets once generated-save metadata exists.
-- Candidate rows should eventually support quick audition without fully loading the patch first.
+Candidate polish behavior:
+- Each candidate can be saved directly with the same recipe-aware category, pack, BPM, and generated-source metadata.
+- Each candidate can be auditioned briefly without fully committing the patch first.
+- Candidate rows can show a compact changed-section count in addition to the current trait summary.
+- Library can group generated preset variants into a smart collection once generated-save metadata exists.

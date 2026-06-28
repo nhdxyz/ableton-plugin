@@ -2,6 +2,11 @@
 
 ## 2026-06-28
 
+### Modulation Visibility Polish
+
+- Added modulation stripes and compact route badges to horizontal sliders, so sample, FX, and matrix controls get visible route feedback instead of only rotary knobs.
+- Preserved each control's base tooltip when modulation indicators update, appending source/depth status instead of replacing the original control guidance.
+
 ### Right-Click Modulation Assignment
 
 - Added right-click modulation menus to MOD-targetable sliders so cutoff, drive, Osc Warp, sample chop controls, and FX movement controls can receive routes without first navigating to the MOD matrix.

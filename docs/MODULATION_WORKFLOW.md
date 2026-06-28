@@ -166,6 +166,7 @@ MOD:
 - Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
 - Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
 - Current implementation includes right-click `Modulate` menus on matrix-targetable sliders, so producers can add LFO, macro, S&H, Smooth, Chaos, or LFO 2 routes directly from cutoff, drive, Osc Warp, sample chop, and FX movement controls.
+- Current implementation now shows modulation feedback on both rotary and horizontal sliders: knobs draw amount rings, while horizontal sample/FX/matrix controls draw modulation stripes and compact route badges. Tooltips keep the normal control guidance and append active source/depth status.
 
 SEQ:
 
@@ -227,6 +228,14 @@ Right-click assignment workflow slice:
 3. Disabled voice-only Mod Env and Velocity choices for global sample/FX destinations.
 4. Reused the existing inspector destination and route-allocation path, so right-click assignment updates matrix rows, destination rings, route summaries, and saved preset state.
 5. Kept drag-from-source assignment, explicit route ranges, route curves, and route processors as future work.
+
+Visual feedback polish slice:
+
+1. Kept existing rotary amount rings and route badges.
+2. Added horizontal slider modulation stripes for sample, FX, and matrix controls.
+3. Added compact horizontal route badges when the control has enough room.
+4. Preserved base tooltips and appended modulation source/depth text instead of replacing the original guidance.
+5. Kept hover route overlays, source activity meters, and per-route range handles as future work.
 
 Editable engine slice:
 

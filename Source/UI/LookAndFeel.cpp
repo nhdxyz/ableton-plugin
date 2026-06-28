@@ -117,6 +117,97 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     }
 }
 
+void LookAndFeel::drawLinearSlider(juce::Graphics& g,
+                                   int x,
+                                   int y,
+                                   int width,
+                                   int height,
+                                   float sliderPos,
+                                   float minSliderPos,
+                                   float maxSliderPos,
+                                   const juce::Slider::SliderStyle style,
+                                   juce::Slider& slider)
+{
+    if (style != juce::Slider::LinearHorizontal)
+    {
+        juce::LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
+        return;
+    }
+
+    juce::ignoreUnused(minSliderPos, maxSliderPos);
+
+    const auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y),
+                                               static_cast<float>(width), static_cast<float>(height))
+                            .reduced(1.0f, 2.0f);
+    const auto isActive = slider.isMouseOverOrDragging();
+    const auto trackBounds = bounds.withHeight(7.0f).withCentre(bounds.getCentre());
+    const auto trackStart = trackBounds.getX();
+    const auto trackEnd = trackBounds.getRight();
+    const auto currentX = juce::jlimit(trackStart, trackEnd, sliderPos);
+    const auto modulationAmount = static_cast<float>(static_cast<double>(slider.getProperties().getWithDefault("modAmount", 0.0)));
+    const auto modulationDepth = juce::jlimit(0.0f, 1.0f, std::abs(modulationAmount));
+    const auto modulationRouteCount = static_cast<int>(slider.getProperties().getWithDefault("modRouteCount", 0));
+
+    g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
+    g.fillRoundedRectangle(bounds, 4.0f);
+    g.setColour(isActive ? juce::Colour(0xff3e5359) : juce::Colour(0xff222d32));
+    g.drawRoundedRectangle(bounds, 4.0f, isActive ? 1.4f : 1.0f);
+
+    g.setColour(juce::Colour(0xff263035));
+    g.fillRoundedRectangle(trackBounds, 3.5f);
+
+    if (currentX > trackStart + 0.5f)
+    {
+        auto valueBounds = trackBounds.withRight(currentX);
+        g.setColour(isActive ? juce::Colour(0xffa8ffe3) : juce::Colour(0xff8ee6c9));
+        g.fillRoundedRectangle(valueBounds, 3.5f);
+    }
+
+    if (modulationDepth > 0.001f)
+    {
+        const auto ringColour = modulationAmount >= 0.0f ? juce::Colour(0xff8ee6c9)
+                                                         : juce::Colour(0xffffa36f);
+        const auto modulationEnd = juce::jlimit(trackStart,
+                                                trackEnd,
+                                                currentX + modulationAmount * (trackEnd - trackStart));
+        auto modulationBounds = trackBounds.withY(trackBounds.getY() - 5.0f).withHeight(3.0f);
+        modulationBounds.setLeft(juce::jmin(currentX, modulationEnd));
+        modulationBounds.setRight(juce::jmax(currentX, modulationEnd));
+
+        g.setColour(ringColour.withAlpha(0.22f));
+        g.fillRoundedRectangle(trackBounds.expanded(0.0f, 3.5f), 6.0f);
+        g.setColour(ringColour);
+        g.fillRoundedRectangle(modulationBounds, 1.5f);
+
+        if (modulationRouteCount > 0 && bounds.getWidth() >= 74.0f)
+        {
+            auto badge = juce::Rectangle<float>(42.0f, 14.0f);
+            badge.setRight(bounds.getRight() - 5.0f);
+            badge.setY(bounds.getY() + 3.0f);
+
+            g.setColour(ringColour.withAlpha(0.18f));
+            g.fillRoundedRectangle(badge, 4.0f);
+            g.setColour(ringColour.withAlpha(0.72f));
+            g.drawRoundedRectangle(badge, 4.0f, 1.0f);
+
+            const auto percent = juce::roundToInt(modulationAmount * 100.0f);
+            const auto badgeText = "M" + juce::String(modulationRouteCount) + " "
+                + (percent >= 0 ? "+" : "") + juce::String(percent);
+            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+            g.setColour(juce::Colour(0xffedf7f4));
+            g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
+        }
+    }
+
+    const auto thumbBounds = juce::Rectangle<float>(12.0f, 18.0f).withCentre({ currentX, trackBounds.getCentreY() });
+    g.setColour(juce::Colour(0xff080c0e));
+    g.fillRoundedRectangle(thumbBounds.translated(0.0f, 1.0f), 4.0f);
+    g.setColour(isActive ? juce::Colour(0xffd9fff1) : juce::Colour(0xffc4d7d4));
+    g.fillRoundedRectangle(thumbBounds, 4.0f);
+    g.setColour(isActive ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff4d6364));
+    g.drawRoundedRectangle(thumbBounds, 4.0f, 1.0f);
+}
+
 void LookAndFeel::drawButtonBackground(juce::Graphics& g,
                                        juce::Button& button,
                                        const juce::Colour& backgroundColour,

@@ -3086,7 +3086,9 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
-    slider.setTooltip(controlFeelTooltip(labelText));
+    const auto tooltipText = controlFeelTooltip(labelText);
+    slider.setTooltip(tooltipText);
+    slider.getProperties().set("baseTooltip", tooltipText);
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
     slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
@@ -3124,7 +3126,9 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
-    slider.setTooltip(controlFeelTooltip(labelText));
+    const auto tooltipText = controlFeelTooltip(labelText);
+    slider.setTooltip(tooltipText);
+    slider.getProperties().set("baseTooltip", tooltipText);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
     slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
     slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
@@ -3161,7 +3165,9 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
     slider.setScrollWheelEnabled(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
-    slider.setTooltip("Curve point: drag to adjust, hold Shift or Cmd for fine movement, double-click to reset, or type a value.");
+    const auto tooltipText = juce::String("Curve point: drag to adjust, hold Shift or Cmd for fine movement, double-click to reset, or type a value.");
+    slider.setTooltip(tooltipText);
+    slider.getProperties().set("baseTooltip", tooltipText);
     slider.setNumDecimalPlacesToDisplay(2);
     slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
     slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
@@ -5811,6 +5817,7 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
         const auto previousCount = static_cast<int>(properties.getWithDefault("modRouteCount", 0));
         const auto previousSources = properties.getWithDefault("modSourceSummary", {}).toString();
         const auto sourceSummary = sources.joinIntoString(", ");
+        const auto baseTooltip = properties.getWithDefault("baseTooltip", {}).toString();
         if (std::abs(previous - amount) < 0.001f
             && previousCount == routeCount
             && previousSources == sourceSummary)
@@ -5819,10 +5826,13 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
         properties.set("modAmount", amount);
         properties.set("modRouteCount", routeCount);
         properties.set("modSourceSummary", sourceSummary);
-        slider.setTooltip(routeCount > 0
-                              ? "Modulated by " + sourceSummary
-                                  + " | Sum " + (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%"
-                              : juce::String {});
+        const auto modulationTooltip = routeCount > 0
+            ? "Modulated by " + sourceSummary
+                + " | Sum " + (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%"
+            : juce::String {};
+        slider.setTooltip(modulationTooltip.isNotEmpty() && baseTooltip.isNotEmpty()
+                              ? baseTooltip + "\n" + modulationTooltip
+                              : modulationTooltip.isNotEmpty() ? modulationTooltip : baseTooltip);
         slider.repaint();
     };
 

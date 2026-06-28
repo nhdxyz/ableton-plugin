@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Expanded 32-Preset Factory Style Pack
+
+- Expanded the repo-managed factory preset pack from 24 to 32 presets with additional house, tech-house, minimal, and techno starters: Deep House Seventh Stab, Deep House Mellow Keys, Tech House Acid Roller, Tech House Top Pluck, Minimal Hypno Sequence, Minimal Glass Pluck, Warehouse Riser Noise, and Techno Metallic Ping.
+- Added matching metadata, packs, keys, BPM values, notes, macro seeds, modulation routes, FX choices, and sequencer data so the Library browser can sort, filter, inspect, and save from a broader house-focused factory base.
+- Updated `FactoryPresetLibraryAudit` and current-state docs to require and describe the 32-preset style pack.
+
 ### Sample Chop Modulation Overlay
 
 - Extended the SAMPLE waveform display with modulation overlays for existing Sample Start, Mix, Pitch, Ramp, and Stutter MOD matrix destinations.

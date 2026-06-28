@@ -15,21 +15,29 @@ The factory pack includes UK garage and broader club workflow starters:
 - `UKG Vocal Chop Starter`
 - `UKG Late Stab`
 - `House Chord Memory`
+- `Deep House Seventh Stab`
+- `Deep House Mellow Keys`
 - `Deep House Sub Chug`
 - `Deep House Velvet Pad`
 - `House Organ Skank`
+- `Tech House Acid Roller`
 - `Tech House Rubber Bass`
+- `Tech House Top Pluck`
 - `Tech House Perc Pluck`
 - `Tech House Rolling Bass`
 - `Tech House Perc Stab`
+- `Minimal Hypno Sequence`
 - `Minimal Click Pluck`
 - `Minimal Sub Pulse`
+- `Minimal Glass Pluck`
 - `Minimal Dub Chord`
 - `Minimal Noise Tick`
+- `Techno Metallic Ping`
 - `Techno Pulse Bass`
 - `Techno Warehouse Stab`
 - `Techno Rumble Stab`
 - `Warehouse Noise Sweep`
+- `Warehouse Riser Noise`
 
 Regenerate the pack after parameter or template changes:
 

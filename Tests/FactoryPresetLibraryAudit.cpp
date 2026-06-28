@@ -46,19 +46,27 @@ int main()
         if (preset.isFactory)
             ++factoryCount;
 
-    if (factoryCount < 24)
+    if (factoryCount < 32)
     {
-        std::cerr << "Expected at least 24 factory presets, found " << factoryCount << '\n';
+        std::cerr << "Expected at least 32 factory presets, found " << factoryCount << '\n';
         return 1;
     }
 
     const std::vector<std::pair<juce::String, juce::String>> expectedPacks {
+        { "Deep House Seventh Stab", "House Chords" },
+        { "Deep House Mellow Keys", "House Chords" },
         { "Deep House Velvet Pad", "House Tools" },
         { "House Organ Skank", "House Tools" },
+        { "Tech House Acid Roller", "Tech House Tools" },
+        { "Tech House Top Pluck", "Tech House Tools" },
         { "Tech House Rolling Bass", "Tech House Tools" },
         { "Tech House Perc Stab", "Tech House Tools" },
+        { "Minimal Hypno Sequence", "Minimal Tools" },
+        { "Minimal Glass Pluck", "Minimal Tools" },
         { "Minimal Dub Chord", "Minimal Tools" },
         { "Minimal Noise Tick", "Minimal Tools" },
+        { "Techno Metallic Ping", "Techno Tools" },
+        { "Warehouse Riser Noise", "Techno Tools" },
         { "Warehouse Noise Sweep", "Techno Tools" },
         { "Techno Rumble Stab", "Techno Tools" },
     };
@@ -89,6 +97,6 @@ int main()
         }
     }
 
-    std::cout << "Factory preset library audit passed for expanded style pack.\n";
+    std::cout << "Factory preset library audit passed for 32-preset expanded style pack.\n";
     return 0;
 }

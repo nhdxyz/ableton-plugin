@@ -175,6 +175,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     auto fxFlangerMix = 0.18f;
     auto fxGuardEnabled = false;
     auto fxGuardPush = 0.0f;
+    auto fxGuardGlue = 0.0f;
+    auto fxGuardPunch = 0.0f;
+    auto fxGuardClipMix = 1.0f;
     auto fxGuardCeiling = 0.92f;
     auto mono = true;
     auto glide = 0.0f;
@@ -938,6 +941,34 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     fxSendDelay = juce::jlimit(0.0f, 0.55f, macroThrow * 0.72f);
     fxSendReverb = juce::jlimit(0.0f, 0.55f, macroSpace * 0.42f);
 
+    if (fxGuardEnabled)
+    {
+        const auto isBassRecipe = recipe == Recipe::deepHouseBass
+            || recipe == Recipe::rollingTechBass
+            || recipe == Recipe::ukgTwoStepBass
+            || recipe == Recipe::ukgDredBass;
+        const auto isTransientRecipe = recipe == Recipe::minimalBlip
+            || recipe == Recipe::darkStab
+            || recipe == Recipe::ukgOrganStab
+            || recipe == Recipe::ukgChordStab
+            || recipe == Recipe::ukgBellPluck;
+        const auto driveLoad = juce::jlimit(0.0f, 1.0f, drive + (fxGuardPush * 0.75f) + (chaos * 0.12f));
+
+        fxGuardGlue = juce::jlimit(0.0f,
+                                   isBassRecipe ? 0.36f : 0.48f,
+                                   randomFloat(isBassRecipe ? 0.10f : 0.04f,
+                                               isBassRecipe ? 0.26f : 0.22f)
+                                       + (driveLoad * (isBassRecipe ? 0.16f : 0.24f)));
+        fxGuardPunch = juce::jlimit(0.0f,
+                                    isBassRecipe ? 0.14f : 0.42f,
+                                    randomFloat(0.02f, isTransientRecipe ? 0.30f : 0.16f)
+                                        + ((isTransientRecipe ? 0.12f : 0.02f) * wildness));
+        fxGuardClipMix = juce::jlimit(0.70f,
+                                      1.0f,
+                                      randomFloat(isBassRecipe ? 0.88f : 0.76f, 1.0f)
+                                          + (driveLoad * 0.08f));
+    }
+
     if (subtle)
     {
         auto blend = [this, amount] (const juce::String& id, float target)
@@ -1014,6 +1045,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxFlangerFeedback = blend(Parameters::ID::fxFlangerFeedback, fxFlangerFeedback);
         fxFlangerMix = blend(Parameters::ID::fxFlangerMix, fxFlangerMix);
         fxGuardPush = blend(Parameters::ID::fxGuardPush, fxGuardPush);
+        fxGuardGlue = blend(Parameters::ID::fxGuardGlue, fxGuardGlue);
+        fxGuardPunch = blend(Parameters::ID::fxGuardPunch, fxGuardPunch);
+        fxGuardClipMix = blend(Parameters::ID::fxGuardClipMix, fxGuardClipMix);
         fxGuardCeiling = blend(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
         glide = blend(Parameters::ID::glideTime, glide);
 
@@ -1060,6 +1094,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
         fxWidthMonoCutoff = juce::jlimit(125.0f, 190.0f, fxWidthMonoCutoff);
         fxGuardEnabled = true;
         fxGuardPush = juce::jlimit(0.0f, 0.13f, fxGuardPush);
+        fxGuardGlue = juce::jlimit(0.08f, 0.34f, fxGuardGlue);
+        fxGuardPunch = juce::jlimit(0.0f, 0.16f, fxGuardPunch);
+        fxGuardClipMix = juce::jlimit(0.86f, 1.0f, fxGuardClipMix);
         fxGuardCeiling = juce::jlimit(0.87f, 0.93f, fxGuardCeiling);
         mono = true;
         glide = juce::jlimit(0.02f, 0.12f, glide);
@@ -1174,6 +1211,9 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     setParameter(Parameters::ID::fxFlangerMix, fxFlangerMix);
     setParameter(Parameters::ID::fxGuardEnabled, fxGuardEnabled ? 1.0f : 0.0f);
     setParameter(Parameters::ID::fxGuardPush, fxGuardPush);
+    setParameter(Parameters::ID::fxGuardGlue, fxGuardGlue);
+    setParameter(Parameters::ID::fxGuardPunch, fxGuardPunch);
+    setParameter(Parameters::ID::fxGuardClipMix, fxGuardClipMix);
     setParameter(Parameters::ID::fxGuardCeiling, fxGuardCeiling);
     setParameter(Parameters::ID::monoMode, mono ? 1.0f : 0.0f);
     setParameter(Parameters::ID::glideTime, glide);

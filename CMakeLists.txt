@@ -163,6 +163,19 @@ target_link_libraries(NateVSTGuardTelemetryAudit
 
 add_test(NAME GuardTelemetryAudit COMMAND NateVSTGuardTelemetryAudit)
 
+add_executable(NateVSTGuardDynamicsAudit Tests/GuardDynamicsAudit.cpp)
+
+target_link_libraries(NateVSTGuardDynamicsAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME GuardDynamicsAudit COMMAND NateVSTGuardDynamicsAudit)
+
 add_executable(NateVSTSequencerPatternSceneAudit Tests/SequencerPatternSceneAudit.cpp)
 
 target_link_libraries(NateVSTSequencerPatternSceneAudit

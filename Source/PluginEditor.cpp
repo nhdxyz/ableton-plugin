@@ -29,7 +29,7 @@ constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto candidateAuditionDurationMs = 680.0;
 constexpr auto candidateAuditionVelocity = 0.88f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
-constexpr std::array<const char*, 31> momentaryFxParameterIDs {
+constexpr std::array<const char*, 34> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
     Parameters::ID::fxDelaySync,
     Parameters::ID::fxDelayRate,
@@ -59,6 +59,9 @@ constexpr std::array<const char*, 31> momentaryFxParameterIDs {
     Parameters::ID::fxWidthMonoCutoff,
     Parameters::ID::fxGuardEnabled,
     Parameters::ID::fxGuardPush,
+    Parameters::ID::fxGuardGlue,
+    Parameters::ID::fxGuardPunch,
+    Parameters::ID::fxGuardClipMix,
     Parameters::ID::fxGuardCeiling,
     Parameters::ID::outputGain
 };
@@ -1777,6 +1780,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(fxFlangerFeedbackSlider, fxFlangerFeedbackLabel, "Fdbk", Parameters::ID::fxFlangerFeedback);
     configureSlider(fxFlangerMixSlider, fxFlangerMixLabel, "Mix", Parameters::ID::fxFlangerMix);
     configureSlider(fxGuardPushSlider, fxGuardPushLabel, "Push", Parameters::ID::fxGuardPush);
+    configureSlider(fxGuardGlueSlider, fxGuardGlueLabel, "Glue", Parameters::ID::fxGuardGlue);
+    configureSlider(fxGuardPunchSlider, fxGuardPunchLabel, "Punch", Parameters::ID::fxGuardPunch);
+    configureSlider(fxGuardClipMixSlider, fxGuardClipMixLabel, "Clip", Parameters::ID::fxGuardClipMix);
     configureSlider(fxGuardCeilingSlider, fxGuardCeilingLabel, "Ceil", Parameters::ID::fxGuardCeiling);
 
     generateButton.onClick = [this] { triggerRandomGenerate(); };
@@ -3806,8 +3812,17 @@ void NateVSTAudioProcessorEditor::resized()
                     fxGuardEnabledButton.setVisible(true);
                     fxGuardEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
                     setSliderVisible(fxGuardPushSlider, fxGuardPushLabel, true);
+                    setSliderVisible(fxGuardGlueSlider, fxGuardGlueLabel, true);
+                    setSliderVisible(fxGuardPunchSlider, fxGuardPunchLabel, true);
+                    setSliderVisible(fxGuardClipMixSlider, fxGuardClipMixLabel, true);
                     setSliderVisible(fxGuardCeilingSlider, fxGuardCeilingLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxGuardPushSlider, &fxGuardCeilingSlider });
+                    layoutKnobRow(controlsArea.removeFromTop(150), {
+                        &fxGuardPushSlider,
+                        &fxGuardGlueSlider,
+                        &fxGuardPunchSlider,
+                        &fxGuardClipMixSlider,
+                        &fxGuardCeilingSlider
+                    });
                     break;
             }
             break;
@@ -5663,6 +5678,9 @@ void NateVSTAudioProcessorEditor::applyDelayThrow()
     setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 140.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.08f);
+    setPlainParameterValue(Parameters::ID::fxGuardGlue, 0.22f);
+    setPlainParameterValue(Parameters::ID::fxGuardPunch, 0.12f);
+    setPlainParameterValue(Parameters::ID::fxGuardClipMix, 0.92f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
 
     selectedFxModule = FxModule::delay;
@@ -5692,6 +5710,9 @@ void NateVSTAudioProcessorEditor::applySpaceThrow()
     setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 145.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.05f);
+    setPlainParameterValue(Parameters::ID::fxGuardGlue, 0.18f);
+    setPlainParameterValue(Parameters::ID::fxGuardPunch, 0.08f);
+    setPlainParameterValue(Parameters::ID::fxGuardClipMix, 0.86f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
 
     selectedFxModule = FxModule::reverb;
@@ -5714,6 +5735,9 @@ void NateVSTAudioProcessorEditor::applyPumpDrop()
     setPlainParameterValue(Parameters::ID::fxWidthMonoCutoff, 135.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.10f);
+    setPlainParameterValue(Parameters::ID::fxGuardGlue, 0.30f);
+    setPlainParameterValue(Parameters::ID::fxGuardPunch, 0.16f);
+    setPlainParameterValue(Parameters::ID::fxGuardClipMix, 0.94f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.90f);
     fxPumpRateBox.setSelectedItemIndex(1, juce::dontSendNotification);
     fxPumpCurveBox.setSelectedItemIndex(2, juce::dontSendNotification);
@@ -5741,6 +5765,9 @@ void NateVSTAudioProcessorEditor::clearFxThrows()
     setPlainParameterValue(Parameters::ID::fxPumpDepth, 0.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.04f);
+    setPlainParameterValue(Parameters::ID::fxGuardGlue, 0.10f);
+    setPlainParameterValue(Parameters::ID::fxGuardPunch, 0.05f);
+    setPlainParameterValue(Parameters::ID::fxGuardClipMix, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.92f);
 
     selectedFxModule = FxModule::guard;
@@ -5801,6 +5828,9 @@ void NateVSTAudioProcessorEditor::applyMomentaryMuteDrop()
     setPlainParameterValue(Parameters::ID::outputGain, -24.0f);
     setPlainParameterValue(Parameters::ID::fxGuardEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardPush, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardGlue, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardPunch, 0.0f);
+    setPlainParameterValue(Parameters::ID::fxGuardClipMix, 1.0f);
     setPlainParameterValue(Parameters::ID::fxGuardCeiling, 0.92f);
 
     selectedFxModule = FxModule::guard;
@@ -5909,9 +5939,9 @@ void NateVSTAudioProcessorEditor::updateFxPresetBox(bool force)
             break;
 
         case FxModule::guard:
-            addPreset(1, "Club Safety");
-            addPreset(2, "Hot Push");
-            addPreset(3, "Clean Ceiling");
+            addPreset(1, "Club Glue");
+            addPreset(2, "Hot Clip");
+            addPreset(3, "Punch Safe");
             break;
     }
 
@@ -6248,16 +6278,25 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
             if (presetId == 1)
             {
                 set(Parameters::ID::fxGuardPush, 0.06f);
+                set(Parameters::ID::fxGuardGlue, 0.34f);
+                set(Parameters::ID::fxGuardPunch, 0.18f);
+                set(Parameters::ID::fxGuardClipMix, 0.86f);
                 set(Parameters::ID::fxGuardCeiling, 0.90f);
             }
             else if (presetId == 2)
             {
                 set(Parameters::ID::fxGuardPush, 0.16f);
+                set(Parameters::ID::fxGuardGlue, 0.22f);
+                set(Parameters::ID::fxGuardPunch, 0.08f);
+                set(Parameters::ID::fxGuardClipMix, 1.0f);
                 set(Parameters::ID::fxGuardCeiling, 0.88f);
             }
             else
             {
                 set(Parameters::ID::fxGuardPush, 0.02f);
+                set(Parameters::ID::fxGuardGlue, 0.12f);
+                set(Parameters::ID::fxGuardPunch, 0.28f);
+                set(Parameters::ID::fxGuardClipMix, 0.72f);
                 set(Parameters::ID::fxGuardCeiling, 0.94f);
             }
             break;
@@ -6571,6 +6610,8 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::width: return "mono bass width";
         case FxModule::guard:
         {
+            const auto glue = readPlainParameterValue(Parameters::ID::fxGuardGlue, 0.0f);
+            const auto punch = readPlainParameterValue(Parameters::ID::fxGuardPunch, 0.0f);
             auto peakLeft = 0.0f;
             auto peakRight = 0.0f;
             auto rmsLeft = 0.0f;
@@ -6581,7 +6622,11 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
             audioProcessor.getOutputMeterLevels(peakLeft, peakRight, rmsLeft, rmsRight);
             audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, guardActive);
             juce::ignoreUnused(guardDrive);
-            return guardSafetySummary(juce::jmax(peakLeft, peakRight), guardReduction, guardActive);
+            auto summary = guardSafetySummary(juce::jmax(peakLeft, peakRight), guardReduction, guardActive);
+            if (glue > 0.01f || punch > 0.01f)
+                summary = "glue " + juce::String(juce::roundToInt(glue * 100.0f))
+                    + " punch " + juce::String(juce::roundToInt(punch * 100.0f));
+            return summary;
         }
     }
 
@@ -6965,13 +7010,13 @@ juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) co
             return "MOD is where motion becomes visible. Source meters show activity for LFOs, macros, random sources, velocity, and envelopes. The matrix routes a source to a destination with bipolar amount control.\n\nTouch a knob first, then use CONTROL MOD+ to add a route quickly. Use the inspector to focus a destination, clear routes, or open the MOD panel from any sound-design page.\n\nFor house and UKG, start with small macro amounts on cutoff, drive, pump, delay mix, sample start, and wavetable position.";
 
         case 4:
-            return "FX is a slot-based rack. Add modules from the dropdown, reorder them, remove weak links, and select a slot to edit only that module.\n\nFor club patches, useful chains are Tone -> Drive -> Pump -> Delay -> Reverb -> Width -> Guard. Guard belongs near the end for output safety.\n\nThrow buttons are performance moves: send delay, send space, pump drop, dry reset, and hold actions for fills and breakdowns.";
+            return "FX is a slot-based rack. Add modules from the dropdown, reorder them, remove weak links, and select a slot to edit only that module.\n\nFor club patches, useful chains are Tone -> Drive -> Pump -> Delay -> Reverb -> Width -> Guard. Guard belongs near the end for output safety, glue, punch, and clip control.\n\nThrow buttons are performance moves: send delay, send space, pump drop, dry reset, and hold actions for fills and breakdowns.";
 
         case 5:
             return "LIBRARY stores the patch with category, pack, author, key, BPM, rating, favorite, notes, and searchable metadata.\n\nUse categories like UKG/Bass, UKG/Chops, House/Chords, Tech House/Bass, Minimal/Plucks, and Techno/Stabs so the browser behaves like a production crate.\n\nThe browser can filter by favorites, rating, generated status, category, tag, pack, tempo, and macro-rich patches. Macro previews help decide if a preset has usable performance movement before loading it.";
 
         case 6:
-            return "UKG targets: 130-136 BPM, swung 16ths, short organ stabs, vocal chops, dred/Reese bass, clean mono subs, delay throws, tight room space, and shuffled call-response movement.\n\nHouse and tech-house targets: 120-130 BPM, rolling bass, warm filtered chords, restrained drive, pump, short plates, hook stabs, and macro-friendly cutoff/space control.\n\nMinimal and techno targets: sparse blips, darker stabs, resonant motion, noise layers, tighter envelopes, Guard safety, and controlled width.";
+            return "UKG targets: 130-136 BPM, swung 16ths, short organ stabs, vocal chops, dred/Reese bass, clean mono subs, delay throws, tight room space, and shuffled call-response movement.\n\nHouse and tech-house targets: 120-130 BPM, rolling bass, warm filtered chords, restrained drive, pump, short plates, hook stabs, and macro-friendly cutoff/space control.\n\nMinimal and techno targets: sparse blips, darker stabs, resonant motion, noise layers, tighter envelopes, Guard glue/clip safety, and controlled width.";
 
         case 7:
             return "Undo Edit and Redo Edit sit in the CONTROL strip. They restore full sound-design snapshots across synth parameters, modulation routes, sequencer steps, FX rack edits, sample edits, preset loads, and performance snapshots.\n\nKnobs support normal drag, fine drag with Shift or Cmd, double-click reset, text entry, and disabled scroll-wheel movement to avoid accidental jumps.\n\nThe CONTROL strip also shows the touched parameter, value, automation ID, and modulation summary.";
@@ -7191,6 +7236,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(fxFlangerFeedbackSlider, fxFlangerFeedbackLabel, false);
     setSliderVisible(fxFlangerMixSlider, fxFlangerMixLabel, false);
     setSliderVisible(fxGuardPushSlider, fxGuardPushLabel, false);
+    setSliderVisible(fxGuardGlueSlider, fxGuardGlueLabel, false);
+    setSliderVisible(fxGuardPunchSlider, fxGuardPunchLabel, false);
+    setSliderVisible(fxGuardClipMixSlider, fxGuardClipMixLabel, false);
     setSliderVisible(fxGuardCeilingSlider, fxGuardCeilingLabel, false);
 }
 

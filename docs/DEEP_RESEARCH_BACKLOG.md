@@ -198,8 +198,8 @@ Implemented sequencer sub-slice:
 83. Add amp/cabinet-style drive for rough warehouse tones.
 84. Add tape, tube, diode, foldback, hard-clip, and sampler-rate drive characters.
 85. Add pre/post gain matching for drive modules.
-86. Add transient shaper for pluck/stab attack.
-87. Add compressor.
+86. Add transient shaper for pluck/stab attack. First Guard-stage Punch pass implemented.
+87. Add compressor. First Guard-stage Glue pass implemented; full dedicated compressor module remains future work.
 88. Add sidechain-style ducking input for a future audio-effect build.
 89. Add frequency shifter for minimal and techno motion.
 90. Add resonator-bank module beyond the current single comb flavor.
@@ -217,7 +217,8 @@ Implemented sequencer sub-slice:
 Implemented FX sub-slice:
 
 - Pump now publishes live phase, gain, peak reduction, and active-state telemetry from the DSP path, and the FX Pump curve display shows HOST/INT timing source, a moving phase marker, and a reduction meter. External Ableton sidechain input remains tracked separately because it requires bus-layout and host-validation work.
-- The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction. This is the first visibility slice for the compressor/clipper/transient safety backlog before adding more dynamics modules.
+- The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction.
+- Guard now includes first-pass club dynamics: Glue compression, Punch transient lift, and Clip blend before the safety ceiling, with `GuardDynamicsAudit` coverage for punch, compression, and ceiling behavior. Dedicated compressor, limiter metering, and multiband dynamics remain future work.
 - Delay and Reverb now have separate send amounts and dedicated send DSP state for throw tails, with appended MOD destinations for `FX Send Delay` and `FX Send Reverb`, plus `EffectsSendAudit` coverage for send tails and one-shot tail kill.
 - Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), preset previews/construction kits (#68), percussive noise source (#69), send-style delay/reverb buses (#70), dedicated groove engine (#71), and chord/bassline designer (#72).
 

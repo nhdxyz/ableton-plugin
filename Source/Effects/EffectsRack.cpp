@@ -194,6 +194,9 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxGuardEnabled = parameters.getRawParameterValue(Parameters::ID::fxGuardEnabled);
     fxGuardPush = parameters.getRawParameterValue(Parameters::ID::fxGuardPush);
     fxGuardCeiling = parameters.getRawParameterValue(Parameters::ID::fxGuardCeiling);
+    fxGuardGlue = parameters.getRawParameterValue(Parameters::ID::fxGuardGlue);
+    fxGuardPunch = parameters.getRawParameterValue(Parameters::ID::fxGuardPunch);
+    fxGuardClipMix = parameters.getRawParameterValue(Parameters::ID::fxGuardClipMix);
     fxFlangerEnabled = parameters.getRawParameterValue(Parameters::ID::fxFlangerEnabled);
     fxFlangerRate = parameters.getRawParameterValue(Parameters::ID::fxFlangerRate);
     fxFlangerDepth = parameters.getRawParameterValue(Parameters::ID::fxFlangerDepth);
@@ -262,6 +265,10 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
     widthLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    guardEnvelopeState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    guardCompressionGainState.assign(static_cast<size_t>(preparedChannels), 1.0f);
+    guardTransientFastState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    guardTransientSlowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     reset();
 }
 
@@ -285,6 +292,10 @@ void EffectsRack::reset()
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
     std::fill(widthLowState.begin(), widthLowState.end(), 0.0f);
+    std::fill(guardEnvelopeState.begin(), guardEnvelopeState.end(), 0.0f);
+    std::fill(guardCompressionGainState.begin(), guardCompressionGainState.end(), 1.0f);
+    std::fill(guardTransientFastState.begin(), guardTransientFastState.end(), 0.0f);
+    std::fill(guardTransientSlowState.begin(), guardTransientSlowState.end(), 0.0f);
     pumpPhase = 0.0;
     tremoloPhase = 0.0;
     ringPhase = 0.0;
@@ -1217,31 +1228,103 @@ void EffectsRack::applyOutputGainAndSafety(juce::AudioBuffer<float>& buffer, flo
     const auto guardEnabled = readParameter(fxGuardEnabled, 0.0f) >= 0.5f;
     const auto guardPush = guardEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxGuardPush, 0.0f)) : 0.0f;
     const auto guardCeiling = guardEnabled ? juce::jlimit(0.65f, 0.98f, readParameter(fxGuardCeiling, 0.92f)) : 0.98f;
+    const auto guardGlue = guardEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxGuardGlue, 0.0f)) : 0.0f;
+    const auto guardPunch = guardEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxGuardPunch, 0.0f)) : 0.0f;
+    const auto guardClipMix = guardEnabled ? juce::jlimit(0.0f, 1.0f, readParameter(fxGuardClipMix, 1.0f)) : 1.0f;
     const auto gain = juce::Decibels::decibelsToGain(macroCompensatedOutput + (guardPush * 9.0f));
     const auto guardShape = 1.0f + (guardPush * 2.8f);
     const auto guardNormaliser = std::tanh(guardShape);
+    const auto compressorAttackAlpha = 1.0f - std::exp(-1.0f / static_cast<float>(juce::jmax(1.0, currentSampleRate) * 0.006));
+    const auto compressorReleaseAlpha = 1.0f - std::exp(-1.0f / static_cast<float>(juce::jmax(1.0, currentSampleRate) * 0.110));
+    const auto transientFastAlpha = onePoleAlpha(1450.0f, currentSampleRate);
+    const auto transientSlowAlpha = onePoleAlpha(85.0f, currentSampleRate);
     auto maxGuardDrive = 0.0f;
     auto maxGuardReduction = 0.0f;
+    const auto channelsWithGuardState = juce::jmin(buffer.getNumChannels(),
+                                                   static_cast<int>(juce::jmin(guardEnvelopeState.size(),
+                                                                               juce::jmin(guardCompressionGainState.size(),
+                                                                                           juce::jmin(guardTransientFastState.size(),
+                                                                                                       guardTransientSlowState.size())))));
+
+    if (! guardEnabled)
+    {
+        std::fill(guardEnvelopeState.begin(), guardEnvelopeState.end(), 0.0f);
+        std::fill(guardCompressionGainState.begin(), guardCompressionGainState.end(), 1.0f);
+        std::fill(guardTransientFastState.begin(), guardTransientFastState.end(), 0.0f);
+        std::fill(guardTransientSlowState.begin(), guardTransientSlowState.end(), 0.0f);
+    }
 
     for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         auto* samples = buffer.getWritePointer(channel);
+        auto* envelopeState = channel < channelsWithGuardState ? &guardEnvelopeState[static_cast<size_t>(channel)] : nullptr;
+        auto* compressionGainState = channel < channelsWithGuardState ? &guardCompressionGainState[static_cast<size_t>(channel)] : nullptr;
+        auto* transientFastState = channel < channelsWithGuardState ? &guardTransientFastState[static_cast<size_t>(channel)] : nullptr;
+        auto* transientSlowState = channel < channelsWithGuardState ? &guardTransientSlowState[static_cast<size_t>(channel)] : nullptr;
 
         for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
         {
-            const auto driven = samples[sampleIndex] * gain;
+            const auto input = samples[sampleIndex];
+            auto dynamicsSample = input;
+
+            if (guardEnabled && envelopeState != nullptr && compressionGainState != nullptr
+                && transientFastState != nullptr && transientSlowState != nullptr)
+            {
+                const auto inputMagnitude = std::abs(dynamicsSample);
+                *transientFastState += transientFastAlpha * (inputMagnitude - *transientFastState);
+                *transientSlowState += transientSlowAlpha * (inputMagnitude - *transientSlowState);
+
+                if (guardPunch > 0.0001f)
+                {
+                    const auto transientLift = juce::jlimit(0.0f, 0.55f, (*transientFastState - *transientSlowState) * 3.2f);
+                    dynamicsSample *= 1.0f + (guardPunch * transientLift);
+                }
+
+                const auto dynamicsMagnitude = std::abs(dynamicsSample);
+                const auto envelopeAlpha = dynamicsMagnitude > *envelopeState ? compressorAttackAlpha : compressorReleaseAlpha;
+                *envelopeState += envelopeAlpha * (dynamicsMagnitude - *envelopeState);
+
+                if (guardGlue > 0.0001f)
+                {
+                    const auto thresholdDb = -8.0f - (guardGlue * 16.0f);
+                    const auto ratio = 1.25f + (guardGlue * 5.25f);
+                    const auto envelopeDb = juce::Decibels::gainToDecibels(juce::jmax(0.000001f, *envelopeState));
+                    auto targetCompressionGain = 1.0f;
+
+                    if (envelopeDb > thresholdDb)
+                    {
+                        const auto overDb = envelopeDb - thresholdDb;
+                        const auto compressedDb = thresholdDb + (overDb / ratio);
+                        targetCompressionGain = juce::Decibels::decibelsToGain(compressedDb - envelopeDb);
+                    }
+
+                    const auto gainAlpha = targetCompressionGain < *compressionGainState ? compressorAttackAlpha : compressorReleaseAlpha;
+                    *compressionGainState += gainAlpha * (targetCompressionGain - *compressionGainState);
+                    dynamicsSample *= juce::jlimit(0.08f, 1.0f, *compressionGainState);
+                }
+                else
+                {
+                    *compressionGainState += compressorReleaseAlpha * (1.0f - *compressionGainState);
+                }
+            }
+
+            const auto driven = dynamicsSample * gain;
             const auto processed = guardEnabled
-                ? (std::tanh(driven * guardShape) / guardNormaliser) * guardCeiling
+                ? juce::jlimit(-guardCeiling,
+                               guardCeiling,
+                               (driven * (1.0f - guardClipMix))
+                                   + (((std::tanh(driven * guardShape) / guardNormaliser) * guardCeiling) * guardClipMix))
                 : softClip(driven);
 
             if (guardEnabled)
             {
+                const auto referenceLevel = std::abs(input * gain);
                 const auto drivenLevel = std::abs(driven);
                 const auto processedLevel = std::abs(processed);
                 maxGuardDrive = juce::jmax(maxGuardDrive, drivenLevel / juce::jmax(0.000001f, guardCeiling));
 
-                if (drivenLevel > 0.000001f)
-                    maxGuardReduction = juce::jmax(maxGuardReduction, 1.0f - (processedLevel / drivenLevel));
+                if (referenceLevel > 0.000001f)
+                    maxGuardReduction = juce::jmax(maxGuardReduction, 1.0f - (processedLevel / referenceLevel));
             }
 
             samples[sampleIndex] = processed;

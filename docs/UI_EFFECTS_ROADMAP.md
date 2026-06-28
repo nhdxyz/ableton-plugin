@@ -258,7 +258,7 @@ Useful but higher risk. It needs crossover design, phase considerations, and out
 
 10. Compressor / Glue
 
-Useful for polish, but a good compressor takes careful tuning. Start with Pump/Duck and Guard before adding a full compressor.
+First pass implemented inside Guard as Glue compression, Punch transient lift, and Clip blend before the ceiling. A full dedicated compressor still needs attack/release/knee/makeup controls, clearer metering, and sidechain routing before it should become a separate rack module.
 
 ### Lower Priority
 

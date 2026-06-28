@@ -37,10 +37,10 @@ Research references:
 ### Bass Character
 
 - Core bass targets: mono sub, Reese movement, Dred/reverse-filter movement, and short rubbery plucks.
-- Useful controls: filter envelope amount, filter envelope attack, glide, mono/legato, drive, Crush mix, output Guard, and the top-bar LOW/SAFE/HOT/CLIP meter.
+- Useful controls: filter envelope amount, filter envelope attack, glide, mono/legato, drive, Crush mix, output Guard Glue/Punch/Clip, and the top-bar LOW/SAFE/HOT/CLIP meter.
 - Bass randomization should include tuned-sub guardrails, with practical club notes called out when preset authors build sub-focused patches.
 - Sub-focused preset authoring should keep the fundamental in a useful club range, roughly 40 to 80 Hz, and avoid relying on stereo detune for the weight of the bass.
-- The HOME `CLUB` assistant now turns this into live patch guidance by flagging root-range issues, low-side stereo risk, Mono spread-lock behavior, Guard/headroom risk, and phase-reset status. The always-visible output meter adds a second quick safety check by labelling the live level as LOW, SAFE, HOT, or CLIP, and the Guard slot reports active reduction when the safety stage catches hot bass/chop peaks.
+- The HOME `CLUB` assistant now turns this into live patch guidance by flagging root-range issues, low-side stereo risk, Mono spread-lock behavior, Guard/headroom risk, and phase-reset status. The always-visible output meter adds a second quick safety check by labelling the live level as LOW, SAFE, HOT, or CLIP, and the Guard slot reports active reduction when the safety stage catches hot bass/chop peaks. Guard now also has Glue for bus-style control, Punch for short stabs/chops, and Clip for blending safety character.
 - UKG randomization should keep low-end stable first, then add motion with filter and oscillator detune.
 - Dred/reverse-filter bass should use a centered sub, a restrained Reese layer, a slower modulation envelope opening the filter, and short glide so it feels like a garage bass phrase without making the amp envelope sluggish.
 - Filter Character now gives UKG basses and stabs a first tone layer: Warm for rounded sub/stab weight, Acid for rubbery moving basslines, and Dirty for darker Dred or warehouse-style pressure.
@@ -75,7 +75,7 @@ Research references:
 - The FX page now also has hold-to-restore throw controls for quick garage fills and temporary mute drops without permanently changing the patch.
 - Delay now supports tempo-synced divisions, including dotted and triplet rates, so garage vocal throws and house/tech-house repeats can follow the session tempo instead of drifting from fixed millisecond values.
 - Delay and Reverb now have separate send amounts, so garage throws can ring out from the send bus while insert Delay/Reverb remain available as serial tone modules. Dry Reset uses one-shot tail kill to clear send tails.
-- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes. The Pump display now also shows HOST/INT timing, live phase, and ducking reduction, while the Guard/output safety labels and reduction telemetry keep garage bass and chop patches from silently drifting into unsafe level ranges.
+- Pump now has selectable curve types. Garage holds the duck slightly longer for skippy 2-step feel, while Stutter and Gate curves support tighter vocal chop and minimal/tech-house rhythmic edits. Custom adds eight saved draggable points for hand-drawn garage/house duck shapes. The Pump display now also shows HOST/INT timing, live phase, and ducking reduction, while Guard Glue/Punch/Clip plus the output safety labels and reduction telemetry keep garage bass and chop patches from silently drifting into unsafe level ranges.
 
 ## Sound Targets
 

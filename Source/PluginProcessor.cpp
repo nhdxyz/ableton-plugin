@@ -789,6 +789,9 @@ juce::String NateVSTAudioProcessor::getRandomCandidateDiffSummary(int slotIndex)
 
     addDiff("Drive", Parameters::ID::driveAmount, 0.0f, 0.05f, formatPercent);
     addDiff("FX drive", Parameters::ID::fxDistortionAmount, 0.0f, 0.05f, formatPercent);
+    addDiff("Glue", Parameters::ID::fxGuardGlue, 0.0f, 0.05f, formatPercent);
+    addDiff("Punch", Parameters::ID::fxGuardPunch, 0.0f, 0.05f, formatPercent);
+    addDiff("Clip", Parameters::ID::fxGuardClipMix, 1.0f, 0.08f, formatPercent);
     addDiff("Motion", Parameters::ID::macroMotion, 0.0f, 0.08f, formatPercent);
     addDiff("LFO", Parameters::ID::lfo1Depth, 0.0f, 0.08f, formatPercent);
     addDiff("Delay", Parameters::ID::fxDelayMix, 0.0f, 0.05f, formatPercent);
@@ -2967,6 +2970,9 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
                     Parameters::ID::fxPhaserMix,
                     Parameters::ID::fxGuardEnabled,
                     Parameters::ID::fxGuardPush,
+                    Parameters::ID::fxGuardGlue,
+                    Parameters::ID::fxGuardPunch,
+                    Parameters::ID::fxGuardClipMix,
                     Parameters::ID::fxGuardCeiling,
                     Parameters::ID::fxFlangerEnabled,
                     Parameters::ID::fxFlangerRate,
@@ -3803,6 +3809,9 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::fxFlangerFeedback,
                 Parameters::ID::fxFlangerMix,
                 Parameters::ID::fxGuardPush,
+                Parameters::ID::fxGuardGlue,
+                Parameters::ID::fxGuardPunch,
+                Parameters::ID::fxGuardClipMix,
                 Parameters::ID::fxGuardCeiling,
                 Parameters::ID::outputGain
             }, intensity);
@@ -3997,6 +4006,9 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::fxPhaserMix,
                 Parameters::ID::fxGuardEnabled,
                 Parameters::ID::fxGuardPush,
+                Parameters::ID::fxGuardGlue,
+                Parameters::ID::fxGuardPunch,
+                Parameters::ID::fxGuardClipMix,
                 Parameters::ID::fxGuardCeiling,
                 Parameters::ID::fxFlangerEnabled,
                 Parameters::ID::fxFlangerRate,
@@ -4211,6 +4223,9 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::fxPhaserMix,
             Parameters::ID::fxGuardEnabled,
             Parameters::ID::fxGuardPush,
+            Parameters::ID::fxGuardGlue,
+            Parameters::ID::fxGuardPunch,
+            Parameters::ID::fxGuardClipMix,
             Parameters::ID::fxGuardCeiling,
             Parameters::ID::fxFlangerEnabled,
             Parameters::ID::fxFlangerRate,
@@ -4610,6 +4625,9 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFxSendControls = stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendDelay).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendReverb).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendTailKill).isValid();
+    const auto hasFxGuardDynamics = stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardGlue).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardPunch).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardClipMix).isValid();
     const auto hasWavetablePositions = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWavetablePosition).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::osc2WavetablePosition).isValid();
     const auto hasSequencerLockControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDestination).isValid()
@@ -4689,6 +4707,12 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::fxSendDelay, 0.0f);
         setParameterPlainValue(Parameters::ID::fxSendReverb, 0.0f);
         setParameterPlainValue(Parameters::ID::fxSendTailKill, 0.0f);
+    }
+    if (! hasFxGuardDynamics)
+    {
+        setParameterPlainValue(Parameters::ID::fxGuardGlue, 0.0f);
+        setParameterPlainValue(Parameters::ID::fxGuardPunch, 0.0f);
+        setParameterPlainValue(Parameters::ID::fxGuardClipMix, 1.0f);
     }
     if (! hasWavetablePositions)
     {

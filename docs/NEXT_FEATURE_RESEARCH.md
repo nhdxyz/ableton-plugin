@@ -127,7 +127,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 49. Add gain compensation for every drive mode.
 50. Add drive audition with loudness matching.
 51. Add oversampling choices for drive and filter nonlinearity.
-52. Add transient-preserving drive for plucks and stabs.
+52. Add transient-preserving drive for plucks and stabs. First Guard-stage Punch pass implemented for club-safe transient lift; drive-specific transient preservation remains open.
 53. Add club low-end telemetry: sub mono check, DC check, low-end build-up warning, and guard hit rate.
 54. Add a one-knob "low-end tighten" transform for house and UKG bass patches.
 55. Add a one-knob "stab bite" transform for chord and organ stabs.

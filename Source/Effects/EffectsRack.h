@@ -48,6 +48,10 @@ private:
     std::vector<float> bitcrushHeldSample;
     std::vector<int> bitcrushHoldCounter;
     std::vector<float> widthLowState;
+    std::vector<float> guardEnvelopeState;
+    std::vector<float> guardCompressionGainState;
+    std::vector<float> guardTransientFastState;
+    std::vector<float> guardTransientSlowState;
 
     double currentSampleRate = 44100.0;
     double pumpPhase = 0.0;
@@ -154,6 +158,9 @@ private:
     std::atomic<float>* fxGuardEnabled = nullptr;
     std::atomic<float>* fxGuardPush = nullptr;
     std::atomic<float>* fxGuardCeiling = nullptr;
+    std::atomic<float>* fxGuardGlue = nullptr;
+    std::atomic<float>* fxGuardPunch = nullptr;
+    std::atomic<float>* fxGuardClipMix = nullptr;
     std::atomic<float>* fxFlangerEnabled = nullptr;
     std::atomic<float>* fxFlangerRate = nullptr;
     std::atomic<float>* fxFlangerDepth = nullptr;

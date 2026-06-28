@@ -97,7 +97,7 @@ private:
 
     struct FxMomentarySnapshot
     {
-        std::array<float, 31> values {};
+        std::array<float, 34> values {};
         FxModule selectedModule = FxModule::guard;
         bool valid = false;
     };
@@ -367,6 +367,9 @@ private:
     juce::Slider fxFlangerFeedbackSlider;
     juce::Slider fxFlangerMixSlider;
     juce::Slider fxGuardPushSlider;
+    juce::Slider fxGuardGlueSlider;
+    juce::Slider fxGuardPunchSlider;
+    juce::Slider fxGuardClipMixSlider;
     juce::Slider fxGuardCeilingSlider;
 
     juce::Label octaveLabel;
@@ -483,6 +486,9 @@ private:
     juce::Label fxFlangerFeedbackLabel;
     juce::Label fxFlangerMixLabel;
     juce::Label fxGuardPushLabel;
+    juce::Label fxGuardGlueLabel;
+    juce::Label fxGuardPunchLabel;
+    juce::Label fxGuardClipMixLabel;
     juce::Label fxGuardCeilingLabel;
 
     juce::TextButton generateButton { "Generate" };

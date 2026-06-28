@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### Guard Dynamics For Club Mix Safety
+
+- Expanded the pinned Guard/output stage with `Glue`, `Punch`, and `Clip` controls for house-focused glue compression, transient lift, and clip-character blending while preserving the existing ceiling safety behavior.
+- Added per-channel Guard envelope, compression, and transient state in the FX rack, plus backward-compatible defaults so old presets keep full Guard clipping unless edited.
+- Updated Guard detail UI, module presets, one-click FX actions, momentary FX restore, Random Lab generation/diffs, FX lock/restore handling, and factory preset defaults for the new dynamics controls.
+- Added `GuardDynamicsAudit` to verify transient punch, sustained glue compression, and clip ceiling protection.
+
 ### Send-Style Delay And Reverb Throws
 
 - Added internal delay and reverb send amounts separate from the serial insert Delay/Reverb mix controls, with dedicated send delay/reverb DSP state that returns after the insert rack and before output safety.

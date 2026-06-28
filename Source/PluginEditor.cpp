@@ -7607,6 +7607,50 @@ void NateVSTAudioProcessorEditor::updateFilterResponseDisplay()
     state.character = juce::roundToInt(readPlainParameterValue(Parameters::ID::filterCharacter, 0.0f));
     state.slope = juce::roundToInt(readPlainParameterValue(Parameters::ID::filterSlope, 0.0f));
 
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    juce::StringArray filterSources;
+    auto filterRouteCount = 0;
+    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
+            return value->load();
+
+        return fallback;
+    };
+
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto sourceIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto destinationIndex = juce::roundToInt(readParameter(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto amount = readParameter(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readParameter(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+
+        if (! enabled || sourceIndex <= 0)
+            continue;
+
+        if (destinationIndex == 1)
+            state.cutoffModAmount += amount;
+        else if (destinationIndex == 2)
+            state.resonanceModAmount += amount;
+        else if (destinationIndex == 3)
+            state.envModAmount += amount;
+        else if (destinationIndex == 4)
+            state.driveModAmount += amount;
+        else
+            continue;
+
+        ++filterRouteCount;
+        if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+            filterSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
+    }
+
+    state.cutoffModAmount = juce::jlimit(-1.0f, 1.0f, state.cutoffModAmount);
+    state.resonanceModAmount = juce::jlimit(-1.0f, 1.0f, state.resonanceModAmount);
+    state.envModAmount = juce::jlimit(-1.0f, 1.0f, state.envModAmount);
+    state.driveModAmount = juce::jlimit(-1.0f, 1.0f, state.driveModAmount);
+    state.modRouteCount = filterRouteCount;
+    state.modSourceSummary = filterSources.joinIntoString(", ");
+
     filterResponseDisplay.setState(state);
 }
 

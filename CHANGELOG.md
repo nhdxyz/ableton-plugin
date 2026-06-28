@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Filter Modulation Range Overlay
+
+- Extended the SYNTH filter response display with a modulation overlay fed by existing MOD matrix destinations for Filter Cutoff, Filter Res, Filter Env, and Drive.
+- Added cutoff sweep-range shading and ghost response curves so macro/LFO/envelope movement is visible directly on the filter graph while shaping house basses, UKG stabs, and techno sweeps.
+- Added compact modulation badges for route count, summed depth, and source summary without changing APVTS parameters, preset format, or Ableton automation IDs.
+
 ### SYNTH Filter Response Visualization
 
 - Added a reusable `FilterResponseDisplay` component for the SYNTH page so cutoff, resonance, filter mode, slope, character, envelope amount, and drive are visible while shaping basses, stabs, plucks, and pads.

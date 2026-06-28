@@ -42,6 +42,12 @@ void FilterResponseDisplay::setState(const State& newState)
     clipped.resonance = juce::jlimit(0.1f, 1.4f, newState.resonance);
     clipped.envAmount = juce::jlimit(-1.0f, 1.0f, newState.envAmount);
     clipped.drive = juce::jlimit(0.0f, 1.0f, newState.drive);
+    clipped.cutoffModAmount = juce::jlimit(-1.0f, 1.0f, newState.cutoffModAmount);
+    clipped.resonanceModAmount = juce::jlimit(-1.0f, 1.0f, newState.resonanceModAmount);
+    clipped.envModAmount = juce::jlimit(-1.0f, 1.0f, newState.envModAmount);
+    clipped.driveModAmount = juce::jlimit(-1.0f, 1.0f, newState.driveModAmount);
+    clipped.modRouteCount = juce::jmax(0, newState.modRouteCount);
+    clipped.modSourceSummary = newState.modSourceSummary.trim();
     clipped.mode = juce::jlimit(0, 2, newState.mode);
     clipped.character = juce::jlimit(0, 3, newState.character);
     clipped.slope = juce::jlimit(0, 1, newState.slope);
@@ -50,6 +56,12 @@ void FilterResponseDisplay::setState(const State& newState)
         && nearlyEqual(state.resonance, clipped.resonance)
         && nearlyEqual(state.envAmount, clipped.envAmount)
         && nearlyEqual(state.drive, clipped.drive)
+        && nearlyEqual(state.cutoffModAmount, clipped.cutoffModAmount)
+        && nearlyEqual(state.resonanceModAmount, clipped.resonanceModAmount)
+        && nearlyEqual(state.envModAmount, clipped.envModAmount)
+        && nearlyEqual(state.driveModAmount, clipped.driveModAmount)
+        && state.modRouteCount == clipped.modRouteCount
+        && state.modSourceSummary == clipped.modSourceSummary
         && state.mode == clipped.mode
         && state.character == clipped.character
         && state.slope == clipped.slope)
@@ -105,6 +117,33 @@ void FilterResponseDisplay::paint(juce::Graphics& g)
     drawFrequencyMarker(10000.0f, "10K");
 
     const auto cutoffX = plot.getX() + (plot.getWidth() * normaliseFrequency(state.cutoffHz));
+
+    if (std::abs(state.cutoffModAmount) > 0.01f)
+    {
+        auto lowState = state;
+        auto highState = state;
+        const auto lowScale = std::pow(2.0f, juce::jmin(0.0f, state.cutoffModAmount) * 2.5f);
+        const auto highScale = std::pow(2.0f, juce::jmax(0.0f, state.cutoffModAmount) * 2.5f);
+        lowState.cutoffHz = juce::jlimit(minFrequencyHz, maxFrequencyHz, state.cutoffHz * lowScale);
+        highState.cutoffHz = juce::jlimit(minFrequencyHz, maxFrequencyHz, state.cutoffHz * highScale);
+        lowState.resonance = juce::jlimit(0.1f, 1.4f, state.resonance + (juce::jmin(0.0f, state.resonanceModAmount) * 0.55f));
+        highState.resonance = juce::jlimit(0.1f, 1.4f, state.resonance + (juce::jmax(0.0f, state.resonanceModAmount) * 0.55f));
+        lowState.drive = juce::jlimit(0.0f, 1.0f, state.drive + (juce::jmin(0.0f, state.driveModAmount) * 0.35f));
+        highState.drive = juce::jlimit(0.0f, 1.0f, state.drive + (juce::jmax(0.0f, state.driveModAmount) * 0.35f));
+
+        const auto lowX = plot.getX() + (plot.getWidth() * normaliseFrequency(lowState.cutoffHz));
+        const auto highX = plot.getX() + (plot.getWidth() * normaliseFrequency(highState.cutoffHz));
+        auto range = juce::Rectangle<float>(juce::jmin(lowX, highX),
+                                            plot.getY() + 1.0f,
+                                            juce::jmax(2.0f, std::abs(highX - lowX)),
+                                            plot.getHeight() - 2.0f);
+        g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.12f));
+        g.fillRoundedRectangle(range, 3.0f);
+        g.setColour(juce::Colour(0xff7bb7ff).withAlpha(0.58f));
+        g.strokePath(makeResponsePath(plot, lowState), juce::PathStrokeType(1.0f));
+        g.strokePath(makeResponsePath(plot, highState), juce::PathStrokeType(1.0f));
+    }
+
     g.setColour(accent.withAlpha(0.58f));
     g.drawLine(cutoffX, plot.getY(), cutoffX, plot.getBottom(), 1.2f);
 
@@ -129,6 +168,37 @@ void FilterResponseDisplay::paint(juce::Graphics& g)
     g.fillPath(fillPath);
     g.setColour(accent.withAlpha(0.92f));
     g.strokePath(responsePath, juce::PathStrokeType(1.7f + (driveGlow * 0.5f)));
+
+    if (state.modRouteCount > 0)
+    {
+        auto modBadge = juce::Rectangle<float>(plot.getRight() - 106.0f,
+                                               plot.getY(),
+                                               106.0f,
+                                               13.0f);
+        const auto badgeColour = state.cutoffModAmount >= 0.0f ? juce::Colour(0xff7bb7ff)
+                                                               : juce::Colour(0xffff9ab3);
+        g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
+        g.fillRoundedRectangle(modBadge, 3.0f);
+        g.setColour(badgeColour.withAlpha(0.72f));
+        g.drawRoundedRectangle(modBadge, 3.0f, 1.0f);
+        g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+        g.setColour(juce::Colour(0xffd7e3e6));
+        g.drawText("MOD " + modulationText(state.cutoffModAmount)
+                       + (state.modRouteCount > 1 ? " " + juce::String(state.modRouteCount) + "R" : ""),
+                   modBadge.reduced(4.0f, 0.0f),
+                   juce::Justification::centred);
+
+        auto detail = bounds.reduced(8.0f, 4.0f).removeFromBottom(10.0f);
+        g.setFont(juce::FontOptions(8.0f));
+        g.setColour(juce::Colour(0xff8a989e));
+        const auto sourceText = state.modSourceSummary.isNotEmpty() ? state.modSourceSummary : "Routes";
+        const auto detailText = "CUT " + modulationText(state.cutoffModAmount)
+            + "  RES " + modulationText(state.resonanceModAmount)
+            + "  ENV " + modulationText(state.envModAmount)
+            + "  DRV " + modulationText(state.driveModAmount)
+            + "  " + sourceText;
+        g.drawFittedText(detailText, detail.toNearestInt(), juce::Justification::centredLeft, 1, 0.74f);
+    }
 
     g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xffd7e3e6));
@@ -210,6 +280,12 @@ juce::Path FilterResponseDisplay::makeResponsePath(juce::Rectangle<float> plotBo
     }
 
     return path;
+}
+
+juce::String FilterResponseDisplay::modulationText(float amount)
+{
+    amount = juce::jlimit(-1.0f, 1.0f, amount);
+    return (amount >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(amount * 100.0f)) + "%";
 }
 
 juce::String FilterResponseDisplay::modeText(int mode)

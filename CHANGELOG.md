@@ -2,6 +2,14 @@
 
 ## 2026-06-28
 
+### Library Save Redesign And Expanded Factory Pack
+
+- Reworked HOME preset access into recall-only controls, moving save metadata out of the default dashboard so HOME stays focused on performance, randomization, overview, and preset audition.
+- Redesigned LIBRARY into separate Find, Browser, Save Patch, and Inspect areas with a dedicated `PresetLibrarySummary` component for visible count, rated/factory stats, selected preset metadata, macro shape, and notes.
+- Upgraded preset browser row rendering from fixed text columns into adaptive preset rows with source badges, category/pack context, key/BPM/rating, and macro-value strips.
+- Expanded the repo-managed factory library from 16 to 24 presets with new house, tech-house, minimal, and techno patches: Deep House Velvet Pad, House Organ Skank, Tech House Rolling Bass, Tech House Perc Stab, Minimal Dub Chord, Minimal Noise Tick, Warehouse Noise Sweep, and Techno Rumble Stab.
+- Added factory `preset_notes` support and `FactoryPresetLibraryAudit` coverage to verify the expanded style pack scans with metadata and loads by name.
+
 ### HOME Overview Dashboard Redesign
 
 - Reworked HOME into a five-zone dashboard with a central live overview instead of another dense knob cluster.

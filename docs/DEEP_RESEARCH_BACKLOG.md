@@ -77,6 +77,7 @@ Implemented UI test sub-slices:
 - First-pass global `Undo Edit`/`Redo Edit` is available from the persistent selected-control strip, with `GlobalEditHistoryAudit` verifying full-state restore across synth parameters, modulation routes, sequencer step data, and performance snapshots.
 - A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
 - HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, reducing the need to show every sound-design control on the default dashboard.
+- LIBRARY now has dedicated Find, Browser, Save Patch, and Inspect work areas plus `PresetLibrarySummary`, while HOME keeps preset recall/audition only.
 
 ## Priority 1: Modulation And Movement
 

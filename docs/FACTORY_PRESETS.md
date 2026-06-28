@@ -4,7 +4,7 @@ Factory presets are repo-managed `.natevstpreset` XML files in:
 
 `Resources/Factory Presets`
 
-The first pack includes UK garage and broader club workflow starters:
+The factory pack includes UK garage and broader club workflow starters:
 
 - `UKG 2-Step Bass`
 - `UKG Shuffle Bass`
@@ -16,12 +16,20 @@ The first pack includes UK garage and broader club workflow starters:
 - `UKG Late Stab`
 - `House Chord Memory`
 - `Deep House Sub Chug`
+- `Deep House Velvet Pad`
+- `House Organ Skank`
 - `Tech House Rubber Bass`
 - `Tech House Perc Pluck`
+- `Tech House Rolling Bass`
+- `Tech House Perc Stab`
 - `Minimal Click Pluck`
 - `Minimal Sub Pulse`
+- `Minimal Dub Chord`
+- `Minimal Noise Tick`
 - `Techno Pulse Bass`
 - `Techno Warehouse Stab`
+- `Techno Rumble Stab`
+- `Warehouse Noise Sweep`
 
 Regenerate the pack after parameter or template changes:
 
@@ -43,6 +51,6 @@ The UKG factory presets include conservative MOD-panel defaults where useful, su
 
 The house, tech-house, minimal, and techno factory presets use the newer SEQ template direction with saved groove, scale, probability, chord/voicing, strum, and step timing defaults. Bass presets keep mono-safe low-end, Width mono-below protection, Pump movement, source warp where harmonic edge helps, 24 dB slope where tighter filtering helps, and Guard enabled where needed; pluck and stab presets lean on Osc Warp, Filter Character/Slope, Comb, Ring Mod, Delay, Reverb, Width, and EQ for club-ready texture. Pump-enabled presets now store curve type, custom curve points, rate, and depth so UKG patches can prefer Garage ducking, tech-house/techno can stay tighter, minimal pulses can use gated movement, and custom duck shapes recall consistently.
 
-Factory presets also include deterministic browser metadata. `preset_tags` are generated from category, role, sequencer usage, mono-safety, and FX choices. `preset_pack`, `preset_key`, and `preset_bpm` are assigned from the generator metadata map so the Library can search, sort, and filter by pack, musical key, and target tempo. The Library tag filter uses the generated tags for quick browsing by role and production need, such as `Bass`, `Chord`, `Pluck`, `Stab`, `Sequenced`, `Mono Safe`, `Pump`, `Wide`, `FX`, `Vocal Chop`, and genre tags. The Library also parses saved macro values from `macro_1` through `macro_8` so presets can be searched, filtered, sorted, and previewed by performance-macro intensity without changing preset files.
+Factory presets also include deterministic browser metadata. `preset_tags` are generated from category, role, sequencer usage, mono-safety, and FX choices. `preset_pack`, `preset_key`, `preset_bpm`, and optional `preset_notes` are assigned from generator data so the Library can search, sort, filter, and inspect curated usage context. The Library tag filter uses the generated tags for quick browsing by role and production need, such as `Bass`, `Chord`, `Pluck`, `Stab`, `Sequenced`, `Mono Safe`, `Pump`, `Wide`, `FX`, `Vocal Chop`, and genre tags. The Library also parses saved macro values from `macro_1` through `macro_8` so presets can be searched, filtered, sorted, and previewed by performance-macro intensity without changing preset files.
 
 All factory presets seed the eight performance macros. The generator derives Weight from sub/mono settings, Bounce from Pump depth, Warp from oscillator 2 tuning and unison movement, and Throw from the Space macro unless a preset overrides those values directly.

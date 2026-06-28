@@ -762,7 +762,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeEngineLabel, "PERFORM");
     configureSectionLabel(homeShapeLabel, "MACROS");
     configureSectionLabel(homeLabLabel, "RANDOM LAB");
-    configureSectionLabel(homeLibraryLabel, "LIBRARY");
+    configureSectionLabel(homeLibraryLabel, "PRESET RECALL");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(synthSourceLabel, "SOURCE MIX");
     configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
@@ -783,6 +783,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
     configureSectionLabel(librarySectionLabel, "LIBRARY");
+    configureSectionLabel(libraryFindLabel, "FIND");
+    configureSectionLabel(libraryBrowserLabel, "BROWSER");
+    configureSectionLabel(librarySaveLabel, "SAVE PATCH");
+    configureSectionLabel(libraryInspectorLabel, "INSPECT");
     configureSectionLabel(infoSectionLabel, "INFO");
     configureSectionLabel(infoAboutLabel, "ABOUT");
     configureSectionLabel(infoWorkflowLabel, "HOUSE WORKFLOW");
@@ -836,16 +840,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
-    presetBrowserHeaderLabel.setText("PRESET        CATEGORY      PACK        KEY     BPM   RATE  MACRO VALUES", juce::dontSendNotification);
+    presetBrowserHeaderLabel.setText("NAME / FOLDER        PACK / KEY / BPM / RATING        MACRO VALUES", juce::dontSendNotification);
     presetBrowserHeaderLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     presetBrowserHeaderLabel.setJustificationType(juce::Justification::centredLeft);
+    presetBrowserHeaderLabel.setMinimumHorizontalScale(0.58f);
     presetBrowserHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
     presetBrowserHeaderLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
     presetBrowserHeaderLabel.setTooltip("Visible preset browser columns");
     addAndMakeVisible(presetBrowserHeaderLabel);
 
     presetBrowserList.setModel(this);
-    presetBrowserList.setRowHeight(28);
+    presetBrowserList.setRowHeight(34);
     presetBrowserList.setMultipleSelectionEnabled(false);
     presetBrowserList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101619));
     presetBrowserList.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff344047));
@@ -853,6 +858,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetBrowserList.setOutlineThickness(1);
     presetBrowserList.setTooltip("Click a preset row to select it. Double-click a row to load it.");
     addAndMakeVisible(presetBrowserList);
+    addAndMakeVisible(presetLibrarySummary);
 
     randomStatusLabel.setText("Ready", juce::dontSendNotification);
     randomStatusLabel.setJustificationType(juce::Justification::centredLeft);
@@ -2606,6 +2612,31 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         g.drawText(fxModuleName(selectedFxModule).toUpperCase(), detailArea.removeFromTop(24).reduced(14, 0), juce::Justification::centredLeft);
     }
 
+    if (activePanel == Panel::library)
+    {
+        auto libraryContent = contentArea.reduced(18).withTrimmedTop(36);
+        auto leftArea = libraryContent.removeFromLeft(224).reduced(5);
+        auto inspectorArea = libraryContent.removeFromRight(300).reduced(5);
+        auto browserArea = libraryContent.reduced(5);
+
+        for (auto area : { leftArea, browserArea, inspectorArea })
+        {
+            g.setColour(juce::Colour(0xff101619));
+            g.fillRoundedRectangle(area.toFloat(), 6.0f);
+            g.setColour(juce::Colour(0xff2b363c));
+            g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        }
+
+        auto saveArea = inspectorArea.reduced(10).removeFromTop(316);
+        auto inspectArea = inspectorArea.reduced(10).withTrimmedTop(328);
+        g.setColour(juce::Colour(0xff0d1316));
+        g.fillRoundedRectangle(saveArea.toFloat(), 5.0f);
+        g.fillRoundedRectangle(inspectArea.toFloat(), 5.0f);
+        g.setColour(juce::Colour(0xff253037));
+        g.drawRoundedRectangle(saveArea.toFloat(), 5.0f, 1.0f);
+        g.drawRoundedRectangle(inspectArea.toFloat(), 5.0f, 1.0f);
+    }
+
     if (activePanel == Panel::info)
     {
         auto infoContent = contentArea.reduced(18).withTrimmedTop(36);
@@ -2698,14 +2729,12 @@ void NateVSTAudioProcessorEditor::resized()
             undoRandomButton.setVisible(true);
             redoRandomButton.setVisible(true);
             presetBox.setVisible(true);
-            presetCategoryBox.setVisible(true);
             previousPresetButton.setVisible(true);
             nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
             auditionPresetButton.setVisible(true);
             favoritePresetButton.setVisible(true);
-            presetNameEditor.setVisible(true);
-            savePresetButton.setVisible(true);
+            refreshPresetsButton.setVisible(true);
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
@@ -2783,15 +2812,13 @@ void NateVSTAudioProcessorEditor::resized()
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
             auto loadRow = libraryArea.removeFromTop(42);
             previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
-            presetBox.setBounds(loadRow.removeFromLeft(202).reduced(3, 4));
+            presetBox.setBounds(loadRow.removeFromLeft(juce::jmax(120, loadRow.getWidth() - 42)).reduced(3, 4));
             nextPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
-            loadPresetButton.setBounds(loadRow.removeFromLeft(70).reduced(3, 4));
-            auditionPresetButton.setBounds(loadRow.removeFromLeft(82).reduced(3, 4));
-            favoritePresetButton.setBounds(loadRow.removeFromLeft(58).reduced(3, 4));
-            auto saveRow = libraryArea.removeFromTop(42).withTrimmedTop(4);
-            presetCategoryBox.setBounds(saveRow.removeFromLeft(130).reduced(3, 4));
-            presetNameEditor.setBounds(saveRow.removeFromLeft(212).reduced(3, 4));
-            savePresetButton.setBounds(saveRow.removeFromLeft(90).reduced(3, 4));
+            auto actionRow = libraryArea.removeFromTop(42).withTrimmedTop(4);
+            loadPresetButton.setBounds(actionRow.removeFromLeft(88).reduced(3, 4));
+            auditionPresetButton.setBounds(actionRow.removeFromLeft(96).reduced(3, 4));
+            favoritePresetButton.setBounds(actionRow.removeFromLeft(68).reduced(3, 4));
+            refreshPresetsButton.setBounds(actionRow.removeFromLeft(92).reduced(3, 4));
             presetStatusLabel.setBounds(libraryArea.removeFromTop(34).reduced(5, 4));
             break;
         }
@@ -3841,6 +3868,10 @@ void NateVSTAudioProcessorEditor::resized()
         case Panel::library:
         {
             librarySectionLabel.setVisible(true);
+            libraryFindLabel.setVisible(true);
+            libraryBrowserLabel.setVisible(true);
+            librarySaveLabel.setVisible(true);
+            libraryInspectorLabel.setVisible(true);
             presetNameEditor.setVisible(true);
             presetCategoryBox.setVisible(true);
             presetFilterBox.setVisible(true);
@@ -3852,6 +3883,8 @@ void NateVSTAudioProcessorEditor::resized()
             presetBpmBox.setVisible(true);
             presetSearchEditor.setVisible(true);
             presetAuthorEditor.setVisible(true);
+            presetNotesEditor.setVisible(true);
+            presetNotesTemplateBox.setVisible(true);
             savePresetButton.setVisible(true);
             presetBox.setVisible(true);
             previousPresetButton.setVisible(true);
@@ -3863,33 +3896,53 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             presetBrowserHeaderLabel.setVisible(true);
             presetBrowserList.setVisible(true);
+            presetLibrarySummary.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
-            auto saveRow = content.removeFromTop(48);
-            presetCategoryBox.setBounds(saveRow.removeFromLeft(172).reduced(4));
-            presetNameEditor.setBounds(saveRow.removeFromLeft(276).reduced(4));
-            savePresetButton.setBounds(saveRow.removeFromLeft(82).reduced(4));
-            presetRatingBox.setBounds(saveRow.removeFromLeft(118).reduced(4));
-            auto metadataRow = content.removeFromTop(44).withTrimmedTop(4);
-            presetAuthorEditor.setBounds(metadataRow.removeFromLeft(150).reduced(4));
-            presetPackBox.setBounds(metadataRow.removeFromLeft(190).reduced(4));
-            presetKeyBox.setBounds(metadataRow.removeFromLeft(120).reduced(4));
-            presetBpmBox.setBounds(metadataRow.removeFromLeft(118).reduced(4));
-            auto filterRow = content.removeFromTop(46).withTrimmedTop(6);
-            presetFilterBox.setBounds(filterRow.removeFromLeft(132).reduced(4));
-            presetTagBox.setBounds(filterRow.removeFromLeft(150).reduced(4));
-            presetSortBox.setBounds(filterRow.removeFromLeft(118).reduced(4));
-            presetSearchEditor.setBounds(filterRow.removeFromLeft(260).reduced(4));
-            refreshPresetsButton.setBounds(filterRow.removeFromLeft(90).reduced(4));
-            auto loadRow = content.removeFromTop(46).withTrimmedTop(6);
-            previousPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
-            presetBox.setBounds(loadRow.removeFromLeft(318).reduced(4));
-            nextPresetButton.setBounds(loadRow.removeFromLeft(40).reduced(4));
-            loadPresetButton.setBounds(loadRow.removeFromLeft(78).reduced(4));
-            auditionPresetButton.setBounds(loadRow.removeFromLeft(88).reduced(4));
-            favoritePresetButton.setBounds(loadRow.removeFromLeft(62).reduced(4));
-            presetStatusLabel.setBounds(content.removeFromTop(36).reduced(6, 4));
-            presetBrowserHeaderLabel.setBounds(content.removeFromTop(24).reduced(8, 2));
-            presetBrowserList.setBounds(content.reduced(6, 4));
+            auto libraryArea = content.withTrimmedTop(8);
+            auto findArea = libraryArea.removeFromLeft(224).reduced(18, 14);
+            auto inspectorArea = libraryArea.removeFromRight(300).reduced(18, 14);
+            auto browserArea = libraryArea.reduced(18, 14);
+
+            libraryFindLabel.setBounds(findArea.removeFromTop(24));
+            presetSearchEditor.setBounds(findArea.removeFromTop(38).reduced(2, 4));
+            presetFilterBox.setBounds(findArea.removeFromTop(36).reduced(2, 4));
+            presetTagBox.setBounds(findArea.removeFromTop(36).reduced(2, 4));
+            presetSortBox.setBounds(findArea.removeFromTop(36).reduced(2, 4));
+            refreshPresetsButton.setBounds(findArea.removeFromTop(38).withTrimmedTop(4).reduced(2, 4));
+            auto selectedRow = findArea.removeFromTop(82).withTrimmedTop(12);
+            previousPresetButton.setBounds(selectedRow.removeFromLeft(36).reduced(2, 4));
+            nextPresetButton.setBounds(selectedRow.removeFromRight(36).reduced(2, 4));
+            presetBox.setBounds(selectedRow.reduced(2, 4));
+            auto loadActions = findArea.removeFromTop(40).withTrimmedTop(4);
+            loadPresetButton.setBounds(loadActions.removeFromLeft(72).reduced(2, 4));
+            auditionPresetButton.setBounds(loadActions.removeFromLeft(86).reduced(2, 4));
+            favoritePresetButton.setBounds(loadActions.reduced(2, 4));
+            presetStatusLabel.setBounds(findArea.reduced(2, 4));
+
+            libraryBrowserLabel.setBounds(browserArea.removeFromTop(24));
+            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(24).reduced(2, 2));
+            presetBrowserList.setBounds(browserArea.reduced(2, 4));
+
+            auto saveArea = inspectorArea.removeFromTop(316).reduced(10, 8);
+            librarySaveLabel.setBounds(saveArea.removeFromTop(24));
+            presetCategoryBox.setBounds(saveArea.removeFromTop(36).reduced(2, 4));
+            presetNameEditor.setBounds(saveArea.removeFromTop(36).reduced(2, 4));
+            auto metadataRow = saveArea.removeFromTop(36);
+            presetAuthorEditor.setBounds(metadataRow.removeFromLeft(metadataRow.getWidth() / 2).reduced(2, 4));
+            presetPackBox.setBounds(metadataRow.reduced(2, 4));
+            auto keyRow = saveArea.removeFromTop(36);
+            savePresetButton.setBounds(keyRow.removeFromRight(64).reduced(2, 4));
+            const auto keyCellWidth = keyRow.getWidth() / 3;
+            presetKeyBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
+            presetBpmBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
+            presetRatingBox.setBounds(keyRow.reduced(2, 4));
+            auto notesToolRow = saveArea.removeFromTop(34).withTrimmedTop(4);
+            presetNotesTemplateBox.setBounds(notesToolRow.reduced(2, 4));
+            presetNotesEditor.setBounds(saveArea.reduced(2, 4));
+
+            auto summaryArea = inspectorArea.reduced(10, 6);
+            libraryInspectorLabel.setBounds(summaryArea.removeFromTop(24));
+            presetLibrarySummary.setBounds(summaryArea.reduced(2, 4));
             break;
         }
 
@@ -7055,7 +7108,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
         &waveformBox, &osc2WaveBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -7089,7 +7142,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &presetLibrarySummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -8543,29 +8596,52 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
     g.setColour(rowIsSelected ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff253036));
     g.drawHorizontalLine(height - 1, 0.0f, static_cast<float>(width));
 
-    auto row = juce::Rectangle<int>(0, 0, width, height).reduced(8, 3);
-    auto drawCell = [&g] (juce::Rectangle<int> area,
-                          const juce::String& text,
-                          juce::Colour colour,
-                          juce::Justification justification = juce::Justification::centredLeft)
-    {
-        g.setColour(colour);
-        g.drawFittedText(text, area.reduced(3, 0), justification, 1);
-    };
-
+    auto row = juce::Rectangle<int>(0, 0, width, height).reduced(9, 4);
     const auto categoryText = preset.folder.isNotEmpty() ? preset.folder : preset.category;
     const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("-");
     const auto sourcePrefix = preset.isFavorite ? juce::String("F ") : juce::String();
     const auto nameColour = preset.isFavorite ? juce::Colour(0xffffd27a) : juce::Colour(0xffedf7f4);
+    const auto macroWidth = juce::jlimit(118, 230, row.getWidth() / 3);
+    auto macroArea = row.removeFromRight(macroWidth);
+    row.removeFromRight(8);
+    const auto infoWidth = juce::jlimit(86, 160, row.getWidth() / 3);
+    auto infoArea = row.removeFromRight(infoWidth);
+    row.removeFromRight(8);
+    auto nameArea = row;
 
-    g.setFont(juce::FontOptions(11.0f, juce::Font::plain));
-    drawCell(row.removeFromLeft(218), sourcePrefix + preset.name, nameColour);
-    drawCell(row.removeFromLeft(112), categoryText, juce::Colour(0xffb7c5c7));
-    drawCell(row.removeFromLeft(126), preset.pack, juce::Colour(0xffa8b6b8));
-    drawCell(row.removeFromLeft(76), preset.key, juce::Colour(0xffa8b6b8));
-    drawCell(row.removeFromLeft(64), formatPresetBpm(preset.bpm), juce::Colour(0xffa8b6b8));
-    drawCell(row.removeFromLeft(54), ratingText, juce::Colour(0xffd6e0dc), juce::Justification::centred);
-    drawPresetMacroValueStrip(g, row, preset);
+    g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    g.setColour(nameColour);
+    g.drawFittedText(sourcePrefix + preset.name,
+                     nameArea.removeFromTop(15).reduced(2, 0),
+                     juce::Justification::centredLeft,
+                     1,
+                     0.64f);
+
+    g.setFont(juce::FontOptions(9.0f, juce::Font::plain));
+    g.setColour(juce::Colour(0xff9dafb2));
+    g.drawFittedText(categoryText + " | " + preset.pack,
+                     nameArea.reduced(2, 0),
+                     juce::Justification::centredLeft,
+                     1,
+                     0.58f);
+
+    auto pill = infoArea.removeFromTop(16).toFloat().reduced(0.0f, 1.0f);
+    g.setColour(preset.isFactory ? juce::Colour(0xff182b3b) : juce::Colour(0xff1d2d28));
+    g.fillRoundedRectangle(pill, 4.0f);
+    g.setColour(preset.isFactory ? juce::Colour(0xff7bb7ff) : juce::Colour(0xff8ee6c9));
+    g.drawRoundedRectangle(pill, 4.0f, 1.0f);
+    g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+    g.drawFittedText(preset.isFactory ? "FACTORY" : "USER", pill.toNearestInt(), juce::Justification::centred, 1);
+
+    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xffc5d1d0));
+    g.drawFittedText(preset.key + " | " + formatPresetBpm(preset.bpm) + " | " + ratingText,
+                     infoArea.reduced(1, 0),
+                     juce::Justification::centred,
+                     1,
+                     0.56f);
+
+    drawPresetMacroValueStrip(g, macroArea, preset);
 }
 
 juce::String NateVSTAudioProcessorEditor::getNameForRow(int rowNumber)
@@ -8593,6 +8669,7 @@ void NateVSTAudioProcessorEditor::selectedRowsChanged(int lastRowSelected)
                                   + preset.key + " | " + formatPresetBpm(preset.bpm)
                                   + " | " + presetMacroPreviewText(preset),
                               juce::dontSendNotification);
+    updatePresetLibrarySummary();
 }
 
 void NateVSTAudioProcessorEditor::listBoxItemDoubleClicked(int row, const juce::MouseEvent&)
@@ -8832,6 +8909,58 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                              ? selectedPreset->name + " | " + presetMacroPreviewText(*selectedPreset)
                              : juce::String("Select a preset"));
     updateFavoritePresetButton();
+    updatePresetLibrarySummary();
+}
+
+void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
+{
+    UI::PresetLibrarySummary::State state;
+    const auto library = audioProcessor.getPresetLibrary();
+    state.totalCount = static_cast<int>(library.size());
+    state.visibleCount = static_cast<int>(visiblePresetBrowserPresets.size());
+
+    for (const auto& preset : library)
+    {
+        if (preset.isFavorite)
+            ++state.favoriteCount;
+        if (preset.rating > 0)
+            ++state.ratedCount;
+        if (preset.isFactory)
+            ++state.factoryCount;
+        else
+            ++state.userCount;
+    }
+
+    const auto selectedName = presetBox.getText().trim();
+    for (const auto& preset : library)
+    {
+        if (preset.name != selectedName)
+            continue;
+
+        state.hasSelection = true;
+        state.selectedFavorite = preset.isFavorite;
+        state.selectedFactory = preset.isFactory;
+        state.selectedName = preset.name;
+        state.selectedCategory = preset.folder.isNotEmpty() ? preset.folder : preset.category;
+        state.selectedPack = preset.pack;
+        state.selectedKey = preset.key;
+        state.selectedBpm = formatPresetBpm(preset.bpm);
+        state.selectedRating = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("Unrated");
+        state.selectedSource = preset.source;
+        state.selectedNotes = preset.notes;
+        state.macroValues = preset.macroValues;
+        break;
+    }
+
+    if (! state.hasSelection)
+    {
+        state.selectedName = state.totalCount > 0 ? "Choose a preset" : "No presets found";
+        state.selectedCategory = "All folders";
+        state.selectedPack = juce::String(state.totalCount) + " total";
+        state.selectedRating = juce::String(state.favoriteCount) + " fav";
+    }
+
+    presetLibrarySummary.setState(state);
 }
 
 void NateVSTAudioProcessorEditor::saveCurrentPreset()
@@ -9153,4 +9282,6 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
         presetStatusLabel.setTooltip(preview + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm));
         break;
     }
+
+    updatePresetLibrarySummary();
 }

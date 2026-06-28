@@ -9,6 +9,7 @@
 #include "UI/ModMatrixRow.h"
 #include "UI/ModSourceMeter.h"
 #include "UI/OutputMeter.h"
+#include "UI/PresetLibrarySummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -158,6 +159,10 @@ private:
     juce::Label selectedControlStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
+    juce::Label libraryFindLabel;
+    juce::Label libraryBrowserLabel;
+    juce::Label librarySaveLabel;
+    juce::Label libraryInspectorLabel;
     juce::Label infoSectionLabel;
     juce::Label infoAboutLabel;
     juce::Label infoWorkflowLabel;
@@ -638,6 +643,7 @@ private:
     juce::ListBox presetBrowserList { "Preset Browser" };
     UI::OutputMeter outputMeter;
     UI::HomeOverviewDisplay homeOverviewDisplay;
+    UI::PresetLibrarySummary presetLibrarySummary;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
@@ -756,6 +762,7 @@ private:
     void updateSampleWaveformDisplay();
     void timerCallback() override;
     void refreshPresetList();
+    void updatePresetLibrarySummary();
     void saveCurrentPreset();
     void saveActiveRandomCandidatePreset();
     void loadSelectedPreset();

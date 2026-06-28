@@ -61,6 +61,7 @@ target_sources(NateVST
         Source/UI/ModMatrixRow.cpp
         Source/UI/ModSourceMeter.cpp
         Source/UI/OutputMeter.cpp
+        Source/UI/PresetLibrarySummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
@@ -111,6 +112,24 @@ target_link_libraries(NateVSTPresetSaveAudit
 )
 
 add_test(NAME PresetSaveAudit COMMAND NateVSTPresetSaveAudit)
+
+add_executable(NateVSTFactoryPresetLibraryAudit Tests/FactoryPresetLibraryAudit.cpp)
+
+target_link_libraries(NateVSTFactoryPresetLibraryAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+target_compile_definitions(NateVSTFactoryPresetLibraryAudit
+    PRIVATE
+        NATE_VST_FACTORY_PRESETS_TEST_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets"
+)
+
+add_test(NAME FactoryPresetLibraryAudit COMMAND NateVSTFactoryPresetLibraryAudit)
 
 add_executable(NateVSTRandomCandidateAudit Tests/RandomCandidateAudit.cpp)
 

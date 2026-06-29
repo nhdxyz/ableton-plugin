@@ -83,7 +83,7 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
-- HOME overview, session, analyzer, and signal-flow visualization for active source, filter, motion, FX, Guard, and output state.
+- HOME overview, Play View, signal-flow, and output analyzer visualization for active source, filter, motion, FX, Guard, oscilloscope shape, held spectrum peaks, grouped club-band balance, stereo width/correlation, and output state.
 - Starter factory presets for UKG, speed garage, future garage, house, bass house, deep tech, French house, soulful house, garage house, breaks house, tribal tech-house, amapiano-inspired house, tech-house, microhouse, raw/hypnotic techno, hardgroove/warehouse/melodic techno, and minimal.
 - First editor layout audit test.
 
@@ -273,7 +273,7 @@ These should stay near the top because every future feature becomes harder if th
 23. Add loudness-matched drive audition.
 24. Add oversampling for filter and drive nonlinearity.
 25. Add per-preset quality mode: Eco, Normal, High, Render.
-26. Add club low-end monitor.
+26. Extend the current HOME low-end assistant and analyzer with long-window sub buildup, phase-cancellation history, DC offset, guard-hit rate, and limiter/clip activity.
 27. Warn on stereo bass below a configurable frequency.
 28. Warn on DC offset.
 29. Warn on repeated output guard hits.

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### HOME Spectrum Peak Hold
+
+- Added held-peak ticks to `OutputSpectrumDisplay` so quick bass hits, stabs, and transient-heavy house/UKG patches leave a readable trace in the compact HOME analyzer.
+- Added a compact sub/low/mid/presence/air balance strip and tooltip summary for final-output peak, held energy, and dominant frequency focus.
+- Kept the change UI-side only: no APVTS parameters, preset schema, automation IDs, or audio-thread behavior changed.
+
 ### HOME Play View
 
 - Reworked the lower-right HOME recall area from a library-style `SESSION` summary into a compact `PLAY VIEW` focused on patch role, source type, output safety, A/B readiness, sequencer/pump state, random candidate context, and preset recall.

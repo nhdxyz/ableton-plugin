@@ -302,7 +302,7 @@ Nate VST gaps:
 52. Add drive oversampling choices.
 53. Add nonlinear filter oversampling choices.
 54. Add transient-preserving drive for plucks and stabs.
-55. Add low-end monitor for sub mono, DC, buildup, and guard rate.
+55. Extend the current HOME low-end assistant/analyzer with DC checks, long-window buildup history, phase-cancellation history, and guard-hit rate.
 56. Add one-knob low-end tighten.
 57. Add one-knob stab bite.
 

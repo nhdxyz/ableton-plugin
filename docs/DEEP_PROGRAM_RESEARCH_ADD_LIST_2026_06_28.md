@@ -20,6 +20,7 @@ Based on the current repo docs and recent implementation notes, Nate VST already
 - Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length lanes, groove templates, host sync, undo, rotation, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, EQ/tone, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, and user/factory separation.
+- HOME output visualization with oscilloscope shape, held spectrum peaks, grouped sub/low/mid/presence/air balance, stereo width/correlation, low-end side-risk, and Guard/output status.
 - Factory starter presets for UKG, house, deep tech, French house, soulful house, garage house, breaks house, tech-house, tribal tech-house, microhouse, raw/hypnotic techno, techno, and minimal.
 - First editor layout audit and plugin validation workflow.
 
@@ -206,7 +207,7 @@ If we only pick the next 15 big work tracks, they should be:
 93. Add loudness-matched audition for drive models.
 94. Add oversampling modes for drive, filter nonlinearities, clipper, and limiter.
 95. Add DC blocking and denormal tests.
-96. Add club low-end monitor for sub buildup, stereo bass, phase cancellation, DC offset, and excessive limiter activity.
+96. Extend club low-end monitoring beyond the current HOME assistant and analyzer with long-window sub buildup, phase-cancellation history, DC offset, guard-hit rate, and excessive limiter/clip activity.
 97. Add mono-maker below a selectable crossover.
 98. Add low-end sidechain preview display.
 99. Add bass note range helper for UKG and house keys.

@@ -138,7 +138,7 @@ Implemented P0 sub-slice:
 72. Add gain compensation for every drive mode.
 73. Add loudness-matched audition for drive models.
 74. Add oversampling controls for drive and filter nonlinearities.
-75. Add "club low-end" monitor that flags sub buildup, stereo bass, and excessive DC.
+75. Extend the current HOME low-end assistant/analyzer into a deeper club monitor that flags long-window sub buildup, phase cancellation, guard-hit history, and excessive DC.
 
 ### P3 - Sampling, Chops, And UK Garage Tools
 

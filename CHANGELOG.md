@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### 72-Preset Expanded House Style Pack
+
+- Expanded the repo-managed factory pack from 64 to 72 presets with Chicago House Acid Bass, Classic House Piano Chord, Funky House Clav Stab, Melodic House Arp Pluck, Romanian Minimal Pluck, Berlin Dub Techno Stab, Hardgroove Rave Chord, and Electro Breaks Sync Bass.
+- Added Library filter/tag choices for Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Dub Techno, and Electro Breaks so the new style presets are findable without text search.
+- Updated `FactoryPresetLibraryAudit` to require and load-check the 72-preset expanded style pack.
+
 ### Library Inspector Profile
 
 - Reworked `PresetLibrarySummary` into an adaptive selected-preset profile card for the short LIBRARY Inspect rail.

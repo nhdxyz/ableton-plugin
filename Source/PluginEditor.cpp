@@ -280,6 +280,13 @@ juce::StringArray presetFilterChoices()
         "Raw Techno",
         "Tribal Tech House",
         "Breaks House",
+        "Chicago House",
+        "Classic House",
+        "Funky House",
+        "Melodic House",
+        "Romanian Minimal",
+        "Dub Techno",
+        "Electro Breaks",
         "FX",
         "Sequence",
         "Sample",
@@ -730,7 +737,14 @@ juce::StringArray presetTagChoices()
         "Microhouse",
         "Raw Techno",
         "Tribal Tech House",
-        "Breaks House"
+        "Breaks House",
+        "Chicago House",
+        "Classic House",
+        "Funky House",
+        "Melodic House",
+        "Romanian Minimal",
+        "Dub Techno",
+        "Electro Breaks"
     };
 }
 
@@ -9875,7 +9889,7 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
             ++state.macroRichCount;
 
         const auto searchable = presetSearchText(preset);
-        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House" }))
+        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
             ++state.styleCount;
     }
 

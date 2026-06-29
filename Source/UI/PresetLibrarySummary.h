@@ -28,7 +28,12 @@ public:
         juce::String selectedRating = "-";
         juce::String selectedSource = "-";
         juce::String selectedNotes;
+        juce::String selectedRole = "Patch";
+        juce::String selectedTraits = "No traits";
+        juce::String selectedCue = "Choose a preset";
         std::array<float, 8> macroValues {};
+        std::array<float, 4> profileValues {};
+        std::array<juce::String, 4> profileLabels { "TONE", "DIRT", "MOVE", "SPACE" };
     };
 
     void setState(const State& newState);
@@ -44,5 +49,14 @@ private:
                          const juce::String& label,
                          const juce::String& value,
                          juce::Colour accent);
+    static void drawPill(juce::Graphics& g,
+                         juce::Rectangle<float> area,
+                         const juce::String& text,
+                         juce::Colour accent);
+    static void drawProfileMeter(juce::Graphics& g,
+                                 juce::Rectangle<float> area,
+                                 const juce::String& label,
+                                 float value,
+                                 juce::Colour accent);
 };
 }

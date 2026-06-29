@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Inspector Profile
+
+- Reworked `PresetLibrarySummary` into an adaptive selected-preset profile card for the short LIBRARY Inspect rail.
+- Added role, category, key/BPM, rating/source pills, metadata-derived traits, a musical cue, and four compact Tone/Dirt/Motion/Space profile meters.
+- Kept the change UI-only by deriving the profile from existing preset metadata and macro values without changing preset XML, APVTS parameters, or automation IDs.
+
 ### HOME Spectrum Peak Hold
 
 - Added held-peak ticks to `OutputSpectrumDisplay` so quick bass hits, stabs, and transient-heavy house/UKG patches leave a readable trace in the compact HOME analyzer.

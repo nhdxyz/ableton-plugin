@@ -2,10 +2,17 @@
 
 ## 2026-06-28
 
+### Save Target Redesign And 64-Preset Expansion
+
+- Reworked the LIBRARY Save Target card with a clearer status header, destination trail, metadata chips, and readiness strip for name, folder, pack, key/BPM, and notes completeness.
+- Expanded the repo-managed factory pack from 56 to 64 presets with Deep Tech Organ Roller, French House Filter Chord, Soulful House M1 Keys, Garage House Swing Lead, Microhouse Dust Pluck, Raw Hypnotic Techno Stab, Tribal Tech House Perc Bass, and Breaks House Reese Pluck.
+- Added Library filter/tag choices for Deep Tech, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, and Breaks House so the new style presets are findable without text search.
+- Updated `FactoryPresetLibraryAudit` to require and load-check the 64-preset expanded style pack.
+
 ### Library Crate Map
 
 - Added a reusable `PresetCrateMapDisplay` to the LIBRARY Find column, giving the browser a compact visual summary of visible/total presets, favorites, rated presets, factory presets, generated saves, macro-rich presets, and style-tagged crates.
-- Wired the crate map to the existing search, filter, tag, and preset-library refresh path so it reflects quick filters, smart crates, text search, generated metadata, ratings, favorites, and the current 56-preset factory pack without changing preset files.
+- Wired the crate map to the existing search, filter, tag, and preset-library refresh path so it reflects quick filters, smart crates, text search, generated metadata, ratings, favorites, and the factory pack without changing preset files.
 - Updated docs and backlog language so the implemented compact browser summary is not confused with future full-sidebar folder trees, editable user crates, or rendered audio previews.
 
 ### HOME Signal Flow And 56-Preset Expansion

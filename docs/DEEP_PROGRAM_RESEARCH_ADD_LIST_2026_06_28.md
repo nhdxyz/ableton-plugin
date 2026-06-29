@@ -20,7 +20,7 @@ Based on the current repo docs and recent implementation notes, Nate VST already
 - Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length lanes, groove templates, host sync, undo, rotation, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, EQ/tone, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, and user/factory separation.
-- Factory starter presets for UKG, house, tech-house, techno, and minimal.
+- Factory starter presets for UKG, house, deep tech, French house, soulful house, garage house, breaks house, tech-house, tribal tech-house, microhouse, raw/hypnotic techno, techno, and minimal.
 - First editor layout audit and plugin validation workflow.
 
 That means the big gap is no longer "basic controls." The big gap is deeper engines, more visual movement, richer sampling, professional routing, better content discovery, and less cluttered UI.
@@ -403,7 +403,7 @@ If we only pick the next 15 big work tracks, they should be:
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Expand beyond the current 56-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
+275. Expand beyond the current 64-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Deep Tech, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.

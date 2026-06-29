@@ -84,7 +84,7 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
 - HOME overview, session, analyzer, and signal-flow visualization for active source, filter, motion, FX, Guard, and output state.
-- Starter factory presets for UKG, speed garage, future garage, house, bass house, amapiano-inspired house, tech-house, hardgroove/warehouse/melodic techno, and minimal.
+- Starter factory presets for UKG, speed garage, future garage, house, bass house, deep tech, French house, soulful house, garage house, breaks house, tribal tech-house, amapiano-inspired house, tech-house, microhouse, raw/hypnotic techno, hardgroove/warehouse/melodic techno, and minimal.
 - First editor layout audit test.
 
 The gap is now professional depth, sound quality, focus, and genre workflow.

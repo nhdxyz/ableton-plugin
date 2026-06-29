@@ -272,6 +272,14 @@ juce::StringArray presetFilterChoices()
         "Hardgroove",
         "Future Garage",
         "Speed Garage",
+        "Deep Tech",
+        "French House",
+        "Soulful House",
+        "Garage House",
+        "Microhouse",
+        "Raw Techno",
+        "Tribal Tech House",
+        "Breaks House",
         "FX",
         "Sequence",
         "Sample",
@@ -390,11 +398,11 @@ bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, co
 {
     const auto text = presetSearchText(preset);
     const auto isUkg = textContainsAny(text, { "UKG", "Garage", "2-Step", "Two Step", "Dred", "Reese" });
-    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit", "Lo-Fi", "Afro" })
+    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit", "Lo-Fi", "Afro", "French House", "Soulful House", "Garage House", "Breaks House" })
         && ! textContainsAny(text, { "Tech House", "Tech-House" });
-    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House" });
-    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click" });
-    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid" });
+    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House", "Deep Tech", "Tribal Tech House" });
+    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse" });
+    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid", "Raw Techno", "Hypnotic Techno" });
     const auto isBass = textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" });
     const auto isChordOrStab = textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" });
     const auto isChop = textContainsAny(text, { "Chop", "Vocal", "Sample", "Slice" });
@@ -614,7 +622,15 @@ juce::StringArray presetTagChoices()
         "Amapiano",
         "Hardgroove",
         "Future Garage",
-        "Speed Garage"
+        "Speed Garage",
+        "Deep Tech",
+        "French House",
+        "Soulful House",
+        "Garage House",
+        "Microhouse",
+        "Raw Techno",
+        "Tribal Tech House",
+        "Breaks House"
     };
 }
 
@@ -9690,7 +9706,7 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
             ++state.macroRichCount;
 
         const auto searchable = presetSearchText(preset);
-        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage" }))
+        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House" }))
             ++state.styleCount;
     }
 

@@ -49,6 +49,7 @@ void PresetSaveSummary::drawPill(juce::Graphics& g,
 void PresetSaveSummary::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
+    const auto compact = bounds.getHeight() < 124.0f;
     const auto accent = state.overwriteArmed ? juce::Colour(0xffff8f78)
                       : state.overwriteExists ? juce::Colour(0xffffc36b)
                       : state.generated ? juce::Colour(0xffc4a7ff)
@@ -61,9 +62,9 @@ void PresetSaveSummary::paint(juce::Graphics& g)
     g.setColour(accent.withAlpha(0.7f));
     g.fillRoundedRectangle(bounds.withHeight(3.0f), 2.0f);
 
-    auto content = bounds.reduced(10.0f, 8.0f);
-    auto header = content.removeFromTop(16.0f);
-    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
+    auto content = bounds.reduced(compact ? 8.0f : 10.0f, compact ? 6.0f : 8.0f);
+    auto header = content.removeFromTop(compact ? 14.0f : 16.0f);
+    g.setFont(juce::FontOptions(compact ? 8.2f : 9.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff73848a));
     g.drawFittedText("SAVE TARGET", header.removeFromLeft(header.getWidth() * 0.42f).toNearestInt(), juce::Justification::centredLeft, 1);
 
@@ -75,8 +76,8 @@ void PresetSaveSummary::paint(juce::Graphics& g)
     g.setColour(accent);
     g.drawFittedText(status, header.toNearestInt(), juce::Justification::centredRight, 1, 0.68f);
 
-    auto title = content.removeFromTop(19.0f);
-    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+    auto title = content.removeFromTop(compact ? 17.0f : 19.0f);
+    g.setFont(juce::FontOptions(compact ? 13.0f : 15.0f, juce::Font::bold));
     g.setColour(state.hasName ? juce::Colour(0xffedf7f4) : juce::Colour(0xff85949a));
     g.drawFittedText(state.name, title.toNearestInt(), juce::Justification::centredLeft, 1, 0.58f);
 
@@ -84,21 +85,21 @@ void PresetSaveSummary::paint(juce::Graphics& g)
     if (legalName.isEmpty())
         legalName = "Untitled";
 
-    auto trail = content.removeFromTop(17.0f);
+    auto trail = content.removeFromTop(compact ? 15.0f : 17.0f);
     g.setColour(juce::Colour(0xff162126));
     g.fillRoundedRectangle(trail, 4.0f);
     g.setColour(juce::Colour(0xff26343a));
     g.drawRoundedRectangle(trail, 4.0f, 1.0f);
-    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(compact ? 8.0f : 9.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff9dafb3));
-    g.drawFittedText("User Presets > " + state.category + " > " + legalName,
+    g.drawFittedText("User Presets / " + state.category + " / " + legalName,
                      trail.reduced(7.0f, 2.0f).toNearestInt(),
                      juce::Justification::centredLeft,
                      1,
                      0.48f);
 
-    content.removeFromTop(5.0f);
-    auto readiness = content.removeFromTop(10.0f);
+    content.removeFromTop(compact ? 3.0f : 5.0f);
+    auto readiness = content.removeFromTop(compact ? 8.0f : 10.0f);
     const std::array<bool, 5> readyItems {
         state.hasName,
         state.category.trim().isNotEmpty(),
@@ -107,9 +108,9 @@ void PresetSaveSummary::paint(juce::Graphics& g)
         state.notesCharacters > 0
     };
 
-    g.setFont(juce::FontOptions(7.5f, juce::Font::bold));
+    g.setFont(juce::FontOptions(compact ? 7.0f : 7.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff73848a));
-    g.drawFittedText("READY", readiness.removeFromLeft(38.0f).toNearestInt(), juce::Justification::centredLeft, 1);
+    g.drawFittedText("READY", readiness.removeFromLeft(compact ? 34.0f : 38.0f).toNearestInt(), juce::Justification::centredLeft, 1);
     const auto dotGap = 4.0f;
     const auto dotWidth = (readiness.getWidth() - (dotGap * 4.0f)) / 5.0f;
     for (size_t index = 0; index < readyItems.size(); ++index)
@@ -120,25 +121,28 @@ void PresetSaveSummary::paint(juce::Graphics& g)
         g.fillRoundedRectangle(dot, 2.0f);
     }
 
-    content.removeFromTop(5.0f);
-    auto pills = content.removeFromTop(30.0f);
-    const auto gap = 5.0f;
-    const auto pillWidth = (pills.getWidth() - (gap * 2.0f)) / 3.0f;
-    drawPill(g, pills.removeFromLeft(pillWidth), "PACK", state.pack, juce::Colour(0xff8ee6c9));
-    pills.removeFromLeft(gap);
-    drawPill(g, pills.removeFromLeft(pillWidth), "KEY", state.key, juce::Colour(0xffffc36b));
-    pills.removeFromLeft(gap);
-    drawPill(g, pills, "BPM", state.bpm, juce::Colour(0xff7bb7ff));
+    if (content.getHeight() > (compact ? 22.0f : 30.0f))
+    {
+        content.removeFromTop(compact ? 4.0f : 5.0f);
+        auto pills = content.removeFromTop(compact ? 24.0f : 30.0f);
+        const auto gap = 5.0f;
+        const auto pillWidth = (pills.getWidth() - (gap * 2.0f)) / 3.0f;
+        drawPill(g, pills.removeFromLeft(pillWidth), "PACK", state.pack, juce::Colour(0xff8ee6c9));
+        pills.removeFromLeft(gap);
+        drawPill(g, pills.removeFromLeft(pillWidth), "KEY", state.key, juce::Colour(0xffffc36b));
+        pills.removeFromLeft(gap);
+        drawPill(g, pills, "BPM", state.bpm, juce::Colour(0xff7bb7ff));
+    }
 
     if (content.getHeight() > 12.0f)
     {
-        content.removeFromTop(5.0f);
-        auto footer = content.removeFromTop(15.0f);
+        content.removeFromTop(compact ? 3.0f : 5.0f);
+        auto footer = content.removeFromTop(compact ? 13.0f : 15.0f);
         g.setColour(juce::Colour(0xff151d21));
         g.fillRoundedRectangle(footer, 4.0f);
         g.setColour(juce::Colour(0xff26343a));
         g.drawRoundedRectangle(footer, 4.0f, 1.0f);
-        g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+        g.setFont(juce::FontOptions(compact ? 7.6f : 8.5f, juce::Font::bold));
         g.setColour(juce::Colour(0xff9dafb3));
         g.drawFittedText("AUTHOR  " + state.author + "     NOTES  " + juce::String(state.notesCharacters),
                          footer.reduced(7.0f, 2.0f).toNearestInt(),

@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Browser Rail Rework
+
+- Reworked the LIBRARY layout so search, smart crates, and sort controls live in a left crate rail while selected-preset navigation, load, audition, favorite, compare/revert, and 1-5 rating controls sit above the central browser list.
+- Expanded the crate-map visualization from generic counts into user/factory, folder, pack, generated, style, favorite, rated, and macro-rich coverage so recursive preset organization is visible while filtering.
+- Retitled the HOME lower-right panel as `PATCH SNAPSHOT`, added newer house/techno style folders and pack choices to the Save Target dropdowns, and made the Save Target summary compact-aware for smaller Ableton laptop layouts.
+
 ### 72-Preset Expanded House Style Pack
 
 - Expanded the repo-managed factory pack from 64 to 72 presets with Chicago House Acid Bass, Classic House Piano Chord, Funky House Clav Stab, Melodic House Arp Pluck, Romanian Minimal Pluck, Berlin Dub Techno Stab, Hardgroove Rave Chord, and Electro Breaks Sync Bass.

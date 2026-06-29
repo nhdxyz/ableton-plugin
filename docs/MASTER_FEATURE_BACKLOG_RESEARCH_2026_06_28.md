@@ -77,13 +77,13 @@ Based on the local docs and current repo direction, Nate VST already has:
 - JUCE/CMake/VST3 foundation for macOS and Ableton.
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Subtractive synth core with oscillator mix, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
-- Genre-oriented randomization, A/B snapshots, macros, XY pad, low-end guidance, and HOME Play View state for preset recall, performance energy, compare readiness, and active random candidates.
+- Genre-oriented randomization, A/B snapshots, macros, XY pad, low-end guidance, and HOME Patch Snapshot state for preset recall, performance energy, compare readiness, and active random candidates.
 - Modulation matrix, LFO/curve tools, macro assignment editor, destination badges, S&H/Smooth/Chaos/LFO 2 movement sources, and a first right-click assignment pass for MOD-targetable controls.
 - Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, and UKG chop helpers.
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
-- Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
-- HOME overview, Play View, signal-flow, and output analyzer visualization for active source, filter, motion, FX, Guard, oscilloscope shape, held spectrum peaks, grouped club-band balance, stereo width/correlation, and output state.
+- Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, a left crate rail with folder/pack/style coverage, compact browser rows, and audition.
+- HOME overview, Patch Snapshot, signal-flow, and output analyzer visualization for active source, filter, motion, FX, Guard, oscilloscope shape, held spectrum peaks, grouped club-band balance, stereo width/correlation, and output state.
 - Starter factory presets for UKG, speed garage, future garage, house, bass house, Chicago house, classic house, funky house, melodic house, deep tech, French house, soulful house, garage house, breaks house, tribal tech-house, amapiano-inspired house, tech-house, microhouse, Romanian minimal, electro breaks, dub techno, raw/hypnotic techno, hardgroove/warehouse/melodic techno, and minimal.
 - First editor layout audit test.
 
@@ -528,7 +528,7 @@ These should stay near the top because every future feature becomes harder if th
 
 1. Add larger full-browser mode.
 2. Add folder tree for factory and user libraries.
-3. Expand the implemented quick filters, smart-crate filter menu, and compact crate-map summary into a full browser sidebar with Favorites, Five Star, Recent, User, Factory, Macro Rich, and editable user crates.
+3. Expand the implemented quick filters, smart-crate filter menu, centered browser toolbar, and folder/pack/style crate rail into a full editable browser sidebar with Favorites, Five Star, Recent, User, Factory, Macro Rich, and user crates.
 4. Extend smart crates with New This Week, UKG Vocal Chops, House Stabs, Tech-House Bass, Dirty Techno, Clean Subs, and user-defined rules.
 5. Add editable custom user tags.
 6. Add tag editor for existing presets.

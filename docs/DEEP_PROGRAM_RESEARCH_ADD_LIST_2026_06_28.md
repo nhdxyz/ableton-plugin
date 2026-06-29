@@ -19,7 +19,7 @@ Based on the current repo docs and recent implementation notes, Nate VST already
 - Sample Lab with waveform display, phrase/chop controls, slice pads, Slice Keys, per-slice region, pitch, gain, pan, probability, reverse, stutter, and choke memory.
 - Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length lanes, groove templates, host sync, undo, rotation, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, EQ/tone, width, guard, modulation FX, throws, and module presets.
-- Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, and user/factory separation.
+- Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, user/factory separation, centered browser actions, and a left crate rail with folder/pack/style coverage.
 - HOME output visualization with oscilloscope shape, held spectrum peaks, grouped sub/low/mid/presence/air balance, stereo width/correlation, low-end side-risk, and Guard/output status.
 - Factory starter presets for UKG, house, deep tech, French house, soulful house, garage house, breaks house, tech-house, tribal tech-house, microhouse, raw/hypnotic techno, techno, and minimal.
 - First editor layout audit and plugin validation workflow.
@@ -133,7 +133,7 @@ If we only pick the next 15 big work tracks, they should be:
 
 ### Home And Performance Views
 
-31. Extend the implemented compact HOME Play View into a larger optional performance mode with preset, engine summary, macros, XY, randomize, low-end safety, output, and recent patches.
+31. Extend the implemented compact HOME Patch Snapshot into a larger optional performance mode with preset, engine summary, macros, XY, randomize, low-end safety, output, and recent patches.
 32. Add source status cards that show Layer A, Layer B, Sampler, and FX status without opening full edit pages.
 33. Add quick engine audition/solo buttons from HOME.
 34. Add "make it more UKG", "make it more deep house", "make it more minimal", "make it more warehouse", and "make it more tech-house" transforms.
@@ -390,7 +390,7 @@ If we only pick the next 15 big work tracks, they should be:
 258. Add automatic preview regeneration when a preset changes.
 259. Expand the implemented macro-value strip into optional full browser columns for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 260. Add key, BPM, pack, category, subcategory, author, rating, favorite, date, source type, sample dependency, and wavetable dependency columns.
-261. Expand the implemented smart-crate filter pass and compact crate-map summary into editable smart collections and a full browser sidebar.
+261. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into editable smart collections and a full browser sidebar.
 262. Add user crates/playlists.
 263. Add editable tag manager.
 264. Add batch retagging.

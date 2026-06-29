@@ -10,6 +10,9 @@ void PresetCrateMapDisplay::setState(const State& newState)
     state.favoriteCount = juce::jmax(0, state.favoriteCount);
     state.ratedCount = juce::jmax(0, state.ratedCount);
     state.factoryCount = juce::jmax(0, state.factoryCount);
+    state.userCount = juce::jmax(0, state.userCount);
+    state.folderCount = juce::jmax(0, state.folderCount);
+    state.packCount = juce::jmax(0, state.packCount);
     state.generatedCount = juce::jmax(0, state.generatedCount);
     state.macroRichCount = juce::jmax(0, state.macroRichCount);
     state.styleCount = juce::jmax(0, state.styleCount);
@@ -93,26 +96,66 @@ void PresetCrateMapDisplay::paint(juce::Graphics& g)
     g.setColour(juce::Colour(0xffa8b6b8));
     g.drawFittedText(activeText, context.toNearestInt(), juce::Justification::centredLeft, 1, 0.58f);
 
-    content.removeFromTop(3.0f);
+    content.removeFromTop(4.0f);
+    auto primary = content.removeFromTop(22.0f);
+    const auto visibleProportion = proportion(state.visibleCount, state.totalCount);
+    g.setColour(juce::Colour(0xff151d21));
+    g.fillRoundedRectangle(primary, 4.0f);
+    g.setColour(juce::Colour(0xff8ee6c9).withAlpha(0.36f));
+    g.drawRoundedRectangle(primary, 4.0f, 1.0f);
+    auto primaryContent = primary.reduced(6.0f, 3.0f);
+    auto primaryLabel = primaryContent.removeFromTop(8.0f);
+    g.setFont(juce::FontOptions(7.2f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff73848a));
+    g.drawFittedText("VISIBLE LIBRARY", primaryLabel.toNearestInt(), juce::Justification::centredLeft, 1, 0.66f);
+    auto visibleTrack = primaryContent.withTrimmedTop(2.0f).withHeight(4.0f);
+    g.setColour(juce::Colour(0xff202a2f));
+    g.fillRoundedRectangle(visibleTrack, 2.0f);
+    g.setColour(juce::Colour(0xff8ee6c9));
+    g.fillRoundedRectangle(visibleTrack.withWidth(visibleTrack.getWidth() * visibleProportion), 2.0f);
+
+    content.removeFromTop(5.0f);
     const auto gap = 4.0f;
     auto metrics = content;
-    const auto metricWidth = (metrics.getWidth() - (gap * 2.0f)) / 3.0f;
-    auto top = metrics.removeFromTop(23.0f);
-    drawMetric(g, top.removeFromLeft(metricWidth), "FAV", state.favoriteCount, state.totalCount, juce::Colour(0xffffd27a));
-    top.removeFromLeft(gap);
-    drawMetric(g, top.removeFromLeft(metricWidth), "RATE", state.ratedCount, state.totalCount, juce::Colour(0xffffc36b));
-    top.removeFromLeft(gap);
-    drawMetric(g, top, "FAC", state.factoryCount, state.totalCount, juce::Colour(0xff7bb7ff));
+    const auto metricHeight = metrics.getHeight() >= 78.0f ? 22.0f : 20.0f;
+    const auto metricWidth = (metrics.getWidth() - gap) / 2.0f;
 
-    if (metrics.getHeight() >= 23.0f)
+    auto drawMetricPair = [&] (const juce::String& leftLabel,
+                               int leftValue,
+                               juce::Colour leftAccent,
+                               const juce::String& rightLabel,
+                               int rightValue,
+                               juce::Colour rightAccent)
     {
+        if (metrics.getHeight() < metricHeight)
+            return;
+
+        auto row = metrics.removeFromTop(metricHeight);
+        drawMetric(g, row.removeFromLeft(metricWidth), leftLabel, leftValue, state.totalCount, leftAccent);
+        row.removeFromLeft(gap);
+        drawMetric(g, row, rightLabel, rightValue, state.totalCount, rightAccent);
         metrics.removeFromTop(4.0f);
-        auto bottom = metrics.removeFromTop(23.0f);
-        drawMetric(g, bottom.removeFromLeft(metricWidth), "GEN", state.generatedCount, state.totalCount, juce::Colour(0xffc4a7ff));
-        bottom.removeFromLeft(gap);
-        drawMetric(g, bottom.removeFromLeft(metricWidth), "MAC", state.macroRichCount, state.totalCount, juce::Colour(0xff8ee6c9));
-        bottom.removeFromLeft(gap);
-        drawMetric(g, bottom, "STYLE", state.styleCount, state.totalCount, juce::Colour(0xffff8f78));
+    };
+
+    drawMetricPair("USER", state.userCount, juce::Colour(0xff8ee6c9),
+                   "FAC", state.factoryCount, juce::Colour(0xff7bb7ff));
+    drawMetricPair("FOLD", state.folderCount, juce::Colour(0xffd7e37b),
+                   "PACK", state.packCount, juce::Colour(0xffffc36b));
+    drawMetricPair("GEN", state.generatedCount, juce::Colour(0xffc4a7ff),
+                   "STYLE", state.styleCount, juce::Colour(0xffff8f78));
+
+    if (metrics.getHeight() >= 18.0f)
+    {
+        auto footer = metrics.removeFromTop(18.0f);
+        const auto rich = state.macroRichCount > 0 ? juce::String(state.macroRichCount) + " macro-rich" : juce::String("No macro-rich");
+        const auto rated = state.ratedCount > 0 ? juce::String(state.ratedCount) + " rated" : juce::String("No ratings");
+        g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff9dafb3));
+        g.drawFittedText(rich + " | " + rated + " | " + juce::String(state.favoriteCount) + " fav",
+                         footer.toNearestInt(),
+                         juce::Justification::centredLeft,
+                         1,
+                         0.58f);
     }
 }
 }

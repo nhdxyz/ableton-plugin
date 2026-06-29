@@ -222,20 +222,27 @@ juce::StringArray presetCategoryChoices()
         "Stab",
         "Lead",
         "House",
+        "House/Acid",
         "House/Bass",
         "House/Chords",
+        "House/Keys",
+        "House/Plucks",
         "Tech House",
         "Tech House/Bass",
         "Techno",
+        "Techno/Dub",
+        "Techno/Hardgroove",
         "Techno/Stabs",
         "Minimal",
         "Minimal/Plucks",
+        "Romanian Minimal",
         "UKG",
         "UKG/Bass",
         "UKG/Chops",
         "UKG/Organ",
         "UKG/Stabs",
         "UKG/Bells",
+        "Electro Breaks",
         "FX",
         "Sequence",
         "Sample"
@@ -325,10 +332,15 @@ juce::StringArray presetPackChoices()
         "UKG Essentials",
         "UKG Basslines",
         "Garage Chops",
+        "House Chords",
         "House Tools",
+        "Dub Stabs",
         "Tech House Tools",
+        "Minimal Plucks",
         "Minimal Tools",
+        "Dub Techno Tools",
         "Techno Tools",
+        "Electro Breaks Tools",
         "Factory Pack"
     };
 }
@@ -1108,7 +1120,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeEngineLabel, "PERFORM");
     configureSectionLabel(homeShapeLabel, "MACROS");
     configureSectionLabel(homeLabLabel, "RANDOM LAB");
-    configureSectionLabel(homeLibraryLabel, "PLAY VIEW");
+    configureSectionLabel(homeLibraryLabel, "PATCH SNAPSHOT");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(synthSourceLabel, "SOURCE MIX");
     configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
@@ -1129,10 +1141,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
     configureSectionLabel(librarySectionLabel, "LIBRARY");
-    configureSectionLabel(libraryFindLabel, "FIND");
+    configureSectionLabel(libraryFindLabel, "CRATES");
     configureSectionLabel(libraryBrowserLabel, "BROWSER");
-    configureSectionLabel(librarySaveLabel, "SAVE PATCH");
-    configureSectionLabel(libraryInspectorLabel, "INSPECT");
+    configureSectionLabel(librarySaveLabel, "SAVE TARGET");
+    configureSectionLabel(libraryInspectorLabel, "PRESET PROFILE");
     configureSectionLabel(infoSectionLabel, "INFO");
     configureSectionLabel(infoAboutLabel, "ABOUT");
     configureSectionLabel(infoWorkflowLabel, "HOUSE WORKFLOW");
@@ -1186,7 +1198,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
-    presetBrowserHeaderLabel.setText("PRESET CRATE        SOURCE / KEY / BPM / RATING        PERFORMANCE MACROS", juce::dontSendNotification);
+    presetBrowserHeaderLabel.setText("SOUND        FOLDER / PACK        KEY / BPM / RATING        MACROS", juce::dontSendNotification);
     presetBrowserHeaderLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     presetBrowserHeaderLabel.setJustificationType(juce::Justification::centredLeft);
     presetBrowserHeaderLabel.setMinimumHorizontalScale(0.58f);
@@ -1196,7 +1208,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(presetBrowserHeaderLabel);
 
     presetBrowserList.setModel(this);
-    presetBrowserList.setRowHeight(38);
+    presetBrowserList.setRowHeight(42);
     presetBrowserList.setMultipleSelectionEnabled(false);
     presetBrowserList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101619));
     presetBrowserList.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff344047));
@@ -3002,8 +3014,10 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::library)
     {
         auto libraryContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto leftArea = libraryContent.removeFromLeft(236).reduced(5);
-        auto inspectorArea = libraryContent.removeFromRight(318).reduced(5);
+        const auto leftWidth = juce::jlimit(214, 276, libraryContent.getWidth() / 4);
+        const auto inspectorWidth = juce::jlimit(296, 372, libraryContent.getWidth() / 3);
+        auto leftArea = libraryContent.removeFromLeft(leftWidth).reduced(5);
+        auto inspectorArea = libraryContent.removeFromRight(inspectorWidth).reduced(5);
         auto browserArea = libraryContent.reduced(5);
 
         for (auto area : { leftArea, browserArea, inspectorArea })
@@ -3031,14 +3045,15 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         drawInset(saveArea, juce::Colour(0xff8ee6c9));
         drawInset(inspectArea, juce::Colour(0xffffc36b));
 
-        auto browserHeader = browserArea.removeFromTop(56).reduced(10, 8);
+        const auto browserHeaderHeight = browserArea.getWidth() < 520 ? 166 : 130;
+        auto browserHeader = browserArea.removeFromTop(browserHeaderHeight).reduced(10, 8);
         g.setColour(juce::Colour(0xff121c20));
         g.fillRoundedRectangle(browserHeader.toFloat(), 5.0f);
         g.setColour(juce::Colour(0xff324148));
         g.drawRoundedRectangle(browserHeader.toFloat(), 5.0f, 1.0f);
         g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
         g.setColour(juce::Colour(0xff74868b));
-        g.drawFittedText("SEARCH, AUDITION, RATE, AND SAVE PRODUCTION PATCHES",
+        g.drawFittedText("SELECT, AUDITION, LOAD, COMPARE, AND RATE PRODUCTION PATCHES",
                          browserHeader.reduced(10, 6),
                          juce::Justification::centredLeft,
                          1,
@@ -4341,8 +4356,10 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
             auto libraryArea = content.withTrimmedTop(8);
-            auto findArea = libraryArea.removeFromLeft(236).reduced(18, 14);
-            auto inspectorArea = libraryArea.removeFromRight(318).reduced(18, 14);
+            const auto leftWidth = juce::jlimit(214, 276, libraryArea.getWidth() / 4);
+            const auto inspectorWidth = juce::jlimit(296, 372, libraryArea.getWidth() / 3);
+            auto findArea = libraryArea.removeFromLeft(leftWidth).reduced(18, 14);
+            auto inspectorArea = libraryArea.removeFromRight(inspectorWidth).reduced(18, 14);
             auto browserArea = libraryArea.reduced(18, 14);
 
             libraryFindLabel.setBounds(findArea.removeFromTop(24));
@@ -4354,32 +4371,41 @@ void NateVSTAudioProcessorEditor::resized()
             for (size_t index = 4; index < presetQuickFilterButtons.size(); ++index)
                 presetQuickFilterButtons[index].setBounds(quickRowB.removeFromLeft(quickRowB.getWidth() / static_cast<int>(presetQuickFilterButtons.size() - index)).reduced(2, 3));
 
-            auto modeRow = findArea.removeFromTop(72).withTrimmedTop(6);
-            presetFilterBox.setBounds(modeRow.removeFromTop(34).reduced(2, 4));
-            presetTagBox.setBounds(modeRow.reduced(2, 4));
-
-            auto sortRefreshRow = findArea.removeFromTop(38).withTrimmedTop(3);
-            refreshPresetsButton.setBounds(sortRefreshRow.removeFromRight(70).reduced(2, 4));
+            findArea.removeFromTop(5);
+            presetFilterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
+            presetTagBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
+            auto sortRefreshRow = findArea.removeFromTop(36).withTrimmedTop(2);
+            refreshPresetsButton.setBounds(sortRefreshRow.removeFromRight(76).reduced(2, 4));
             presetSortBox.setBounds(sortRefreshRow.reduced(2, 4));
 
-            auto selectedRow = findArea.removeFromTop(58).withTrimmedTop(8);
-            previousPresetButton.setBounds(selectedRow.removeFromLeft(36).reduced(2, 4));
-            nextPresetButton.setBounds(selectedRow.removeFromRight(36).reduced(2, 4));
-            presetBox.setBounds(selectedRow.reduced(2, 4));
-            auto loadActions = findArea.removeFromTop(40).withTrimmedTop(4);
-            loadPresetButton.setBounds(loadActions.removeFromLeft(72).reduced(2, 4));
-            auditionPresetButton.setBounds(loadActions.removeFromLeft(86).reduced(2, 4));
-            favoritePresetButton.setBounds(loadActions.reduced(2, 4));
-            auto compareActions = findArea.removeFromTop(38).withTrimmedTop(2);
-            presetRatingBox.setBounds(compareActions.removeFromLeft(88).reduced(2, 4));
-            comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
-            revertPresetButton.setBounds(compareActions.reduced(2, 4));
-            const auto crateMapHeight = juce::jlimit(62, 104, findArea.getHeight() - 34);
-            presetCrateMapDisplay.setBounds(findArea.removeFromTop(crateMapHeight).reduced(2, 4));
+            const auto crateMapHeight = juce::jlimit(132, 182, findArea.getHeight() - 36);
+            presetCrateMapDisplay.setBounds(findArea.removeFromTop(crateMapHeight).reduced(2, 5));
             presetStatusLabel.setBounds(findArea.reduced(2, 4));
 
             libraryBrowserLabel.setBounds(browserArea.removeFromTop(24));
-            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(34).reduced(6, 5));
+            auto selectedRow = browserArea.removeFromTop(38).withTrimmedTop(2);
+            previousPresetButton.setBounds(selectedRow.removeFromLeft(38).reduced(2, 4));
+            nextPresetButton.setBounds(selectedRow.removeFromRight(38).reduced(2, 4));
+            presetBox.setBounds(selectedRow.reduced(2, 4));
+            const auto compactBrowser = browserArea.getWidth() < 520;
+            auto primaryActions = browserArea.removeFromTop(38).withTrimmedTop(3);
+            loadPresetButton.setBounds(primaryActions.removeFromLeft(76).reduced(2, 4));
+            auditionPresetButton.setBounds(primaryActions.removeFromLeft(92).reduced(2, 4));
+            favoritePresetButton.setBounds(primaryActions.removeFromLeft(70).reduced(2, 4));
+            if (compactBrowser)
+            {
+                auto compareActions = browserArea.removeFromTop(36).withTrimmedTop(1);
+                comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
+                revertPresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
+                presetRatingBox.setBounds(compareActions.reduced(2, 4));
+            }
+            else
+            {
+                presetRatingBox.setBounds(primaryActions.removeFromRight(112).reduced(2, 4));
+                revertPresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
+                comparePresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
+            }
+            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(30).reduced(6, 5));
             presetBrowserList.setBounds(browserArea.reduced(2, 5));
 
             const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
@@ -9869,6 +9895,8 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
 {
     UI::PresetCrateMapDisplay::State state;
     const auto library = audioProcessor.getPresetLibrary();
+    juce::StringArray folders;
+    juce::StringArray packs;
     state.totalCount = static_cast<int>(library.size());
     state.visibleCount = static_cast<int>(visiblePresetBrowserPresets.size());
     state.filterName = presetFilterBox.getText().trim();
@@ -9883,16 +9911,26 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
             ++state.ratedCount;
         if (preset.isFactory)
             ++state.factoryCount;
+        else
+            ++state.userCount;
         if (preset.source.equalsIgnoreCase("Generated") || preset.tags.containsIgnoreCase("Generated"))
             ++state.generatedCount;
         if (preset.macroIntensity >= 0.30f)
             ++state.macroRichCount;
+
+        const auto folder = preset.folder.trim().isNotEmpty() ? preset.folder.trim() : preset.category.trim();
+        if (folder.isNotEmpty())
+            folders.addIfNotAlreadyThere(folder);
+        if (preset.pack.trim().isNotEmpty())
+            packs.addIfNotAlreadyThere(preset.pack.trim());
 
         const auto searchable = presetSearchText(preset);
         if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
             ++state.styleCount;
     }
 
+    state.folderCount = folders.size();
+    state.packCount = packs.size();
     presetCrateMapDisplay.setState(state);
 }
 

@@ -24,7 +24,7 @@ Reference pages checked during the editable-matrix pass:
 
 ## Principles
 
-- Keep HOME focused on playability: macros, source mix, randomization, Play View state, and preset recall.
+- Keep HOME focused on playability: macros, source mix, randomization, Patch Snapshot state, and preset recall.
 - Keep SYNTH focused on oscillator, filter, amp, and core tone shaping.
 - Put deeper assignment work in a future MOD panel instead of crowding HOME.
 - Make the first modulation implementation small, automatable, and easy to validate.

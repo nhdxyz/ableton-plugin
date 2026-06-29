@@ -14,6 +14,9 @@ public:
         int favoriteCount = 0;
         int ratedCount = 0;
         int factoryCount = 0;
+        int userCount = 0;
+        int folderCount = 0;
+        int packCount = 0;
         int generatedCount = 0;
         int macroRichCount = 0;
         int styleCount = 0;

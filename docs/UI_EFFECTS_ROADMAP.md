@@ -38,8 +38,8 @@ Implemented foundation pass:
 - `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
 - HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
 - HOME now includes a compact `SOURCE -> FILTER -> MOTION -> FX -> GUARD -> OUT` signal-flow strip, making active sound path, movement, effects, Guard state, and output safety visible without opening SYNTH or FX.
-- HOME preset access is now a compact Play View with selected-preset metadata, patch role, source type, output safety, A/B readiness, sequencer/pump state, active Random Lab candidate status, six performance meters, and recall/audition controls. The deeper save workflow lives in LIBRARY.
-- LIBRARY now uses Find, Browser, Save Patch, and Inspect work areas, plus a compact crate-map summary, an adaptive selected-preset profile card, and a dedicated save-target summary with library stats, visible/total/favorite/rated/factory/generated/macro-rich/style counts, role/trait/cue context, Tone/Dirt/Motion/Space profile meters, destination trail, metadata readiness, generated/overwrite status, and clearer rating placement.
+- HOME preset access is now a compact Patch Snapshot view with selected-preset metadata, patch role, source type, output safety, A/B readiness, sequencer/pump state, active Random Lab candidate status, six performance meters, and recall/audition controls. The deeper save workflow lives in LIBRARY.
+- LIBRARY now uses Crates, Browser, Save Target, and Preset Profile work areas, plus a compact crate-map summary, an adaptive selected-preset profile card, and a dedicated save-target summary with library stats, visible/total/user/factory/folder/pack/generated/macro-rich/style counts, role/trait/cue context, Tone/Dirt/Motion/Space profile meters, destination trail, metadata readiness, generated/overwrite status, centered browser actions, and clearer rating placement.
 - SYNTH now includes a compact filter response display, giving the filter group a visual center for cutoff/resonance/mode edits instead of expanding the page with more always-visible controls.
 - HOME now includes a compact output spectrum analyzer fed by final-output snapshot telemetry, with held-peak ticks and grouped sub/low/mid/presence/air balance so the dashboard distinguishes patch intent from actual club-band energy.
 - The filter response display now includes modulation range overlays for filter destinations, making MOD assignments visible directly in the sound-shaping view.
@@ -323,9 +323,9 @@ Groups:
 - Macros: Tone, Dirt, Weight, Bounce, Warp, Throw, plus the Motion/Space XY pad.
 - Signal Flow: source, filter, motion, FX, Guard, and output status.
 - Random Lab: recipe, generate, mutate, variation, undo, status.
-- Play View: selected preset, role/source/safety state, Tone/Dirt/Move/Space/Weight/Bounce performance meters, compare state, sequencer/pump state, random-candidate status, and recall/audition controls.
+- Patch Snapshot: selected preset, role/source/safety state, Tone/Dirt/Move/Space/Weight/Bounce performance meters, compare state, sequencer/pump state, random-candidate status, and recall/audition controls.
 
-Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, signal-flow status, Play View state, and preset recall/audition. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, full save metadata, and full envelope editing stay in focused panels.
+Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, signal-flow status, Patch Snapshot state, and preset recall/audition. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, full save metadata, and full envelope editing stay in focused panels.
 
 HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the most performance-critical macro controls plus the Motion/Space XY pad.
 
@@ -504,7 +504,7 @@ Build the next larger slices in this order:
    First rating/organization pass implemented 1-5 star ratings in `Library.xml`, sort modes, rated/star filters, recursive preset scanning, and category subfolder saves for user presets.
    First pack/key/tempo metadata pass implemented author, pack, key, and BPM preset XML fields, LIBRARY save controls, metadata search, pack/BPM filters, and sort modes for pack, BPM, key, and author.
    First macro-value strip pass implemented structured Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw values in Library scan results, an eight-meter Browser column, searchable value tokens, and `PresetSaveAudit` coverage.
-   First crate-map pass implemented a `PresetCrateMapDisplay` in the LIBRARY Find column for visible/total, favorite, rated, factory, generated, macro-rich, and style-tagged preset counts.
+   The crate-map pass now uses `PresetCrateMapDisplay` in the LIBRARY Crates column for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged preset counts.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
    First source-warp pass implemented as a saved Osc Warp control with macro and MOD matrix routing for pre-filter harmonic movement on house basses, UKG Dred/Reese patches, stabs, and techno pulses.
@@ -557,6 +557,6 @@ Build the next larger slices in this order:
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
 - Remaining UI polish: direct grid gestures now edit velocity, probability, timing, and length lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
 - Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
-- HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, Signal Flow, and Play View while keeping deeper controls on focused panels.
+- HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, Signal Flow, and Patch Snapshot while keeping deeper controls on focused panels.
 - HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.
 - A clear path exists for adding more FX without redesigning the page again.

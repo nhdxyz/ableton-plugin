@@ -31,12 +31,12 @@ Nate VST already has a strong starter direction:
 
 - JUCE/VST3 foundation with Ableton-focused validation and local pluginval checks.
 - Subtractive synth core with oscillator 1, oscillator 2, sub, noise, unison, filter character/slope, drive, output guard, and bandlimited oscillator work.
-- Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, Play View state, preset recall, and auditioning.
+- Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, Patch Snapshot state, preset recall, and auditioning.
 - MOD panel with LFO, envelope, eight macros, matrix routes, macro assignment editor, curve presets, bypass/delete, and destination badges.
 - SAMPLE panel with waveform view, start/end handles, phrase markers, slice pads, stored slice regions, pan, trigger probability, reverse, pitch, gain, mix, and UKG chop helpers.
 - SEQ panel with piano-roll editing, chord memory, scale/groove templates, velocity/probability/timing lanes, host sync, and MIDI export.
 - FX rack with add/select flow, reordering, delay, reverb, distortion, pump, tremolo, ring mod, comb, chorus, phaser, flanger, bitcrush, EQ/tone, width, guard, and throw controls.
-- LIBRARY panel with folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, recursive preset scanning, and macro previews.
+- LIBRARY panel with folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, recursive preset scanning, a left crate rail with folder/pack/style coverage, centered browser actions, and macro previews.
 - Factory preset generation for UKG, house, tech-house, techno, and minimal.
 
 The main gap is no longer "we need more controls." The gap is "we need deeper sound engines, better visual feedback, stronger genre workflows, and a more professional browser/routing experience."
@@ -310,7 +310,7 @@ Implemented P5 sub-slice:
 219. Add custom user tags.
 220. Add multi-select metadata editing.
 221. Expand implemented preset notes into structured production tips and batch-editable metadata.
-222. Expand the implemented smart-crate filter pass and compact crate-map summary into a full sidebar with editable crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
+222. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into a full sidebar with editable crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
 223. Add folder tree view for user and factory libraries.
 224. Add pack manager with import/export.
 225. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
@@ -332,7 +332,7 @@ Implemented P5 sub-slice:
 
 Implemented P8 sub-slice:
 
-- LIBRARY now has a compact multi-column preset browser list that uses the active search, filter, sort, recents, rating, favorite, and macro metadata path. It shows the preset name, category/folder, pack, key, BPM, rating, favorite marker, and macro summary before loading. Remaining browser work includes a full-size browser mode, custom tag editing, smart folder tree, multi-select metadata editing, audio previews, and construction-kit dependency tracking.
+- LIBRARY now has a compact multi-column preset browser list with selected-preset navigation/actions above the list, a left crate rail for search/smart-crates/sort, folder/pack/style coverage, and the active search, filter, sort, recents, rating, favorite, and macro metadata path. It shows the preset name, category/folder, pack, key, BPM, rating, favorite marker, and macro summary before loading. Remaining browser work includes a full-size browser mode, custom tag editing, editable smart folder tree, multi-select metadata editing, audio previews, and construction-kit dependency tracking.
 
 ### P9 - Audio Quality, Stability, And Testing
 
@@ -398,7 +398,7 @@ Track the backlog through one umbrella issue plus focused child issues. Good fir
 
 - Componentize editor panels and add layout regression checks.
 - Improve rotary controls with fine drag, double-click reset, and value popovers.
-- Expand the compact preset browser and smart-crate filters into a full multi-column browser with editable sidebar folders.
+- Expand the compact preset browser, centered browser toolbar, and folder/pack crate rail into a full multi-column browser with editable sidebar folders.
 - Add drag-and-drop modulation assignment and visible modulation rings.
 - Add sequencer pattern chaining, ratchets, chord paint, and per-step modulation lanes.
 - Add transient/manual slicing with per-slice controls.

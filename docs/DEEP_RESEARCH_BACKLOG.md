@@ -39,7 +39,7 @@ Primary FX, groove, and club-workflow references:
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
 - Sampler/chop workflow for UKG vocal and stab material, including Slice Keys and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
-- Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, recursive preset scanning, visual save preview, and HOME Play View recall/performance state.
+- Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, recursive preset scanning, visual save preview, left crate rail folder/pack/style coverage, centered browser actions, and HOME Patch Snapshot recall/performance state.
 - Factory preset generator for genre-targeted packs.
 
 ## Product Gaps
@@ -78,7 +78,7 @@ Implemented UI test sub-slices:
 - A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
 - HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, reducing the need to show every sound-design control on the default dashboard.
 - HOME now has a compact signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization; deeper split, send, and parallel routing views remain future work.
-- LIBRARY now has dedicated Find, Browser, Save Patch, and Inspect work areas plus an adaptive `PresetLibrarySummary` profile card, a compact crate-map summary, and a redesigned Save Target card with destination trail/readiness, while HOME has a compact Play View for role/source/safety, performance meters, compare, sequencer/pump, and random-candidate state above recall/audition.
+- LIBRARY now has dedicated Crates, Browser, Save Target, and Preset Profile work areas plus an adaptive `PresetLibrarySummary` profile card, a compact crate rail with folder/pack/style coverage, centered browser actions, and a redesigned Save Target card with destination trail/readiness, while HOME has a compact Patch Snapshot for role/source/safety, performance meters, compare, sequencer/pump, and random-candidate state above recall/audition.
 - SYNTH now has a dedicated `FilterResponseDisplay` above the filter controls, making cutoff, resonance, mode, character, slope, envelope amount, and drive visible without adding another row of knobs.
 - HOME now includes `OutputOscilloscopeDisplay` and `OutputSpectrumDisplay` fed by the real-time-safe final-output snapshot ring, making waveform shape, transient punch, clipping risk, held spectrum peaks, and sub/low/mid/presence/air energy visible without opening a separate analysis page.
 - The filter response display now shows MOD-matrix route depth for Filter Cutoff, Filter Res, Filter Env, and Drive, including cutoff range shading and source summaries.
@@ -255,7 +255,7 @@ Implemented FX sub-slice:
 113. Add multi-select preset metadata editing.
 114. Expand preset notes into structured production tips, source-recipe context, and batch-editable metadata.
 115. Add pack artwork or pack color markers if the UI can support it cleanly.
-116. Expand the implemented smart-crate filter pass and compact crate-map summary into a full browser sidebar with editable user crates, New This Week, and pack crates.
+116. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into a full browser sidebar with editable user crates, New This Week, and pack crates.
 117. Add audition auto-advance.
 118. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 119. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.
@@ -267,7 +267,7 @@ Implemented FX sub-slice:
 Implemented library sub-slice:
 
 - Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
-- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The Find column now includes a compact crate-map summary for visible/total, favorite, rated, factory, generated, macro-rich, and style-tagged counts, while Inspect shows a selected-preset role/trait/cue profile with Tone/Dirt/Motion/Space meters. The filter menu includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
+- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The Crates column now includes quick filters, smart-crate/search/sort controls, centered browser actions, and a compact crate-map summary for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged counts, while Preset Profile shows a selected-preset role/trait/cue profile with Tone/Dirt/Motion/Space meters. The filter menu includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
 - The Library Audition button now plays runtime role-aware MIDI phrases for bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general presets. Rendered preview files, auto-preview, and editable preview phrase templates remain open.
 - Library Save now has a two-click same-folder overwrite guard, and same-name presets in different category folders are preserved for real subfolder organization.
 

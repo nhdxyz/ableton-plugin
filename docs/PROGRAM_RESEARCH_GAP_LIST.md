@@ -440,7 +440,7 @@ Nate VST gaps:
 
 173. Add full-browser mode.
 174. Add folder tree for user and factory libraries.
-175. Expand the implemented smart-crate filter pass and compact crate-map summary into full smart folders with editable user crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
+175. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into full smart folders with editable user crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
 176. Add custom tag editor.
 177. Add multi-select metadata editing.
 178. Expand implemented preset notes into structured production tips and batch-editable metadata.
@@ -690,7 +690,7 @@ Key extra lessons:
 367. Add full-screen or wide browser mode with tree, results, details, macro preview, and audio preview.
 368. Add rendered preset audio preview files using standard house/UKG/techno MIDI phrases; runtime role-aware audition phrases are implemented.
 369. Add auto-preview with output safety and host-transport awareness.
-370. Expand the implemented smart-crate filter pass and compact crate-map summary into smart collections for New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Clean Subs, and pack folders.
+370. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into smart collections for New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Clean Subs, and pack folders.
 371. Add editable user tags with batch metadata editing.
 372. Extend the existing search tokens with modulation count, FX type, sequencer type, sample dependencies, and date.
 373. Add "find similar preset" using parameter distance, macro roles, tags, and future audio preview descriptors.

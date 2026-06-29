@@ -42,7 +42,7 @@ Nate VST already has a real foundation:
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Randomization recipes, section scope, locks, undo/redo, and genre seeds.
 - Eight performance macros plus an XY macro pad.
-- HOME Play View for selected-preset metadata, patch role, source type, output safety, performance meters, compare readiness, active random-candidate state, recall, and audition.
+- HOME Patch Snapshot for selected-preset metadata, patch role, source type, output safety, performance meters, compare readiness, active random-candidate state, recall, and audition.
 - HOME signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
@@ -87,7 +87,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 13. Add larger invisible hit areas around small rotary controls.
 14. Add page-level grouping around user tasks: Source, Shape, Motion, Space, Utility.
 15. Add collapsible groups for dense pages instead of always showing every section.
-16. Continue the professional HOME redesign beyond the implemented overview/Play View/signal-flow pass with selected-control focus and larger performance/browser modes.
+16. Continue the professional HOME redesign beyond the implemented overview/Patch Snapshot/signal-flow pass with selected-control focus and larger performance/browser modes.
 17. Extend the implemented signal-flow strip into deeper split/source, send, parallel, and Guard routing visualization.
 18. Add voice count, CPU estimate, and guard activity in the top bar.
 19. Add stronger disabled-state styling for inactive modules and mode-dependent controls.
@@ -263,7 +263,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 166. Add a larger full-browser mode.
 167. Add a folder tree for user and factory libraries.
-168. Expand the implemented smart-crate filter pass and compact crate-map summary into full smart folders: New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, pack crates, and full-browser sidebar navigation.
+168. Expand the implemented smart-crate filter pass, centered browser actions, and folder/pack/style crate rail into full smart folders: New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, pack crates, and full-browser sidebar navigation.
 169. Add tag editor for user presets.
 170. Add custom user tags.
 171. Add multi-select metadata editing.

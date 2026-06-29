@@ -132,7 +132,7 @@ If we only pick the next 15 big work tracks, they should be:
 
 ### Home And Performance Views
 
-31. Redesign HOME around Play View: preset, engine summary, macros, XY, randomize, low-end safety, output, and recent patches.
+31. Extend the implemented compact HOME Play View into a larger optional performance mode with preset, engine summary, macros, XY, randomize, low-end safety, output, and recent patches.
 32. Add source status cards that show Layer A, Layer B, Sampler, and FX status without opening full edit pages.
 33. Add quick engine audition/solo buttons from HOME.
 34. Add "make it more UKG", "make it more deep house", "make it more minimal", "make it more warehouse", and "make it more tech-house" transforms.

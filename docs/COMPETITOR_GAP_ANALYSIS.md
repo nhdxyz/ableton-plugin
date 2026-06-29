@@ -31,7 +31,7 @@ Nate VST already has a strong starter direction:
 
 - JUCE/VST3 foundation with Ableton-focused validation and local pluginval checks.
 - Subtractive synth core with oscillator 1, oscillator 2, sub, noise, unison, filter character/slope, drive, output guard, and bandlimited oscillator work.
-- Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, session state, preset recall, and auditioning.
+- Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, Play View state, preset recall, and auditioning.
 - MOD panel with LFO, envelope, eight macros, matrix routes, macro assignment editor, curve presets, bypass/delete, and destination badges.
 - SAMPLE panel with waveform view, start/end handles, phrase markers, slice pads, stored slice regions, pan, trigger probability, reverse, pitch, gain, mix, and UKG chop helpers.
 - SEQ panel with piano-roll editing, chord memory, scale/groove templates, velocity/probability/timing lanes, host sync, and MIDI export.

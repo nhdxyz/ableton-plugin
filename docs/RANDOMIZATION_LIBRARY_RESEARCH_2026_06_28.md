@@ -76,7 +76,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Library Audition now uses short role-aware MIDI phrases inferred from preset metadata, so bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general patches get more useful house-focused preview gestures than a single sustained note.
 - Library Save now protects same-folder overwrites with a two-click confirmation and preserves same-name presets in different category folders instead of deleting older folder copies.
 - Library Save now has a redesigned visual Save Target summary for name, destination trail, readiness, pack, key, BPM, author, notes length, generated state, and overwrite status, while selected-preset rating lives with browser inspect actions instead of the save metadata row.
-- HOME now replaces the old preset-recall block with a Session summary showing selected-preset metadata, visible/total library count, favorite/rating/source state, compare readiness, and active Random Lab candidate status above compact recall/audition controls.
+- HOME now replaces the old preset-recall block with a Play View showing selected-preset metadata, patch role, source type, output safety, A/B readiness, sequencer/pump state, performance-meter energy, and active Random Lab candidate status above compact recall/audition controls.
 - LIBRARY Find now includes a compact crate-map summary for visible/total, favorite, rated, factory, generated, macro-rich, and style-tagged preset counts, so browser state is visible without a full-sidebar mode.
 
 ## Highest-Value Randomization Backlog

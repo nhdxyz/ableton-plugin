@@ -994,7 +994,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(homeEngineLabel, "PERFORM");
     configureSectionLabel(homeShapeLabel, "MACROS");
     configureSectionLabel(homeLabLabel, "RANDOM LAB");
-    configureSectionLabel(homeLibraryLabel, "SESSION");
+    configureSectionLabel(homeLibraryLabel, "PLAY VIEW");
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(synthSourceLabel, "SOURCE MIX");
     configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
@@ -3115,7 +3115,8 @@ void NateVSTAudioProcessorEditor::resized()
             randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
-            homeSessionDisplay.setBounds(libraryArea.removeFromTop(74).reduced(3, 5));
+            const auto playViewHeight = juce::jlimit(76, 102, libraryArea.getHeight() - 116);
+            homeSessionDisplay.setBounds(libraryArea.removeFromTop(playViewHeight).reduced(3, 5));
             auto loadRow = libraryArea.removeFromTop(38).withTrimmedTop(2);
             previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
             presetBox.setBounds(loadRow.removeFromLeft(juce::jmax(120, loadRow.getWidth() - 42)).reduced(3, 4));
@@ -9222,12 +9223,25 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
     UI::HomeSessionDisplay::State state;
     const auto library = audioProcessor.getPresetLibrary();
     const auto selectedName = presetBox.getText().trim();
+    const auto osc2 = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f));
+    const auto sub = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::subLevel, 0.0f));
+    const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f;
+    const auto sampleMix = sampleEnabled ? juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleMix, 0.0f)) : 0.0f;
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
 
     state.visibleCount = static_cast<int>(visiblePresetBrowserPresets.size());
     state.totalCount = static_cast<int>(library.size());
     state.filterName = presetFilterBox.getText().trim();
     state.selectedName = selectedName.isNotEmpty() ? selectedName : juce::String("Choose a sound");
-    state.selectedMeta = "Use Library for full search and save";
+    state.sourceName = sampleEnabled ? juce::String("Sample")
+                    : osc1Wave == 4 ? juce::String("WT")
+                    : osc2 > 0.05f ? juce::String("Dual")
+                    : juce::String("Synth");
+    state.selectedMeta = state.sourceName + " | Use Library for full search";
+    state.roleName = sub > 0.34f ? juce::String("Bass")
+                   : sampleEnabled && sampleMix > 0.1f ? juce::String("Chop")
+                   : juce::String("Patch");
+    juce::String selectedSearchText;
 
     for (const auto& preset : library)
     {
@@ -9235,7 +9249,20 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
             continue;
 
         const auto category = preset.folder.isNotEmpty() ? preset.folder : preset.category;
-        state.selectedMeta = category + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm);
+        selectedSearchText = presetSearchText(preset);
+        state.selectedMeta = preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm);
+        if (textContainsAny(selectedSearchText, { "Bass", "Sub", "Reese", "Dred", "Rubber", "Log Drum" }))
+            state.roleName = "Bass";
+        else if (textContainsAny(selectedSearchText, { "Chord", "Stab", "Organ", "Keys", "Dub" }))
+            state.roleName = "Chord/Stab";
+        else if (textContainsAny(selectedSearchText, { "Lead" }))
+            state.roleName = "Lead";
+        else if (textContainsAny(selectedSearchText, { "Pluck", "Bell", "Ping", "Marimba" }))
+            state.roleName = "Pluck";
+        else if (textContainsAny(selectedSearchText, { "Chop", "Vocal", "Sample", "Slice" }))
+            state.roleName = "Chop";
+        else if (category.isNotEmpty())
+            state.roleName = category.fromLastOccurrenceOf("/", false, true);
         state.rating = preset.rating;
         state.favorite = preset.isFavorite;
         state.factory = preset.isFactory;
@@ -9244,6 +9271,48 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
     }
 
     state.compareReady = hasPresetCompareSnapshots();
+    state.sequencerActive = readPlainParameterValue(Parameters::ID::sequencerEnabled, 0.0f) >= 0.5f;
+
+    auto pumpPhase = 0.0f;
+    auto pumpGain = 1.0f;
+    auto pumpReduction = 0.0f;
+    audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, state.pumpActive);
+
+    auto guardDrive = 0.0f;
+    auto guardReduction = 0.0f;
+    audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, state.guardActive);
+    state.guardActive = state.guardActive || readPlainParameterValue(Parameters::ID::fxGuardEnabled, 0.0f) >= 0.5f;
+
+    const auto outputPeak = juce::jlimit(0.0f, 1.0f, juce::jmax(displayedPeakLeft, displayedPeakRight));
+    const auto rms = juce::jmax(displayedRmsLeft, displayedRmsRight);
+    if (outputPeak >= 0.985f)
+        state.safetyName = "CLIP";
+    else if (outputPeak >= 0.9f)
+        state.safetyName = "HOT";
+    else if (rms < 0.025f && outputPeak < 0.08f)
+        state.safetyName = "LOW";
+    else
+        state.safetyName = "SAFE";
+
+    state.performanceValues = {
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroTone, 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroDirt, 0.0f)
+            + (readPlainParameterValue(Parameters::ID::driveAmount, 0.0f) * 0.4f)
+            + (readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.35f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroMotion, 0.0f)
+            + (readPlainParameterValue(Parameters::ID::lfo1Depth, 0.0f) * 0.3f)
+            + (readPlainParameterValue(Parameters::ID::lfo2Depth, 0.0f) * 0.22f)
+            + (state.sequencerActive ? 0.16f : 0.0f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroSpace, 0.0f)
+            + (readPlainParameterValue(Parameters::ID::fxSendDelay, 0.0f) * 0.4f)
+            + (readPlainParameterValue(Parameters::ID::fxSendReverb, 0.0f) * 0.4f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroWeight, 0.0f)
+            + (sub * 0.45f)
+            + (sampleMix * 0.2f)),
+        juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroBounce, 0.0f)
+            + (readPlainParameterValue(Parameters::ID::fxPumpDepth, 0.0f) * 0.42f)
+            + (state.pumpActive ? pumpReduction * 0.35f : 0.0f))
+    };
 
     const auto activeCandidate = audioProcessor.getActiveRandomCandidateIndex();
     state.candidateReady = audioProcessor.hasRandomCandidate(activeCandidate);

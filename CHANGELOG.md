@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### HOME Play View
+
+- Reworked the lower-right HOME recall area from a library-style `SESSION` summary into a compact `PLAY VIEW` focused on patch role, source type, output safety, A/B readiness, sequencer/pump state, random candidate context, and preset recall.
+- Added six small performance meters for Tone, Dirt, Move, Space, Weight, and Bounce so HOME shows musical patch energy without exposing deeper SYNTH, MOD, SEQ, or FX controls.
+- Kept full search/save/rating/metadata in LIBRARY while preserving compact Previous/Next, Load, Audition, Favorite, and Refresh controls on HOME.
+
 ### Save Target Redesign And 64-Preset Expansion
 
 - Reworked the LIBRARY Save Target card with a clearer status header, destination trail, metadata chips, and readiness strip for name, folder, pack, key/BPM, and notes completeness.

@@ -42,7 +42,7 @@ Nate VST already has a real foundation:
 - HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
 - Randomization recipes, section scope, locks, undo/redo, and genre seeds.
 - Eight performance macros plus an XY macro pad.
-- HOME session dashboard for selected-preset metadata, library/filter count, favorite/rating/source state, compare readiness, active random-candidate state, recall, and audition.
+- HOME Play View for selected-preset metadata, patch role, source type, output safety, performance meters, compare readiness, active random-candidate state, recall, and audition.
 - HOME signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
@@ -87,7 +87,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 13. Add larger invisible hit areas around small rotary controls.
 14. Add page-level grouping around user tasks: Source, Shape, Motion, Space, Utility.
 15. Add collapsible groups for dense pages instead of always showing every section.
-16. Continue the professional HOME redesign beyond the implemented overview/session/signal-flow pass with selected-control focus and larger performance/browser modes.
+16. Continue the professional HOME redesign beyond the implemented overview/Play View/signal-flow pass with selected-control focus and larger performance/browser modes.
 17. Extend the implemented signal-flow strip into deeper split/source, send, parallel, and Guard routing visualization.
 18. Add voice count, CPU estimate, and guard activity in the top bar.
 19. Add stronger disabled-state styling for inactive modules and mode-dependent controls.

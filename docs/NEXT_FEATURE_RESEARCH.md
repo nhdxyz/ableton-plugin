@@ -263,7 +263,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 
 166. Add a larger full-browser mode.
 167. Add a folder tree for user and factory libraries.
-168. Expand the first smart-crate filter pass into full smart folders: New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, pack crates, and full-browser sidebar navigation.
+168. Expand the implemented smart-crate filter pass and compact crate-map summary into full smart folders: New This Week, editable user crates, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, pack crates, and full-browser sidebar navigation.
 169. Add tag editor for user presets.
 170. Add custom user tags.
 171. Add multi-select metadata editing.

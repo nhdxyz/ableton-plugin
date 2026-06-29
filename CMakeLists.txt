@@ -67,6 +67,7 @@ target_sources(NateVST
         Source/UI/OutputMeter.cpp
         Source/UI/OutputOscilloscopeDisplay.cpp
         Source/UI/OutputSpectrumDisplay.cpp
+        Source/UI/PresetCrateMapDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp
         Source/UI/PresetSaveSummary.cpp
         Source/UI/PumpCurveDisplay.cpp

@@ -1074,6 +1074,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetBrowserList.setOutlineThickness(1);
     presetBrowserList.setTooltip("Click a preset row to select it. Double-click a row to load it.");
     addAndMakeVisible(presetBrowserList);
+    addAndMakeVisible(presetCrateMapDisplay);
     addAndMakeVisible(presetLibrarySummary);
     addAndMakeVisible(presetSaveSummary);
 
@@ -4202,6 +4203,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             presetBrowserHeaderLabel.setVisible(true);
             presetBrowserList.setVisible(true);
+            presetCrateMapDisplay.setVisible(true);
             presetLibrarySummary.setVisible(true);
             presetSaveSummary.setVisible(true);
             for (auto& button : presetQuickFilterButtons)
@@ -4241,6 +4243,8 @@ void NateVSTAudioProcessorEditor::resized()
             presetRatingBox.setBounds(compareActions.removeFromLeft(88).reduced(2, 4));
             comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
             revertPresetButton.setBounds(compareActions.reduced(2, 4));
+            const auto crateMapHeight = juce::jlimit(62, 104, findArea.getHeight() - 34);
+            presetCrateMapDisplay.setBounds(findArea.removeFromTop(crateMapHeight).reduced(2, 4));
             presetStatusLabel.setBounds(findArea.reduced(2, 4));
 
             libraryBrowserLabel.setBounds(browserArea.removeFromTop(24));
@@ -7526,7 +7530,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -9662,6 +9666,37 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     updatePresetLibrarySummary();
 }
 
+void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
+{
+    UI::PresetCrateMapDisplay::State state;
+    const auto library = audioProcessor.getPresetLibrary();
+    state.totalCount = static_cast<int>(library.size());
+    state.visibleCount = static_cast<int>(visiblePresetBrowserPresets.size());
+    state.filterName = presetFilterBox.getText().trim();
+    state.tagName = presetTagBox.getText().trim();
+    state.searchText = presetSearchEditor.getText().trim();
+
+    for (const auto& preset : library)
+    {
+        if (preset.isFavorite)
+            ++state.favoriteCount;
+        if (preset.rating > 0)
+            ++state.ratedCount;
+        if (preset.isFactory)
+            ++state.factoryCount;
+        if (preset.source.equalsIgnoreCase("Generated") || preset.tags.containsIgnoreCase("Generated"))
+            ++state.generatedCount;
+        if (preset.macroIntensity >= 0.30f)
+            ++state.macroRichCount;
+
+        const auto searchable = presetSearchText(preset);
+        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage" }))
+            ++state.styleCount;
+    }
+
+    presetCrateMapDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
 {
     UI::PresetLibrarySummary::State state;
@@ -9711,6 +9746,7 @@ void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
     }
 
     presetLibrarySummary.setState(state);
+    updatePresetCrateMapDisplay();
     updatePresetSaveSummary();
     updateHomeSessionDisplay();
 }

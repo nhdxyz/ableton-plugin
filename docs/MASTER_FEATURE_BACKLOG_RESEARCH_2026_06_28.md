@@ -528,7 +528,7 @@ These should stay near the top because every future feature becomes harder if th
 
 1. Add larger full-browser mode.
 2. Add folder tree for factory and user libraries.
-3. Expand the first smart-crate filter pass into a full browser sidebar with Favorites, Five Star, Recent, User, Factory, Macro Rich, and editable user crates.
+3. Expand the implemented quick filters, smart-crate filter menu, and compact crate-map summary into a full browser sidebar with Favorites, Five Star, Recent, User, Factory, Macro Rich, and editable user crates.
 4. Extend smart crates with New This Week, UKG Vocal Chops, House Stabs, Tech-House Bass, Dirty Techno, Clean Subs, and user-defined rules.
 5. Add editable custom user tags.
 6. Add tag editor for existing presets.

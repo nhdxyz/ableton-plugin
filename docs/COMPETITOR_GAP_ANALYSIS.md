@@ -310,7 +310,7 @@ Implemented P5 sub-slice:
 219. Add custom user tags.
 220. Add multi-select metadata editing.
 221. Expand implemented preset notes into structured production tips and batch-editable metadata.
-222. Expand the implemented smart-crate filter pass into a full sidebar with editable crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
+222. Expand the implemented smart-crate filter pass and compact crate-map summary into a full sidebar with editable crates, New This Week, UKG Vocal Chops, House Stabs, Dirty Techno, Macro Rich, User, and Factory views.
 223. Add folder tree view for user and factory libraries.
 224. Add pack manager with import/export.
 225. Expand duplicate preset handling beyond same-folder overwrite detection with rename-as-copy, version history, and near-duplicate detection.

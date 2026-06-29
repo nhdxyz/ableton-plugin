@@ -15,6 +15,7 @@
 #include "UI/OutputMeter.h"
 #include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
+#include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
@@ -670,6 +671,7 @@ private:
     UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::HomeSignalFlowDisplay homeSignalFlowDisplay;
     UI::HomeSessionDisplay homeSessionDisplay;
+    UI::PresetCrateMapDisplay presetCrateMapDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::PresetSaveSummary presetSaveSummary;
     UI::LowEndAssistant lowEndAssistant;
@@ -804,6 +806,7 @@ private:
     void updateSampleWaveformDisplay();
     void timerCallback() override;
     void refreshPresetList();
+    void updatePresetCrateMapDisplay();
     void updatePresetLibrarySummary();
     void updatePresetSaveSummary();
     bool isPresetOverwriteArmed(const juce::String& presetName, const juce::String& category) const;

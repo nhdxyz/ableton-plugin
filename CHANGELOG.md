@@ -2,6 +2,12 @@
 
 ## 2026-06-28
 
+### Library Crate Map
+
+- Added a reusable `PresetCrateMapDisplay` to the LIBRARY Find column, giving the browser a compact visual summary of visible/total presets, favorites, rated presets, factory presets, generated saves, macro-rich presets, and style-tagged crates.
+- Wired the crate map to the existing search, filter, tag, and preset-library refresh path so it reflects quick filters, smart crates, text search, generated metadata, ratings, favorites, and the current 56-preset factory pack without changing preset files.
+- Updated docs and backlog language so the implemented compact browser summary is not confused with future full-sidebar folder trees, editable user crates, or rendered audio previews.
+
 ### HOME Signal Flow And 56-Preset Expansion
 
 - Added a reusable `HomeSignalFlowDisplay` to the HOME visual center, showing `SOURCE -> FILTER -> MOTION -> FX -> GUARD -> OUT` with active-state coloring and compact level/status meters.

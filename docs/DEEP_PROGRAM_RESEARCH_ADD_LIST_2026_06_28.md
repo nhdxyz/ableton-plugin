@@ -389,7 +389,7 @@ If we only pick the next 15 big work tracks, they should be:
 258. Add automatic preview regeneration when a preset changes.
 259. Expand the implemented macro-value strip into optional full browser columns for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
 260. Add key, BPM, pack, category, subcategory, author, rating, favorite, date, source type, sample dependency, and wavetable dependency columns.
-261. Expand the implemented smart-crate filter pass into editable smart collections and a full browser sidebar.
+261. Expand the implemented smart-crate filter pass and compact crate-map summary into editable smart collections and a full browser sidebar.
 262. Add user crates/playlists.
 263. Add editable tag manager.
 264. Add batch retagging.

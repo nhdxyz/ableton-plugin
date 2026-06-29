@@ -56,6 +56,7 @@ target_sources(NateVST
         Source/UI/FilterResponseDisplay.cpp
         Source/UI/FxRackRow.cpp
         Source/UI/HomeOverviewDisplay.cpp
+        Source/UI/HomeSignalFlowDisplay.cpp
         Source/UI/HomeSessionDisplay.cpp
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp

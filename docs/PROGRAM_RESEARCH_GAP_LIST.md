@@ -261,7 +261,7 @@ Nate VST gaps:
 17. Add output, voice count, and CPU estimate in the top bar.
 18. Add global panic/all-notes-off. First bottom-keyboard panic pass implemented for keyboard, chord memory, synth MIDI, and sampler voices.
 19. Add Guard activity telemetry in the UI.
-20. Add a signal-flow mini-map across source, sample, filter, FX, and output.
+20. Extend the implemented HOME signal-flow mini-map across source/sample split, sends, parallel routing, and future layer paths.
 21. Add routing visualization for inserts, throws, sends, safety/Guard, and future parallel paths.
 22. Add domain color language for source, modulation, sequence, effect, library, and safety states.
 
@@ -462,7 +462,7 @@ Nate VST gaps:
 ### 10. Factory Content Additions
 
 193. Expand the current UKG Essentials/Basslines presets into a larger pack.
-194. Add Speed Garage pack.
+194. Expand the first implemented speed-garage factory preset into a fuller Speed Garage pack.
 195. Expand the current Deep House/House Chords presets into a larger pack.
 196. Expand the current Tech House Tools presets into a larger pack.
 197. Expand the current Minimal Tools presets into a larger pack.
@@ -707,7 +707,7 @@ Key extra lessons:
 ### 20. House And UKG Content Direction
 
 383. Expand UKG factory presets into a construction-kit pack with bass, organ, vocal, stab, and groove variants.
-384. Add Speed Garage pack with organ bass, clipped bass, shuffled drums, late stabs, and siren/noise throws.
+384. Expand the first implemented Speed Garage Organ Bass into a fuller pack with clipped bass, shuffled drums, late stabs, and siren/noise throws.
 385. Expand Deep House/House Chords presets with more warm chord stabs, plucks, sub chugs, pads, and mellow macro maps.
 386. Expand Tech House Tools presets with more rubber bass, perc plucks, short stabs, tight pump, and low CPU presets.
 387. Expand Minimal Tools presets with more clicks, short resonant plucks, microtimed bass pulses, and sparse FX.

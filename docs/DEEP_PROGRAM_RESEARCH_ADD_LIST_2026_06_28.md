@@ -121,7 +121,7 @@ If we only pick the next 15 big work tracks, they should be:
 20. Add debug bounds overlay.
 21. Add screenshot regression captures for every panel.
 22. Add layout tests for text overflow, component overlap, and offscreen controls.
-23. Add a signal-flow mini-map: Sources -> Filter -> Sample -> FX -> Guard -> Output.
+23. Extend the implemented HOME signal-flow mini-map into Sources/Sample split, send, parallel, multiband, sidechain, and Guard routing views.
 24. Add routing overlays for insert, send, parallel, multiband, sidechain, and direct paths.
 25. Add small meters for Source A, Source B, Sampler, FX input, FX output, low band, mid band, high band, and final output.
 26. Add CPU and active voice count in the top bar.
@@ -403,7 +403,7 @@ If we only pick the next 15 big work tracks, they should be:
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Expand beyond the current 48-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
+275. Expand beyond the current 56-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.

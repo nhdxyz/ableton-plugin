@@ -4,6 +4,7 @@
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FxRackRow.h"
 #include "UI/HomeOverviewDisplay.h"
+#include "UI/HomeSignalFlowDisplay.h"
 #include "UI/HomeSessionDisplay.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
@@ -667,6 +668,7 @@ private:
     UI::OutputSpectrumDisplay outputSpectrumDisplay;
     UI::StereoFieldDisplay stereoFieldDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
+    UI::HomeSignalFlowDisplay homeSignalFlowDisplay;
     UI::HomeSessionDisplay homeSessionDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::PresetSaveSummary presetSaveSummary;
@@ -781,6 +783,7 @@ private:
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
     void updateHomeOverviewDisplay();
+    void updateHomeSignalFlowDisplay();
     void updateHomeSessionDisplay();
     void updateSequencerSceneButtons();
     void updateSequencerGridContext();

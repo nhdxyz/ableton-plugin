@@ -2,6 +2,13 @@
 
 ## 2026-06-28
 
+### HOME Signal Flow And 56-Preset Expansion
+
+- Added a reusable `HomeSignalFlowDisplay` to the HOME visual center, showing `SOURCE -> FILTER -> MOTION -> FX -> GUARD -> OUT` with active-state coloring and compact level/status meters.
+- Expanded the repo-managed factory pack from 48 to 56 presets with Speed Garage Organ Bass, Bass House Wobble Hook, Hardgroove Techno Perc Stab, Amapiano Log Drum Pluck, Future Garage Atmos Pad, Jackin House Organ Bass, Minimal Micro Perc Sequence, and Peak Time Techno FM Lead.
+- Added Library filter/tag choices for Bass House, Amapiano, Hardgroove, Future Garage, and Speed Garage, plus tag/name matching in the filter path so new style presets can be found without relying only on text search.
+- Updated `FactoryPresetLibraryAudit` to require the 56-preset pack and validate/load-check the new style presets.
+
 ### HOME Session Dashboard
 
 - Replaced the old HOME `PRESET RECALL` framing with a `SESSION` area and a reusable `HomeSessionDisplay` component.

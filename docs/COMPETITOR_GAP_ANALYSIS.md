@@ -77,7 +77,7 @@ Nate VST should become a fast club-music instrument, not a generic copy of every
 21. Replace text-heavy utility buttons with icons where meaning is standard.
 22. Add disabled-state visuals for controls that do not affect the current mode.
 23. Add per-panel "focus" views so not every section is shown at once.
-24. Add signal-flow mini-map across synth, sample, FX, and output.
+24. Extend the implemented HOME signal-flow mini-map across deeper synth/sample split, send, parallel, and Guard paths.
 25. Add mini level meters for synth layer, sample layer, FX input, FX output, and final output.
 26. Add CPU/voice count indicators in the top bar.
 27. Add a global panic/all-notes-off button. First bottom-keyboard panic pass implemented for keyboard, chord memory, synth MIDI, and sampler voices.

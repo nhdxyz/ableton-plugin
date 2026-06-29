@@ -1022,7 +1022,7 @@ Possible long-term tab layout:
 
 Current implemented panel layout:
 
-- HOME: performance shaping, macro/XY movement, compact Random Lab actions, output/low-end analysis, A/B snapshots, and a Session area for selected-preset metadata, compare state, active random-candidate state, recall, and audition.
+- HOME: performance shaping, macro/XY movement, compact Random Lab actions, output/low-end analysis, a compact signal-flow strip, A/B snapshots, and a Session area for selected-preset metadata, compare state, active random-candidate state, recall, and audition.
 - SYNTH: oscillator waveform segments, source mix, mono/unison controls, Osc Warp, wavetable preview, filter response, filter character/slope, drive/output, and amp controls.
 - LAB: focused Generate, Mutate, Recipe, History, and Save pages with section locks, section strengths, candidate slots, cue/compare, save-from-slot, favorite/rating handoff, and generated-preset notes.
 - SAMPLE: sample load/clear, waveform region editing, phrase markers, slice pads, Slice Keys, reverse, pitch, gain, pan, probability, stutter, choke, and UKG chop helpers.

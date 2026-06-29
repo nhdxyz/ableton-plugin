@@ -62,7 +62,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 4. Add resizable UI support: 85%, 100%, 125%, 150%, and 200% later.
 5. Add compact Ableton laptop mode.
 6. Add focused edit modes so pages show Source, Shape, Motion, Space, or Utility instead of everything at once.
-7. Add a signal-flow strip showing synth layer, sample layer, filter, FX rack, and output.
+7. Extend the implemented HOME signal-flow strip into deeper synth/sample split, send, parallel, Guard, and output routing views.
 8. Add a selected-control inspector with value, automation name, modulation routes, reset, and MIDI learn.
 9. Add bigger invisible hit boxes on small knobs.
 10. Add more predictable drag sensitivity classes for knobs and sliders.
@@ -247,7 +247,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 168. Add "replace sample with similar" later.
 169. Add project-specific crates/playlists.
 170. Expand implemented author, pack, and notes metadata with license fields and batch editing.
-171. Expand beyond the current 48-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
+171. Expand beyond the current 56-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Speed Garage, Bass House, Hardgroove, Future Garage, Amapiano-inspired, Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
 
 ### 9. Randomization And Sound Discovery
 

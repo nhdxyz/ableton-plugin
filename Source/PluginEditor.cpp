@@ -267,6 +267,11 @@ juce::StringArray presetFilterChoices()
         "Techno",
         "Minimal",
         "UKG",
+        "Bass House",
+        "Amapiano",
+        "Hardgroove",
+        "Future Garage",
+        "Speed Garage",
         "FX",
         "Sequence",
         "Sample",
@@ -598,11 +603,18 @@ juce::StringArray presetTagChoices()
         "Random Lab",
         "Vocal Chop",
         "Sample",
+        "Lead",
+        "Organ",
         "House",
         "Tech House",
         "Techno",
         "Minimal",
-        "UKG"
+        "UKG",
+        "Bass House",
+        "Amapiano",
+        "Hardgroove",
+        "Future Garage",
+        "Speed Garage"
     };
 }
 
@@ -923,6 +935,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(outputSpectrumDisplay);
     addAndMakeVisible(stereoFieldDisplay);
     addAndMakeVisible(homeOverviewDisplay);
+    addAndMakeVisible(homeSignalFlowDisplay);
     addAndMakeVisible(homeSessionDisplay);
     addAndMakeVisible(lowEndAssistant);
 
@@ -3002,6 +3015,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetStatusLabel.setVisible(true);
             randomStatusLabel.setVisible(true);
             homeOverviewDisplay.setVisible(true);
+            homeSignalFlowDisplay.setVisible(true);
             homeSessionDisplay.setVisible(true);
             outputOscilloscopeDisplay.setVisible(true);
             outputSpectrumDisplay.setVisible(true);
@@ -3033,9 +3047,10 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
 
-            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(126));
-            outputOscilloscopeDisplay.setBounds(overviewArea.removeFromTop(54).withTrimmedTop(6).reduced(4, 0));
-            auto analysisRow = overviewArea.withTrimmedTop(6);
+            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(104));
+            homeSignalFlowDisplay.setBounds(overviewArea.removeFromTop(42).withTrimmedTop(6).reduced(4, 0));
+            outputOscilloscopeDisplay.setBounds(overviewArea.removeFromTop(44).withTrimmedTop(6).reduced(4, 0));
+            auto analysisRow = overviewArea.withTrimmedTop(5);
             const auto stereoWidth = juce::jlimit(112, 158, analysisRow.getWidth() / 3);
             stereoFieldDisplay.setBounds(analysisRow.removeFromRight(stereoWidth).reduced(4, 0));
             outputSpectrumDisplay.setBounds(analysisRow.reduced(4, 0));
@@ -7511,7 +7526,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -9072,6 +9087,116 @@ void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
     homeOverviewDisplay.setState(state);
 }
 
+void NateVSTAudioProcessorEditor::updateHomeSignalFlowDisplay()
+{
+    UI::HomeSignalFlowDisplay::State state;
+
+    const auto osc1 = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f));
+    const auto osc2 = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f));
+    const auto sub = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::subLevel, 0.0f));
+    const auto noise = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::noiseLevel, 0.0f));
+    const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f;
+    const auto sampleMix = sampleEnabled ? juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleMix, 0.0f)) : 0.0f;
+    const auto sourceAmount = juce::jlimit(0.0f, 1.0f, std::max({ osc1, osc2, sub, noise, sampleMix }));
+    const auto activeSources = (osc1 > 0.04f ? 1 : 0)
+        + (osc2 > 0.04f ? 1 : 0)
+        + (sub > 0.04f ? 1 : 0)
+        + (noise > 0.04f ? 1 : 0)
+        + (sampleMix > 0.04f ? 1 : 0);
+
+    auto sourceDetail = sampleEnabled ? juce::String("Sample+") : juce::String("Synth");
+    if (! sampleEnabled)
+        sourceDetail = activeSources > 2 ? juce::String("Layered") : juce::String(activeSources > 1 ? "Dual" : "Synth");
+
+    const auto filterMode = juce::jlimit(0, 2, juce::roundToInt(readPlainParameterValue(Parameters::ID::filterMode, 0.0f)));
+    const auto filterCharacter = juce::jlimit(0, 3, juce::roundToInt(readPlainParameterValue(Parameters::ID::filterCharacter, 0.0f)));
+    const auto cutoffHz = juce::jlimit(20.0f, 20000.0f, readPlainParameterValue(Parameters::ID::filterCutoff, 1000.0f));
+    const auto cutoffAmount = juce::jlimit(0.0f, 1.0f, std::log(cutoffHz / 20.0f) / std::log(1000.0f));
+    const std::array<const char*, 3> filterModes { "LP", "BP", "HP" };
+    const std::array<const char*, 4> filterCharacters { "Clean", "Warm", "Acid", "Dirty" };
+
+    auto pumpPhase = 0.0f;
+    auto pumpGain = 1.0f;
+    auto pumpReduction = 0.0f;
+    auto pumpActive = false;
+    audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, pumpActive);
+
+    const auto macroMotion = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroMotion, 0.0f));
+    const auto lfo1Depth = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::lfo1Depth, 0.0f));
+    const auto lfo2Depth = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::lfo2Depth, 0.0f));
+    const auto seqEnabled = readPlainParameterValue(Parameters::ID::sequencerEnabled, 0.0f) >= 0.5f;
+    const auto motionAmount = juce::jlimit(0.0f,
+                                           1.0f,
+                                           std::max({ macroMotion,
+                                                      lfo1Depth,
+                                                      lfo2Depth,
+                                                      pumpActive ? pumpReduction : 0.0f,
+                                                      seqEnabled ? 0.52f : 0.0f }));
+    const auto motionDetail = seqEnabled ? juce::String("SEQ")
+                           : pumpActive ? juce::String("PUMP")
+                           : lfo1Depth > 0.05f ? juce::String("LFO")
+                           : macroMotion > 0.05f ? juce::String("MACRO")
+                           : juce::String("Idle");
+
+    auto activeFx = 0;
+    auto fxEnergy = 0.0f;
+    auto addFx = [this, &activeFx, &fxEnergy] (const char* enabledID, const char* amountID, float fallback)
+    {
+        if (readPlainParameterValue(enabledID, 0.0f) < 0.5f)
+            return;
+
+        ++activeFx;
+        fxEnergy = juce::jmax(fxEnergy, juce::jlimit(0.0f, 1.0f, readPlainParameterValue(amountID, fallback)));
+    };
+
+    addFx(Parameters::ID::fxDistortionEnabled, Parameters::ID::fxDistortionAmount, 0.2f);
+    addFx(Parameters::ID::fxBitcrushEnabled, Parameters::ID::fxBitcrushMix, 0.25f);
+    addFx(Parameters::ID::fxPumpEnabled, Parameters::ID::fxPumpDepth, 0.35f);
+    addFx(Parameters::ID::fxTremoloEnabled, Parameters::ID::fxTremoloDepth, 0.28f);
+    addFx(Parameters::ID::fxRingEnabled, Parameters::ID::fxRingMix, 0.18f);
+    addFx(Parameters::ID::fxCombEnabled, Parameters::ID::fxCombMix, 0.16f);
+    addFx(Parameters::ID::fxChorusEnabled, Parameters::ID::fxChorusMix, 0.25f);
+    addFx(Parameters::ID::fxDelayEnabled, Parameters::ID::fxDelayMix, 0.2f);
+    addFx(Parameters::ID::fxReverbEnabled, Parameters::ID::fxReverbMix, 0.2f);
+    addFx(Parameters::ID::fxWidthEnabled, Parameters::ID::fxWidthAmount, 0.15f);
+    addFx(Parameters::ID::fxPhaserEnabled, Parameters::ID::fxPhaserMix, 0.22f);
+    addFx(Parameters::ID::fxFlangerEnabled, Parameters::ID::fxFlangerMix, 0.18f);
+    addFx(Parameters::ID::fxToneEnabled, Parameters::ID::fxToneTilt, 0.2f);
+    addFx(Parameters::ID::fxEqEnabled, Parameters::ID::fxEqHighGain, 0.2f);
+
+    const auto sendAmount = juce::jlimit(0.0f, 1.0f, juce::jmax(readPlainParameterValue(Parameters::ID::fxSendDelay, 0.0f),
+                                                               readPlainParameterValue(Parameters::ID::fxSendReverb, 0.0f)));
+    fxEnergy = juce::jlimit(0.0f, 1.0f, juce::jmax(fxEnergy, sendAmount));
+    if (sendAmount > 0.01f)
+        ++activeFx;
+
+    auto guardDrive = 0.0f;
+    auto guardReduction = 0.0f;
+    auto guardActive = false;
+    audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, guardActive);
+    const auto guardEnabled = readPlainParameterValue(Parameters::ID::fxGuardEnabled, 0.0f) >= 0.5f;
+    const auto guardAmount = guardEnabled ? juce::jlimit(0.0f, 1.0f, juce::jmax(readPlainParameterValue(Parameters::ID::fxGuardPush, 0.0f), guardReduction)) : 0.0f;
+
+    const auto outputPeak = juce::jlimit(0.0f, 1.0f, juce::jmax(displayedPeakLeft, displayedPeakRight));
+    const auto rms = juce::jmax(displayedRmsLeft, displayedRmsRight);
+    auto safetyName = juce::String("SAFE");
+    if (outputPeak >= 0.985f)
+        safetyName = "CLIP";
+    else if (outputPeak >= 0.9f)
+        safetyName = "HOT";
+    else if (rms < 0.025f && outputPeak < 0.08f)
+        safetyName = "LOW";
+
+    state.nodes[0] = { "SOURCE", sourceDetail, sourceAmount, sourceAmount > 0.04f };
+    state.nodes[1] = { "FILTER", juce::String(filterModes[static_cast<size_t>(filterMode)]) + " " + filterCharacters[static_cast<size_t>(filterCharacter)], cutoffAmount, true };
+    state.nodes[2] = { "MOTION", motionDetail, motionAmount, motionAmount > 0.05f };
+    state.nodes[3] = { "FX", activeFx > 0 ? juce::String(activeFx) + " ON" : juce::String("Dry"), fxEnergy, activeFx > 0 };
+    state.nodes[4] = { "GUARD", guardEnabled ? (guardActive ? "Catch" : "Ready") : "Off", guardAmount, guardEnabled };
+    state.nodes[5] = { "OUT", safetyName, outputPeak, true };
+
+    homeSignalFlowDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
 {
     UI::HomeSessionDisplay::State state;
@@ -9174,6 +9299,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
     updateHomeOverviewDisplay();
+    updateHomeSignalFlowDisplay();
     updateSequencerGridContext();
     updateSampleSliceButtons();
     updateSampleWaveformDisplay();
@@ -9468,7 +9594,10 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || preset.pack.equalsIgnoreCase(filter)
                 || preset.key.equalsIgnoreCase(filter)
                 || preset.author.equalsIgnoreCase(filter)
-                || preset.folder.startsWithIgnoreCase(filter + "/");
+                || preset.folder.startsWithIgnoreCase(filter + "/")
+                || preset.tags.containsIgnoreCase(filter)
+                || preset.notes.containsIgnoreCase(filter)
+                || preset.name.containsIgnoreCase(filter);
 
             if (matchesFilter && matchesTag(preset) && matchesSearch(preset))
                 visiblePresets.push_back(preset);

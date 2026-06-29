@@ -83,7 +83,8 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
-- Starter factory presets for UKG, house, tech-house, techno, and minimal.
+- HOME overview, session, analyzer, and signal-flow visualization for active source, filter, motion, FX, Guard, and output state.
+- Starter factory presets for UKG, speed garage, future garage, house, bass house, amapiano-inspired house, tech-house, hardgroove/warehouse/melodic techno, and minimal.
 - First editor layout audit test.
 
 The gap is now professional depth, sound quality, focus, and genre workflow.
@@ -148,7 +149,7 @@ These should stay near the top because every future feature becomes harder if th
 21. Add tooltips that describe the musical effect of controls.
 22. Add top-bar CPU estimate, voice count, output peak, and guard activity.
 23. Add global panic/all-notes-off.
-24. Add signal-flow strip: Source -> Sample -> Filter -> FX -> Guard -> Output.
+24. Extend the implemented HOME signal-flow strip into deeper routing views for sample/synth split, sends, parallel processing, and future layer paths.
 25. Add routing visualization for insert, parallel, send, throw, and guard paths.
 26. Add page-specific focus mode so only the active module expands.
 27. Add a performance-only page with macros, XY, throws, and safe output.

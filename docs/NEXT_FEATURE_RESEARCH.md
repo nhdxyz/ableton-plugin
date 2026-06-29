@@ -43,6 +43,7 @@ Nate VST already has a real foundation:
 - Randomization recipes, section scope, locks, undo/redo, and genre seeds.
 - Eight performance macros plus an XY macro pad.
 - HOME session dashboard for selected-preset metadata, library/filter count, favorite/rating/source state, compare readiness, active random-candidate state, recall, and audition.
+- HOME signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization.
 - Modulation matrix, LFO curve editing, pump curve editing, macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
 - Sample waveform display, chop window, phrase markers, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
 - 16-step piano-roll style sequencer with chord memory, expanded house/dub chord colors, templates, appended house/tech/minimal/drive groove modes, velocity/probability/timing lanes, A/B/Fill/Drop pattern scenes, MIDI export, and host sync.
@@ -86,8 +87,8 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 13. Add larger invisible hit areas around small rotary controls.
 14. Add page-level grouping around user tasks: Source, Shape, Motion, Space, Utility.
 15. Add collapsible groups for dense pages instead of always showing every section.
-16. Continue the professional HOME redesign beyond the implemented overview/session pass with stronger signal-flow, selected-control focus, and larger performance/browser modes.
-17. Add a signal-flow strip showing synth, sample, filter, FX, and output order.
+16. Continue the professional HOME redesign beyond the implemented overview/session/signal-flow pass with selected-control focus and larger performance/browser modes.
+17. Extend the implemented signal-flow strip into deeper split/source, send, parallel, and Guard routing visualization.
 18. Add voice count, CPU estimate, and guard activity in the top bar.
 19. Add stronger disabled-state styling for inactive modules and mode-dependent controls.
 20. Add color-coded domain language: source, filter, modulation, sequence, effects, library.
@@ -284,7 +285,7 @@ For the latest program-by-program comparison against Serum 2, Pigments, Phase Pl
 ### J. Genre-Specific Factory Content
 
 186. Expand the current UKG Essentials/Basslines presets into a larger pack: more organ bass, Dred/Reese variants, late stabs, bell plucks, vocal chops, and shuffle basses.
-187. Add a Speed Garage pack: organ bass, Reese bass, swung bass, offbeat stab, chopped vocal.
+187. Expand the first speed-garage factory additions beyond the implemented organ-bass starter with Reese bass, swung bass, offbeat stab, chopped vocal, and noise throw variants.
 188. Expand the current Deep House/House Chords presets into a larger pack: dub chord, warm sub, original-source M1-style stab, soft pluck, and pad stab variants.
 189. Expand the current Tech House Tools presets into a larger pack: more rubber bass, rolling bass, percussive pluck, stab hit, and noise-riser variants.
 190. Expand the current Minimal Tools presets into a larger pack: more click plucks, sine sub pulses, resonant blips, tuned percussion hits, and tiny noise accents.

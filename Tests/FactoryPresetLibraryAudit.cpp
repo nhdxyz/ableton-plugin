@@ -46,9 +46,9 @@ int main()
         if (preset.isFactory)
             ++factoryCount;
 
-    if (factoryCount < 48)
+    if (factoryCount < 56)
     {
-        std::cerr << "Expected at least 48 factory presets, found " << factoryCount << '\n';
+        std::cerr << "Expected at least 56 factory presets, found " << factoryCount << '\n';
         return 1;
     }
 
@@ -85,6 +85,14 @@ int main()
         { "Warehouse Techno Rumble Hit", "Techno Tools" },
         { "Breakbeat Garage Reese", "UKG Basslines" },
         { "Electro House Sync Lead", "House Tools" },
+        { "Speed Garage Organ Bass", "UKG Basslines" },
+        { "Bass House Wobble Hook", "House Tools" },
+        { "Hardgroove Techno Perc Stab", "Techno Tools" },
+        { "Amapiano Log Drum Pluck", "House Tools" },
+        { "Future Garage Atmos Pad", "Garage Chops" },
+        { "Jackin House Organ Bass", "House Tools" },
+        { "Minimal Micro Perc Sequence", "Minimal Tools" },
+        { "Peak Time Techno FM Lead", "Techno Tools" },
     };
 
     for (const auto& [name, pack] : expectedPacks)
@@ -113,6 +121,6 @@ int main()
         }
     }
 
-    std::cout << "Factory preset library audit passed for 48-preset expanded style pack.\n";
+    std::cout << "Factory preset library audit passed for 56-preset expanded style pack.\n";
     return 0;
 }

@@ -19,9 +19,9 @@ Based on the current repo docs and recent implementation notes, Nate VST already
 - Sample Lab with waveform display, phrase/chop controls, slice pads, Slice Keys, per-slice region, pitch, gain, pan, probability, reverse, stutter, and choke memory.
 - Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length lanes, groove templates, host sync, undo, rotation, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, EQ/tone, width, guard, modulation FX, throws, and module presets.
-- Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, user/factory separation, centered browser actions, and a left crate rail with folder/pack/style coverage.
+- Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, user/factory separation, centered browser actions, a labeled Save Plan card, and a left crate rail with folder/pack/style coverage.
 - HOME output visualization with oscilloscope shape, held spectrum peaks, grouped sub/low/mid/presence/air balance, stereo width/correlation, low-end side-risk, and Guard/output status.
-- Factory starter presets for UKG, house, deep tech, French house, soulful house, garage house, breaks house, tech-house, tribal tech-house, microhouse, raw/hypnotic techno, techno, and minimal.
+- Factory starter presets for UKG, house, indie dance, Italo disco, Balearic house, hard house, deep tech, afro tech, French house, soulful house, garage house, breaks house, tech-house, tribal tech-house, microhouse, deep minimal, raw/hypnotic techno, melodic/Detroit/peak-time techno, techno, and minimal.
 - First editor layout audit and plugin validation workflow.
 
 That means the big gap is no longer "basic controls." The big gap is deeper engines, more visual movement, richer sampling, professional routing, better content discovery, and less cluttered UI.
@@ -404,7 +404,7 @@ If we only pick the next 15 big work tracks, they should be:
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Expand beyond the current 80-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Acid House, Nu Disco, Afro Melodic, Progressive House, Peak Time Techno, Detroit Techno, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
+275. Expand beyond the current 88-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.

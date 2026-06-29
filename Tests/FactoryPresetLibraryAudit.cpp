@@ -46,9 +46,9 @@ int main()
         if (preset.isFactory)
             ++factoryCount;
 
-    if (factoryCount < 80)
+    if (factoryCount < 88)
     {
-        std::cerr << "Expected at least 80 factory presets, found " << factoryCount << '\n';
+        std::cerr << "Expected at least 88 factory presets, found " << factoryCount << '\n';
         return 1;
     }
 
@@ -117,6 +117,14 @@ int main()
         { "Peak Time Techno Rumble Bass", "Techno Tools" },
         { "Detroit Techno Minor Chord", "Techno Tools" },
         { "Minimal FM Bubble", "Minimal Tools" },
+        { "Indie Dance Rubber Bass", "House Tools" },
+        { "Italo Disco Arp Lead", "House Tools" },
+        { "Balearic Sunset Pad", "House Tools" },
+        { "Afro Tech Perc Bass", "Tech House Tools" },
+        { "Hard House Rave Stab", "House Tools" },
+        { "Melodic Techno Reese Lead", "Techno Tools" },
+        { "Deep Minimal Sub Groove", "Minimal Tools" },
+        { "Lo-Fi House Vinyl Chord", "House Chords" },
     };
 
     for (const auto& [name, pack] : expectedPacks)
@@ -145,6 +153,6 @@ int main()
         }
     }
 
-    std::cout << "Factory preset library audit passed for 80-preset expanded style pack.\n";
+    std::cout << "Factory preset library audit passed for 88-preset expanded style pack.\n";
     return 0;
 }

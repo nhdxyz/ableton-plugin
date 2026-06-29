@@ -2,6 +2,12 @@
 
 ## 2026-06-29
 
+### Library Save Plan And 88-Preset Style Expansion
+
+- Reworked the LIBRARY save card into a clearer `SAVE PLAN` view with a destination trail and labeled Name, Folder, Pack, Cue, and Notes readiness segments instead of unlabeled readiness dots.
+- Expanded the repo-managed factory pack from 80 to 88 presets with Indie Dance Rubber Bass, Italo Disco Arp Lead, Balearic Sunset Pad, Afro Tech Perc Bass, Hard House Rave Stab, Melodic Techno Reese Lead, Deep Minimal Sub Groove, and Lo-Fi House Vinyl Chord.
+- Added Library category/filter/tag coverage for Indie Dance, Italo Disco, Balearic House, Afro Tech, Hard House, Melodic Techno, Deep Minimal, and Lo-Fi House, and updated `FactoryPresetLibraryAudit` to require and load-check the 88-preset pack.
+
 ### HOME Club Monitor And 80-Preset Style Expansion
 
 - Added a reusable HOME `ClubMonitorDisplay` for short-history sub level, low-side stereo risk, Pump reduction, Guard reduction, and peak risk so the main dashboard surfaces club-translation issues without opening deeper analysis panels.

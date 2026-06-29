@@ -46,6 +46,30 @@ void PresetSaveSummary::drawPill(juce::Graphics& g,
     g.drawFittedText(value, content.toNearestInt(), juce::Justification::centredLeft, 1, 0.58f);
 }
 
+void PresetSaveSummary::drawReadinessSegment(juce::Graphics& g,
+                                             juce::Rectangle<float> area,
+                                             const juce::String& label,
+                                             bool ready,
+                                             juce::Colour accent)
+{
+    const auto fill = ready ? accent.withAlpha(0.22f) : juce::Colour(0xff182126);
+    const auto outline = ready ? accent.withAlpha(0.7f) : juce::Colour(0xff2a363c);
+    const auto text = ready ? juce::Colour(0xffe7f2ef) : juce::Colour(0xff73848a);
+
+    g.setColour(fill);
+    g.fillRoundedRectangle(area, 3.0f);
+    g.setColour(outline);
+    g.drawRoundedRectangle(area, 3.0f, 1.0f);
+
+    auto content = area.reduced(3.0f, 1.0f);
+    g.setFont(juce::FontOptions(6.8f, juce::Font::bold));
+    g.setColour(text);
+    g.drawFittedText(label, content.removeFromTop(8.0f).toNearestInt(), juce::Justification::centred, 1, 0.55f);
+    g.setFont(juce::FontOptions(6.4f, juce::Font::bold));
+    g.setColour(ready ? accent : juce::Colour(0xff4f5e64));
+    g.drawFittedText(ready ? "OK" : "--", content.toNearestInt(), juce::Justification::centred, 1, 0.55f);
+}
+
 void PresetSaveSummary::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
@@ -66,7 +90,7 @@ void PresetSaveSummary::paint(juce::Graphics& g)
     auto header = content.removeFromTop(compact ? 14.0f : 16.0f);
     g.setFont(juce::FontOptions(compact ? 8.2f : 9.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff73848a));
-    g.drawFittedText("SAVE TARGET", header.removeFromLeft(header.getWidth() * 0.42f).toNearestInt(), juce::Justification::centredLeft, 1);
+    g.drawFittedText("SAVE PLAN", header.removeFromLeft(header.getWidth() * 0.42f).toNearestInt(), juce::Justification::centredLeft, 1);
 
     const auto status = state.overwriteArmed ? juce::String("OVERWRITE ARMED")
                       : state.overwriteExists ? juce::String("EXISTS")
@@ -92,14 +116,15 @@ void PresetSaveSummary::paint(juce::Graphics& g)
     g.drawRoundedRectangle(trail, 4.0f, 1.0f);
     g.setFont(juce::FontOptions(compact ? 8.0f : 9.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff9dafb3));
-    g.drawFittedText("User Presets / " + state.category + " / " + legalName,
+    const auto folderText = "Presets / " + state.category + " / " + legalName;
+    g.drawFittedText(folderText,
                      trail.reduced(7.0f, 2.0f).toNearestInt(),
                      juce::Justification::centredLeft,
                      1,
                      0.48f);
 
     content.removeFromTop(compact ? 3.0f : 5.0f);
-    auto readiness = content.removeFromTop(compact ? 8.0f : 10.0f);
+    auto readiness = content.removeFromTop(compact ? 18.0f : 22.0f);
     const std::array<bool, 5> readyItems {
         state.hasName,
         state.category.trim().isNotEmpty(),
@@ -107,18 +132,15 @@ void PresetSaveSummary::paint(juce::Graphics& g)
         state.key.trim().isNotEmpty() || state.bpm.trim().isNotEmpty(),
         state.notesCharacters > 0
     };
+    const std::array<const char*, 5> readyLabels { "NAME", "FOLDER", "PACK", "CUE", "NOTES" };
 
-    g.setFont(juce::FontOptions(compact ? 7.0f : 7.5f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff73848a));
-    g.drawFittedText("READY", readiness.removeFromLeft(compact ? 34.0f : 38.0f).toNearestInt(), juce::Justification::centredLeft, 1);
-    const auto dotGap = 4.0f;
-    const auto dotWidth = (readiness.getWidth() - (dotGap * 4.0f)) / 5.0f;
+    const auto segmentGap = 3.0f;
+    const auto segmentWidth = (readiness.getWidth() - (segmentGap * 4.0f)) / 5.0f;
     for (size_t index = 0; index < readyItems.size(); ++index)
     {
-        auto dot = readiness.removeFromLeft(index + 1 == readyItems.size() ? readiness.getWidth() : dotWidth).reduced(0.0f, 2.0f);
-        readiness.removeFromLeft(dotGap);
-        g.setColour(readyItems[index] ? accent : juce::Colour(0xff233036));
-        g.fillRoundedRectangle(dot, 2.0f);
+        auto segment = readiness.removeFromLeft(index + 1 == readyItems.size() ? readiness.getWidth() : segmentWidth).reduced(0.0f, compact ? 1.0f : 0.0f);
+        readiness.removeFromLeft(segmentGap);
+        drawReadinessSegment(g, segment, readyLabels[index], readyItems[index], accent);
     }
 
     if (content.getHeight() > (compact ? 22.0f : 30.0f))

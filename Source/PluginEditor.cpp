@@ -227,20 +227,28 @@ juce::StringArray presetCategoryChoices()
         "House/Chords",
         "House/Keys",
         "House/Plucks",
+        "House/Indie Dance",
+        "House/Italo Disco",
         "House/Nu Disco",
+        "House/Balearic",
         "House/Afro Melodic",
         "House/Progressive",
+        "House/Hard House",
+        "House/Lo-Fi",
         "Tech House",
         "Tech House/Bass",
         "Tech House/Deep Tech",
+        "Tech House/Afro Tech",
         "Techno",
         "Techno/Dub",
         "Techno/Hardgroove",
         "Techno/Peak Time",
         "Techno/Detroit",
+        "Techno/Melodic",
         "Techno/Stabs",
         "Minimal",
         "Minimal/FM",
+        "Minimal/Deep",
         "Minimal/Plucks",
         "Romanian Minimal",
         "UKG",
@@ -287,13 +295,21 @@ juce::StringArray presetFilterChoices()
         "Future Garage",
         "Speed Garage",
         "Deep Tech",
+        "Indie Dance",
+        "Italo Disco",
+        "Balearic House",
         "Acid House",
         "Nu Disco",
+        "Afro Tech",
         "Afro Melodic",
         "Progressive House",
+        "Hard House",
         "Peak Time Techno",
         "Detroit Techno",
+        "Melodic Techno",
         "Minimal FM",
+        "Deep Minimal",
+        "Lo-Fi House",
         "French House",
         "Soulful House",
         "Garage House",
@@ -431,10 +447,10 @@ bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, co
 {
     const auto text = presetSearchText(preset);
     const auto isUkg = textContainsAny(text, { "UKG", "Garage", "2-Step", "Two Step", "Dred", "Reese" });
-    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit House", "Lo-Fi", "Afro", "Afro Melodic", "French House", "Soulful House", "Garage House", "Breaks House", "Nu Disco", "Progressive House", "Acid House" })
+    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit House", "Lo-Fi", "Lo-Fi House", "Indie Dance", "Italo Disco", "Balearic House", "Afro", "Afro Melodic", "French House", "Soulful House", "Garage House", "Breaks House", "Nu Disco", "Progressive House", "Acid House", "Hard House" })
         && ! textContainsAny(text, { "Tech House", "Tech-House" });
-    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House", "Deep Tech", "Tribal Tech House" });
-    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse", "Minimal FM", "Bubble" });
+    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House", "Deep Tech", "Tribal Tech House", "Afro Tech" });
+    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse", "Minimal FM", "Deep Minimal", "Bubble" });
     const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid Techno", "Raw Techno", "Hypnotic Techno", "Peak Time Techno", "Detroit Techno" });
     const auto isBass = textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" });
     const auto isChordOrStab = textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" });
@@ -757,13 +773,21 @@ juce::StringArray presetTagChoices()
         "Future Garage",
         "Speed Garage",
         "Deep Tech",
+        "Indie Dance",
+        "Italo Disco",
+        "Balearic House",
         "Acid House",
         "Nu Disco",
+        "Afro Tech",
         "Afro Melodic",
         "Progressive House",
+        "Hard House",
         "Peak Time Techno",
         "Detroit Techno",
+        "Melodic Techno",
         "Minimal FM",
+        "Deep Minimal",
+        "Lo-Fi House",
         "French House",
         "Soulful House",
         "Garage House",
@@ -9984,7 +10008,7 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
             packs.addIfNotAlreadyThere(preset.pack.trim());
 
         const auto searchable = presetSearchText(preset);
-        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "Acid House", "Nu Disco", "Afro Melodic", "Progressive House", "Peak Time Techno", "Detroit Techno", "Minimal FM", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
+        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "Indie Dance", "Italo Disco", "Balearic House", "Acid House", "Nu Disco", "Afro Tech", "Afro Melodic", "Progressive House", "Hard House", "Peak Time Techno", "Detroit Techno", "Melodic Techno", "Minimal FM", "Deep Minimal", "Lo-Fi House", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
             ++state.styleCount;
     }
 

@@ -247,7 +247,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 168. Add "replace sample with similar" later.
 169. Add project-specific crates/playlists.
 170. Expand implemented author, pack, and notes metadata with license fields and batch editing.
-171. Expand beyond the current 80-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Acid House, Nu Disco, Afro Melodic, Progressive House, Peak Time Techno, Detroit Techno, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
+171. Expand beyond the current 88-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
 
 ### 9. Randomization And Sound Discovery
 

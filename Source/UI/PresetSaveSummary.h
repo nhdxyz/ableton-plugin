@@ -33,5 +33,10 @@ private:
                          const juce::String& label,
                          const juce::String& value,
                          juce::Colour accent);
+    static void drawReadinessSegment(juce::Graphics& g,
+                                     juce::Rectangle<float> area,
+                                     const juce::String& label,
+                                     bool ready,
+                                     juce::Colour accent);
 };
 }

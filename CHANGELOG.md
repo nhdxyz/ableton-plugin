@@ -1,5 +1,13 @@
 # Nate VST Changelog
 
+## 2026-06-29
+
+### HOME Club Monitor And 80-Preset Style Expansion
+
+- Added a reusable HOME `ClubMonitorDisplay` for short-history sub level, low-side stereo risk, Pump reduction, Guard reduction, and peak risk so the main dashboard surfaces club-translation issues without opening deeper analysis panels.
+- Expanded the repo-managed factory pack from 72 to 80 presets with Acid House 303 Line, Deep Tech Chord Tool, Nu Disco Filter Lead, Afro Melodic House Pluck, Progressive House Pluck Stack, Peak Time Techno Rumble Bass, Detroit Techno Minor Chord, and Minimal FM Bubble.
+- Added Library category/filter/tag coverage for Acid House, Nu Disco, Afro Melodic, Progressive House, Peak Time Techno, Detroit Techno, and Minimal FM, fixed the Minimal Tools smart-crate matcher, and updated `FactoryPresetLibraryAudit` to require and load-check the 80-preset pack.
+
 ## 2026-06-28
 
 ### Library Browser Rail Rework

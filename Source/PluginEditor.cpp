@@ -227,13 +227,20 @@ juce::StringArray presetCategoryChoices()
         "House/Chords",
         "House/Keys",
         "House/Plucks",
+        "House/Nu Disco",
+        "House/Afro Melodic",
+        "House/Progressive",
         "Tech House",
         "Tech House/Bass",
+        "Tech House/Deep Tech",
         "Techno",
         "Techno/Dub",
         "Techno/Hardgroove",
+        "Techno/Peak Time",
+        "Techno/Detroit",
         "Techno/Stabs",
         "Minimal",
+        "Minimal/FM",
         "Minimal/Plucks",
         "Romanian Minimal",
         "UKG",
@@ -280,6 +287,13 @@ juce::StringArray presetFilterChoices()
         "Future Garage",
         "Speed Garage",
         "Deep Tech",
+        "Acid House",
+        "Nu Disco",
+        "Afro Melodic",
+        "Progressive House",
+        "Peak Time Techno",
+        "Detroit Techno",
+        "Minimal FM",
         "French House",
         "Soulful House",
         "Garage House",
@@ -417,15 +431,15 @@ bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, co
 {
     const auto text = presetSearchText(preset);
     const auto isUkg = textContainsAny(text, { "UKG", "Garage", "2-Step", "Two Step", "Dred", "Reese" });
-    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit", "Lo-Fi", "Afro", "French House", "Soulful House", "Garage House", "Breaks House" })
+    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit House", "Lo-Fi", "Afro", "Afro Melodic", "French House", "Soulful House", "Garage House", "Breaks House", "Nu Disco", "Progressive House", "Acid House" })
         && ! textContainsAny(text, { "Tech House", "Tech-House" });
     const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House", "Deep Tech", "Tribal Tech House" });
-    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse" });
-    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid", "Raw Techno", "Hypnotic Techno" });
+    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse", "Minimal FM", "Bubble" });
+    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid Techno", "Raw Techno", "Hypnotic Techno", "Peak Time Techno", "Detroit Techno" });
     const auto isBass = textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" });
     const auto isChordOrStab = textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" });
     const auto isChop = textContainsAny(text, { "Chop", "Vocal", "Sample", "Slice" });
-    const auto isPluck = textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba" });
+    const auto isPluck = textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba", "Bubble" });
     const auto isDirty = textContainsAny(text, { "Dirty", "Dirt", "Drive", "Distortion", "Acid", "Warehouse", "Metallic" })
         || preset.macroValues[1] >= 0.45f;
     const auto isMonoSafe = textContainsAny(text, { "Mono Safe", "Mono-Safe", "Sub Safe" })
@@ -743,6 +757,13 @@ juce::StringArray presetTagChoices()
         "Future Garage",
         "Speed Garage",
         "Deep Tech",
+        "Acid House",
+        "Nu Disco",
+        "Afro Melodic",
+        "Progressive House",
+        "Peak Time Techno",
+        "Detroit Techno",
+        "Minimal FM",
         "French House",
         "Soulful House",
         "Garage House",
@@ -1076,6 +1097,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(outputOscilloscopeDisplay);
     addAndMakeVisible(outputSpectrumDisplay);
     addAndMakeVisible(stereoFieldDisplay);
+    addAndMakeVisible(clubMonitorDisplay);
     addAndMakeVisible(homeOverviewDisplay);
     addAndMakeVisible(homeSignalFlowDisplay);
     addAndMakeVisible(homeSessionDisplay);
@@ -3166,6 +3188,7 @@ void NateVSTAudioProcessorEditor::resized()
             outputOscilloscopeDisplay.setVisible(true);
             outputSpectrumDisplay.setVisible(true);
             stereoFieldDisplay.setVisible(true);
+            clubMonitorDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
@@ -3192,6 +3215,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(outputSlider, outputLabel, true);
             layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
             lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
+            clubMonitorDisplay.setBounds(performArea.reduced(2, 4));
 
             homeOverviewDisplay.setBounds(overviewArea.removeFromTop(104));
             homeSignalFlowDisplay.setBounds(overviewArea.removeFromTop(42).withTrimmedTop(6).reduced(4, 0));
@@ -7687,7 +7711,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -9072,6 +9096,40 @@ void NateVSTAudioProcessorEditor::updateStereoFieldDisplay()
     stereoFieldDisplay.setState(state);
 }
 
+void NateVSTAudioProcessorEditor::updateClubMonitorDisplay()
+{
+    auto subRms = 0.0f;
+    auto lowStereoRisk = 0.0f;
+    auto lowEndPeak = 0.0f;
+    audioProcessor.getLowEndMeterLevels(subRms, lowStereoRisk, lowEndPeak);
+
+    auto guardDrive = 0.0f;
+    auto guardReduction = 0.0f;
+    auto guardActive = false;
+    audioProcessor.getGuardMeterLevels(guardDrive, guardReduction, guardActive);
+    juce::ignoreUnused(guardDrive);
+
+    auto pumpPhase = 0.0f;
+    auto pumpGain = 1.0f;
+    auto pumpReduction = 0.0f;
+    auto pumpActive = false;
+    audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, pumpActive);
+    juce::ignoreUnused(pumpPhase, pumpGain);
+
+    UI::ClubMonitorDisplay::State state;
+    state.subRms = subRms;
+    state.lowStereoRisk = juce::jmax(lowStereoRisk, displayedLowStereoRisk);
+    state.outputPeak = juce::jlimit(0.0f,
+                                    1.0f,
+                                    std::max({ lowEndPeak, displayedPeakLeft, displayedPeakRight }));
+    state.guardReduction = guardReduction;
+    state.pumpReduction = pumpReduction;
+    state.guardActive = guardActive || readPlainParameterValue(Parameters::ID::fxGuardEnabled, 0.0f) >= 0.5f;
+    state.pumpActive = pumpActive || readPlainParameterValue(Parameters::ID::fxPumpEnabled, 0.0f) >= 0.5f;
+    state.active = state.outputPeak > 0.0025f || state.subRms > 0.0002f || state.lowStereoRisk > 0.01f;
+    clubMonitorDisplay.setState(state);
+}
+
 void NateVSTAudioProcessorEditor::updateLowEndAssistant()
 {
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -9524,6 +9582,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateOutputSpectrumDisplay();
     updateOutputOscilloscopeDisplay();
     updateStereoFieldDisplay();
+    updateClubMonitorDisplay();
     updateLowEndAssistant();
     updatePerformanceSnapshotButtons();
     updatePerformanceXYPad();
@@ -9925,7 +9984,7 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
             packs.addIfNotAlreadyThere(preset.pack.trim());
 
         const auto searchable = presetSearchText(preset);
-        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
+        if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "Acid House", "Nu Disco", "Afro Melodic", "Progressive House", "Peak Time Techno", "Detroit Techno", "Minimal FM", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
             ++state.styleCount;
     }
 

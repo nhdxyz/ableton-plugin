@@ -1,6 +1,7 @@
 #pragma once
 
 #include "PluginProcessor.h"
+#include "UI/ClubMonitorDisplay.h"
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FxRackRow.h"
 #include "UI/HomeOverviewDisplay.h"
@@ -668,6 +669,7 @@ private:
     UI::OutputOscilloscopeDisplay outputOscilloscopeDisplay;
     UI::OutputSpectrumDisplay outputSpectrumDisplay;
     UI::StereoFieldDisplay stereoFieldDisplay;
+    UI::ClubMonitorDisplay clubMonitorDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
     UI::HomeSignalFlowDisplay homeSignalFlowDisplay;
     UI::HomeSessionDisplay homeSessionDisplay;
@@ -781,6 +783,7 @@ private:
     void updateOutputSpectrumDisplay();
     void updateOutputOscilloscopeDisplay();
     void updateStereoFieldDisplay();
+    void updateClubMonitorDisplay();
     void updateLowEndAssistant();
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();

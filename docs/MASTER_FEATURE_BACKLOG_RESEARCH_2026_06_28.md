@@ -83,8 +83,8 @@ Based on the local docs and current repo direction, Nate VST already has:
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, a left crate rail with folder/pack/style coverage, compact browser rows, and audition.
-- HOME overview, Patch Snapshot, signal-flow, and output analyzer visualization for active source, filter, motion, FX, Guard, oscilloscope shape, held spectrum peaks, grouped club-band balance, stereo width/correlation, and output state.
-- Starter factory presets for UKG, speed garage, future garage, house, bass house, Chicago house, classic house, funky house, melodic house, deep tech, French house, soulful house, garage house, breaks house, tribal tech-house, amapiano-inspired house, tech-house, microhouse, Romanian minimal, electro breaks, dub techno, raw/hypnotic techno, hardgroove/warehouse/melodic techno, and minimal.
+- HOME overview, Patch Snapshot, signal-flow, Club Monitor, and output analyzer visualization for active source, filter, motion, FX, Guard, oscilloscope shape, held spectrum peaks, grouped club-band balance, stereo width/correlation, short-history sub/side/pump/Guard/peak risk, and output state.
+- Starter factory presets for UKG, speed garage, future garage, house, bass house, Chicago house, classic house, funky house, acid house, nu-disco, afro melodic house, progressive house, melodic house, deep tech, French house, soulful house, garage house, breaks house, tribal tech-house, amapiano-inspired house, tech-house, microhouse, Romanian minimal, minimal/FM, electro breaks, dub techno, raw/hypnotic techno, peak-time/Detroit/hardgroove/warehouse/melodic techno, and minimal.
 - First editor layout audit test.
 
 The gap is now professional depth, sound quality, focus, and genre workflow.

@@ -40,7 +40,7 @@ Primary FX, groove, and club-workflow references:
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
 - Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing/length/lock/ratchet/condition/slide lanes, groove timing, templates, first-pass Chord Stab Paint, first-pass `Build 4-Bar Chain` scene generation, first-pass live scene-chain step/control playback, expanded-focus `Auto` / `2 Bar` / `4 Bar` chain length mode, single-pattern and scene-chain MIDI export, first-pass MIDI drag-out from the `MIDI` and `Chain` buttons, scenes, and host transport sync.
-- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys, first-pass transient Detect slicing, visual selected/custom slice overlays, expanded chop focus editing, and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
+- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys, first-pass transient Detect slicing, direct boundary dragging for existing slice regions, visual selected/custom slice overlays, expanded chop focus editing, and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
 - Live/clickable SYNTH house source rack with expanded source-layer focus overlay for Sub, Body, Character/Stab, Transient/Noise, and Chop roles.
 - Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, recursive preset scanning, visual save preview, left crate rail folder/pack/style coverage, centered browser actions, HOME Patch Snapshot recall/performance state, rendered preview cache/playback, visible-row preview warming, preview level badges, and compact-width browser rows that keep preset name/metadata readable.
 - Factory preset generator for genre-targeted packs.
@@ -170,8 +170,8 @@ Implemented house source-character sub-slice:
 ## Priority 3: Sampler, Chops, And UKG Tools
 
 51. Add transient-based slice detection. First explicit `Detect` action implemented for loaded samples, writing eight ordered custom Slice Keys regions through the existing slice state.
-52. Add manual slice markers in the SAMPLE waveform view.
-53. Add per-slice start/end/nudge. First stored start/end region memory and stepped nudge controls are implemented for eight pads; manual marker nudge remains open.
+52. Add manual slice markers in the SAMPLE waveform view. First direct boundary-drag edit pass is implemented for the existing eight Slice Keys regions; marker add/remove and variable-count markers remain open.
+53. Add per-slice start/end/nudge. First stored start/end region memory, direct boundary dragging, and stepped nudge controls are implemented for eight pads; variable marker nudge remains open.
 54. Add per-slice pitch and gain. First memory/playback pass implemented for eight pads.
 55. Add per-slice reverse. First memory/playback pass implemented for eight pads.
 56. Add slice randomization with musical density limits. First `Dice` pass implemented for the selected slice.
@@ -189,6 +189,7 @@ Implemented sampler sub-slice:
 
 - Slice Keys mode maps the eight SAMPLE pads across C3-G3, reads per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory at trigger time, and falls back to equal regions plus the selected slice style for untouched pads.
 - The SAMPLE UI now exposes Store, Recall, Dice, Rev, Choke, Pan, and Ghost actions with status/tooltips that show default or custom slice regions and behavior.
+- The waveform slice lane now supports direct boundary dragging for existing Slice Keys regions in both compact and expanded chop editing views.
 - Factory presets now serialize the sample-slice state explicitly, and the UKG vocal chop starter opens in Slice Keys mode once a user loads a sample.
 
 ## Priority 4: Sequencer, Piano Roll, And Groove
@@ -320,7 +321,7 @@ Implemented safety sub-slice:
 
 1. Expand rendered preset previews beyond the implemented visible-row warmer and level badges into background generation, Library waveform badges, explicit regeneration controls, and preview loudness consistency. The earlier sample/FX Mod Env and Velocity source-parity and nonzero tail-reporting correctness slice is now implemented and covered by focused audits.
 2. Move the house source-character pass forward with drawbar controls, legal/original digital-PCM-style chord/piano stabs, rubber/Reese/acid bass snippets, true wavetable import/playback, richer warp modes, and focused FM/operator color.
-3. Add deeper manual sample slice markers plus per-slice playback modes, full relink handling, and slice-to-sequencer lanes beyond the first transient Detect, stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes. `SamplerChopAudit` now protects the current load reset, transient detection, Slice Keys, probability, nudge/fade playback changes, missing-file restore clearing, and UKG chop setup baseline.
+3. Add marker add/remove, beat/time slicing, per-slice playback modes, full relink handling, and slice-to-sequencer lanes beyond the first transient Detect, direct boundary dragging, stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes. `SamplerChopAudit` now protects the current load reset, transient detection, Slice Keys, probability, nudge/fade playback changes, missing-file restore clearing, and UKG chop setup baseline.
 4. Add deeper sequencer arrangement tools: arranger-style chain editing beyond first-pass `Build 4-Bar Chain` and `Auto` / `2 Bar` / `4 Bar` modes, deeper per-scene automation/rate/follow behavior beyond first-pass live step/control chaining, richer Ableton audio/loop drag-out or export staging beyond first-pass MIDI drag-out, deeper chord-paint variants beyond first-pass Chord Stab Paint, deeper bassline contour generation beyond the first Bass Contour Shape transform, deeper slide/glide controls beyond the first overlap pass, richer condition vocabulary, MIDI import, and richer per-step modulation lanes.
 5. Add the #84 house drum/kick-bass construction lane: kit pads, sample discovery, groove/accent lanes, kick/bass phase-length checks, rendered loop/one-shot drag-out, and construction-kit stems.
 6. Define the #83 expansion-ready content pack manifest before the next large factory/content push: versioning, license metadata, preview media, dependencies, relink, and user/factory separation.

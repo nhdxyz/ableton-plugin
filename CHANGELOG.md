@@ -2,6 +2,12 @@
 
 ## 2026-06-30
 
+### Sampler Manual Slice Boundary Dragging
+
+- Added direct slice-boundary dragging to the SAMPLE waveform lane, so existing Slice Keys regions can be reshaped visually in the compact panel and expanded chop focus overlay.
+- Wired boundary edits through the existing per-slice APVTS state, materializing default slice style settings before marking edited slices custom, and keeping Slice Keys mode active for immediate C3-G3 auditioning.
+- Added `SampleWaveformDisplayAudit` coverage for boundary-drag hit testing and plain slice-lane selection so marker editing cannot regress into accidental slice selection.
+
 ### Sampler Transient Slice Detection
 
 - Added an explicit SAMPLE `Detect` action that analyzes the loaded sample for transient starts and writes eight ordered custom slice regions into the existing Slice Keys parameter slots.

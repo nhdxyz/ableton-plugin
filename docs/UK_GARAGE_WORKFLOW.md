@@ -100,9 +100,9 @@ Research references:
 
 - The sampler is the right foundation.
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
-- Current pass: waveform display, draggable chop window, phrase markers, first-pass transient Detect slicing, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, Slice Keys C3-G3 triggering, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, reverse, stutter, and rhythmic triggering.
+- Current pass: waveform display, draggable chop window, phrase markers, first-pass transient Detect slicing, direct boundary dragging for existing Slice Keys regions, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, Slice Keys C3-G3 triggering, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, reverse, stutter, and rhythmic triggering.
 - Reverse chop playback now uses corrected continuous-position interpolation, so Garage slice style and reversed/pitch-ramped phrase auditions stay cleaner.
-- Later: add direct manual marker editing, beat/time slicing, per-slice playback modes beyond the first Detect/nudge/fade passes, and sequencer-triggered slice lanes.
+- Later: add marker add/remove, beat/time slicing, per-slice playback modes beyond the first Detect/boundary-drag/nudge/fade passes, and sequencer-triggered slice lanes.
 
 ### Groove
 
@@ -161,7 +161,7 @@ Research references:
 
 Reference-backed next passes:
 
-- Expand the first transient Detect plus stored per-slice region/pitch/gain/pan/probability/reverse/stutter/choke/nudge/fade pass into full slice lanes with direct manual markers, playback modes, and sequencer-triggered slice playback.
+- Expand the first transient Detect, direct boundary-drag, and stored per-slice region/pitch/gain/pan/probability/reverse/stutter/choke/nudge/fade pass into marker add/remove, full slice lanes, playback modes, and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector beyond the implemented per-route bypass/delete controls into richer route editing and macro assignment views.
 - Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.

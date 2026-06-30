@@ -1645,9 +1645,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleSliceButtons();
     };
     sampleWaveformDisplay.onSliceSelected = [this] (size_t sliceIndex) { selectSampleSlice(sliceIndex); };
+    sampleWaveformDisplay.onSliceBoundaryChange = [this] (size_t boundaryIndex, float position) { editSampleSliceBoundary(boundaryIndex, position); };
     addAndMakeVisible(sampleWaveformDisplay);
     expandedSampleWaveformDisplay.onRangeChange = sampleWaveformDisplay.onRangeChange;
     expandedSampleWaveformDisplay.onSliceSelected = sampleWaveformDisplay.onSliceSelected;
+    expandedSampleWaveformDisplay.onSliceBoundaryChange = sampleWaveformDisplay.onSliceBoundaryChange;
     addAndMakeVisible(expandedSampleWaveformDisplay);
     addAndMakeVisible(wavetableDisplay);
     houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
@@ -6275,6 +6277,98 @@ void NateVSTAudioProcessorEditor::recallSampleSliceSettings(size_t sliceIndex)
     setPlainParameterValue(Parameters::ID::sampleGain, readPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], -6.0f));
     setPlainParameterValue(Parameters::ID::sampleStutterEnabled, readPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], 0.0f));
     setPlainParameterValue(Parameters::ID::sampleStutterRepeats, readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f));
+}
+
+void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, float position)
+{
+    if (! audioProcessor.hasLoadedSample() || sampleSliceButtons.empty())
+        return;
+
+    constexpr auto minimumSliceWidth = 0.004f;
+    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto maxBoundaryIndex = sampleSliceButtons.size();
+    const auto safeBoundaryIndex = juce::jlimit<size_t>(0, maxBoundaryIndex, boundaryIndex);
+
+    auto materializeSlice = [this] (size_t sliceIndex)
+    {
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        if (sampleSliceHasCustomSettings(safeIndex))
+            return;
+
+        const auto preview = defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex());
+        setPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], preview.reverse ? 1.0f : 0.0f);
+        setPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], preview.pitch);
+        setPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], preview.gain);
+        setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], preview.pan);
+        setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], preview.probability);
+        setPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], preview.stutter ? 1.0f : 0.0f);
+        setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], preview.choke ? 1.0f : 0.0f);
+        setPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], static_cast<float>(preview.repeats));
+        setPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], preview.nudgePercent);
+        setPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], preview.fade);
+        setPlainParameterValue(Parameters::ID::sampleSliceCustom[safeIndex], 1.0f);
+    };
+
+    auto sliceStart = [this, sliceCount] (size_t sliceIndex)
+    {
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        const auto fallback = static_cast<float>(safeIndex) / sliceCount;
+        return juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], fallback));
+    };
+
+    auto sliceEnd = [this, sliceCount] (size_t sliceIndex)
+    {
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        const auto fallback = static_cast<float>(safeIndex + 1) / sliceCount;
+        return juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex], fallback));
+    };
+
+    auto clampBoundary = [] (float lower, float upper, float value)
+    {
+        if (upper <= lower)
+            return juce::jlimit(0.0f, 1.0f, (lower + upper) * 0.5f);
+
+        return juce::jlimit(lower, upper, juce::jlimit(0.0f, 1.0f, value));
+    };
+
+    position = juce::jlimit(0.0f, 1.0f, position);
+    if (safeBoundaryIndex == 0)
+    {
+        materializeSlice(0);
+        position = clampBoundary(0.0f, sliceEnd(0) - minimumSliceWidth, position);
+        setPlainParameterValue(Parameters::ID::sampleSliceStart[0], position);
+        selectedSampleSliceIndex = 0;
+    }
+    else if (safeBoundaryIndex == maxBoundaryIndex)
+    {
+        const auto lastSliceIndex = sampleSliceButtons.size() - 1;
+        materializeSlice(lastSliceIndex);
+        position = clampBoundary(sliceStart(lastSliceIndex) + minimumSliceWidth, 1.0f, position);
+        setPlainParameterValue(Parameters::ID::sampleSliceEnd[lastSliceIndex], position);
+        selectedSampleSliceIndex = lastSliceIndex;
+    }
+    else
+    {
+        const auto leftIndex = safeBoundaryIndex - 1;
+        const auto rightIndex = safeBoundaryIndex;
+        materializeSlice(leftIndex);
+        materializeSlice(rightIndex);
+        position = clampBoundary(sliceStart(leftIndex) + minimumSliceWidth,
+                                 sliceEnd(rightIndex) - minimumSliceWidth,
+                                 position);
+        setPlainParameterValue(Parameters::ID::sampleSliceEnd[leftIndex], position);
+        setPlainParameterValue(Parameters::ID::sampleSliceStart[rightIndex], position);
+        selectedSampleSliceIndex = rightIndex;
+    }
+
+    const auto selectedIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
+    setPlainParameterValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setPlainParameterValue(Parameters::ID::sampleStart, sliceStart(selectedIndex));
+    setPlainParameterValue(Parameters::ID::sampleEnd, sliceEnd(selectedIndex));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::storeSelectedSampleSliceSettings()

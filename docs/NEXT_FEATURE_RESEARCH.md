@@ -55,7 +55,7 @@ Nate VST already has a real foundation:
 - HOME Patch Snapshot for selected-preset metadata, patch role, source type, output safety, performance meters, compare readiness, active random-candidate state, recall, and audition.
 - HOME signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization.
 - Modulation matrix, LFO curve editing, pump curve editing, visual macro assignment editing, route bypass/delete, and S&H/Smooth/Chaos sources.
-- Sample waveform display, chop window, phrase markers, first-pass transient Detect slicing into eight custom Slice Keys regions, visual selected/custom slice overlays, adaptive expanded chop focus overlay, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
+- Sample waveform display, chop window, phrase markers, first-pass transient Detect slicing into eight custom Slice Keys regions, direct boundary dragging for existing slice markers, visual selected/custom slice overlays, adaptive expanded chop focus overlay, slice pads, reverse, pitch ramp, stutter, and UKG chop helpers.
 - 16-step piano-roll style sequencer with chord memory, expanded house/dub chord colors, templates, appended house/tech/minimal/drive groove modes, velocity/probability/timing/length/lock/ratchet/condition/slide lanes, A/B/Fill/Drop pattern scenes, MIDI export with groove/ratchet/condition/slide timing, and host sync.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Live pump phase/reduction feedback, top-bar output safety status, and Guard reduction telemetry for checking ducking and level risk while sound-designing.
@@ -173,11 +173,11 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 
 76. Add drag-and-drop WAV/AIFF import onto the waveform display.
 77. Add full missing-file relink handling for saved presets beyond the first stale-audio clear and missing-path UI status guard.
-78. Add transient-based slice detection. First explicit SAMPLE `Detect` pass implemented for loaded samples, writing eight ordered custom Slice Keys regions from detected onsets with `SamplerChopAudit` coverage; direct marker editing and beat/time modes remain open.
+78. Add transient-based slice detection. First explicit SAMPLE `Detect` pass implemented for loaded samples, writing eight ordered custom Slice Keys regions from detected onsets with `SamplerChopAudit` coverage; marker add/remove and beat/time modes remain open.
 79. Add beat-grid slicing.
 80. Add equal-region slicing with user-selectable count.
-81. Add fully manual slice marker creation and editing.
-82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke. First stored start/end region plus pitch/gain/pan/reverse/stutter/choke/nudge/fade memory, visual slice badges, and Slice Keys playback pass implemented for eight pads; manual markers and deeper playback modes remain open.
+81. Add fully manual slice marker creation and editing. First direct boundary-drag edit pass is implemented for the existing eight Slice Keys regions; marker add/remove and variable-count regions remain open.
+82. Add per-slice start, end, nudge, gain, pan, pitch, reverse, fade, and choke. First stored start/end region plus direct boundary dragging, pitch/gain/pan/reverse/stutter/choke/nudge/fade memory, visual slice badges, and Slice Keys playback pass implemented for eight pads; deeper playback modes remain open.
 83. Add per-slice probability. First Slice Keys trigger-probability pass implemented with the SAMPLE `Ghost` action; deeper probability lanes and conditions remain open.
 84. Add per-slice stutter and retrigger.
 85. Add slice audition on hover/click. First waveform slice-lane click selection/audition is implemented; hover audition remains open.
@@ -343,7 +343,7 @@ Top missing product capabilities:
 
 1. House source rack depth: true wavetable playback/import, richer warp modes, focused FM/operator color, deeper drawbar organ controls, original/legal digital-PCM-style chord and piano material, second layer, per-layer mute/solo/blend, and source snippets.
 2. Fast visual modulation: drag-to-modulate, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, rotary/linear modulation feedback now shows source-colored rings/badges while preserving base tooltips, MOD targets update the selected-control route summary on hover, and the macro assignment workflow now has a draggable visual pad backed by matrix slots.
-3. Serious UKG slicing: beat/manual slice markers, per-slice playback modes beyond the first transient Detect/stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes, slice-to-sequencer lanes, and full missing-sample relink.
+3. Serious UKG slicing: marker add/remove, beat/time slicing, per-slice playback modes beyond the first transient Detect/direct boundary-drag/stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes, slice-to-sequencer lanes, and full missing-sample relink.
 4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
 5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills. First pump telemetry pass is implemented for live phase/reduction display; external sidechain routing remains open.
 6. Preset discovery: background audio previews beyond the first visible-row warmer, waveform badges, smart folders, custom tags, similar-preset search, construction-kit preset type, relationship-aware compatible preset groups, dependency warnings, and pack import/export.
@@ -384,7 +384,7 @@ Reference URLs used for this refresh:
 
 1. Expand rendered preset previews beyond the implemented visible-row warmer and level badges into background generation, waveform row badges, safe regeneration controls, and preview loudness checks.
 2. Move house source character deeper: drawbar controls, original/legal digital-PCM-style chord/piano material, rubber/Reese/acid snippets, true wavetable import/playback, richer warp modes, and focused FM/operator color.
-3. Add deeper manual sample slicing with per-slice playback modes beyond the first transient Detect/stored start/end/pan/probability/nudge/fade and visual overlay pass, plus slice-to-sequencer lanes.
+3. Add deeper manual sample slicing with marker add/remove, beat/time modes, and per-slice playback modes beyond the first transient Detect/direct boundary-drag/stored start/end/pan/probability/nudge/fade and visual overlay pass, plus slice-to-sequencer lanes.
 4. Add deeper sequencer workflow: arranger-style chain editing beyond first-pass `Build 4-Bar Chain` and `Auto` / `2 Bar` / `4 Bar` modes, deeper per-scene automation/rate/follow behavior beyond first-pass live step/control chaining, richer audio/loop drag-out or export staging beyond first-pass MIDI drag-out, deeper slide/glide controls beyond first-pass overlap, deeper condition vocabulary, deeper chord-paint variants beyond the first Chord Stab Paint transform, MIDI import, deeper bassline contour generation beyond the first Shape transform, and richer assignable modulation lanes.
 5. Add the house drum/kick-bass construction lane from #84 once the export/drag-out foundation is designed.
 6. Define the expansion-ready content pack manifest from #83 before the next large curated factory/content push.

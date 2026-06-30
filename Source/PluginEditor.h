@@ -895,6 +895,7 @@ private:
     void applySampleSliceStyleDefaults(size_t sliceIndex);
     void captureCurrentSampleSliceSettings(size_t sliceIndex, bool markCustom);
     void recallSampleSliceSettings(size_t sliceIndex);
+    void editSampleSliceBoundary(size_t boundaryIndex, float position);
     void storeSelectedSampleSliceSettings();
     void recallSelectedSampleSliceSettings();
     void detectSampleSliceMarkers();

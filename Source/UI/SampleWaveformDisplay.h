@@ -33,6 +33,7 @@ public:
 
     std::function<void(float, float)> onRangeChange;
     std::function<void(size_t)> onSliceSelected;
+    std::function<void(size_t, float)> onSliceBoundaryChange;
 
     SampleWaveformDisplay();
 
@@ -58,7 +59,8 @@ private:
         none,
         start,
         end,
-        range
+        range,
+        sliceBoundary
     };
 
     Sampler::SamplePeakOverview overview;
@@ -74,12 +76,16 @@ private:
     std::array<SliceMarker, 8> sliceMarkers {};
     float dragAnchor = 0.0f;
     DragMode dragMode = DragMode::none;
+    int activeSliceBoundaryIndex = -1;
 
     juce::Rectangle<float> plotBounds() const;
     juce::Rectangle<float> sliceLaneBounds() const;
     float positionToNormalised(float xPosition) const;
     int sliceIndexAtPosition(float xPosition) const;
+    int sliceBoundaryIndexAtPosition(float xPosition) const;
+    float sliceBoundaryPosition(int boundaryIndex) const;
     void applyRange(float start, float end);
+    void applySliceBoundary(float position);
     static juce::String modulationText(float amount);
 };
 }

@@ -331,8 +331,17 @@ void SampleWaveformDisplay::mouseDown(const juce::MouseEvent& event)
     const auto normalised = positionToNormalised(event.position.x);
     const auto startDistance = std::abs(normalised - startNormalised);
     const auto endDistance = std::abs(normalised - endNormalised);
-    if (sliceLaneBounds().contains(event.position) && onSliceSelected)
+    if (sliceLaneBounds().contains(event.position) && (onSliceSelected || onSliceBoundaryChange))
     {
+        const auto boundaryIndex = sliceBoundaryIndexAtPosition(event.position.x);
+        if (boundaryIndex >= 0 && onSliceBoundaryChange)
+        {
+            dragMode = DragMode::sliceBoundary;
+            activeSliceBoundaryIndex = boundaryIndex;
+            applySliceBoundary(normalised);
+            return;
+        }
+
         const auto sliceIndex = sliceIndexAtPosition(event.position.x);
         if (sliceIndex >= 0 && startDistance >= 0.025f && endDistance >= 0.025f)
         {
@@ -369,6 +378,7 @@ void SampleWaveformDisplay::mouseDrag(const juce::MouseEvent& event)
         case DragMode::start: applyRange(normalised, endNormalised); break;
         case DragMode::end: applyRange(startNormalised, normalised); break;
         case DragMode::range: applyRange(dragAnchor, normalised); break;
+        case DragMode::sliceBoundary: applySliceBoundary(normalised); break;
         case DragMode::none: break;
     }
 }
@@ -376,6 +386,7 @@ void SampleWaveformDisplay::mouseDrag(const juce::MouseEvent& event)
 void SampleWaveformDisplay::mouseUp(const juce::MouseEvent&)
 {
     dragMode = DragMode::none;
+    activeSliceBoundaryIndex = -1;
 }
 
 juce::Rectangle<float> SampleWaveformDisplay::plotBounds() const
@@ -422,6 +433,49 @@ int SampleWaveformDisplay::sliceIndexAtPosition(float xPosition) const
     return bestIndex;
 }
 
+int SampleWaveformDisplay::sliceBoundaryIndexAtPosition(float xPosition) const
+{
+    const auto plot = plotBounds();
+    const auto handleThreshold = juce::jmax(7.0f, plot.getWidth() * 0.012f);
+    auto bestIndex = -1;
+    auto bestDistance = handleThreshold;
+
+    for (auto boundaryIndex = 0; boundaryIndex <= static_cast<int>(sliceMarkers.size()); ++boundaryIndex)
+    {
+        const auto boundaryX = juce::jmap(sliceBoundaryPosition(boundaryIndex), 0.0f, 1.0f, plot.getX(), plot.getRight());
+        const auto distance = std::abs(xPosition - boundaryX);
+        if (distance <= bestDistance)
+        {
+            bestDistance = distance;
+            bestIndex = boundaryIndex;
+        }
+    }
+
+    return bestIndex;
+}
+
+float SampleWaveformDisplay::sliceBoundaryPosition(int boundaryIndex) const
+{
+    boundaryIndex = juce::jlimit(0, static_cast<int>(sliceMarkers.size()), boundaryIndex);
+    if (boundaryIndex == 0)
+    {
+        const auto& first = sliceMarkers.front();
+        return juce::jlimit(0.0f, 1.0f, juce::jmin(first.start, first.end));
+    }
+
+    if (boundaryIndex == static_cast<int>(sliceMarkers.size()))
+    {
+        const auto& last = sliceMarkers.back();
+        return juce::jlimit(0.0f, 1.0f, juce::jmax(last.start, last.end));
+    }
+
+    const auto& previous = sliceMarkers[static_cast<size_t>(boundaryIndex - 1)];
+    const auto& current = sliceMarkers[static_cast<size_t>(boundaryIndex)];
+    const auto previousEnd = juce::jlimit(0.0f, 1.0f, juce::jmax(previous.start, previous.end));
+    const auto currentStart = juce::jlimit(0.0f, 1.0f, juce::jmin(current.start, current.end));
+    return juce::jlimit(0.0f, 1.0f, (previousEnd + currentStart) * 0.5f);
+}
+
 void SampleWaveformDisplay::applyRange(float start, float end)
 {
     auto orderedStart = juce::jlimit(0.0f, 1.0f, juce::jmin(start, end));
@@ -439,6 +493,26 @@ void SampleWaveformDisplay::applyRange(float start, float end)
 
     if (onRangeChange)
         onRangeChange(startNormalised, endNormalised);
+}
+
+void SampleWaveformDisplay::applySliceBoundary(float position)
+{
+    if (activeSliceBoundaryIndex < 0 || ! onSliceBoundaryChange)
+        return;
+
+    const auto minimumWidth = 0.004f;
+    const auto boundaryCount = static_cast<int>(sliceMarkers.size());
+    const auto lowerLimit = activeSliceBoundaryIndex <= 0
+        ? 0.0f
+        : sliceBoundaryPosition(activeSliceBoundaryIndex - 1) + minimumWidth;
+    const auto upperLimit = activeSliceBoundaryIndex >= boundaryCount
+        ? 1.0f
+        : sliceBoundaryPosition(activeSliceBoundaryIndex + 1) - minimumWidth;
+    const auto safeLower = juce::jlimit(0.0f, 1.0f, juce::jmin(lowerLimit, upperLimit));
+    const auto safeUpper = juce::jlimit(safeLower, 1.0f, juce::jmax(lowerLimit, upperLimit));
+    const auto normalised = juce::jlimit(safeLower, safeUpper, juce::jlimit(0.0f, 1.0f, position));
+
+    onSliceBoundaryChange(static_cast<size_t>(activeSliceBoundaryIndex), normalised);
 }
 
 juce::String SampleWaveformDisplay::modulationText(float amount)

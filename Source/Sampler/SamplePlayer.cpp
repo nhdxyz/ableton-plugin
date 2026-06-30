@@ -354,6 +354,190 @@ SamplePeakOverview SamplePlayer::createPeakOverview(int pointCount) const
     return overview;
 }
 
+SliceDetectionResult SamplePlayer::detectTransientSliceRegions() const
+{
+    SliceDetectionResult result;
+    for (size_t index = 0; index < result.regions.size(); ++index)
+    {
+        result.regions[index].start = static_cast<float>(index) / static_cast<float>(result.regions.size());
+        result.regions[index].end = static_cast<float>(index + 1) / static_cast<float>(result.regions.size());
+        result.regions[index].transient = index == 0;
+    }
+
+    std::shared_ptr<SampleData> data;
+    {
+        const juce::SpinLock::ScopedLockType lock(sampleLock);
+        data = sampleData;
+    }
+
+    if (data == nullptr || data->buffer.getNumSamples() <= 128 || data->buffer.getNumChannels() <= 0)
+        return result;
+
+    const auto totalSamples = data->buffer.getNumSamples();
+    result.valid = true;
+
+    const auto hopSize = juce::jlimit(64, 512, totalSamples / 256);
+    const auto windowSize = juce::jlimit(hopSize, hopSize * 4, static_cast<int>(data->sourceSampleRate * 0.010));
+    const auto frameCount = juce::jmax(1, (totalSamples + hopSize - 1) / hopSize);
+    std::vector<float> envelope(static_cast<size_t>(frameCount), 0.0f);
+
+    auto meanEnvelope = 0.0f;
+    auto maxEnvelope = 0.0f;
+    for (auto frame = 0; frame < frameCount; ++frame)
+    {
+        const auto startSample = frame * hopSize;
+        const auto endSample = juce::jmin(totalSamples, startSample + windowSize);
+        auto sum = 0.0f;
+        auto count = 0;
+
+        for (auto sampleIndex = startSample; sampleIndex < endSample; ++sampleIndex)
+        {
+            sum += std::abs(mixedSampleAt(data->buffer, sampleIndex));
+            ++count;
+        }
+
+        const auto energy = count > 0 ? sum / static_cast<float>(count) : 0.0f;
+        envelope[static_cast<size_t>(frame)] = energy;
+        meanEnvelope += energy;
+        maxEnvelope = juce::jmax(maxEnvelope, energy);
+    }
+
+    meanEnvelope /= static_cast<float>(frameCount);
+    const auto threshold = juce::jmax(maxEnvelope * 0.12f, meanEnvelope * 1.65f);
+    const auto minimumBoundarySample = juce::jmax(hopSize * 2,
+                                                 static_cast<int>(data->sourceSampleRate * 0.035));
+    const auto maximumBoundarySample = juce::jmax(0, totalSamples - minimumBoundarySample);
+    const auto minimumSpacing = juce::jmax(totalSamples / 64,
+                                           static_cast<int>(data->sourceSampleRate * 0.045));
+
+    struct Candidate
+    {
+        int sample = 0;
+        float strength = 0.0f;
+    };
+
+    std::vector<Candidate> candidates;
+    for (auto frame = 1; frame < frameCount; ++frame)
+    {
+        const auto current = envelope[static_cast<size_t>(frame)];
+        const auto previous = envelope[static_cast<size_t>(frame - 1)];
+        const auto onset = current - (previous * 0.78f);
+        const auto sample = juce::jlimit(0, totalSamples - 1, frame * hopSize);
+
+        if (sample >= minimumBoundarySample
+            && sample <= maximumBoundarySample
+            && current >= threshold
+            && onset >= threshold * 0.32f)
+        {
+            candidates.push_back({ sample, onset + (current * 0.2f) });
+        }
+    }
+
+    std::sort(candidates.begin(), candidates.end(), [] (const Candidate& left, const Candidate& right)
+    {
+        return left.strength > right.strength;
+    });
+
+    std::vector<int> boundaries;
+    boundaries.reserve(result.regions.size() + 1);
+    boundaries.push_back(0);
+
+    for (const auto& candidate : candidates)
+    {
+        if (boundaries.size() >= result.regions.size())
+            break;
+
+        auto tooClose = false;
+        for (const auto boundary : boundaries)
+        {
+            if (std::abs(boundary - candidate.sample) < minimumSpacing)
+            {
+                tooClose = true;
+                break;
+            }
+        }
+
+        if (! tooClose)
+        {
+            boundaries.push_back(candidate.sample);
+            ++result.transientCount;
+        }
+    }
+
+    for (size_t index = 1; boundaries.size() < result.regions.size() && index < result.regions.size(); ++index)
+    {
+        const auto gridBoundary = static_cast<int>((static_cast<int64_t>(index) * totalSamples)
+                                                   / static_cast<int64_t>(result.regions.size()));
+        auto tooClose = false;
+        for (const auto boundary : boundaries)
+        {
+            if (std::abs(boundary - gridBoundary) < minimumSpacing / 2)
+            {
+                tooClose = true;
+                break;
+            }
+        }
+
+        if (! tooClose)
+            boundaries.push_back(gridBoundary);
+    }
+
+    std::sort(boundaries.begin(), boundaries.end());
+    boundaries.erase(std::unique(boundaries.begin(), boundaries.end()), boundaries.end());
+
+    for (size_t index = 1; boundaries.size() < result.regions.size() && index < result.regions.size(); ++index)
+    {
+        const auto gridBoundary = static_cast<int>((static_cast<int64_t>(index) * totalSamples)
+                                                   / static_cast<int64_t>(result.regions.size()));
+        if (std::find(boundaries.begin(), boundaries.end(), gridBoundary) == boundaries.end())
+        {
+            boundaries.push_back(gridBoundary);
+            std::sort(boundaries.begin(), boundaries.end());
+        }
+    }
+
+    while (boundaries.size() < result.regions.size())
+    {
+        auto widestGapIndex = 0;
+        auto widestGap = 0;
+        for (size_t index = 0; index < boundaries.size(); ++index)
+        {
+            const auto nextBoundary = index + 1 < boundaries.size() ? boundaries[index + 1] : totalSamples;
+            const auto gap = nextBoundary - boundaries[index];
+            if (gap > widestGap)
+            {
+                widestGap = gap;
+                widestGapIndex = static_cast<int>(index);
+            }
+        }
+
+        const auto nextBoundary = static_cast<size_t>(widestGapIndex) + 1 < boundaries.size()
+            ? boundaries[static_cast<size_t>(widestGapIndex) + 1]
+            : totalSamples;
+        const auto midpoint = boundaries[static_cast<size_t>(widestGapIndex)]
+            + juce::jmax(1, (nextBoundary - boundaries[static_cast<size_t>(widestGapIndex)]) / 2);
+        boundaries.push_back(juce::jlimit(1, totalSamples - 1, midpoint));
+        std::sort(boundaries.begin(), boundaries.end());
+        boundaries.erase(std::unique(boundaries.begin(), boundaries.end()), boundaries.end());
+    }
+
+    boundaries.resize(result.regions.size());
+    boundaries.push_back(totalSamples);
+
+    for (size_t index = 0; index < result.regions.size(); ++index)
+    {
+        const auto startSample = juce::jlimit(0, totalSamples - 1, boundaries[index]);
+        const auto endSample = juce::jlimit(startSample + 1, totalSamples, boundaries[index + 1]);
+        auto& sliceRegion = result.regions[index];
+        sliceRegion.start = static_cast<float>(startSample) / static_cast<float>(totalSamples);
+        sliceRegion.end = static_cast<float>(endSample) / static_cast<float>(totalSamples);
+        sliceRegion.transient = index == 0 || startSample != static_cast<int>((static_cast<int64_t>(index) * totalSamples)
+                                                                              / static_cast<int64_t>(result.regions.size()));
+    }
+
+    return result;
+}
+
 SampleRegion SamplePlayer::getRegion() const
 {
     const juce::SpinLock::ScopedLockType lock(sampleLock);

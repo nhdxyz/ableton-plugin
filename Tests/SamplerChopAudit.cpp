@@ -1,5 +1,6 @@
 #include "../Source/PluginProcessor.h"
 
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <memory>
@@ -74,6 +75,48 @@ bool writeStepSample(const juce::File& file)
         const auto value = 0.10f + (static_cast<float>(sliceIndex) * 0.10f);
         buffer.setSample(0, sample, value);
         buffer.setSample(1, sample, value);
+    }
+
+    file.deleteFile();
+    if (! file.getParentDirectory().createDirectory())
+        return false;
+
+    juce::WavAudioFormat format;
+    std::unique_ptr<juce::FileOutputStream> fileStream(file.createOutputStream());
+    if (fileStream == nullptr || ! fileStream->openedOk())
+        return false;
+
+    std::unique_ptr<juce::OutputStream> stream(std::move(fileStream));
+    const auto options = juce::AudioFormatWriterOptions {}
+        .withSampleRate(44100.0)
+        .withNumChannels(2)
+        .withBitsPerSample(16);
+    auto writer = format.createWriterFor(stream, options);
+    return writer != nullptr && writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+}
+
+bool writeTransientSample(const juce::File& file)
+{
+    juce::AudioBuffer<float> buffer(2, 44100);
+    buffer.clear();
+
+    const std::array<float, 8> transientPositions { 0.0f, 0.075f, 0.19f, 0.33f, 0.48f, 0.62f, 0.77f, 0.90f };
+    for (size_t transientIndex = 0; transientIndex < transientPositions.size(); ++transientIndex)
+    {
+        const auto startSample = juce::jlimit(0,
+                                              buffer.getNumSamples() - 1,
+                                              juce::roundToInt(transientPositions[transientIndex]
+                                                               * static_cast<float>(buffer.getNumSamples())));
+        const auto burstLength = transientIndex == 0 ? 2200 : 1500;
+        const auto frequency = 180.0 + (static_cast<double>(transientIndex) * 65.0);
+        for (auto offset = 0; offset < burstLength && startSample + offset < buffer.getNumSamples(); ++offset)
+        {
+            const auto envelope = std::exp(-static_cast<double>(offset) / 310.0);
+            const auto phase = (static_cast<double>(offset) / 44100.0) * frequency * juce::MathConstants<double>::twoPi;
+            const auto value = static_cast<float>((0.84 * envelope) * std::sin(phase));
+            buffer.addSample(0, startSample + offset, value);
+            buffer.addSample(1, startSample + offset, value * (transientIndex % 2 == 0 ? 0.82f : 0.98f));
+        }
     }
 
     file.deleteFile();
@@ -309,6 +352,72 @@ bool verifySliceNudgeAndFadeAffectPlayback(const juce::File& sampleFile)
     return passed;
 }
 
+bool verifyTransientDetectionWritesCustomSlices(const juce::File& sampleFile)
+{
+    NateVSTAudioProcessor processor;
+    if (! configureSampleOnly(processor, sampleFile))
+        return false;
+
+    const auto transientCount = processor.detectSampleTransientSlices();
+    if (transientCount < 5)
+    {
+        std::cerr << "Expected at least 5 detected transients, got " << transientCount << '\n';
+        return false;
+    }
+
+    if (! near(readPlainParameter(processor, Parameters::ID::sampleEnabled), 1.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::samplePlaybackMode), 2.0f))
+    {
+        std::cerr << "Transient detection did not leave sample enabled in Slice Keys mode\n";
+        return false;
+    }
+
+    auto previousEnd = 0.0f;
+    auto movedStartCount = 0;
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto custom = readPlainParameter(processor, Parameters::ID::sampleSliceCustom[index]);
+        const auto start = readPlainParameter(processor, Parameters::ID::sampleSliceStart[index]);
+        const auto end = readPlainParameter(processor, Parameters::ID::sampleSliceEnd[index]);
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+
+        if (! near(custom, 1.0f)
+            || start < -0.0001f
+            || end > 1.0001f
+            || end <= start + 0.006f
+            || start + 0.0005f < previousEnd)
+        {
+            std::cerr << "Unsafe detected slice " << index
+                      << " custom=" << custom
+                      << " start=" << start
+                      << " end=" << end
+                      << " previousEnd=" << previousEnd << '\n';
+            return false;
+        }
+
+        if (index > 0 && std::abs(start - equalStart) > 0.018f)
+            ++movedStartCount;
+
+        previousEnd = end;
+    }
+
+    if (movedStartCount < 4)
+    {
+        std::cerr << "Transient detection did not move enough slice starts, moved "
+                  << movedStartCount << '\n';
+        return false;
+    }
+
+    const auto first = renderSlice(processor, 60);
+    const auto fifth = renderSlice(processor, 64);
+    return first.finite
+        && fifth.finite
+        && first.rms > 0.003f
+        && fifth.rms > 0.003f
+        && first.peak < 1.4f
+        && fifth.peak < 1.4f;
+}
+
 bool verifySliceProbabilitySuppresses(const juce::File& sampleFile)
 {
     NateVSTAudioProcessor processor;
@@ -384,6 +493,8 @@ int main()
         .getChildFile("NateVST_SamplerChopAudit.wav");
     const auto staleSampleFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
         .getChildFile("NateVST_SamplerChopAudit_Stale.wav");
+    const auto transientSampleFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
+        .getChildFile("NateVST_SamplerChopAudit_Transient.wav");
     if (! writeTestSample(sampleFile))
     {
         std::cerr << "Could not write temporary sampler audit sample\n";
@@ -411,6 +522,18 @@ int main()
     if (! verifyUkgChopRandomizer(sampleFile))
     {
         std::cerr << "UKG vocal chop randomizer did not set the expected sample/chop state\n";
+        return 1;
+    }
+
+    if (! writeTransientSample(transientSampleFile))
+    {
+        std::cerr << "Could not write temporary sampler transient audit sample\n";
+        return 1;
+    }
+
+    if (! verifyTransientDetectionWritesCustomSlices(transientSampleFile))
+    {
+        std::cerr << "Transient slice detection did not create usable custom Slice Keys regions\n";
         return 1;
     }
 
@@ -442,7 +565,8 @@ int main()
 
     sampleFile.deleteFile();
     staleSampleFile.deleteFile();
+    transientSampleFile.deleteFile();
     nudgeFadeSampleFile.deleteFile();
-    std::cout << "Sampler chop audit passed for load defaults, Slice Keys, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
+    std::cout << "Sampler chop audit passed for load defaults, transient detection, Slice Keys, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
     return 0;
 }

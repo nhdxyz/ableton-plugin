@@ -1,5 +1,13 @@
 # Nate VST Changelog
 
+## 2026-06-30
+
+### Sampler Transient Slice Detection
+
+- Added an explicit SAMPLE `Detect` action that analyzes the loaded sample for transient starts and writes eight ordered custom slice regions into the existing Slice Keys parameter slots.
+- Reused the current per-slice APVTS state instead of adding a parallel chop model, so detected regions persist through presets/state and play through the existing Slice Keys engine.
+- Added deterministic transient-sample coverage to `SamplerChopAudit`, verifying detected custom regions, Slice Keys mode activation, ordered/clamped marker ranges, moved starts, and finite audible playback.
+
 ## 2026-06-29
 
 ### Focus Overlay Expansion Pass

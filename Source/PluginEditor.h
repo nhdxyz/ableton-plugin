@@ -594,6 +594,7 @@ private:
     std::array<juce::TextButton, 8> sampleSliceButtons;
     juce::TextButton sampleSliceStoreButton { "Store" };
     juce::TextButton sampleSliceRecallButton { "Recall" };
+    juce::TextButton sampleSliceDetectButton { "Detect" };
     juce::TextButton sampleSliceDiceButton { "Dice" };
     juce::TextButton sampleSliceReverseEditButton { "Rev" };
     juce::TextButton sampleSliceChokeButton { "Choke" };
@@ -896,6 +897,7 @@ private:
     void recallSampleSliceSettings(size_t sliceIndex);
     void storeSelectedSampleSliceSettings();
     void recallSelectedSampleSliceSettings();
+    void detectSampleSliceMarkers();
     void randomizeSelectedSampleSliceSettings();
     void toggleSelectedSampleSliceReverse();
     void toggleSelectedSampleSliceChoke();

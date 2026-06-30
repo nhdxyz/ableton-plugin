@@ -1615,6 +1615,36 @@ bool NateVSTAudioProcessor::randomizeSampleCut()
     return true;
 }
 
+int NateVSTAudioProcessor::detectSampleTransientSlices()
+{
+    if (! samplePlayer.hasSample())
+        return -1;
+
+    const auto detection = samplePlayer.detectTransientSliceRegions();
+    if (! detection.valid)
+        return -1;
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, detection.regions[0].start);
+    setParameterPlainValue(Parameters::ID::sampleEnd, detection.regions[0].end);
+
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto& region = detection.regions[index];
+        auto orderedStart = juce::jlimit(0.0f, 1.0f, juce::jmin(region.start, region.end));
+        auto orderedEnd = juce::jlimit(0.0f, 1.0f, juce::jmax(region.start, region.end));
+        if (orderedEnd - orderedStart < 0.002f)
+            orderedStart = juce::jmax(0.0f, orderedEnd - 0.002f);
+
+        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 1.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], orderedStart);
+        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], orderedEnd);
+    }
+
+    return detection.transientCount;
+}
+
 bool NateVSTAudioProcessor::randomizeUkgVocalChop()
 {
     if (isRandomLockEnabled(Parameters::ID::randomLockSample))

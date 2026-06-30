@@ -143,6 +143,7 @@ public:
     bool hasLoadedSample() const;
     bool hasMissingSampleReference() const;
     bool randomizeSampleCut();
+    int detectSampleTransientSlices();
     bool randomizeUkgVocalChop();
     bool triggerSampleAudition();
     bool triggerSampleSliceAudition(int sliceIndex);

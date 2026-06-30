@@ -2668,6 +2668,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleSliceStoreButton.onClick = [this] { storeSelectedSampleSliceSettings(); };
     sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, pan, chance, reverse, choke, stutter, nudge, and fade settings");
     sampleSliceRecallButton.onClick = [this] { recallSelectedSampleSliceSettings(); };
+    sampleSliceDetectButton.setTooltip("Detect transient starts in the loaded sample and write eight custom slice regions");
+    sampleSliceDetectButton.onClick = [this] { detectSampleSliceMarkers(); };
     sampleSliceDiceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
     sampleSliceDiceButton.onClick = [this] { randomizeSelectedSampleSliceSettings(); };
     sampleSliceReverseEditButton.setTooltip("Toggle reverse for the selected slice and store it");
@@ -3172,6 +3174,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(ukgChopButton);
     addAndMakeVisible(sampleSliceStoreButton);
     addAndMakeVisible(sampleSliceRecallButton);
+    addAndMakeVisible(sampleSliceDetectButton);
     addAndMakeVisible(sampleSliceDiceButton);
     addAndMakeVisible(sampleSliceReverseEditButton);
     addAndMakeVisible(sampleSliceChokeButton);
@@ -4441,6 +4444,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceStatusLabel.setVisible(true);
             sampleSliceStoreButton.setVisible(true);
             sampleSliceRecallButton.setVisible(true);
+            sampleSliceDetectButton.setVisible(true);
             sampleSliceDiceButton.setVisible(true);
             sampleSliceReverseEditButton.setVisible(true);
             sampleSliceChokeButton.setVisible(true);
@@ -4475,9 +4479,10 @@ void NateVSTAudioProcessorEditor::resized()
             auto sliceEditRow = content.removeFromTop(36).withTrimmedTop(2);
             const auto statusWidth = juce::jlimit(238, 310, sliceEditRow.getWidth() / 3);
             sampleSliceStatusLabel.setBounds(sliceEditRow.removeFromLeft(statusWidth).reduced(8, 4));
-            const std::array<juce::TextButton*, 9> sampleActionButtons {
+            const std::array<juce::TextButton*, 10> sampleActionButtons {
                 &sampleSliceStoreButton,
                 &sampleSliceRecallButton,
+                &sampleSliceDetectButton,
                 &sampleSliceDiceButton,
                 &sampleSliceReverseEditButton,
                 &sampleSliceChokeButton,
@@ -6296,6 +6301,39 @@ void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Recalled slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+}
+
+void NateVSTAudioProcessorEditor::detectSampleSliceMarkers()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    if (! audioProcessor.hasLoadedSample())
+    {
+        setRandomStatus("Detect skipped: load a sample first");
+        return;
+    }
+
+    captureGlobalEdit("Detect sample slices");
+    const auto transientCount = audioProcessor.detectSampleTransientSlices();
+    if (transientCount < 0)
+    {
+        setRandomStatus("Detect skipped: load a sample first");
+        return;
+    }
+
+    selectedSampleSliceIndex = 0;
+    recallSampleSliceSettings(selectedSampleSliceIndex);
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(selectedSampleSliceIndex));
+    setRandomStatus("Detected "
+                    + juce::String(transientCount)
+                    + " transient"
+                    + (transientCount == 1 ? "" : "s")
+                    + " into 8 slices"
+                    + (didAudition ? " | S1 auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
     updateSampleWaveformDisplay();
@@ -8859,6 +8897,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
         sampleSliceStatusLabel.setVisible(true);
         sampleSliceStoreButton.setVisible(true);
         sampleSliceRecallButton.setVisible(true);
+        sampleSliceDetectButton.setVisible(true);
         sampleSliceDiceButton.setVisible(true);
         sampleSliceReverseEditButton.setVisible(true);
         sampleSliceChokeButton.setVisible(true);
@@ -8878,9 +8917,10 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
         sampleSliceStatusLabel.setBounds(content.removeFromTop(30).reduced(8, 3));
 
         auto actionRow = content.removeFromTop(42).withTrimmedTop(4);
-        const std::array<juce::TextButton*, 9> actionButtons {
+        const std::array<juce::TextButton*, 10> actionButtons {
             &sampleSliceStoreButton,
             &sampleSliceRecallButton,
+            &sampleSliceDetectButton,
             &sampleSliceDiceButton,
             &sampleSliceReverseEditButton,
             &sampleSliceChokeButton,
@@ -8919,6 +8959,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
         sampleSliceStatusLabel.toFront(false);
         sampleSliceStoreButton.toFront(false);
         sampleSliceRecallButton.toFront(false);
+        sampleSliceDetectButton.toFront(false);
         sampleSliceDiceButton.toFront(false);
         sampleSliceReverseEditButton.toFront(false);
         sampleSliceChokeButton.toFront(false);
@@ -9051,7 +9092,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
-        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
+        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDetectButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,

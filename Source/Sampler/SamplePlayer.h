@@ -43,6 +43,20 @@ struct SamplePeakOverview
     }
 };
 
+struct SliceMarkerRegion
+{
+    float start = 0.0f;
+    float end = 1.0f;
+    bool transient = false;
+};
+
+struct SliceDetectionResult
+{
+    std::array<SliceMarkerRegion, 8> regions {};
+    int transientCount = 0;
+    bool valid = false;
+};
+
 class SamplePlayer
 {
 public:
@@ -56,6 +70,7 @@ public:
     bool hasSample() const;
     juce::String getLoadedFileName() const;
     SamplePeakOverview createPeakOverview(int pointCount) const;
+    SliceDetectionResult detectTransientSliceRegions() const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
     bool triggerAudition(int midiNoteNumber, float velocity, double bpm);

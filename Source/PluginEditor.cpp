@@ -16,14 +16,18 @@ constexpr auto editorDefaultWidth = 1280;
 constexpr auto editorDefaultHeight = 820;
 constexpr auto editorMaxWidth = 1680;
 constexpr auto editorMaxHeight = 1040;
-constexpr auto pianoKeyboardHeight = 76;
-constexpr auto keyboardControlsWidth = 292;
-constexpr auto keyboardMinimumWhiteKeyWidth = 18.0f;
-constexpr auto keyboardMaximumWhiteKeyWidth = 36.0f;
+constexpr auto pianoKeyboardHeight = 80;
+constexpr auto keyboardControlsWidth = 300;
+constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
+constexpr auto keyboardMaximumWhiteKeyWidth = 82.0f;
 constexpr auto keyboardLowestNote = 24;
-constexpr auto keyboardHighestNote = 96;
-constexpr auto keyboardInitialLowestNote = 36;
-constexpr auto keyboardMaxLowestVisibleNote = 84;
+constexpr auto keyboardHighestNote = 88;
+constexpr auto keyboardInitialLowestNote = 48;
+constexpr auto keyboardMinLowestVisibleNote = 36;
+constexpr auto keyboardMaxLowestVisibleNote = 60;
+constexpr auto keyboardTypingKeySpanSemitones = 16;
+constexpr auto keyboardTypingMinBaseOctave = keyboardMinLowestVisibleNote / 12;
+constexpr auto keyboardTypingMaxBaseOctave = (keyboardHighestNote - keyboardTypingKeySpanSemitones) / 12;
 constexpr auto modMatrixTitleHeight = 28;
 constexpr auto modMatrixInspectorHeight = 30;
 constexpr auto modMatrixRouteMapHeight = 46;
@@ -111,6 +115,23 @@ constexpr auto lastMacroModSourceIndex = 11;
 constexpr std::array<float, 8> defaultSlicePitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
 constexpr std::array<float, 8> defaultGarageSlicePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
 
+static_assert(keyboardLowestNote <= keyboardMinLowestVisibleNote);
+static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
+static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
+static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
+
+int clampedKeyboardLowestVisibleNote(int note) noexcept
+{
+    return juce::jlimit(keyboardMinLowestVisibleNote, keyboardMaxLowestVisibleNote, note);
+}
+
+int keyboardTypingBaseOctaveForLowestNote(int note) noexcept
+{
+    return juce::jlimit(keyboardTypingMinBaseOctave,
+                       keyboardTypingMaxBaseOctave,
+                       clampedKeyboardLowestVisibleNote(note) / 12);
+}
+
 int whiteKeyCountInRange(int lowestNote, int highestNote) noexcept
 {
     auto count = 0;
@@ -123,7 +144,7 @@ int whiteKeyCountInRange(int lowestNote, int highestNote) noexcept
 
 float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, int lowestVisibleNote) noexcept
 {
-    const auto visibleLowestNote = juce::jlimit(keyboardLowestNote, keyboardHighestNote, lowestVisibleNote);
+    const auto visibleLowestNote = clampedKeyboardLowestVisibleNote(lowestVisibleNote);
     const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(visibleLowestNote, keyboardHighestNote));
     const auto fillWidth = static_cast<float>(juce::jmax(1, keyboardBounds.getWidth())) / whiteKeyCount;
     return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
@@ -1417,11 +1438,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
-    keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+    keyboardTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote);
     configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
     pianoKeyboard.setWantsKeyboardFocus(true);
-    pianoKeyboard.setScrollButtonsVisible(true);
+    pianoKeyboard.setScrollButtonsVisible(false);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffd9e3df));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, juce::Colour(0xff151b1f));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, juce::Colour(0xff2a363c));
@@ -1430,13 +1451,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
     addAndMakeVisible(pianoKeyboard);
 
-    keyboardOctaveDownButton.setTooltip("Shift the audition keyboard down one octave");
+    keyboardOctaveDownButton.setTooltip("Shift the laptop audition range down one octave");
     keyboardOctaveDownButton.setWantsKeyboardFocus(false);
     keyboardOctaveDownButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
     addAndMakeVisible(keyboardOctaveDownButton);
 
-    keyboardOctaveUpButton.setTooltip("Shift the audition keyboard up one octave");
+    keyboardOctaveUpButton.setTooltip("Shift the laptop audition range up one octave");
     keyboardOctaveUpButton.setWantsKeyboardFocus(false);
     keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
@@ -5863,8 +5884,9 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             }
         }
 
+        const auto keyboardLowestForAudit = clampedKeyboardLowestVisibleNote(pianoKeyboard.getLowestVisibleKey());
         const auto expectedKeyboardKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
-                                                                                 pianoKeyboard.getLowestVisibleKey());
+                                                                                 keyboardLowestForAudit);
         if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyboardKeyWidth) > 0.25f)
         {
             issues.add(panelName + ": piano keyboard key width "
@@ -5875,7 +5897,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + pianoKeyboard.getBounds().toString());
         }
 
-        const auto keyboardPaintCoverage = static_cast<float>(whiteKeyCountInRange(pianoKeyboard.getLowestVisibleKey(),
+        const auto keyboardPaintCoverage = static_cast<float>(whiteKeyCountInRange(keyboardLowestForAudit,
                                                                                   keyboardHighestNote))
                                          * pianoKeyboard.getKeyWidth();
         if (keyboardPaintCoverage < static_cast<float>(pianoKeyboard.getWidth()) - 1.0f)
@@ -8136,10 +8158,8 @@ void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 
 void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
 {
-    const auto currentLowestNote = pianoKeyboard.getLowestVisibleKey();
-    const auto nextLowestNote = juce::jlimit(keyboardLowestNote,
-                                            keyboardMaxLowestVisibleNote,
-                                            currentLowestNote + semitones);
+    const auto currentLowestNote = clampedKeyboardLowestVisibleNote(pianoKeyboard.getLowestVisibleKey());
+    const auto nextLowestNote = clampedKeyboardLowestVisibleNote(currentLowestNote + semitones);
 
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
     pianoKeyboard.setLowestVisibleKey(nextLowestNote);
@@ -8150,25 +8170,40 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
 
 void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 {
-    const auto lowestVisibleNote = pianoKeyboard.getLowestVisibleKey();
-    const auto noteName = juce::MidiMessage::getMidiNoteName(lowestVisibleNote, true, true, 3);
-    const auto mappedTopNote = juce::jlimit(0, 127, ((lowestVisibleNote / 12) * 12) + 16);
+    auto lowestVisibleNote = pianoKeyboard.getLowestVisibleKey();
+    const auto clampedLowestNote = clampedKeyboardLowestVisibleNote(lowestVisibleNote);
+    if (lowestVisibleNote != clampedLowestNote)
+    {
+        audioProcessor.getMidiKeyboardState().allNotesOff(1);
+        pianoKeyboard.setLowestVisibleKey(clampedLowestNote);
+        lowestVisibleNote = clampedLowestNote;
+    }
+
+    const auto nextTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(lowestVisibleNote);
+    const auto mappedBaseNote = juce::jlimit(0, keyboardHighestNote, nextTypingBaseOctave * 12);
+    const auto noteName = juce::MidiMessage::getMidiNoteName(mappedBaseNote, true, true, 3);
+    const auto mappedTopNote = juce::jlimit(0,
+                                           keyboardHighestNote,
+                                           mappedBaseNote + keyboardTypingKeySpanSemitones);
     const auto mappedTopName = juce::MidiMessage::getMidiNoteName(mappedTopNote, true, true, 3);
 
-    const auto nextTypingBaseOctave = juce::jlimit(0, 10, lowestVisibleNote / 12);
     if (keyboardTypingBaseOctave != nextTypingBaseOctave)
     {
         keyboardTypingBaseOctave = nextTypingBaseOctave;
         configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
     }
 
+    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), lowestVisibleNote);
+    if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
+        pianoKeyboard.setKeyWidth(expectedKeyWidth);
+
     const auto labelText = noteName + "\n" + mappedTopName;
     if (keyboardRangeLabel.getText() != labelText)
         keyboardRangeLabel.setText(labelText, juce::dontSendNotification);
 
-    keyboardRangeLabel.setTooltip("Laptop keys map from " + noteName + " to " + mappedTopName);
+    keyboardRangeLabel.setTooltip("Laptop keys A through ; map from " + noteName + " to " + mappedTopName);
 
-    keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardLowestNote);
+    keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardMinLowestVisibleNote);
     keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
 }
 

@@ -46,6 +46,21 @@ Voice::Voice(Parameters::APVTS& state)
     oscWarp = parameters.getRawParameterValue(Parameters::ID::oscWarp);
     oscWavetablePosition = parameters.getRawParameterValue(Parameters::ID::oscWavetablePosition);
     osc2WavetablePosition = parameters.getRawParameterValue(Parameters::ID::osc2WavetablePosition);
+    for (size_t index = 0; index < Oscillator::customWavePointCount; ++index)
+    {
+        oscCustomWave[index] = parameters.getRawParameterValue(Parameters::ID::oscCustomWave[index]);
+        osc2CustomWave[index] = parameters.getRawParameterValue(Parameters::ID::osc2CustomWave[index]);
+    }
+    for (size_t frameIndex = 1; frameIndex < Oscillator::customWaveFrameCount; ++frameIndex)
+    {
+        for (size_t pointIndex = 0; pointIndex < Oscillator::customWavePointCount; ++pointIndex)
+        {
+            oscCustomWaveFrames[frameIndex - 1][pointIndex] =
+                parameters.getRawParameterValue(Parameters::customWaveMorphFrameParameterID(false, frameIndex, pointIndex));
+            osc2CustomWaveFrames[frameIndex - 1][pointIndex] =
+                parameters.getRawParameterValue(Parameters::customWaveMorphFrameParameterID(true, frameIndex, pointIndex));
+        }
+    }
     ampAttack = parameters.getRawParameterValue(Parameters::ID::ampAttack);
     ampDecay = parameters.getRawParameterValue(Parameters::ID::ampDecay);
     ampSustain = parameters.getRawParameterValue(Parameters::ID::ampSustain);
@@ -132,6 +147,11 @@ void Voice::setHostBpm(double bpm) noexcept
     hostBpm = juce::jlimit(20.0, 300.0, bpm);
 }
 
+void Voice::setActiveVoiceLoad(int activeVoiceCount) noexcept
+{
+    activeVoiceLoad = juce::jlimit(1, 16, activeVoiceCount);
+}
+
 void Voice::setSequencerLock(int destinationIndex, float amount) noexcept
 {
     sequencerLockDestination = destinationIndex;
@@ -180,8 +200,10 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
     noiseBrownState = 0.0f;
     noiseCrackleState = 0.0f;
     noiseDigitalHeldSample = (noiseRandom.nextFloat() * 2.0f) - 1.0f;
+    noiseTickEnvelope = 1.0f;
     noiseDigitalHoldSamples = 1;
     voiceAgeSamples = 0;
+    controlSamplesUntilUpdate = 0;
 
     if (readParameter(lfo1Retrigger, 1.0f) >= 0.5f)
     {
@@ -231,29 +253,26 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
     for (auto sampleIndex = 0; sampleIndex < numSamples; ++sampleIndex)
     {
         const auto envelopeValue = ampEnvelope.process();
-        updateVoiceParameters(envelopeValue);
+        if (controlSamplesUntilUpdate <= 0)
+        {
+            const auto samplesToAdvance = juce::jlimit(1,
+                                                       controlUpdateIntervalSamples,
+                                                       numSamples - sampleIndex);
+            updateVoiceParameters(envelopeValue, samplesToAdvance);
+            controlSamplesUntilUpdate = samplesToAdvance;
+        }
 
-        const auto osc1Gain = readParameter(osc1Level, 1.0f);
-        const auto osc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
-        const auto weight = readParameter(macroWeight, 0.0f);
-        const auto subGain = juce::jlimit(0.0f, 1.15f, readParameter(subLevel, 0.0f) + (weight * 0.32f));
-        const auto noiseGain = readParameter(noiseLevel, 0.0f);
-        const auto sourceWeight = osc1Gain + osc2Gain + (subGain * 0.75f) + (noiseGain * 0.45f);
-        const auto sourceCompensation = 1.0f / juce::jmax(1.0f, sourceWeight);
-        const auto noiseTypeIndex = juce::jlimit(0, 6, static_cast<int>(std::round(readParameter(noiseType, 0.0f))));
-        const auto noiseSample = processNoiseSample(noiseTypeIndex);
-        const auto unisonSample = renderUnisonStack(osc1Gain, osc2Gain);
-        const auto centeredSample = (subOscillator.process() * subGain * 0.75f)
-            + (noiseSample * noiseGain * 0.45f);
+        const auto noiseSample = currentNoiseGain > 0.0001f ? processNoiseSample(currentNoiseTypeIndex) : 0.0f;
+        const auto unisonSample = renderUnisonStack();
+        const auto centeredSample = ((currentSubGain > 0.0001f ? subOscillator.process() * currentSubGain : 0.0f) * 0.75f)
+            + (noiseSample * currentNoiseGain * 0.45f);
 
-        auto leftSample = (unisonSample.left + centeredSample) * sourceCompensation;
-        auto rightSample = (unisonSample.right + centeredSample) * sourceCompensation;
+        auto leftSample = (unisonSample.left + centeredSample) * currentSourceCompensation;
+        auto rightSample = (unisonSample.right + centeredSample) * currentSourceCompensation;
         leftSample = leftFilter.process(leftSample);
         rightSample = rightFilter.process(rightSample);
-        const auto dirt = readParameter(macroDirt, 0.0f);
-        const auto macroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f) + currentDriveOffset);
-        leftSample = distortion.process(leftSample, macroDrive);
-        rightSample = distortion.process(rightSample, macroDrive);
+        leftSample = distortion.process(leftSample, currentMacroDrive);
+        rightSample = distortion.process(rightSample, currentMacroDrive);
         leftSample *= envelopeValue * noteVelocity * 0.28f;
         rightSample *= envelopeValue * noteVelocity * 0.28f;
 
@@ -271,6 +290,7 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
         }
 
         ++voiceAgeSamples;
+        --controlSamplesUntilUpdate;
 
         if (! ampEnvelope.isActive())
         {
@@ -280,18 +300,57 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
     }
 }
 
-void Voice::updateVoiceParameters(float envelopeValue)
+bool Voice::refreshCustomWavetableFrames(const CustomWaveParameterPoints& baseFrameParameters,
+                                         const CustomWaveMorphParameterFrames& morphFrameParameters,
+                                         Oscillator::CustomWaveFrames& frameCache,
+                                         bool& cacheInitialised)
 {
-    updateGlide();
+    auto changed = ! cacheInitialised;
+
+    for (size_t point = 0; point < Oscillator::customWavePointCount; ++point)
+    {
+        const auto value = readParameter(baseFrameParameters[point], 0.5f);
+        if (! cacheInitialised || std::abs(frameCache[0][point] - value) > 0.000001f)
+        {
+            frameCache[0][point] = value;
+            changed = true;
+        }
+    }
+
+    for (size_t frameIndex = 1; frameIndex < Oscillator::customWaveFrameCount; ++frameIndex)
+    {
+        for (size_t point = 0; point < Oscillator::customWavePointCount; ++point)
+        {
+            const auto value = readParameter(morphFrameParameters[frameIndex - 1][point],
+                                             frameCache[0][point]);
+            if (! cacheInitialised || std::abs(frameCache[frameIndex][point] - value) > 0.000001f)
+            {
+                frameCache[frameIndex][point] = value;
+                changed = true;
+            }
+        }
+    }
+
+    cacheInitialised = true;
+    return changed;
+}
+
+void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
+{
+    samplesToAdvance = juce::jmax(1, samplesToAdvance);
+    updateGlide(samplesToAdvance);
     modEnvelope.setParameters(
         readParameter(modEnv1Attack, 0.01f),
         readParameter(modEnv1Decay, 0.22f),
         readParameter(modEnv1Sustain, 0.0f),
         readParameter(modEnv1Release, 0.12f));
 
-    const auto lfoValue = processLfo() * readParameter(lfo1Depth, 0.45f);
-    const auto lfo2Value = processLfo2() * readParameter(lfo2Depth, 0.25f);
-    const auto modEnvelopeValue = modEnvelope.process() * readParameter(modEnv1Depth, 0.5f);
+    const auto lfoValue = processLfo(samplesToAdvance) * readParameter(lfo1Depth, 0.45f);
+    const auto lfo2Value = processLfo2(samplesToAdvance) * readParameter(lfo2Depth, 0.25f);
+    auto modEnvelopeRaw = 0.0f;
+    for (auto sample = 0; sample < samplesToAdvance; ++sample)
+        modEnvelopeRaw = modEnvelope.process();
+    const auto modEnvelopeValue = modEnvelopeRaw * readParameter(modEnv1Depth, 0.5f);
     auto cutoffMod = 0.0f;
     auto resonanceMod = 0.0f;
     auto filterEnvMod = 0.0f;
@@ -345,16 +404,18 @@ void Voice::updateVoiceParameters(float envelopeValue)
     const auto sequenceWavetable2Mod = sequencerLockDestination == 8 ? sequencerLockAmount : 0.0f;
     currentDriveOffset = (driveMod * 0.45f) + (sequenceDriveMod * 0.38f);
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
+    currentOsc1Gain = readParameter(osc1Level, 1.0f);
+    currentOsc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
-    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 6, waveIndex));
+    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 7, waveIndex));
 
     const auto octaveOffset = static_cast<int>(readParameter(oscOctave, 0.0f)) * 12.0f;
     const auto tuneOffset = readParameter(oscTune, 0.0f);
     const auto pitchRatio = std::pow(2.0f, (octaveOffset + tuneOffset + pitchBendSemitones) / 12.0f);
 
     const auto osc2WaveIndex = static_cast<int>(readParameter(osc2Wave, 1.0f));
-    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 6, osc2WaveIndex));
+    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 7, osc2WaveIndex));
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
     const auto motion = readParameter(macroMotion, 0.0f);
@@ -372,21 +433,77 @@ void Voice::updateVoiceParameters(float envelopeValue)
         + (warp * 0.14f)
         + (osc2WavetablePositionMod * 0.5f)
         + (sequenceWavetable2Mod * 0.55f));
+    const auto osc1UsesCustomWave = waveform == Waveform::custom;
+    const auto osc2UsesCustomWave = osc2Waveform == Waveform::custom;
+    const auto shouldRefreshCustomFrames = (voiceAgeSamples % 64) == 0;
+    const auto osc1CustomFramesChanged = osc1UsesCustomWave
+        && (! osc1CustomFramesInitialised
+            || shouldRefreshCustomFrames
+            || osc1CustomFramesAppliedVoices <= 0)
+        && refreshCustomWavetableFrames(oscCustomWave,
+                                        oscCustomWaveFrames,
+                                        osc1CustomFrameCache,
+                                        osc1CustomFramesInitialised);
+    const auto osc2CustomFramesChanged = osc2UsesCustomWave
+        && (! osc2CustomFramesInitialised
+            || shouldRefreshCustomFrames
+            || osc2CustomFramesAppliedVoices <= 0)
+        && refreshCustomWavetableFrames(osc2CustomWave,
+                                        osc2CustomWaveFrames,
+                                        osc2CustomFrameCache,
+                                        osc2CustomFramesInitialised);
 
-    const auto activeUnisonVoices = getUnisonVoiceCount();
+    currentActiveUnisonVoices = getBudgetedUnisonVoiceCount();
     const auto detuneCents = readParameter(unisonDetune, 0.0f) * 24.0f;
-    for (auto voiceIndex = 0; voiceIndex < activeUnisonVoices; ++voiceIndex)
+    const auto shouldApplyOsc1CustomFrames = osc1UsesCustomWave
+        && (osc1CustomFramesChanged || osc1CustomFramesAppliedVoices < currentActiveUnisonVoices);
+    const auto shouldApplyOsc2CustomFrames = osc2UsesCustomWave
+        && (osc2CustomFramesChanged || osc2CustomFramesAppliedVoices < currentActiveUnisonVoices);
+    for (auto voiceIndex = 0; voiceIndex < currentActiveUnisonVoices; ++voiceIndex)
     {
-        const auto detuneRatio = std::pow(2.0f, (getUnisonPosition(voiceIndex, activeUnisonVoices) * detuneCents) / 1200.0f);
+        const auto detuneRatio = std::pow(2.0f, (getUnisonPosition(voiceIndex, currentActiveUnisonVoices) * detuneCents) / 1200.0f);
         oscillators[static_cast<size_t>(voiceIndex)].setWaveform(waveform);
         oscillators[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
         oscillators[static_cast<size_t>(voiceIndex)].setWavetablePosition(osc1WavetablePosition);
+        if (shouldApplyOsc1CustomFrames)
+            oscillators[static_cast<size_t>(voiceIndex)].setCustomWavetableFrames(osc1CustomFrameCache);
         oscillators[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * pitchRatio * detuneRatio);
         oscillators2[static_cast<size_t>(voiceIndex)].setWaveform(osc2Waveform);
         oscillators2[static_cast<size_t>(voiceIndex)].setWarp(oscillatorWarpAmount);
         oscillators2[static_cast<size_t>(voiceIndex)].setWavetablePosition(osc2WavetablePositionValue);
+        if (shouldApplyOsc2CustomFrames)
+            oscillators2[static_cast<size_t>(voiceIndex)].setCustomWavetableFrames(osc2CustomFrameCache);
         oscillators2[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * osc2PitchRatio * detuneRatio);
     }
+
+    const auto blend = currentActiveUnisonVoices > 1 ? readParameter(unisonBlend, 0.65f) : 0.0f;
+    const auto spread = readParameter(monoMode, 0.0f) >= 0.5f ? 0.0f : readParameter(unisonSpread, 0.0f);
+    const auto voiceWeight = currentActiveUnisonVoices > 1 ? juce::jmap(blend, 0.0f, 1.0f, 0.2f, 1.0f) : 1.0f;
+    auto weightTotal = 0.0f;
+    for (auto voiceIndex = 0; voiceIndex < currentActiveUnisonVoices; ++voiceIndex)
+    {
+        const auto position = getUnisonPosition(voiceIndex, currentActiveUnisonVoices);
+        const auto pan = position * spread;
+        const auto leftPan = pan <= 0.0f ? 1.0f : 1.0f - pan;
+        const auto rightPan = pan >= 0.0f ? 1.0f : 1.0f + pan;
+        const auto weight = currentActiveUnisonVoices > 1 ? voiceWeight * (1.0f + (std::abs(position) * blend * 0.15f)) : 1.0f;
+        currentUnisonLeftGains[static_cast<size_t>(voiceIndex)] = weight * leftPan;
+        currentUnisonRightGains[static_cast<size_t>(voiceIndex)] = weight * rightPan;
+        weightTotal += weight;
+    }
+
+    if (weightTotal > 1.0f)
+    {
+        const auto compensation = 1.0f / weightTotal;
+        for (auto voiceIndex = 0; voiceIndex < currentActiveUnisonVoices; ++voiceIndex)
+        {
+            currentUnisonLeftGains[static_cast<size_t>(voiceIndex)] *= compensation;
+            currentUnisonRightGains[static_cast<size_t>(voiceIndex)] *= compensation;
+        }
+    }
+
+    osc1CustomFramesAppliedVoices = osc1UsesCustomWave ? juce::jmax(osc1CustomFramesAppliedVoices, currentActiveUnisonVoices) : 0;
+    osc2CustomFramesAppliedVoices = osc2UsesCustomWave ? juce::jmax(osc2CustomFramesAppliedVoices, currentActiveUnisonVoices) : 0;
 
     subOscillator.setFrequency(currentFrequencyHz * 0.5f);
 
@@ -397,6 +514,17 @@ void Voice::updateVoiceParameters(float envelopeValue)
         readParameter(ampRelease, 0.22f));
 
     const auto tone = readParameter(macroTone, 0.0f);
+    const auto dirt = readParameter(macroDirt, 0.0f);
+    const auto weight = readParameter(macroWeight, 0.0f);
+    currentSubGain = juce::jlimit(0.0f, 1.15f, readParameter(subLevel, 0.0f) + (weight * 0.32f));
+    currentNoiseGain = readParameter(noiseLevel, 0.0f);
+    currentNoiseTypeIndex = juce::jlimit(0, 6, static_cast<int>(std::round(readParameter(noiseType, 0.0f))));
+    currentMacroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f) + currentDriveOffset);
+    const auto sourceWeight = currentOsc1Gain + currentOsc2Gain + (currentSubGain * 0.75f) + (currentNoiseGain * 0.45f);
+    currentSourceCompensation = 1.0f / juce::jmax(1.0f, sourceWeight);
+    const auto decaySeconds = juce::jlimit(0.005f, 0.6f, readParameter(noiseDecay, 0.18f));
+    noiseTickDecayMultiplier = std::exp(-1.0f / juce::jmax(1.0f, static_cast<float>(currentSampleRate) * decaySeconds));
+
     const auto envAmount = juce::jlimit(-1.0f, 1.0f, readParameter(filterEnvAmount, 0.15f) + (motion * 0.35f) + (warp * 0.18f) + (filterEnvMod * 0.65f));
     const auto cutoffScale = std::pow(2.0f, envAmount * envelopeValue * 4.0f);
     const auto toneCutoffScale = std::pow(2.0f, tone * 2.5f);
@@ -444,7 +572,7 @@ void Voice::updateVoiceParameters(float envelopeValue)
     rightFilter.setCutoffAndResonance(cutoff, macroResonance);
 }
 
-void Voice::updateGlide()
+void Voice::updateGlide(int samplesToAdvance)
 {
     if (glideSamplesRemaining <= 0 || glideTotalSamples <= 0)
     {
@@ -456,10 +584,10 @@ void Voice::updateGlide()
     const auto start = juce::jmax(1.0f, glideStartFrequencyHz);
     const auto target = juce::jmax(1.0f, targetFrequencyHz);
     currentFrequencyHz = start * std::pow(target / start, progress);
-    --glideSamplesRemaining;
+    glideSamplesRemaining = juce::jmax(0, glideSamplesRemaining - juce::jmax(1, samplesToAdvance));
 }
 
-float Voice::processLfo()
+float Voice::processLfo(int samplesToAdvance)
 {
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
     const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
@@ -506,10 +634,12 @@ float Voice::processLfo()
                                             + ((lfoStepValue - lfoSmoothRandomStartValue) * smoothProgress));
     lfoChaosValue = advanceChaosRandomWalk(lfoChaosValue,
                                            modulationRandom,
-                                           rateHz / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
+                                           (rateHz * static_cast<float>(juce::jmax(1, samplesToAdvance)))
+                                               / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
     const auto previousPhase = lfoPhase;
-    lfoPhase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
+    lfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
+        / static_cast<float>(currentSampleRate);
 
     if (lfoPhase >= 1.0f)
     {
@@ -524,7 +654,7 @@ float Voice::processLfo()
     return juce::jlimit(-1.0f, 1.0f, value);
 }
 
-float Voice::processLfo2()
+float Voice::processLfo2(int samplesToAdvance)
 {
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
     const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
@@ -561,7 +691,8 @@ float Voice::processLfo2()
     }
 
     const auto previousPhase = lfo2Phase;
-    lfo2Phase += juce::jlimit(0.01f, 80.0f, rateHz) / static_cast<float>(currentSampleRate);
+    lfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
+        / static_cast<float>(currentSampleRate);
 
     if (lfo2Phase >= 1.0f)
     {
@@ -609,35 +740,25 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo
     }
 }
 
-Voice::StereoSample Voice::renderUnisonStack(float osc1Gain, float osc2Gain)
+Voice::StereoSample Voice::renderUnisonStack()
 {
     StereoSample sample;
-    const auto activeUnisonVoices = getUnisonVoiceCount();
-    const auto blend = activeUnisonVoices > 1 ? readParameter(unisonBlend, 0.65f) : 0.0f;
-    const auto spread = readParameter(monoMode, 0.0f) >= 0.5f ? 0.0f : readParameter(unisonSpread, 0.0f);
-    const auto voiceWeight = activeUnisonVoices > 1 ? juce::jmap(blend, 0.0f, 1.0f, 0.2f, 1.0f) : 1.0f;
-    auto weightTotal = 0.0f;
+    const auto useOsc1 = currentOsc1Gain > 0.0001f;
+    const auto useOsc2 = currentOsc2Gain > 0.0001f;
 
-    for (auto voiceIndex = 0; voiceIndex < activeUnisonVoices; ++voiceIndex)
+    if (! useOsc1 && ! useOsc2)
+        return sample;
+
+    for (auto voiceIndex = 0; voiceIndex < currentActiveUnisonVoices; ++voiceIndex)
     {
-        const auto position = getUnisonPosition(voiceIndex, activeUnisonVoices);
-        const auto pan = position * spread;
-        const auto leftPan = pan <= 0.0f ? 1.0f : 1.0f - pan;
-        const auto rightPan = pan >= 0.0f ? 1.0f : 1.0f + pan;
-        const auto weight = activeUnisonVoices > 1 ? voiceWeight * (1.0f + (std::abs(position) * blend * 0.15f)) : 1.0f;
-        const auto voiceSample = (oscillators[static_cast<size_t>(voiceIndex)].process() * osc1Gain)
-            + (oscillators2[static_cast<size_t>(voiceIndex)].process() * osc2Gain);
+        auto voiceSample = 0.0f;
+        if (useOsc1)
+            voiceSample += oscillators[static_cast<size_t>(voiceIndex)].process() * currentOsc1Gain;
+        if (useOsc2)
+            voiceSample += oscillators2[static_cast<size_t>(voiceIndex)].process() * currentOsc2Gain;
 
-        sample.left += voiceSample * weight * leftPan;
-        sample.right += voiceSample * weight * rightPan;
-        weightTotal += weight;
-    }
-
-    if (weightTotal > 1.0f)
-    {
-        const auto compensation = 1.0f / weightTotal;
-        sample.left *= compensation;
-        sample.right *= compensation;
+        sample.left += voiceSample * currentUnisonLeftGains[static_cast<size_t>(voiceIndex)];
+        sample.right += voiceSample * currentUnisonRightGains[static_cast<size_t>(voiceIndex)];
     }
 
     return sample;
@@ -667,10 +788,9 @@ float Voice::processNoiseSample(int noiseTypeIndex)
         {
             noiseColourState += (raw - noiseColourState) * 0.018f;
             const auto highPassed = juce::jlimit(-1.0f, 1.0f, (raw - noiseColourState) * 1.5f);
-            const auto decaySeconds = juce::jlimit(0.005f, 0.6f, readParameter(noiseDecay, 0.18f));
-            const auto decay = std::exp(-static_cast<float>(voiceAgeSamples)
-                                        / juce::jmax(1.0f, static_cast<float>(currentSampleRate) * decaySeconds));
-            return highPassed * decay;
+            const auto output = highPassed * noiseTickEnvelope;
+            noiseTickEnvelope *= noiseTickDecayMultiplier;
+            return output;
         }
 
         case 5: // Vinyl
@@ -703,6 +823,17 @@ float Voice::processNoiseSample(int noiseTypeIndex)
 int Voice::getUnisonVoiceCount() const
 {
     return juce::jlimit(1, maxUnisonVoices, static_cast<int>(std::round(readParameter(unisonVoices, 1.0f))));
+}
+
+int Voice::getBudgetedUnisonVoiceCount() const
+{
+    const auto requested = getUnisonVoiceCount();
+    const auto loadLimit = activeVoiceLoad >= 7 ? 2
+        : activeVoiceLoad >= 5 ? 3
+        : activeVoiceLoad >= 3 ? 5
+        : maxUnisonVoices;
+
+    return juce::jlimit(1, maxUnisonVoices, juce::jmin(requested, loadLimit));
 }
 
 float Voice::getUnisonPosition(int voiceIndex, int voiceCount) const

@@ -52,9 +52,9 @@ int main()
         if (preset.isFactory)
             ++factoryCount;
 
-    if (factoryCount < 96)
+    if (factoryCount < 400)
     {
-        std::cerr << "Expected at least 96 factory presets, found " << factoryCount << '\n';
+        std::cerr << "Expected at least 400 factory presets, found " << factoryCount << '\n';
         return 1;
     }
 
@@ -139,6 +139,29 @@ int main()
         { "Dub House Chord Throw", "Dub Stabs" },
         { "Dirty House Tool Stab", "House Tools" },
         { "Garage House Chord Kit", "Garage Chops" },
+        { "UKG Swing Organ Bass", "UKG Basslines" },
+        { "UKG Dark Reese Skip", "UKG Basslines" },
+        { "Piano House Filter Pump", "House Chords" },
+        { "Tech House Low Roller", "Tech House Tools" },
+        { "Hypnotic Warehouse Chord", "Techno Tools" },
+        { "Glassy Micro Chord", "Minimal Tools" },
+        { "Afro House Sunrise Marimba Pluck", "Afro House Rituals" },
+        { "Amapiano Log Drum Knock", "Amapiano Log Lab" },
+        { "Melodic Techno Afterhours Pluck", "Melodic Techno Motion" },
+        { "Organic House Cedar Pluck", "Organic Progressive" },
+        { "DnB Liquid Reese", "Drum & Bass Tools" },
+        { "Bass House Nasal Wobble", "Bass House Weapons" },
+        { "Hard Techno Rave Siren Stab", "Hard Techno Rave" },
+        { "Indie Dance Rubber Disco Bass", "Indie Dance Dark Disco" },
+        { "Trance Supersaw Pluck", "Trance Progressive" },
+        { "Ambient Dust Halo Pad", "Ambient Electronica" },
+        { "Future Garage Rain Chord Stab", "Future Garage Dub" },
+        { "Latin Tech Tribal Perc Bass", "Latin Tech Tribal" },
+        { "House Velvet Organ Bass", "House Expansion" },
+        { "Tech House Rubber Pressure Bass", "Tech House Expansion" },
+        { "UKG 2 Step Sub Skip", "UKG Expansion" },
+        { "Techno Warehouse Rumble Bass", "Techno Expansion" },
+        { "Minimal Micro Click Pluck", "Minimal Expansion" },
     };
 
     for (const auto& [name, pack] : expectedPacks)
@@ -167,6 +190,6 @@ int main()
         }
     }
 
-    std::cout << "Factory preset library audit passed for 96-preset expanded style pack.\n";
+    std::cout << "Factory preset library audit passed for 400-preset expanded style pack.\n";
     return 0;
 }

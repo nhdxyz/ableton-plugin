@@ -63,21 +63,23 @@ float meanAbsoluteDifference(const std::vector<float>& first, const std::vector<
 int main()
 {
     const auto choices = Parameters::waveformChoices();
-    if (choices.size() != 7
+    if (choices.size() != 8
         || choices[0] != "Sine"
         || choices[1] != "Saw"
         || choices[2] != "Square"
         || choices[3] != "Triangle"
         || choices[4] != "Wavetable"
         || choices[5] != "Organ"
-        || choices[6] != "House Piano")
+        || choices[6] != "House Piano"
+        || choices[7] != "Custom")
     {
-        std::cerr << "Waveform choices were reordered or missing appended house source modes\n";
+        std::cerr << "Waveform choices were reordered or missing appended custom/house source modes\n";
         return 1;
     }
 
     const auto organStats = renderWaveform(Synth::Waveform::organ);
     const auto pianoStats = renderWaveform(Synth::Waveform::housePiano);
+    const auto customStats = renderWaveform(Synth::Waveform::custom);
 
     if (organStats.rms <= 0.02f || organStats.peak <= 0.05f || organStats.peak > 1.05f)
     {
@@ -93,6 +95,13 @@ int main()
         return 1;
     }
 
+    if (customStats.rms <= 0.02f || customStats.peak <= 0.05f || customStats.peak > 1.05f)
+    {
+        std::cerr << "Custom source rendered outside the expected audible/safe range: rms "
+                  << customStats.rms << " peak " << customStats.peak << '\n';
+        return 1;
+    }
+
     const auto difference = meanAbsoluteDifference(organStats.samples, pianoStats.samples);
     if (difference <= 0.04f)
     {
@@ -101,6 +110,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Source character audit passed for appended waveform choices and house source rendering.\n";
+    std::cout << "Source character audit passed for appended waveform choices, custom source rendering, and house source rendering.\n";
     return 0;
 }

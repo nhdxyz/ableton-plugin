@@ -48,6 +48,7 @@ public:
     void mouseDrag(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void mouseDoubleClick(const juce::MouseEvent& event) override;
+    void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
 private:
     State state;
@@ -65,6 +66,8 @@ private:
     int destinationIndexForPosition(juce::Point<float> position) const;
     void previewAmountAt(juce::Point<float> position);
     void commitAmount();
+    void nudgeAmountAt(juce::Point<float> position, float delta);
+    float currentAmountForDestination(int destinationIndex) const noexcept;
     int selectedMacroArrayIndex() const noexcept;
     float amountFromPosition(juce::Point<float> position, juce::Rectangle<float> area) const noexcept;
     juce::String selectedDestinationName() const;

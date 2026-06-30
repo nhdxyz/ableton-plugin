@@ -1,14 +1,100 @@
 #include "WavetableDisplay.h"
 
+#include <array>
 #include <cmath>
+#include <utility>
 
 namespace UI
 {
 namespace
 {
+constexpr WavetableDisplay::CustomPointArray defaultCustomWavePoints {
+    0.5f,
+    0.691342f,
+    0.853553f,
+    0.961940f,
+    1.0f,
+    0.961940f,
+    0.853553f,
+    0.691342f,
+    0.5f,
+    0.308658f,
+    0.146447f,
+    0.038060f,
+    0.0f,
+    0.038060f,
+    0.146447f,
+    0.308658f
+};
+
 float sineHarmonic(float phase, float harmonic, float phaseOffset = 0.0f)
 {
     return std::sin(juce::MathConstants<float>::twoPi * ((phase * harmonic) + phaseOffset));
+}
+
+WavetableDisplay::CustomPointArray sanitiseCustomPoints(WavetableDisplay::CustomPointArray points)
+{
+    for (auto& point : points)
+        point = juce::jlimit(0.0f, 1.0f, point);
+
+    return points;
+}
+
+bool pointsDiffer(const WavetableDisplay::CustomPointArray& lhs, const WavetableDisplay::CustomPointArray& rhs)
+{
+    for (size_t index = 0; index < lhs.size(); ++index)
+        if (std::abs(lhs[index] - rhs[index]) >= 0.001f)
+            return true;
+
+    return false;
+}
+
+struct WaveAnalysis
+{
+    float rms = 0.0f;
+    float dc = 0.0f;
+    float peak = 0.0f;
+    std::array<float, 16> partials {};
+};
+
+WaveAnalysis analysePoints(const WavetableDisplay::CustomPointArray& points)
+{
+    WaveAnalysis analysis;
+    auto sum = 0.0f;
+    auto squareSum = 0.0f;
+
+    for (const auto point : points)
+    {
+        const auto sample = (juce::jlimit(0.0f, 1.0f, point) * 2.0f) - 1.0f;
+        sum += sample;
+        squareSum += sample * sample;
+        analysis.peak = juce::jmax(analysis.peak, std::abs(sample));
+    }
+
+    analysis.dc = sum / static_cast<float>(points.size());
+    analysis.rms = std::sqrt(squareSum / static_cast<float>(points.size()));
+
+    for (size_t partial = 0; partial < analysis.partials.size(); ++partial)
+    {
+        auto real = 0.0f;
+        auto imaginary = 0.0f;
+        const auto harmonic = static_cast<float>(partial + 1);
+        for (size_t index = 0; index < points.size(); ++index)
+        {
+            const auto phase = static_cast<float>(index) / static_cast<float>(points.size());
+            const auto sample = (juce::jlimit(0.0f, 1.0f, points[index]) * 2.0f) - 1.0f;
+            const auto angle = juce::MathConstants<float>::twoPi * harmonic * phase;
+            real += sample * std::cos(angle);
+            imaginary -= sample * std::sin(angle);
+        }
+
+        analysis.partials[partial] = juce::jlimit(0.0f,
+                                                  1.0f,
+                                                  std::sqrt((real * real) + (imaginary * imaginary))
+                                                      / static_cast<float>(points.size()) * 2.0f);
+    }
+
+    return analysis;
 }
 
 float drawFrame(int frameIndex, float phase)
@@ -55,6 +141,12 @@ float drawFrame(int frameIndex, float phase)
 }
 }
 
+WavetableDisplay::WavetableDisplay()
+{
+    setInterceptsMouseClicks(true, true);
+    setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+}
+
 void WavetableDisplay::setState(float newOsc1Position,
                                 float newOsc2Position,
                                 bool newOsc1Active,
@@ -62,7 +154,12 @@ void WavetableDisplay::setState(float newOsc1Position,
                                 float newOsc1ModAmount,
                                 float newOsc2ModAmount,
                                 int newModRouteCount,
-                                juce::String newModSourceSummary)
+                                juce::String newModSourceSummary,
+                                float newWarp,
+                                CustomPointArray newOsc1CustomPoints,
+                                CustomPointArray newOsc2CustomPoints,
+                                bool newOsc1CustomActive,
+                                bool newOsc2CustomActive)
 {
     newOsc1Position = juce::jlimit(0.0f, 1.0f, newOsc1Position);
     newOsc2Position = juce::jlimit(0.0f, 1.0f, newOsc2Position);
@@ -70,35 +167,71 @@ void WavetableDisplay::setState(float newOsc1Position,
     newOsc2ModAmount = juce::jlimit(-1.0f, 1.0f, newOsc2ModAmount);
     newModRouteCount = juce::jmax(0, newModRouteCount);
     newModSourceSummary = newModSourceSummary.trim();
+    newWarp = juce::jlimit(0.0f, 1.0f, newWarp);
+    newOsc1CustomPoints = sanitiseCustomPoints(newOsc1CustomPoints);
+    newOsc2CustomPoints = sanitiseCustomPoints(newOsc2CustomPoints);
 
     if (std::abs(osc1Position - newOsc1Position) < 0.001f
         && std::abs(osc2Position - newOsc2Position) < 0.001f
+        && std::abs(warp - newWarp) < 0.001f
         && std::abs(osc1ModAmount - newOsc1ModAmount) < 0.001f
         && std::abs(osc2ModAmount - newOsc2ModAmount) < 0.001f
         && modRouteCount == newModRouteCount
         && modSourceSummary == newModSourceSummary
         && osc1Active == newOsc1Active
-        && osc2Active == newOsc2Active)
+        && osc2Active == newOsc2Active
+        && osc1CustomActive == newOsc1CustomActive
+        && osc2CustomActive == newOsc2CustomActive
+        && ! pointsDiffer(osc1CustomPoints, newOsc1CustomPoints)
+        && ! pointsDiffer(osc2CustomPoints, newOsc2CustomPoints))
     {
         return;
     }
 
     osc1Position = newOsc1Position;
     osc2Position = newOsc2Position;
+    warp = newWarp;
     osc1ModAmount = newOsc1ModAmount;
     osc2ModAmount = newOsc2ModAmount;
     modRouteCount = newModRouteCount;
     modSourceSummary = std::move(newModSourceSummary);
     osc1Active = newOsc1Active;
     osc2Active = newOsc2Active;
+    osc1CustomActive = newOsc1CustomActive;
+    osc2CustomActive = newOsc2CustomActive;
+    osc1CustomPoints = newOsc1CustomPoints;
+    osc2CustomPoints = newOsc2CustomPoints;
+    repaint();
+}
+
+juce::String WavetableDisplay::getTooltip()
+{
+    return "Wave editor: drag WT to morph, select Custom and draw points. Drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+}
+
+void WavetableDisplay::setCustomDrawMode(CustomDrawMode newMode)
+{
+    if (customDrawMode == newMode)
+        return;
+
+    customDrawMode = newMode;
+    lastDrawCustomPoint = -1;
     repaint();
 }
 
 void WavetableDisplay::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
-    const auto plot = bounds.reduced(8.0f, 8.0f);
-    const auto inactive = ! osc1Active && ! osc2Active;
+    auto visualArea = bounds.reduced(8.0f, 8.0f);
+    const auto showAnalysis = visualArea.getHeight() >= 112.0f;
+    auto analysisArea = juce::Rectangle<float>();
+    if (showAnalysis)
+    {
+        analysisArea = visualArea.removeFromBottom(25.0f);
+        visualArea.removeFromBottom(4.0f);
+    }
+    const auto plot = visualArea;
+    const auto inactive = ! osc1Active && ! osc2Active && ! osc1CustomActive && ! osc2CustomActive;
 
     g.setColour(juce::Colour(0xff101619));
     g.fillRoundedRectangle(bounds, 6.0f);
@@ -114,6 +247,82 @@ void WavetableDisplay::paint(juce::Graphics& g)
 
     g.setColour(juce::Colour(0x335b6e75));
     g.drawLine(plot.getX(), plot.getCentreY(), plot.getRight(), plot.getCentreY(), 1.0f);
+
+    const auto drawSurface = [&] (float position, bool customActive, const CustomPointArray& customPoints, juce::Colour colour)
+    {
+        if (plot.getWidth() < 150.0f || plot.getHeight() < 74.0f)
+            return;
+
+        const auto surfaceBounds = plot.reduced(12.0f, 13.0f);
+        constexpr auto sliceCount = 9;
+        for (auto slice = 0; slice < sliceCount; ++slice)
+        {
+            const auto depth = static_cast<float>(slice) / static_cast<float>(sliceCount - 1);
+            const auto framePosition = customActive ? position
+                                                     : juce::jlimit(0.0f, 1.0f, depth);
+            const auto xSkew = juce::jmap(depth, -12.0f, 14.0f);
+            const auto ySkew = juce::jmap(depth, 17.0f, -15.0f);
+            const auto alpha = juce::jmap(depth, 0.06f, 0.30f);
+            juce::Path path;
+            constexpr auto surfacePoints = 72;
+
+            for (auto index = 0; index < surfacePoints; ++index)
+            {
+                const auto phase = static_cast<float>(index) / static_cast<float>(surfacePoints - 1);
+                auto sample = 0.0f;
+
+                if (customActive)
+                {
+                    const auto pointPosition = phase * static_cast<float>(customPoints.size());
+                    const auto lowerIndex = static_cast<size_t>(std::floor(pointPosition)) % customPoints.size();
+                    const auto upperIndex = (lowerIndex + 1) % customPoints.size();
+                    const auto mix = pointPosition - std::floor(pointPosition);
+                    sample = ((customPoints[lowerIndex] + ((customPoints[upperIndex] - customPoints[lowerIndex]) * mix)) * 2.0f) - 1.0f;
+                    sample *= 0.72f + (depth * 0.18f);
+                }
+                else
+                {
+                    sample = sampleFrame(phase, framePosition) * 0.80f;
+                }
+
+                const auto x = surfaceBounds.getX() + (surfaceBounds.getWidth() * phase) + xSkew;
+                const auto y = surfaceBounds.getCentreY() - (sample * surfaceBounds.getHeight() * 0.30f) + ySkew;
+
+                if (index == 0)
+                    path.startNewSubPath(x, y);
+                else
+                    path.lineTo(x, y);
+            }
+
+            g.setColour(colour.withAlpha(alpha));
+            g.strokePath(path, juce::PathStrokeType(slice == sliceCount - 1 ? 1.45f : 0.85f,
+                                                    juce::PathStrokeType::curved,
+                                                    juce::PathStrokeType::rounded));
+        }
+
+        g.setColour(colour.withAlpha(0.10f));
+        for (auto rib = 0; rib < 5; ++rib)
+        {
+            const auto phase = static_cast<float>(rib) / 4.0f;
+            const auto x = surfaceBounds.getX() + (surfaceBounds.getWidth() * phase);
+            g.drawLine(x - 12.0f, surfaceBounds.getCentreY() + 17.0f,
+                       x + 14.0f, surfaceBounds.getCentreY() - 15.0f,
+                       0.7f);
+        }
+    };
+
+    if (osc2Active)
+        drawSurface(osc2Position, osc2CustomActive, osc2CustomPoints, juce::Colour(0xffc4a2ff));
+
+    if (osc1Active)
+        drawSurface(osc1Position, osc1CustomActive, osc1CustomPoints, juce::Colour(0xff8ee6c9));
+
+    if (! inactive)
+    {
+        const auto warpY = juce::jmap(warp, 0.0f, 1.0f, plot.getBottom(), plot.getY());
+        g.setColour(juce::Colour(0xffffc36b).withAlpha(0.24f));
+        g.drawHorizontalLine(static_cast<int>(std::round(warpY)), plot.getX(), plot.getRight());
+    }
 
     const auto drawModRange = [&] (float position, float amount, juce::Colour colour)
     {
@@ -140,6 +349,38 @@ void WavetableDisplay::paint(juce::Graphics& g)
     if (osc1Active)
         drawModRange(osc1Position, osc1ModAmount, juce::Colour(0xff8ee6c9));
 
+    const auto drawCustomPath = [&] (const CustomPointArray& points,
+                                     juce::Colour colour,
+                                     float thickness,
+                                     bool showHandles)
+    {
+        g.setColour(colour);
+        g.strokePath(makeCustomPath(plot, points), juce::PathStrokeType(thickness));
+
+        if (! showHandles)
+            return;
+
+        for (size_t index = 0; index < points.size(); ++index)
+        {
+            const auto phase = static_cast<float>(index) / static_cast<float>(points.size());
+            const auto x = plot.getX() + (plot.getWidth() * phase);
+            const auto y = plot.getBottom() - (plot.getHeight() * points[index]);
+            const auto handleSize = static_cast<int>(index) == editingCustomPoint ? 9.2f : 7.0f;
+            const auto handle = juce::Rectangle<float>(x - (handleSize * 0.5f),
+                                                       y - (handleSize * 0.5f),
+                                                       handleSize,
+                                                       handleSize);
+            g.setColour(colour.withAlpha(0.18f));
+            g.drawVerticalLine(juce::roundToInt(x), plot.getY(), plot.getBottom());
+            g.setColour(juce::Colour(0xff101619));
+            g.fillEllipse(handle.expanded(1.4f));
+            g.setColour(static_cast<int>(index) == editingCustomPoint ? juce::Colour(0xffedf7f4) : colour.withAlpha(0.70f));
+            g.drawEllipse(handle.expanded(3.0f), 1.0f);
+            g.setColour(colour);
+            g.fillEllipse(handle);
+        }
+    };
+
     const auto drawPath = [&] (float position, juce::Colour colour, float thickness)
     {
         g.setColour(colour);
@@ -149,10 +390,80 @@ void WavetableDisplay::paint(juce::Graphics& g)
     };
 
     if (osc2Active)
-        drawPath(osc2Position, juce::Colour(0x99c4a2ff), 1.2f);
+    {
+        if (osc2CustomActive)
+            drawCustomPath(osc2CustomPoints, juce::Colour(0x99c4a2ff), 1.2f, editingOscillator == 2);
+        else
+            drawPath(osc2Position, juce::Colour(0x99c4a2ff), 1.2f);
+    }
 
     if (osc1Active)
-        drawPath(osc1Position, juce::Colour(0xff8ee6c9), 1.6f);
+    {
+        if (osc1CustomActive)
+            drawCustomPath(osc1CustomPoints, juce::Colour(0xff8ee6c9), 1.6f, editingOscillator != 2);
+        else
+            drawPath(osc1Position, juce::Colour(0xff8ee6c9), 1.6f);
+    }
+
+    if (showAnalysis && ! inactive)
+    {
+        CustomPointArray analysisPoints {};
+        const auto targetCustom = (editingOscillator == 2 && osc2CustomActive) || (! osc1CustomActive && osc2CustomActive);
+        if (targetCustom)
+        {
+            analysisPoints = osc2CustomPoints;
+        }
+        else if (osc1CustomActive)
+        {
+            analysisPoints = osc1CustomPoints;
+        }
+        else
+        {
+            const auto position = osc1Active ? osc1Position : osc2Position;
+            for (size_t index = 0; index < analysisPoints.size(); ++index)
+            {
+                const auto phase = static_cast<float>(index) / static_cast<float>(analysisPoints.size());
+                analysisPoints[index] = juce::jlimit(0.0f, 1.0f, 0.5f + (sampleFrame(phase, position) * 0.5f));
+            }
+        }
+
+        const auto analysis = analysePoints(analysisPoints);
+        auto barsArea = analysisArea.removeFromLeft(analysisArea.getWidth() * 0.58f).reduced(1.0f, 2.0f);
+        const auto barWidth = barsArea.getWidth() / static_cast<float>(analysis.partials.size());
+        g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
+        g.fillRoundedRectangle(barsArea.expanded(1.0f), 3.0f);
+        for (size_t index = 0; index < analysis.partials.size(); ++index)
+        {
+            auto cell = juce::Rectangle<float>(barsArea.getX() + (static_cast<float>(index) * barWidth),
+                                               barsArea.getY(),
+                                               barWidth,
+                                               barsArea.getHeight()).reduced(1.5f, 1.0f);
+            const auto value = analysis.partials[index];
+            auto bar = cell.withY(cell.getBottom() - (cell.getHeight() * value))
+                           .withHeight(cell.getHeight() * value);
+            g.setColour((index == 0 ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff7bb7ff)).withAlpha(0.28f));
+            g.fillRoundedRectangle(cell, 2.0f);
+            g.setColour(index == 0 ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff7bb7ff));
+            g.fillRoundedRectangle(bar, 2.0f);
+            if ((index % 4) == 0 && barsArea.getHeight() >= 18.0f)
+            {
+                g.setColour(juce::Colour(0xff101619).withAlpha(0.75f));
+                g.setFont(juce::FontOptions(6.5f, juce::Font::bold));
+                g.drawFittedText(juce::String(static_cast<int>(index + 1)),
+                                 cell.withHeight(8.0f).toNearestInt(),
+                                 juce::Justification::centred,
+                                 1,
+                                 0.65f);
+            }
+        }
+
+        g.setColour(juce::Colour(0xff9fb0b6));
+        g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
+        const auto stats = "RMS " + juce::String(juce::roundToInt(analysis.rms * 100.0f)) + "%"
+            + "  DC " + (analysis.dc >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(analysis.dc * 100.0f)) + "%"
+            + "  PK " + juce::String(juce::roundToInt(analysis.peak * 100.0f)) + "%";
+        g.drawFittedText(stats, analysisArea.toNearestInt().reduced(4, 2), juce::Justification::centredRight, 1, 0.72f);
+    }
 
     if (inactive)
     {
@@ -166,14 +477,16 @@ void WavetableDisplay::paint(juce::Graphics& g)
         const auto labelBounds = getLocalBounds().removeFromTop(16).reduced(8, 1);
         g.setColour(juce::Colour(0xff8ee6c9));
         if (osc1Active)
-            g.drawText("O1 " + juce::String(juce::roundToInt(osc1Position * 100.0f)) + "%",
+            g.drawText(osc1CustomActive ? "O1 EDIT"
+                                        : "O1 " + juce::String(juce::roundToInt(osc1Position * 100.0f)) + "%",
                        labelBounds,
                        juce::Justification::centredLeft);
 
         if (osc2Active)
         {
             g.setColour(juce::Colour(0xffc4a2ff));
-            g.drawText("O2 " + juce::String(juce::roundToInt(osc2Position * 100.0f)) + "%",
+            g.drawText(osc2CustomActive ? "O2 EDIT"
+                                        : "O2 " + juce::String(juce::roundToInt(osc2Position * 100.0f)) + "%",
                        labelBounds,
                        juce::Justification::centredRight);
         }
@@ -206,7 +519,383 @@ void WavetableDisplay::paint(juce::Graphics& g)
                              1,
                              0.72f);
         }
+        else
+        {
+            auto detail = getLocalBounds().reduced(8, 2).removeFromBottom(11);
+            g.setColour(juce::Colour(0xff8a989e));
+            g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
+            g.drawFittedText("WRP " + juce::String(juce::roundToInt(warp * 100.0f)) + "%",
+                             detail,
+                             juce::Justification::centredRight,
+                             1,
+                             0.72f);
+        }
     }
+}
+
+void WavetableDisplay::mouseDown(const juce::MouseEvent& event)
+{
+    if (const auto partialIndex = partialForEvent(event); partialIndex >= 0)
+    {
+        editingOscillator = oscillatorForEvent(event);
+        editingPartial = partialIndex;
+        editingCustomPoint = -1;
+        editGestureActive = true;
+        lastDrawCustomPoint = -1;
+        if (onEditStart)
+            onEditStart();
+        editPartial(event, partialIndex);
+        return;
+    }
+
+    beginEdit(event);
+    applyMousePosition(event);
+}
+
+void WavetableDisplay::mouseDrag(const juce::MouseEvent& event)
+{
+    if (editingPartial >= 0)
+    {
+        editPartial(event, editingPartial);
+        return;
+    }
+
+    if (! editGestureActive)
+        beginEdit(event);
+
+    applyMousePosition(event);
+}
+
+void WavetableDisplay::mouseUp(const juce::MouseEvent&)
+{
+    editingCustomPoint = -1;
+    editingPartial = -1;
+    lastDrawCustomPoint = -1;
+    editGestureActive = false;
+}
+
+void WavetableDisplay::mouseDoubleClick(const juce::MouseEvent& event)
+{
+    beginEdit(event);
+    if (editingCustomPoint >= 0)
+    {
+        const auto target = oscillatorForEvent(event);
+        if (target == 2)
+        {
+            osc2CustomPoints[static_cast<size_t>(editingCustomPoint)] = defaultCustomWavePoints[static_cast<size_t>(editingCustomPoint)];
+            if (onCustomPointChange)
+                onCustomPointChange(2,
+                                    static_cast<size_t>(editingCustomPoint),
+                                    osc2CustomPoints[static_cast<size_t>(editingCustomPoint)]);
+        }
+        else
+        {
+            osc1CustomPoints[static_cast<size_t>(editingCustomPoint)] = defaultCustomWavePoints[static_cast<size_t>(editingCustomPoint)];
+            if (onCustomPointChange)
+                onCustomPointChange(1,
+                                    static_cast<size_t>(editingCustomPoint),
+                                    osc1CustomPoints[static_cast<size_t>(editingCustomPoint)]);
+        }
+
+        editingCustomPoint = -1;
+        editGestureActive = false;
+        repaint();
+        return;
+    }
+
+    const auto target = oscillatorForEvent(event);
+    if (target == 2 && onOsc2PositionChange)
+        onOsc2PositionChange(0.5f);
+    else if (onOsc1PositionChange)
+        onOsc1PositionChange(0.5f);
+
+    editGestureActive = false;
+}
+
+void WavetableDisplay::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    const auto delta = (wheel.deltaY >= 0.0f ? 0.025f : -0.025f)
+        * (event.mods.isShiftDown() || event.mods.isCommandDown() ? 0.35f : 1.0f);
+    nudgePosition(event, delta);
+}
+
+void WavetableDisplay::beginEdit(const juce::MouseEvent& event)
+{
+    editingOscillator = oscillatorForEvent(event);
+    editingCustomPoint = customPointForEvent(event);
+    if (! editGestureActive)
+    {
+        editGestureActive = true;
+        lastDrawCustomPoint = -1;
+        if (onEditStart)
+            onEditStart();
+    }
+}
+
+void WavetableDisplay::applyMousePosition(const juce::MouseEvent& event)
+{
+    const auto plot = editorPlotBounds();
+    if (plot.isEmpty())
+        return;
+
+    if (! event.mods.isAltDown()
+        && ((editingOscillator == 2 && osc2CustomActive) || (editingOscillator != 2 && osc1CustomActive)))
+    {
+        editingCustomPoint = customPointForEvent(event);
+        editCustomPoint(event, editingCustomPoint);
+        return;
+    }
+
+    if (event.mods.isAltDown())
+    {
+        const auto nextWarp = juce::jlimit(0.0f, 1.0f, 1.0f - ((event.position.y - plot.getY()) / juce::jmax(1.0f, plot.getHeight())));
+        warp = nextWarp;
+        if (onWarpChange)
+            onWarpChange(nextWarp);
+        repaint();
+        return;
+    }
+
+    const auto position = juce::jlimit(0.0f, 1.0f, (event.position.x - plot.getX()) / juce::jmax(1.0f, plot.getWidth()));
+    if (editingOscillator == 2)
+    {
+        osc2Position = position;
+        if (onOsc2PositionChange)
+            onOsc2PositionChange(position);
+    }
+    else
+    {
+        osc1Position = position;
+        if (onOsc1PositionChange)
+            onOsc1PositionChange(position);
+    }
+
+    repaint();
+}
+
+void WavetableDisplay::nudgePosition(const juce::MouseEvent& event, float delta)
+{
+    beginEdit(event);
+    if (event.mods.isAltDown())
+    {
+        const auto nextWarp = juce::jlimit(0.0f, 1.0f, warp + delta);
+        warp = nextWarp;
+        if (onWarpChange)
+            onWarpChange(nextWarp);
+        repaint();
+        return;
+    }
+
+    if ((editingOscillator == 2 && osc2CustomActive) || (editingOscillator != 2 && osc1CustomActive))
+    {
+        const auto plot = editorPlotBounds();
+        const auto position = juce::jlimit(0.0f, 1.0f,
+                                           ((event.position.x - plot.getX()) / juce::jmax(1.0f, plot.getWidth())) + delta);
+        editingCustomPoint = juce::jlimit(0,
+                                          static_cast<int>(defaultCustomWavePoints.size()) - 1,
+                                          static_cast<int>(std::round(position * static_cast<float>(defaultCustomWavePoints.size() - 1))));
+        editingCustomPoint = editingCustomPoint % static_cast<int>(defaultCustomWavePoints.size());
+        editCustomPoint(event, editingCustomPoint);
+        editGestureActive = false;
+        return;
+    }
+
+    if (editingOscillator == 2)
+    {
+        const auto nextPosition = juce::jlimit(0.0f, 1.0f, osc2Position + delta);
+        osc2Position = nextPosition;
+        if (onOsc2PositionChange)
+            onOsc2PositionChange(nextPosition);
+    }
+    else
+    {
+        const auto nextPosition = juce::jlimit(0.0f, 1.0f, osc1Position + delta);
+        osc1Position = nextPosition;
+        if (onOsc1PositionChange)
+            onOsc1PositionChange(nextPosition);
+    }
+
+    editGestureActive = false;
+    repaint();
+}
+
+int WavetableDisplay::oscillatorForEvent(const juce::MouseEvent& event) const noexcept
+{
+    if (! osc1Active && osc2Active)
+        return 2;
+
+    if (event.mods.isRightButtonDown() || event.mods.isShiftDown() || event.mods.isCommandDown())
+        return 2;
+
+    return 1;
+}
+
+int WavetableDisplay::customPointForEvent(const juce::MouseEvent& event) const noexcept
+{
+    const auto target = oscillatorForEvent(event);
+    if ((target == 2 && ! osc2CustomActive) || (target != 2 && ! osc1CustomActive))
+        return -1;
+
+    const auto plot = editorPlotBounds();
+    if (plot.isEmpty())
+        return -1;
+
+    const auto normalisedX = juce::jlimit(0.0f, 0.999f,
+                                          (event.position.x - plot.getX()) / juce::jmax(1.0f, plot.getWidth()));
+    return juce::jlimit(0,
+                        static_cast<int>(defaultCustomWavePoints.size()) - 1,
+                        static_cast<int>(std::floor(normalisedX * static_cast<float>(defaultCustomWavePoints.size()))));
+}
+
+void WavetableDisplay::editCustomPoint(const juce::MouseEvent& event, int pointIndex)
+{
+    pointIndex = juce::jlimit(0, static_cast<int>(defaultCustomWavePoints.size()) - 1, pointIndex);
+
+    const auto plot = editorPlotBounds();
+    const auto value = juce::jlimit(0.0f, 1.0f,
+                                    1.0f - ((event.position.y - plot.getY()) / juce::jmax(1.0f, plot.getHeight())));
+    const auto point = static_cast<size_t>(pointIndex);
+    const auto target = editingOscillator == 2 ? 2 : 1;
+
+    if (customDrawMode == CustomDrawMode::line && lastDrawCustomPoint >= 0 && lastDrawCustomPoint != pointIndex)
+    {
+        const auto start = juce::jmin(lastDrawCustomPoint, pointIndex);
+        const auto end = juce::jmax(lastDrawCustomPoint, pointIndex);
+        const auto span = juce::jmax(1, end - start);
+        for (auto index = start; index <= end; ++index)
+        {
+            const auto normalised = static_cast<float>(index - start) / static_cast<float>(span);
+            const auto drawValue = lastDrawCustomPoint < pointIndex
+                ? lastDrawCustomValue + ((value - lastDrawCustomValue) * normalised)
+                : value + ((lastDrawCustomValue - value) * normalised);
+            setCustomPointValue(target, static_cast<size_t>(index), drawValue);
+        }
+    }
+    else if (customDrawMode == CustomDrawMode::smooth)
+    {
+        setCustomPointValue(target, point, value);
+        if (point > 0)
+            setCustomPointValue(target, point - 1, (value * 0.35f) + ((editingOscillator == 2 ? osc2CustomPoints[point - 1] : osc1CustomPoints[point - 1]) * 0.65f));
+        if (point + 1 < defaultCustomWavePoints.size())
+            setCustomPointValue(target, point + 1, (value * 0.35f) + ((editingOscillator == 2 ? osc2CustomPoints[point + 1] : osc1CustomPoints[point + 1]) * 0.65f));
+    }
+    else if (customDrawMode == CustomDrawMode::step)
+    {
+        setCustomPointValue(target, point, value);
+        if (point + 1 < defaultCustomWavePoints.size())
+            setCustomPointValue(target, point + 1, value);
+    }
+    else if (customDrawMode == CustomDrawMode::erase)
+    {
+        setCustomPointValue(target, point, 0.5f);
+        if (point > 0)
+            setCustomPointValue(target, point - 1, (editingOscillator == 2 ? osc2CustomPoints[point - 1] : osc1CustomPoints[point - 1]) * 0.65f + 0.175f);
+        if (point + 1 < defaultCustomWavePoints.size())
+            setCustomPointValue(target, point + 1, (editingOscillator == 2 ? osc2CustomPoints[point + 1] : osc1CustomPoints[point + 1]) * 0.65f + 0.175f);
+    }
+    else
+    {
+        setCustomPointValue(target, point, value);
+    }
+
+    lastDrawCustomPoint = pointIndex;
+    lastDrawCustomValue = value;
+    repaint();
+}
+
+void WavetableDisplay::setCustomPointValue(int oscillator, size_t pointIndex, float value)
+{
+    if (pointIndex >= defaultCustomWavePoints.size())
+        return;
+
+    value = juce::jlimit(0.0f, 1.0f, value);
+    if (oscillator == 2)
+    {
+        osc2CustomPoints[pointIndex] = value;
+        if (onCustomPointChange)
+            onCustomPointChange(2, pointIndex, value);
+    }
+    else
+    {
+        osc1CustomPoints[pointIndex] = value;
+        if (onCustomPointChange)
+            onCustomPointChange(1, pointIndex, value);
+    }
+}
+
+void WavetableDisplay::editPartial(const juce::MouseEvent& event, int partialIndex)
+{
+    partialIndex = juce::jlimit(0, 15, partialIndex);
+    const auto target = editingOscillator == 2 ? 2 : 1;
+    if ((target == 2 && ! osc2CustomActive) || (target != 2 && ! osc1CustomActive))
+        return;
+
+    const auto bars = partialBarsBounds();
+    if (bars.isEmpty())
+        return;
+
+    const auto desired = juce::jlimit(0.0f,
+                                     1.0f,
+                                     1.0f - ((event.position.y - bars.getY()) / juce::jmax(1.0f, bars.getHeight())));
+    auto points = target == 2 ? osc2CustomPoints : osc1CustomPoints;
+    const auto analysis = analysePoints(points);
+    const auto current = analysis.partials[static_cast<size_t>(partialIndex)];
+    const auto harmonic = static_cast<float>(partialIndex + 1);
+    const auto delta = (desired - current) * 0.90f;
+    auto peak = 0.0001f;
+    std::array<float, customPointCount> bipolar {};
+
+    for (size_t index = 0; index < points.size(); ++index)
+    {
+        const auto phase = static_cast<float>(index) / static_cast<float>(points.size());
+        bipolar[index] = ((points[index] * 2.0f) - 1.0f)
+            + (std::sin(juce::MathConstants<float>::twoPi * phase * harmonic) * delta);
+        peak = juce::jmax(peak, std::abs(bipolar[index]));
+    }
+
+    const auto normalise = peak > 1.0f ? peak : 1.0f;
+    for (size_t index = 0; index < points.size(); ++index)
+        setCustomPointValue(target, index, 0.5f + ((bipolar[index] / normalise) * 0.5f));
+
+    repaint();
+}
+
+juce::Rectangle<float> WavetableDisplay::editorPlotBounds() const
+{
+    auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() >= 112.0f)
+    {
+        visualArea.removeFromBottom(25.0f);
+        visualArea.removeFromBottom(4.0f);
+    }
+
+    return visualArea;
+}
+
+juce::Rectangle<float> WavetableDisplay::partialBarsBounds() const
+{
+    auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() < 112.0f)
+        return {};
+
+    auto analysisArea = visualArea.removeFromBottom(25.0f);
+    analysisArea.removeFromRight(analysisArea.getWidth() * 0.42f);
+    return analysisArea.reduced(1.0f, 2.0f);
+}
+
+int WavetableDisplay::partialForEvent(const juce::MouseEvent& event) const noexcept
+{
+    const auto target = oscillatorForEvent(event);
+    if ((target == 2 && ! osc2CustomActive) || (target != 2 && ! osc1CustomActive))
+        return -1;
+
+    const auto bars = partialBarsBounds();
+    if (bars.isEmpty() || ! bars.contains(event.position))
+        return -1;
+
+    const auto normalised = juce::jlimit(0.0f, 0.999f,
+                                        (event.position.x - bars.getX()) / juce::jmax(1.0f, bars.getWidth()));
+    return juce::jlimit(0, 15, static_cast<int>(std::floor(normalised * 16.0f)));
 }
 
 float WavetableDisplay::sampleFrame(float phase, float position)
@@ -221,6 +910,26 @@ float WavetableDisplay::sampleFrame(float phase, float position)
     const auto upperSample = drawFrame(upperFrame, phase);
 
     return lowerSample + ((upperSample - lowerSample) * smoothMix);
+}
+
+juce::Path WavetableDisplay::makeCustomPath(juce::Rectangle<float> bounds, const CustomPointArray& points)
+{
+    juce::Path path;
+
+    for (size_t index = 0; index <= points.size(); ++index)
+    {
+        const auto pointIndex = index % points.size();
+        const auto phase = static_cast<float>(index) / static_cast<float>(points.size());
+        const auto x = bounds.getX() + (bounds.getWidth() * phase);
+        const auto y = bounds.getBottom() - (bounds.getHeight() * juce::jlimit(0.0f, 1.0f, points[pointIndex]));
+
+        if (index == 0)
+            path.startNewSubPath(x, y);
+        else
+            path.lineTo(x, y);
+    }
+
+    return path;
 }
 
 juce::Path WavetableDisplay::makePath(juce::Rectangle<float> bounds, float position)

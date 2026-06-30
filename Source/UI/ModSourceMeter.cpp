@@ -4,6 +4,36 @@
 
 namespace UI
 {
+namespace
+{
+juce::String compactSourceLabel(const juce::String& summary)
+{
+    auto label = summary.upToFirstOccurrenceOf(":", false, false).trim();
+    if (label.isEmpty())
+        label = summary.upToFirstOccurrenceOf("|", false, false).trim();
+
+    if (label.isEmpty())
+        label = summary.trim();
+
+    label = label.replace("Velocity", "Vel")
+                 .replace("Motion", "Move")
+                 .replace("Mod Env", "Env");
+
+    return label.substring(0, 12);
+}
+}
+
+ModSourceMeter::ModSourceMeter()
+{
+    setInterceptsMouseClicks(true, true);
+    setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+}
+
+void ModSourceMeter::setSourceIndex(int newSourceIndex)
+{
+    sourceIndex = juce::jmax(0, newSourceIndex);
+}
+
 void ModSourceMeter::setState(const juce::String& newSummary,
                               int newRouteCount,
                               float newDepth,
@@ -36,6 +66,25 @@ juce::String ModSourceMeter::getTooltip()
     return tooltipText;
 }
 
+void ModSourceMeter::mouseDown(const juce::MouseEvent&)
+{
+    dragStarted = false;
+}
+
+void ModSourceMeter::mouseDrag(const juce::MouseEvent& event)
+{
+    if (dragStarted || event.getDistanceFromDragStart() < 5 || sourceIndex <= 0 || ! onDragStart)
+        return;
+
+    dragStarted = true;
+    onDragStart(sourceIndex, *this);
+}
+
+void ModSourceMeter::mouseUp(const juce::MouseEvent&)
+{
+    dragStarted = false;
+}
+
 void ModSourceMeter::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(0.5f);
@@ -44,6 +93,7 @@ void ModSourceMeter::paint(juce::Graphics& g)
     const auto accent = configured
         ? (positiveDepth ? juce::Colour(0xff8ee6c9) : juce::Colour(0xffffa36f))
         : juce::Colour(0xff5b6a70);
+    const auto displayLabel = compactSourceLabel(summary);
 
     g.setColour(configured ? accent.withAlpha(0.10f) : juce::Colour(0x00101619));
     g.fillRoundedRectangle(bounds, 4.0f);
@@ -58,7 +108,7 @@ void ModSourceMeter::paint(juce::Graphics& g)
 
         g.setFont(juce::FontOptions(8.0f, configured ? juce::Font::bold : juce::Font::plain));
         g.setColour(configured ? juce::Colour(0xffe1fff5) : juce::Colour(0xffbdcacb));
-        g.drawFittedText(summary, row, juce::Justification::centredLeft, 1, 0.52f);
+        g.drawFittedText(displayLabel, row, juce::Justification::centredLeft, 1, 0.52f);
 
         if (badgeArea.getWidth() > 4 && badgeArea.getHeight() > 4)
         {
@@ -91,7 +141,7 @@ void ModSourceMeter::paint(juce::Graphics& g)
 
     g.setFont(juce::FontOptions(9.5f, configured ? juce::Font::bold : juce::Font::plain));
     g.setColour(configured ? juce::Colour(0xffd9fff1) : juce::Colour(0xffbdcacb));
-    g.drawFittedText(summary, textArea, juce::Justification::centredLeft, 1);
+    g.drawFittedText(displayLabel, textArea, juce::Justification::centredLeft, 1);
 
     if (badgeArea.getWidth() > 4 && badgeArea.getHeight() > 4)
     {

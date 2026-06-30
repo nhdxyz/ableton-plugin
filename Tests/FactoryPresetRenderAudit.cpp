@@ -160,9 +160,9 @@ int main()
     if (! copyFactoryPresetFiles(repoPresetNames))
         return 1;
 
-    if (repoPresetNames.size() < 96)
+    if (repoPresetNames.size() < 400)
     {
-        std::cerr << "Expected at least 96 repo-managed factory presets, found " << repoPresetNames.size() << '\n';
+        std::cerr << "Expected at least 400 repo-managed factory presets, found " << repoPresetNames.size() << '\n';
         return 1;
     }
 

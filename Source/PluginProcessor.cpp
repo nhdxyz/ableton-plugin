@@ -1768,6 +1768,9 @@ void NateVSTAudioProcessor::setSequencerStep(int index, Sequencer::Step step)
 {
     captureSequencerUndoState();
     patternSequencer.setStep(index, step);
+    if (step.enabled)
+        setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+
     if (isSequencerSceneChainPlaybackEnabled() && getSequencerSceneChainPlaybackLength() <= 0)
         refreshSequencerSceneChainPlayback();
 }
@@ -4295,7 +4298,9 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
                     Parameters::ID::unisonVoices,
                     Parameters::ID::unisonDetune,
                     Parameters::ID::unisonBlend,
-                    Parameters::ID::unisonSpread }))
+                    Parameters::ID::unisonSpread })
+        || anyArrayChanged(Parameters::ID::oscCustomWave)
+        || anyArrayChanged(Parameters::ID::osc2CustomWave))
         sections.add("Source");
 
     if (anyChanged({ Parameters::ID::ampAttack,
@@ -5115,6 +5120,8 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::unisonBlend,
                 Parameters::ID::unisonSpread
             }, intensity);
+            blendArray(Parameters::ID::oscCustomWave);
+            blendArray(Parameters::ID::osc2CustomWave);
             break;
 
         case RandomMutationScope::envelope:
@@ -5369,6 +5376,12 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::unisonBlend,
                 Parameters::ID::unisonSpread
             });
+
+            for (const auto* parameterID : Parameters::ID::oscCustomWave)
+                restoreParameterFromState(state, parameterID);
+
+            for (const auto* parameterID : Parameters::ID::osc2CustomWave)
+                restoreParameterFromState(state, parameterID);
             break;
 
         case RandomMutationScope::envelope:
@@ -5608,6 +5621,12 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::unisonBlend,
             Parameters::ID::unisonSpread
         });
+
+        for (const auto* parameterID : Parameters::ID::oscCustomWave)
+            restoreParameterFromState(state, parameterID);
+
+        for (const auto* parameterID : Parameters::ID::osc2CustomWave)
+            restoreParameterFromState(state, parameterID);
     }
 
     if (isRandomLockEnabled(Parameters::ID::randomLockSample))
@@ -6380,6 +6399,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardClipMix).isValid();
     const auto hasWavetablePositions = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWavetablePosition).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::osc2WavetablePosition).isValid();
+    const auto hasOsc1CustomWave = stateForParameters.getChildWithProperty("id", Parameters::ID::oscCustomWave.back()).isValid();
+    const auto hasOsc2CustomWave = stateForParameters.getChildWithProperty("id", Parameters::ID::osc2CustomWave.back()).isValid();
     const auto hasSequencerLockControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDestination).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDepth).isValid();
     const auto hasModMatrixEnabled = stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixEnabled[0]).isValid();
@@ -6483,6 +6504,36 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     {
         setParameterPlainValue(Parameters::ID::oscWavetablePosition, 0.0f);
         setParameterPlainValue(Parameters::ID::osc2WavetablePosition, 0.35f);
+    }
+    if (! hasOsc1CustomWave || ! hasOsc2CustomWave)
+    {
+        constexpr std::array<float, 16> customWaveDefaults {
+            0.5f,
+            0.691342f,
+            0.853553f,
+            0.961940f,
+            1.0f,
+            0.961940f,
+            0.853553f,
+            0.691342f,
+            0.5f,
+            0.308658f,
+            0.146447f,
+            0.038060f,
+            0.0f,
+            0.038060f,
+            0.146447f,
+            0.308658f
+        };
+
+        for (size_t index = 0; index < customWaveDefaults.size(); ++index)
+        {
+            if (! hasOsc1CustomWave)
+                setParameterPlainValue(Parameters::ID::oscCustomWave[index], customWaveDefaults[index]);
+
+            if (! hasOsc2CustomWave)
+                setParameterPlainValue(Parameters::ID::osc2CustomWave[index], customWaveDefaults[index]);
+        }
     }
     if (! hasSequencerLockControls)
     {

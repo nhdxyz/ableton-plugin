@@ -7,6 +7,7 @@
 namespace Parameters
 {
 using APVTS = juce::AudioProcessorValueTreeState;
+inline constexpr size_t customWaveMorphFrameCount = 8;
 
 namespace ID
 {
@@ -25,6 +26,42 @@ inline constexpr auto noiseDecay = "noise_decay";
 inline constexpr auto oscWarp = "osc_warp";
 inline constexpr auto oscWavetablePosition = "osc_wavetable_position";
 inline constexpr auto osc2WavetablePosition = "osc2_wavetable_position";
+inline constexpr std::array<const char*, 16> oscCustomWave {
+    "osc_custom_wave_1",
+    "osc_custom_wave_2",
+    "osc_custom_wave_3",
+    "osc_custom_wave_4",
+    "osc_custom_wave_5",
+    "osc_custom_wave_6",
+    "osc_custom_wave_7",
+    "osc_custom_wave_8",
+    "osc_custom_wave_9",
+    "osc_custom_wave_10",
+    "osc_custom_wave_11",
+    "osc_custom_wave_12",
+    "osc_custom_wave_13",
+    "osc_custom_wave_14",
+    "osc_custom_wave_15",
+    "osc_custom_wave_16"
+};
+inline constexpr std::array<const char*, 16> osc2CustomWave {
+    "osc2_custom_wave_1",
+    "osc2_custom_wave_2",
+    "osc2_custom_wave_3",
+    "osc2_custom_wave_4",
+    "osc2_custom_wave_5",
+    "osc2_custom_wave_6",
+    "osc2_custom_wave_7",
+    "osc2_custom_wave_8",
+    "osc2_custom_wave_9",
+    "osc2_custom_wave_10",
+    "osc2_custom_wave_11",
+    "osc2_custom_wave_12",
+    "osc2_custom_wave_13",
+    "osc2_custom_wave_14",
+    "osc2_custom_wave_15",
+    "osc2_custom_wave_16"
+};
 inline constexpr auto ampAttack = "amp_attack";
 inline constexpr auto ampDecay = "amp_decay";
 inline constexpr auto ampSustain = "amp_sustain";
@@ -403,6 +440,7 @@ inline constexpr std::array<const char*, 15> fxOrder {
 }
 
 juce::StringArray waveformChoices();
+juce::String customWaveMorphFrameParameterID(bool oscillator2, size_t frameIndex, size_t pointIndex);
 juce::StringArray filterModeChoices();
 juce::StringArray filterCharacterChoices();
 juce::StringArray filterSlopeChoices();

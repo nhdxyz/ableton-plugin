@@ -13,10 +13,17 @@ class StepSequencerGrid final : public juce::Component
 public:
     using StepGetter = std::function<Sequencer::Step(int)>;
     using StepSetter = std::function<void(int, Sequencer::Step)>;
+    using SelectionChanged = std::function<void(int, Sequencer::Step)>;
+
+    SelectionChanged onSelectionChanged;
 
     void setCallbacks(StepGetter getter, StepSetter setter);
     void setRootNote(int newRootNote);
     void setScaleMode(int newScaleMode);
+    int getSelectedStepIndex() const noexcept;
+    Sequencer::Step getSelectedStepValue() const;
+    void selectStep(int stepIndex);
+    void setSelectedStepValue(Sequencer::Step step);
 
     struct LayoutMetrics
     {
@@ -43,10 +50,11 @@ private:
                                  - Sequencer::PatternSequencer::minNoteOffset
                                  + 1;
     static constexpr int laneCount = 8;
-    static constexpr int laneLabelWidth = 44;
-    static constexpr int minimumLaneAreaHeight = 64;
-    static constexpr int maximumLaneAreaHeight = 112;
-    static constexpr int targetMinimumNoteRowHeight = 6;
+    static constexpr int laneLabelWidth = 62;
+    static constexpr int stepHeaderHeight = 22;
+    static constexpr int minimumLaneAreaHeight = 132;
+    static constexpr int maximumLaneAreaHeight = 232;
+    static constexpr int targetMinimumNoteRowHeight = 7;
     enum class DragMode
     {
         none,
@@ -66,6 +74,7 @@ private:
     StepSetter setStep;
     int lastEditedStep = -1;
     int lastEditedRow = -1;
+    int selectedStep = -1;
     int rootNote = 36;
     int scaleMode = 0;
     DragMode dragMode = DragMode::none;
@@ -76,6 +85,9 @@ private:
     juce::Rectangle<int> laneLabelBounds() const;
     juce::Rectangle<int> stepHeaderBounds() const;
     int laneAreaHeightForCurrentBounds() const noexcept;
+    float laneWeight(int lane) const noexcept;
+    float laneTopForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept;
+    float laneHeightForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept;
     int stepForPosition(juce::Point<int> position) const;
     int laneStepForPosition(juce::Point<int> position) const;
     int laneForPosition(juce::Point<int> position) const;
@@ -87,6 +99,7 @@ private:
     void beginEditAt(juce::Point<int> position);
     void editAt(juce::Point<int> position);
     void editLaneAt(juce::Point<int> position);
+    void notifySelectionChanged();
     void cycleTimingAt(juce::Point<int> position);
     void nudgeTimingAt(juce::Point<int> position, float delta);
     void nudgeLaneAt(juce::Point<int> position, float delta);

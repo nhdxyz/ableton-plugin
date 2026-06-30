@@ -41,6 +41,8 @@ public:
     };
 
     std::function<void(size_t)> onLayerSelected;
+    std::function<void(size_t)> onLayerEditStarted;
+    std::function<void(size_t, float)> onLayerLevelChanged;
 
     HouseLayerRackDisplay();
 
@@ -52,16 +54,20 @@ public:
     void mouseMove(const juce::MouseEvent& event) override;
     void mouseExit(const juce::MouseEvent& event) override;
     void mouseDown(const juce::MouseEvent& event) override;
+    void mouseDrag(const juce::MouseEvent& event) override;
+    void mouseUp(const juce::MouseEvent& event) override;
 
 private:
     Theme theme = themeFor(ThemeId::darkClub);
     State state;
     juce::String tooltipText;
     int hoveredLayerIndex = -1;
+    int editingLayerIndex = -1;
 
     static bool layersEqual(const Layer& left, const Layer& right) noexcept;
     static juce::Colour colourForLayer(const Theme& theme, const Layer& layer, size_t index);
     std::array<juce::Rectangle<float>, layerCount> layerBoundsForArea(juce::Rectangle<float> bounds) const;
     int layerIndexAt(juce::Point<float> position) const;
+    void updateLayerLevelAt(juce::Point<float> position);
 };
 }

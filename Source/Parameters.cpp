@@ -14,7 +14,17 @@ namespace Parameters
 {
 juce::StringArray waveformChoices()
 {
-    return { "Sine", "Saw", "Square", "Triangle", "Wavetable", "Organ", "House Piano" };
+    return { "Sine", "Saw", "Square", "Triangle", "Wavetable", "Organ", "House Piano", "Custom" };
+}
+
+juce::String customWaveMorphFrameParameterID(bool oscillator2, size_t frameIndex, size_t pointIndex)
+{
+    const auto safeFrame = juce::jlimit<size_t>(1, customWaveMorphFrameCount - 1, frameIndex);
+    const auto safePoint = juce::jlimit<size_t>(0, ID::oscCustomWave.size() - 1, pointIndex);
+    return juce::String(oscillator2 ? "osc2_custom_wave_frame_" : "osc_custom_wave_frame_")
+        + juce::String(static_cast<int>(safeFrame + 1))
+        + "_"
+        + juce::String(static_cast<int>(safePoint + 1));
 }
 
 juce::StringArray filterModeChoices()
@@ -1389,6 +1399,63 @@ APVTS::ParameterLayout createLayout()
         "Osc 2 Wavetable Position",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.35f));
+
+    constexpr std::array<float, 16> customWaveDefaults {
+        0.5f,
+        0.691342f,
+        0.853553f,
+        0.961940f,
+        1.0f,
+        0.961940f,
+        0.853553f,
+        0.691342f,
+        0.5f,
+        0.308658f,
+        0.146447f,
+        0.038060f,
+        0.0f,
+        0.038060f,
+        0.146447f,
+        0.308658f
+    };
+
+    for (size_t index = 0; index < ID::oscCustomWave.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::oscCustomWave[index],
+            "Osc 1 Custom Wave " + juce::String(static_cast<int>(index + 1)),
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            customWaveDefaults[index]));
+    }
+
+    for (size_t index = 0; index < ID::osc2CustomWave.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::osc2CustomWave[index],
+            "Osc 2 Custom Wave " + juce::String(static_cast<int>(index + 1)),
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            customWaveDefaults[index]));
+    }
+
+    for (size_t frameIndex = 1; frameIndex < customWaveMorphFrameCount; ++frameIndex)
+    {
+        for (size_t pointIndex = 0; pointIndex < ID::oscCustomWave.size(); ++pointIndex)
+        {
+            add(std::make_unique<juce::AudioParameterFloat>(
+                customWaveMorphFrameParameterID(false, frameIndex, pointIndex),
+                "Osc 1 Custom Frame " + juce::String(static_cast<int>(frameIndex + 1))
+                    + " Point " + juce::String(static_cast<int>(pointIndex + 1)),
+                juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+                customWaveDefaults[pointIndex]));
+
+            add(std::make_unique<juce::AudioParameterFloat>(
+                customWaveMorphFrameParameterID(true, frameIndex, pointIndex),
+                "Osc 2 Custom Frame " + juce::String(static_cast<int>(frameIndex + 1))
+                    + " Point " + juce::String(static_cast<int>(pointIndex + 1)),
+                juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+                customWaveDefaults[pointIndex]));
+        }
+    }
 
     add(std::make_unique<juce::AudioParameterChoice>(
         ID::sequencerLockDestination,

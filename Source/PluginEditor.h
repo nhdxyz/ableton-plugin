@@ -77,6 +77,8 @@ private:
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
+                                           public juce::DragAndDropContainer,
+                                           public juce::DragAndDropTarget,
                                            private juce::Timer,
                                            private juce::ListBoxModel
 {
@@ -88,6 +90,8 @@ public:
     void resized() override;
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
+    bool isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override;
+    void itemDropped(const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override;
     juce::StringArray runLayoutAudit();
 
 private:
@@ -111,6 +115,14 @@ private:
         recipe,
         history,
         save
+    };
+
+    enum class ModWorkflowPage
+    {
+        sources = 0,
+        matrix,
+        macros,
+        curves
     };
 
     enum class FxModule
@@ -251,12 +263,16 @@ private:
 
     juce::ComboBox waveformBox;
     juce::ComboBox osc2WaveBox;
+    juce::ComboBox wavetableToolBox;
+    juce::ComboBox wavetableDrawModeBox;
     juce::ComboBox noiseTypeBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox filterCharacterBox;
     juce::ComboBox filterSlopeBox;
     juce::ComboBox recipeBox;
     juce::ComboBox randomScopeBox;
+    juce::ComboBox randomSectionActionBox;
+    juce::ComboBox randomLockActionBox;
     juce::ComboBox sequencerRateBox;
     juce::ComboBox sequencerGrooveBox;
     juce::ComboBox sequencerScaleBox;
@@ -273,6 +289,7 @@ private:
     juce::ComboBox presetFilterBox;
     juce::ComboBox presetTagBox;
     juce::ComboBox presetSortBox;
+    juce::ComboBox presetBrowserPackFilterBox;
     juce::ComboBox presetRatingBox;
     juce::ComboBox candidateRatingBox;
     juce::ComboBox presetPackBox;
@@ -294,6 +311,7 @@ private:
     juce::ComboBox lfo2ShapeBox;
     juce::ComboBox lfo2SyncRateBox;
     juce::ComboBox lfoCurvePresetBox;
+    juce::ComboBox lfoCurveActionBox;
     std::array<juce::ComboBox, 8> modSourceBoxes;
     std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
@@ -622,6 +640,7 @@ private:
     juce::TextButton applyGrooveTransformButton { "Shape" };
     std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
     std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
+    std::array<juce::TextButton, 13> sequencerStepEditorButtons;
     juce::TextButton homeTabButton { "HOME" };
     juce::TextButton synthTabButton { "SYNTH" };
     juce::TextButton labTabButton { "LAB" };
@@ -642,6 +661,7 @@ private:
     juce::TextButton wavetableWaveButton { "WT" };
     juce::TextButton organWaveButton { "Org" };
     juce::TextButton housePianoWaveButton { "Pno" };
+    juce::TextButton customWaveButton { "Edit" };
     juce::TextButton osc2SineWaveButton { "Sine" };
     juce::TextButton osc2SawWaveButton { "Saw" };
     juce::TextButton osc2SquareWaveButton { "Square" };
@@ -649,6 +669,7 @@ private:
     juce::TextButton osc2WavetableWaveButton { "WT" };
     juce::TextButton osc2OrganWaveButton { "Org" };
     juce::TextButton osc2HousePianoWaveButton { "Pno" };
+    juce::TextButton osc2CustomWaveButton { "Edit" };
     juce::TextButton lowpassFilterButton { "LP" };
     juce::TextButton bandpassFilterButton { "BP" };
     juce::TextButton highpassFilterButton { "HP" };
@@ -665,7 +686,8 @@ private:
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton comparePresetButton { "Before" };
     juce::TextButton revertPresetButton { "Revert" };
-    std::array<juce::TextButton, 8> presetQuickFilterButtons;
+    std::array<juce::TextButton, 10> presetQuickFilterButtons;
+    std::array<juce::TextButton, 4> modWorkflowButtons;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
     juce::TextButton fxMoveUpButton { "Up" };
@@ -723,7 +745,11 @@ private:
     juce::TextButton keyboardOctaveDownButton { "Oct -" };
     juce::TextButton keyboardOctaveUpButton { "Oct +" };
     juce::TextButton keyboardPanicButton { "Panic" };
+    juce::TextButton sequencerRootDownButton { "-" };
+    juce::TextButton sequencerRootUpButton { "+" };
     juce::Label keyboardRangeLabel;
+    juce::Label sequencerRootValueLabel;
+    juce::Label sequencerStepEditorLabel;
     juce::Label fxRackStatusLabel;
     std::array<UI::ModSourceMeter, 15> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
@@ -783,6 +809,7 @@ private:
     double fxRackStatusOverrideUntilMs = 0.0;
     juce::String sampleWaveformKey;
     std::vector<juce::File> sequencerDragMidiFiles;
+    int keyboardTypingBaseOctave = -1;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
     std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
@@ -813,6 +840,8 @@ private:
     void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
     const ModulationMenuTarget* findModulationMenuTarget(const juce::Component* component) const;
     int findModRouteAmountIndex(const juce::Component* component) const;
+    void beginModSourceDrag(int sourceIndex, juce::Component& sourceComponent);
+    bool handleDroppedModSource(int sourceIndex, juce::Point<int> localPosition);
     void mouseEnter(const juce::MouseEvent& event) override;
     void mouseUp(const juce::MouseEvent& event) override;
     void showModulationMenuForControl(const ModulationMenuTarget& target, juce::Component& component);
@@ -831,6 +860,7 @@ private:
     void setRandomStatus(const juce::String& action);
     void setActivePanel(Panel panel);
     void setActiveRandomLabPage(RandomLabPage page);
+    void setActiveModWorkflowPage(ModWorkflowPage page);
     void updatePanelVisibility();
     void updateTabButtons();
     const UI::Theme& uiTheme() const noexcept;
@@ -843,6 +873,7 @@ private:
     void layoutFocusOverlay();
     juce::Rectangle<int> focusOverlayBounds() const;
     void updateRandomLabPageButtons();
+    void updateModWorkflowButtons();
     void updateRandomRecipeInfo();
     void updateInfoDetail();
     juce::String infoDetailTextForTopic(int topicId) const;
@@ -853,8 +884,22 @@ private:
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
+    void applySelectedWavetableTool();
+    bool wavetableTargetIsOsc2() const;
+    UI::WavetableDisplay::CustomPointArray readCustomWaveFrame(bool targetOsc2, size_t frameIndex) const;
+    UI::WavetableDisplay::CustomPointArray readMorphedCustomWaveFrame(bool targetOsc2) const;
+    void writeCustomWaveFrame(bool targetOsc2, size_t frameIndex, const UI::WavetableDisplay::CustomPointArray& values, const juce::String& editLabel);
+    void importSingleCycleWave(bool targetOsc2);
+    void exportSingleCycleWave(bool targetOsc2);
+    void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
+    void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
+    void bakeCurrentCustomWaveMorph(bool targetOsc2);
+    void applySelectedRandomSectionAction();
+    void applySelectedRandomLockAction();
     void updateHouseLayerRackDisplay();
     void focusHouseLayer(size_t layerIndex);
+    void beginHouseLayerLevelEdit(size_t layerIndex);
+    void setHouseLayerLevel(size_t layerIndex, float level);
     void updateFilterResponseDisplay();
     void updateHostSyncStatus();
     void updateModMatrixRows();
@@ -877,6 +922,7 @@ private:
     int modulationDestinationIndexForParameter(const juce::String& parameterID) const;
     void applyLfoCurvePreset(int presetId);
     void applyLfoCurveTool(LfoCurveTool tool);
+    void applySelectedLfoCurveAction();
     void updateOutputMeter();
     void updateOutputSpectrumDisplay();
     void updateOutputOscilloscopeDisplay();
@@ -891,6 +937,11 @@ private:
     void updateSequencerSceneButtons();
     void updateSequencerGridContext();
     void repaintSequencerGrids();
+    void updateSequencerStepEditor();
+    void setSelectedSequencerStep(Sequencer::Step step);
+    void adjustSelectedSequencerStepNote(int semitones);
+    void adjustSelectedSequencerStepValue(int fieldIndex, float delta);
+    void toggleSelectedSequencerStepFlag(int flagIndex);
     void selectSampleSlice(size_t sliceIndex);
     void updateSampleSliceButtons();
     void updateSampleSliceEditorStatus();
@@ -961,6 +1012,8 @@ private:
     void updateFavoritePresetButton();
     void shiftKeyboardOctave(int semitones);
     void updateKeyboardRangeLabel();
+    void stepSequencerRoot(int semitones);
+    void updateSequencerRootStepper();
     void addFxModule(FxModule module);
     void removeSelectedFxModule();
     void selectFxModule(FxModule module);
@@ -1008,6 +1061,7 @@ private:
     Panel activePanel = Panel::home;
     FocusOverlay activeFocusOverlay = FocusOverlay::none;
     RandomLabPage activeRandomLabPage = RandomLabPage::generate;
+    ModWorkflowPage activeModWorkflowPage = ModWorkflowPage::matrix;
     bool presetNameIsRandomDraft = false;
     bool presetNotesIsRandomDraft = false;
     bool currentPresetDraftIsGenerated = false;

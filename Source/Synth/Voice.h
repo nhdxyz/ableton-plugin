@@ -33,11 +33,16 @@ public:
 
     void prepare(double sampleRate, int maximumBlockSize);
     void setHostBpm(double bpm) noexcept;
+    void setActiveVoiceLoad(int activeVoiceCount) noexcept;
     void setSequencerLock(int destinationIndex, float amount) noexcept;
 
 private:
     static constexpr int maxUnisonVoices = 7;
     static constexpr int maxModSlots = 8;
+    static constexpr int controlUpdateIntervalSamples = 8;
+    using CustomWaveParameterPoints = std::array<std::atomic<float>*, Oscillator::customWavePointCount>;
+    using CustomWaveMorphParameterFrames =
+        std::array<CustomWaveParameterPoints, Oscillator::customWaveFrameCount - 1>;
 
     struct StereoSample
     {
@@ -75,15 +80,35 @@ private:
     float noiseBrownState = 0.0f;
     float noiseCrackleState = 0.0f;
     float noiseDigitalHeldSample = 0.0f;
+    float noiseTickEnvelope = 1.0f;
+    float noiseTickDecayMultiplier = 0.999f;
+    float currentOsc1Gain = 1.0f;
+    float currentOsc2Gain = 0.0f;
+    float currentSubGain = 0.0f;
+    float currentNoiseGain = 0.0f;
+    float currentSourceCompensation = 1.0f;
+    float currentMacroDrive = 0.18f;
     double currentSampleRate = 44100.0;
     double hostBpm = 124.0;
     int noiseDigitalHoldSamples = 1;
     int voiceAgeSamples = 0;
+    int controlSamplesUntilUpdate = 0;
     int glideSamplesRemaining = 0;
     int glideTotalSamples = 0;
     int sequencerLockDestination = 0;
+    int activeVoiceLoad = 1;
+    int currentNoiseTypeIndex = 0;
+    int currentActiveUnisonVoices = 1;
     float sequencerLockAmount = 0.0f;
     bool hasPreviousNoteFrequency = false;
+    bool osc1CustomFramesInitialised = false;
+    bool osc2CustomFramesInitialised = false;
+    int osc1CustomFramesAppliedVoices = 0;
+    int osc2CustomFramesAppliedVoices = 0;
+    Oscillator::CustomWaveFrames osc1CustomFrameCache {};
+    Oscillator::CustomWaveFrames osc2CustomFrameCache {};
+    std::array<float, maxUnisonVoices> currentUnisonLeftGains {};
+    std::array<float, maxUnisonVoices> currentUnisonRightGains {};
 
     std::atomic<float>* oscWave = nullptr;
     std::atomic<float>* oscOctave = nullptr;
@@ -100,6 +125,10 @@ private:
     std::atomic<float>* oscWarp = nullptr;
     std::atomic<float>* oscWavetablePosition = nullptr;
     std::atomic<float>* osc2WavetablePosition = nullptr;
+    CustomWaveParameterPoints oscCustomWave {};
+    CustomWaveParameterPoints osc2CustomWave {};
+    CustomWaveMorphParameterFrames oscCustomWaveFrames {};
+    CustomWaveMorphParameterFrames osc2CustomWaveFrames {};
     std::atomic<float>* ampAttack = nullptr;
     std::atomic<float>* ampDecay = nullptr;
     std::atomic<float>* ampSustain = nullptr;
@@ -150,15 +179,20 @@ private:
     std::array<std::atomic<float>*, maxModSlots> modMatrixAmounts {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixEnabled {};
 
-    void updateVoiceParameters(float envelopeValue);
-    void updateGlide();
-    float processLfo();
-    float processLfo2();
+    void updateVoiceParameters(float envelopeValue, int samplesToAdvance);
+    bool refreshCustomWavetableFrames(const CustomWaveParameterPoints& baseFrameParameters,
+                                      const CustomWaveMorphParameterFrames& morphFrameParameters,
+                                      Oscillator::CustomWaveFrames& frameCache,
+                                      bool& cacheInitialised);
+    void updateGlide(int samplesToAdvance);
+    float processLfo(int samplesToAdvance);
+    float processLfo2(int samplesToAdvance);
     float evaluateLfoCurve(float phase) const;
     float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
-    StereoSample renderUnisonStack(float osc1Gain, float osc2Gain);
+    StereoSample renderUnisonStack();
     float processNoiseSample(int noiseTypeIndex);
     int getUnisonVoiceCount() const;
+    int getBudgetedUnisonVoiceCount() const;
     float getUnisonPosition(int voiceIndex, int voiceCount) const;
     float frequencyForNote(int midiNoteNumber) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;

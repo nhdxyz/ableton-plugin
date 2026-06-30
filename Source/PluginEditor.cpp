@@ -10,23 +10,26 @@
 
 namespace
 {
-constexpr auto editorMinWidth = 940;
-constexpr auto editorMinHeight = 710;
-constexpr auto editorDefaultWidth = 1040;
-constexpr auto editorDefaultHeight = 760;
-constexpr auto editorMaxWidth = 1440;
-constexpr auto editorMaxHeight = 980;
-constexpr auto pianoKeyboardHeight = 58;
-constexpr auto keyboardControlsWidth = 214;
+constexpr auto editorMinWidth = 1040;
+constexpr auto editorMinHeight = 760;
+constexpr auto editorDefaultWidth = 1280;
+constexpr auto editorDefaultHeight = 820;
+constexpr auto editorMaxWidth = 1680;
+constexpr auto editorMaxHeight = 1040;
+constexpr auto pianoKeyboardHeight = 76;
+constexpr auto keyboardControlsWidth = 292;
 constexpr auto keyboardMinimumWhiteKeyWidth = 18.0f;
 constexpr auto keyboardMaximumWhiteKeyWidth = 36.0f;
 constexpr auto keyboardLowestNote = 24;
 constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 84;
-constexpr auto modTopRowHeight = 148;
-constexpr auto modGeneratorRowHeight = 158;
-constexpr auto modPanelGap = 6;
+constexpr auto modMatrixTitleHeight = 28;
+constexpr auto modMatrixInspectorHeight = 30;
+constexpr auto modMatrixRouteMapHeight = 46;
+constexpr auto modMatrixHeaderHeight = 18;
+constexpr auto modMatrixMinimumRowHeight = 26;
+constexpr auto modMatrixRouteMapMinimumRowHeight = 26;
 constexpr auto firstMacroModSourceIndex = 4;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto candidateAuditionDurationMs = 680.0;
@@ -124,6 +127,20 @@ float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, i
     const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(visibleLowestNote, keyboardHighestNote));
     const auto fillWidth = static_cast<float>(juce::jmax(1, keyboardBounds.getWidth())) / whiteKeyCount;
     return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
+}
+
+void configureKeyboardTypingMap(juce::MidiKeyboardComponent& keyboard, int baseOctave)
+{
+    keyboard.clearKeyMappings();
+
+    constexpr std::array<char, 17> keys {
+        'a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';'
+    };
+
+    for (size_t index = 0; index < keys.size(); ++index)
+        keyboard.setKeyPressForNote({ keys[index], 0, 0 }, static_cast<int>(index));
+
+    keyboard.setKeyPressBaseOctave(juce::jlimit(0, 10, baseOctave));
 }
 
 struct PresetBrowserRowLayout
@@ -378,6 +395,18 @@ juce::StringArray presetCategoryChoices()
         "House/Progressive",
         "House/Hard House",
         "House/Lo-Fi",
+        "Afro House",
+        "Amapiano",
+        "Organic House",
+        "Melodic Techno",
+        "Drum & Bass",
+        "Bass House",
+        "Hard Techno",
+        "Indie Dance",
+        "Trance",
+        "Ambient",
+        "Future Garage",
+        "Latin Tech",
         "Tech House",
         "Tech House/Bass",
         "Tech House/Deep Tech",
@@ -420,11 +449,14 @@ juce::StringArray presetFilterChoices()
         "Generated",
         "User",
         "Factory",
+        "Similar",
         "Five Star Crate",
         "Club Bass",
         "Chord Stabs",
         "Dub Stabs",
         "Bass",
+        "Chord",
+        "Pad",
         "Stab",
         "Lead",
         "House",
@@ -432,6 +464,13 @@ juce::StringArray presetFilterChoices()
         "Techno",
         "Minimal",
         "UKG",
+        "Afro House",
+        "Organic House",
+        "Drum & Bass",
+        "Hard Techno",
+        "Trance",
+        "Ambient",
+        "Latin Tech",
         "Bass House",
         "Amapiano",
         "Hardgroove",
@@ -477,11 +516,28 @@ juce::StringArray presetFilterChoices()
         "Garage Chops",
         "House Chords",
         "House Tools",
+        "House Expansion",
+        "Afro House Rituals",
+        "Amapiano Log Lab",
+        "Melodic Techno Motion",
+        "Organic Progressive",
+        "Drum & Bass Tools",
+        "Bass House Weapons",
+        "Hard Techno Rave",
+        "Indie Dance Dark Disco",
+        "Trance Progressive",
+        "Ambient Electronica",
+        "Future Garage Dub",
+        "Latin Tech Tribal",
         "Tech House Tools",
+        "Tech House Expansion",
         "Minimal Plucks",
         "Minimal Tools",
+        "Minimal Expansion",
         "Techno Stabs",
         "Techno Tools",
+        "Techno Expansion",
+        "UKG Expansion",
         "Dirty Tools",
         "Mono Safe",
         "Sequenced Grooves",
@@ -507,12 +563,29 @@ juce::StringArray presetPackChoices()
         "Garage Chops",
         "House Chords",
         "House Tools",
+        "House Expansion",
+        "Afro House Rituals",
+        "Amapiano Log Lab",
         "Dub Stabs",
         "Tech House Tools",
+        "Tech House Expansion",
         "Minimal Plucks",
         "Minimal Tools",
+        "Minimal Expansion",
         "Dub Techno Tools",
         "Techno Tools",
+        "Techno Expansion",
+        "Melodic Techno Motion",
+        "Organic Progressive",
+        "Drum & Bass Tools",
+        "Bass House Weapons",
+        "Hard Techno Rave",
+        "Indie Dance Dark Disco",
+        "Trance Progressive",
+        "Ambient Electronica",
+        "Future Garage Dub",
+        "Latin Tech Tribal",
+        "UKG Expansion",
         "Electro Breaks Tools",
         "Factory Pack"
     };
@@ -1344,6 +1417,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+    keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+    configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
     pianoKeyboard.setWantsKeyboardFocus(true);
     pianoKeyboard.setScrollButtonsVisible(true);
@@ -1356,14 +1431,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(pianoKeyboard);
 
     keyboardOctaveDownButton.setTooltip("Shift the audition keyboard down one octave");
+    keyboardOctaveDownButton.setWantsKeyboardFocus(false);
+    keyboardOctaveDownButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
     addAndMakeVisible(keyboardOctaveDownButton);
 
     keyboardOctaveUpButton.setTooltip("Shift the audition keyboard up one octave");
+    keyboardOctaveUpButton.setWantsKeyboardFocus(false);
+    keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
 
     keyboardPanicButton.setTooltip("Stop held keyboard, chord-memory, synth, and sample voices");
+    keyboardPanicButton.setWantsKeyboardFocus(false);
+    keyboardPanicButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardPanicButton.onClick = [this]
     {
         releasePresetAuditionNote();
@@ -1377,6 +1458,69 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardRangeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
     addAndMakeVisible(keyboardRangeLabel);
     updateKeyboardRangeLabel();
+
+    sequencerRootDownButton.setTooltip("Move sequencer root note down one semitone");
+    sequencerRootDownButton.setWantsKeyboardFocus(false);
+    sequencerRootDownButton.setMouseClickGrabsKeyboardFocus(false);
+    sequencerRootDownButton.onClick = [this] { stepSequencerRoot(-1); };
+    addAndMakeVisible(sequencerRootDownButton);
+
+    sequencerRootUpButton.setTooltip("Move sequencer root note up one semitone");
+    sequencerRootUpButton.setWantsKeyboardFocus(false);
+    sequencerRootUpButton.setMouseClickGrabsKeyboardFocus(false);
+    sequencerRootUpButton.onClick = [this] { stepSequencerRoot(1); };
+    addAndMakeVisible(sequencerRootUpButton);
+
+    sequencerRootValueLabel.setText("C1", juce::dontSendNotification);
+    sequencerRootValueLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    sequencerRootValueLabel.setJustificationType(juce::Justification::centred);
+    sequencerRootValueLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
+    sequencerRootValueLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
+    sequencerRootValueLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff31434a));
+    sequencerRootValueLabel.setTooltip("Sequencer root note");
+    addAndMakeVisible(sequencerRootValueLabel);
+
+    sequencerStepEditorLabel.setText("Select a step", juce::dontSendNotification);
+    sequencerStepEditorLabel.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    sequencerStepEditorLabel.setJustificationType(juce::Justification::centred);
+    sequencerStepEditorLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
+    sequencerStepEditorLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
+    sequencerStepEditorLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff31434a));
+    sequencerStepEditorLabel.setTooltip("Focused editor for the selected piano-roll step");
+    addAndMakeVisible(sequencerStepEditorLabel);
+
+    const std::array<juce::String, 13> stepButtonLabels {
+        "Note -", "Note +", "Oct -", "Oct +", "Vel -", "Vel +", "Prob -", "Prob +", "Len -", "Len +", "Rat", "Slide", "Lock"
+    };
+    for (size_t index = 0; index < sequencerStepEditorButtons.size(); ++index)
+    {
+        auto& button = sequencerStepEditorButtons[index];
+        button.setButtonText(stepButtonLabels[index]);
+        button.setWantsKeyboardFocus(false);
+        button.setMouseClickGrabsKeyboardFocus(false);
+        button.setTooltip("Edit the selected sequencer step: " + stepButtonLabels[index]);
+        button.onClick = [this, index]
+        {
+            switch (index)
+            {
+                case 0: adjustSelectedSequencerStepNote(-1); break;
+                case 1: adjustSelectedSequencerStepNote(1); break;
+                case 2: adjustSelectedSequencerStepNote(-12); break;
+                case 3: adjustSelectedSequencerStepNote(12); break;
+                case 4: adjustSelectedSequencerStepValue(0, -0.05f); break;
+                case 5: adjustSelectedSequencerStepValue(0, 0.05f); break;
+                case 6: adjustSelectedSequencerStepValue(1, -0.05f); break;
+                case 7: adjustSelectedSequencerStepValue(1, 0.05f); break;
+                case 8: adjustSelectedSequencerStepValue(2, -0.05f); break;
+                case 9: adjustSelectedSequencerStepValue(2, 0.05f); break;
+                case 10: toggleSelectedSequencerStepFlag(0); break;
+                case 11: toggleSelectedSequencerStepFlag(1); break;
+                case 12: toggleSelectedSequencerStepFlag(2); break;
+                default: break;
+            }
+        };
+        addAndMakeVisible(button);
+    }
 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "PERFORM");
@@ -1651,11 +1795,60 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     expandedSampleWaveformDisplay.onSliceSelected = sampleWaveformDisplay.onSliceSelected;
     expandedSampleWaveformDisplay.onSliceBoundaryChange = sampleWaveformDisplay.onSliceBoundaryChange;
     addAndMakeVisible(expandedSampleWaveformDisplay);
+    wavetableDisplay.onEditStart = [this] { captureGlobalEdit("Edit wavetable"); };
+    wavetableDisplay.onOsc1PositionChange = [this] (float position)
+    {
+        setPlainParameterValue(Parameters::ID::oscWave, 4.0f);
+        waveformBox.setSelectedItemIndex(4, juce::dontSendNotification);
+        setPlainParameterValue(Parameters::ID::oscWavetablePosition, position);
+        updateSelectedControlInspector("WT 1", Parameters::ID::oscWavetablePosition, position);
+        updateSegmentedSelectors();
+        updateWavetableDisplay();
+    };
+    wavetableDisplay.onOsc2PositionChange = [this] (float position)
+    {
+        setPlainParameterValue(Parameters::ID::osc2Wave, 4.0f);
+        osc2WaveBox.setSelectedItemIndex(4, juce::dontSendNotification);
+        setPlainParameterValue(Parameters::ID::osc2WavetablePosition, position);
+        updateSelectedControlInspector("WT 2", Parameters::ID::osc2WavetablePosition, position);
+        updateSegmentedSelectors();
+        updateWavetableDisplay();
+    };
+    wavetableDisplay.onWarpChange = [this] (float warp)
+    {
+        setPlainParameterValue(Parameters::ID::oscWarp, warp);
+        updateSelectedControlInspector("Osc Warp", Parameters::ID::oscWarp, warp);
+        updateWavetableDisplay();
+    };
+    wavetableDisplay.onCustomPointChange = [this] (int oscillator, size_t pointIndex, float value)
+    {
+        if (pointIndex >= Parameters::ID::oscCustomWave.size())
+            return;
+
+        const auto targetOsc2 = oscillator == 2;
+        const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+        const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
+                                       : juce::String(Parameters::ID::oscWave);
+        auto& waveBox = targetOsc2 ? osc2WaveBox : waveformBox;
+
+        setPlainParameterValue(waveID, 7.0f);
+        waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+        setPlainParameterValue(pointIDs[pointIndex], juce::jlimit(0.0f, 1.0f, value));
+        updateSelectedControlInspector(targetOsc2 ? "O2 Custom" : "O1 Custom",
+                                       pointIDs[pointIndex],
+                                       value);
+        updateSegmentedSelectors();
+        updateWavetableDisplay();
+    };
     addAndMakeVisible(wavetableDisplay);
     houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
+    houseLayerRackDisplay.onLayerEditStarted = [this] (size_t layerIndex) { beginHouseLayerLevelEdit(layerIndex); };
+    houseLayerRackDisplay.onLayerLevelChanged = [this] (size_t layerIndex, float level) { setHouseLayerLevel(layerIndex, level); };
     addAndMakeVisible(houseLayerRackDisplay);
     expandedHouseLayerRackDisplay.setComponentID("ExpandedHouseLayerRackDisplay");
     expandedHouseLayerRackDisplay.onLayerSelected = houseLayerRackDisplay.onLayerSelected;
+    expandedHouseLayerRackDisplay.onLayerEditStarted = houseLayerRackDisplay.onLayerEditStarted;
+    expandedHouseLayerRackDisplay.onLayerLevelChanged = houseLayerRackDisplay.onLayerLevelChanged;
     addAndMakeVisible(expandedHouseLayerRackDisplay);
     addAndMakeVisible(filterResponseDisplay);
 
@@ -1667,6 +1860,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         auto& meter = modSourceRows[index];
         meter.setComponentID("ModSource" + juce::String(static_cast<int>(index + 1)));
+        meter.setSourceIndex(static_cast<int>(index + 1));
+        meter.onDragStart = [this] (int sourceIndex, juce::Component& sourceComponent)
+        {
+            beginModSourceDrag(sourceIndex, sourceComponent);
+        };
         meter.setState(modSourceSummaryText(index), 0, 0.0f, 0.0f, modSourceSummaryText(index));
         addAndMakeVisible(meter);
     }
@@ -1830,12 +2028,68 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     updateInfoDetail();
 
     waveformBox.addItemList(Parameters::waveformChoices(), 1);
+    waveformBox.setTooltip("Osc 1 waveform. Choose Custom to edit the 16-point wave in the center display.");
     addAndMakeVisible(waveformBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWave, waveformBox));
 
     osc2WaveBox.addItemList(Parameters::waveformChoices(), 1);
+    osc2WaveBox.setTooltip("Osc 2 waveform. Choose Custom to edit the 16-point wave in the center display.");
     addAndMakeVisible(osc2WaveBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2Wave, osc2WaveBox));
+
+    wavetableDrawModeBox.addItem("Point Draw", 1);
+    wavetableDrawModeBox.addItem("Line Draw", 2);
+    wavetableDrawModeBox.addItem("Smooth Brush", 3);
+    wavetableDrawModeBox.addItem("Step Pencil", 4);
+    wavetableDrawModeBox.addItem("Center Erase", 5);
+    wavetableDrawModeBox.setSelectedId(1, juce::dontSendNotification);
+    wavetableDrawModeBox.setTextWhenNothingSelected("Draw Mode");
+    wavetableDrawModeBox.setTooltip("Choose how dragging edits custom wave points");
+    addAndMakeVisible(wavetableDrawModeBox);
+
+    wavetableToolBox.addItem("Wave Tools", 1);
+    wavetableToolBox.addItem("Mirror", 2);
+    wavetableToolBox.addItem("Normalize", 3);
+    wavetableToolBox.addItem("Smooth", 4);
+    wavetableToolBox.addItem("Sharpen", 5);
+    wavetableToolBox.addItem("Randomize", 6);
+    wavetableToolBox.addItem("Harmonics", 7);
+    wavetableToolBox.addItem("Sine", 8);
+    wavetableToolBox.addItem("Saw", 9);
+    wavetableToolBox.addItem("Square", 10);
+    wavetableToolBox.addItem("Triangle", 11);
+    wavetableToolBox.addItem("Copy Points", 12);
+    wavetableToolBox.addItem("Paste Points", 13);
+    wavetableToolBox.addItem("Invert", 14);
+    wavetableToolBox.addItem("Reverse", 15);
+    wavetableToolBox.addItem("Rotate Left", 16);
+    wavetableToolBox.addItem("Rotate Right", 17);
+    wavetableToolBox.addItem("Quantize", 18);
+    wavetableToolBox.addItem("Fold", 19);
+    wavetableToolBox.addItem("Zero DC", 20);
+    wavetableToolBox.addItem("Bright Partials", 21);
+    wavetableToolBox.addItem("Soft Clip", 22);
+    wavetableToolBox.addItem("Window Ends", 23);
+    wavetableToolBox.addSectionHeading("Single-Cycle WAV");
+    wavetableToolBox.addItem("Import WAV", 24);
+    wavetableToolBox.addItem("Export WAV", 25);
+    wavetableToolBox.addSectionHeading("Additive Partials");
+    wavetableToolBox.addItem("Odd Harmonics", 26);
+    wavetableToolBox.addItem("Even Harmonics", 27);
+    wavetableToolBox.addItem("Tilt Bright", 28);
+    wavetableToolBox.addItem("Tilt Dark", 29);
+    wavetableToolBox.addItem("Hollow Partials", 30);
+    wavetableToolBox.addItem("Random Partials", 31);
+    wavetableToolBox.addSectionHeading("Morph Frames");
+    for (auto frame = 1; frame <= 8; ++frame)
+        wavetableToolBox.addItem("Store Frame " + juce::String(frame), 31 + frame);
+    for (auto frame = 1; frame <= 8; ++frame)
+        wavetableToolBox.addItem("Load Frame " + juce::String(frame), 39 + frame);
+    wavetableToolBox.addItem("Bake WT Position", 48);
+    wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
+    wavetableToolBox.setTextWhenNothingSelected("Wave Tools");
+    wavetableToolBox.setTooltip("Apply custom-wave edits, import/export WAV single cycles, shape additive partials, or store/load eight WT morph frames");
+    addAndMakeVisible(wavetableToolBox);
 
     noiseTypeBox.addItemList(Parameters::noiseTypeChoices(), 1);
     noiseTypeBox.setTextWhenNothingSelected("Noise Type");
@@ -1844,6 +2098,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::noiseType, noiseTypeBox));
 
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
+    filterModeBox.setTextWhenNothingSelected("Filter Mode");
+    filterModeBox.setTooltip("Choose low-pass, band-pass, or high-pass filter mode");
     addAndMakeVisible(filterModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterMode, filterModeBox));
 
@@ -1869,6 +2125,40 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomScopeBox.setTextWhenNothingSelected("Scope");
     randomScopeBox.setTooltip("Limit Generate, Vary, Mutate, and Wild to one patch section");
     addAndMakeVisible(randomScopeBox);
+
+    randomSectionActionBox.addItem("Random Action", 1);
+    randomSectionActionBox.addItem("Source", 2);
+    randomSectionActionBox.addItem("Env", 3);
+    randomSectionActionBox.addItem("Filter", 4);
+    randomSectionActionBox.addItem("Sample", 5);
+    randomSectionActionBox.addItem("FX", 6);
+    randomSectionActionBox.addItem("Seq", 7);
+    randomSectionActionBox.addItem("Macros", 8);
+    randomSectionActionBox.addItem("Smart Full", 9);
+    randomSectionActionBox.addItem("Safe Vary", 10);
+    randomSectionActionBox.addItem("Wild Chain", 11);
+    randomSectionActionBox.addItem("Dice Seq", 12);
+    randomSectionActionBox.addItem("Macro Motion", 13);
+    randomSectionActionBox.addItem("FX Space", 14);
+    randomSectionActionBox.addItem("Explore 3", 15);
+    randomSectionActionBox.setSelectedId(1, juce::dontSendNotification);
+    randomSectionActionBox.setTextWhenNothingSelected("Random Action");
+    randomSectionActionBox.setTooltip("Run focused randomization actions: section rolls, full generation, safe variation, wild chain, sequencer dice, macro motion, FX space, or three candidate explorations");
+    addAndMakeVisible(randomSectionActionBox);
+
+    randomLockActionBox.addItem("Lock Focus", 1);
+    randomLockActionBox.addItem("Pitch", 2);
+    randomLockActionBox.addItem("Envelope", 3);
+    randomLockActionBox.addItem("Filter", 4);
+    randomLockActionBox.addItem("Source", 5);
+    randomLockActionBox.addItem("Sample", 6);
+    randomLockActionBox.addItem("FX", 7);
+    randomLockActionBox.addItem("Output", 8);
+    randomLockActionBox.addItem("Sequencer", 9);
+    randomLockActionBox.setSelectedId(1, juce::dontSendNotification);
+    randomLockActionBox.setTextWhenNothingSelected("Lock Focus");
+    randomLockActionBox.setTooltip("Toggle one generation lock without exposing the full lock grid");
+    addAndMakeVisible(randomLockActionBox);
 
     sequencerRateBox.addItemList(Parameters::sequencerRateChoices(), 1);
     addAndMakeVisible(sequencerRateBox);
@@ -1988,6 +2278,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetSortBox.setTextWhenNothingSelected("Sort");
     presetSortBox.setTooltip("Sort the visible library by name, rating, newest save, category, or source");
     addAndMakeVisible(presetSortBox);
+
+    presetBrowserPackFilterBox.addItem("All Packs", 1);
+    presetBrowserPackFilterBox.addItemList(presetPackChoices(), 2);
+    presetBrowserPackFilterBox.setSelectedId(1, juce::dontSendNotification);
+    presetBrowserPackFilterBox.setTextWhenNothingSelected("All Packs");
+    presetBrowserPackFilterBox.setTooltip("Filter the browser by pack without changing preset save metadata");
+    addAndMakeVisible(presetBrowserPackFilterBox);
 
     presetRatingBox.addItem("No Stars", 1);
     presetRatingBox.addItem("1 Star", 2);
@@ -2145,6 +2442,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     lfoCurvePresetBox.setTextWhenNothingSelected("Curve Preset");
     lfoCurvePresetBox.setTooltip("Load an LFO curve shape for house, UKG, techno, and minimal movement");
     addAndMakeVisible(lfoCurvePresetBox);
+
+    lfoCurveActionBox.addItem("Edit Curve", 1);
+    lfoCurveActionBox.addItem("Invert", 2);
+    lfoCurveActionBox.addItem("Reverse", 3);
+    lfoCurveActionBox.addItem("Smooth", 4);
+    lfoCurveActionBox.addItem("Quantize", 5);
+    lfoCurveActionBox.addItem("Randomize", 6);
+    lfoCurveActionBox.addItem("UKG Swing", 7);
+    lfoCurveActionBox.setSelectedId(1, juce::dontSendNotification);
+    lfoCurveActionBox.setTextWhenNothingSelected("Edit Curve");
+    lfoCurveActionBox.setTooltip("Apply utility edits to the visible LFO/MSEG curve");
+    addAndMakeVisible(lfoCurveActionBox);
 
     lfoCurveInvertButton.setTooltip("Invert the custom LFO curve around the centre line");
     lfoCurveInvertButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::invert); };
@@ -2909,6 +3218,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 4); };
     organWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 5); };
     housePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 6); };
+    customWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 7); };
     osc2SineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 0); };
     osc2SawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 1); };
     osc2SquareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 2); };
@@ -2916,6 +3226,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     osc2WavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 4); };
     osc2OrganWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 5); };
     osc2HousePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 6); };
+    osc2CustomWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 7); };
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
@@ -2944,13 +3255,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     revertPresetButton.setTooltip("Restore the sound from before the most recent Library preset load");
     revertPresetButton.onClick = [this] { revertPresetCompare(); };
     updatePresetCompareButtons();
-    const std::array<juce::String, 8> quickFilterLabels { "All", "Fav", "House", "Tech", "Min", "UKG", "Techno", "Factory" };
+    const std::array<juce::String, 10> quickFilterLabels { "All", "Fav", "Recent", "Similar", "Bass", "Lead", "Chord", "Pad", "FX", "Seq" };
     for (size_t index = 0; index < presetQuickFilterButtons.size(); ++index)
     {
         auto& button = presetQuickFilterButtons[index];
         button.setButtonText(quickFilterLabels[index]);
         button.setTooltip("Quick Library filter: " + quickFilterLabels[index]);
         button.setClickingTogglesState(false);
+        button.setWantsKeyboardFocus(false);
+        button.setMouseClickGrabsKeyboardFocus(false);
         button.onClick = [this, index] { applyPresetQuickFilter(index); };
         addAndMakeVisible(button);
     }
@@ -2987,12 +3300,30 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modMacroAssignSourceBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
     modMacroAssignDestinationBox.onChange = [this] { updateMacroAssignmentEditorStatus(); };
     modMacroAssignAmountSlider.onValueChange = [this] { updateMacroAssignmentEditorStatus(); };
+    wavetableDrawModeBox.onChange = [this]
+    {
+        switch (wavetableDrawModeBox.getSelectedId())
+        {
+            case 2: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::line); break;
+            case 3: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::smooth); break;
+            case 4: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::step); break;
+            case 5: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::erase); break;
+            case 1:
+            default: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::point); break;
+        }
+        returnKeyboardFocusToPiano();
+    };
+    wavetableToolBox.onChange = [this] { applySelectedWavetableTool(); };
+    randomSectionActionBox.onChange = [this] { applySelectedRandomSectionAction(); };
+    randomLockActionBox.onChange = [this] { applySelectedRandomLockAction(); };
+    presetBrowserPackFilterBox.onChange = [this] { refreshPresetList(); };
     lfoCurvePresetBox.onChange = [this]
     {
         const auto selectedId = lfoCurvePresetBox.getSelectedId();
         if (selectedId > 1)
             applyLfoCurvePreset(selectedId);
     };
+    lfoCurveActionBox.onChange = [this] { applySelectedLfoCurveAction(); };
     fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
@@ -3112,9 +3443,39 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         auto& button = randomLabPageButtons[index];
         button.setButtonText(randomLabPageLabels[index]);
         button.setTooltip(randomLabPageTooltips[index]);
+        button.setWantsKeyboardFocus(false);
+        button.setMouseClickGrabsKeyboardFocus(false);
         button.onClick = [this, index]
         {
             setActiveRandomLabPage(static_cast<RandomLabPage>(index));
+        };
+        addAndMakeVisible(button);
+    }
+
+    const std::array<juce::String, 4> modWorkflowLabels {
+        "Sources",
+        "Matrix",
+        "Macros",
+        "Curves"
+    };
+
+    const std::array<juce::String, 4> modWorkflowTooltips {
+        "Inspect live modulation sources and envelope/LFO activity",
+        "Edit active source-to-destination routes",
+        "Assign performance macros to destinations",
+        "Edit LFO and MSEG curve shapes"
+    };
+
+    for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
+    {
+        auto& button = modWorkflowButtons[index];
+        button.setButtonText(modWorkflowLabels[index]);
+        button.setTooltip(modWorkflowTooltips[index]);
+        button.setWantsKeyboardFocus(false);
+        button.setMouseClickGrabsKeyboardFocus(false);
+        button.onClick = [this, index]
+        {
+            setActiveModWorkflowPage(static_cast<ModWorkflowPage>(index));
         };
         addAndMakeVisible(button);
     }
@@ -3134,6 +3495,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         auto& button = randomSectionRollButtons[index];
         button.setButtonText(sectionRollLabels[index]);
         button.setTooltip("Mutate only the " + sectionRollLabels[index] + " section while preserving the rest of the patch");
+        button.setWantsKeyboardFocus(false);
+        button.setMouseClickGrabsKeyboardFocus(false);
         button.onClick = [this, index] { triggerRandomSectionRoll(index); };
         addAndMakeVisible(button);
     }
@@ -3208,6 +3571,20 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(effectsTabButton);
     addAndMakeVisible(libraryTabButton);
     addAndMakeVisible(infoTabButton);
+    for (auto* tabButton : {
+             &homeTabButton,
+             &synthTabButton,
+             &labTabButton,
+             &modTabButton,
+             &sampleTabButton,
+             &sequencerTabButton,
+             &effectsTabButton,
+             &libraryTabButton,
+             &infoTabButton })
+    {
+        tabButton->setWantsKeyboardFocus(false);
+        tabButton->setMouseClickGrabsKeyboardFocus(false);
+    }
     addAndMakeVisible(sineWaveButton);
     addAndMakeVisible(sawWaveButton);
     addAndMakeVisible(squareWaveButton);
@@ -3215,6 +3592,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(wavetableWaveButton);
     addAndMakeVisible(organWaveButton);
     addAndMakeVisible(housePianoWaveButton);
+    addAndMakeVisible(customWaveButton);
     addAndMakeVisible(osc2SineWaveButton);
     addAndMakeVisible(osc2SawWaveButton);
     addAndMakeVisible(osc2SquareWaveButton);
@@ -3222,6 +3600,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(osc2WavetableWaveButton);
     addAndMakeVisible(osc2OrganWaveButton);
     addAndMakeVisible(osc2HousePianoWaveButton);
+    addAndMakeVisible(osc2CustomWaveButton);
     addAndMakeVisible(lowpassFilterButton);
     addAndMakeVisible(bandpassFilterButton);
     addAndMakeVisible(highpassFilterButton);
@@ -3287,10 +3666,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         audioProcessor.setSequencerStep(index, step);
         repaintSequencerGrids();
+        updateSequencerStepEditor();
     };
     sequencerGrid.setCallbacks(sequencerStepGetter, sequencerStepSetter);
+    sequencerGrid.onSelectionChanged = [this] (int index, Sequencer::Step)
+    {
+        if (expandedSequencerGrid.getSelectedStepIndex() != index)
+            expandedSequencerGrid.selectStep(index);
+        updateSequencerStepEditor();
+    };
     expandedSequencerGrid.setComponentID("ExpandedSequencerGrid");
     expandedSequencerGrid.setCallbacks(sequencerStepGetter, sequencerStepSetter);
+    expandedSequencerGrid.onSelectionChanged = [this] (int index, Sequencer::Step)
+    {
+        if (sequencerGrid.getSelectedStepIndex() != index)
+            sequencerGrid.selectStep(index);
+        updateSequencerStepEditor();
+    };
     addAndMakeVisible(sequencerGrid);
     addAndMakeVisible(expandedSequencerGrid);
     applyThemeColours();
@@ -3325,6 +3717,9 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     titleLabel.setColour(juce::Label::textColourId, theme.text);
     keyboardRangeLabel.setColour(juce::Label::textColourId, theme.text);
+    sequencerRootValueLabel.setColour(juce::Label::textColourId, theme.text);
+    sequencerRootValueLabel.setColour(juce::Label::backgroundColourId, theme.field);
+    sequencerRootValueLabel.setColour(juce::Label::outlineColourId, theme.outline);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, theme.keyboardWhite);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, theme.keyboardBlack);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, theme.outline);
@@ -3438,12 +3833,13 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
         auto topRow = homeContent.removeFromTop(258);
+        const auto engineColumnWidth = juce::jlimit(306, 350, topRow.getWidth() / 4);
         const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
-        auto engineArea = topRow.removeFromLeft(306).reduced(5);
+        auto engineArea = topRow.removeFromLeft(engineColumnWidth).reduced(5);
         auto shapeArea = topRow.removeFromRight(macroColumnWidth).reduced(5);
         auto overviewArea = topRow.reduced(5);
         auto bottomRow = homeContent.withTrimmedTop(14);
-        auto labArea = bottomRow.removeFromLeft(330).reduced(5);
+        auto labArea = bottomRow.removeFromLeft(juce::jlimit(330, 380, bottomRow.getWidth() / 3)).reduced(5);
         auto libraryArea = bottomRow.reduced(5);
 
         for (auto area : { engineArea, overviewArea, shapeArea, labArea, libraryArea })
@@ -3458,19 +3854,13 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::synth)
     {
         auto synthContent = contentArea.reduced(18).withTrimmedTop(36);
-        synthContent.removeFromTop(44);
-        synthContent.removeFromTop(44);
-        synthContent.removeFromTop(8);
+        auto workspace = synthContent.withTrimmedTop(8);
+        auto sourceArea = workspace.removeFromLeft(juce::jlimit(300, 360, workspace.getWidth() / 4)).reduced(5);
+        workspace.removeFromLeft(10);
+        auto inspectorArea = workspace.removeFromRight(juce::jlimit(300, 370, workspace.getWidth() / 3)).reduced(5);
+        auto canvasArea = workspace.reduced(5);
 
-        auto topCards = synthContent.removeFromTop((synthContent.getHeight() - 10) / 2);
-        synthContent.removeFromTop(10);
-        auto bottomCards = synthContent;
-        auto sourceArea = topCards.removeFromLeft(330).reduced(5);
-        auto voiceArea = topCards.reduced(5);
-        auto filterArea = bottomCards.removeFromLeft(330).reduced(5);
-        auto ampArea = bottomCards.reduced(5);
-
-        for (auto area : { sourceArea, voiceArea, filterArea, ampArea })
+        for (auto area : { sourceArea, canvasArea, inspectorArea })
         {
             g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -3482,22 +3872,39 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::mod)
     {
         auto modContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = modContent.removeFromTop(modTopRowHeight);
-        auto sourceArea = topRow.removeFromLeft(300).reduced(5);
-        auto macroArea = topRow.reduced(5);
-        modContent.removeFromTop(modPanelGap);
-        auto controlsRow = modContent.removeFromTop(modGeneratorRowHeight);
-        auto lfoArea = controlsRow.removeFromLeft(450).reduced(5);
-        auto envelopeArea = controlsRow.reduced(5);
-        modContent.removeFromTop(modPanelGap);
-        auto matrixArea = modContent.reduced(5);
+        modContent.removeFromTop(38);
+        auto workspace = modContent.withTrimmedTop(8).reduced(5);
 
-        for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
+        auto drawPanel = [&g, &theme] (juce::Rectangle<int> area)
         {
             g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
             g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
+        };
+
+        if (activeModWorkflowPage == ModWorkflowPage::sources)
+        {
+            auto sourceArea = workspace.removeFromLeft(juce::jlimit(420, 590, workspace.getWidth() / 2)).reduced(0);
+            workspace.removeFromLeft(12);
+            auto generatorArea = workspace;
+            auto lfo2Area = generatorArea.removeFromTop(juce::jlimit(146, 188, generatorArea.getHeight() / 2));
+            generatorArea.removeFromTop(10);
+            drawPanel(sourceArea);
+            drawPanel(lfo2Area);
+            drawPanel(generatorArea);
+        }
+        else if (activeModWorkflowPage == ModWorkflowPage::macros)
+        {
+            const auto mapWidth = juce::jlimit(250, 360, workspace.getWidth() / 3);
+            auto mapArea = workspace.removeFromLeft(mapWidth);
+            workspace.removeFromLeft(10);
+            drawPanel(mapArea);
+            drawPanel(workspace);
+        }
+        else
+        {
+            drawPanel(workspace);
         }
     }
 
@@ -3505,11 +3912,12 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     {
         auto sampleContent = contentArea.reduced(18);
         sampleContent.removeFromTop(28);
-        auto sourceArea = sampleContent.removeFromTop(88).reduced(5);
-        auto chopArea = sampleContent.removeFromTop(192).reduced(5);
-        auto shapeArea = sampleContent.reduced(5);
+        auto workspace = sampleContent.withTrimmedTop(8);
+        auto sourceArea = workspace.removeFromLeft(juce::jlimit(260, 310, workspace.getWidth() / 4)).reduced(5);
+        workspace.removeFromLeft(10);
+        auto chopArea = workspace.reduced(5);
 
-        for (auto area : { sourceArea, chopArea, shapeArea })
+        for (auto area : { sourceArea, chopArea })
         {
             g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
@@ -3521,7 +3929,8 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::sequencer)
     {
         auto sequencerContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto controlArea = sequencerContent.removeFromTop(262).reduced(5);
+        auto controlArea = sequencerContent.removeFromLeft(juce::jlimit(228, 286, sequencerContent.getWidth() / 5)).reduced(5);
+        sequencerContent.removeFromLeft(10);
         auto gridArea = sequencerContent.reduced(5, 7);
 
         for (auto area : { controlArea, gridArea })
@@ -3653,10 +4062,10 @@ void NateVSTAudioProcessorEditor::resized()
     bounds.removeFromTop(14);
     auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
     auto keyboardControlArea = keyboardArea.removeFromLeft(keyboardControlsWidth).reduced(8, 6);
-    keyboardOctaveDownButton.setBounds(keyboardControlArea.removeFromLeft(42).reduced(2, 3));
-    keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(52).reduced(2, 3));
-    keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(42).reduced(2, 3));
-    keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(62).reduced(2, 3));
+    keyboardOctaveDownButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
+    keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(92).reduced(3, 4));
+    keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
+    keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(74).reduced(2, 4));
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
     pianoKeyboard.setBounds(pianoKeyboardBounds);
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboardBounds,
@@ -3730,12 +4139,13 @@ void NateVSTAudioProcessorEditor::resized()
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
             auto topRow = dashboard.removeFromTop(258);
+            const auto engineColumnWidth = juce::jlimit(306, 350, topRow.getWidth() / 4);
             const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
-            auto performArea = topRow.removeFromLeft(306).reduced(18, 12);
+            auto performArea = topRow.removeFromLeft(engineColumnWidth).reduced(18, 12);
             auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(18, 12);
             auto overviewArea = topRow.reduced(18, 12);
             auto bottomRow = dashboard.withTrimmedTop(14);
-            auto labArea = bottomRow.removeFromLeft(330).reduced(18, 12);
+            auto labArea = bottomRow.removeFromLeft(juce::jlimit(330, 380, bottomRow.getWidth() / 3)).reduced(18, 12);
             auto libraryArea = bottomRow.reduced(18, 12);
 
             homeEngineLabel.setBounds(performArea.removeFromTop(24));
@@ -3807,24 +4217,18 @@ void NateVSTAudioProcessorEditor::resized()
             synthVoiceLabel.setVisible(true);
             synthFilterLabel.setVisible(true);
             filterResponseDisplay.setVisible(true);
+            wavetableDisplay.setVisible(true);
+            outputOscilloscopeDisplay.setVisible(true);
+            outputSpectrumDisplay.setVisible(true);
             synthAmpLabel.setVisible(true);
-            sineWaveButton.setVisible(true);
-            sawWaveButton.setVisible(true);
-            squareWaveButton.setVisible(true);
-            triangleWaveButton.setVisible(true);
-            wavetableWaveButton.setVisible(true);
-            organWaveButton.setVisible(true);
-            housePianoWaveButton.setVisible(true);
-            osc2SineWaveButton.setVisible(true);
-            osc2SawWaveButton.setVisible(true);
-            osc2SquareWaveButton.setVisible(true);
-            osc2TriangleWaveButton.setVisible(true);
-            osc2WavetableWaveButton.setVisible(true);
-            osc2OrganWaveButton.setVisible(true);
-            osc2HousePianoWaveButton.setVisible(true);
-            lowpassFilterButton.setVisible(true);
-            bandpassFilterButton.setVisible(true);
-            highpassFilterButton.setVisible(true);
+            waveformBox.setVisible(true);
+            osc2WaveBox.setVisible(true);
+            wavetableToolBox.setVisible(true);
+            wavetableDrawModeBox.setVisible(true);
+            filterModeBox.setVisible(true);
+            lowpassFilterButton.setVisible(false);
+            bandpassFilterButton.setVisible(false);
+            highpassFilterButton.setVisible(false);
             noiseTypeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
@@ -3832,34 +4236,6 @@ void NateVSTAudioProcessorEditor::resized()
             houseLayerRackDisplay.setVisible(true);
             sourceLayerExpandButton.setVisible(true);
             synthSectionLabel.setBounds(content.removeFromTop(28));
-            auto selectorRow = content.removeFromTop(44);
-            auto waveRow = selectorRow.removeFromLeft(364);
-            const auto waveButtonWidth = waveRow.getWidth() / 7;
-            sineWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            sawWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            squareWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            triangleWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            wavetableWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            organWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            housePianoWaveButton.setBounds(waveRow.reduced(3, 4));
-            auto filterRow = selectorRow.removeFromLeft(180);
-            const auto filterButtonWidth = filterRow.getWidth() / 3;
-            lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
-            bandpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
-            highpassFilterButton.setBounds(filterRow.reduced(3, 4));
-            filterCharacterBox.setBounds(selectorRow.removeFromLeft(126).reduced(4));
-            filterSlopeBox.setBounds(selectorRow.removeFromLeft(82).reduced(4));
-            monoButton.setBounds(selectorRow.removeFromLeft(90).reduced(4));
-            auto osc2Row = content.removeFromTop(44).withTrimmedTop(2);
-            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 7;
-            osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2TriangleWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2WavetableWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2OrganWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2HousePianoWaveButton.setBounds(osc2Row.reduced(3, 4));
-            content.removeFromTop(8);
             setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
             setSliderVisible(subLevelSlider, subLevelLabel, true);
@@ -3886,22 +4262,25 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(decaySlider, decayLabel, true);
             setSliderVisible(sustainSlider, sustainLabel, true);
             setSliderVisible(releaseSlider, releaseLabel, true);
-            auto cards = content;
-            auto topCards = cards.removeFromTop((cards.getHeight() - 10) / 2);
-            cards.removeFromTop(10);
-            auto bottomCards = cards;
-
-            auto sourceArea = topCards.removeFromLeft(330).reduced(18, 10);
-            auto voiceArea = topCards.reduced(18, 10);
-            auto filterArea = bottomCards.removeFromLeft(330).reduced(18, 10);
-            auto ampArea = bottomCards.reduced(18, 10);
+            auto workspace = content.withTrimmedTop(8);
+            auto sourceArea = workspace.removeFromLeft(juce::jlimit(300, 360, workspace.getWidth() / 4)).reduced(18, 12);
+            workspace.removeFromLeft(10);
+            auto inspectorArea = workspace.removeFromRight(juce::jlimit(300, 370, workspace.getWidth() / 3)).reduced(18, 12);
+            auto canvasArea = workspace.reduced(18, 12);
 
             auto sourceHeader = sourceArea.removeFromTop(22);
             sourceLayerExpandButton.setBounds(sourceHeader.removeFromRight(28).reduced(3, 1));
             synthSourceLabel.setBounds(sourceHeader);
-            const auto compactSourceCard = sourceArea.getHeight() < 184;
-            const auto rackHeight = compactSourceCard ? 46 : 54;
-            const auto levelRowHeight = compactSourceCard ? 58 : 64;
+
+            auto osc1Row = sourceArea.removeFromTop(34).withTrimmedTop(2);
+            waveformBox.setBounds(osc1Row.reduced(4, 4));
+
+            auto osc2Row = sourceArea.removeFromTop(34).withTrimmedTop(2);
+            osc2WaveBox.setBounds(osc2Row.reduced(4, 4));
+
+            const auto compactSourceCard = sourceArea.getHeight() < 260;
+            const auto rackHeight = compactSourceCard ? 58 : 76;
+            const auto levelRowHeight = compactSourceCard ? 62 : 72;
             houseLayerRackDisplay.setBounds(sourceArea.removeFromTop(rackHeight).reduced(2, 4));
             layoutKnobRow(sourceArea.removeFromTop(levelRowHeight).withTrimmedTop(3), {
                 &osc1LevelSlider,
@@ -3910,43 +4289,67 @@ void NateVSTAudioProcessorEditor::resized()
                 &noiseLevelSlider
             });
             auto sourceTextureRow = sourceArea.withTrimmedTop(2);
-            noiseTypeBox.setBounds(sourceTextureRow.removeFromLeft(90).reduced(4, 8));
+            noiseTypeBox.setBounds(sourceTextureRow.removeFromTop(30).reduced(4, 4));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
                 &oscWavetablePositionSlider,
                 &osc2WavetablePositionSlider
             });
 
-            synthVoiceLabel.setBounds(voiceArea.removeFromTop(22));
-            layoutKnobRow(voiceArea.removeFromTop(72).withTrimmedTop(3), {
-                &octaveSlider,
-                &tuneSlider,
-                &osc2OctaveSlider,
-                &osc2TuneSlider,
-                &glideSlider,
-                &oscWarpSlider
-            });
-            layoutKnobRow(voiceArea.removeFromTop(72).withTrimmedTop(5), {
-                &unisonVoicesSlider,
-                &unisonDetuneSlider,
-                &unisonBlendSlider,
-                &unisonSpreadSlider
-            });
+            auto canvasHeader = canvasArea.removeFromTop(22);
+            synthFilterLabel.setBounds(canvasHeader);
+            auto waveToolRow = canvasArea.removeFromTop(34).withTrimmedTop(2);
+            wavetableDrawModeBox.setBounds(waveToolRow.removeFromLeft(juce::jlimit(120, 160, waveToolRow.getWidth() / 3)).reduced(4));
+            wavetableToolBox.setBounds(waveToolRow.removeFromLeft(juce::jlimit(128, 180, waveToolRow.getWidth() / 2)).reduced(4));
+            const auto wavetableHeight = juce::jlimit(158, 238, canvasArea.getHeight() / 2);
+            wavetableDisplay.setBounds(canvasArea.removeFromTop(wavetableHeight).reduced(2, 6));
 
-            synthFilterLabel.setBounds(filterArea.removeFromTop(22));
-            filterResponseDisplay.setBounds(filterArea.removeFromTop(58).reduced(2, 4));
-            layoutKnobRow(filterArea.removeFromTop(72).withTrimmedTop(3), {
+            auto liveVisualRow = canvasArea.removeFromTop(juce::jlimit(48, 62, canvasArea.getHeight() / 5)).withTrimmedTop(4);
+            const auto liveScopeWidth = juce::jlimit(150, 230, liveVisualRow.getWidth() / 3);
+            outputOscilloscopeDisplay.setBounds(liveVisualRow.removeFromLeft(liveScopeWidth).reduced(3, 2));
+            outputSpectrumDisplay.setBounds(liveVisualRow.reduced(3, 2));
+
+            auto filterSelectRow = canvasArea.removeFromTop(38).withTrimmedTop(2);
+            monoButton.setBounds(filterSelectRow.removeFromRight(78).reduced(4));
+            filterSlopeBox.setBounds(filterSelectRow.removeFromRight(78).reduced(4));
+            filterCharacterBox.setBounds(filterSelectRow.removeFromRight(juce::jlimit(110, 138, filterSelectRow.getWidth() / 2)).reduced(4));
+            filterModeBox.setBounds(filterSelectRow.reduced(4));
+
+            const auto responseHeight = juce::jlimit(86, 140, canvasArea.getHeight() / 2);
+            filterResponseDisplay.setBounds(canvasArea.removeFromTop(responseHeight).reduced(2, 6));
+            layoutKnobRow(canvasArea.removeFromTop(86).withTrimmedTop(4), {
                 &cutoffSlider,
                 &resonanceSlider,
                 &filterEnvSlider,
                 &driveSlider
             });
 
-            synthAmpLabel.setBounds(ampArea.removeFromTop(22));
-            layoutKnobRow(ampArea.removeFromTop(104).withTrimmedTop(5), {
+            synthVoiceLabel.setBounds(inspectorArea.removeFromTop(22));
+            layoutKnobRow(inspectorArea.removeFromTop(74).withTrimmedTop(4), {
+                &octaveSlider,
+                &tuneSlider,
+                &glideSlider
+            });
+            layoutKnobRow(inspectorArea.removeFromTop(74).withTrimmedTop(4), {
+                &osc2OctaveSlider,
+                &osc2TuneSlider,
+                &oscWarpSlider
+            });
+            layoutKnobRow(inspectorArea.removeFromTop(78).withTrimmedTop(5), {
+                &unisonVoicesSlider,
+                &unisonDetuneSlider,
+                &unisonBlendSlider,
+                &unisonSpreadSlider
+            });
+
+            inspectorArea.removeFromTop(8);
+            synthAmpLabel.setBounds(inspectorArea.removeFromTop(22));
+            layoutKnobRow(inspectorArea.removeFromTop(78).withTrimmedTop(5), {
                 &attackSlider,
                 &decaySlider,
-                &sustainSlider,
+                &sustainSlider
+            });
+            layoutKnobRow(inspectorArea.removeFromTop(78).withTrimmedTop(5), {
                 &releaseSlider,
                 &outputSlider
             });
@@ -3958,12 +4361,14 @@ void NateVSTAudioProcessorEditor::resized()
             randomSectionLabel.setVisible(true);
             randomSectionLabel.setBounds(content.removeFromTop(28));
 
-            auto pageRow = content.removeFromTop(42).withTrimmedTop(4);
-            const auto pageButtonWidth = pageRow.getWidth() / static_cast<int>(randomLabPageButtons.size());
+            auto labWorkspace = content.withTrimmedTop(8);
+            auto pageRail = labWorkspace.removeFromLeft(juce::jlimit(132, 168, labWorkspace.getWidth() / 6)).reduced(12, 8);
+            content = labWorkspace.reduced(18, 10);
+            const auto pageButtonHeight = juce::jlimit(32, 42, pageRail.getHeight() / static_cast<int>(randomLabPageButtons.size()));
             for (auto& button : randomLabPageButtons)
             {
                 button.setVisible(true);
-                button.setBounds(pageRow.removeFromLeft(pageButtonWidth).reduced(4));
+                button.setBounds(pageRail.removeFromTop(pageButtonHeight).reduced(4));
             }
             updateRandomLabPageButtons();
 
@@ -3975,44 +4380,24 @@ void NateVSTAudioProcessorEditor::resized()
                     generateButton.setVisible(true);
 
                 auto row = content.removeFromTop(48).withTrimmedTop(4);
-                recipeBox.setBounds(row.removeFromLeft(240).reduced(4));
-                randomScopeBox.setBounds(row.removeFromLeft(132).reduced(4));
+                recipeBox.setBounds(row.removeFromLeft(juce::jlimit(220, 320, row.getWidth() / 2)).reduced(4));
+                randomScopeBox.setBounds(row.removeFromLeft(juce::jlimit(120, 160, row.getWidth() / 3)).reduced(4));
                 if (includeGenerate)
-                    generateButton.setBounds(row.removeFromLeft(112).reduced(4));
+                    generateButton.setBounds(row.removeFromLeft(juce::jlimit(100, 132, row.getWidth())).reduced(4));
             };
 
-            auto showSectionRolls = [&content, this]
+            auto showSectionAction = [&content, this]
             {
-                auto row = content.removeFromTop(42).withTrimmedTop(6);
-                const auto buttonWidth = row.getWidth() / static_cast<int>(randomSectionRollButtons.size());
-                for (auto& button : randomSectionRollButtons)
-                {
-                    button.setVisible(true);
-                    button.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                }
+                randomSectionActionBox.setVisible(true);
+                auto row = content.removeFromTop(42).withTrimmedTop(4);
+                randomSectionActionBox.setBounds(row.removeFromLeft(juce::jlimit(180, 260, row.getWidth() / 3)).reduced(4));
             };
 
-            auto showLockRow = [&content, this]
+            auto showLockAction = [&content, this]
             {
-                randomLockPitchButton.setVisible(true);
-                randomLockEnvelopeButton.setVisible(true);
-                randomLockFilterButton.setVisible(true);
-                randomLockSourceButton.setVisible(true);
-                randomLockSampleButton.setVisible(true);
-                randomLockFxButton.setVisible(true);
-                randomLockOutputButton.setVisible(true);
-                randomLockSequencerButton.setVisible(true);
-
-                auto row = content.removeFromTop(44).withTrimmedTop(6);
-                const auto buttonWidth = row.getWidth() / 8;
-                randomLockPitchButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockEnvelopeButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockFilterButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockSourceButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockSampleButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockFxButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockOutputButton.setBounds(row.removeFromLeft(buttonWidth).reduced(4));
-                randomLockSequencerButton.setBounds(row.reduced(4));
+                randomLockActionBox.setVisible(true);
+                auto row = content.removeFromTop(42).withTrimmedTop(4);
+                randomLockActionBox.setBounds(row.removeFromLeft(juce::jlimit(180, 260, row.getWidth() / 3)).reduced(4));
             };
 
             auto showRandomBiasKnobs = [&content, this]
@@ -4033,7 +4418,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto showSectionIntensityControls = [&content, this]
             {
-                auto row = content.removeFromTop(72).withTrimmedTop(6);
+                auto row = content.removeFromTop(84).withTrimmedTop(6);
                 const auto count = static_cast<int>(randomSectionIntensitySliders.size());
                 const auto cellWidth = row.getWidth() / juce::jmax(1, count);
 
@@ -4042,8 +4427,8 @@ void NateVSTAudioProcessorEditor::resized()
                     auto cell = row.removeFromLeft(cellWidth).reduced(4, 2);
                     randomSectionIntensityLabels[index].setVisible(true);
                     randomSectionIntensitySliders[index].setVisible(true);
-                    randomSectionIntensityLabels[index].setBounds(cell.removeFromTop(18));
-                    randomSectionIntensitySliders[index].setBounds(cell.removeFromTop(26));
+                    randomSectionIntensityLabels[index].setBounds(cell.removeFromTop(22));
+                    randomSectionIntensitySliders[index].setBounds(cell.removeFromTop(30));
                 }
             };
 
@@ -4090,7 +4475,7 @@ void NateVSTAudioProcessorEditor::resized()
                 case RandomLabPage::generate:
                 {
                     showRecipeControls(true);
-                    showSectionRolls();
+                    showSectionAction();
                     showRandomBiasKnobs();
                     showSectionIntensityControls();
                     showStatus();
@@ -4106,15 +4491,19 @@ void NateVSTAudioProcessorEditor::resized()
                     wildMutateButton.setVisible(true);
                     undoRandomButton.setVisible(true);
                     redoRandomButton.setVisible(true);
+                    randomSectionActionBox.setVisible(true);
 
-                    auto row = content.removeFromTop(48).withTrimmedTop(4);
-                    recipeBox.setBounds(row.removeFromLeft(220).reduced(4));
-                    randomScopeBox.setBounds(row.removeFromLeft(118).reduced(4));
-                    variationButton.setBounds(row.removeFromLeft(84).reduced(4));
-                    mutateButton.setBounds(row.removeFromLeft(96).reduced(4));
-                    wildMutateButton.setBounds(row.removeFromLeft(76).reduced(4));
-                    undoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
-                    redoRandomButton.setBounds(row.removeFromLeft(78).reduced(4));
+                    auto rows = content.removeFromTop(84).withTrimmedTop(4);
+                    auto topRow = rows.removeFromTop(40);
+                    auto bottomRow = rows.withTrimmedTop(2);
+                    recipeBox.setBounds(topRow.removeFromLeft(juce::jlimit(190, 260, topRow.getWidth() / 3)).reduced(4));
+                    randomScopeBox.setBounds(topRow.removeFromLeft(juce::jlimit(118, 160, topRow.getWidth() / 3)).reduced(4));
+                    randomSectionActionBox.setBounds(topRow.removeFromLeft(juce::jlimit(160, 230, topRow.getWidth())).reduced(4));
+                    variationButton.setBounds(bottomRow.removeFromLeft(bottomRow.getWidth() / 5).reduced(4));
+                    mutateButton.setBounds(bottomRow.removeFromLeft(bottomRow.getWidth() / 4).reduced(4));
+                    wildMutateButton.setBounds(bottomRow.removeFromLeft(bottomRow.getWidth() / 3).reduced(4));
+                    undoRandomButton.setBounds(bottomRow.removeFromLeft(bottomRow.getWidth() / 2).reduced(4));
+                    redoRandomButton.setBounds(bottomRow.reduced(4));
                     showRandomBiasKnobs();
                     showSectionIntensityControls();
                     showStatus();
@@ -4127,7 +4516,7 @@ void NateVSTAudioProcessorEditor::resized()
                     randomRecipeInfoLabel.setVisible(true);
                     updateRandomRecipeInfo();
                     randomRecipeInfoLabel.setBounds(content.removeFromTop(46).withTrimmedTop(6).reduced(4));
-                    showLockRow();
+                    showLockAction();
                     showRandomBiasKnobs();
                     showStatus();
                     break;
@@ -4195,171 +4584,162 @@ void NateVSTAudioProcessorEditor::resized()
         case Panel::mod:
         {
             modSectionLabel.setVisible(true);
-            modSourceLabel.setVisible(true);
-            modMacroLabel.setVisible(true);
-            modLfoLabel.setVisible(true);
-            modLfo2Label.setVisible(true);
-            modEnvelopeLabel.setVisible(true);
-            modMatrixLabel.setVisible(true);
-            lfo1ShapeBox.setVisible(true);
-            lfo1SyncRateBox.setVisible(true);
-            lfo2ShapeBox.setVisible(true);
-            lfo2SyncRateBox.setVisible(true);
-            lfoCurvePresetBox.setVisible(true);
-            lfo1SyncButton.setVisible(true);
-            lfo1RetriggerButton.setVisible(true);
-            lfo2SyncButton.setVisible(true);
-            lfo2RetriggerButton.setVisible(true);
-            lfoCurveDisplay.setVisible(true);
-            lfoCurveInvertButton.setVisible(true);
-            lfoCurveReverseButton.setVisible(true);
-            lfoCurveSmoothButton.setVisible(true);
-            lfoCurveQuantizeButton.setVisible(true);
-            lfoCurveRandomButton.setVisible(true);
-            lfoCurveGarageButton.setVisible(true);
-
             modSectionLabel.setBounds(content.removeFromTop(28));
 
-            for (auto& label : modSourceRows)
-                label.setVisible(true);
-
-            for (size_t index = 0; index < modSlotRows.size(); ++index)
+            auto workflowRow = content.removeFromTop(38).withTrimmedTop(4);
+            for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
             {
-                modSlotRows[index].setVisible(true);
-                modSourceBoxes[index].setVisible(true);
-                modDestinationBoxes[index].setVisible(true);
-                modAmountSliders[index].setVisible(true);
-                modAmountLabels[index].setVisible(false);
-                modMatrixRows[index].setVisible(true);
-                modSlotEnabledButtons[index].setVisible(true);
-                modSlotDuplicateButtons[index].setVisible(true);
-                modSlotDeleteButtons[index].setVisible(true);
+                auto& button = modWorkflowButtons[index];
+                button.setVisible(true);
+                const auto remaining = static_cast<int>(modWorkflowButtons.size() - index);
+                button.setBounds(workflowRow.removeFromLeft(workflowRow.getWidth() / juce::jmax(1, remaining)).reduced(4));
             }
-            modMatrixStatusLabel.setVisible(true);
-            modInspectorLabel.setVisible(true);
-            modInspectorDestinationBox.setVisible(true);
-            modInspectorSourceBox.setVisible(true);
-            modInspectorStatusLabel.setVisible(true);
-            modInspectorAddButton.setVisible(true);
-            modInspectorClearButton.setVisible(true);
-            modMacroAssignLabel.setVisible(true);
-            modMacroAssignStatusLabel.setVisible(true);
-            modMatrixSourceHeader.setVisible(true);
-            modMatrixDestinationHeader.setVisible(true);
-            modMatrixAmountHeader.setVisible(true);
-            modMatrixSourceHeaderB.setVisible(true);
-            modMatrixDestinationHeaderB.setVisible(true);
-            modMatrixAmountHeaderB.setVisible(true);
-            macroAssignmentPad.setVisible(true);
-            macroPerformanceMap.setVisible(true);
-            modMacroExpandButton.setVisible(true);
-            modRouteMapDisplay.setVisible(true);
+            updateModWorkflowButtons();
 
-            auto modContent = content.withTrimmedTop(8);
-            auto topRow = modContent.removeFromTop(modTopRowHeight);
-            auto sourceArea = topRow.removeFromLeft(300).reduced(18, 8);
-            auto macroArea = topRow.reduced(18, 8);
+            auto modContent = content.withTrimmedTop(8).reduced(18, 10);
 
-            modSourceLabel.setBounds(sourceArea.removeFromTop(18));
-            auto sourceListArea = sourceArea.withTrimmedTop(2);
-            auto leftSources = sourceListArea.removeFromLeft(sourceListArea.getWidth() / 2);
-            auto rightSources = sourceListArea;
-            const auto sourceColumnRows = (modSourceRows.size() + 1) / 2;
-            const auto sourceRowHeight = juce::jmax(10,
-                                                    sourceListArea.getHeight()
-                                                        / juce::jmax(1, static_cast<int>(sourceColumnRows)));
-            for (size_t index = 0; index < modSourceRows.size(); ++index)
+            auto layoutSources = [this] (juce::Rectangle<int> area)
             {
-                auto& column = index < sourceColumnRows ? leftSources : rightSources;
-                modSourceRows[index].setBounds(column.removeFromTop(sourceRowHeight).reduced(3, 1));
-            }
+                modSourceLabel.setVisible(true);
+                modLfo2Label.setVisible(true);
+                modEnvelopeLabel.setVisible(true);
+                lfo2ShapeBox.setVisible(true);
+                lfo2SyncRateBox.setVisible(true);
+                lfo2SyncButton.setVisible(true);
+                lfo2RetriggerButton.setVisible(true);
 
-            auto macroHeader = macroArea.removeFromTop(18);
-            modMacroLabel.setBounds(macroHeader.removeFromLeft(74));
-            modMacroAssignLabel.setBounds(macroHeader.removeFromLeft(62));
-            modMacroExpandButton.setBounds(macroHeader.removeFromRight(26).reduced(3, 1));
-            modMacroAssignStatusLabel.setBounds(macroHeader.reduced(3, 0));
-            auto macroVisualArea = macroArea.withTrimmedTop(4);
-            const auto macroShapeWidth = juce::jlimit(164, 196, macroVisualArea.getWidth() / 3);
-            macroPerformanceMap.setBounds(macroVisualArea.removeFromLeft(macroShapeWidth).reduced(3, 0));
-            macroAssignmentPad.setBounds(macroVisualArea.reduced(3, 0));
+                auto sourceArea = area.removeFromLeft(juce::jlimit(420, 590, area.getWidth() / 2));
+                area.removeFromLeft(12);
+                auto generatorArea = area;
 
-            modContent.removeFromTop(modPanelGap);
-            auto generatorRow = modContent.removeFromTop(modGeneratorRowHeight);
-            auto lfoArea = generatorRow.removeFromLeft(450).reduced(18, 8);
-            auto rightGeneratorArea = generatorRow.reduced(18, 8);
-            auto lfo2Area = rightGeneratorArea.removeFromLeft(212);
-            auto envelopeArea = rightGeneratorArea.withTrimmedLeft(10);
+                modSourceLabel.setBounds(sourceArea.removeFromTop(22));
+                auto sourceListArea = sourceArea.withTrimmedTop(6);
+                constexpr auto sourceColumnCount = 5;
+                constexpr auto sourceRowCount = 3;
+                const auto sourceCellHeight = juce::jmax(1, sourceListArea.getHeight() / sourceRowCount);
+                for (size_t index = 0; index < modSourceRows.size(); ++index)
+                {
+                    modSourceRows[index].setVisible(true);
+                    const auto row = static_cast<int>(index) / sourceColumnCount;
+                    const auto column = static_cast<int>(index) % sourceColumnCount;
+                    auto rowArea = sourceListArea.withTrimmedTop(row * sourceCellHeight).withHeight(sourceCellHeight);
+                    const auto cellWidth = rowArea.getWidth() / sourceColumnCount;
+                    modSourceRows[index].setBounds(rowArea.withTrimmedLeft(column * cellWidth)
+                                                           .withWidth(cellWidth)
+                                                           .reduced(4, 3));
+                }
 
-            modLfoLabel.setBounds(lfoArea.removeFromTop(18));
-            auto lfoModeRow = lfoArea.removeFromTop(24);
-            lfo1ShapeBox.setBounds(lfoModeRow.removeFromLeft(86).reduced(3, 4));
-            lfo1SyncRateBox.setBounds(lfoModeRow.removeFromLeft(78).reduced(3, 4));
-            lfo1SyncButton.setBounds(lfoModeRow.removeFromLeft(58).reduced(3, 4));
-            lfo1RetriggerButton.setBounds(lfoModeRow.removeFromLeft(72).reduced(3, 4));
-            lfoCurvePresetBox.setBounds(lfoModeRow.removeFromLeft(130).reduced(3, 4));
-            auto lfoToolRow = lfoArea.removeFromTop(24).withTrimmedTop(3);
-            const auto lfoToolWidth = lfoToolRow.getWidth() / 6;
-            lfoCurveInvertButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
-            lfoCurveReverseButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
-            lfoCurveSmoothButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
-            lfoCurveQuantizeButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
-            lfoCurveRandomButton.setBounds(lfoToolRow.removeFromLeft(lfoToolWidth).reduced(2, 1));
-            lfoCurveGarageButton.setBounds(lfoToolRow.reduced(2, 1));
-            lfoCurveDisplay.setBounds(lfoArea.removeFromTop(36).withTrimmedTop(2));
+                auto lfo2Area = generatorArea.removeFromTop(juce::jlimit(146, 188, generatorArea.getHeight() / 2));
+                generatorArea.removeFromTop(10);
+                auto envelopeArea = generatorArea;
 
-            setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
-            setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
-            setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-            layoutKnobRow(lfoArea.removeFromTop(40).withTrimmedTop(2), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+                modLfo2Label.setBounds(lfo2Area.removeFromTop(22));
+                auto lfo2ModeRow = lfo2Area.removeFromTop(36).withTrimmedTop(3);
+                lfo2ShapeBox.setBounds(lfo2ModeRow.removeFromLeft(lfo2ModeRow.getWidth() / 2).reduced(4));
+                lfo2SyncRateBox.setBounds(lfo2ModeRow.reduced(4));
+                auto lfo2ToggleRow = lfo2Area.removeFromTop(34).withTrimmedTop(3);
+                lfo2SyncButton.setBounds(lfo2ToggleRow.removeFromLeft(lfo2ToggleRow.getWidth() / 2).reduced(4));
+                lfo2RetriggerButton.setBounds(lfo2ToggleRow.reduced(4));
+                setSliderVisible(lfo2RateSlider, lfo2RateLabel, true);
+                setSliderVisible(lfo2DepthSlider, lfo2DepthLabel, true);
+                setSliderVisible(lfo2PhaseSlider, lfo2PhaseLabel, true);
+                layoutKnobRow(lfo2Area.withTrimmedTop(4), { &lfo2RateSlider, &lfo2DepthSlider, &lfo2PhaseSlider });
 
-            modLfo2Label.setBounds(lfo2Area.removeFromTop(18));
-            auto lfo2ModeRow = lfo2Area.removeFromTop(48);
-            lfo2ShapeBox.setBounds(lfo2ModeRow.removeFromTop(24).reduced(3, 4));
-            auto lfo2SyncRow = lfo2ModeRow;
-            lfo2SyncRateBox.setBounds(lfo2SyncRow.removeFromLeft(72).reduced(3, 4));
-            lfo2SyncButton.setBounds(lfo2SyncRow.removeFromLeft(55).reduced(3, 4));
-            lfo2RetriggerButton.setBounds(lfo2SyncRow.removeFromLeft(70).reduced(3, 4));
-            setSliderVisible(lfo2RateSlider, lfo2RateLabel, true);
-            setSliderVisible(lfo2DepthSlider, lfo2DepthLabel, true);
-            setSliderVisible(lfo2PhaseSlider, lfo2PhaseLabel, true);
-            layoutKnobRow(lfo2Area.removeFromTop(58).withTrimmedTop(4), { &lfo2RateSlider, &lfo2DepthSlider, &lfo2PhaseSlider });
+                modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
+                setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
+                setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
+                setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
+                setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
+                setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
+                layoutKnobRow(envelopeArea.removeFromTop(76).withTrimmedTop(4), {
+                    &modEnv1AttackSlider,
+                    &modEnv1DecaySlider,
+                    &modEnv1SustainSlider
+                });
+                layoutKnobRow(envelopeArea.removeFromTop(76).withTrimmedTop(4), {
+                    &modEnv1ReleaseSlider,
+                    &modEnv1DepthSlider
+                });
+            };
 
-            modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(18));
-            setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
-            setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
-            setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
-            setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
-            setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-            layoutKnobRow(envelopeArea.removeFromTop(58).withTrimmedTop(2), {
-                &modEnv1AttackSlider,
-                &modEnv1DecaySlider,
-                &modEnv1SustainSlider
-            });
-            layoutKnobRow(envelopeArea.removeFromTop(54).withTrimmedTop(2), {
-                &modEnv1ReleaseSlider,
-                &modEnv1DepthSlider
-            });
+            auto layoutMacros = [this] (juce::Rectangle<int> area)
+            {
+                modMacroLabel.setVisible(true);
+                modMacroAssignLabel.setVisible(true);
+                modMacroAssignStatusLabel.setVisible(true);
+                macroAssignmentPad.setVisible(true);
+                macroPerformanceMap.setVisible(true);
+                modMacroExpandButton.setVisible(true);
 
-            modContent.removeFromTop(modPanelGap);
-            auto matrixArea = modContent.reduced(18, 0);
-            constexpr auto matrixTitleHeight = 28;
-            constexpr auto matrixInspectorHeight = 30;
-            constexpr auto routeMapHeight = 46;
-            constexpr auto matrixHeaderHeight = 18;
-            constexpr auto minimumMatrixRowHeight = 24;
-            constexpr auto matrixRowsPerBank = 4;
-            const auto canShowRouteMap = matrixArea.getHeight() >= matrixTitleHeight
-                                                                + matrixInspectorHeight
-                                                                + routeMapHeight
-                                                                + matrixHeaderHeight
-                                                                + (minimumMatrixRowHeight * matrixRowsPerBank);
-            auto matrixTitleRow = matrixArea.removeFromTop(matrixTitleHeight);
+                auto macroHeader = area.removeFromTop(26);
+                modMacroLabel.setBounds(macroHeader.removeFromLeft(78));
+                modMacroAssignLabel.setBounds(macroHeader.removeFromLeft(66));
+                modMacroExpandButton.setBounds(macroHeader.removeFromRight(30).reduced(3, 2));
+                modMacroAssignStatusLabel.setBounds(macroHeader.reduced(4, 1));
+
+                area.removeFromTop(8);
+                const auto mapWidth = juce::jlimit(250, 360, area.getWidth() / 3);
+                macroPerformanceMap.setBounds(area.removeFromLeft(mapWidth).reduced(4));
+                area.removeFromLeft(10);
+                macroAssignmentPad.setBounds(area.reduced(4));
+            };
+
+            auto layoutCurves = [this] (juce::Rectangle<int> area)
+            {
+                modLfoLabel.setVisible(true);
+                lfo1ShapeBox.setVisible(true);
+                lfo1SyncRateBox.setVisible(true);
+                lfoCurvePresetBox.setVisible(true);
+                lfoCurveActionBox.setVisible(true);
+                lfo1SyncButton.setVisible(true);
+                lfo1RetriggerButton.setVisible(true);
+                lfoCurveDisplay.setVisible(true);
+
+                modLfoLabel.setBounds(area.removeFromTop(22));
+                auto controlRow = area.removeFromTop(38).withTrimmedTop(3);
+                lfo1ShapeBox.setBounds(controlRow.removeFromLeft(juce::jlimit(150, 220, controlRow.getWidth() / 4)).reduced(4));
+                lfo1SyncRateBox.setBounds(controlRow.removeFromLeft(juce::jlimit(110, 160, controlRow.getWidth() / 4)).reduced(4));
+                lfoCurvePresetBox.setBounds(controlRow.removeFromLeft(juce::jlimit(150, 230, controlRow.getWidth() / 3)).reduced(4));
+                lfoCurveActionBox.setBounds(controlRow.removeFromLeft(juce::jlimit(130, 180, controlRow.getWidth() / 2)).reduced(4));
+                lfo1SyncButton.setBounds(controlRow.removeFromLeft(82).reduced(4));
+                lfo1RetriggerButton.setBounds(controlRow.removeFromLeft(88).reduced(4));
+
+                setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
+                setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
+                setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
+                const auto knobHeight = juce::jlimit(62, 84, area.getHeight() / 4);
+                lfoCurveDisplay.setBounds(area.removeFromTop(area.getHeight() - knobHeight).withTrimmedTop(4));
+                layoutKnobRow(area.removeFromTop(knobHeight).withTrimmedTop(6), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
+            };
+
+            auto layoutMatrix = [this] (juce::Rectangle<int> matrixArea)
+            {
+                modMatrixLabel.setVisible(true);
+                modMatrixStatusLabel.setVisible(true);
+                modInspectorLabel.setVisible(true);
+                modInspectorDestinationBox.setVisible(true);
+                modInspectorSourceBox.setVisible(true);
+                modInspectorStatusLabel.setVisible(true);
+                modInspectorAddButton.setVisible(true);
+                modInspectorClearButton.setVisible(true);
+                modMatrixSourceHeader.setVisible(true);
+                modMatrixDestinationHeader.setVisible(true);
+                modMatrixAmountHeader.setVisible(true);
+                modMatrixSourceHeaderB.setVisible(false);
+                modMatrixDestinationHeaderB.setVisible(false);
+                modMatrixAmountHeaderB.setVisible(false);
+
+            const auto canShowRouteMap = matrixArea.getHeight() >= modMatrixTitleHeight
+                                                                + modMatrixInspectorHeight
+                                                                + modMatrixRouteMapHeight
+                                                                + modMatrixHeaderHeight
+                                                                + (modMatrixRouteMapMinimumRowHeight * static_cast<int>(modMatrixRows.size()));
+            auto matrixTitleRow = matrixArea.removeFromTop(modMatrixTitleHeight);
             modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(5));
             modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(150).reduced(3, 5));
             modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 5));
 
-            auto inspectorRow = matrixArea.removeFromTop(matrixInspectorHeight);
+            auto inspectorRow = matrixArea.removeFromTop(modMatrixInspectorHeight);
             modInspectorLabel.setBounds(inspectorRow.removeFromLeft(62).withTrimmedTop(6));
             modInspectorDestinationBox.setBounds(inspectorRow.removeFromLeft(150).reduced(3, 4));
             modInspectorSourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
@@ -4368,7 +4748,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             if (canShowRouteMap)
             {
-                auto routeMapRow = matrixArea.removeFromTop(routeMapHeight).withTrimmedTop(4);
+                auto routeMapRow = matrixArea.removeFromTop(modMatrixRouteMapHeight).withTrimmedTop(4);
                 modRouteMapDisplay.setVisible(true);
                 modRouteMapDisplay.setBounds(routeMapRow.reduced(3, 2));
             }
@@ -4377,49 +4757,78 @@ void NateVSTAudioProcessorEditor::resized()
                 modRouteMapDisplay.setVisible(false);
             }
 
-            auto matrixHeaderRow = matrixArea.removeFromTop(matrixHeaderHeight).reduced(3, 1);
-            auto leftHeader = matrixHeaderRow.removeFromLeft((matrixHeaderRow.getWidth() - 10) / 2);
-            matrixHeaderRow.removeFromLeft(10);
-            auto rightHeader = matrixHeaderRow;
+            auto matrixHeaderRow = matrixArea.removeFromTop(modMatrixHeaderHeight).reduced(3, 1);
             auto placeHeader = [] (juce::Rectangle<int> header,
                                    juce::Label& source,
                                    juce::Label& destination,
                                    juce::Label& amount)
             {
-                header.removeFromLeft(26);
-                header.removeFromRight(74);
-                source.setBounds(header.removeFromLeft(100).reduced(5, 0));
-                destination.setBounds(header.removeFromLeft(138).reduced(5, 0));
+                constexpr auto slotWidth = 26;
+                const auto actionWidth = juce::jlimit(70, 78, header.getWidth() / 6);
+                const auto fieldAreaWidth = juce::jmax(1, header.getWidth() - slotWidth - actionWidth);
+                const auto sourceWidth = juce::jlimit(140, 190, fieldAreaWidth / 4);
+                const auto destinationWidth = juce::jlimit(170, 240, fieldAreaWidth / 3);
+
+                header.removeFromLeft(slotWidth);
+                header.removeFromRight(actionWidth);
+                source.setBounds(header.removeFromLeft(sourceWidth).reduced(5, 0));
+                destination.setBounds(header.removeFromLeft(destinationWidth).reduced(5, 0));
                 amount.setBounds(header.reduced(5, 0));
             };
-            placeHeader(leftHeader, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
-            placeHeader(rightHeader, modMatrixSourceHeaderB, modMatrixDestinationHeaderB, modMatrixAmountHeaderB);
+            placeHeader(matrixHeaderRow, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
 
-            auto leftBank = matrixArea.removeFromLeft((matrixArea.getWidth() - 10) / 2);
-            matrixArea.removeFromLeft(10);
-            auto rightBank = matrixArea;
+            const auto rowsPerBankToShow = juce::jlimit(1,
+                                                        static_cast<int>(modMatrixRows.size()),
+                                                        matrixArea.getHeight() / modMatrixMinimumRowHeight);
+            auto setRouteVisible = [this] (size_t index, bool shouldBeVisible)
+            {
+                modMatrixRows[index].setVisible(shouldBeVisible);
+                modSlotRows[index].setVisible(shouldBeVisible);
+                modSourceBoxes[index].setVisible(shouldBeVisible);
+                modDestinationBoxes[index].setVisible(shouldBeVisible);
+                modAmountSliders[index].setVisible(shouldBeVisible);
+                modSlotEnabledButtons[index].setVisible(shouldBeVisible);
+                modSlotDuplicateButtons[index].setVisible(shouldBeVisible);
+                modSlotDeleteButtons[index].setVisible(shouldBeVisible);
+            };
+            for (size_t index = 0; index < modSlotRows.size(); ++index)
+                setRouteVisible(index, static_cast<int>(index) < rowsPerBankToShow);
+
             auto placeRouteRow = [this] (size_t index, juce::Rectangle<int>& bank, int rowsRemaining)
             {
-                const auto rowHeight = juce::jmax(22, bank.getHeight() / rowsRemaining);
+                const auto rowHeight = juce::jmax(modMatrixMinimumRowHeight, bank.getHeight() / rowsRemaining);
                 auto rowBounds = bank.removeFromTop(rowHeight).reduced(3, 1);
                 modMatrixRows[index].setBounds(rowBounds);
 
                 auto row = rowBounds.reduced(2, 2);
-                modSlotRows[index].setBounds(row.removeFromLeft(26).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(100).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(138).reduced(3, 0));
-                auto actionArea = row.removeFromRight(74);
-                modSlotEnabledButtons[index].setBounds(actionArea.removeFromLeft(31).reduced(1, 0));
+                constexpr auto slotWidth = 26;
+                const auto actionWidth = juce::jlimit(70, 78, row.getWidth() / 6);
+                const auto fieldAreaWidth = juce::jmax(1, row.getWidth() - slotWidth - actionWidth);
+                const auto sourceWidth = juce::jlimit(140, 190, fieldAreaWidth / 4);
+                const auto destinationWidth = juce::jlimit(170, 240, fieldAreaWidth / 3);
+
+                modSlotRows[index].setBounds(row.removeFromLeft(slotWidth).reduced(2, 0));
+                modSourceBoxes[index].setBounds(row.removeFromLeft(sourceWidth).reduced(3, 0));
+                modDestinationBoxes[index].setBounds(row.removeFromLeft(destinationWidth).reduced(3, 0));
+                auto actionArea = row.removeFromRight(actionWidth);
+                modSlotEnabledButtons[index].setBounds(actionArea.removeFromLeft(30).reduced(1, 0));
                 modSlotDuplicateButtons[index].setBounds(actionArea.removeFromLeft(22).reduced(1, 0));
                 modSlotDeleteButtons[index].setBounds(actionArea.reduced(1, 0));
                 modAmountSliders[index].setBounds(row.reduced(3, 0));
             };
 
-            for (size_t index = 0; index < 4; ++index)
-                placeRouteRow(index, leftBank, static_cast<int>(4 - index));
+            for (auto row = 0; row < rowsPerBankToShow; ++row)
+                placeRouteRow(static_cast<size_t>(row), matrixArea, rowsPerBankToShow - row);
+            };
 
-            for (size_t index = 4; index < modSlotRows.size(); ++index)
-                placeRouteRow(index, rightBank, static_cast<int>(modSlotRows.size() - index));
+            switch (activeModWorkflowPage)
+            {
+                case ModWorkflowPage::sources: layoutSources(modContent); break;
+                case ModWorkflowPage::macros: layoutMacros(modContent); break;
+                case ModWorkflowPage::curves: layoutCurves(modContent); break;
+                case ModWorkflowPage::matrix:
+                default: layoutMatrix(modContent); break;
+            }
 
             break;
         }
@@ -4457,30 +4866,53 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceFadeButton.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
-            sampleSourceLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
-            auto actionRow = content.removeFromTop(38);
-            loadSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
-            clearSampleButton.setBounds(actionRow.removeFromLeft(90).reduced(4));
-            randomCutButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
-            ukgChopButton.setBounds(actionRow.removeFromLeft(114).reduced(4));
-            sampleEnabledButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
-            sampleReverseButton.setBounds(actionRow.removeFromLeft(70).reduced(4));
-            sampleModeBox.setBounds(actionRow.removeFromLeft(112).reduced(4));
-            auto stutterRow = content.removeFromTop(34).withTrimmedTop(2);
-            sampleNameLabel.setBounds(stutterRow.removeFromLeft(330).reduced(8, 4));
-            sampleSliceStyleBox.setBounds(stutterRow.removeFromLeft(142).reduced(4));
-            sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
-            sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
-            auto chopHeader = content.removeFromTop(18);
-            sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 0));
+            setSliderVisible(sampleStartSlider, sampleStartLabel, true);
+            setSliderVisible(sampleEndSlider, sampleEndLabel, true);
+            setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
+            setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
+            setSliderVisible(sampleGainSlider, sampleGainLabel, true);
+            setSliderVisible(sampleMixSlider, sampleMixLabel, true);
+            setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
+
+            auto workspace = content.withTrimmedTop(8);
+            auto sourceArea = workspace.removeFromLeft(juce::jlimit(260, 310, workspace.getWidth() / 4)).reduced(18, 12);
+            workspace.removeFromLeft(10);
+            auto chopArea = workspace.reduced(18, 12);
+
+            sampleSourceLabel.setBounds(sourceArea.removeFromTop(22));
+            auto actionRow = sourceArea.removeFromTop(70).withTrimmedTop(2);
+            auto actionTop = actionRow.removeFromTop(34);
+            loadSampleButton.setBounds(actionTop.removeFromLeft(actionTop.getWidth() / 2).reduced(3, 4));
+            clearSampleButton.setBounds(actionTop.reduced(3, 4));
+            auto actionBottom = actionRow.withTrimmedTop(2);
+            sampleEnabledButton.setBounds(actionBottom.removeFromLeft(actionBottom.getWidth() / 2).reduced(3, 4));
+            sampleReverseButton.setBounds(actionBottom.reduced(3, 4));
+
+            sampleNameLabel.setBounds(sourceArea.removeFromTop(30).reduced(5, 4));
+            sampleModeBox.setBounds(sourceArea.removeFromTop(34).reduced(4));
+            sampleSliceStyleBox.setBounds(sourceArea.removeFromTop(34).reduced(4));
+            auto stutterRow = sourceArea.removeFromTop(34);
+            sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
+            sampleStutterRateBox.setBounds(stutterRow.reduced(3, 4));
+            auto cutRecipeRow = sourceArea.removeFromTop(38).withTrimmedTop(2);
+            randomCutButton.setBounds(cutRecipeRow.removeFromLeft(cutRecipeRow.getWidth() / 2).reduced(3, 4));
+            ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
+
+            sampleShapeLabel.setBounds(sourceArea.removeFromTop(22).withTrimmedLeft(4));
+            layoutKnobRow(sourceArea.removeFromTop(84).withTrimmedTop(4), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(sourceArea.removeFromTop(78).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+
+            auto chopHeader = chopArea.removeFromTop(24);
+            sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
             sampleChopLabel.setBounds(chopHeader.withTrimmedLeft(4));
-            sampleWaveformDisplay.setBounds(content.removeFromTop(100).reduced(4, 6));
-            auto sliceRow = content.removeFromTop(34).withTrimmedTop(2);
+            const auto waveformHeight = juce::jlimit(170, 260, chopArea.getHeight() / 2);
+            sampleWaveformDisplay.setBounds(chopArea.removeFromTop(waveformHeight).reduced(4, 6));
+            auto sliceRow = chopArea.removeFromTop(36).withTrimmedTop(2);
             const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
             for (auto& button : sampleSliceButtons)
                 button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-            auto sliceEditRow = content.removeFromTop(36).withTrimmedTop(2);
-            const auto statusWidth = juce::jlimit(238, 310, sliceEditRow.getWidth() / 3);
+            auto sliceEditRow = chopArea.removeFromTop(38).withTrimmedTop(2);
+            const auto statusWidth = juce::jlimit(230, 330, sliceEditRow.getWidth() / 3);
             sampleSliceStatusLabel.setBounds(sliceEditRow.removeFromLeft(statusWidth).reduced(8, 4));
             const std::array<juce::TextButton*, 10> sampleActionButtons {
                 &sampleSliceStoreButton,
@@ -4497,19 +4929,9 @@ void NateVSTAudioProcessorEditor::resized()
             const auto actionWidth = juce::jmax(44, sliceEditRow.getWidth() / static_cast<int>(sampleActionButtons.size()));
             for (auto* button : sampleActionButtons)
                 button->setBounds(sliceEditRow.removeFromLeft(actionWidth).reduced(3));
-            auto cutRow = content.removeFromTop(42).withTrimmedTop(4);
-            setSliderVisible(sampleStartSlider, sampleStartLabel, true);
-            setSliderVisible(sampleEndSlider, sampleEndLabel, true);
+            auto cutRow = chopArea.removeFromTop(54).withTrimmedTop(6);
             sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
-            sampleShapeLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
-            setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
-            setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
-            setSliderVisible(sampleGainSlider, sampleGainLabel, true);
-            setSliderVisible(sampleMixSlider, sampleMixLabel, true);
-            setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            layoutKnobRow(content.removeFromTop(78), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(content.removeFromTop(78).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
             break;
         }
 
@@ -4529,6 +4951,12 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerPatternBox.setVisible(true);
             sequencerGrooveTransformBox.setVisible(true);
             sequencerLockDestinationBox.setVisible(true);
+            sequencerRootDownButton.setVisible(true);
+            sequencerRootUpButton.setVisible(true);
+            sequencerRootValueLabel.setVisible(true);
+            sequencerStepEditorLabel.setVisible(true);
+            for (auto& button : sequencerStepEditorButtons)
+                button.setVisible(true);
             applyPatternButton.setVisible(true);
             copySequencerButton.setVisible(true);
             rotateSequencerLeftButton.setVisible(true);
@@ -4550,43 +4978,104 @@ void NateVSTAudioProcessorEditor::resized()
             auto sequencerHeader = content.removeFromTop(28);
             sequencerExpandButton.setBounds(sequencerHeader.removeFromRight(30).reduced(3, 1));
             sequencerSectionLabel.setBounds(sequencerHeader);
-            auto timingRow = content.removeFromTop(44);
+            auto workspace = content.withTrimmedTop(8);
+            auto controlArea = workspace.removeFromLeft(juce::jlimit(228, 286, workspace.getWidth() / 5)).reduced(18, 12);
+            workspace.removeFromLeft(10);
+            auto gridArea = workspace.reduced(18, 12);
+            const auto showAdvancedSequencerControls = controlArea.getHeight() >= 570;
+
+            auto timingRow = controlArea.removeFromTop(34);
             sequencerEnabledButton.setBounds(timingRow.removeFromLeft(62).reduced(4));
-            auto rateRow = timingRow.removeFromLeft(150);
+            hostSyncStatusLabel.setBounds(timingRow.reduced(4));
+
+            auto rateRow = controlArea.removeFromTop(34);
             const auto rateButtonWidth = rateRow.getWidth() / 3;
             rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
             rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
-            sequencerGrooveBox.setBounds(timingRow.removeFromLeft(124).reduced(4));
-            sequencerScaleBox.setBounds(timingRow.removeFromLeft(112).reduced(4));
-            sequencerChordBox.setBounds(timingRow.removeFromLeft(112).reduced(4));
-            sequencerVoicingBox.setBounds(timingRow.removeFromLeft(104).reduced(4));
-            sequencerChordMemoryButton.setBounds(timingRow.removeFromLeft(92).reduced(4));
-            hostSyncStatusLabel.setBounds(timingRow.reduced(4));
-            auto patternRow = content.removeFromTop(42).withTrimmedTop(2);
-            sequencerPatternBox.setBounds(patternRow.removeFromLeft(230).reduced(4));
-            applyPatternButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
-            randomSequencerButton.setBounds(patternRow.removeFromLeft(108).reduced(4));
-            mutateSequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
-            undoSequencerButton.setBounds(patternRow.removeFromLeft(76).reduced(4));
-            clearSequencerButton.setBounds(patternRow.removeFromLeft(82).reduced(4));
-            auto sceneRow = content.removeFromTop(32).withTrimmedTop(2);
-            for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+
+            auto grooveRow = controlArea.removeFromTop(34);
+            sequencerGrooveBox.setBounds(grooveRow.removeFromLeft(grooveRow.getWidth() / 2).reduced(4));
+            sequencerScaleBox.setBounds(grooveRow.reduced(4));
+            auto harmonyRow = controlArea.removeFromTop(34);
+            sequencerChordBox.setBounds(harmonyRow.removeFromLeft(harmonyRow.getWidth() / 2).reduced(4));
+            sequencerVoicingBox.setBounds(harmonyRow.reduced(4));
+
+            auto patternRow = controlArea.removeFromTop(34);
+            sequencerChordMemoryButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
+            sequencerPatternBox.setBounds(patternRow.reduced(4));
+            auto generateRow = controlArea.removeFromTop(34);
+            applyPatternButton.setBounds(generateRow.removeFromLeft(generateRow.getWidth() / 2).reduced(4));
+            randomSequencerButton.setBounds(generateRow.reduced(4));
+            auto editRow = controlArea.removeFromTop(34);
+            mutateSequencerButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 3).reduced(4));
+            undoSequencerButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 2).reduced(4));
+            clearSequencerButton.setBounds(editRow.reduced(4));
+
+            auto rootStepperRow = controlArea.removeFromTop(34).withTrimmedTop(2);
+            sequencerRootDownButton.setBounds(rootStepperRow.removeFromLeft(38).reduced(4));
+            sequencerRootUpButton.setBounds(rootStepperRow.removeFromRight(38).reduced(4));
+            sequencerRootValueLabel.setBounds(rootStepperRow.reduced(4));
+            updateSequencerRootStepper();
+
+            auto stepEditorArea = controlArea.removeFromTop(104).withTrimmedTop(4);
+            sequencerStepEditorLabel.setBounds(stepEditorArea.removeFromTop(24).reduced(4, 2));
+            auto stepPitchRow = stepEditorArea.removeFromTop(26);
+            for (auto index = 0; index < 4; ++index)
+                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepPitchRow.removeFromLeft(stepPitchRow.getWidth() / (4 - index)).reduced(3, 3));
+            auto stepValueRow = stepEditorArea.removeFromTop(26);
+            for (auto index = 4; index < 10; ++index)
+                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepValueRow.removeFromLeft(stepValueRow.getWidth() / (10 - index)).reduced(3, 3));
+            auto stepFlagRow = stepEditorArea.removeFromTop(26);
+            for (auto index = 10; index < 13; ++index)
+                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepFlagRow.removeFromLeft(stepFlagRow.getWidth() / (13 - index)).reduced(3, 3));
+            updateSequencerStepEditor();
+
+            auto transformRow = controlArea.removeFromTop(34).withTrimmedTop(2);
+            sequencerLockDestinationBox.setBounds(transformRow.removeFromLeft(transformRow.getWidth() / 2).reduced(4));
+            sequencerGrooveTransformBox.setBounds(transformRow.reduced(4));
+            applyGrooveTransformButton.setBounds(controlArea.removeFromTop(32).reduced(4));
+
+            if (showAdvancedSequencerControls)
             {
-                sequencerSceneRecallButtons[index].setBounds(sceneRow.removeFromLeft(62).reduced(4));
-                sequencerSceneCaptureButtons[index].setBounds(sceneRow.removeFromLeft(78).reduced(4));
+                auto sceneArea = controlArea.removeFromTop(68).withTrimmedTop(2);
+                auto sceneTopRow = sceneArea.removeFromTop(32);
+                auto sceneBottomRow = sceneArea.withTrimmedTop(2);
+                auto placeSceneSlot = [this] (size_t index, juce::Rectangle<int>& row, int slotsRemaining)
+                {
+                    auto slotArea = row.removeFromLeft(row.getWidth() / slotsRemaining);
+                    sequencerSceneRecallButtons[index].setBounds(slotArea.removeFromLeft(slotArea.getWidth() / 2).reduced(3, 4));
+                    sequencerSceneCaptureButtons[index].setBounds(slotArea.reduced(3, 4));
+                };
+                placeSceneSlot(0, sceneTopRow, 2);
+                placeSceneSlot(1, sceneTopRow, 1);
+                placeSceneSlot(2, sceneBottomRow, 2);
+                placeSceneSlot(3, sceneBottomRow, 1);
+
+                auto utilityRow = controlArea.removeFromTop(34).withTrimmedTop(2);
+                copySequencerButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 3).reduced(4));
+                rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 2).reduced(4));
+                rotateSequencerRightButton.setBounds(utilityRow.reduced(4));
+                auto exportRow = controlArea.removeFromTop(34).withTrimmedTop(2);
+                exportSequencerMidiButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 3).reduced(4));
+                exportSequencerChainButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 2).reduced(4));
+                sequencerSceneChainLiveButton.setBounds(exportRow.reduced(4));
             }
-            auto utilityRow = content.removeFromTop(32).withTrimmedTop(2);
-            copySequencerButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
-            rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
-            rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
-            exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
-            exportSequencerChainButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
-            sequencerSceneChainLiveButton.setBounds(utilityRow.removeFromLeft(64).reduced(4));
-            sequencerLockDestinationBox.setBounds(utilityRow.removeFromLeft(124).reduced(4));
-            sequencerGrooveTransformBox.setBounds(utilityRow.removeFromLeft(174).reduced(4));
-            applyGrooveTransformButton.setBounds(utilityRow.removeFromLeft(70).reduced(4));
-            setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
+            else
+            {
+                copySequencerButton.setVisible(false);
+                rotateSequencerLeftButton.setVisible(false);
+                rotateSequencerRightButton.setVisible(false);
+                exportSequencerMidiButton.setVisible(false);
+                exportSequencerChainButton.setVisible(false);
+                sequencerSceneChainLiveButton.setVisible(false);
+                for (auto& button : sequencerSceneRecallButtons)
+                    button.setVisible(false);
+                for (auto& button : sequencerSceneCaptureButtons)
+                    button.setVisible(false);
+            }
+
+            setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
             setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, true);
@@ -4595,18 +5084,37 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
             setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
             setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, true);
-            layoutKnobRow(content.removeFromTop(68).withTrimmedTop(4), {
-                &sequencerRootSlider,
-                &sequencerGateSlider,
-                &sequencerSwingSlider,
-                &sequencerChordStrumSlider,
-                &sequencerAccentSlider,
-                &sequencerOctaveSlider,
-                &sequencerProbabilitySlider,
-                &sequencerRandomSlider,
-                &sequencerLockDepthSlider
-            });
-            sequencerGrid.setBounds(content.reduced(4, 12));
+            const auto showPrimarySequencerKnobs = controlArea.getHeight() >= 58;
+            setSliderVisible(sequencerGateSlider, sequencerGateLabel, showPrimarySequencerKnobs);
+            setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, showPrimarySequencerKnobs);
+            setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, showPrimarySequencerKnobs);
+            if (showPrimarySequencerKnobs)
+            {
+                const auto primarySequencerKnobHeight = juce::jlimit(58, 72, controlArea.getHeight());
+                layoutKnobRow(controlArea.removeFromTop(primarySequencerKnobHeight).withTrimmedTop(4), {
+                    &sequencerGateSlider,
+                    &sequencerSwingSlider,
+                    &sequencerChordStrumSlider
+                });
+            }
+
+            const auto showSecondarySequencerKnobs = controlArea.getHeight() >= 58;
+            setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, showSecondarySequencerKnobs);
+            setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, showSecondarySequencerKnobs);
+            setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, showSecondarySequencerKnobs);
+            setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, showSecondarySequencerKnobs);
+            setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, showSecondarySequencerKnobs);
+            if (showSecondarySequencerKnobs)
+            {
+                layoutKnobRow(controlArea.withTrimmedTop(4), {
+                    &sequencerAccentSlider,
+                    &sequencerOctaveSlider,
+                    &sequencerProbabilitySlider,
+                    &sequencerRandomSlider,
+                    &sequencerLockDepthSlider
+                });
+            }
+            sequencerGrid.setBounds(gridArea.reduced(4, 8));
             break;
         }
 
@@ -4904,6 +5412,7 @@ void NateVSTAudioProcessorEditor::resized()
             presetFilterBox.setVisible(true);
             presetTagBox.setVisible(true);
             presetSortBox.setVisible(true);
+            presetBrowserPackFilterBox.setVisible(true);
             presetRatingBox.setVisible(true);
             presetPackBox.setVisible(true);
             presetKeyBox.setVisible(true);
@@ -4943,14 +5452,15 @@ void NateVSTAudioProcessorEditor::resized()
             presetSearchEditor.setBounds(findArea.removeFromTop(38).reduced(2, 4));
             auto quickRowA = findArea.removeFromTop(30).withTrimmedTop(2);
             auto quickRowB = findArea.removeFromTop(30).withTrimmedTop(2);
-            for (size_t index = 0; index < 4; ++index)
-                presetQuickFilterButtons[index].setBounds(quickRowA.removeFromLeft(quickRowA.getWidth() / static_cast<int>(4 - index)).reduced(2, 3));
-            for (size_t index = 4; index < presetQuickFilterButtons.size(); ++index)
+            for (size_t index = 0; index < 5; ++index)
+                presetQuickFilterButtons[index].setBounds(quickRowA.removeFromLeft(quickRowA.getWidth() / static_cast<int>(5 - index)).reduced(2, 3));
+            for (size_t index = 5; index < presetQuickFilterButtons.size(); ++index)
                 presetQuickFilterButtons[index].setBounds(quickRowB.removeFromLeft(quickRowB.getWidth() / static_cast<int>(presetQuickFilterButtons.size() - index)).reduced(2, 3));
 
             findArea.removeFromTop(5);
             presetFilterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
             presetTagBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
+            presetBrowserPackFilterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
             auto sortRefreshRow = findArea.removeFromTop(36).withTrimmedTop(2);
             refreshPresetsButton.setBounds(sortRefreshRow.removeFromRight(76).reduced(2, 4));
             presetSortBox.setBounds(sortRefreshRow.reduced(2, 4));
@@ -5800,6 +6310,56 @@ int NateVSTAudioProcessorEditor::findModRouteAmountIndex(const juce::Component* 
     }
 
     return -1;
+}
+
+void NateVSTAudioProcessorEditor::beginModSourceDrag(int sourceIndex, juce::Component& sourceComponent)
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    if (! juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+        return;
+
+    startDragging("mod-source:" + juce::String(sourceIndex), &sourceComponent);
+    modMatrixStatusLabel.setText("Drag " + sourceChoices[sourceIndex] + " onto a control",
+                                 juce::dontSendNotification);
+}
+
+bool NateVSTAudioProcessorEditor::isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails& dragSourceDetails)
+{
+    return dragSourceDetails.description.toString().startsWith("mod-source:");
+}
+
+void NateVSTAudioProcessorEditor::itemDropped(const juce::DragAndDropTarget::SourceDetails& dragSourceDetails)
+{
+    const auto description = dragSourceDetails.description.toString();
+    if (! description.startsWith("mod-source:"))
+        return;
+
+    const auto sourceIndex = description.fromFirstOccurrenceOf(":", false, false).getIntValue();
+    if (! handleDroppedModSource(sourceIndex, dragSourceDetails.localPosition.roundToInt()))
+        modMatrixStatusLabel.setText("Drop onto a modulatable control",
+                                     juce::dontSendNotification);
+}
+
+bool NateVSTAudioProcessorEditor::handleDroppedModSource(int sourceIndex, juce::Point<int> localPosition)
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    if (! juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
+        return false;
+
+    auto* component = getComponentAt(localPosition);
+    const auto* target = findModulationMenuTarget(component);
+    if (target == nullptr || target->component == nullptr)
+        return false;
+
+    const auto destinationIndex = modulationDestinationIndexForParameter(target->parameterID);
+    if (destinationIndex <= 0)
+        return false;
+
+    selectedControlName = target->labelText;
+    selectedControlParameterID = target->parameterID;
+    selectedControlPlainValue = readPlainParameterValue(target->parameterID, 0.0f);
+    addModRouteForParameter(target->parameterID, target->labelText, sourceIndex);
+    return true;
 }
 
 void NateVSTAudioProcessorEditor::mouseEnter(const juce::MouseEvent& event)
@@ -6997,6 +7557,112 @@ void NateVSTAudioProcessorEditor::triggerRandomSectionRoll(size_t sectionIndex)
     setRandomStatus("Rolled " + sectionName);
 }
 
+void NateVSTAudioProcessorEditor::applySelectedRandomSectionAction()
+{
+    const auto selectedId = randomSectionActionBox.getSelectedId();
+    if (selectedId <= 1)
+        return;
+
+    if (selectedId >= 2 && selectedId <= 8)
+    {
+        triggerRandomSectionRoll(static_cast<size_t>(selectedId - 2));
+    }
+    else
+    {
+        switch (selectedId)
+        {
+            case 9:
+                triggerRandomGenerate();
+                break;
+
+            case 10:
+                triggerRandomVariation();
+                break;
+
+            case 11:
+                triggerRandomWild();
+                break;
+
+            case 12:
+                releaseRandomCandidateAudition(false);
+                releasePresetAuditionNote();
+                captureGlobalEdit("Dice sequence");
+                if (audioProcessor.randomizeSequencerPattern())
+                {
+                    repaintSequencerGrids();
+                    updateSequencerSceneButtons();
+                    setRandomStatus("Sequence diced");
+                }
+                else
+                {
+                    setRandomStatus("Sequence dice skipped");
+                }
+                break;
+
+            case 13:
+                triggerRandomSectionRoll(6);
+                setRandomStatus("Macro motion rolled");
+                break;
+
+            case 14:
+                triggerRandomSectionRoll(4);
+                setRandomStatus("FX space rolled");
+                break;
+
+            case 15:
+                triggerRandomGenerate();
+                triggerRandomVariation();
+                triggerRandomWild();
+                updateRandomCandidateButtons();
+                setRandomStatus("Explored 3 candidates");
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    randomSectionActionBox.setSelectedId(1, juce::dontSendNotification);
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::applySelectedRandomLockAction()
+{
+    const auto selectedId = randomLockActionBox.getSelectedId();
+    if (selectedId <= 1)
+        return;
+
+    struct LockTarget
+    {
+        const char* parameterID = nullptr;
+        juce::ToggleButton* button = nullptr;
+        const char* label = nullptr;
+    };
+
+    const std::array<LockTarget, 8> targets {
+        LockTarget { Parameters::ID::randomLockPitch, &randomLockPitchButton, "Pitch" },
+        LockTarget { Parameters::ID::randomLockEnvelope, &randomLockEnvelopeButton, "Envelope" },
+        LockTarget { Parameters::ID::randomLockFilter, &randomLockFilterButton, "Filter" },
+        LockTarget { Parameters::ID::randomLockSource, &randomLockSourceButton, "Source" },
+        LockTarget { Parameters::ID::randomLockSample, &randomLockSampleButton, "Sample" },
+        LockTarget { Parameters::ID::randomLockFx, &randomLockFxButton, "FX" },
+        LockTarget { Parameters::ID::randomLockOutput, &randomLockOutputButton, "Output" },
+        LockTarget { Parameters::ID::randomLockSequencer, &randomLockSequencerButton, "Sequencer" }
+    };
+
+    const auto targetIndex = selectedId - 2;
+    if (! juce::isPositiveAndBelow(targetIndex, static_cast<int>(targets.size())))
+        return;
+
+    const auto& target = targets[static_cast<size_t>(targetIndex)];
+    const auto nextValue = readPlainParameterValue(target.parameterID, 0.0f) >= 0.5f ? 0.0f : 1.0f;
+    setPlainParameterValue(target.parameterID, nextValue);
+    target.button->setToggleState(nextValue >= 0.5f, juce::dontSendNotification);
+    randomLockActionBox.setSelectedId(1, juce::dontSendNotification);
+    setRandomStatus(juce::String(target.label) + (nextValue >= 0.5f ? " locked" : " unlocked"));
+    returnKeyboardFocusToPiano();
+}
+
 void NateVSTAudioProcessorEditor::recallRandomCandidate(size_t slotIndex)
 {
     releaseRandomCandidateAudition(false);
@@ -7475,20 +8141,73 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
                                             keyboardMaxLowestVisibleNote,
                                             currentLowestNote + semitones);
 
+    audioProcessor.getMidiKeyboardState().allNotesOff(1);
     pianoKeyboard.setLowestVisibleKey(nextLowestNote);
+    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextLowestNote));
     updateKeyboardRangeLabel();
+    returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 {
     const auto lowestVisibleNote = pianoKeyboard.getLowestVisibleKey();
     const auto noteName = juce::MidiMessage::getMidiNoteName(lowestVisibleNote, true, true, 3);
+    const auto mappedTopNote = juce::jlimit(0, 127, ((lowestVisibleNote / 12) * 12) + 16);
+    const auto mappedTopName = juce::MidiMessage::getMidiNoteName(mappedTopNote, true, true, 3);
 
-    if (keyboardRangeLabel.getText() != noteName)
-        keyboardRangeLabel.setText(noteName, juce::dontSendNotification);
+    const auto nextTypingBaseOctave = juce::jlimit(0, 10, lowestVisibleNote / 12);
+    if (keyboardTypingBaseOctave != nextTypingBaseOctave)
+    {
+        keyboardTypingBaseOctave = nextTypingBaseOctave;
+        configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
+    }
+
+    const auto labelText = noteName + "\n" + mappedTopName;
+    if (keyboardRangeLabel.getText() != labelText)
+        keyboardRangeLabel.setText(labelText, juce::dontSendNotification);
+
+    keyboardRangeLabel.setTooltip("Laptop keys map from " + noteName + " to " + mappedTopName);
 
     keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardLowestNote);
     keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
+}
+
+void NateVSTAudioProcessorEditor::stepSequencerRoot(int semitones)
+{
+    const auto currentRoot = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f));
+    const auto nextRoot = juce::jlimit(24, 84, currentRoot + semitones);
+    if (nextRoot == currentRoot)
+    {
+        updateSequencerRootStepper();
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    captureGlobalEdit("Edit sequencer root");
+    setPlainParameterValue(Parameters::ID::sequencerRoot, static_cast<float>(nextRoot));
+    updateSelectedControlInspector("Seq Root", Parameters::ID::sequencerRoot, static_cast<double>(nextRoot));
+    updateSequencerRootStepper();
+    updateSequencerGridContext();
+    repaintSequencerGrids();
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::updateSequencerRootStepper()
+{
+    const auto root = juce::jlimit(24, 84, juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f)));
+    const auto octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerOctave, 0.0f));
+    const auto displayRoot = juce::jlimit(0, 127, root + (octave * 12));
+    const auto rootName = juce::MidiMessage::getMidiNoteName(root, true, true, 3);
+    const auto displayName = juce::MidiMessage::getMidiNoteName(displayRoot, true, true, 3);
+    const auto labelText = octave == 0 ? "Root " + rootName
+                                       : "Root " + rootName + " -> " + displayName;
+
+    if (sequencerRootValueLabel.getText() != labelText)
+        sequencerRootValueLabel.setText(labelText, juce::dontSendNotification);
+
+    sequencerRootValueLabel.setTooltip("Sequencer root note. The arrow buttons move the root by semitone.");
+    sequencerRootDownButton.setEnabled(root > 24);
+    sequencerRootUpButton.setEnabled(root < 84);
 }
 
 void NateVSTAudioProcessorEditor::returnKeyboardFocusToPiano()
@@ -8875,6 +9594,7 @@ void NateVSTAudioProcessorEditor::focusSelectedControlModDestination()
     }
 
     setModInspectorDestination(destinationIndex);
+    activeModWorkflowPage = ModWorkflowPage::matrix;
     setActivePanel(Panel::mod);
 }
 
@@ -8901,6 +9621,7 @@ void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
     updatePanelVisibility();
     resized();
     repaint();
+    returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::openMacroFocusOverlay()
@@ -8952,7 +9673,7 @@ juce::Rectangle<int> NateVSTAudioProcessorEditor::focusOverlayBounds() const
     bounds.removeFromTop(14);
     bounds.removeFromBottom(pianoKeyboardHeight);
     bounds.removeFromBottom(10);
-    return bounds.reduced(18);
+    return bounds.reduced(10);
 }
 
 void NateVSTAudioProcessorEditor::layoutFocusOverlay()
@@ -9085,11 +9806,21 @@ void NateVSTAudioProcessorEditor::setActiveRandomLabPage(RandomLabPage page)
     repaint();
 }
 
+void NateVSTAudioProcessorEditor::setActiveModWorkflowPage(ModWorkflowPage page)
+{
+    activeModWorkflowPage = page;
+    updateModWorkflowButtons();
+    resized();
+    repaint();
+    returnKeyboardFocusToPiano();
+}
+
 void NateVSTAudioProcessorEditor::updatePanelVisibility()
 {
     hidePanelComponents();
     updateTabButtons();
     updateRandomLabPageButtons();
+    updateModWorkflowButtons();
 }
 
 void NateVSTAudioProcessorEditor::updateTabButtons()
@@ -9110,6 +9841,13 @@ void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
     for (size_t index = 0; index < randomLabPageButtons.size(); ++index)
         randomLabPageButtons[index].setToggleState(activeRandomLabPage == static_cast<RandomLabPage>(index),
                                                    juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::updateModWorkflowButtons()
+{
+    for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
+        modWorkflowButtons[index].setToggleState(activeModWorkflowPage == static_cast<ModWorkflowPage>(index),
+                                                 juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::updateRandomRecipeInfo()
@@ -9182,9 +9920,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -9202,10 +9940,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,
-        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton,
-        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton,
+        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton,
+        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
-        &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
+        &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton, &sequencerRootDownButton, &sequencerRootUpButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &warmPresetPreviewsButton, &refreshPresetsButton, &favoritePresetButton, &comparePresetButton, &revertPresetButton, &candidateFavoriteButton,
         &saveCandidateButton,
@@ -9238,6 +9976,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     for (auto& button : presetQuickFilterButtons)
         button.setVisible(false);
 
+    for (auto& button : modWorkflowButtons)
+        button.setVisible(false);
+
     for (auto& button : sampleSliceButtons)
         button.setVisible(false);
 
@@ -9245,6 +9986,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : sequencerSceneCaptureButtons)
+        button.setVisible(false);
+
+    for (auto& button : sequencerStepEditorButtons)
         button.setVisible(false);
 
     for (auto& label : modSourceRows)
@@ -9410,6 +10154,8 @@ void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& paramet
         sequencerRateBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
 
     updateSegmentedSelectors();
+    if (parameterID == Parameters::ID::oscWave || parameterID == Parameters::ID::osc2Wave)
+        updateWavetableDisplay();
     returnKeyboardFocusToPiano();
 }
 
@@ -9435,6 +10181,7 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     wavetableWaveButton.setToggleState(waveformIndex == 4, juce::dontSendNotification);
     organWaveButton.setToggleState(waveformIndex == 5, juce::dontSendNotification);
     housePianoWaveButton.setToggleState(waveformIndex == 6, juce::dontSendNotification);
+    customWaveButton.setToggleState(waveformIndex == 7, juce::dontSendNotification);
 
     const auto osc2WaveformIndex = getChoiceIndex(osc2WaveBox, Parameters::ID::osc2Wave, 1);
     osc2SineWaveButton.setToggleState(osc2WaveformIndex == 0, juce::dontSendNotification);
@@ -9444,6 +10191,7 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     osc2WavetableWaveButton.setToggleState(osc2WaveformIndex == 4, juce::dontSendNotification);
     osc2OrganWaveButton.setToggleState(osc2WaveformIndex == 5, juce::dontSendNotification);
     osc2HousePianoWaveButton.setToggleState(osc2WaveformIndex == 6, juce::dontSendNotification);
+    osc2CustomWaveButton.setToggleState(osc2WaveformIndex == 7, juce::dontSendNotification);
 
     const auto filterModeIndex = getChoiceIndex(filterModeBox, Parameters::ID::filterMode, 0);
     lowpassFilterButton.setToggleState(filterModeIndex == 0, juce::dontSendNotification);
@@ -9582,6 +10330,26 @@ void NateVSTAudioProcessorEditor::applyLfoCurveTool(LfoCurveTool tool)
     modMatrixStatusLabel.setText(statusText, juce::dontSendNotification);
 }
 
+void NateVSTAudioProcessorEditor::applySelectedLfoCurveAction()
+{
+    const auto selectedId = lfoCurveActionBox.getSelectedId();
+    if (selectedId <= 1)
+        return;
+
+    switch (selectedId)
+    {
+        case 2: applyLfoCurveTool(LfoCurveTool::invert); break;
+        case 3: applyLfoCurveTool(LfoCurveTool::reverse); break;
+        case 4: applyLfoCurveTool(LfoCurveTool::smooth); break;
+        case 5: applyLfoCurveTool(LfoCurveTool::quantize); break;
+        case 6: applyLfoCurveTool(LfoCurveTool::randomize); break;
+        case 7: applyLfoCurveTool(LfoCurveTool::garage); break;
+        default: break;
+    }
+
+    lfoCurveActionBox.setSelectedId(1, juce::dontSendNotification);
+}
+
 void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
 {
     std::array<float, 8> customCurve {};
@@ -9620,6 +10388,14 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
 {
     const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
     const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    UI::WavetableDisplay::CustomPointArray osc1CustomPoints {};
+    UI::WavetableDisplay::CustomPointArray osc2CustomPoints {};
+
+    for (size_t index = 0; index < osc1CustomPoints.size(); ++index)
+    {
+        osc1CustomPoints[index] = readPlainParameterValue(Parameters::ID::oscCustomWave[index], 0.5f);
+        osc2CustomPoints[index] = readPlainParameterValue(Parameters::ID::osc2CustomWave[index], 0.5f);
+    }
 
     auto osc1WtModAmount = 0.0f;
     auto osc2WtModAmount = 0.0f;
@@ -9659,12 +10435,654 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
     wavetableDisplay.setState(
         readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
         readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
-        osc1Wave == 4,
-        osc2Wave == 4,
+        osc1Wave == 4 || osc1Wave == 7,
+        osc2Wave == 4 || osc2Wave == 7,
         juce::jlimit(-1.0f, 1.0f, osc1WtModAmount),
         juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
         wtRouteCount,
-        wtSources.joinIntoString(", "));
+        wtSources.joinIntoString(", "),
+        readPlainParameterValue(Parameters::ID::oscWarp, 0.0f),
+        osc1CustomPoints,
+        osc2CustomPoints,
+        osc1Wave == 7,
+        osc2Wave == 7);
+}
+
+bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const
+{
+    const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
+    const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
+    return osc2IsCustom && ! osc1IsCustom;
+}
+
+UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readCustomWaveFrame(bool targetOsc2,
+                                                                                        size_t frameIndex) const
+{
+    UI::WavetableDisplay::CustomPointArray values {};
+
+    if (frameIndex == 0)
+    {
+        const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+        for (size_t index = 0; index < values.size(); ++index)
+            values[index] = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(pointIDs[index], 0.5f));
+
+        return values;
+    }
+
+    const auto safeFrame = juce::jlimit<size_t>(1, Parameters::customWaveMorphFrameCount - 1, frameIndex);
+    for (size_t index = 0; index < values.size(); ++index)
+        values[index] = juce::jlimit(0.0f,
+                                     1.0f,
+                                     readPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, safeFrame, index),
+                                                             0.5f));
+
+    return values;
+}
+
+UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readMorphedCustomWaveFrame(bool targetOsc2) const
+{
+    const auto position = juce::jlimit(0.0f,
+                                      1.0f,
+                                      readPlainParameterValue(targetOsc2 ? Parameters::ID::osc2WavetablePosition
+                                                                         : Parameters::ID::oscWavetablePosition,
+                                                              targetOsc2 ? 0.35f : 0.0f));
+    const auto framePosition = position * static_cast<float>(Parameters::customWaveMorphFrameCount - 1);
+    const auto lowerFrame = juce::jlimit<size_t>(0,
+                                                 Parameters::customWaveMorphFrameCount - 1,
+                                                 static_cast<size_t>(std::floor(framePosition)));
+    const auto upperFrame = juce::jlimit<size_t>(0,
+                                                 Parameters::customWaveMorphFrameCount - 1,
+                                                 lowerFrame + 1);
+    const auto mix = juce::jlimit(0.0f, 1.0f, framePosition - static_cast<float>(lowerFrame));
+    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
+    const auto lower = readCustomWaveFrame(targetOsc2, lowerFrame);
+    const auto upper = readCustomWaveFrame(targetOsc2, upperFrame);
+    UI::WavetableDisplay::CustomPointArray values {};
+
+    for (size_t index = 0; index < values.size(); ++index)
+        values[index] = juce::jlimit(0.0f, 1.0f, lower[index] + ((upper[index] - lower[index]) * smoothMix));
+
+    return values;
+}
+
+void NateVSTAudioProcessorEditor::writeCustomWaveFrame(bool targetOsc2,
+                                                       size_t frameIndex,
+                                                       const UI::WavetableDisplay::CustomPointArray& values,
+                                                       const juce::String& editLabel)
+{
+    const auto safeFrame = juce::jlimit<size_t>(0, Parameters::customWaveMorphFrameCount - 1, frameIndex);
+    const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+    const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
+                                   : juce::String(Parameters::ID::oscWave);
+    auto& waveBox = targetOsc2 ? osc2WaveBox : waveformBox;
+
+    captureGlobalEdit(editLabel);
+    setPlainParameterValue(waveID, 7.0f);
+    waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+
+    for (size_t index = 0; index < values.size(); ++index)
+    {
+        const auto value = juce::jlimit(0.0f, 1.0f, values[index]);
+        if (safeFrame == 0)
+            setPlainParameterValue(pointIDs[index], value);
+        else
+            setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, safeFrame, index), value);
+    }
+
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSelectedControlInspector(targetOsc2 ? "O2 Custom" : "O1 Custom",
+                                   safeFrame == 0 ? pointIDs[0]
+                                                  : Parameters::customWaveMorphFrameParameterID(targetOsc2, safeFrame, 0),
+                                   values[0]);
+}
+
+void NateVSTAudioProcessorEditor::importSingleCycleWave(bool targetOsc2)
+{
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Import single-cycle WAV",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory),
+        "*.wav;*.aif;*.aiff");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                             [this, targetOsc2] (const juce::FileChooser& chooser)
+                             {
+                                 const auto file = chooser.getResult();
+                                 if (! file.existsAsFile())
+                                     return;
+
+                                 juce::AudioFormatManager manager;
+                                 manager.registerBasicFormats();
+                                 std::unique_ptr<juce::AudioFormatReader> reader(manager.createReaderFor(file));
+                                 if (reader == nullptr || reader->lengthInSamples <= 1)
+                                 {
+                                     setRandomStatus("Wave import failed");
+                                     return;
+                                 }
+
+                                 const auto readSamples = juce::jlimit(2,
+                                                                       262144,
+                                                                       static_cast<int>(reader->lengthInSamples));
+                                 juce::AudioBuffer<float> buffer(1, readSamples);
+                                 buffer.clear();
+                                 reader->read(&buffer, 0, readSamples, 0, true, false);
+
+                                 UI::WavetableDisplay::CustomPointArray values {};
+                                 std::array<float, UI::WavetableDisplay::customPointCount> bipolar {};
+                                 auto mean = 0.0f;
+                                 for (size_t index = 0; index < bipolar.size(); ++index)
+                                 {
+                                     const auto position = (static_cast<float>(index) / static_cast<float>(bipolar.size()))
+                                         * static_cast<float>(readSamples - 1);
+                                     const auto lowerIndex = juce::jlimit(0, readSamples - 1, static_cast<int>(std::floor(position)));
+                                     const auto upperIndex = juce::jlimit(0, readSamples - 1, lowerIndex + 1);
+                                     const auto mix = position - static_cast<float>(lowerIndex);
+                                     const auto lower = buffer.getSample(0, lowerIndex);
+                                     const auto upper = buffer.getSample(0, upperIndex);
+                                     bipolar[index] = lower + ((upper - lower) * mix);
+                                     mean += bipolar[index];
+                                 }
+
+                                 mean /= static_cast<float>(bipolar.size());
+                                 auto peak = 0.0f;
+                                 for (auto& sample : bipolar)
+                                 {
+                                     sample -= mean;
+                                     peak = juce::jmax(peak, std::abs(sample));
+                                 }
+
+                                 if (peak <= 0.000001f)
+                                 {
+                                     setRandomStatus("Wave import silent");
+                                     return;
+                                 }
+
+                                 for (size_t index = 0; index < values.size(); ++index)
+                                     values[index] = juce::jlimit(0.0f, 1.0f, 0.5f + ((bipolar[index] / peak) * 0.5f));
+
+                                 writeCustomWaveFrame(targetOsc2, 0, values, "Import single-cycle wave");
+                                 setRandomStatus("Imported " + file.getFileNameWithoutExtension() + " to "
+                                                 + juce::String(targetOsc2 ? "O2" : "O1") + " custom wave");
+                                 returnKeyboardFocusToPiano();
+                             });
+}
+
+void NateVSTAudioProcessorEditor::exportSingleCycleWave(bool targetOsc2)
+{
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Export single-cycle WAV",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory).getChildFile("Nate VST Custom Wave.wav"),
+        "*.wav");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
+                                 | juce::FileBrowserComponent::canSelectFiles
+                                 | juce::FileBrowserComponent::warnAboutOverwriting,
+                             [this, targetOsc2] (const juce::FileChooser& chooser)
+                             {
+                                 auto file = chooser.getResult();
+                                 if (file == juce::File{})
+                                     return;
+
+                                 if (! file.hasFileExtension(".wav"))
+                                     file = file.withFileExtension(".wav");
+
+                                 constexpr auto sampleCount = 2048;
+                                 auto values = readMorphedCustomWaveFrame(targetOsc2);
+                                 juce::AudioBuffer<float> buffer(1, sampleCount);
+                                 for (auto sampleIndex = 0; sampleIndex < sampleCount; ++sampleIndex)
+                                 {
+                                     const auto phase = static_cast<float>(sampleIndex) / static_cast<float>(sampleCount);
+                                     const auto scaled = phase * static_cast<float>(values.size());
+                                     const auto lowerIndex = static_cast<size_t>(std::floor(scaled)) % values.size();
+                                     const auto upperIndex = (lowerIndex + 1) % values.size();
+                                     const auto mix = scaled - std::floor(scaled);
+                                     const auto value = values[lowerIndex] + ((values[upperIndex] - values[lowerIndex]) * mix);
+                                     buffer.setSample(0, sampleIndex, (juce::jlimit(0.0f, 1.0f, value) * 2.0f) - 1.0f);
+                                 }
+
+                                 juce::WavAudioFormat format;
+                                 std::unique_ptr<juce::OutputStream> stream = file.createOutputStream();
+                                 if (stream == nullptr)
+                                 {
+                                     setRandomStatus("Wave export failed");
+                                     return;
+                                 }
+
+                                 const auto writerOptions = juce::AudioFormatWriterOptions{}
+                                     .withSampleRate(44100.0)
+                                     .withNumChannels(1)
+                                     .withBitsPerSample(24);
+                                 auto writer = format.createWriterFor(stream, writerOptions);
+                                 if (writer == nullptr)
+                                 {
+                                     setRandomStatus("Wave export failed");
+                                     return;
+                                 }
+
+                                 const auto ok = writer->writeFromAudioSampleBuffer(buffer, 0, sampleCount);
+                                 setRandomStatus(ok ? "Exported custom wave WAV" : "Wave export failed");
+                                 returnKeyboardFocusToPiano();
+                             });
+}
+
+void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
+{
+    const auto values = readMorphedCustomWaveFrame(targetOsc2);
+    writeCustomWaveFrame(targetOsc2, frameIndex, values, "Store custom wave frame");
+    setRandomStatus("Stored " + juce::String(targetOsc2 ? "O2" : "O1")
+                    + " frame " + juce::String(static_cast<int>(frameIndex + 1)));
+}
+
+void NateVSTAudioProcessorEditor::loadCustomWaveFrame(bool targetOsc2, size_t frameIndex)
+{
+    const auto values = readCustomWaveFrame(targetOsc2, frameIndex);
+    writeCustomWaveFrame(targetOsc2, 0, values, "Load custom wave frame");
+    setRandomStatus("Loaded " + juce::String(targetOsc2 ? "O2" : "O1")
+                    + " frame " + juce::String(static_cast<int>(frameIndex + 1)));
+}
+
+void NateVSTAudioProcessorEditor::bakeCurrentCustomWaveMorph(bool targetOsc2)
+{
+    const auto values = readMorphedCustomWaveFrame(targetOsc2);
+    writeCustomWaveFrame(targetOsc2, 0, values, "Bake custom wave morph");
+    setRandomStatus("Baked " + juce::String(targetOsc2 ? "O2" : "O1") + " WT position into frame 1");
+}
+
+void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
+{
+    const auto selectedId = wavetableToolBox.getSelectedId();
+    if (selectedId <= 1)
+        return;
+
+    const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
+    const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
+    const auto targetOsc2 = osc2IsCustom && ! osc1IsCustom;
+    const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+    const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
+                                   : juce::String(Parameters::ID::oscWave);
+    auto& waveBox = targetOsc2 ? osc2WaveBox : waveformBox;
+
+    std::array<float, Parameters::ID::oscCustomWave.size()> values {};
+    for (size_t index = 0; index < values.size(); ++index)
+        values[index] = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(pointIDs[index], 0.5f));
+
+    auto normalizeValues = [&values]
+    {
+        auto minValue = values.front();
+        auto maxValue = values.front();
+        for (const auto value : values)
+        {
+            minValue = juce::jmin(minValue, value);
+            maxValue = juce::jmax(maxValue, value);
+        }
+
+        const auto range = maxValue - minValue;
+        if (range <= 0.001f)
+        {
+            values.fill(0.5f);
+            return;
+        }
+
+        for (auto& value : values)
+            value = juce::jlimit(0.0f, 1.0f, (value - minValue) / range);
+    };
+
+    auto writeShape = [&values] (auto&& valueForPhase)
+    {
+        const auto lastIndex = std::max<size_t>(1, values.size() - 1);
+        for (size_t index = 0; index < values.size(); ++index)
+        {
+            const auto phase = static_cast<float>(index) / static_cast<float>(lastIndex);
+            values[index] = juce::jlimit(0.0f, 1.0f, valueForPhase(phase));
+        }
+    };
+
+    auto applyValues = [&]
+    {
+        captureGlobalEdit("Wave tool " + wavetableToolBox.getText());
+        setPlainParameterValue(waveID, 7.0f);
+        waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+        for (size_t index = 0; index < values.size(); ++index)
+            setPlainParameterValue(pointIDs[index], juce::jlimit(0.0f, 1.0f, values[index]));
+
+        updateSegmentedSelectors();
+        updateWavetableDisplay();
+        updateSelectedControlInspector(targetOsc2 ? "O2 Custom" : "O1 Custom",
+                                       pointIDs[0],
+                                       values[0]);
+        setRandomStatus("Wave tool: " + wavetableToolBox.getText());
+    };
+
+    auto changed = true;
+    switch (selectedId)
+    {
+        case 2:
+            for (size_t index = 0; index < values.size() / 2; ++index)
+                values[values.size() - 1 - index] = values[index];
+            break;
+
+        case 3:
+            normalizeValues();
+            break;
+
+        case 4:
+        {
+            const auto source = values;
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                const auto left = source[index == 0 ? 0 : index - 1];
+                const auto right = source[index + 1 >= source.size() ? source.size() - 1 : index + 1];
+                values[index] = (left * 0.25f) + (source[index] * 0.50f) + (right * 0.25f);
+            }
+            break;
+        }
+
+        case 5:
+        {
+            const auto source = values;
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                const auto left = source[index == 0 ? 0 : index - 1];
+                const auto right = source[index + 1 >= source.size() ? source.size() - 1 : index + 1];
+                const auto neighbourAverage = (left + right) * 0.5f;
+                values[index] = juce::jlimit(0.0f, 1.0f, source[index] + ((source[index] - neighbourAverage) * 0.65f));
+            }
+            break;
+        }
+
+        case 6:
+        {
+            juce::Random random;
+            auto previous = 0.0f;
+            for (auto& value : values)
+            {
+                const auto target = (random.nextFloat() * 2.0f) - 1.0f;
+                previous = (previous * 0.45f) + (target * 0.55f);
+                value = juce::jlimit(0.0f, 1.0f, 0.5f + (previous * 0.45f));
+            }
+            normalizeValues();
+            break;
+        }
+
+        case 7:
+            writeShape([] (float phase)
+            {
+                const auto wave = std::sin(juce::MathConstants<float>::twoPi * phase)
+                    + (0.45f * std::sin(juce::MathConstants<float>::twoPi * phase * 2.0f + 0.35f))
+                    + (0.28f * std::sin(juce::MathConstants<float>::twoPi * phase * 3.0f + 1.15f))
+                    + (0.18f * std::sin(juce::MathConstants<float>::twoPi * phase * 5.0f));
+                return 0.5f + (wave * 0.28f);
+            });
+            normalizeValues();
+            break;
+
+        case 8:
+            writeShape([] (float phase) { return 0.5f + (0.5f * std::sin(juce::MathConstants<float>::twoPi * phase)); });
+            break;
+
+        case 9:
+            writeShape([] (float phase) { return phase; });
+            break;
+
+        case 10:
+            writeShape([] (float phase) { return phase < 0.5f ? 1.0f : 0.0f; });
+            break;
+
+        case 11:
+            writeShape([] (float phase) { return phase < 0.5f ? phase * 2.0f : 2.0f - (phase * 2.0f); });
+            break;
+
+        case 12:
+        {
+            juce::StringArray parts;
+            for (const auto value : values)
+                parts.add(juce::String(value, 4));
+            juce::SystemClipboard::copyTextToClipboard(parts.joinIntoString(","));
+            setRandomStatus("Copied custom wave points");
+            changed = false;
+            break;
+        }
+
+        case 13:
+        {
+            const auto clipboardText = juce::SystemClipboard::getTextFromClipboard();
+            juce::StringArray tokens;
+            tokens.addTokens(clipboardText, ",; \n\r\t", "\"'");
+            tokens.removeEmptyStrings();
+            if (tokens.size() < static_cast<int>(values.size()))
+            {
+                setRandomStatus("Paste needs 16 wave values");
+                changed = false;
+                break;
+            }
+
+            auto hasNegative = false;
+            auto looksPercent = false;
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                const auto raw = tokens[static_cast<int>(index)].getFloatValue();
+                hasNegative = hasNegative || raw < 0.0f;
+                looksPercent = looksPercent || raw > 1.0f;
+                values[index] = raw;
+            }
+
+            for (auto& value : values)
+            {
+                if (hasNegative)
+                    value = (value + 1.0f) * 0.5f;
+                else if (looksPercent)
+                    value *= 0.01f;
+                value = juce::jlimit(0.0f, 1.0f, value);
+            }
+            break;
+        }
+
+        case 14:
+            for (auto& value : values)
+                value = 1.0f - value;
+            break;
+
+        case 15:
+            std::reverse(values.begin(), values.end());
+            break;
+
+        case 16:
+            std::rotate(values.begin(), values.begin() + 1, values.end());
+            break;
+
+        case 17:
+            std::rotate(values.rbegin(), values.rbegin() + 1, values.rend());
+            break;
+
+        case 18:
+            for (auto& value : values)
+                value = std::round(juce::jlimit(0.0f, 1.0f, value) * 4.0f) * 0.25f;
+            break;
+
+        case 19:
+            for (auto& value : values)
+            {
+                const auto bipolar = (value * 2.0f) - 1.0f;
+                value = juce::jlimit(0.0f, 1.0f, std::abs(bipolar));
+            }
+            break;
+
+        case 20:
+        {
+            auto mean = 0.0f;
+            for (const auto value : values)
+                mean += value;
+            mean /= static_cast<float>(values.size());
+            for (auto& value : values)
+                value = juce::jlimit(0.0f, 1.0f, value - mean + 0.5f);
+            break;
+        }
+
+        case 21:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 1; harmonic <= 9; ++harmonic)
+                {
+                    const auto weight = harmonic == 1 ? 0.72f : 0.52f / std::sqrt(static_cast<float>(harmonic));
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * static_cast<float>(harmonic)
+                                     + (static_cast<float>(harmonic % 3) * 0.21f)) * weight;
+                }
+                return 0.5f + (wave * 0.18f);
+            });
+            normalizeValues();
+            break;
+
+        case 22:
+            for (auto& value : values)
+            {
+                const auto bipolar = ((value * 2.0f) - 1.0f) * 1.85f;
+                value = 0.5f + (std::tanh(bipolar) * 0.5f);
+            }
+            break;
+
+        case 23:
+        {
+            const auto lastIndex = std::max<size_t>(1, values.size() - 1);
+            for (size_t index = 0; index < values.size(); ++index)
+            {
+                const auto phase = static_cast<float>(index) / static_cast<float>(lastIndex);
+                const auto window = std::sin(juce::MathConstants<float>::pi * phase);
+                values[index] = 0.5f + ((values[index] - 0.5f) * window);
+            }
+            break;
+        }
+
+        case 24:
+            importSingleCycleWave(targetOsc2);
+            changed = false;
+            break;
+
+        case 25:
+            exportSingleCycleWave(targetOsc2);
+            changed = false;
+            break;
+
+        case 26:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 1; harmonic <= 15; harmonic += 2)
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * static_cast<float>(harmonic))
+                        / static_cast<float>(harmonic);
+                return 0.5f + (wave * 0.38f);
+            });
+            normalizeValues();
+            break;
+
+        case 27:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 2; harmonic <= 16; harmonic += 2)
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * static_cast<float>(harmonic))
+                        / static_cast<float>(harmonic);
+                return 0.5f + (wave * 0.46f);
+            });
+            normalizeValues();
+            break;
+
+        case 28:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 1; harmonic <= 16; ++harmonic)
+                {
+                    const auto h = static_cast<float>(harmonic);
+                    const auto tilt = std::pow(h / 16.0f, 0.35f);
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * h) * tilt / std::sqrt(h);
+                }
+                return 0.5f + (wave * 0.20f);
+            });
+            normalizeValues();
+            break;
+
+        case 29:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 1; harmonic <= 16; ++harmonic)
+                {
+                    const auto h = static_cast<float>(harmonic);
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * h) / std::pow(h, 1.38f);
+                }
+                return 0.5f + (wave * 0.36f);
+            });
+            normalizeValues();
+            break;
+
+        case 30:
+            writeShape([] (float phase)
+            {
+                auto wave = 0.0f;
+                for (auto harmonic = 2; harmonic <= 12; harmonic += 2)
+                {
+                    const auto h = static_cast<float>(harmonic);
+                    wave += std::sin(juce::MathConstants<float>::twoPi * phase * h + (0.08f * h))
+                        / std::sqrt(h);
+                }
+                return 0.5f + (wave * 0.28f);
+            });
+            normalizeValues();
+            break;
+
+        case 31:
+            {
+                auto& random = juce::Random::getSystemRandom();
+                std::array<float, 16> amplitudes {};
+                std::array<float, 16> offsets {};
+                for (size_t harmonic = 0; harmonic < amplitudes.size(); ++harmonic)
+                {
+                    amplitudes[harmonic] = random.nextFloat() * (harmonic < 3 ? 0.72f : 0.42f)
+                        / std::sqrt(static_cast<float>(harmonic + 1));
+                    offsets[harmonic] = random.nextFloat();
+                }
+
+                writeShape([amplitudes, offsets] (float phase)
+                {
+                    auto wave = 0.0f;
+                    for (size_t harmonic = 0; harmonic < amplitudes.size(); ++harmonic)
+                    {
+                        const auto h = static_cast<float>(harmonic + 1);
+                        wave += std::sin(juce::MathConstants<float>::twoPi * ((phase * h) + offsets[harmonic]))
+                            * amplitudes[harmonic];
+                    }
+                    return 0.5f + (wave * 0.32f);
+                });
+                normalizeValues();
+            }
+            break;
+
+        case 32: case 33: case 34: case 35: case 36: case 37: case 38: case 39:
+            storeCustomWaveFrame(targetOsc2, static_cast<size_t>(selectedId - 32));
+            changed = false;
+            break;
+
+        case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
+            loadCustomWaveFrame(targetOsc2, static_cast<size_t>(selectedId - 40));
+            changed = false;
+            break;
+
+        case 48:
+            bakeCurrentCustomWaveMorph(targetOsc2);
+            changed = false;
+            break;
+
+        default:
+            changed = false;
+            break;
+    }
+
+    if (changed)
+        applyValues();
+
+    wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
+    returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::updateHouseLayerRackDisplay()
@@ -9787,6 +11205,52 @@ void NateVSTAudioProcessorEditor::focusHouseLayer(size_t layerIndex)
     const auto value = readPlainParameterValue(target.parameterID, target.fallback);
     updateSelectedControlInspector(target.label, target.parameterID, value);
     updateSelectedControlActionState();
+}
+
+void NateVSTAudioProcessorEditor::beginHouseLayerLevelEdit(size_t layerIndex)
+{
+    static constexpr std::array<const char*, UI::HouseLayerRackDisplay::layerCount> labels {
+        "Layer Sub",
+        "Layer Body",
+        "Layer Character",
+        "Layer Transient",
+        "Layer Chop"
+    };
+
+    const auto safeIndex = juce::jlimit<size_t>(0, labels.size() - 1, layerIndex);
+    captureGlobalEdit("Edit " + juce::String(labels[safeIndex]));
+}
+
+void NateVSTAudioProcessorEditor::setHouseLayerLevel(size_t layerIndex, float level)
+{
+    struct LayerTarget
+    {
+        const char* label = "";
+        const char* parameterID = "";
+    };
+
+    static constexpr std::array<LayerTarget, UI::HouseLayerRackDisplay::layerCount> targets {
+        LayerTarget { "Layer Sub", Parameters::ID::subLevel },
+        LayerTarget { "Layer Body", Parameters::ID::osc1Level },
+        LayerTarget { "Layer Character", Parameters::ID::osc2Level },
+        LayerTarget { "Layer Transient", Parameters::ID::noiseLevel },
+        LayerTarget { "Layer Chop", Parameters::ID::sampleMix }
+    };
+
+    if (layerIndex >= targets.size())
+        return;
+
+    level = juce::jlimit(0.0f, 1.0f, level);
+    const auto& target = targets[layerIndex];
+
+    if (layerIndex == 4 && level > 0.001f)
+        setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
+
+    setPlainParameterValue(target.parameterID, level);
+    updateSelectedControlInspector(target.label, target.parameterID, level);
+    updateHouseLayerRackDisplay();
+    updateHomeOverviewDisplay();
+    updateHomeSignalFlowDisplay();
 }
 
 void NateVSTAudioProcessorEditor::updateFilterResponseDisplay()
@@ -11300,12 +12764,142 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
     sequencerGrid.setScaleMode(scaleMode);
     expandedSequencerGrid.setRootNote(displayRoot);
     expandedSequencerGrid.setScaleMode(scaleMode);
+    updateSequencerRootStepper();
+    updateSequencerStepEditor();
 }
 
 void NateVSTAudioProcessorEditor::repaintSequencerGrids()
 {
     sequencerGrid.repaint();
     expandedSequencerGrid.repaint();
+}
+
+void NateVSTAudioProcessorEditor::updateSequencerStepEditor()
+{
+    auto selectedIndex = sequencerGrid.getSelectedStepIndex();
+    if (selectedIndex < 0)
+        selectedIndex = expandedSequencerGrid.getSelectedStepIndex();
+
+    const auto hasSelection = selectedIndex >= 0;
+    for (auto& button : sequencerStepEditorButtons)
+        button.setEnabled(hasSelection);
+
+    if (! hasSelection)
+    {
+        sequencerStepEditorLabel.setText("Select a step", juce::dontSendNotification);
+        sequencerStepEditorLabel.setTooltip("Click a piano-roll step or lane cell, then edit it here");
+        return;
+    }
+
+    const auto step = audioProcessor.getSequencerStep(selectedIndex);
+    const auto root = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f));
+    const auto octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerOctave, 0.0f)) * 12;
+    const auto midiNote = juce::jlimit(0, 127, root + octave + step.noteOffset);
+    const auto noteName = juce::MidiMessage::getMidiNoteName(midiNote, true, true, 3);
+    const auto label = "S" + juce::String(selectedIndex + 1)
+        + (step.enabled ? " " + noteName : " empty")
+        + " | V" + juce::String(juce::roundToInt(step.velocity * 100.0f))
+        + " P" + juce::String(juce::roundToInt(step.probability * 100.0f))
+        + " L" + juce::String(juce::roundToInt(step.length * 100.0f));
+
+    sequencerStepEditorLabel.setText(label, juce::dontSendNotification);
+    sequencerStepEditorLabel.setTooltip("Selected step editor: " + label
+                                        + " | Ratchet " + juce::String(step.ratchet) + "x"
+                                        + (step.slide ? " | Slide" : "")
+                                        + " | Lock " + juce::String(juce::roundToInt(step.lock * 100.0f)) + "%");
+    sequencerStepEditorButtons[10].setButtonText("Rat " + juce::String(step.ratchet) + "x");
+    sequencerStepEditorButtons[11].setButtonText(step.slide ? "Slide On" : "Slide");
+    sequencerStepEditorButtons[12].setButtonText(step.lock > 0.01f ? "Lock " + juce::String(juce::roundToInt(step.lock * 100.0f)) : "Lock");
+}
+
+void NateVSTAudioProcessorEditor::setSelectedSequencerStep(Sequencer::Step step)
+{
+    auto selectedIndex = sequencerGrid.getSelectedStepIndex();
+    if (selectedIndex < 0)
+        selectedIndex = expandedSequencerGrid.getSelectedStepIndex();
+    if (selectedIndex < 0)
+        selectedIndex = 0;
+
+    step.enabled = true;
+    audioProcessor.setSequencerStep(selectedIndex, step);
+    if (sequencerGrid.getSelectedStepIndex() != selectedIndex)
+        sequencerGrid.selectStep(selectedIndex);
+    if (expandedSequencerGrid.getSelectedStepIndex() != selectedIndex)
+        expandedSequencerGrid.selectStep(selectedIndex);
+
+    updateSequencerStepEditor();
+    repaintSequencerGrids();
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::adjustSelectedSequencerStepNote(int semitones)
+{
+    auto step = sequencerGrid.getSelectedStepIndex() >= 0
+        ? sequencerGrid.getSelectedStepValue()
+        : expandedSequencerGrid.getSelectedStepValue();
+
+    step.noteOffset = juce::jlimit(Sequencer::PatternSequencer::minNoteOffset,
+                                  Sequencer::PatternSequencer::maxNoteOffset,
+                                  step.noteOffset + semitones);
+    if (step.velocity <= 0.0f)
+        step.velocity = 0.82f;
+    if (step.probability <= 0.0f)
+        step.probability = 1.0f;
+    if (step.length <= 0.0f)
+        step.length = 1.0f;
+
+    setSelectedSequencerStep(step);
+    setRandomStatus("Step note " + juce::String(semitones > 0 ? "+" : "") + juce::String(semitones));
+}
+
+void NateVSTAudioProcessorEditor::adjustSelectedSequencerStepValue(int fieldIndex, float delta)
+{
+    auto step = sequencerGrid.getSelectedStepIndex() >= 0
+        ? sequencerGrid.getSelectedStepValue()
+        : expandedSequencerGrid.getSelectedStepValue();
+
+    switch (fieldIndex)
+    {
+        case 0: step.velocity = juce::jlimit(0.1f, 1.0f, step.velocity + delta); break;
+        case 1: step.probability = juce::jlimit(0.0f, 1.0f, step.probability + delta); break;
+        case 2: step.length = juce::jlimit(0.1f, 1.0f, step.length + delta); break;
+        default: break;
+    }
+
+    setSelectedSequencerStep(step);
+}
+
+void NateVSTAudioProcessorEditor::toggleSelectedSequencerStepFlag(int flagIndex)
+{
+    auto step = sequencerGrid.getSelectedStepIndex() >= 0
+        ? sequencerGrid.getSelectedStepValue()
+        : expandedSequencerGrid.getSelectedStepValue();
+
+    switch (flagIndex)
+    {
+        case 0:
+            step.ratchet = step.ratchet >= Sequencer::PatternSequencer::maxRatchet
+                ? Sequencer::PatternSequencer::minRatchet
+                : step.ratchet + 1;
+            if (step.ratchet > 1)
+                step.slide = false;
+            break;
+
+        case 1:
+            step.slide = ! step.slide;
+            if (step.slide)
+                step.ratchet = 1;
+            break;
+
+        case 2:
+            step.lock = step.lock < 0.05f ? 0.5f : (step.lock < 0.75f ? 1.0f : 0.0f);
+            break;
+
+        default:
+            break;
+    }
+
+    setSelectedSequencerStep(step);
 }
 
 void NateVSTAudioProcessorEditor::timerCallback()
@@ -11346,6 +12940,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateHomeSignalFlowDisplay();
     updateSequencerSceneButtons();
     updateSequencerGridContext();
+    updateSequencerRootStepper();
     updateSampleSliceButtons();
     updateSampleWaveformDisplay();
     updateKeyboardRangeLabel();
@@ -11530,6 +13125,10 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     if (tagFilter.isEmpty())
         tagFilter = "All Tags";
 
+    auto packFilter = presetBrowserPackFilterBox.getText().trim();
+    if (packFilter.isEmpty())
+        packFilter = "All Packs";
+
     auto sortMode = presetSortBox.getText().trim();
     if (sortMode.isEmpty())
         sortMode = "Name";
@@ -11537,18 +13136,20 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     for (size_t index = 0; index < presetQuickFilterButtons.size(); ++index)
     {
         auto active = false;
-        switch (index)
-        {
-            case 0: active = filter == "All" && tagFilter == "All Tags"; break;
-            case 1: active = filter == "Favorites"; break;
-            case 2: active = tagFilter == "House"; break;
-            case 3: active = tagFilter == "Tech House"; break;
-            case 4: active = tagFilter == "Minimal"; break;
-            case 5: active = tagFilter == "UKG"; break;
-            case 6: active = tagFilter == "Techno"; break;
-            case 7: active = filter == "Factory"; break;
-            default: break;
-        }
+            switch (index)
+            {
+                case 0: active = filter == "All" && tagFilter == "All Tags"; break;
+                case 1: active = filter == "Favorites"; break;
+                case 2: active = filter == "Recent"; break;
+                case 3: active = filter == "Similar"; break;
+                case 4: active = filter == "Bass"; break;
+                case 5: active = filter == "Lead"; break;
+                case 6: active = filter == "Chord"; break;
+                case 7: active = filter == "Pad"; break;
+                case 8: active = filter == "FX"; break;
+                case 9: active = filter == "Sequence"; break;
+                default: break;
+            }
         presetQuickFilterButtons[index].setToggleState(active, juce::dontSendNotification);
     }
 
@@ -11584,6 +13185,11 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
             || preset.author.equalsIgnoreCase(tagFilter)
             || preset.notes.containsIgnoreCase(tagFilter)
             || preset.name.containsIgnoreCase(tagFilter);
+    };
+
+    auto matchesPack = [&packFilter] (const NateVSTAudioProcessor::PresetInfo& preset)
+    {
+        return packFilter == "All Packs" || preset.pack.equalsIgnoreCase(packFilter);
     };
 
     auto nextItemId = 1;
@@ -11659,11 +13265,52 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         return nullptr;
     };
 
+    NateVSTAudioProcessor::PresetInfo similarReferencePreset;
+    auto hasSimilarReference = false;
+    if (const auto* preset = findPreset(previousSelection))
+    {
+        similarReferencePreset = *preset;
+        hasSimilarReference = true;
+    }
+
+    auto matchesSimilarPreset = [&similarReferencePreset, hasSimilarReference] (const NateVSTAudioProcessor::PresetInfo& preset)
+    {
+        if (! hasSimilarReference || preset.name == similarReferencePreset.name)
+            return false;
+
+        auto score = 0;
+        if (inferPresetAuditionRole(&preset) == inferPresetAuditionRole(&similarReferencePreset))
+            score += 3;
+        if (preset.pack.isNotEmpty() && preset.pack.equalsIgnoreCase(similarReferencePreset.pack))
+            score += 2;
+        if (preset.category.equalsIgnoreCase(similarReferencePreset.category)
+            || preset.folder.equalsIgnoreCase(similarReferencePreset.folder))
+            score += 2;
+
+        juce::StringArray referenceTerms;
+        referenceTerms.addTokens(similarReferencePreset.tags + " " + similarReferencePreset.category + " " + similarReferencePreset.folder,
+                                 ",/; ",
+                                 "\"'");
+        referenceTerms.removeEmptyStrings();
+        const auto searchable = presetSearchText(preset);
+        for (const auto& term : referenceTerms)
+        {
+            if (term.length() >= 3 && searchable.containsIgnoreCase(term))
+            {
+                ++score;
+                if (score >= 4)
+                    break;
+            }
+        }
+
+        return score >= 3;
+    };
+
     if (filter == "Recent")
     {
         for (const auto& recentName : recentNames)
             if (const auto* preset = findPreset(recentName))
-                if (matchesTag(*preset) && matchesSearch(*preset))
+                if (matchesPack(*preset) && matchesTag(*preset) && matchesSearch(*preset))
                     addPreset(*preset);
     }
     else
@@ -11682,6 +13329,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                                                || preset.tags.containsIgnoreCase("Generated")))
                 || (filter == "User" && ! preset.isFactory)
                 || (filter == "Factory" && preset.isFactory)
+                || (filter == "Similar" && matchesSimilarPreset(preset))
                 || (filter == "120-124 BPM" && preset.bpm >= 120 && preset.bpm <= 124)
                 || (filter == "125-128 BPM" && preset.bpm >= 125 && preset.bpm <= 128)
                 || (filter == "129-132 BPM" && preset.bpm >= 129 && preset.bpm <= 132)
@@ -11697,7 +13345,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || preset.notes.containsIgnoreCase(filter)
                 || preset.name.containsIgnoreCase(filter);
 
-            if (matchesFilter && matchesTag(preset) && matchesSearch(preset))
+            if (matchesFilter && matchesPack(preset) && matchesTag(preset) && matchesSearch(preset))
                 visiblePresets.push_back(preset);
         }
 
@@ -11752,6 +13400,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     auto statusText = juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter;
     if (tagFilter != "All Tags")
         statusText += " | Tag: " + tagFilter;
+    if (packFilter != "All Packs")
+        statusText += " | Pack: " + packFilter;
     statusText += " | Sort: " + sortMode;
     if (searchText.isNotEmpty())
         statusText += " | Search: " + searchText;
@@ -11918,28 +13568,36 @@ void NateVSTAudioProcessorEditor::applyPresetQuickFilter(size_t index)
             label = "Favorites";
             break;
         case 2:
-            tag = "House";
-            label = "House";
+            filter = "Recent";
+            label = "Recent";
             break;
         case 3:
-            tag = "Tech House";
-            label = "Tech House";
+            filter = "Similar";
+            label = "Similar presets";
             break;
         case 4:
-            tag = "Minimal";
-            label = "Minimal";
+            filter = "Bass";
+            label = "Bass";
             break;
         case 5:
-            tag = "UKG";
-            label = "UKG";
+            filter = "Lead";
+            label = "Lead";
             break;
         case 6:
-            tag = "Techno";
-            label = "Techno";
+            filter = "Chord";
+            label = "Chord";
             break;
         case 7:
-            filter = "Factory";
-            label = "Factory";
+            filter = "Pad";
+            label = "Pad";
+            break;
+        case 8:
+            filter = "FX";
+            label = "FX";
+            break;
+        case 9:
+            filter = "Sequence";
+            label = "Sequence";
             break;
         case 0:
         default:

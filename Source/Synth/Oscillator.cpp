@@ -161,6 +161,34 @@ float housePianoSample(float phase, float phaseDelta)
     const auto tine = std::sin(sample * juce::MathConstants<float>::halfPi * 1.22f);
     return ((sample * 0.72f) + (tine * 0.28f)) * 0.48f;
 }
+
+float customWavePointSample(float phase, const Oscillator::CustomWavePoints& points)
+{
+    constexpr auto pointCount = static_cast<float>(Oscillator::customWavePointCount);
+    const auto scaledPhase = wrapUnitPhase(phase) * pointCount;
+    const auto leftIndex = static_cast<size_t>(std::floor(scaledPhase)) % Oscillator::customWavePointCount;
+    const auto rightIndex = (leftIndex + 1) % Oscillator::customWavePointCount;
+    const auto mix = scaledPhase - std::floor(scaledPhase);
+    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
+    const auto left = (juce::jlimit(0.0f, 1.0f, points[leftIndex]) * 2.0f) - 1.0f;
+    const auto right = (juce::jlimit(0.0f, 1.0f, points[rightIndex]) * 2.0f) - 1.0f;
+
+    return left + ((right - left) * smoothMix);
+}
+
+float customWaveSample(float phase, const Oscillator::CustomWaveFrames& frames, float position)
+{
+    constexpr auto lastFrame = static_cast<float>(Oscillator::customWaveFrameCount - 1);
+    const auto framePosition = juce::jlimit(0.0f, 1.0f, position) * lastFrame;
+    const auto lowerFrame = juce::jlimit(0, static_cast<int>(lastFrame), static_cast<int>(std::floor(framePosition)));
+    const auto upperFrame = juce::jlimit(0, static_cast<int>(lastFrame), lowerFrame + 1);
+    const auto mix = juce::jlimit(0.0f, 1.0f, framePosition - static_cast<float>(lowerFrame));
+    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
+    const auto lower = customWavePointSample(phase, frames[static_cast<size_t>(lowerFrame)]);
+    const auto upper = customWavePointSample(phase, frames[static_cast<size_t>(upperFrame)]);
+
+    return lower + ((upper - lower) * smoothMix);
+}
 }
 
 void Oscillator::prepare(double newSampleRate)
@@ -202,6 +230,31 @@ void Oscillator::setWavetablePosition(float newPosition)
     wavetablePosition = juce::jlimit(0.0f, 1.0f, newPosition);
 }
 
+void Oscillator::setCustomWaveform(const CustomWavePoints& points)
+{
+    for (size_t index = 0; index < customWavePoints.size(); ++index)
+        customWavePoints[index] = juce::jlimit(0.0f, 1.0f, points[index]);
+
+    customWaveFrames[0] = customWavePoints;
+    if (! customFramesInitialised)
+    {
+        for (auto& frame : customWaveFrames)
+            frame = customWavePoints;
+
+        customFramesInitialised = true;
+    }
+}
+
+void Oscillator::setCustomWavetableFrames(const CustomWaveFrames& frames)
+{
+    for (size_t frameIndex = 0; frameIndex < customWaveFrames.size(); ++frameIndex)
+        for (size_t pointIndex = 0; pointIndex < customWaveFrames[frameIndex].size(); ++pointIndex)
+            customWaveFrames[frameIndex][pointIndex] = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
+
+    customWavePoints = customWaveFrames[0];
+    customFramesInitialised = true;
+}
+
 float Oscillator::process()
 {
     float sample = 0.0f;
@@ -234,6 +287,10 @@ float Oscillator::process()
 
         case Waveform::housePiano:
             sample = housePianoSample(phase, phaseDelta);
+            break;
+
+        case Waveform::custom:
+            sample = customWaveSample(phase, customWaveFrames, wavetablePosition);
             break;
     }
 

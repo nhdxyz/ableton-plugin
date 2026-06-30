@@ -206,10 +206,29 @@ void HouseLayerRackDisplay::mouseExit(const juce::MouseEvent&)
 void HouseLayerRackDisplay::mouseDown(const juce::MouseEvent& event)
 {
     const auto layerIndex = layerIndexAt(event.position);
-    if (layerIndex < 0 || ! onLayerSelected)
+    if (layerIndex < 0)
         return;
 
-    onLayerSelected(static_cast<size_t>(layerIndex));
+    editingLayerIndex = layerIndex;
+    hoveredLayerIndex = layerIndex;
+
+    if (onLayerSelected)
+        onLayerSelected(static_cast<size_t>(layerIndex));
+
+    if (onLayerEditStarted)
+        onLayerEditStarted(static_cast<size_t>(layerIndex));
+
+    updateLayerLevelAt(event.position);
+}
+
+void HouseLayerRackDisplay::mouseDrag(const juce::MouseEvent& event)
+{
+    updateLayerLevelAt(event.position);
+}
+
+void HouseLayerRackDisplay::mouseUp(const juce::MouseEvent&)
+{
+    editingLayerIndex = -1;
 }
 
 bool HouseLayerRackDisplay::layersEqual(const Layer& left, const Layer& right) noexcept
@@ -274,5 +293,29 @@ int HouseLayerRackDisplay::layerIndexAt(juce::Point<float> position) const
             return static_cast<int>(index);
 
     return -1;
+}
+
+void HouseLayerRackDisplay::updateLayerLevelAt(juce::Point<float> position)
+{
+    if (editingLayerIndex < 0 || editingLayerIndex >= static_cast<int>(layerCount))
+        return;
+
+    const auto cards = layerBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
+    const auto card = cards[static_cast<size_t>(editingLayerIndex)];
+    if (card.isEmpty())
+        return;
+
+    const auto level = juce::jlimit(0.0f, 1.0f, 1.0f - ((position.y - card.getY()) / juce::jmax(1.0f, card.getHeight())));
+    auto& layer = state.layers[static_cast<size_t>(editingLayerIndex)];
+    if (std::abs(layer.level - level) < 0.002f)
+        return;
+
+    layer.level = level;
+    layer.active = level > activeThreshold;
+
+    if (onLayerLevelChanged)
+        onLayerLevelChanged(static_cast<size_t>(editingLayerIndex), level);
+
+    repaint();
 }
 }

@@ -36,7 +36,7 @@ void MacroAssignmentPad::setState(State newState)
 
 juce::String MacroAssignmentPad::getTooltip()
 {
-    const auto detail = "Click a macro or destination. Drag the amount lane to assign or update.";
+    const auto detail = "Click a macro or destination. Drag up/down in destination pads or use the wheel to set bipolar amount.";
     return state.summary.isNotEmpty() ? state.summary + "\n" + detail : juce::String(detail);
 }
 
@@ -143,19 +143,40 @@ void MacroAssignmentPad::paint(juce::Graphics& g)
 
         if (hasRoute)
         {
-            auto routeRail = chip.reduced(3.0f, 0.0f).removeFromBottom(4.0f).withTrimmedBottom(1.0f);
-            const auto routeCentre = routeRail.getCentreX();
-            const auto routeX = juce::jmap(destination.amount, -1.0f, 1.0f, routeRail.getX(), routeRail.getRight());
+            auto routeRail = chip.reduced(5.0f, 5.0f);
+            if (routeRail.getHeight() > 28.0f)
+                routeRail = routeRail.withTrimmedTop(10.0f).withTrimmedBottom(10.0f);
+
+            const auto routeCentre = routeRail.getCentreY();
+            const auto routeY = juce::jmap(destination.amount, -1.0f, 1.0f, routeRail.getBottom(), routeRail.getY());
             g.setColour(colour.withAlpha(destination.enabled ? 0.82f : 0.36f));
-            g.fillRoundedRectangle(juce::Rectangle<float>::leftTopRightBottom(juce::jmin(routeCentre, routeX),
-                                                                              routeRail.getY(),
-                                                                              juce::jmax(routeCentre, routeX),
-                                                                              routeRail.getBottom()),
+            g.fillRoundedRectangle(juce::Rectangle<float>::leftTopRightBottom(routeRail.getX(),
+                                                                              juce::jmin(routeCentre, routeY),
+                                                                              routeRail.getRight(),
+                                                                              juce::jmax(routeCentre, routeY)),
                                    2.0f);
+            g.setColour(juce::Colour(0xff0a0e10).withAlpha(0.72f));
+            g.drawHorizontalLine(static_cast<int>(std::round(routeCentre)), routeRail.getX(), routeRail.getRight());
+            g.setColour(colour.withAlpha(destination.enabled ? 0.95f : 0.42f));
+            g.fillRoundedRectangle(routeRail.withY(routeY - 1.5f).withHeight(3.0f), 1.5f);
         }
 
         g.setColour(selected || hasRoute ? juce::Colour(0xffdce7e4) : juce::Colour(0xff87969a));
         g.drawFittedText(compactName(destination.name), chip.toNearestInt().reduced(3, 0), juce::Justification::centred, 1, 0.48f);
+
+        if (selected || hasRoute)
+        {
+            const auto shownAmount = selected ? state.targetAmount : destination.amount;
+            const auto percent = juce::roundToInt(shownAmount * 100.0f);
+            auto percentArea = chip.toNearestInt().reduced(4, 3).removeFromBottom(10);
+            g.setColour(selected ? accent : colour);
+            g.setFont(juce::FontOptions(7.0f, juce::Font::bold));
+            g.drawFittedText((percent >= 0 ? "+" : "") + juce::String(percent),
+                             percentArea,
+                             juce::Justification::centred,
+                             1,
+                             0.58f);
+        }
     }
 
     if (state.destinations.empty())
@@ -221,6 +242,12 @@ void MacroAssignmentPad::mouseDoubleClick(const juce::MouseEvent& event)
 {
     if (const auto sourceIndex = sourceIndexForPosition(event.position); sourceIndex > 0 && onClearSource)
         onClearSource(sourceIndex);
+}
+
+void MacroAssignmentPad::mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+{
+    const auto delta = (wheel.deltaY >= 0.0f ? 0.05f : -0.05f) * (event.mods.isShiftDown() || event.mods.isCommandDown() ? 0.25f : 1.0f);
+    nudgeAmountAt(event.position, delta);
 }
 
 juce::Rectangle<float> MacroAssignmentPad::getContentBounds() const
@@ -335,6 +362,36 @@ void MacroAssignmentPad::commitAmount()
         onTargetAmountCommit(state.selectedSourceIndex, destinationIndex, state.targetAmount);
 }
 
+void MacroAssignmentPad::nudgeAmountAt(juce::Point<float> position, float delta)
+{
+    auto destinationIndex = destinationIndexForPosition(position);
+    if (destinationIndex <= 0 && getTargetBounds().contains(position))
+        destinationIndex = state.selectedDestinationIndex;
+
+    if (destinationIndex <= 0)
+        return;
+
+    const auto amount = clampBipolar(currentAmountForDestination(destinationIndex) + delta);
+    state.selectedDestinationIndex = destinationIndex;
+    state.targetAmount = amount;
+    repaint();
+
+    if (onTargetAmountPreview)
+        onTargetAmountPreview(state.selectedSourceIndex, destinationIndex, amount);
+
+    if (onTargetAmountCommit)
+        onTargetAmountCommit(state.selectedSourceIndex, destinationIndex, amount);
+}
+
+float MacroAssignmentPad::currentAmountForDestination(int destinationIndex) const noexcept
+{
+    for (const auto& destination : state.destinations)
+        if (destination.index == destinationIndex && destination.assigned)
+            return destination.amount;
+
+    return destinationIndex == state.selectedDestinationIndex ? state.targetAmount : 0.0f;
+}
+
 int MacroAssignmentPad::selectedMacroArrayIndex() const noexcept
 {
     for (size_t index = 0; index < state.macroSourceIndices.size(); ++index)
@@ -347,8 +404,14 @@ int MacroAssignmentPad::selectedMacroArrayIndex() const noexcept
 float MacroAssignmentPad::amountFromPosition(juce::Point<float> position, juce::Rectangle<float> area) const noexcept
 {
     const auto usable = area.reduced(8.0f, 0.0f);
-    const auto normalised = (position.x - usable.getX()) / juce::jmax(1.0f, usable.getWidth());
-    return clampBipolar((normalised * 2.0f) - 1.0f);
+    if (usable.getWidth() > usable.getHeight() * 2.4f)
+    {
+        const auto normalised = (position.x - usable.getX()) / juce::jmax(1.0f, usable.getWidth());
+        return clampBipolar((normalised * 2.0f) - 1.0f);
+    }
+
+    const auto normalised = (position.y - usable.getY()) / juce::jmax(1.0f, usable.getHeight());
+    return clampBipolar(1.0f - (normalised * 2.0f));
 }
 
 juce::String MacroAssignmentPad::selectedDestinationName() const

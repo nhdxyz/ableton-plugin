@@ -13,30 +13,34 @@ Randomizer::Randomizer(Parameters::APVTS& state)
 
 void Randomizer::generate()
 {
-    const auto amount = readFloat(Parameters::ID::randomAmount);
-    const auto chaos = readFloat(Parameters::ID::randomChaos);
-    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, false);
+    const auto profile = recipeProfileForChoice(readChoice(Parameters::ID::randomRecipe));
+    const auto amount = juce::jlimit(0.02f, 1.0f, readFloat(Parameters::ID::randomAmount) * profile.amountScale);
+    const auto chaos = juce::jlimit(0.0f, 1.0f, readFloat(Parameters::ID::randomChaos) + profile.chaosOffset);
+    randomizeForRecipe(profile, amount, chaos, false);
 }
 
 void Randomizer::mutate()
 {
-    const auto amount = juce::jlimit(0.05f, 1.0f, readFloat(Parameters::ID::randomAmount) * 0.65f);
-    const auto chaos = readFloat(Parameters::ID::randomChaos);
-    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, true);
+    const auto profile = recipeProfileForChoice(readChoice(Parameters::ID::randomRecipe));
+    const auto amount = juce::jlimit(0.05f, 1.0f, readFloat(Parameters::ID::randomAmount) * 0.65f * profile.amountScale);
+    const auto chaos = juce::jlimit(0.0f, 1.0f, readFloat(Parameters::ID::randomChaos) + (profile.chaosOffset * 0.75f));
+    randomizeForRecipe(profile, amount, chaos, true);
 }
 
 void Randomizer::wildMutate()
 {
-    const auto amount = juce::jlimit(0.35f, 1.0f, readFloat(Parameters::ID::randomAmount) * 1.15f);
-    const auto chaos = juce::jlimit(0.2f, 1.0f, (readFloat(Parameters::ID::randomChaos) * 1.25f) + 0.15f);
-    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, false);
+    const auto profile = recipeProfileForChoice(readChoice(Parameters::ID::randomRecipe));
+    const auto amount = juce::jlimit(0.35f, 1.0f, readFloat(Parameters::ID::randomAmount) * 1.15f * profile.amountScale);
+    const auto chaos = juce::jlimit(0.2f, 1.0f, (readFloat(Parameters::ID::randomChaos) * 1.25f) + 0.15f + profile.chaosOffset);
+    randomizeForRecipe(profile, amount, chaos, false);
 }
 
 void Randomizer::variation()
 {
-    const auto amount = juce::jlimit(0.02f, 0.35f, readFloat(Parameters::ID::randomAmount) * 0.25f);
-    const auto chaos = readFloat(Parameters::ID::randomChaos) * 0.35f;
-    randomizeForRecipe(static_cast<Recipe>(readChoice(Parameters::ID::randomRecipe)), amount, chaos, true);
+    const auto profile = recipeProfileForChoice(readChoice(Parameters::ID::randomRecipe));
+    const auto amount = juce::jlimit(0.02f, 0.35f, readFloat(Parameters::ID::randomAmount) * 0.25f * profile.amountScale);
+    const auto chaos = juce::jlimit(0.0f, 1.0f, (readFloat(Parameters::ID::randomChaos) * 0.35f) + (profile.chaosOffset * 0.45f));
+    randomizeForRecipe(profile, amount, chaos, true);
 }
 
 float Randomizer::randomFloat(float min, float max)
@@ -79,11 +83,45 @@ void Randomizer::setChoice(const juce::String& parameterID, int choiceIndex)
     setParameter(parameterID, static_cast<float>(choiceIndex));
 }
 
-void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bool subtle)
+Randomizer::RecipeProfile Randomizer::recipeProfileForChoice(int choiceIndex) const
 {
-    const auto brightnessBias = readFloat(Parameters::ID::randomBrightnessBias);
-    const auto driveBias = readFloat(Parameters::ID::randomDriveBias);
-    const auto motionBias = readFloat(Parameters::ID::randomMotionBias);
+    switch (choiceIndex)
+    {
+        case 0: return { Recipe::deepHouseBass };
+        case 1: return { Recipe::rollingTechBass };
+        case 2: return { Recipe::acidLine };
+        case 3: return { Recipe::minimalBlip };
+        case 4: return { Recipe::darkStab };
+        case 5: return { Recipe::noiseFx };
+        case 6: return { Recipe::ukgTwoStepBass };
+        case 7: return { Recipe::ukgOrganStab };
+        case 8: return { Recipe::ukgChordStab };
+        case 9: return { Recipe::ukgBellPluck };
+        case 10: return { Recipe::ukgDredBass };
+        case 11: return { Recipe::ukgBellPluck, 1.00f, -0.04f, 0.18f, -0.04f, 0.18f };
+        case 12: return { Recipe::deepHouseBass, 1.05f, -0.02f, -0.12f, 0.04f, 0.10f };
+        case 13: return { Recipe::ukgDredBass, 1.12f, 0.12f, 0.04f, 0.18f, 0.08f };
+        case 14: return { Recipe::darkStab, 0.86f, -0.06f, -0.36f, 0.02f, -0.08f };
+        case 15: return { Recipe::darkStab, 0.96f, 0.04f, -0.04f, 0.10f, 0.04f };
+        case 16: return { Recipe::rollingTechBass, 1.10f, 0.08f, -0.18f, 0.16f, 0.18f };
+        case 17: return { Recipe::minimalBlip, 0.84f, -0.06f, 0.14f, -0.08f, 0.04f };
+        case 18: return { Recipe::minimalBlip, 0.96f, 0.06f, 0.34f, -0.02f, 0.22f };
+        case 19: return { Recipe::ukgBellPluck, 1.02f, 0.06f, 0.24f, -0.06f, 0.28f };
+        case 20: return { Recipe::darkStab, 0.76f, -0.08f, -0.08f, -0.12f, 0.16f };
+        case 21: return { Recipe::ukgChordStab, 1.02f, 0.04f, 0.08f, 0.06f, 0.10f };
+        case 22: return { Recipe::acidLine, 1.14f, 0.12f, 0.24f, 0.20f, 0.16f };
+        case 23: return { Recipe::ukgOrganStab, 0.84f, -0.08f, -0.22f, -0.08f, -0.04f };
+        case 24: return { Recipe::minimalBlip, 1.04f, 0.08f, 0.10f, 0.08f, 0.24f };
+        default: return { Recipe::deepHouseBass };
+    }
+}
+
+void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, float chaos, bool subtle)
+{
+    const auto recipe = profile.recipe;
+    const auto brightnessBias = juce::jlimit(-1.0f, 1.0f, readFloat(Parameters::ID::randomBrightnessBias) + profile.brightnessOffset);
+    const auto driveBias = juce::jlimit(-1.0f, 1.0f, readFloat(Parameters::ID::randomDriveBias) + profile.driveOffset);
+    const auto motionBias = juce::jlimit(-1.0f, 1.0f, readFloat(Parameters::ID::randomMotionBias) + profile.motionOffset);
     const auto wildness = juce::jlimit(0.0f, 1.0f, (amount * 0.75f) + (chaos * 0.25f));
 
     auto attack = 0.004f;

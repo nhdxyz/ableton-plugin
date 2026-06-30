@@ -4523,11 +4523,18 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
     const auto recipeName = currentRandomRecipeName();
     const auto bassRole = recipeName.containsIgnoreCase("Bass")
         || recipeName.containsIgnoreCase("Dred")
+        || recipeName.containsIgnoreCase("Reece")
+        || recipeName.containsIgnoreCase("Rumble")
+        || recipeName.containsIgnoreCase("Log")
         || recipeName.containsIgnoreCase("Acid");
     const auto pitchedMidRole = recipeName.containsIgnoreCase("Stab")
         || recipeName.containsIgnoreCase("Organ")
         || recipeName.containsIgnoreCase("Chord")
         || recipeName.containsIgnoreCase("Bell")
+        || recipeName.containsIgnoreCase("Pluck")
+        || recipeName.containsIgnoreCase("Keys")
+        || recipeName.containsIgnoreCase("Pad")
+        || recipeName.containsIgnoreCase("Chop")
         || recipeName.containsIgnoreCase("Blip");
 
     const auto sourceLocked = isRandomLockEnabled(Parameters::ID::randomLockSource);
@@ -4746,13 +4753,21 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
     const auto outputLocked = isRandomLockEnabled(Parameters::ID::randomLockOutput);
     const auto bassRole = recipeName.containsIgnoreCase("Bass")
         || recipeName.containsIgnoreCase("Dred")
+        || recipeName.containsIgnoreCase("Reece")
+        || recipeName.containsIgnoreCase("Rumble")
+        || recipeName.containsIgnoreCase("Log")
         || recipeName.containsIgnoreCase("Acid");
     const auto midRole = recipeName.containsIgnoreCase("Stab")
         || recipeName.containsIgnoreCase("Organ")
         || recipeName.containsIgnoreCase("Chord")
         || recipeName.containsIgnoreCase("Bell")
+        || recipeName.containsIgnoreCase("Pluck")
+        || recipeName.containsIgnoreCase("Keys")
+        || recipeName.containsIgnoreCase("Pad")
+        || recipeName.containsIgnoreCase("Chop")
         || recipeName.containsIgnoreCase("Blip");
-    const auto noiseRole = recipeName.containsIgnoreCase("Noise");
+    const auto noiseRole = recipeName.containsIgnoreCase("Noise")
+        || recipeName.containsIgnoreCase("Perc");
 
     const auto sourceEnergy = getParameterPlainValue(Parameters::ID::osc1Level, 1.0f)
         + getParameterPlainValue(Parameters::ID::osc2Level, 0.0f)

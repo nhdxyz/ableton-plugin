@@ -17,11 +17,11 @@ constexpr auto editorDefaultHeight = 820;
 constexpr auto editorMaxWidth = 1680;
 constexpr auto editorMaxHeight = 1040;
 constexpr auto pianoKeyboardHeight = 80;
-constexpr auto keyboardControlsWidth = 300;
+constexpr auto keyboardControlsWidth = 356;
 constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
-constexpr auto keyboardMaximumWhiteKeyWidth = 82.0f;
+constexpr auto keyboardMaximumWhiteKeyWidth = 112.0f;
 constexpr auto keyboardLowestNote = 24;
-constexpr auto keyboardHighestNote = 88;
+constexpr auto keyboardHighestNote = 76;
 constexpr auto keyboardInitialLowestNote = 48;
 constexpr auto keyboardMinLowestVisibleNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 60;
@@ -1242,7 +1242,7 @@ struct RandomRecipeInfo
 
 RandomRecipeInfo randomRecipeInfoForName(const juce::String& recipeName)
 {
-    static const std::array<RandomRecipeInfo, 11> recipes {
+    static const std::array recipes {
         RandomRecipeInfo { "Deep House Bass", "Deep House", "120-126 BPM", "round basslines, warm chords, low drive", "sub weight, warm filter, light pump" },
         RandomRecipeInfo { "Rolling Tech Bass", "Tech House", "124-130 BPM", "rolling bass, tight groove, mid punch", "short envelope, drive, 24 dB filter motion" },
         RandomRecipeInfo { "Acid Line", "Acid / Techno", "128-134 BPM", "rubber riffs, resonant hooks, automation", "acid character, resonance, sync movement" },
@@ -1253,7 +1253,21 @@ RandomRecipeInfo randomRecipeInfoForName(const juce::String& recipeName)
         RandomRecipeInfo { "UKG Organ Stab", "UKG", "130-134 BPM", "short organ hits, speed-garage stabs", "warm filter, quick amp, delay/room space" },
         RandomRecipeInfo { "UKG Chord Stab", "UKG", "130-134 BPM", "minor stabs, late chords, shuffled hooks", "chord color, strum-friendly motion, pump" },
         RandomRecipeInfo { "UKG Bell Pluck", "UKG", "130-136 BPM", "bright plucks, metallic hooks, call-response", "clean transient, WT brightness, short tails" },
-        RandomRecipeInfo { "UKG Dred Bass", "UKG / Speed Garage", "132-136 BPM", "Dred/Reese bass, darker 2-step pressure", "mono sub, detuned upper bass, slow filter pull" }
+        RandomRecipeInfo { "UKG Dred Bass", "UKG / Speed Garage", "132-136 BPM", "Dred/Reese bass, darker 2-step pressure", "mono sub, detuned upper bass, slow filter pull" },
+        RandomRecipeInfo { "Afro House Pluck", "Afro House", "120-124 BPM", "syncopated plucks, chant hooks, warm percussion", "bright pluck, moderate motion, clean low end" },
+        RandomRecipeInfo { "Amapiano Log Bass", "Amapiano", "112-116 BPM", "round log bass, sparse groove, soft transient", "warm low tone, light drive, pitch-safe movement" },
+        RandomRecipeInfo { "Bass House Reece", "Bass House", "124-128 BPM", "wide upper bass, mono sub support, dirty hooks", "Reese detune, drive, clipped club safety" },
+        RandomRecipeInfo { "Dub Techno Chord", "Dub Techno", "122-128 BPM", "dark chords, long tails, smoky stabs", "darker filter, softer chaos, spacious motion" },
+        RandomRecipeInfo { "Detroit Tech Stab", "Detroit Techno", "126-132 BPM", "classic stab riffs, chord memory, machine soul", "mid punch, guarded drive, steady LFO" },
+        RandomRecipeInfo { "Hardgroove Rumble", "Hardgroove", "132-138 BPM", "rolling rumble, percussion pressure, hypnotic bass", "low tilt, drive, sequencer and pump motion" },
+        RandomRecipeInfo { "Minimal House Pluck", "Minimal House", "122-126 BPM", "small plucks, restrained hooks, dry groove", "low chaos, bright transient, tight envelope" },
+        RandomRecipeInfo { "Microhouse Perc Blip", "Microhouse", "122-128 BPM", "clicky blips, micro percussion, short motifs", "bright tone, high motion, small FX throws" },
+        RandomRecipeInfo { "Garage Vocal Chop", "Garage", "130-134 BPM", "vocal-like chops, shuffled call-response, hook fills", "bright bell engine, more motion, short tails" },
+        RandomRecipeInfo { "Future Garage Pad", "Future Garage", "130-136 BPM", "washed chords, moody beds, atmospheric hooks", "soft drive, darker tone, wider motion" },
+        RandomRecipeInfo { "Tech House Chord Tool", "Tech House", "124-128 BPM", "stab chords, groove tools, DJ-friendly hooks", "chord stab engine, mild drive, pump-ready" },
+        RandomRecipeInfo { "Peak Techno Acid", "Peak Techno", "132-140 BPM", "acid lead pressure, rave hooks, automation", "bright resonance, more drive, high chaos" },
+        RandomRecipeInfo { "Lo-Fi House Keys", "Lo-Fi House", "118-124 BPM", "dusty key stabs, soft chords, mellow riffs", "darker keys, low chaos, gentle motion" },
+        RandomRecipeInfo { "Tribal Tech Perc", "Tribal Tech", "124-130 BPM", "percussive blips, tribal loops, call hits", "short envelope, motion bias, drive-safe FX" }
     };
 
     for (const auto& recipe : recipes)
@@ -1419,6 +1433,19 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
+
+    keyboardHomeButton.setTooltip("Reset the audition keyboard to its default octave");
+    keyboardHomeButton.setWantsKeyboardFocus(false);
+    keyboardHomeButton.setMouseClickGrabsKeyboardFocus(false);
+    keyboardHomeButton.onClick = [this]
+    {
+        audioProcessor.getMidiKeyboardState().allNotesOff(1);
+        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
+        updateKeyboardRangeLabel();
+        returnKeyboardFocusToPiano();
+    };
+    addAndMakeVisible(keyboardHomeButton);
 
     keyboardPanicButton.setTooltip("Stop held keyboard, chord-memory, synth, and sample voices");
     keyboardPanicButton.setWantsKeyboardFocus(false);
@@ -2104,6 +2131,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::filterSlope, filterSlopeBox));
 
     recipeBox.addItemList(Parameters::randomRecipeChoices(), 1);
+    recipeBox.setTextWhenNothingSelected("Generator Recipe");
+    recipeBox.setTooltip("Profiled Random Lab recipes: bass, pluck, chord, pad, FX, garage, house, techno, and minimal starting points");
     addAndMakeVisible(recipeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::randomRecipe, recipeBox));
     recipeBox.onChange = [this] { updateRandomRecipeInfo(); };
@@ -4052,6 +4081,7 @@ void NateVSTAudioProcessorEditor::resized()
     auto keyboardControlArea = keyboardArea.removeFromLeft(keyboardControlsWidth).reduced(8, 6);
     keyboardOctaveDownButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
     keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(92).reduced(3, 4));
+    keyboardHomeButton.setBounds(keyboardControlArea.removeFromLeft(58).reduced(2, 4));
     keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
     keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(74).reduced(2, 4));
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
@@ -4095,9 +4125,7 @@ void NateVSTAudioProcessorEditor::resized()
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
-            wildMutateButton.setVisible(true);
-            undoRandomButton.setVisible(true);
-            redoRandomButton.setVisible(true);
+            randomMorphPad.setVisible(true);
             presetBox.setVisible(true);
             previousPresetButton.setVisible(true);
             nextPresetButton.setVisible(true);
@@ -4126,14 +4154,14 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(258);
-            const auto engineColumnWidth = juce::jlimit(306, 350, topRow.getWidth() / 4);
+            auto topRow = dashboard.removeFromTop(juce::jlimit(250, 318, dashboard.getHeight() / 2 + 28));
+            const auto engineColumnWidth = juce::jlimit(292, 340, topRow.getWidth() / 4);
             const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
             auto performArea = topRow.removeFromLeft(engineColumnWidth).reduced(18, 12);
             auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(18, 12);
             auto overviewArea = topRow.reduced(18, 12);
             auto bottomRow = dashboard.withTrimmedTop(14);
-            auto labArea = bottomRow.removeFromLeft(juce::jlimit(330, 380, bottomRow.getWidth() / 3)).reduced(18, 12);
+            auto labArea = bottomRow.removeFromLeft(juce::jlimit(386, 452, bottomRow.getWidth() / 3 + 28)).reduced(18, 12);
             auto libraryArea = bottomRow.reduced(18, 12);
 
             homeEngineLabel.setBounds(performArea.removeFromTop(24));
@@ -4141,14 +4169,15 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(cutoffSlider, cutoffLabel, true);
             setSliderVisible(driveSlider, driveLabel, true);
             setSliderVisible(outputSlider, outputLabel, true);
-            layoutKnobRow(performArea.removeFromTop(92).withTrimmedTop(6), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
-            lowEndAssistant.setBounds(performArea.removeFromTop(62).reduced(2, 4));
+            layoutKnobRow(performArea.removeFromTop(88).withTrimmedTop(4), { &subLevelSlider, &cutoffSlider, &driveSlider, &outputSlider });
+            lowEndAssistant.setBounds(performArea.removeFromTop(68).reduced(2, 5));
             clubMonitorDisplay.setBounds(performArea.reduced(2, 4));
 
-            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(104));
-            homeSignalFlowDisplay.setBounds(overviewArea.removeFromTop(42).withTrimmedTop(6).reduced(4, 0));
-            outputOscilloscopeDisplay.setBounds(overviewArea.removeFromTop(44).withTrimmedTop(6).reduced(4, 0));
-            auto analysisRow = overviewArea.withTrimmedTop(5);
+            homeOverviewDisplay.setBounds(overviewArea.removeFromTop(118).reduced(2, 0));
+            homeSignalFlowDisplay.setBounds(overviewArea.removeFromTop(44).withTrimmedTop(6).reduced(4, 0));
+            auto scopeRow = overviewArea.removeFromTop(juce::jlimit(58, 76, overviewArea.getHeight() / 3)).withTrimmedTop(5);
+            outputOscilloscopeDisplay.setBounds(scopeRow.reduced(4, 1));
+            auto analysisRow = overviewArea.withTrimmedTop(6);
             const auto stereoWidth = juce::jlimit(112, 158, analysisRow.getWidth() / 3);
             stereoFieldDisplay.setBounds(analysisRow.removeFromRight(stereoWidth).reduced(4, 0));
             outputSpectrumDisplay.setBounds(analysisRow.reduced(4, 0));
@@ -4170,20 +4199,20 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             auto randomSelectRow = labArea.removeFromTop(38);
-            recipeBox.setBounds(randomSelectRow.removeFromLeft(176).reduced(3, 4));
+            recipeBox.setBounds(randomSelectRow.removeFromLeft(juce::jlimit(190, 260, randomSelectRow.getWidth() / 2)).reduced(3, 4));
             randomScopeBox.setBounds(randomSelectRow.reduced(3, 4));
-            auto labButtonRow = labArea.removeFromTop(36).withTrimmedTop(4);
-            generateButton.setBounds(labButtonRow.removeFromLeft(82).reduced(3, 4));
-            mutateButton.setBounds(labButtonRow.removeFromLeft(74).reduced(3, 4));
-            variationButton.setBounds(labButtonRow.removeFromLeft(62).reduced(3, 4));
-            wildMutateButton.setBounds(labButtonRow.removeFromLeft(56).reduced(3, 4));
+            updateRandomMorphPad();
+            randomMorphPad.setBounds(labArea.removeFromTop(juce::jlimit(64, 118, labArea.getHeight() - 72)).withTrimmedTop(4).reduced(3, 2));
+            auto labButtonRow = labArea.removeFromTop(38).withTrimmedTop(4);
+            const auto labButtonWidth = juce::jmax(1, labButtonRow.getWidth() / 3);
+            generateButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 4));
+            variationButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 4));
+            mutateButton.setBounds(labButtonRow.reduced(3, 4));
             auto randomStatusRow = labArea.removeFromTop(34).withTrimmedTop(6);
-            undoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
-            redoRandomButton.setBounds(randomStatusRow.removeFromLeft(58).reduced(3, 4));
             randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
-            const auto playViewHeight = juce::jlimit(76, 102, libraryArea.getHeight() - 116);
+            const auto playViewHeight = juce::jlimit(74, 104, libraryArea.getHeight() - 112);
             homeSessionDisplay.setBounds(libraryArea.removeFromTop(playViewHeight).reduced(3, 5));
             auto loadRow = libraryArea.removeFromTop(38).withTrimmedTop(2);
             previousPresetButton.setBounds(loadRow.removeFromLeft(42).reduced(3, 4));
@@ -5888,6 +5917,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         for (const auto* keyboardControl : {
                  static_cast<const juce::Component*>(&keyboardOctaveDownButton),
                  static_cast<const juce::Component*>(&keyboardRangeLabel),
+                 static_cast<const juce::Component*>(&keyboardHomeButton),
                  static_cast<const juce::Component*>(&keyboardOctaveUpButton),
                  static_cast<const juce::Component*>(&keyboardPanicButton) })
         {
@@ -8104,6 +8134,32 @@ juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() con
 {
     const auto recipe = recipeBox.getText().trim();
 
+    if (recipe.containsIgnoreCase("Afro House"))
+        return "Afro House/Plucks";
+    if (recipe.containsIgnoreCase("Amapiano"))
+        return "Amapiano/Bass";
+    if (recipe.containsIgnoreCase("Bass House"))
+        return "Bass House/Bass";
+    if (recipe.containsIgnoreCase("Dub Techno"))
+        return "Dub Techno/Chords";
+    if (recipe.containsIgnoreCase("Detroit"))
+        return "Techno/Stabs";
+    if (recipe.containsIgnoreCase("Hardgroove"))
+        return "Techno/Rumble";
+    if (recipe.containsIgnoreCase("Microhouse"))
+        return "Minimal/Perc";
+    if (recipe.containsIgnoreCase("Garage Vocal"))
+        return "UKG/Chops";
+    if (recipe.containsIgnoreCase("Future Garage"))
+        return "UKG/Pads";
+    if (recipe.containsIgnoreCase("Peak Techno"))
+        return "Techno/Acid";
+    if (recipe.containsIgnoreCase("Lo-Fi House"))
+        return "House/Keys";
+    if (recipe.containsIgnoreCase("Tribal Tech"))
+        return "Tech House/Perc";
+    if (recipe.containsIgnoreCase("Tech House Chord"))
+        return "Tech House/Stabs";
     if (recipe.containsIgnoreCase("Dred") || recipe.containsIgnoreCase("2-Step Bass"))
         return "UKG/Bass";
     if (recipe.containsIgnoreCase("Organ"))
@@ -8132,6 +8188,10 @@ juce::String NateVSTAudioProcessorEditor::suggestedPresetUseForCategory(const ju
 {
     if (category.startsWithIgnoreCase("UKG/Bass"))
         return "UKG bassline or Dred/Reese layer around 130-136 BPM";
+    if (category.startsWithIgnoreCase("UKG/Chops"))
+        return "garage chop or vocal-like call-response hook";
+    if (category.startsWithIgnoreCase("UKG/Pads"))
+        return "future-garage pad, washed chord, or atmospheric bed";
     if (category.startsWithIgnoreCase("UKG/Organ"))
         return "short organ stab for 2-step or speed-garage hooks";
     if (category.startsWithIgnoreCase("UKG/Stabs"))
@@ -8139,9 +8199,17 @@ juce::String NateVSTAudioProcessorEditor::suggestedPresetUseForCategory(const ju
     if (category.startsWithIgnoreCase("UKG/Bells"))
         return "bright garage pluck, fill, or call-response hook";
     if (category.startsWithIgnoreCase("House"))
-        return "warm house bass or chord layer around 120-126 BPM";
+        return "warm house bass, key layer, or chord around 118-126 BPM";
+    if (category.startsWithIgnoreCase("Afro House"))
+        return "syncopated Afro house pluck or hook";
+    if (category.startsWithIgnoreCase("Amapiano"))
+        return "log bass or sparse amapiano motif";
+    if (category.startsWithIgnoreCase("Bass House"))
+        return "driven bass-house Reese or hook layer";
+    if (category.startsWithIgnoreCase("Dub Techno"))
+        return "dub chord stab or smoky delayed chord";
     if (category.startsWithIgnoreCase("Tech House"))
-        return "rolling bass or mid punch around 124-130 BPM";
+        return "rolling bass, chord tool, or percussive tech-house hook";
     if (category.startsWithIgnoreCase("Minimal"))
         return "short pluck or sparse rhythmic top line";
     if (category.startsWithIgnoreCase("Techno"))
@@ -8158,6 +8226,18 @@ juce::String NateVSTAudioProcessorEditor::suggestedPresetPackForCategory(const j
 
     if (recipe.containsIgnoreCase("Dred") || recipe.containsIgnoreCase("2-Step Bass"))
         return "UKG Basslines";
+    if (recipe.containsIgnoreCase("Afro House"))
+        return "Afro House Rituals";
+    if (recipe.containsIgnoreCase("Amapiano"))
+        return "Amapiano Log Lab";
+    if (recipe.containsIgnoreCase("Bass House"))
+        return "Bass House Weapons";
+    if (recipe.containsIgnoreCase("Dub Techno"))
+        return "Dub Techno Chords";
+    if (recipe.containsIgnoreCase("Hardgroove") || recipe.containsIgnoreCase("Peak Techno") || recipe.containsIgnoreCase("Detroit"))
+        return "Techno Tools";
+    if (recipe.containsIgnoreCase("Lo-Fi House"))
+        return "House Tools";
     if (category.startsWithIgnoreCase("UKG"))
         return "UKG Essentials";
     if (category.startsWithIgnoreCase("House"))
@@ -8178,6 +8258,20 @@ int NateVSTAudioProcessorEditor::suggestedPresetBpmForCategory(const juce::Strin
 {
     const auto recipe = recipeBox.getText().trim();
 
+    if (recipe.containsIgnoreCase("Amapiano"))
+        return 113;
+    if (recipe.containsIgnoreCase("Afro House"))
+        return 122;
+    if (recipe.containsIgnoreCase("Bass House") || recipe.containsIgnoreCase("Tech House Chord") || recipe.containsIgnoreCase("Tribal Tech"))
+        return 126;
+    if (recipe.containsIgnoreCase("Dub Techno") || recipe.containsIgnoreCase("Lo-Fi House"))
+        return 124;
+    if (recipe.containsIgnoreCase("Hardgroove") || recipe.containsIgnoreCase("Peak Techno"))
+        return 136;
+    if (recipe.containsIgnoreCase("Detroit"))
+        return 130;
+    if (recipe.containsIgnoreCase("Future Garage") || recipe.containsIgnoreCase("Garage Vocal"))
+        return 132;
     if (category.startsWithIgnoreCase("UKG"))
         return recipe.containsIgnoreCase("Dred") ? 134 : 132;
     if (category.startsWithIgnoreCase("Tech House"))

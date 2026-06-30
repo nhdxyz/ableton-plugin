@@ -60,7 +60,21 @@ juce::StringArray randomRecipeChoices()
         "UKG Organ Stab",
         "UKG Chord Stab",
         "UKG Bell Pluck",
-        "UKG Dred Bass"
+        "UKG Dred Bass",
+        "Afro House Pluck",
+        "Amapiano Log Bass",
+        "Bass House Reece",
+        "Dub Techno Chord",
+        "Detroit Tech Stab",
+        "Hardgroove Rumble",
+        "Minimal House Pluck",
+        "Microhouse Perc Blip",
+        "Garage Vocal Chop",
+        "Future Garage Pad",
+        "Tech House Chord Tool",
+        "Peak Techno Acid",
+        "Lo-Fi House Keys",
+        "Tribal Tech Perc"
     };
 }
 

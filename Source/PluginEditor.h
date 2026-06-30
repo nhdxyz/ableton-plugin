@@ -745,6 +745,7 @@ private:
     UI::FxRackRow fxGuardSlotButton { "Guard" };
     juce::TextButton keyboardOctaveDownButton { "Oct -" };
     juce::TextButton keyboardOctaveUpButton { "Oct +" };
+    juce::TextButton keyboardHomeButton { "Home" };
     juce::TextButton keyboardPanicButton { "Panic" };
     juce::TextButton sequencerRootDownButton { "-" };
     juce::TextButton sequencerRootUpButton { "+" };

@@ -277,7 +277,7 @@ Implemented as the Comb module. Useful for plucks, tuned metallic sounds, UKG st
 
 9. Multiband Drive
 
-Useful but higher risk. It needs crossover design, phase considerations, and output safety. Do this after simple drive and Guard feel solid.
+First Bass Safe Drive pass is implemented in the existing Drive module: an automatable control splits off the low band, keeps it mostly clean, and saturates the remaining band for house bass dirt without flattening the sub. Full multiband drive is still higher risk because it needs crossover design, phase considerations, oversampling, and output safety.
 
 10. Compressor / Glue
 

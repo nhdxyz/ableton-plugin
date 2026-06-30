@@ -2497,6 +2497,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sequencerRandomSlider, sequencerRandomLabel, "Rand", Parameters::ID::sequencerRandomAmount);
     configureSlider(sequencerLockDepthSlider, sequencerLockDepthLabel, "Lock Amt", Parameters::ID::sequencerLockDepth);
     configureSlider(fxDistortionAmountSlider, fxDistortionAmountLabel, "Drive", Parameters::ID::fxDistortionAmount);
+    configureSlider(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, "Bass Safe", Parameters::ID::fxDistortionBassSafe);
     configureSlider(fxBitcrushBitsSlider, fxBitcrushBitsLabel, "Bits", Parameters::ID::fxBitcrushBits);
     configureSlider(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, "Down", Parameters::ID::fxBitcrushDownsample);
     configureSlider(fxBitcrushMixSlider, fxBitcrushMixLabel, "Mix", Parameters::ID::fxBitcrushMix);
@@ -4728,7 +4729,11 @@ void NateVSTAudioProcessorEditor::resized()
                     fxDistortionEnabledButton.setVisible(true);
                     fxDistortionEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
                     setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDistortionAmountSlider });
+                    setSliderVisible(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, true);
+                    layoutKnobRow(controlsArea.removeFromTop(150), {
+                        &fxDistortionAmountSlider,
+                        &fxDistortionBassSafeSlider
+                    });
                     break;
 
                 case FxModule::bitcrush:
@@ -7948,6 +7953,7 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
 
         case FxModule::distortion:
             set(Parameters::ID::fxDistortionAmount, presetId == 1 ? 0.22f : (presetId == 2 ? 0.38f : 0.56f));
+            set(Parameters::ID::fxDistortionBassSafe, presetId == 1 ? 0.20f : (presetId == 2 ? 0.48f : 0.72f));
             break;
 
         case FxModule::bitcrush:
@@ -8508,7 +8514,13 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
     {
         case FxModule::tone: return "tilt and low cut";
         case FxModule::eq: return "low mid high trim";
-        case FxModule::distortion: return "saturation amount";
+        case FxModule::distortion:
+        {
+            const auto bassSafe = readPlainParameterValue(Parameters::ID::fxDistortionBassSafe, 0.0f);
+            return bassSafe > 0.05f
+                ? "saturation | bass safe " + juce::String(static_cast<int>(std::round(bassSafe * 100.0f))) + "%"
+                : "saturation amount";
+        }
         case FxModule::bitcrush: return "bits downsample mix";
         case FxModule::pump:
         {
@@ -9320,6 +9332,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, false);
     setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, false);
     setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, false);
+    setSliderVisible(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, false);
     setSliderVisible(fxBitcrushBitsSlider, fxBitcrushBitsLabel, false);
     setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, false);
     setSliderVisible(fxBitcrushMixSlider, fxBitcrushMixLabel, false);
@@ -10958,6 +10971,7 @@ void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
     state.drive = juce::jlimit(0.0f, 1.0f,
                                readPlainParameterValue(Parameters::ID::driveAmount, 0.0f)
                                    + (readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.35f)
+                                   + (readPlainParameterValue(Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.10f)
                                    + (readPlainParameterValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
 
     auto pumpPhase = 0.0f;
@@ -11074,7 +11088,15 @@ void NateVSTAudioProcessorEditor::updateHomeSignalFlowDisplay()
         fxEnergy = juce::jmax(fxEnergy, juce::jlimit(0.0f, 1.0f, readPlainParameterValue(amountID, fallback)));
     };
 
-    addFx(Parameters::ID::fxDistortionEnabled, Parameters::ID::fxDistortionAmount, 0.2f);
+    if (readPlainParameterValue(Parameters::ID::fxDistortionEnabled, 0.0f) >= 0.5f)
+    {
+        ++activeFx;
+        fxEnergy = juce::jmax(fxEnergy,
+                              juce::jlimit(0.0f,
+                                           1.0f,
+                                           readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.2f)
+                                               + (readPlainParameterValue(Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.12f)));
+    }
     addFx(Parameters::ID::fxBitcrushEnabled, Parameters::ID::fxBitcrushMix, 0.25f);
     addFx(Parameters::ID::fxPumpEnabled, Parameters::ID::fxPumpDepth, 0.35f);
     addFx(Parameters::ID::fxTremoloEnabled, Parameters::ID::fxTremoloDepth, 0.28f);
@@ -11204,7 +11226,8 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
         juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroTone, 0.0f)),
         juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroDirt, 0.0f)
             + (readPlainParameterValue(Parameters::ID::driveAmount, 0.0f) * 0.4f)
-            + (readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.35f)),
+            + (readPlainParameterValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.35f)
+            + (readPlainParameterValue(Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.10f)),
         juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroMotion, 0.0f)
             + (readPlainParameterValue(Parameters::ID::lfo1Depth, 0.0f) * 0.3f)
             + (readPlainParameterValue(Parameters::ID::lfo2Depth, 0.0f) * 0.22f)

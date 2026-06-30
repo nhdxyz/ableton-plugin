@@ -402,6 +402,7 @@ private:
     juce::Slider sequencerRandomSlider;
     juce::Slider sequencerLockDepthSlider;
     juce::Slider fxDistortionAmountSlider;
+    juce::Slider fxDistortionBassSafeSlider;
     juce::Slider fxBitcrushBitsSlider;
     juce::Slider fxBitcrushDownsampleSlider;
     juce::Slider fxBitcrushMixSlider;
@@ -521,6 +522,7 @@ private:
     juce::Label sequencerRandomLabel;
     juce::Label sequencerLockDepthLabel;
     juce::Label fxDistortionAmountLabel;
+    juce::Label fxDistortionBassSafeLabel;
     juce::Label fxBitcrushBitsLabel;
     juce::Label fxBitcrushDownsampleLabel;
     juce::Label fxBitcrushMixLabel;

@@ -273,6 +273,19 @@ target_link_libraries(NateVSTGuardDynamicsAudit
 
 add_test(NAME GuardDynamicsAudit COMMAND NateVSTGuardDynamicsAudit)
 
+add_executable(NateVSTDriveBassSafetyAudit Tests/DriveBassSafetyAudit.cpp)
+
+target_link_libraries(NateVSTDriveBassSafetyAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME DriveBassSafetyAudit COMMAND NateVSTDriveBassSafetyAudit)
+
 add_executable(NateVSTSequencerPatternSceneAudit Tests/SequencerPatternSceneAudit.cpp)
 
 target_link_libraries(NateVSTSequencerPatternSceneAudit

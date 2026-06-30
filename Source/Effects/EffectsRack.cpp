@@ -131,6 +131,7 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
 {
     fxDistortionEnabled = parameters.getRawParameterValue(Parameters::ID::fxDistortionEnabled);
     fxDistortionAmount = parameters.getRawParameterValue(Parameters::ID::fxDistortionAmount);
+    fxDistortionBassSafe = parameters.getRawParameterValue(Parameters::ID::fxDistortionBassSafe);
     fxBitcrushEnabled = parameters.getRawParameterValue(Parameters::ID::fxBitcrushEnabled);
     fxBitcrushBits = parameters.getRawParameterValue(Parameters::ID::fxBitcrushBits);
     fxBitcrushDownsample = parameters.getRawParameterValue(Parameters::ID::fxBitcrushDownsample);
@@ -267,6 +268,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqHighState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    distortionLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     combDampingState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
@@ -294,6 +296,7 @@ void EffectsRack::reset()
     std::fill(toneTiltState.begin(), toneTiltState.end(), 0.0f);
     std::fill(eqLowState.begin(), eqLowState.end(), 0.0f);
     std::fill(eqHighState.begin(), eqHighState.end(), 0.0f);
+    std::fill(distortionLowState.begin(), distortionLowState.end(), 0.0f);
     std::fill(combDampingState.begin(), combDampingState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
@@ -782,8 +785,48 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
     const auto amount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionAmount, 0.2f) + (fxModulation.drive * 0.45f));
     const auto drive = juce::jmap(juce::jlimit(0.0f, 1.0f, amount), 1.0f, 24.0f);
     const auto makeup = 1.0f / std::sqrt(drive);
+    const auto bassSafe = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionBassSafe, 0.0f));
 
-    for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+    if (bassSafe <= 0.0001f || distortionLowState.empty())
+    {
+        for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            auto* samples = buffer.getWritePointer(channel);
+
+            for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+                samples[sampleIndex] = std::tanh(samples[sampleIndex] * drive) * makeup;
+        }
+
+        return;
+    }
+
+    const auto lowAlpha = onePoleAlpha(165.0f, currentSampleRate);
+    const auto cleanLowGain = 1.0f - (amount * bassSafe * 0.04f);
+    const auto drivenLowBleed = 1.0f - (bassSafe * 0.98f);
+    const auto drivenHighMakeup = juce::jmap(bassSafe, 0.0f, 1.0f, makeup, juce::jmin(1.0f, makeup * 1.18f));
+    const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(distortionLowState.size()));
+
+    for (auto channel = 0; channel < channels; ++channel)
+    {
+        auto* samples = buffer.getWritePointer(channel);
+        auto& lowState = distortionLowState[static_cast<size_t>(channel)];
+
+        for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+        {
+            const auto input = samples[sampleIndex];
+            lowState += lowAlpha * (input - lowState);
+
+            const auto low = lowState;
+            const auto high = input - low;
+            const auto fullBand = std::tanh(input * drive) * makeup;
+            const auto protectedDriveInput = high + (low * drivenLowBleed);
+            const auto protectedBand = std::tanh(protectedDriveInput * drive) * drivenHighMakeup;
+            const auto protectedOutput = (low * cleanLowGain) + protectedBand - (std::tanh(low * drivenLowBleed * drive) * drivenHighMakeup);
+            samples[sampleIndex] = (fullBand * (1.0f - bassSafe)) + (protectedOutput * bassSafe);
+        }
+    }
+
+    for (auto channel = channels; channel < buffer.getNumChannels(); ++channel)
     {
         auto* samples = buffer.getWritePointer(channel);
 

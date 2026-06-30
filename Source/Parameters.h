@@ -303,6 +303,7 @@ inline constexpr auto sequencerLockDestination = "sequencer_lock_destination";
 inline constexpr auto sequencerLockDepth = "sequencer_lock_depth";
 inline constexpr auto fxDistortionEnabled = "fx_distortion_enabled";
 inline constexpr auto fxDistortionAmount = "fx_distortion_amount";
+inline constexpr auto fxDistortionBassSafe = "fx_distortion_bass_safe";
 inline constexpr auto fxBitcrushEnabled = "fx_bitcrush_enabled";
 inline constexpr auto fxBitcrushBits = "fx_bitcrush_bits";
 inline constexpr auto fxBitcrushDownsample = "fx_bitcrush_downsample";

@@ -937,6 +937,12 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.2f));
 
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxDistortionBassSafe,
+        "FX Distortion Bass Safe",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
     add(std::make_unique<juce::AudioParameterBool>(
         ID::fxBitcrushEnabled,
         "FX Bitcrush Enabled",

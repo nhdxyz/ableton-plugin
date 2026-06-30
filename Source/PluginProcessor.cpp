@@ -1289,10 +1289,12 @@ juce::String NateVSTAudioProcessor::getRandomCandidateCompareSummary(int slotInd
 
     const auto candidateDirt = readStateParameterValue(candidate.state, Parameters::ID::driveAmount, 0.0f)
         + readStateParameterValue(candidate.state, Parameters::ID::fxDistortionAmount, 0.0f)
+        + (readStateParameterValue(candidate.state, Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.25f)
         + readStateParameterValue(candidate.state, Parameters::ID::fxBitcrushMix, 0.0f)
         + readStateParameterValue(candidate.state, Parameters::ID::macroDirt, 0.0f);
     const auto currentDirt = readStateParameterValue(current, Parameters::ID::driveAmount, 0.0f)
         + readStateParameterValue(current, Parameters::ID::fxDistortionAmount, 0.0f)
+        + (readStateParameterValue(current, Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.25f)
         + readStateParameterValue(current, Parameters::ID::fxBitcrushMix, 0.0f)
         + readStateParameterValue(current, Parameters::ID::macroDirt, 0.0f);
     addDirection(candidateDirt, currentDirt, 0.20f, "dirtier", "cleaner");
@@ -1407,6 +1409,7 @@ juce::String NateVSTAudioProcessor::getRandomCandidateDiffSummary(int slotIndex)
 
     addDiff("Drive", Parameters::ID::driveAmount, 0.0f, 0.05f, formatPercent);
     addDiff("FX drive", Parameters::ID::fxDistortionAmount, 0.0f, 0.05f, formatPercent);
+    addDiff("Bass safe", Parameters::ID::fxDistortionBassSafe, 0.0f, 0.08f, formatPercent);
     addDiff("Glue", Parameters::ID::fxGuardGlue, 0.0f, 0.05f, formatPercent);
     addDiff("Punch", Parameters::ID::fxGuardPunch, 0.0f, 0.05f, formatPercent);
     addDiff("Clip", Parameters::ID::fxGuardClipMix, 1.0f, 0.08f, formatPercent);
@@ -4360,6 +4363,7 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
 
     if (anyChanged({ Parameters::ID::fxDistortionEnabled,
                     Parameters::ID::fxDistortionAmount,
+                    Parameters::ID::fxDistortionBassSafe,
                     Parameters::ID::fxBitcrushEnabled,
                     Parameters::ID::fxBitcrushBits,
                     Parameters::ID::fxBitcrushDownsample,
@@ -4587,6 +4591,7 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
         const auto driveLoad = juce::jlimit(0.0f, 1.0f,
             getParameterPlainValue(Parameters::ID::driveAmount, 0.18f)
             + (getParameterPlainValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.4f)
+            + (getParameterPlainValue(Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.12f)
             + (getParameterPlainValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
 
         if (driveLoad > 0.36f && getParameterPlainValue(Parameters::ID::fxGuardEnabled, 0.0f) < 0.5f)
@@ -4604,6 +4609,7 @@ NateVSTAudioProcessor::RandomValidationResult NateVSTAudioProcessor::applyRandom
     const auto driveForGain = juce::jlimit(0.0f, 1.0f,
         getParameterPlainValue(Parameters::ID::driveAmount, 0.18f)
         + (getParameterPlainValue(Parameters::ID::fxDistortionAmount, 0.0f) * 0.45f)
+        + (getParameterPlainValue(Parameters::ID::fxDistortionBassSafe, 0.0f) * 0.10f)
         + (getParameterPlainValue(Parameters::ID::fxGuardPush, 0.0f) * 0.25f));
     const auto maxOutputGain = driveForGain > 0.62f ? -10.0f : -6.0f;
     if (getParameterPlainValue(Parameters::ID::outputGain, -8.0f) > maxOutputGain)
@@ -5219,6 +5225,7 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
             }, intensity);
             blendParameterGroupFromState(state, {
                 Parameters::ID::fxDistortionAmount,
+                Parameters::ID::fxDistortionBassSafe,
                 Parameters::ID::fxBitcrushBits,
                 Parameters::ID::fxBitcrushDownsample,
                 Parameters::ID::fxBitcrushMix,
@@ -5393,6 +5400,7 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
             restoreParameterGroupFromState(state, {
                 Parameters::ID::fxDistortionEnabled,
                 Parameters::ID::fxDistortionAmount,
+                Parameters::ID::fxDistortionBassSafe,
                 Parameters::ID::fxBitcrushEnabled,
                 Parameters::ID::fxBitcrushBits,
                 Parameters::ID::fxBitcrushDownsample,
@@ -5610,6 +5618,7 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
         restoreParameterGroupFromState(state, {
             Parameters::ID::fxDistortionEnabled,
             Parameters::ID::fxDistortionAmount,
+            Parameters::ID::fxDistortionBassSafe,
             Parameters::ID::fxBitcrushEnabled,
             Parameters::ID::fxBitcrushBits,
             Parameters::ID::fxBitcrushDownsample,
@@ -6365,6 +6374,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFxSendControls = stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendDelay).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendReverb).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendTailKill).isValid();
+    const auto hasFxDriveBassSafe = stateForParameters.getChildWithProperty("id", Parameters::ID::fxDistortionBassSafe).isValid();
     const auto hasFxGuardDynamics = stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardGlue).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardPunch).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::fxGuardClipMix).isValid();
@@ -6461,6 +6471,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::fxSendReverb, 0.0f);
         setParameterPlainValue(Parameters::ID::fxSendTailKill, 0.0f);
     }
+    if (! hasFxDriveBassSafe)
+        setParameterPlainValue(Parameters::ID::fxDistortionBassSafe, 0.0f);
     if (! hasFxGuardDynamics)
     {
         setParameterPlainValue(Parameters::ID::fxGuardGlue, 0.0f);

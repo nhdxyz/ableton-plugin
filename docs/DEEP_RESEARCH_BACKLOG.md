@@ -247,6 +247,7 @@ Implemented FX sub-slice:
 - The top-bar output meter now classifies output as `LOW`, `SAFE`, `HOT`, or `CLIP` from peak/RMS levels, and the FX Guard slot summary reports live peak headroom plus active Guard gain reduction.
 - HOME now includes a compact Club Monitor that combines low-end meter, stereo-risk, Pump, Guard, and peak history into one dashboard readout for house bass and club-safety decisions.
 - Guard now includes first-pass club dynamics: Glue compression, Punch transient lift, and Clip blend before the safety ceiling, with `GuardDynamicsAudit` coverage for punch, compression, and ceiling behavior. Dedicated compressor, limiter metering, and multiband dynamics remain future work.
+- Drive now includes first-pass Bass Safe routing that keeps the low band closer to the clean reference while saturating upper content, with `DriveBassSafetyAudit` coverage. Full multiband drive, oversampling, and louderness-compensated audition remain future work.
 - Delay and Reverb now have separate send amounts and dedicated send DSP state for throw tails, with appended MOD destinations for `FX Send Delay` and `FX Send Reverb`, plus `EffectsSendAudit` coverage for send tails and one-shot tail kill.
 - Open implementation issues now track the broader house-production set: sidechain/pump (#64), compressor/clipper/transient safety (#65), pattern scenes and chord-stab tools (#66), visual analysis meters (#67), preset previews/construction kits (#68), percussive noise source (#69), send-style delay/reverb buses (#70), dedicated groove engine (#71), and chord/bassline designer (#72).
 
@@ -327,7 +328,7 @@ Implemented safety sub-slice:
 6. Define the #83 expansion-ready content pack manifest before the next large factory/content push: versioning, license metadata, preview media, dependencies, relink, and user/factory separation.
 7. Add deterministic house performance transforms: make it more house, tighten low end, more groove, darker dub, shorter stab, delay throw variation, and reset mix-safe.
 8. Add drag-to-modulate plus route min/max ranges, route curves, route slew, macro snapshots, and XY assignment editing.
-9. Add multiband/bass-safe drive with oversampling, gain compensation, clearer clip/limiter metering, and loudness checks.
+9. Add multiband/bass-safe drive with oversampling, gain compensation, clearer clip/limiter metering, and loudness checks. First Bass Safe Drive routing is implemented; full multiband/oversampling/loudness work remains open.
 10. Grow the compact LIBRARY browser and first smart-crate pass into a full browser with sidebar crates, tag editing, construction kits, relationship-aware compatible preset groups, dependency tracking, and pack import/export.
 11. Build expandable Sequencer, FX, and Mod Matrix focus panels after the Macro and Sample focus overlays.
 12. Run Ableton workflow validation: scan, load, automate, save/reopen, duplicate track, freeze/flatten, missing sample behavior, direct MIDI/audio drag-out, and preset loudness consistency.

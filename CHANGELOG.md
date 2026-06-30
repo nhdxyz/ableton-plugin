@@ -2,6 +2,13 @@
 
 ## 2026-06-30
 
+### Bass-Safe Drive V1
+
+- Added an automatable `FX Distortion Bass Safe` control to the Drive module, defaulting off for old preset/session compatibility.
+- Routed Bass Safe Drive through a first split-band path that keeps the low band mostly clean while saturating the remaining band, giving house basses and Reese/rubber layers dirt without flattening the sub.
+- Updated Drive module summaries, presets, Random Lab FX restore/diff handling, and HOME dirt/FX indicators so Bass Safe state is visible instead of hidden in DSP.
+- Added `DriveBassSafetyAudit` to verify Bass Safe Drive keeps the low band closer to the clean reference than full-band Drive while still increasing high-band saturation.
+
 ### Sampler Manual Slice Boundary Dragging
 
 - Added direct slice-boundary dragging to the SAMPLE waveform lane, so existing Slice Keys regions can be reshaped visually in the compact panel and expanded chop focus overlay.

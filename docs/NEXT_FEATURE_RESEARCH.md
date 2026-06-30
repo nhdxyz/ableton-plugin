@@ -136,7 +136,7 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 44. Add filter keytracking with slope and center note.
 45. Add filter FM with protected depth.
 46. Add pre/post filter drive routing.
-47. Add a bass-safe high-pass utility before heavy drive.
+47. Add a bass-safe high-pass utility before heavy drive. First Bass Safe Drive route is implemented inside the Drive module; dedicated pre-drive utility filtering remains open.
 48. Add drive models: tape, tube, diode, transformer, hard clip, soft clip, foldback, wavefold, fuzz, and digital degrade.
 49. Add gain compensation for every drive mode.
 50. Add drive audition with loudness matching.
@@ -227,7 +227,7 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 
 ### G. FX, Routing, And Club Processing
 
-126. Add multiband distortion with movable crossovers.
+126. Add multiband distortion with movable crossovers. First fixed Bass Safe Drive split is implemented; movable crossovers remain open.
 127. Add per-band drive, dynamics, tone, feedback, mix, mute, and solo.
 128. Add mid/side processing for drive, EQ, and width.
 129. Add oversampling modes for nonlinear FX.
@@ -345,7 +345,7 @@ Top missing product capabilities:
 2. Fast visual modulation: drag-to-modulate, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, rotary/linear modulation feedback now shows source-colored rings/badges while preserving base tooltips, MOD targets update the selected-control route summary on hover, and the macro assignment workflow now has a draggable visual pad backed by matrix slots.
 3. Serious UKG slicing: marker add/remove, beat/time slicing, per-slice playback modes beyond the first transient Detect/direct boundary-drag/stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes, slice-to-sequencer lanes, and full missing-sample relink.
 4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
-5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills. First pump telemetry pass is implemented for live phase/reduction display; external sidechain routing remains open.
+5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills. First Bass Safe Drive routing and pump telemetry passes are implemented; full multiband/oversampling and external sidechain routing remain open.
 6. Preset discovery: background audio previews beyond the first visible-row warmer, waveform badges, smart folders, custom tags, similar-preset search, construction-kit preset type, relationship-aware compatible preset groups, dependency warnings, and pack import/export.
 7. Genre generators: UKG vocal chop templates, Dred/Reese and organ-bass starters, tech-house bassline generator, minimal Euclidean/sparse tools, techno feedback/resonator scenes, and house chord/organ stabs.
 8. Ableton release polish: validate first-pass MIDI drag export, add MIDI drag import, optional MIDI-output strategy, automation-name audit, save/reopen/freeze/flatten checklist, sample collection/relink checks, sidechain routing tests, signing/notarization, and installer/copy workflow.
@@ -390,7 +390,7 @@ Reference URLs used for this refresh:
 6. Define the expansion-ready content pack manifest from #83 before the next large curated factory/content push.
 7. Add deterministic house performance transforms for "more house," "tighten low end," "more groove," "darker dub," "shorter stab," "delay throw variation," and "reset mix-safe."
 8. Expand the first right-click modulation assignment and visual-feedback passes with drag-from-source assignment, hover route overlays, per-route range editing, curves, and slew.
-9. Add multiband drive with oversampling, gain compensation, clearer limiter/clip metering, and bass-safe routing.
+9. Add multiband drive with oversampling, gain compensation, clearer limiter/clip metering, and bass-safe routing. First Bass Safe Drive routing is implemented; full multiband/oversampling/loudness work remains open.
 10. Add full-browser mode, smart folders, user tag editing, dependency warnings, construction kits, relationship-aware preset groups, and pack import/export.
 11. Build expandable FX and Mod focus panels after the Macro, Sample, Source, and SEQ focus overlays, then continue component extraction and screenshot/layout regression.
 12. Add Ableton save/reopen/freeze/flatten validation, missing-sample behavior checks, MIDI/audio drag validation, signing/notarization, and installer/copy workflow.

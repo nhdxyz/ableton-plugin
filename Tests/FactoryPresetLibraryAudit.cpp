@@ -32,6 +32,12 @@ int main()
     for (const auto& file : sourceDirectory.findChildFiles(juce::File::findFiles, true, "*.natevstpreset"))
     {
         const auto destination = factoryDirectory.getChildFile(file.getFileName());
+        if (destination.existsAsFile() && ! destination.deleteFile())
+        {
+            std::cerr << "Could not replace stale factory preset for audit: " << destination.getFullPathName() << '\n';
+            return 1;
+        }
+
         if (! file.copyFileTo(destination))
         {
             std::cerr << "Could not copy factory preset for audit: " << file.getFullPathName() << '\n';
@@ -46,9 +52,9 @@ int main()
         if (preset.isFactory)
             ++factoryCount;
 
-    if (factoryCount < 88)
+    if (factoryCount < 96)
     {
-        std::cerr << "Expected at least 88 factory presets, found " << factoryCount << '\n';
+        std::cerr << "Expected at least 96 factory presets, found " << factoryCount << '\n';
         return 1;
     }
 
@@ -125,6 +131,14 @@ int main()
         { "Melodic Techno Reese Lead", "Techno Tools" },
         { "Deep Minimal Sub Groove", "Minimal Tools" },
         { "Lo-Fi House Vinyl Chord", "House Chords" },
+        { "Deep House Ninth Chord Kit", "House Chords" },
+        { "Piano House Lift Riff", "House Chords" },
+        { "Jackin Organ Bass Kit", "House Tools" },
+        { "Disco Filter Sweep Stab", "House Tools" },
+        { "Tech House Rubber Hook Kit", "Tech House Tools" },
+        { "Dub House Chord Throw", "Dub Stabs" },
+        { "Dirty House Tool Stab", "House Tools" },
+        { "Garage House Chord Kit", "Garage Chops" },
     };
 
     for (const auto& [name, pack] : expectedPacks)
@@ -153,6 +167,6 @@ int main()
         }
     }
 
-    std::cout << "Factory preset library audit passed for 88-preset expanded style pack.\n";
+    std::cout << "Factory preset library audit passed for 96-preset expanded style pack.\n";
     return 0;
 }

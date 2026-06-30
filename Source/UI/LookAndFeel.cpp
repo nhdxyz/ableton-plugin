@@ -92,13 +92,24 @@ namespace UI
 {
 LookAndFeel::LookAndFeel()
 {
-    setColour(juce::Slider::thumbColourId, juce::Colour(0xff8ee6c9));
-    setColour(juce::Slider::rotarySliderFillColourId, juce::Colour(0xff8ee6c9));
-    setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff263035));
-    setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff171d20));
-    setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff344047));
-    setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1d272b));
-    setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff315b52));
+    setTheme(themeFor(ThemeId::darkClub));
+}
+
+void LookAndFeel::setTheme(const Theme& theme)
+{
+    currentTheme = theme;
+    setColour(juce::Slider::thumbColourId, currentTheme.accent);
+    setColour(juce::Slider::rotarySliderFillColourId, currentTheme.accent);
+    setColour(juce::Slider::rotarySliderOutlineColourId, currentTheme.outline);
+    setColour(juce::ComboBox::backgroundColourId, currentTheme.panelRaised);
+    setColour(juce::ComboBox::outlineColourId, currentTheme.outlineStrong);
+    setColour(juce::TextButton::buttonColourId, currentTheme.button);
+    setColour(juce::TextButton::buttonOnColourId, currentTheme.buttonOn);
+    setColour(juce::TextEditor::backgroundColourId, currentTheme.field);
+    setColour(juce::TextEditor::outlineColourId, currentTheme.outlineStrong);
+    setColour(juce::TextEditor::focusedOutlineColourId, currentTheme.fieldFocus);
+    setColour(juce::TextEditor::textColourId, currentTheme.text);
+    setColour(juce::Label::textColourId, currentTheme.text);
 }
 
 void LookAndFeel::drawRotarySlider(juce::Graphics& g,
@@ -123,30 +134,31 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     const auto modulationAmount = static_cast<float>(static_cast<double>(slider.getProperties().getWithDefault("modAmount", 0.0)));
     const auto modulationDepth = juce::jlimit(0.0f, 1.0f, std::abs(modulationAmount));
     const auto modulationRouteCount = static_cast<int>(slider.getProperties().getWithDefault("modRouteCount", 0));
+    const auto& theme = currentTheme;
 
-    g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
+    g.setColour(isActive ? theme.panelRaised : theme.panelAlt);
     g.fillRoundedRectangle(cellBounds, 6.0f);
-    g.setColour(isActive ? juce::Colour(0xff3e5359) : juce::Colour(0xff222d32));
+    g.setColour(isActive ? theme.outlineStrong : theme.outline);
     g.drawRoundedRectangle(cellBounds, 6.0f, isActive ? 1.6f : 1.0f);
 
-    g.setColour(juce::Colour(0xff080c0e));
+    g.setColour(theme.background.darker(0.35f));
     g.fillEllipse(knobBounds.translated(0.0f, 1.5f));
-    g.setColour(isActive ? juce::Colour(0xff18262a) : juce::Colour(0xff12191c));
+    g.setColour(isActive ? theme.panelRaised : theme.panel);
     g.fillEllipse(knobBounds);
 
-    g.setColour(isActive ? juce::Colour(0xff6f8984) : juce::Colour(0xff2d3a40));
+    g.setColour(isActive ? theme.textDim.brighter(0.18f) : theme.outlineStrong);
     g.drawEllipse(knobBounds, isActive ? 2.4f : 1.8f);
 
     juce::Path rail;
     rail.addCentredArc(centre.x, centre.y, radius - 4.0f, radius - 4.0f, 0.0f,
                        rotaryStartAngle, rotaryEndAngle, true);
-    g.setColour(juce::Colour(0xff273238));
+    g.setColour(theme.outline);
     g.strokePath(rail, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     juce::Path valueArc;
     valueArc.addCentredArc(centre.x, centre.y, radius - 4.0f, radius - 4.0f, 0.0f,
                            rotaryStartAngle, angle, true);
-    g.setColour(isActive ? juce::Colour(0xffa8ffe3) : juce::Colour(0xff8ee6c9));
+    g.setColour(isActive ? theme.accentBright : theme.accent);
     g.strokePath(valueArc, juce::PathStrokeType(isActive ? 4.8f : 3.8f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
     juce::Path pointer;
@@ -154,10 +166,10 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
     pointer.applyTransform(juce::AffineTransform::rotation(angle).translated(centre));
     g.fillPath(pointer);
 
-    g.setColour(isActive ? juce::Colour(0xffe9fff7) : juce::Colour(0xffd3e1df));
+    g.setColour(isActive ? theme.text : theme.textMuted);
     g.fillEllipse(juce::Rectangle<float>(radius * 0.22f, radius * 0.22f).withCentre(centre));
 
-    g.setColour(isActive ? juce::Colour(0x338ee6c9) : juce::Colour(0x00101619));
+    g.setColour(isActive ? theme.accent.withAlpha(0.20f) : theme.panelAlt.withAlpha(0.0f));
     g.drawEllipse(knobBounds.expanded(4.0f), 1.0f);
 
     if (modulationDepth > 0.001f)
@@ -194,7 +206,7 @@ void LookAndFeel::drawRotarySlider(juce::Graphics& g,
             g.setColour(ringColour.withAlpha(0.72f));
             g.drawRoundedRectangle(badge, 4.0f, 1.0f);
 
-            g.setColour(juce::Colour(0xffedf7f4));
+            g.setColour(theme.text);
             g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
         }
     }
@@ -230,19 +242,20 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g,
     const auto modulationAmount = static_cast<float>(static_cast<double>(slider.getProperties().getWithDefault("modAmount", 0.0)));
     const auto modulationDepth = juce::jlimit(0.0f, 1.0f, std::abs(modulationAmount));
     const auto modulationRouteCount = static_cast<int>(slider.getProperties().getWithDefault("modRouteCount", 0));
+    const auto& theme = currentTheme;
 
-    g.setColour(isActive ? juce::Colour(0xff172326) : juce::Colour(0xff101619));
+    g.setColour(isActive ? theme.panelRaised : theme.panelAlt);
     g.fillRoundedRectangle(bounds, 4.0f);
-    g.setColour(isActive ? juce::Colour(0xff3e5359) : juce::Colour(0xff222d32));
+    g.setColour(isActive ? theme.outlineStrong : theme.outline);
     g.drawRoundedRectangle(bounds, 4.0f, isActive ? 1.4f : 1.0f);
 
-    g.setColour(juce::Colour(0xff263035));
+    g.setColour(theme.outline);
     g.fillRoundedRectangle(trackBounds, 3.5f);
 
     if (currentX > trackStart + 0.5f)
     {
         auto valueBounds = trackBounds.withRight(currentX);
-        g.setColour(isActive ? juce::Colour(0xffa8ffe3) : juce::Colour(0xff8ee6c9));
+        g.setColour(isActive ? theme.accentBright : theme.accent);
         g.fillRoundedRectangle(valueBounds, 3.5f);
     }
 
@@ -274,17 +287,17 @@ void LookAndFeel::drawLinearSlider(juce::Graphics& g,
             g.setColour(ringColour.withAlpha(0.72f));
             g.drawRoundedRectangle(badge, 4.0f, 1.0f);
 
-            g.setColour(juce::Colour(0xffedf7f4));
+            g.setColour(theme.text);
             g.drawFittedText(badgeText, badge.toNearestInt().reduced(2, 0), juce::Justification::centred, 1);
         }
     }
 
     const auto thumbBounds = juce::Rectangle<float>(12.0f, 18.0f).withCentre({ currentX, trackBounds.getCentreY() });
-    g.setColour(juce::Colour(0xff080c0e));
+    g.setColour(theme.background.darker(0.35f));
     g.fillRoundedRectangle(thumbBounds.translated(0.0f, 1.0f), 4.0f);
-    g.setColour(isActive ? juce::Colour(0xffd9fff1) : juce::Colour(0xffc4d7d4));
+    g.setColour(isActive ? theme.accentBright : theme.textMuted);
     g.fillRoundedRectangle(thumbBounds, 4.0f);
-    g.setColour(isActive ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff4d6364));
+    g.setColour(isActive ? theme.accent : theme.outlineStrong);
     g.drawRoundedRectangle(thumbBounds, 4.0f, 1.0f);
 }
 
@@ -297,18 +310,19 @@ void LookAndFeel::drawButtonBackground(juce::Graphics& g,
     auto bounds = button.getLocalBounds().toFloat().reduced(0.5f);
     const auto isOn = button.getToggleState();
     auto fill = backgroundColour;
+    const auto& theme = currentTheme;
 
     if (isOn)
-        fill = juce::Colour(0xff315b52);
+        fill = theme.buttonOn;
     else if (shouldDrawButtonAsDown)
-        fill = juce::Colour(0xff26373d);
+        fill = theme.buttonDown;
     else if (shouldDrawButtonAsHighlighted)
-        fill = juce::Colour(0xff243136);
+        fill = theme.buttonHover;
 
     g.setColour(fill);
     g.fillRoundedRectangle(bounds, 5.0f);
 
-    g.setColour(isOn ? juce::Colour(0xff8ee6c9) : juce::Colour(0xff39484e));
+    g.setColour(isOn ? theme.accent : theme.outlineStrong);
     g.drawRoundedRectangle(bounds, 5.0f, isOn ? 1.4f : 1.0f);
 }
 
@@ -317,8 +331,9 @@ void LookAndFeel::drawButtonText(juce::Graphics& g,
                                  bool,
                                  bool)
 {
+    const auto& theme = currentTheme;
     g.setFont(juce::FontOptions(12.0f, button.getToggleState() ? juce::Font::bold : juce::Font::plain));
-    g.setColour(button.getToggleState() ? juce::Colour(0xffedf7f4) : juce::Colour(0xffb7c5c7));
+    g.setColour(button.getToggleState() ? theme.text : theme.textMuted);
     g.drawFittedText(button.getButtonText(), button.getLocalBounds().reduced(4, 2), juce::Justification::centred, 1);
 }
 }

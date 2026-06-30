@@ -75,11 +75,11 @@ UK garage and club-production references:
 Based on the local docs and current repo direction, Nate VST already has:
 
 - JUCE/CMake/VST3 foundation for macOS and Ableton.
-- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
+- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, and INFO panels.
 - Subtractive synth core with oscillator mix, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
 - Genre-oriented randomization, A/B snapshots, macros, XY pad, low-end guidance, and HOME Patch Snapshot state for preset recall, performance energy, compare readiness, and active random candidates.
 - Modulation matrix, LFO/curve tools, macro assignment editor, destination badges, S&H/Smooth/Chaos/LFO 2 movement sources, and a first right-click assignment pass for MOD-targetable controls.
-- Sample waveform area, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, and UKG chop helpers.
+- Sample waveform area, visual selected/custom slice overlays, expanded chop focus overlay, phrase/chop controls, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, and UKG chop helpers.
 - Piano-roll style sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, ratings, metadata, search, sort, filters, macro previews, a left crate rail with folder/pack/style coverage, compact browser rows, labeled Save Plan readiness, and audition.
@@ -95,8 +95,8 @@ The gap is now professional depth, sound quality, focus, and genre workflow.
 2. Wavetable display, playhead, browser, and safe import.
 3. Second synth layer with independent source, filter, amp, pan, and routing.
 4. Source rack with mute/solo/blend/copy and source snippets.
-5. Drawbar/organ source for UKG and speed garage.
-6. Original/legal PCM-style house organ, piano, string, and stab sources.
+5. Drawbar/organ source for UKG and speed garage. First procedural Organ source pass is implemented; deeper drawbar controls remain open.
+6. Original/legal PCM-style house organ, piano, string, and stab sources. First procedural House Piano source pass is implemented; bundled PCM-style content remains open.
 7. Focused FM engine for bells, pings, metallic stabs, and techno hits.
 8. Better Reese/Dred bass builder with mono-safe sub and moving upper harmonics.
 9. Drag-to-modulate assignment from source chips to controls.
@@ -104,9 +104,9 @@ The gap is now professional depth, sound quality, focus, and genre workflow.
 11. Per-route range, curve, smoothing, invert, and polarity editing.
 12. True MSEG/multi-point envelope source.
 13. Step LFO with hold, probability, slew, and per-step shapes.
-14. Pattern scenes and pattern chaining in the sequencer.
+14. Pattern scenes, first-pass live scene-chain playback, first-pass Build 4-Bar Chain scene generation, first forced scene-chain length modes, and deeper pattern chaining in the sequencer.
 15. Per-step modulation lanes for cutoff, drive, warp, sample slice, pump, delay throw, and reverb throw.
-16. Per-step ratchets, slide, accent, conditions, and lane-specific groove.
+16. Per-step ratchets, first-pass slide, accent, conditions, and lane-specific groove.
 17. Direct MIDI drag export/import with Ableton-friendly behavior.
 18. Drag-and-drop WAV/AIFF import onto SAMPLE.
 19. Transient, beat-grid, equal-region, and manual slicing.
@@ -119,17 +119,18 @@ The gap is now professional depth, sound quality, focus, and genre workflow.
 26. Full browser mode with smart folders, tags, audio previews, and construction kits.
 27. Find-similar preset search based on metadata and parameter distance.
 28. UI scaling, compact mode, component extraction, and screenshot regression.
-29. Automated sound-quality tests for aliasing, smoothing, denormals, gain staging, and stuck notes.
+29. Automated sound-quality tests for aliasing, smoothing, denormals, gain staging, and stuck notes. First factory preset render smoke coverage is implemented for finite, non-silent, peak-contained output.
 30. Ableton release checklist: scan, automate, save, reopen, freeze, flatten, duplicate, and export.
 
 ## Priority 0: UI, Workflow, And Foundation
 
 These should stay near the top because every future feature becomes harder if the UI remains one large editor file.
 
-1. Split `PluginEditor` into dedicated page components: HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, top bar, and keyboard.
+1. Split `PluginEditor` into dedicated page components: HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, top bar, and keyboard.
 2. Split shared UI primitives into reusable components: knob group, section header, value inspector, rack row, browser row, route badge, and lane editor.
 3. Add richer automated overlap checks beyond empty-bounds/editor-overflow checks.
-4. Add screenshot regression captures for every panel.
+4. Finish UI theme-token migration. First shared-control/editor-chrome token pass plus contrast audit is implemented; custom visual components, user settings, screenshot review, and selectable themes remain open.
+5. Add screenshot regression captures for every panel.
 5. Add a debug bounds overlay for manual layout inspection.
 6. Add UI scale modes: 85%, 100%, 125%, and 150%.
 7. Add compact Ableton laptop mode.
@@ -158,6 +159,8 @@ These should stay near the top because every future feature becomes harder if th
 30. Add visual domain colors for source, modulation, sequencer, sample, FX, library, and safety.
 
 ## Priority 1: Source Engine Architecture
+
+Implemented first visual pass: the SYNTH source card now has a themed house layer rack that maps existing Osc 1, Osc 2, Sub, Noise, and Sample Mix state to Sub, Body, Character/Stab, Transient/Noise, and Chop roles. The items below remain the larger engine architecture.
 
 1. Add a source rack abstraction.
 2. Add Source A and Source B lanes.
@@ -201,8 +204,8 @@ These should stay near the top because every future feature becomes harder if th
 17. Add audio-rate modulation for selected oscillator parameters.
 18. Add focused 3-operator FM engine.
 19. Add additive/partial engine for hollow bells and metallic techno hits.
-20. Add drawbar organ engine for UKG, speed garage, and house organs.
-21. Add original/legal sampled PCM source for house organ and piano-style stabs.
+20. Add drawbar organ engine for UKG, speed garage, and house organs. First procedural Organ waveform pass is implemented; a full editable drawbar engine remains open.
+21. Add original/legal sampled PCM source for house organ and piano-style stabs. First procedural House Piano waveform pass is implemented; sampled PCM content remains open.
 22. Add resonator/physical-style source for minimal plucks.
 23. Add noise engine with white, pink, brown, air, vinyl, metallic, digital hash, attack tick, and rumble.
 24. Add supersaw/unison engine improvements: detune curve, phase spread, stereo spread, mono-safe spread.
@@ -326,10 +329,10 @@ These should stay near the top because every future feature becomes harder if th
 
 1. Add multiple sequencer patterns per preset.
 2. Add pattern scenes: A, B, Fill, Drop, Breakdown, Transition.
-3. Add pattern chaining.
+3. Add deeper pattern chaining beyond the first live scene-chain playback, Build 4-Bar Chain, and forced chain-length passes.
 4. Add scene trigger buttons.
-5. Add per-step ratchet/retrigger.
-6. Add per-step slide/glide.
+5. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
+6. Add deeper per-step slide/glide. First saved lane/live-export overlap pass implemented.
 7. Add per-step accent.
 8. Tie accent to amp, filter, and drive.
 9. Add per-step modulation lanes.
@@ -342,10 +345,10 @@ These should stay near the top because every future feature becomes harder if th
 16. Add per-step filter cutoff lane.
 17. Add per-step macro amount lane.
 18. Add probability ranges.
-19. Add step conditions: first, not first, fill, every 2, every 4, random.
+19. Add deeper step conditions: first, not first, every 4, random, follow, and per-repeat probability. First Always/Odd/Even/Fill condition lane is implemented.
 20. Add scale quantize in the piano roll.
 21. Add key lock in the piano roll.
-22. Add chord paint tools: minor 7, minor 9, major 7, sus, garage organ, dub chord, rave stab.
+22. Add deeper chord paint tools: minor 7, minor 9, major 7, sus, garage organ, dub chord, rave stab. First Chord Stab Paint is implemented.
 23. Add voicing spread.
 24. Add inversion controls.
 25. Add strum direction and amount per chord.
@@ -362,7 +365,7 @@ These should stay near the top because every future feature becomes harder if th
 36. Add warehouse straight groove template.
 37. Add broken percussion groove template.
 38. Add Euclidean generator for minimal blips and percussion-like synth hits.
-39. Add bassline contour generator.
+39. Add bassline contour generator. First Bass Contour Shape transform is implemented; deeper multi-phrase generation remains open.
 40. Add recombine tool: keep rhythm, change notes.
 41. Add density control for generated patterns.
 42. Add range control for generated basslines.
@@ -545,8 +548,8 @@ These should stay near the top because every future feature becomes harder if th
 17. Add preset pack import/export.
 18. Add pack validation before import.
 19. Add pack artwork or pack colors if it does not clutter the UI.
-20. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
-21. Expand the implemented runtime role-aware audition phrases into editable preview MIDI patterns by category and rendered preview files.
+20. Expand the implemented rendered per-preset preview cache/playback into background/batch generation, waveform/level row badges, manual regeneration, and preview loudness consistency.
+21. Expand the implemented role-aware preview render phrases into editable preview MIDI patterns by category and construction-kit role.
 22. Add audition auto-advance.
 23. Add audition level normalization.
 24. Add "find similar presets" using metadata and parameter distance.
@@ -583,7 +586,7 @@ These should stay near the top because every future feature becomes harder if th
 12. Add drive gain compensation tests.
 13. Add loudness-matched drive tests.
 14. Add randomizer safety tests.
-15. Add factory preset safety validator.
+15. Expand the factory preset safety validator beyond the existing finite/non-silent/peak render smoke gate.
 16. Add output guard telemetry tests.
 17. Add voice stealing audit.
 18. Add stuck-note tests.
@@ -591,12 +594,12 @@ These should stay near the top because every future feature becomes harder if th
 20. Add transport jump tests.
 21. Add sample import fuzz tests for invalid files.
 22. Add preset migration tests.
-23. Add library scanner tests.
+23. Expand library scanner tests beyond the existing factory library scan/load audit.
 24. Add UI layout tests for every page.
 25. Add screenshot regression tests.
 26. Add pluginval run in local release script.
 27. Add CI build for macOS.
-28. Add CI unit tests.
+28. Add CI unit tests; local CTest now includes factory preset library and render smoke audits.
 29. Add CI artifact packaging.
 30. Add Ableton manual checklist for every release.
 
@@ -653,11 +656,11 @@ These should stay near the top because every future feature becomes harder if th
 3. Add selected-control inspector with route, value, automation name, reset, and modulation summary.
 4. Add drag-to-modulate plus modulation rings and hover route overlays.
 5. Add per-route range, curve, slew, invert, and polarity editing.
-6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
-7. Add sequencer pattern scenes, ratchets, slide/accent, and per-step modulation lanes.
+6. Upgrade SAMPLE with drag/drop import, transient/manual slices, and per-slice playback modes beyond the first stored start/end/pan/probability/nudge/fade and visual overlay pass.
+7. Add sequencer pattern scenes, ratchets, first-pass slide/accent, and per-step modulation lanes.
 8. Add full-browser mode with smart folders, tags, audio previews, construction kits, and dependency warnings.
 9. Add true wavetable oscillator with preview, position modulation, safe factory tables, and simple warp.
-10. Add drawbar organ, Reese/Dred builder, and original PCM-style house stab source.
+10. Add drawbar organ, Reese/Dred builder, and original PCM-style house stab source. First procedural Organ/House Piano source modes are implemented; Reese/Dred builder and sampled PCM content remain open.
 11. Add multiband drive with gain compensation, oversampling, and low-end safety telemetry.
 12. Add drawable shaper FX and internal send/parallel routing.
 13. Add MSEG and step LFO once modulation assignment/range UX is mature.
@@ -680,7 +683,7 @@ The strongest house/UKG sound slice after that is:
 
 1. Drag/drop sample import.
 2. Transient/manual slicing.
-3. Per-slice nudge/fade/playback mode plus transient/manual markers beyond the first stored start/end/pan/probability pass.
+3. Per-slice nudge/fade/playback mode plus transient/manual markers beyond the first stored start/end/pan/probability and visual overlay pass.
 4. Slice-to-sequencer lane.
 5. UKG chop templates.
 

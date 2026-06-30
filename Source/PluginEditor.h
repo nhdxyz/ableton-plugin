@@ -3,12 +3,16 @@
 #include "PluginProcessor.h"
 #include "UI/ClubMonitorDisplay.h"
 #include "UI/FilterResponseDisplay.h"
+#include "UI/FocusOverlayPanel.h"
 #include "UI/FxRackRow.h"
+#include "UI/HouseLayerRackDisplay.h"
 #include "UI/HomeOverviewDisplay.h"
 #include "UI/HomeSignalFlowDisplay.h"
 #include "UI/HomeSessionDisplay.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
+#include "UI/MacroAssignmentPad.h"
+#include "UI/MacroPerformanceMap.h"
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
 #include "UI/ModRouteMapDisplay.h"
@@ -30,7 +34,46 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <array>
+#include <functional>
 #include <vector>
+
+class ExternalFileDragButton final : public juce::TextButton
+{
+public:
+    using juce::TextButton::TextButton;
+
+    std::function<bool(juce::Component&)> onExternalDrag;
+
+    void mouseDown(const juce::MouseEvent& event) override
+    {
+        externalDragStarted = false;
+        juce::TextButton::mouseDown(event);
+    }
+
+    void mouseDrag(const juce::MouseEvent& event) override
+    {
+        if (! externalDragStarted && event.getDistanceFromDragStart() >= 5)
+        {
+            externalDragStarted = true;
+            if (onExternalDrag != nullptr && onExternalDrag(*this))
+                return;
+        }
+
+        if (! externalDragStarted)
+            juce::TextButton::mouseDrag(event);
+    }
+
+    void mouseUp(const juce::MouseEvent& event) override
+    {
+        const auto consumedByExternalDrag = externalDragStarted;
+        externalDragStarted = false;
+        if (! consumedByExternalDrag)
+            juce::TextButton::mouseUp(event);
+    }
+
+private:
+    bool externalDragStarted = false;
+};
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
@@ -106,6 +149,15 @@ private:
         quantize,
         randomize,
         garage
+    };
+
+    enum class FocusOverlay
+    {
+        none,
+        macroEditor,
+        sampleChopEditor,
+        sourceLayerEditor,
+        sequencerEditor
     };
 
     struct FxMomentarySnapshot
@@ -195,6 +247,7 @@ private:
     juce::Label randomStatusLabel;
     juce::Label randomRecipeInfoLabel;
     juce::Label performanceStatusLabel;
+    juce::Label focusOverlayTitleLabel;
 
     juce::ComboBox waveformBox;
     juce::ComboBox osc2WaveBox;
@@ -546,6 +599,8 @@ private:
     juce::TextButton sampleSliceChokeButton { "Choke" };
     juce::TextButton sampleSlicePanButton { "Pan" };
     juce::TextButton sampleSliceGhostButton { "Ghost" };
+    juce::TextButton sampleSliceNudgeButton { "Nudge" };
+    juce::TextButton sampleSliceFadeButton { "Fade" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
     juce::TextButton undoSequencerButton { "Undo" };
@@ -557,7 +612,10 @@ private:
     juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton rotateSequencerLeftButton { "Rot <" };
     juce::TextButton rotateSequencerRightButton { "Rot >" };
-    juce::TextButton exportSequencerMidiButton { "MIDI" };
+    ExternalFileDragButton exportSequencerMidiButton { "MIDI" };
+    ExternalFileDragButton exportSequencerChainButton { "Chain" };
+    juce::TextButton sequencerSceneChainLiveButton { "Live" };
+    juce::TextButton sequencerSceneChainLengthButton { "Auto" };
     juce::TextButton applyGrooveTransformButton { "Shape" };
     std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
     std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
@@ -579,11 +637,15 @@ private:
     juce::TextButton squareWaveButton { "Square" };
     juce::TextButton triangleWaveButton { "Tri" };
     juce::TextButton wavetableWaveButton { "WT" };
+    juce::TextButton organWaveButton { "Org" };
+    juce::TextButton housePianoWaveButton { "Pno" };
     juce::TextButton osc2SineWaveButton { "Sine" };
     juce::TextButton osc2SawWaveButton { "Saw" };
     juce::TextButton osc2SquareWaveButton { "Square" };
     juce::TextButton osc2TriangleWaveButton { "Tri" };
     juce::TextButton osc2WavetableWaveButton { "WT" };
+    juce::TextButton osc2OrganWaveButton { "Org" };
+    juce::TextButton osc2HousePianoWaveButton { "Pno" };
     juce::TextButton lowpassFilterButton { "LP" };
     juce::TextButton bandpassFilterButton { "BP" };
     juce::TextButton highpassFilterButton { "HP" };
@@ -595,6 +657,7 @@ private:
     juce::TextButton savePresetButton { "Save" };
     juce::TextButton loadPresetButton { "Load" };
     juce::TextButton auditionPresetButton { "Audition" };
+    juce::TextButton warmPresetPreviewsButton { "Warm" };
     juce::TextButton refreshPresetsButton { "Refresh" };
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton comparePresetButton { "Before" };
@@ -620,6 +683,12 @@ private:
     juce::TextButton modMacroAssignAddButton { "Add" };
     juce::TextButton modMacroAssignReplaceButton { "Replace" };
     juce::TextButton modMacroAssignClearButton { "Clear" };
+    juce::TextButton homeMacroExpandButton { ">" };
+    juce::TextButton modMacroExpandButton { ">" };
+    juce::TextButton sampleChopExpandButton { ">" };
+    juce::TextButton sourceLayerExpandButton { ">" };
+    juce::TextButton sequencerExpandButton { ">" };
+    juce::TextButton focusOverlayCloseButton { "Close" };
     juce::TextButton lfoCurveInvertButton { "Inv" };
     juce::TextButton lfoCurveReverseButton { "Rev" };
     juce::TextButton lfoCurveSmoothButton { "Smooth" };
@@ -681,9 +750,18 @@ private:
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::PumpCurveDisplay pumpCurveDisplay;
     UI::SampleWaveformDisplay sampleWaveformDisplay;
+    UI::SampleWaveformDisplay expandedSampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
+    UI::StepSequencerGrid expandedSequencerGrid;
     UI::WavetableDisplay wavetableDisplay;
+    UI::HouseLayerRackDisplay houseLayerRackDisplay;
+    UI::HouseLayerRackDisplay expandedHouseLayerRackDisplay;
     UI::FilterResponseDisplay filterResponseDisplay;
+    UI::FocusOverlayPanel focusOverlayPanel;
+    UI::MacroAssignmentPad macroAssignmentPad;
+    UI::MacroPerformanceMap macroPerformanceMap;
+    UI::MacroAssignmentPad expandedMacroAssignmentPad;
+    UI::MacroPerformanceMap expandedMacroPerformanceMap;
     UI::XYMacroPad performanceXYPad;
     UI::ModRouteMapDisplay modRouteMapDisplay;
     std::array<UI::ModMatrixRow, 8> modMatrixRows;
@@ -701,6 +779,7 @@ private:
     juce::String fxRackStatusOverride;
     double fxRackStatusOverrideUntilMs = 0.0;
     juce::String sampleWaveformKey;
+    std::vector<juce::File> sequencerDragMidiFiles;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
     std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
@@ -725,6 +804,7 @@ private:
 
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureHorizontalSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
+    void configureModAmountSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void configureCompactHorizontalSlider(juce::Slider& slider, const juce::String& parameterID);
     void configureRandomSectionSlider(juce::Slider& slider, juce::Label& label, const juce::String& labelText, const juce::String& parameterID);
     void registerModulationMenuTarget(juce::Component& component, const juce::String& labelText, const juce::String& parameterID);
@@ -740,6 +820,9 @@ private:
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);
     void chooseSampleFile();
     void exportSequencerMidiClip();
+    void exportSequencerSceneChainMidiClip();
+    bool beginSequencerMidiDrag(juce::Component& sourceComponent, bool sceneChain);
+    void pruneSequencerDragMidiFiles();
     void loadSampleFile(const juce::File& file);
     void updateSampleNameLabel();
     void setRandomStatus(const juce::String& action);
@@ -747,6 +830,15 @@ private:
     void setActiveRandomLabPage(RandomLabPage page);
     void updatePanelVisibility();
     void updateTabButtons();
+    const UI::Theme& uiTheme() const noexcept;
+    void applyThemeColours();
+    void openMacroFocusOverlay();
+    void openSampleChopFocusOverlay();
+    void openSourceLayerFocusOverlay();
+    void openSequencerFocusOverlay();
+    void closeFocusOverlay();
+    void layoutFocusOverlay();
+    juce::Rectangle<int> focusOverlayBounds() const;
     void updateRandomLabPageButtons();
     void updateRandomRecipeInfo();
     void updateInfoDetail();
@@ -758,11 +850,14 @@ private:
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
+    void updateHouseLayerRackDisplay();
+    void focusHouseLayer(size_t layerIndex);
     void updateFilterResponseDisplay();
     void updateHostSyncStatus();
     void updateModMatrixRows();
     void updateModInspectorStatus();
     void updateMacroAssignmentEditorStatus();
+    void updateMacroAssignmentPad();
     void updateModDestinationIndicators();
     float modulationSourceActivityForUi(int sourceIndex) const;
     void updateSelectedControlInspector(const juce::String& labelText, const juce::String& parameterID, double plainValue);
@@ -792,6 +887,7 @@ private:
     void updateHomeSessionDisplay();
     void updateSequencerSceneButtons();
     void updateSequencerGridContext();
+    void repaintSequencerGrids();
     void selectSampleSlice(size_t sliceIndex);
     void updateSampleSliceButtons();
     void updateSampleSliceEditorStatus();
@@ -805,6 +901,8 @@ private:
     void toggleSelectedSampleSliceChoke();
     void cycleSelectedSampleSlicePan();
     void toggleSelectedSampleSliceGhost();
+    void cycleSelectedSampleSliceNudge();
+    void cycleSelectedSampleSliceFade();
     bool sampleSliceHasCustomSettings(size_t sliceIndex) const;
     void updateSampleWaveformDisplay();
     void timerCallback() override;
@@ -840,8 +938,10 @@ private:
     int suggestedPresetBpmForCategory(const juce::String& category) const;
     void loadPresetByOffset(int offset);
     void auditionSelectedPreset();
+    void warmVisiblePresetPreviews();
     void updatePresetAudition();
     void releasePresetAuditionNote();
+    void returnKeyboardFocusToPiano();
     juce::String startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote);
     bool hasPresetCompareSnapshots() const;
     bool capturePresetCompareBefore(const juce::String& presetName);
@@ -896,10 +996,12 @@ private:
     UI::FxRackRow& fxSlotButton(FxModule module);
     float readPlainParameterValue(const juce::String& parameterID, float fallback) const;
     void setPlainParameterValue(const juce::String& parameterID, float plainValue);
+    float macroAssignmentAmountForRoute(int sourceIndex, int destinationIndex, float fallback) const;
     int selectedMacroAssignmentSourceIndex() const;
     int selectedMacroAssignmentDestinationIndex() const;
 
     Panel activePanel = Panel::home;
+    FocusOverlay activeFocusOverlay = FocusOverlay::none;
     RandomLabPage activeRandomLabPage = RandomLabPage::generate;
     bool presetNameIsRandomDraft = false;
     bool presetNotesIsRandomDraft = false;

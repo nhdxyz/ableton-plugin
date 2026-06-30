@@ -254,17 +254,37 @@ inline constexpr std::array<const char*, 8> sampleSliceChoke {
     "sample_slice_7_choke",
     "sample_slice_8_choke"
 };
-inline constexpr std::array<const char*, 8> sampleSliceStutterRepeats {
-    "sample_slice_1_stutter_repeats",
-    "sample_slice_2_stutter_repeats",
-    "sample_slice_3_stutter_repeats",
-    "sample_slice_4_stutter_repeats",
-    "sample_slice_5_stutter_repeats",
-    "sample_slice_6_stutter_repeats",
-    "sample_slice_7_stutter_repeats",
-    "sample_slice_8_stutter_repeats"
-};
-inline constexpr auto sequencerEnabled = "sequencer_enabled";
+    inline constexpr std::array<const char*, 8> sampleSliceStutterRepeats {
+        "sample_slice_1_stutter_repeats",
+        "sample_slice_2_stutter_repeats",
+        "sample_slice_3_stutter_repeats",
+        "sample_slice_4_stutter_repeats",
+        "sample_slice_5_stutter_repeats",
+        "sample_slice_6_stutter_repeats",
+        "sample_slice_7_stutter_repeats",
+        "sample_slice_8_stutter_repeats"
+    };
+    inline constexpr std::array<const char*, 8> sampleSliceNudge {
+        "sample_slice_1_nudge",
+        "sample_slice_2_nudge",
+        "sample_slice_3_nudge",
+        "sample_slice_4_nudge",
+        "sample_slice_5_nudge",
+        "sample_slice_6_nudge",
+        "sample_slice_7_nudge",
+        "sample_slice_8_nudge"
+    };
+    inline constexpr std::array<const char*, 8> sampleSliceFade {
+        "sample_slice_1_fade",
+        "sample_slice_2_fade",
+        "sample_slice_3_fade",
+        "sample_slice_4_fade",
+        "sample_slice_5_fade",
+        "sample_slice_6_fade",
+        "sample_slice_7_fade",
+        "sample_slice_8_fade"
+    };
+    inline constexpr auto sequencerEnabled = "sequencer_enabled";
 inline constexpr auto sequencerRate = "sequencer_rate";
 inline constexpr auto sequencerRoot = "sequencer_root";
 inline constexpr auto sequencerGate = "sequencer_gate";

@@ -134,6 +134,14 @@ TailKillStats renderTailKillStats()
 
 int main()
 {
+    NateVSTAudioProcessor tailProcessor;
+    if (tailProcessor.getTailLengthSeconds() < 2.0)
+    {
+        std::cerr << "Processor reports an unrealistically short tail for delay/reverb/send effects: "
+                  << tailProcessor.getTailLengthSeconds() << " seconds\n";
+        return 1;
+    }
+
     const auto dryTail = renderDelayTail(0.0f);
     const auto sendTail = renderDelayTail(0.85f);
 

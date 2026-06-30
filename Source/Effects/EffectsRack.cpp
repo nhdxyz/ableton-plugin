@@ -234,6 +234,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
+    modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
+    modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
+    modEnv1Release = parameters.getRawParameterValue(Parameters::ID::modEnv1Release);
+    modEnv1Depth = parameters.getRawParameterValue(Parameters::ID::modEnv1Depth);
 }
 
 void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChannels)
@@ -257,6 +262,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     sendInputBuffer.setSize(preparedChannels, juce::jmax(1, maximumBlockSize));
     sendWorkBuffer.setSize(preparedChannels, juce::jmax(1, maximumBlockSize));
     combBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 0.12)));
+    fxModEnvelope.setSampleRate(currentSampleRate);
     toneLowCutState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     toneTiltState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
@@ -306,6 +312,10 @@ void EffectsRack::reset()
     fxModChaosValue = ((fxModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     fxModLfo2Phase = 0.0f;
     fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    fxModEnvelope.reset();
+    fxModEnvelopeValue = 0.0f;
+    fxModVelocity = 0.0f;
+    fxModActiveNotes = 0;
     sequencerLockDestination = 0;
     sequencerLockAmount = 0.0f;
     pumpSmoothedGain = 1.0f;
@@ -328,8 +338,13 @@ void EffectsRack::setSequencerLock(int destinationIndex, float amount) noexcept
     sequencerLockAmount = juce::jlimit(0.0f, 1.0f, amount);
 }
 
-void EffectsRack::process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition)
+void EffectsRack::process(juce::AudioBuffer<float>& buffer,
+                          const juce::MidiBuffer& midi,
+                          float outputGainDb,
+                          double bpm,
+                          std::optional<double> ppqPosition)
 {
+    handleFxModulationMidi(midi);
     updateFxModulation(buffer.getNumSamples(), bpm, ppqPosition);
     captureSendInput(buffer);
 
@@ -361,12 +376,64 @@ void EffectsRack::requestSendTailKill() noexcept
     sendTailKillRequested.store(true, std::memory_order_release);
 }
 
+void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
+{
+    for (const auto metadata : midi)
+    {
+        const auto message = metadata.getMessage();
+
+        if (message.isNoteOn())
+        {
+            triggerFxModulationNoteOn(message.getFloatVelocity());
+        }
+        else if (message.isNoteOff())
+        {
+            fxModActiveNotes = juce::jmax(0, fxModActiveNotes - 1);
+            if (fxModActiveNotes == 0)
+                fxModEnvelope.noteOff();
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            releaseFxModulationNote();
+        }
+    }
+}
+
+void EffectsRack::triggerFxModulationNoteOn(float velocity)
+{
+    fxModVelocity = juce::jlimit(0.0f, 1.0f, velocity);
+    fxModActiveNotes = juce::jmin(128, fxModActiveNotes + 1);
+    fxModEnvelope.noteOn();
+}
+
+void EffectsRack::releaseFxModulationNote()
+{
+    fxModActiveNotes = 0;
+    fxModEnvelope.noteOff();
+}
+
+float EffectsRack::processFxModulationEnvelope(int numSamples)
+{
+    fxModEnvelopeParameters.attack = juce::jmax(0.001f, readParameter(modEnv1Attack, 0.01f));
+    fxModEnvelopeParameters.decay = juce::jmax(0.001f, readParameter(modEnv1Decay, 0.2f));
+    fxModEnvelopeParameters.sustain = juce::jlimit(0.0f, 1.0f, readParameter(modEnv1Sustain, 0.5f));
+    fxModEnvelopeParameters.release = juce::jmax(0.001f, readParameter(modEnv1Release, 0.2f));
+    fxModEnvelope.setParameters(fxModEnvelopeParameters);
+
+    const auto samplesToProcess = juce::jmax(1, numSamples);
+    for (auto sampleIndex = 0; sampleIndex < samplesToProcess; ++sampleIndex)
+        fxModEnvelopeValue = fxModEnvelope.getNextSample();
+
+    return juce::jlimit(0.0f, 1.0f, fxModEnvelopeValue * readParameter(modEnv1Depth, 1.0f));
+}
+
 void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
 {
     fxModulation = {};
 
     const auto lfoValue = processFxModulationLfo(numSamples, bpm, ppqPosition);
     const auto lfo2Value = processFxModulationLfo2(numSamples, bpm, ppqPosition);
+    const auto modEnvelopeValue = processFxModulationEnvelope(numSamples);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -378,7 +445,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         if (! enabled || sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value) * amount;
+        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
 
         switch (destinationIndex)
         {
@@ -557,11 +624,13 @@ float EffectsRack::evaluateFxLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const
+float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
         case 1: return lfoValue;
+        case 2: return modEnvelopeValue;
+        case 3: return fxModVelocity;
         case 4: return readParameter(macroTone, 0.0f);
         case 5: return readParameter(macroDirt, 0.0f);
         case 6: return readParameter(macroMotion, 0.0f);

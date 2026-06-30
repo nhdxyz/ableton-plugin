@@ -28,7 +28,7 @@ Research references:
 - Default UKG range should sit around 125 to 140 BPM, with 130 to 134 BPM as the practical center for 2-step and modern garage.
 - The sequencer should favor late/offbeat placement, strong swing, short gates, and controlled ghost probability.
 - Swing now has a selective groove layer: Classic preserves old offbeat swing, Selective uses per-step timing, UKG Push keeps anchors tighter while pushing ghost/offbeat steps, Tight applies only conservative per-step delay, and appended House Shuf/Tech/Minimal/Drive modes add focused timing models for the surrounding house, tech-house, minimal, and techno workflows.
-- The SEQ grid now exposes editable Velocity, Probability, Late, and Len lanes under the piano roll so 2-step basslines, vocal triggers, and stab patterns can be shaped per step without leaving the grid.
+- The SEQ grid now exposes editable Velocity, Probability, Late, Len, Lock, Rat, Cond, and Slide lanes under the piano roll so 2-step basslines, vocal triggers, and stab patterns can be shaped per step without leaving the grid.
 - The SEQ panel now stores A/B/Fill/Drop pattern scenes, so a UKG or house patch can keep a main groove, response variation, short fill, and drop pattern inside the preset.
 - The sequencer now follows host play-state and PPQ position, so 2-step basslines, organ skanks, and vocal-trigger patterns relock after Ableton loop jumps or transport repositioning.
 - The SEQ and FX panels now show `LOCK`, `HOST`, or `INT` tempo status so Ableton transport lock, stopped-host state, and internal fallback are visible while editing skippy patterns and pump/delay movement.
@@ -51,10 +51,10 @@ Research references:
 
 - Common colors to support: organ stabs, M1-ish house chords, short bell/pluck phrases, bright minor chord stabs, major/dominant house chords, dub chords, and simple repeating lead hooks.
 - These need short envelopes, cleaner transients than techno stabs, optional chorus/width, and a quick low-cut/tone path.
-- A future organ/stab source should start as recipes and presets before adding a dedicated drawbar-style oscillator mode.
+- The first procedural Organ and House Piano source modes now cover basic organ/stab identity; deeper drawbar controls, key-click/percussion behavior, and original PCM-style house stab material remain future source work.
 - Current recipes and factory presets now seed Filter Character so organ/chord patches open warmer while bell/pluck patches can stay cleaner.
 - Current stab and bell presets mostly stay on 12 dB slope so the transient and chord color remain open before delay, reverb, width, and pump processing.
-- Current stab and bass recipes seed Osc Warp conservatively so organ/chord hits gain edge without replacing the future organ/drawbar or M1-style source work.
+- Current stab and bass recipes seed Osc Warp conservatively so organ/chord hits gain edge while deeper drawbar and legal/original digital-PCM-style source work remains open.
 - The SEQ chord menu now includes Maj 7, Dom 7, Sus, House 9, and Dub colors, with Deep Chord and Dub Chord pattern starters for fast house/garage stab sketches.
 - SYNTH noise now includes Air, Tick, Vinyl, and Digital colors with Noise Decay, so UKG bells/stabs can get short attack clicks and garage texture without using an always-on generic hiss layer.
 
@@ -102,7 +102,7 @@ Research references:
 - UKG needs quick random cuts, pitch offsets, reverse as an option, and rhythmic triggering.
 - Current pass: waveform display, draggable chop window, phrase markers, slice pads, click-guarded playback boundaries, slice styles, one-shot/gated modes, Slice Keys C3-G3 triggering, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, reverse, stutter, and rhythmic triggering.
 - Reverse chop playback now uses corrected continuous-position interpolation, so Garage slice style and reversed/pitch-ramped phrase auditions stay cleaner.
-- Later: add transient-ish slicing, manual markers, per-slice nudge/fades/playback mode, and sequencer-triggered slice lanes.
+- Later: add transient-ish slicing, manual markers, per-slice playback modes beyond the first nudge/fade pass, and sequencer-triggered slice lanes.
 
 ### Groove
 
@@ -137,7 +137,7 @@ Research references:
 - Added SEQ chord memory for turning the selected chord mode and voicing into one-finger played stabs while keeping it default-off for old presets.
 - Cleaned up the SEQ panel so chord/groove controls, random/variation actions, and the grid are grouped more clearly for pattern building.
 - Added non-destructive zero-cross/low-energy boundary snapping and adaptive fade guards for SAMPLE playback so short vocal cuts and slice-pad auditions click less.
-- Added SEQ `Shape` transforms for tightening anchors, swinging ghost notes, pushing late stabs, nudging vocal-trigger timing, and adding light human feel without replacing the notes.
+- Added SEQ `Shape` transforms for tightening anchors, swinging ghost notes, pushing late stabs, nudging vocal-trigger timing, adding light human feel, reshaping enabled bass steps with Bass Contour, painting House 9 chord stabs, and generating A/B/Fill/Drop phrase scenes with Build 4-Bar Chain.
 - Added SAMPLE `Slice Style` modes so numbered pads can apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behavior while auditioning phrase sections.
 - Set `UKG Vocal Chop Starter` to Garage slice style and tightened the SAMPLE panel grouping so vocal-chop source, phrase slicing, and shape controls stay visually separate.
 - Added FX `Module Preset` choices for garage delay throws, short rooms, mono-safe width, light chorus/phaser movement, controlled drive, resonator color, and Guard safety.
@@ -151,6 +151,7 @@ Research references:
 - Added visible host-sync badges to SEQ and FX so transport-locked garage patterns, Pump, Tremolo, and synced Delay state can be checked without leaving the panel.
 - Added a first assignable SEQ Lock lane so UKG bass, organ stabs, late stabs, and vocal-trigger patterns can push cutoff, drive, Osc Warp, pump, delay, reverb, or wavetable position per step without editing host automation.
 - Added SEQ pattern scenes for A/B/Fill/Drop variations, with scene state saved in plugin and preset state for house and UKG arrangement sketches.
+- Added a first SEQ Slide lane that holds a bass/chord note into the next triggered step in live playback and exported/dragged MIDI, with Bass Contour seeding slide gestures for passing/pickup notes.
 - Added appended house chord colors and Deep Chord, Dub Chord, Off Bass, and Rolling Bass pattern starters so chord/bass hooks can be sketched faster.
 - Added SEQ genre groove templates for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive. These shape per-step timing, velocity, probability, length, lock intensity, swing, gate, accent, and lock routing from one grouped action.
 - Added SYNTH noise colors and Noise Decay, with randomization biased toward short Air/Tick attacks for UKG bells and stabs, sub-safe bass recipes, and Vinyl/Digital texture for Noise FX.
@@ -160,7 +161,7 @@ Research references:
 
 Reference-backed next passes:
 
-- Expand the first stored per-slice region/pitch/gain/pan/probability/reverse/stutter/choke pass into full slice lanes with nudge/fades/playback modes, transient/manual markers, and sequencer-triggered slice playback.
+- Expand the first stored per-slice region/pitch/gain/pan/probability/reverse/stutter/choke/nudge/fade pass into full slice lanes with playback modes, transient/manual markers, and sequencer-triggered slice playback.
 - Expand FX presets into user-saveable module presets.
 - Expand the modulation inspector beyond the implemented per-route bypass/delete controls into richer route editing and macro assignment views.
 - Add a broader source-character pass for organ/drawbar color, M1-style attack tones, deeper Reese movement, and wavetable import now that the basic oscillator, first Osc Warp, filter-character, and filter-slope passes are in place.
@@ -214,7 +215,7 @@ Reference-backed next passes:
 - The SEQ panel includes `Vary` for small groove-preserving mutations to basslines, chord stabs, and vocal-trigger patterns.
 - The SEQ panel includes `Undo` for stepping back from generated, varied, template, copied, rotated, or cleared patterns while searching for a garage groove.
 - The SEQ panel includes `Rot <` and `Rot >` controls for shifting 2-step basslines, late stabs, and vocal-trigger patterns around the bar while keeping per-step groove details intact.
-- The SEQ panel includes MIDI export so generated UKG basslines, skanks, and vocal trigger patterns can be saved as `.mid` clips and edited directly in Ableton.
+- The SEQ panel includes MIDI export and first-pass drag-out from the `MIDI`/`Chain` buttons so generated UKG basslines, skanks, and vocal trigger patterns can be saved or dragged as `.mid` clips and edited directly in Ableton; the expanded SEQ focus can force Chain drags to Auto, 2-bar, or 4-bar length.
 - The SEQ shape menu now includes House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive, so timing feel can be changed without redrawing the pattern or adding another visible control group.
 
 5. UKG factory presets.

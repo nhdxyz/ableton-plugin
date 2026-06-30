@@ -571,8 +571,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
 
         case Recipe::ukgOrganStab:
-            wave = randomInt(2, 3);
-            osc2Wave = randomInt(0, 2);
+            wave = 5;
+            osc2Wave = randomFloat(0.0f, 1.0f) < 0.42f + (chaos * 0.16f) ? 5 : randomInt(0, 3);
             octave = randomInt(-1, 0);
             osc2Octave = octave + randomInt(0, 1);
             tune = randomFloat(-0.03f, 0.03f);
@@ -625,8 +625,8 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
             break;
 
         case Recipe::ukgChordStab:
-            wave = randomInt(1, 2);
-            osc2Wave = randomInt(1, 3);
+            wave = randomFloat(0.0f, 1.0f) < 0.42f + (chaos * 0.18f) ? 6 : randomInt(1, 2);
+            osc2Wave = randomFloat(0.0f, 1.0f) < 0.28f + (chaos * 0.16f) ? randomInt(5, 6) : randomInt(1, 3);
             octave = randomInt(-1, 0);
             osc2Octave = octave;
             tune = randomFloat(-0.08f, 0.08f);
@@ -1103,7 +1103,6 @@ void Randomizer::randomizeForRecipe(Recipe recipe, float amount, float chaos, bo
     }
 
     const auto isWavetableFriendlyStab = recipe == Recipe::darkStab
-        || recipe == Recipe::ukgOrganStab
         || recipe == Recipe::ukgChordStab
         || recipe == Recipe::ukgBellPluck;
 

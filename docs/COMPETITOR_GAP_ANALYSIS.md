@@ -29,12 +29,13 @@ Do not copy proprietary UI layouts, presets, wavetables, samples, DSP code, bran
 
 Nate VST already has a strong starter direction:
 
-- JUCE/VST3 foundation with Ableton-focused validation and local pluginval checks.
+- JUCE/VST3 foundation with broad local CTest coverage; repo-backed pluginval and Ableton release gates remain open.
 - Subtractive synth core with oscillator 1, oscillator 2, sub, noise, unison, filter character/slope, drive, output guard, and bandlimited oscillator work.
+- SYNTH source card with a compact house layer rack that reads current Osc 1, Osc 2, Sub, Noise, and Sample Mix state as Sub, Body, Character/Stab, Transient/Noise, and Chop roles.
 - Genre-oriented HOME dashboard with macros, randomization, low-end guidance, A/B snapshots, Patch Snapshot state, preset recall, and auditioning.
 - MOD panel with LFO, envelope, eight macros, matrix routes, macro assignment editor, curve presets, bypass/delete, and destination badges.
 - SAMPLE panel with waveform view, start/end handles, phrase markers, slice pads, stored slice regions, pan, trigger probability, reverse, pitch, gain, mix, and UKG chop helpers.
-- SEQ panel with piano-roll editing, chord memory, scale/groove templates, velocity/probability/timing lanes, host sync, and MIDI export.
+- SEQ panel with piano-roll editing, chord memory, scale/groove templates, velocity/probability/timing/length/lock/ratchet/condition/slide lanes, host sync, and MIDI export/drag-out.
 - FX rack with add/select flow, reordering, delay, reverb, distortion, pump, tremolo, ring mod, comb, chorus, phaser, flanger, bitcrush, EQ/tone, width, guard, and throw controls.
 - LIBRARY panel with folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, recursive preset scanning, a left crate rail with folder/pack/style coverage, centered browser actions, and macro previews.
 - Factory preset generation for UKG, house, tech-house, techno, and minimal.
@@ -54,7 +55,7 @@ Nate VST should become a fast club-music instrument, not a generic copy of every
 
 ### P0 - UI, Layout, And Interaction Quality
 
-1. Split `PluginEditor` into focused child components for HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, top bar, and keyboard.
+1. Split `PluginEditor` into focused child components for HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, top bar, and keyboard.
 2. Add automated component-overlap tests at the fixed plugin size.
 3. Add screenshot regression tests for every panel.
 4. Add a debug bounds overlay for layout review.
@@ -106,8 +107,8 @@ Implemented P0 sub-slice:
 43. Add a focused three-operator FM engine for UKG bells, pings, organ edges, and metallic stabs.
 44. Add a supersaw/unison engine with detune curve, phase spread, stereo spread, and mono safety.
 45. Add analog drift controls for pitch, phase, filter, envelope, and voice variance.
-46. Add a "garage organ" source model using additive drawbar-style partials.
-47. Add a simple sampled-PCM source layer for M1-style house organs, strings, and classic stabs, using legal/original samples only.
+46. Add a "garage organ" source model using additive drawbar-style partials. First procedural Organ waveform pass is implemented; editable drawbar/source-rack depth remains open.
+47. Add a simple sampled-PCM source layer for M1-style house organs, strings, and classic stabs, using legal/original samples only. First procedural House Piano source pass is implemented; sampled PCM content remains open.
 48. Add a resonator/physical-model source for plucked minimal tones.
 49. Add an additive partial bank for hollow bells and glassy techno hits.
 50. Add noise color models: white, pink, brown, metallic, vinyl, air, and digital hash.
@@ -149,7 +150,7 @@ Implemented P0 sub-slice:
 80. Add beat-grid slicing.
 81. Add equal-region slicing.
 82. Add fully manual slice markers.
-83. Add per-slice start, end, nudge, pitch, gain, pan, reverse, fade, and choke. First stored start/end region plus pitch/gain/pan/reverse/stutter/choke memory pass implemented; manual marker nudge and fades remain open.
+83. Add per-slice start, end, nudge, pitch, gain, pan, reverse, fade, and choke. First stored start/end region plus pitch/gain/pan/reverse/stutter/choke/nudge/fade memory pass implemented; manual marker nudge and deeper playback controls remain open.
 84. Add slice audition on hover/click.
 85. Add slice keyboard mapping display.
 86. Add slice to sequencer lane.
@@ -168,7 +169,7 @@ Implemented P0 sub-slice:
 99. Add UKG vocal-chop templates: call/response, late swing, stutter tag, reverse pickup, and sparse two-note hook.
 100. Add Dred/Reese bass recipe buttons tied to source, filter, pitch, and drive.
 101. Add organ-bass recipe buttons for UKG and speed garage.
-102. Add "M1-style organ stab" and "house piano stab" starter recipes using legal/original sources.
+102. Add "M1-style organ stab" and "house piano stab" starter recipes using legal/original sources. First procedural Organ/House Piano source pass is implemented for selected presets and organ/chord randomization; larger starter recipes remain open.
 103. Add a sample-pack browser inside LIBRARY.
 104. Add construction-kit preset type that stores sample, sequence, macros, key, BPM, and recommended FX.
 105. Add non-destructive crop/export helpers for user-created chops.
@@ -176,11 +177,11 @@ Implemented P0 sub-slice:
 ### P4 - Sequencer, Piano Roll, And Groove
 
 106. Add multiple sequencer patterns per preset.
-107. Add pattern chaining.
-108. Add pattern scene buttons for A, B, fill, drop, breakdown, and transition.
-109. Add per-step ratchet/retrigger.
+107. Add deeper pattern chaining beyond the first live scene-chain step/control playback.
+108. Expand the implemented A/B/Fill/Drop pattern scene buttons into breakdown, transition, longer-chain, and arranger-style scene workflows.
+109. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
 110. Add per-step note length. First saved lane/playback/export pass implemented.
-111. Add per-step slide/glide.
+111. Add deeper per-step slide/glide. First saved lane/live-export overlap pass implemented.
 112. Add per-step accent tied to filter, amp, and drive.
 113. Add per-step modulation lanes assignable to any safe destination. First single-destination Lock lane implemented; expand to multiple simultaneous lanes and sample-accurate lock events.
 114. Add per-step sample slice lane.
@@ -188,9 +189,9 @@ Implemented P0 sub-slice:
 116. Add per-step delay throw lane.
 117. Add per-step reverb throw lane.
 118. Add per-step probability ranges, not just one value.
-119. Add step conditions such as first, not first, fill, every 2, every 4, and random.
+119. Add deeper step conditions such as first, not first, every 4, random, follow, and per-repeat probability. First Always/Odd/Even/Fill condition lane is implemented.
 120. Add scale quantize and key lock in the piano roll.
-121. Add chord paint tools for minor 7, minor 9, major 7, sus, stab voicings, and garage organ shapes.
+121. Add deeper chord paint tools for minor 7, minor 9, major 7, sus, stab voicings, and garage organ shapes beyond the first Chord Stab Paint transform.
 122. Add voicing spread control for chord memory.
 123. Add humanize with separate timing, velocity, gate, and pitch.
 124. Add groove templates: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, and broken percussion.
@@ -200,7 +201,7 @@ Implemented P0 sub-slice:
 128. Add shape/contour generator for basslines.
 129. Add recombine tool that keeps rhythm but changes pitches.
 130. Add density control for generated patterns.
-131. Add MIDI drag export from the internal sequencer into Ableton.
+131. Add richer MIDI drag export validation and clip handoff for Ableton. First current-pattern and scene-chain `.mid` drag-out is implemented.
 132. Add MIDI drag import from a dropped MIDI clip or file.
 133. Add sequencer preset snippets.
 134. Add pattern undo/redo history.
@@ -317,7 +318,7 @@ Implemented P5 sub-slice:
 226. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 227. Add preset version history for user saves.
 228. Add missing sample warnings in browser rows.
-229. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
+229. Expand the implemented rendered per-preset preview cache/playback into background/batch generation, waveform/level row badges, manual regeneration, and preview loudness consistency.
 230. Add audition auto-advance.
 231. Expand the implemented role-aware audition phrases into editable preview MIDI patterns by category.
 232. Add "find similar presets" using metadata and parameter distance.
@@ -350,7 +351,7 @@ Implemented P8 sub-slice:
 252. Add Ableton-specific checklist: scan, load, automate, save set, reopen set, duplicate track, freeze, flatten, export, and reopen.
 253. Add UI open/close stress test while audio runs.
 254. Add output guard telemetry for internal debug builds.
-255. Add factory preset loudness validation.
+255. Expand factory preset loudness validation beyond the first finite/non-silent/peak render smoke gate into role targets and pack consistency.
 256. Add randomizer loudness validation.
 257. Add sample import failure tests.
 258. Add file-permission handling for user library saves.
@@ -383,8 +384,8 @@ The best next slices are the ones that improve professional feel before adding a
 2. Expand control feel with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
 3. Grow the compact LIBRARY table and first smart-crate pass into a full browser with sidebar crates, custom tags, audio previews, and construction kits.
 4. Add a focused modulation-routing UX: drag assignment, visible rings, selected-parameter route view, and route range editing.
-5. Add multiple SEQ patterns, ratchets, scale-locked chord paint, and per-step modulation lanes.
-6. Add transient/manual sample slicing with per-slice controls.
+5. Add deeper pattern chaining, deeper per-scene automation/rate behavior, deeper scale-locked chord paint beyond the first Chord Stab Paint transform, deeper slide/glide controls beyond the first overlap pass, richer condition options, MIDI import/validation, and richer per-step modulation lanes.
+6. Add transient/manual sample slicing with deeper per-slice playback controls beyond the first nudge/fade pass.
 7. Add wavetable oscillator playback with preview before import/editor work.
 8. Add multiband drive with oversampling and gain compensation.
 9. Add UKG recipe tools: Dred/Reese bass, organ bass, late stabs, vocal chop motifs, and swung 2-step patterns.
@@ -400,8 +401,8 @@ Track the backlog through one umbrella issue plus focused child issues. Good fir
 - Improve rotary controls with fine drag, double-click reset, and value popovers.
 - Expand the compact preset browser, centered browser toolbar, and folder/pack crate rail into a full multi-column browser with editable sidebar folders.
 - Add drag-and-drop modulation assignment and visible modulation rings.
-- Add sequencer pattern chaining, ratchets, chord paint, and per-step modulation lanes.
-- Add transient/manual slicing with per-slice controls.
+- Add deeper sequencer pattern chaining, deeper per-scene automation/rate behavior, deeper chord paint beyond the first Chord Stab Paint transform, deeper slide/glide controls beyond the first overlap pass, richer condition options, MIDI import/validation, and richer per-step modulation lanes.
+- Add transient/manual slicing with deeper per-slice playback controls beyond the first nudge/fade pass.
 - Add wavetable oscillator playback and preview display.
 - Add multiband distortion with oversampling and gain compensation.
 - Add UKG recipe builder for Dred bass, organ bass, vocal chops, and late stabs.

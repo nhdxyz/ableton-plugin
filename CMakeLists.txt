@@ -55,12 +55,16 @@ target_sources(NateVST
         Source/Effects/EffectsRack.cpp
         Source/UI/ClubMonitorDisplay.cpp
         Source/UI/FilterResponseDisplay.cpp
+        Source/UI/FocusOverlayPanel.cpp
         Source/UI/FxRackRow.cpp
+        Source/UI/HouseLayerRackDisplay.cpp
         Source/UI/HomeOverviewDisplay.cpp
         Source/UI/HomeSignalFlowDisplay.cpp
         Source/UI/HomeSessionDisplay.cpp
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp
+        Source/UI/MacroAssignmentPad.cpp
+        Source/UI/MacroPerformanceMap.cpp
         Source/UI/ModCurveDisplay.cpp
         Source/UI/ModMatrixRow.cpp
         Source/UI/ModRouteMapDisplay.cpp
@@ -75,6 +79,7 @@ target_sources(NateVST
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
+        Source/UI/Theme.cpp
         Source/UI/WavetableDisplay.cpp
         Source/UI/XYMacroPad.cpp
 )
@@ -110,6 +115,17 @@ target_link_libraries(NateVSTLayoutAudit
 
 add_test(NAME EditorLayoutAudit COMMAND NateVSTLayoutAudit)
 
+add_executable(NateVSTThemeAudit Tests/ThemeAudit.cpp Source/UI/Theme.cpp)
+
+target_link_libraries(NateVSTThemeAudit
+    PRIVATE
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME ThemeAudit COMMAND NateVSTThemeAudit)
+
 add_executable(NateVSTPresetSaveAudit Tests/PresetSaveAudit.cpp)
 
 target_link_libraries(NateVSTPresetSaveAudit
@@ -140,6 +156,43 @@ target_compile_definitions(NateVSTFactoryPresetLibraryAudit
 )
 
 add_test(NAME FactoryPresetLibraryAudit COMMAND NateVSTFactoryPresetLibraryAudit)
+
+add_executable(NateVSTFactoryPresetRenderAudit Tests/FactoryPresetRenderAudit.cpp)
+
+target_link_libraries(NateVSTFactoryPresetRenderAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+target_compile_definitions(NateVSTFactoryPresetRenderAudit
+    PRIVATE
+        NATE_VST_FACTORY_PRESETS_TEST_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets"
+)
+
+add_test(NAME FactoryPresetRenderAudit COMMAND NateVSTFactoryPresetRenderAudit)
+
+add_executable(NateVSTPresetPreviewAudit Tests/PresetPreviewAudit.cpp)
+
+target_link_libraries(NateVSTPresetPreviewAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+target_compile_definitions(NateVSTPresetPreviewAudit
+    PRIVATE
+        NATE_VST_FACTORY_PRESETS_TEST_SOURCE="${CMAKE_CURRENT_SOURCE_DIR}/Resources/Factory Presets"
+)
+
+add_test(NAME PresetPreviewAudit COMMAND NateVSTPresetPreviewAudit)
 
 add_executable(NateVSTRandomCandidateAudit Tests/RandomCandidateAudit.cpp)
 
@@ -232,6 +285,19 @@ target_link_libraries(NateVSTSequencerHousePatternAudit
 
 add_test(NAME SequencerHousePatternAudit COMMAND NateVSTSequencerHousePatternAudit)
 
+add_executable(NateVSTSequencerRatchetAudit Tests/SequencerRatchetAudit.cpp)
+
+target_link_libraries(NateVSTSequencerRatchetAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME SequencerRatchetAudit COMMAND NateVSTSequencerRatchetAudit)
+
 add_executable(NateVSTNoiseSourceAudit Tests/NoiseSourceAudit.cpp)
 
 target_link_libraries(NateVSTNoiseSourceAudit
@@ -244,6 +310,47 @@ target_link_libraries(NateVSTNoiseSourceAudit
 )
 
 add_test(NAME NoiseSourceAudit COMMAND NateVSTNoiseSourceAudit)
+
+add_executable(NateVSTSourceCharacterAudit Tests/SourceCharacterAudit.cpp)
+
+target_link_libraries(NateVSTSourceCharacterAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME SourceCharacterAudit COMMAND NateVSTSourceCharacterAudit)
+
+add_executable(NateVSTModulationSourceParityAudit Tests/ModulationSourceParityAudit.cpp)
+
+target_link_libraries(NateVSTModulationSourceParityAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME ModulationSourceParityAudit COMMAND NateVSTModulationSourceParityAudit)
+
+add_executable(NateVSTSamplerChopAudit Tests/SamplerChopAudit.cpp)
+
+target_link_libraries(NateVSTSamplerChopAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_audio_formats
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME SamplerChopAudit COMMAND NateVSTSamplerChopAudit)
 
 add_executable(NateVSTEffectsSendAudit Tests/EffectsSendAudit.cpp)
 

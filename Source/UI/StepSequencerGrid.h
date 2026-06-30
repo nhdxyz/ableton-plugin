@@ -18,6 +18,20 @@ public:
     void setRootNote(int newRootNote);
     void setScaleMode(int newScaleMode);
 
+    struct LayoutMetrics
+    {
+        juce::Rectangle<int> grid;
+        juce::Rectangle<int> noteLabels;
+        juce::Rectangle<int> lanes;
+        juce::Rectangle<int> laneLabels;
+        juce::Rectangle<int> header;
+        float noteRowHeight = 0.0f;
+        float laneRowHeight = 0.0f;
+        float stepCellWidth = 0.0f;
+    };
+
+    LayoutMetrics getLayoutMetricsForAudit() const;
+
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
@@ -28,9 +42,11 @@ private:
     static constexpr int numRows = Sequencer::PatternSequencer::maxNoteOffset
                                  - Sequencer::PatternSequencer::minNoteOffset
                                  + 1;
-    static constexpr int laneCount = 5;
-    static constexpr int laneAreaHeight = 84;
-    static constexpr int laneLabelWidth = 40;
+    static constexpr int laneCount = 8;
+    static constexpr int laneLabelWidth = 44;
+    static constexpr int minimumLaneAreaHeight = 64;
+    static constexpr int maximumLaneAreaHeight = 112;
+    static constexpr int targetMinimumNoteRowHeight = 6;
     enum class DragMode
     {
         none,
@@ -40,7 +56,10 @@ private:
         probability,
         timing,
         length,
-        lock
+        lock,
+        ratchet,
+        condition,
+        slide
     };
 
     StepGetter getStep;
@@ -56,6 +75,7 @@ private:
     juce::Rectangle<int> laneBounds() const;
     juce::Rectangle<int> laneLabelBounds() const;
     juce::Rectangle<int> stepHeaderBounds() const;
+    int laneAreaHeightForCurrentBounds() const noexcept;
     int stepForPosition(juce::Point<int> position) const;
     int laneStepForPosition(juce::Point<int> position) const;
     int laneForPosition(juce::Point<int> position) const;

@@ -10,7 +10,9 @@ enum class Waveform
     saw,
     square,
     triangle,
-    wavetable
+    wavetable,
+    organ,
+    housePiano
 };
 
 class Oscillator

@@ -42,6 +42,14 @@ int main()
     initialStep.timing = 0.08f;
     initialStep.length = 0.42f;
     initialStep.lock = 0.18f;
+    initialStep.ratchet = 2;
+    initialStep.condition = 1;
+
+    Sequencer::Step initialSlideStep = initialStep;
+    initialSlideStep.noteOffset = -5;
+    initialSlideStep.ratchet = 1;
+    initialSlideStep.condition = 0;
+    initialSlideStep.slide = true;
 
     if (! setPlainParameter(processor, Parameters::ID::filterCutoff, 760.0f)
         || ! setPlainParameter(processor, Parameters::ID::driveAmount, 0.12f)
@@ -55,6 +63,7 @@ int main()
     }
 
     processor.setSequencerStep(0, initialStep);
+    processor.setSequencerStep(1, initialSlideStep);
     processor.capturePerformanceSnapshot(0);
     processor.captureGlobalEditState("Initial audit state");
 
@@ -65,6 +74,13 @@ int main()
     editedStep.timing = 0.11f;
     editedStep.length = 0.88f;
     editedStep.lock = 0.72f;
+    editedStep.ratchet = 4;
+    editedStep.condition = 3;
+
+    Sequencer::Step editedSlideStep = initialSlideStep;
+    editedSlideStep.noteOffset = 5;
+    editedSlideStep.velocity = 0.62f;
+    editedSlideStep.slide = false;
 
     if (! setPlainParameter(processor, Parameters::ID::filterCutoff, 2460.0f)
         || ! setPlainParameter(processor, Parameters::ID::driveAmount, 0.58f)
@@ -78,6 +94,7 @@ int main()
     }
 
     processor.setSequencerStep(0, editedStep);
+    processor.setSequencerStep(1, editedSlideStep);
     processor.capturePerformanceSnapshot(0);
 
     if (! processor.canUndoGlobalEdit() || processor.canRedoGlobalEdit())
@@ -94,6 +111,7 @@ int main()
     }
 
     const auto undoStep = processor.getSequencerStep(0);
+    const auto undoSlideStep = processor.getSequencerStep(1);
     if (! near(readPlainParameter(processor, Parameters::ID::filterCutoff, 0.0f), 760.0f)
         || ! near(readPlainParameter(processor, Parameters::ID::driveAmount, 0.0f), 0.12f)
         || ! near(readPlainParameter(processor, Parameters::ID::modMatrixSource[0], 0.0f), 4.0f)
@@ -106,6 +124,10 @@ int main()
         || ! near(undoStep.timing, initialStep.timing)
         || ! near(undoStep.length, initialStep.length)
         || ! near(undoStep.lock, initialStep.lock)
+        || undoStep.ratchet != initialStep.ratchet
+        || undoStep.condition != initialStep.condition
+        || undoSlideStep.noteOffset != initialSlideStep.noteOffset
+        || ! undoSlideStep.slide
         || processor.canUndoGlobalEdit()
         || ! processor.canRedoGlobalEdit())
     {
@@ -122,6 +144,10 @@ int main()
                   << " stepTiming=" << undoStep.timing
                   << " stepLen=" << undoStep.length
                   << " stepLock=" << undoStep.lock
+                  << " stepRatchet=" << undoStep.ratchet
+                  << " stepCondition=" << undoStep.condition
+                  << " slideStepNote=" << undoSlideStep.noteOffset
+                  << " slideStepSlide=" << undoSlideStep.slide
                   << " canUndo=" << processor.canUndoGlobalEdit()
                   << " canRedo=" << processor.canRedoGlobalEdit()
                   << '\n';
@@ -143,6 +169,7 @@ int main()
     }
 
     const auto redoStep = processor.getSequencerStep(0);
+    const auto redoSlideStep = processor.getSequencerStep(1);
     if (! near(readPlainParameter(processor, Parameters::ID::filterCutoff, 0.0f), 2460.0f)
         || ! near(readPlainParameter(processor, Parameters::ID::driveAmount, 0.0f), 0.58f)
         || ! near(readPlainParameter(processor, Parameters::ID::modMatrixSource[0], 0.0f), 12.0f)
@@ -155,6 +182,10 @@ int main()
         || ! near(redoStep.timing, editedStep.timing)
         || ! near(redoStep.length, editedStep.length)
         || ! near(redoStep.lock, editedStep.lock)
+        || redoStep.ratchet != editedStep.ratchet
+        || redoStep.condition != editedStep.condition
+        || redoSlideStep.noteOffset != editedSlideStep.noteOffset
+        || redoSlideStep.slide
         || ! processor.canUndoGlobalEdit()
         || processor.canRedoGlobalEdit())
     {

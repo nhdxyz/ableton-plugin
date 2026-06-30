@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <initializer_list>
+#include <limits>
 #include <typeinfo>
 #include <utility>
 #include <vector>
@@ -17,6 +18,8 @@ constexpr auto editorMaxWidth = 1440;
 constexpr auto editorMaxHeight = 980;
 constexpr auto pianoKeyboardHeight = 58;
 constexpr auto keyboardControlsWidth = 214;
+constexpr auto keyboardMinimumWhiteKeyWidth = 18.0f;
+constexpr auto keyboardMaximumWhiteKeyWidth = 36.0f;
 constexpr auto keyboardLowestNote = 24;
 constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 36;
@@ -30,6 +33,28 @@ constexpr auto candidateAuditionDurationMs = 680.0;
 constexpr auto candidateAuditionVelocity = 0.88f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
 constexpr auto presetOverwriteConfirmMs = 6500.0;
+constexpr auto presetBrowserCompactRowBreakpoint = 420;
+constexpr auto sequencerFourBarChainTransformIndex = 12;
+constexpr std::array<const char*, 8> macroPerformanceParameterIDs {
+    Parameters::ID::macroTone,
+    Parameters::ID::macroDirt,
+    Parameters::ID::macroMotion,
+    Parameters::ID::macroSpace,
+    Parameters::ID::macroWeight,
+    Parameters::ID::macroBounce,
+    Parameters::ID::macroWarp,
+    Parameters::ID::macroThrow
+};
+constexpr std::array<const char*, 8> macroPerformanceNames {
+    "Tone",
+    "Dirt",
+    "Motion",
+    "Space",
+    "Weight",
+    "Bounce",
+    "Warp",
+    "Throw"
+};
 
 enum class PresetAuditionRole
 {
@@ -83,6 +108,65 @@ constexpr auto lastMacroModSourceIndex = 11;
 constexpr std::array<float, 8> defaultSlicePitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
 constexpr std::array<float, 8> defaultGarageSlicePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
 
+int whiteKeyCountInRange(int lowestNote, int highestNote) noexcept
+{
+    auto count = 0;
+    for (auto note = lowestNote; note <= highestNote; ++note)
+        if (! juce::MidiMessage::isMidiNoteBlack(note % 12))
+            ++count;
+
+    return juce::jmax(1, count);
+}
+
+float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, int lowestVisibleNote) noexcept
+{
+    const auto visibleLowestNote = juce::jlimit(keyboardLowestNote, keyboardHighestNote, lowestVisibleNote);
+    const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(visibleLowestNote, keyboardHighestNote));
+    const auto fillWidth = static_cast<float>(juce::jmax(1, keyboardBounds.getWidth())) / whiteKeyCount;
+    return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
+}
+
+struct PresetBrowserRowLayout
+{
+    int paddedWidth = 0;
+    int nameWidth = 0;
+    int infoWidth = 0;
+    int previewWidth = 0;
+    int macroWidth = 0;
+    bool compact = false;
+    bool showsMacroStrip = true;
+};
+
+PresetBrowserRowLayout presetBrowserRowLayoutForWidth(int width, int height)
+{
+    auto row = juce::Rectangle<int>(0, 0, juce::jmax(0, width), juce::jmax(0, height)).reduced(9, 4);
+    PresetBrowserRowLayout layout;
+    layout.paddedWidth = juce::jmax(0, row.getWidth());
+    if (layout.paddedWidth <= 0)
+        return layout;
+
+    layout.compact = layout.paddedWidth < presetBrowserCompactRowBreakpoint;
+    if (layout.compact)
+    {
+        constexpr auto gap = 5;
+        layout.previewWidth = juce::jlimit(58, 96, layout.paddedWidth / 4);
+        layout.infoWidth = juce::jlimit(48, 72, layout.paddedWidth / 5);
+        layout.macroWidth = layout.previewWidth;
+        layout.showsMacroStrip = false;
+        layout.nameWidth = juce::jmax(0, layout.paddedWidth - layout.previewWidth - layout.infoWidth - (gap * 2));
+        return layout;
+    }
+
+    auto remainingWidth = layout.paddedWidth;
+    layout.macroWidth = juce::jlimit(118, 230, remainingWidth / 3);
+    remainingWidth -= layout.macroWidth + 8;
+    layout.infoWidth = juce::jlimit(86, 160, remainingWidth / 3);
+    remainingWidth -= layout.infoWidth + 8;
+    layout.previewWidth = layout.macroWidth;
+    layout.nameWidth = juce::jmax(0, remainingWidth);
+    return layout;
+}
+
 struct SampleSlicePreviewSettings
 {
     float pitch = 0.0f;
@@ -93,6 +177,8 @@ struct SampleSlicePreviewSettings
     int repeats = 3;
     float pan = 0.0f;
     float probability = 1.0f;
+    float nudgePercent = 0.0f;
+    float fade = 0.0f;
 };
 
 juce::String slicePanText(float pan)
@@ -109,6 +195,63 @@ juce::String slicePanText(float pan)
 juce::String sliceChanceText(float probability)
 {
     return juce::String(juce::roundToInt(juce::jlimit(0.0f, 1.0f, probability) * 100.0f)) + "%";
+}
+
+juce::String sliceNudgeText(float nudgePercent)
+{
+    nudgePercent = juce::jlimit(-5.0f, 5.0f, nudgePercent);
+    if (std::abs(nudgePercent) < 0.01f)
+        return "N0";
+
+    return juce::String(nudgePercent > 0.0f ? "N+" : "N") + juce::String(nudgePercent, 1) + "%";
+}
+
+juce::String sliceFadeText(float fade)
+{
+    fade = juce::jlimit(0.0f, 1.0f, fade);
+    if (fade < 0.12f)
+        return "tight";
+    if (fade < 0.55f)
+        return "soft";
+
+    return "smooth";
+}
+
+juce::String sourceNameForWave(int wave)
+{
+    switch (wave)
+    {
+        case 0: return "Sine";
+        case 1: return "Saw";
+        case 2: return "Square";
+        case 3: return "Triangle";
+        case 4: return "Wavetable";
+        case 5: return "Organ";
+        case 6: return "House Piano";
+        default: return "Synth";
+    }
+}
+
+juce::String bodyRoleForWave(int wave)
+{
+    switch (wave)
+    {
+        case 4: return "WT BODY";
+        case 5: return "ORGAN";
+        case 6: return "KEYS";
+        default: return "BODY";
+    }
+}
+
+juce::String characterRoleForWave(int wave)
+{
+    switch (wave)
+    {
+        case 4: return "WT";
+        case 5: return "DRAW";
+        case 6: return "STAB";
+        default: return "CHAR";
+    }
 }
 
 SampleSlicePreviewSettings defaultSlicePreviewSettings(size_t sliceIndex, int styleIndex)
@@ -204,14 +347,14 @@ void appendVisibleLayoutIssues(const juce::Component& root,
     }
 }
 
-juce::Colour backgroundColour()
+juce::Colour backgroundColour(const UI::Theme& theme)
 {
-    return juce::Colour(0xff0d1113);
+    return theme.background;
 }
 
-juce::Colour panelColour()
+juce::Colour panelColour(const UI::Theme& theme)
 {
-    return juce::Colour(0xff141a1d);
+    return theme.panel;
 }
 
 juce::StringArray presetCategoryChoices()
@@ -698,6 +841,78 @@ juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& pre
         + " | " + values;
 }
 
+juce::String presetPreviewSummaryText(const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    if (! preset.previewAvailable)
+        return "Preview renders on audition";
+
+    if (preset.previewStale)
+        return "Preview stale";
+
+    if (preset.previewPeak > 0.0f && preset.previewRms > 0.0f)
+        return "Preview ready | pk "
+            + juce::String(juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f), 1)
+            + " dB";
+
+    return "Preview ready";
+}
+
+juce::String presetPreviewBadgeText(const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    if (! preset.previewAvailable)
+        return "RENDER";
+
+    if (preset.previewStale)
+        return "STALE";
+
+    if (preset.previewPeak > 0.0f && std::isfinite(preset.previewPeak))
+        return "PK " + juce::String(juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f), 0) + " dB";
+
+    return "READY";
+}
+
+float presetPreviewLevelNormalised(const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    if (! preset.previewAvailable || preset.previewStale || preset.previewPeak <= 0.0f || ! std::isfinite(preset.previewPeak))
+        return 0.0f;
+
+    const auto peakDb = juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f);
+    return juce::jlimit(0.0f, 1.0f, juce::jmap(peakDb, -60.0f, -6.0f, 0.0f, 1.0f));
+}
+
+void drawPresetPreviewLevelBadge(juce::Graphics& g,
+                                 juce::Rectangle<int> area,
+                                 const NateVSTAudioProcessor::PresetInfo& preset)
+{
+    if (area.getWidth() <= 0 || area.getHeight() <= 0)
+        return;
+
+    const auto ready = preset.previewAvailable && ! preset.previewStale;
+    const auto stale = preset.previewStale;
+    const auto accent = ready ? juce::Colour(0xff8ee6c9)
+                              : (stale ? juce::Colour(0xffffc36b) : juce::Colour(0xff617078));
+    const auto bounds = area.toFloat().reduced(1.0f, 1.0f);
+    g.setColour(juce::Colour(0xff151e22));
+    g.fillRoundedRectangle(bounds, 4.0f);
+
+    const auto levelWidth = bounds.getWidth() * presetPreviewLevelNormalised(preset);
+    if (levelWidth > 1.0f)
+    {
+        g.setColour(accent.withAlpha(0.28f));
+        g.fillRoundedRectangle(bounds.withWidth(levelWidth), 4.0f);
+    }
+
+    g.setColour(accent.withAlpha(ready ? 0.78f : 0.52f));
+    g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
+    g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
+    g.setColour(ready ? juce::Colour(0xffdff8f0) : accent);
+    g.drawFittedText(presetPreviewBadgeText(preset),
+                     area.reduced(3, 0),
+                     juce::Justification::centred,
+                     1,
+                     0.58f);
+}
+
 void drawPresetMacroValueStrip(juce::Graphics& g,
                                juce::Rectangle<int> area,
                                const NateVSTAudioProcessor::PresetInfo& preset)
@@ -1129,7 +1344,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
-    pianoKeyboard.setKeyWidth(18.0f);
+    pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
+    pianoKeyboard.setWantsKeyboardFocus(true);
     pianoKeyboard.setScrollButtonsVisible(true);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffd9e3df));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, juce::Colour(0xff151b1f));
@@ -1323,8 +1539,103 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         setPlainParameterValue(Parameters::ID::macroMotion, motion);
         setPlainParameterValue(Parameters::ID::macroSpace, space);
+        updateSelectedControlInspector("Motion / Space", Parameters::ID::macroMotion, motion);
+        updatePerformanceXYPad();
+        updateHomeOverviewDisplay();
     };
     addAndMakeVisible(performanceXYPad);
+
+    macroPerformanceMap.onChange = [this] (size_t index, float value)
+    {
+        if (index >= macroPerformanceParameterIDs.size())
+            return;
+
+        const auto parameterID = juce::String(macroPerformanceParameterIDs[index]);
+        setPlainParameterValue(parameterID, value);
+        updateSelectedControlInspector(macroPerformanceNames[index], parameterID, value);
+        updatePerformanceXYPad();
+        updateHomeOverviewDisplay();
+    };
+    addAndMakeVisible(macroPerformanceMap);
+    expandedMacroPerformanceMap.onChange = macroPerformanceMap.onChange;
+    addAndMakeVisible(expandedMacroPerformanceMap);
+
+    macroAssignmentPad.onSourceSelected = [this] (int sourceIndex)
+    {
+        const auto destinationIndex = selectedMacroAssignmentDestinationIndex();
+        const auto amount = macroAssignmentAmountForRoute(sourceIndex,
+                                                          destinationIndex,
+                                                          static_cast<float>(modMacroAssignAmountSlider.getValue() / 100.0));
+        modMacroAssignSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+        modMacroAssignAmountSlider.setValue(amount * 100.0f, juce::dontSendNotification);
+        updateMacroAssignmentEditorStatus();
+    };
+    macroAssignmentPad.onDestinationSelected = [this] (int destinationIndex)
+    {
+        const auto sourceIndex = selectedMacroAssignmentSourceIndex();
+        const auto amount = macroAssignmentAmountForRoute(sourceIndex,
+                                                          destinationIndex,
+                                                          static_cast<float>(modMacroAssignAmountSlider.getValue() / 100.0));
+        modMacroAssignDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+        modMacroAssignAmountSlider.setValue(amount * 100.0f, juce::dontSendNotification);
+        updateMacroAssignmentEditorStatus();
+    };
+    macroAssignmentPad.onTargetAmountPreview = [this] (int sourceIndex, int destinationIndex, float amount)
+    {
+        modMacroAssignSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+        modMacroAssignDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+        modMacroAssignAmountSlider.setValue(amount * 100.0f, juce::dontSendNotification);
+        updateMacroAssignmentEditorStatus();
+    };
+    macroAssignmentPad.onTargetAmountCommit = [this] (int sourceIndex, int destinationIndex, float amount)
+    {
+        modMacroAssignSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+        modMacroAssignDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+        modMacroAssignAmountSlider.setValue(amount * 100.0f, juce::dontSendNotification);
+        addMacroAssignment(false);
+    };
+    macroAssignmentPad.onClearSource = [this] (int sourceIndex)
+    {
+        modMacroAssignSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+        clearSelectedMacroAssignments();
+    };
+    addAndMakeVisible(macroAssignmentPad);
+    expandedMacroAssignmentPad.onSourceSelected = macroAssignmentPad.onSourceSelected;
+    expandedMacroAssignmentPad.onDestinationSelected = macroAssignmentPad.onDestinationSelected;
+    expandedMacroAssignmentPad.onTargetAmountPreview = macroAssignmentPad.onTargetAmountPreview;
+    expandedMacroAssignmentPad.onTargetAmountCommit = macroAssignmentPad.onTargetAmountCommit;
+    expandedMacroAssignmentPad.onClearSource = macroAssignmentPad.onClearSource;
+    addAndMakeVisible(expandedMacroAssignmentPad);
+
+    homeMacroExpandButton.setTooltip("Open a larger macro editor");
+    homeMacroExpandButton.onClick = [this] { openMacroFocusOverlay(); };
+    addAndMakeVisible(homeMacroExpandButton);
+
+    modMacroExpandButton.setTooltip("Open a larger macro editor");
+    modMacroExpandButton.onClick = [this] { openMacroFocusOverlay(); };
+    addAndMakeVisible(modMacroExpandButton);
+
+    sampleChopExpandButton.setTooltip("Open a larger sample chop editor");
+    sampleChopExpandButton.onClick = [this] { openSampleChopFocusOverlay(); };
+    addAndMakeVisible(sampleChopExpandButton);
+
+    sourceLayerExpandButton.setTooltip("Open a larger house source layer rack");
+    sourceLayerExpandButton.onClick = [this] { openSourceLayerFocusOverlay(); };
+    addAndMakeVisible(sourceLayerExpandButton);
+
+    sequencerExpandButton.setTooltip("Open a larger sequencer editor");
+    sequencerExpandButton.onClick = [this] { openSequencerFocusOverlay(); };
+    addAndMakeVisible(sequencerExpandButton);
+
+    focusOverlayCloseButton.setTooltip("Close the expanded editor");
+    focusOverlayCloseButton.onClick = [this] { closeFocusOverlay(); };
+    addAndMakeVisible(focusOverlayPanel);
+    focusOverlayTitleLabel.setText("EXPANDED MACRO EDITOR", juce::dontSendNotification);
+    focusOverlayTitleLabel.setJustificationType(juce::Justification::centredLeft);
+    focusOverlayTitleLabel.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    focusOverlayTitleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
+    addAndMakeVisible(focusOverlayTitleLabel);
+    addAndMakeVisible(focusOverlayCloseButton);
 
     sampleWaveformDisplay.onRangeChange = [this] (float start, float end)
     {
@@ -1333,8 +1644,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
         updateSampleSliceButtons();
     };
+    sampleWaveformDisplay.onSliceSelected = [this] (size_t sliceIndex) { selectSampleSlice(sliceIndex); };
     addAndMakeVisible(sampleWaveformDisplay);
+    expandedSampleWaveformDisplay.onRangeChange = sampleWaveformDisplay.onRangeChange;
+    expandedSampleWaveformDisplay.onSliceSelected = sampleWaveformDisplay.onSliceSelected;
+    addAndMakeVisible(expandedSampleWaveformDisplay);
     addAndMakeVisible(wavetableDisplay);
+    houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
+    addAndMakeVisible(houseLayerRackDisplay);
+    expandedHouseLayerRackDisplay.setComponentID("ExpandedHouseLayerRackDisplay");
+    expandedHouseLayerRackDisplay.onLayerSelected = houseLayerRackDisplay.onLayerSelected;
+    addAndMakeVisible(expandedHouseLayerRackDisplay);
     addAndMakeVisible(filterResponseDisplay);
 
     fxRackStatusLabel.setJustificationType(juce::Justification::centredLeft);
@@ -1602,6 +1922,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerGrooveTransformBox.addItem("Tech House Tight", 9);
     sequencerGrooveTransformBox.addItem("Minimal Skip", 10);
     sequencerGrooveTransformBox.addItem("Techno Drive", 11);
+    sequencerGrooveTransformBox.addItem("Bass Contour", 12);
+    sequencerGrooveTransformBox.addSectionHeading("Paint Tools");
+    sequencerGrooveTransformBox.addItem("Chord Stab Paint", 14);
+    sequencerGrooveTransformBox.addSectionHeading("Chain Tools");
+    sequencerGrooveTransformBox.addItem("Build 4-Bar Chain", 13);
     sequencerGrooveTransformBox.setSelectedId(1, juce::dontSendNotification);
     sequencerGrooveTransformBox.setTooltip("Choose a timing transform or genre groove template for the current sequence");
     addAndMakeVisible(sequencerGrooveTransformBox);
@@ -2078,7 +2403,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     for (size_t index = 0; index < modAmountSliders.size(); ++index)
     {
-        configureHorizontalSlider(modAmountSliders[index],
+        configureModAmountSlider(modAmountSliders[index],
                                   modAmountLabels[index],
                                   "Amt " + juce::String(static_cast<int>(index + 1)),
                                   Parameters::ID::modMatrixAmount[index]);
@@ -2234,7 +2559,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleWaveformDisplay();
         updateWavetableDisplay();
         updateRandomCandidateButtons();
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     redoRandomButton.setTooltip("Redo the last undone randomization action");
     redoRandomButton.onClick = [this]
@@ -2246,7 +2571,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleWaveformDisplay();
         updateWavetableDisplay();
         updateRandomCandidateButtons();
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     recallSnapshotAButton.setTooltip("Recall performance snapshot A");
     recallSnapshotAButton.onClick = [this]
@@ -2259,7 +2584,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         {
             updateSampleNameLabel();
             updateSampleWaveformDisplay();
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             updatePerformanceSnapshotButtons();
         }
     };
@@ -2283,7 +2608,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         {
             updateSampleNameLabel();
             updateSampleWaveformDisplay();
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             updatePerformanceSnapshotButtons();
         }
     };
@@ -2322,7 +2647,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         captureGlobalEdit("UKG chop");
         if (audioProcessor.randomizeUkgVocalChop())
         {
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             updateSampleWaveformDisplay();
             setRandomStatus("UKG chop ready");
         }
@@ -2339,9 +2664,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         button.onClick = [this, index] { selectSampleSlice(index); };
         addAndMakeVisible(button);
     }
-    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, pan, chance, reverse, choke, and stutter settings into this slice");
+    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, pan, chance, reverse, choke, stutter, nudge, and fade settings into this slice");
     sampleSliceStoreButton.onClick = [this] { storeSelectedSampleSliceSettings(); };
-    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, pan, chance, reverse, choke, and stutter settings");
+    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, pan, chance, reverse, choke, stutter, nudge, and fade settings");
     sampleSliceRecallButton.onClick = [this] { recallSelectedSampleSliceSettings(); };
     sampleSliceDiceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
     sampleSliceDiceButton.onClick = [this] { randomizeSelectedSampleSliceSettings(); };
@@ -2353,13 +2678,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleSlicePanButton.onClick = [this] { cycleSelectedSampleSlicePan(); };
     sampleSliceGhostButton.setTooltip("Toggle ghost probability for this slice so Slice Keys can skip it sometimes");
     sampleSliceGhostButton.onClick = [this] { toggleSelectedSampleSliceGhost(); };
+    sampleSliceNudgeButton.setTooltip("Cycle this slice timing between centered, early, and late for tighter vocal-chop placement");
+    sampleSliceNudgeButton.onClick = [this] { cycleSelectedSampleSliceNudge(); };
+    sampleSliceFadeButton.setTooltip("Cycle this slice boundary fade between tight, soft, and smooth envelopes");
+    sampleSliceFadeButton.onClick = [this] { cycleSelectedSampleSliceFade(); };
     randomSequencerButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         if (audioProcessor.randomizeSequencerPattern())
         {
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             setRandomStatus("Sequence generated");
         }
         else
@@ -2374,7 +2703,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releasePresetAuditionNote();
         if (audioProcessor.mutateSequencerPattern())
         {
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             setRandomStatus("Sequence varied");
         }
         else
@@ -2389,7 +2718,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releasePresetAuditionNote();
         if (audioProcessor.undoSequencerEdit())
         {
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             updateSegmentedSelectors();
             setRandomStatus("Sequence undo");
         }
@@ -2403,28 +2732,28 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.clearSequencerPattern();
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     bassPatternButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.applySequencerPatternPreset(0);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     stabPatternButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.applySequencerPatternPreset(1);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     ukgPatternButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.applySequencerPatternPreset(2);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     applyPatternButton.onClick = [this]
     {
@@ -2432,14 +2761,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releasePresetAuditionNote();
         const auto selectedId = sequencerPatternBox.getSelectedId();
         audioProcessor.applySequencerPatternPreset(juce::jmax(1, selectedId) - 1);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     copySequencerButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.copySequencerFirstHalfToSecondHalf();
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
     };
     rotateSequencerLeftButton.setTooltip("Shift the whole sequencer pattern one step earlier");
     rotateSequencerLeftButton.onClick = [this]
@@ -2447,7 +2776,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.rotateSequencerPattern(-1);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
         setRandomStatus("Sequence rotated left");
     };
     rotateSequencerRightButton.setTooltip("Shift the whole sequencer pattern one step later");
@@ -2456,11 +2785,49 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.rotateSequencerPattern(1);
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
         setRandomStatus("Sequence rotated right");
     };
-    exportSequencerMidiButton.setTooltip("Export the current sequencer pattern as a MIDI clip");
+    exportSequencerMidiButton.setTooltip("Click to save the current sequencer pattern as MIDI, or drag into Ableton");
     exportSequencerMidiButton.onClick = [this] { exportSequencerMidiClip(); };
+    exportSequencerMidiButton.onExternalDrag = [this] (juce::Component& sourceComponent)
+    {
+        return beginSequencerMidiDrag(sourceComponent, false);
+    };
+    exportSequencerChainButton.setTooltip("Click to save captured A/B/Fill/Drop scenes as one chained MIDI clip, or drag into Ableton");
+    exportSequencerChainButton.onClick = [this] { exportSequencerSceneChainMidiClip(); };
+    exportSequencerChainButton.onExternalDrag = [this] (juce::Component& sourceComponent)
+    {
+        return beginSequencerMidiDrag(sourceComponent, true);
+    };
+    sequencerSceneChainLiveButton.setTooltip("Play captured A/B/Fill/Drop scene steps as a live 2/4-bar chain");
+    sequencerSceneChainLiveButton.setClickingTogglesState(true);
+    sequencerSceneChainLiveButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        const auto shouldEnable = sequencerSceneChainLiveButton.getToggleState();
+        audioProcessor.setSequencerSceneChainPlaybackEnabled(shouldEnable);
+        updateSequencerSceneButtons();
+        const auto chainLength = audioProcessor.getSequencerSceneChainPlaybackLength();
+        setRandomStatus(shouldEnable
+                            ? ("Live chain " + juce::String(juce::jmax(1, chainLength)) + " bar")
+                            : "Live chain off");
+    };
+    addAndMakeVisible(sequencerSceneChainLiveButton);
+    sequencerSceneChainLengthButton.setTooltip("Set scene-chain MIDI/live length: Auto, forced 2 bars, or forced 4 bars");
+    sequencerSceneChainLengthButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        const auto currentBars = audioProcessor.getSequencerSceneChainClipBars();
+        const auto nextBars = currentBars == 0 ? 2 : (currentBars == 2 ? 4 : 0);
+        audioProcessor.setSequencerSceneChainClipBars(nextBars);
+        updateSequencerSceneButtons();
+        const auto modeText = nextBars == 0 ? juce::String("Auto") : juce::String(nextBars) + " Bar";
+        setRandomStatus("Chain length " + modeText);
+    };
+    addAndMakeVisible(sequencerSceneChainLengthButton);
     applyGrooveTransformButton.setTooltip("Apply the selected groove transform to the current sequence");
     applyGrooveTransformButton.onClick = [this]
     {
@@ -2470,9 +2837,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         const auto transformIndex = juce::jmax(1, selectedId) - 1;
         if (audioProcessor.applySequencerGrooveTransform(transformIndex))
         {
-            sequencerGrid.repaint();
+            repaintSequencerGrids();
             updateSegmentedSelectors();
-            setRandomStatus(sequencerGrooveTransformBox.getText() + " shaped");
+            updateSequencerSceneButtons();
+            setRandomStatus(transformIndex == sequencerFourBarChainTransformIndex ? "4-bar chain ready" : sequencerGrooveTransformBox.getText() + " shaped");
         }
         else
         {
@@ -2495,7 +2863,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                 captureGlobalEdit("Recall pattern scene " + label);
             if (audioProcessor.recallSequencerPatternScene(static_cast<int>(index)))
             {
-                sequencerGrid.repaint();
+                repaintSequencerGrids();
                 updateSegmentedSelectors();
                 updateSequencerSceneButtons();
                 setRandomStatus("Scene " + label + " recalled");
@@ -2534,11 +2902,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     squareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 2); };
     triangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 3); };
     wavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 4); };
+    organWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 5); };
+    housePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 6); };
     osc2SineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 0); };
     osc2SawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 1); };
     osc2SquareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 2); };
     osc2TriangleWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 3); };
     osc2WavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 4); };
+    osc2OrganWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 5); };
+    osc2HousePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 6); };
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
@@ -2554,7 +2926,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     saveCandidateButton.onClick = [this] { saveActiveRandomCandidatePreset(); };
     loadPresetButton.onClick = [this] { loadSelectedPreset(); };
     auditionPresetButton.onClick = [this] { auditionSelectedPreset(); };
-    refreshPresetsButton.onClick = [this] { refreshPresetList(); };
+    warmPresetPreviewsButton.setTooltip("Render previews for the selected and visible preset rows without loading patches");
+    warmPresetPreviewsButton.onClick = [this] { warmVisiblePresetPreviews(); };
+    refreshPresetsButton.onClick = [this]
+    {
+        audioProcessor.invalidatePresetLibraryCache();
+        refreshPresetList();
+    };
     favoritePresetButton.onClick = [this] { toggleFavoritePreset(); };
     comparePresetButton.setTooltip("Load a preset to compare it against the sound that was active before loading");
     comparePresetButton.onClick = [this] { togglePresetCompare(); };
@@ -2799,6 +3177,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleSliceChokeButton);
     addAndMakeVisible(sampleSlicePanButton);
     addAndMakeVisible(sampleSliceGhostButton);
+    addAndMakeVisible(sampleSliceNudgeButton);
+    addAndMakeVisible(sampleSliceFadeButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(mutateSequencerButton);
     addAndMakeVisible(undoSequencerButton);
@@ -2811,6 +3191,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(rotateSequencerLeftButton);
     addAndMakeVisible(rotateSequencerRightButton);
     addAndMakeVisible(exportSequencerMidiButton);
+    addAndMakeVisible(exportSequencerChainButton);
     addAndMakeVisible(applyGrooveTransformButton);
     addAndMakeVisible(homeTabButton);
     addAndMakeVisible(synthTabButton);
@@ -2826,11 +3207,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(squareWaveButton);
     addAndMakeVisible(triangleWaveButton);
     addAndMakeVisible(wavetableWaveButton);
+    addAndMakeVisible(organWaveButton);
+    addAndMakeVisible(housePianoWaveButton);
     addAndMakeVisible(osc2SineWaveButton);
     addAndMakeVisible(osc2SawWaveButton);
     addAndMakeVisible(osc2SquareWaveButton);
     addAndMakeVisible(osc2TriangleWaveButton);
     addAndMakeVisible(osc2WavetableWaveButton);
+    addAndMakeVisible(osc2OrganWaveButton);
+    addAndMakeVisible(osc2HousePianoWaveButton);
     addAndMakeVisible(lowpassFilterButton);
     addAndMakeVisible(bandpassFilterButton);
     addAndMakeVisible(highpassFilterButton);
@@ -2842,6 +3227,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(savePresetButton);
     addAndMakeVisible(loadPresetButton);
     addAndMakeVisible(auditionPresetButton);
+    addAndMakeVisible(warmPresetPreviewsButton);
     addAndMakeVisible(refreshPresetsButton);
     addAndMakeVisible(favoritePresetButton);
     addAndMakeVisible(comparePresetButton);
@@ -2890,14 +3276,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxWidthSlotButton);
     addAndMakeVisible(fxGuardSlotButton);
 
-    sequencerGrid.setCallbacks(
-        [this] (int index) { return audioProcessor.getSequencerStep(index); },
-        [this] (int index, Sequencer::Step step) { audioProcessor.setSequencerStep(index, step); });
+    const auto sequencerStepGetter = [this] (int index) { return audioProcessor.getSequencerStep(index); };
+    const auto sequencerStepSetter = [this] (int index, Sequencer::Step step)
+    {
+        audioProcessor.setSequencerStep(index, step);
+        repaintSequencerGrids();
+    };
+    sequencerGrid.setCallbacks(sequencerStepGetter, sequencerStepSetter);
+    expandedSequencerGrid.setComponentID("ExpandedSequencerGrid");
+    expandedSequencerGrid.setCallbacks(sequencerStepGetter, sequencerStepSetter);
     addAndMakeVisible(sequencerGrid);
+    addAndMakeVisible(expandedSequencerGrid);
+    applyThemeColours();
     updateSampleNameLabel();
     updateSampleSliceButtons();
+    updateHouseLayerRackDisplay();
     refreshPresetList();
     setActivePanel(Panel::home);
+    returnKeyboardFocusToPiano();
     startTimerHz(12);
 }
 
@@ -2906,14 +3302,112 @@ NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
     restoreFxMomentarySnapshot(fxMomentarySnapshot);
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
+    pruneSequencerDragMidiFiles();
     stopTimer();
     presetBrowserList.setModel(nullptr);
     setLookAndFeel(nullptr);
 }
 
+const UI::Theme& NateVSTAudioProcessorEditor::uiTheme() const noexcept
+{
+    return lookAndFeel.theme();
+}
+
+void NateVSTAudioProcessorEditor::applyThemeColours()
+{
+    const auto& theme = uiTheme();
+
+    titleLabel.setColour(juce::Label::textColourId, theme.text);
+    keyboardRangeLabel.setColour(juce::Label::textColourId, theme.text);
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, theme.keyboardWhite);
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, theme.keyboardBlack);
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, theme.outline);
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, theme.accent.withAlpha(0.20f));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, theme.accent.withAlpha(0.67f));
+    pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, theme.keyboardText);
+
+    for (auto* label : {
+             &homeSectionLabel, &homeEngineLabel, &homeShapeLabel, &homeLabLabel, &homeLibraryLabel,
+             &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
+             &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel,
+             &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel, &sampleSectionLabel, &sampleSourceLabel,
+             &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel, &futureSectionLabel,
+             &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel,
+             &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel,
+             &infoDetailsLabel, &infoFocusLabel })
+    {
+        label->setColour(juce::Label::textColourId, theme.accent);
+    }
+
+    for (auto* label : {
+             &sampleNameLabel, &sampleSliceStatusLabel, &presetStatusLabel, &randomStatusLabel,
+             &modMatrixStatusLabel, &modInspectorStatusLabel, &modMacroAssignStatusLabel,
+             &performanceStatusLabel, &selectedControlStatusLabel, &fxRackStatusLabel })
+    {
+        label->setColour(juce::Label::textColourId, theme.textMuted);
+    }
+
+    for (auto* label : {
+             &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
+             &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB,
+             &modInspectorLabel, &modMacroAssignLabel })
+    {
+        label->setColour(juce::Label::textColourId, theme.textDim);
+    }
+
+    selectedControlHeaderLabel.setColour(juce::Label::textColourId, theme.accent);
+    selectedControlHeaderLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.28f));
+    selectedControlHeaderLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId, theme.panelAlt.withAlpha(0.93f));
+    selectedControlStatusLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
+    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
+    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    presetBrowserHeaderLabel.setColour(juce::Label::textColourId, theme.accent);
+    presetBrowserHeaderLabel.setColour(juce::Label::backgroundColourId, theme.panelAlt);
+    focusOverlayTitleLabel.setColour(juce::Label::textColourId, theme.text);
+    randomRecipeInfoLabel.setColour(juce::Label::textColourId, theme.accentBright);
+    randomRecipeInfoLabel.setColour(juce::Label::backgroundColourId, theme.panelAlt.withAlpha(0.93f));
+    randomRecipeInfoLabel.setColour(juce::Label::outlineColourId, theme.outline);
+
+    presetBrowserList.setColour(juce::ListBox::backgroundColourId, theme.panelAlt);
+    presetBrowserList.setColour(juce::ListBox::outlineColourId, theme.outlineStrong);
+    presetBrowserList.setColour(juce::ListBox::textColourId, theme.text);
+
+    houseLayerRackDisplay.setTheme(theme);
+    expandedHouseLayerRackDisplay.setTheme(theme);
+
+    modMacroAssignAmountSlider.setColour(juce::Slider::trackColourId, theme.accent);
+    modMacroAssignAmountSlider.setColour(juce::Slider::backgroundColourId, theme.outline);
+    modMacroAssignAmountSlider.setColour(juce::Slider::textBoxTextColourId, theme.text);
+    modMacroAssignAmountSlider.setColour(juce::Slider::textBoxBackgroundColourId, theme.field);
+
+    auto applyTextEditorTheme = [&theme] (juce::TextEditor& editor)
+    {
+        editor.setColour(juce::TextEditor::backgroundColourId, theme.field);
+        editor.setColour(juce::TextEditor::outlineColourId, theme.outlineStrong);
+        editor.setColour(juce::TextEditor::focusedOutlineColourId, theme.fieldFocus);
+        editor.setColour(juce::TextEditor::textColourId, theme.text);
+        editor.setColour(juce::TextEditor::highlightColourId, theme.accent.withAlpha(0.34f));
+    };
+
+    for (auto* editor : {
+             &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor,
+             &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor })
+    {
+        applyTextEditorTheme(*editor);
+    }
+
+    for (auto& label : modSlotRows)
+        label.setColour(juce::Label::textColourId, theme.accent);
+
+    repaint();
+}
+
 void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(backgroundColour());
+    const auto& theme = uiTheme();
+    g.fillAll(backgroundColour(theme));
 
     auto bounds = getLocalBounds().reduced(16);
     const auto topArea = bounds.removeFromTop(48);
@@ -2921,12 +3415,12 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     bounds.removeFromBottom(10);
     const auto contentArea = bounds.reduced(0, 8);
 
-    g.setColour(panelColour());
+    g.setColour(panelColour(theme));
     g.fillRoundedRectangle(topArea.toFloat(), 7.0f);
     g.fillRoundedRectangle(contentArea.toFloat(), 7.0f);
     g.fillRoundedRectangle(keyboardArea.toFloat(), 7.0f);
 
-    g.setColour(juce::Colour(0xff293339));
+    g.setColour(theme.outline);
     g.drawRoundedRectangle(topArea.toFloat(), 7.0f, 1.0f);
     g.drawRoundedRectangle(contentArea.toFloat(), 7.0f, 1.0f);
     g.drawRoundedRectangle(keyboardArea.toFloat(), 7.0f, 1.0f);
@@ -2948,9 +3442,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { engineArea, overviewArea, shapeArea, labArea, libraryArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -2972,9 +3466,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { sourceArea, voiceArea, filterArea, ampArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -2994,9 +3488,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { sourceArea, macroArea, lfoArea, envelopeArea, matrixArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -3011,9 +3505,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { sourceArea, chopArea, shapeArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -3026,9 +3520,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { controlArea, gridArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -3045,13 +3539,13 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { commandArea, performArea, rackArea, detailArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
 
-        g.setColour(juce::Colour(0xff879299));
+        g.setColour(theme.textDim);
         g.setFont(12.0f);
         g.drawText("RACK", rackArea.removeFromTop(24).reduced(12, 0), juce::Justification::centredLeft);
         g.drawText(fxModuleName(selectedFxModule).toUpperCase(), detailArea.removeFromTop(24).reduced(14, 0), juce::Justification::centredLeft);
@@ -3068,37 +3562,37 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { leftArea, browserArea, inspectorArea })
         {
-            g.setColour(juce::Colour(0xff0f1619));
+            g.setColour(theme.panelAlt.darker(0.08f));
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
 
         const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
         auto saveArea = inspectorArea.reduced(10).removeFromTop(savePanelHeight);
         auto inspectArea = inspectorArea.reduced(10).withTrimmedTop(savePanelHeight + 12);
-        auto drawInset = [&g] (juce::Rectangle<int> area, juce::Colour accent)
+        auto drawInset = [&g, &theme] (juce::Rectangle<int> area, juce::Colour accent)
         {
             auto inset = area.toFloat();
-            g.setColour(juce::Colour(0xff0b1114));
+            g.setColour(theme.background.brighter(0.03f));
             g.fillRoundedRectangle(inset, 5.0f);
-            g.setColour(juce::Colour(0xff26343a));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(inset, 5.0f, 1.0f);
             g.setColour(accent.withAlpha(0.56f));
             g.fillRoundedRectangle(inset.removeFromTop(3.0f), 2.0f);
         };
 
-        drawInset(saveArea, juce::Colour(0xff8ee6c9));
-        drawInset(inspectArea, juce::Colour(0xffffc36b));
+        drawInset(saveArea, theme.accent);
+        drawInset(inspectArea, theme.warning);
 
         const auto browserHeaderHeight = browserArea.getWidth() < 520 ? 166 : 130;
         auto browserHeader = browserArea.removeFromTop(browserHeaderHeight).reduced(10, 8);
-        g.setColour(juce::Colour(0xff121c20));
+        g.setColour(theme.panelRaised);
         g.fillRoundedRectangle(browserHeader.toFloat(), 5.0f);
-        g.setColour(juce::Colour(0xff324148));
+        g.setColour(theme.outlineStrong);
         g.drawRoundedRectangle(browserHeader.toFloat(), 5.0f, 1.0f);
         g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-        g.setColour(juce::Colour(0xff74868b));
+        g.setColour(theme.textDim);
         g.drawFittedText("SELECT, AUDITION, LOAD, COMPARE, AND RATE PRODUCTION PATCHES",
                          browserHeader.reduced(10, 6),
                          juce::Justification::centredLeft,
@@ -3119,9 +3613,9 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
 
         for (auto area : { aboutArea, workflowArea, detailArea, focusArea })
         {
-            g.setColour(juce::Colour(0xff101619));
+            g.setColour(theme.panelAlt);
             g.fillRoundedRectangle(area.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff2b363c));
+            g.setColour(theme.outline);
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
     }
@@ -3157,7 +3651,11 @@ void NateVSTAudioProcessorEditor::resized()
     keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(52).reduced(2, 3));
     keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(42).reduced(2, 3));
     keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(62).reduced(2, 3));
-    pianoKeyboard.setBounds(keyboardArea.reduced(8, 6));
+    auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
+    pianoKeyboard.setBounds(pianoKeyboardBounds);
+    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboardBounds,
+                                                                  pianoKeyboard.getLowestVisibleKey()));
+    updateKeyboardRangeLabel();
     bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
     hidePanelComponents();
@@ -3214,6 +3712,8 @@ void NateVSTAudioProcessorEditor::resized()
             stereoFieldDisplay.setVisible(true);
             clubMonitorDisplay.setVisible(true);
             lowEndAssistant.setVisible(true);
+            macroPerformanceMap.setVisible(true);
+            homeMacroExpandButton.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
             recallSnapshotAButton.setVisible(true);
@@ -3249,26 +3749,13 @@ void NateVSTAudioProcessorEditor::resized()
             stereoFieldDisplay.setBounds(analysisRow.removeFromRight(stereoWidth).reduced(4, 0));
             outputSpectrumDisplay.setBounds(analysisRow.reduced(4, 0));
 
-            homeShapeLabel.setBounds(macroArea.removeFromTop(24));
-            setSliderVisible(macroToneSlider, macroToneLabel, true);
-            setSliderVisible(macroDirtSlider, macroDirtLabel, true);
-            setSliderVisible(macroWeightSlider, macroWeightLabel, true);
-            setSliderVisible(macroBounceSlider, macroBounceLabel, true);
-            setSliderVisible(macroWarpSlider, macroWarpLabel, true);
-            setSliderVisible(macroThrowSlider, macroThrowLabel, true);
+            auto homeMacroHeader = macroArea.removeFromTop(24);
+            homeMacroExpandButton.setBounds(homeMacroHeader.removeFromRight(28).reduced(3, 2));
+            homeShapeLabel.setBounds(homeMacroHeader);
             auto macroControlArea = macroArea.removeFromTop(132).withTrimmedTop(4);
-            const auto xyWidth = juce::jlimit(104, 128, macroControlArea.getWidth() / 2);
+            const auto xyWidth = juce::jlimit(106, 128, macroControlArea.getWidth() / 3);
             performanceXYPad.setBounds(macroControlArea.removeFromRight(xyWidth).reduced(4, 0));
-            layoutKnobRow(macroControlArea.removeFromTop(60), {
-                &macroToneSlider,
-                &macroDirtSlider,
-                &macroWeightSlider
-            });
-            layoutKnobRow(macroControlArea.withTrimmedTop(4), {
-                &macroBounceSlider,
-                &macroWarpSlider,
-                &macroThrowSlider
-            });
+            macroPerformanceMap.setBounds(macroControlArea.reduced(4, 0));
             auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
             performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(juce::jlimit(76, 112, snapshotRow.getWidth() / 3)).reduced(4, 4));
             const auto snapshotButtonWidth = juce::jmax(1, snapshotRow.getWidth() / 4);
@@ -3320,11 +3807,15 @@ void NateVSTAudioProcessorEditor::resized()
             squareWaveButton.setVisible(true);
             triangleWaveButton.setVisible(true);
             wavetableWaveButton.setVisible(true);
+            organWaveButton.setVisible(true);
+            housePianoWaveButton.setVisible(true);
             osc2SineWaveButton.setVisible(true);
             osc2SawWaveButton.setVisible(true);
             osc2SquareWaveButton.setVisible(true);
             osc2TriangleWaveButton.setVisible(true);
             osc2WavetableWaveButton.setVisible(true);
+            osc2OrganWaveButton.setVisible(true);
+            osc2HousePianoWaveButton.setVisible(true);
             lowpassFilterButton.setVisible(true);
             bandpassFilterButton.setVisible(true);
             highpassFilterButton.setVisible(true);
@@ -3332,15 +3823,19 @@ void NateVSTAudioProcessorEditor::resized()
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
+            houseLayerRackDisplay.setVisible(true);
+            sourceLayerExpandButton.setVisible(true);
             synthSectionLabel.setBounds(content.removeFromTop(28));
             auto selectorRow = content.removeFromTop(44);
-            auto waveRow = selectorRow.removeFromLeft(320);
-            const auto waveButtonWidth = waveRow.getWidth() / 5;
+            auto waveRow = selectorRow.removeFromLeft(364);
+            const auto waveButtonWidth = waveRow.getWidth() / 7;
             sineWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             sawWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             squareWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
             triangleWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
-            wavetableWaveButton.setBounds(waveRow.reduced(3, 4));
+            wavetableWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
+            organWaveButton.setBounds(waveRow.removeFromLeft(waveButtonWidth).reduced(3, 4));
+            housePianoWaveButton.setBounds(waveRow.reduced(3, 4));
             auto filterRow = selectorRow.removeFromLeft(180);
             const auto filterButtonWidth = filterRow.getWidth() / 3;
             lowpassFilterButton.setBounds(filterRow.removeFromLeft(filterButtonWidth).reduced(3, 4));
@@ -3350,12 +3845,14 @@ void NateVSTAudioProcessorEditor::resized()
             filterSlopeBox.setBounds(selectorRow.removeFromLeft(82).reduced(4));
             monoButton.setBounds(selectorRow.removeFromLeft(90).reduced(4));
             auto osc2Row = content.removeFromTop(44).withTrimmedTop(2);
-            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 5;
+            const auto osc2WaveButtonWidth = osc2Row.getWidth() / 7;
             osc2SineWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2SawWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2SquareWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
             osc2TriangleWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
-            osc2WavetableWaveButton.setBounds(osc2Row.reduced(3, 4));
+            osc2WavetableWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2OrganWaveButton.setBounds(osc2Row.removeFromLeft(osc2WaveButtonWidth).reduced(3, 4));
+            osc2HousePianoWaveButton.setBounds(osc2Row.reduced(3, 4));
             content.removeFromTop(8);
             setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
@@ -3393,16 +3890,20 @@ void NateVSTAudioProcessorEditor::resized()
             auto filterArea = bottomCards.removeFromLeft(330).reduced(18, 10);
             auto ampArea = bottomCards.reduced(18, 10);
 
-            synthSourceLabel.setBounds(sourceArea.removeFromTop(22));
-            wavetableDisplay.setVisible(true);
-            wavetableDisplay.setBounds(sourceArea.removeFromTop(48).reduced(2, 4));
-            layoutKnobRow(sourceArea.removeFromTop(68).withTrimmedTop(3), {
+            auto sourceHeader = sourceArea.removeFromTop(22);
+            sourceLayerExpandButton.setBounds(sourceHeader.removeFromRight(28).reduced(3, 1));
+            synthSourceLabel.setBounds(sourceHeader);
+            const auto compactSourceCard = sourceArea.getHeight() < 184;
+            const auto rackHeight = compactSourceCard ? 46 : 54;
+            const auto levelRowHeight = compactSourceCard ? 58 : 64;
+            houseLayerRackDisplay.setBounds(sourceArea.removeFromTop(rackHeight).reduced(2, 4));
+            layoutKnobRow(sourceArea.removeFromTop(levelRowHeight).withTrimmedTop(3), {
                 &osc1LevelSlider,
                 &osc2LevelSlider,
                 &subLevelSlider,
                 &noiseLevelSlider
             });
-            auto sourceTextureRow = sourceArea.removeFromTop(54).withTrimmedTop(2);
+            auto sourceTextureRow = sourceArea.withTrimmedTop(2);
             noiseTypeBox.setBounds(sourceTextureRow.removeFromLeft(90).reduced(4, 8));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
@@ -3737,18 +4238,15 @@ void NateVSTAudioProcessorEditor::resized()
             modInspectorClearButton.setVisible(true);
             modMacroAssignLabel.setVisible(true);
             modMacroAssignStatusLabel.setVisible(true);
-            modMacroAssignSourceBox.setVisible(true);
-            modMacroAssignDestinationBox.setVisible(true);
-            modMacroAssignAmountSlider.setVisible(true);
-            modMacroAssignAddButton.setVisible(true);
-            modMacroAssignReplaceButton.setVisible(true);
-            modMacroAssignClearButton.setVisible(true);
             modMatrixSourceHeader.setVisible(true);
             modMatrixDestinationHeader.setVisible(true);
             modMatrixAmountHeader.setVisible(true);
             modMatrixSourceHeaderB.setVisible(true);
             modMatrixDestinationHeaderB.setVisible(true);
             modMatrixAmountHeaderB.setVisible(true);
+            macroAssignmentPad.setVisible(true);
+            macroPerformanceMap.setVisible(true);
+            modMacroExpandButton.setVisible(true);
             modRouteMapDisplay.setVisible(true);
 
             auto modContent = content.withTrimmedTop(8);
@@ -3772,25 +4270,13 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto macroHeader = macroArea.removeFromTop(18);
             modMacroLabel.setBounds(macroHeader.removeFromLeft(74));
+            modMacroAssignLabel.setBounds(macroHeader.removeFromLeft(62));
+            modMacroExpandButton.setBounds(macroHeader.removeFromRight(26).reduced(3, 1));
             modMacroAssignStatusLabel.setBounds(macroHeader.reduced(3, 0));
-            setSliderVisible(macroToneSlider, macroToneLabel, true);
-            setSliderVisible(macroDirtSlider, macroDirtLabel, true);
-            setSliderVisible(macroMotionSlider, macroMotionLabel, true);
-            setSliderVisible(macroSpaceSlider, macroSpaceLabel, true);
-            setSliderVisible(macroWeightSlider, macroWeightLabel, true);
-            setSliderVisible(macroBounceSlider, macroBounceLabel, true);
-            setSliderVisible(macroWarpSlider, macroWarpLabel, true);
-            setSliderVisible(macroThrowSlider, macroThrowLabel, true);
-            layoutKnobRow(macroArea.removeFromTop(42).withTrimmedTop(1), { &macroToneSlider, &macroDirtSlider, &macroMotionSlider, &macroSpaceSlider });
-            layoutKnobRow(macroArea.removeFromTop(42).withTrimmedTop(1), { &macroWeightSlider, &macroBounceSlider, &macroWarpSlider, &macroThrowSlider });
-            auto macroAssignRow = macroArea.removeFromTop(30).withTrimmedTop(4);
-            modMacroAssignLabel.setBounds(macroAssignRow.removeFromLeft(48).withTrimmedTop(5));
-            modMacroAssignSourceBox.setBounds(macroAssignRow.removeFromLeft(88).reduced(3, 3));
-            modMacroAssignDestinationBox.setBounds(macroAssignRow.removeFromLeft(124).reduced(3, 3));
-            modMacroAssignAmountSlider.setBounds(macroAssignRow.removeFromLeft(114).reduced(3, 4));
-            modMacroAssignAddButton.setBounds(macroAssignRow.removeFromLeft(48).reduced(3, 3));
-            modMacroAssignReplaceButton.setBounds(macroAssignRow.removeFromLeft(66).reduced(3, 3));
-            modMacroAssignClearButton.setBounds(macroAssignRow.removeFromLeft(52).reduced(3, 3));
+            auto macroVisualArea = macroArea.withTrimmedTop(4);
+            const auto macroShapeWidth = juce::jlimit(164, 196, macroVisualArea.getWidth() / 3);
+            macroPerformanceMap.setBounds(macroVisualArea.removeFromLeft(macroShapeWidth).reduced(3, 0));
+            macroAssignmentPad.setBounds(macroVisualArea.reduced(3, 0));
 
             modContent.removeFromTop(modPanelGap);
             auto generatorRow = modContent.removeFromTop(modGeneratorRowHeight);
@@ -3851,13 +4337,23 @@ void NateVSTAudioProcessorEditor::resized()
 
             modContent.removeFromTop(modPanelGap);
             auto matrixArea = modContent.reduced(18, 0);
-            const auto canShowRouteMap = matrixArea.getHeight() >= 190;
-            auto matrixTitleRow = matrixArea.removeFromTop(28);
+            constexpr auto matrixTitleHeight = 28;
+            constexpr auto matrixInspectorHeight = 30;
+            constexpr auto routeMapHeight = 46;
+            constexpr auto matrixHeaderHeight = 18;
+            constexpr auto minimumMatrixRowHeight = 24;
+            constexpr auto matrixRowsPerBank = 4;
+            const auto canShowRouteMap = matrixArea.getHeight() >= matrixTitleHeight
+                                                                + matrixInspectorHeight
+                                                                + routeMapHeight
+                                                                + matrixHeaderHeight
+                                                                + (minimumMatrixRowHeight * matrixRowsPerBank);
+            auto matrixTitleRow = matrixArea.removeFromTop(matrixTitleHeight);
             modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(5));
             modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(150).reduced(3, 5));
             modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 5));
 
-            auto inspectorRow = matrixArea.removeFromTop(30);
+            auto inspectorRow = matrixArea.removeFromTop(matrixInspectorHeight);
             modInspectorLabel.setBounds(inspectorRow.removeFromLeft(62).withTrimmedTop(6));
             modInspectorDestinationBox.setBounds(inspectorRow.removeFromLeft(150).reduced(3, 4));
             modInspectorSourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
@@ -3866,7 +4362,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             if (canShowRouteMap)
             {
-                auto routeMapRow = matrixArea.removeFromTop(46).withTrimmedTop(4);
+                auto routeMapRow = matrixArea.removeFromTop(routeMapHeight).withTrimmedTop(4);
                 modRouteMapDisplay.setVisible(true);
                 modRouteMapDisplay.setBounds(routeMapRow.reduced(3, 2));
             }
@@ -3875,7 +4371,7 @@ void NateVSTAudioProcessorEditor::resized()
                 modRouteMapDisplay.setVisible(false);
             }
 
-            auto matrixHeaderRow = matrixArea.removeFromTop(18).reduced(3, 1);
+            auto matrixHeaderRow = matrixArea.removeFromTop(matrixHeaderHeight).reduced(3, 1);
             auto leftHeader = matrixHeaderRow.removeFromLeft((matrixHeaderRow.getWidth() - 10) / 2);
             matrixHeaderRow.removeFromLeft(10);
             auto rightHeader = matrixHeaderRow;
@@ -3938,6 +4434,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceStyleBox.setVisible(true);
             sampleStutterEnabledButton.setVisible(true);
             sampleStutterRateBox.setVisible(true);
+            sampleChopExpandButton.setVisible(true);
             sampleWaveformDisplay.setVisible(true);
             for (auto& button : sampleSliceButtons)
                 button.setVisible(true);
@@ -3949,6 +4446,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceChokeButton.setVisible(true);
             sampleSlicePanButton.setVisible(true);
             sampleSliceGhostButton.setVisible(true);
+            sampleSliceNudgeButton.setVisible(true);
+            sampleSliceFadeButton.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             sampleSourceLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
@@ -3965,21 +4464,31 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceStyleBox.setBounds(stutterRow.removeFromLeft(142).reduced(4));
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(96).reduced(4));
             sampleStutterRateBox.setBounds(stutterRow.removeFromLeft(108).reduced(4));
-            sampleChopLabel.setBounds(content.removeFromTop(16).withTrimmedLeft(4));
+            auto chopHeader = content.removeFromTop(18);
+            sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 0));
+            sampleChopLabel.setBounds(chopHeader.withTrimmedLeft(4));
             sampleWaveformDisplay.setBounds(content.removeFromTop(100).reduced(4, 6));
             auto sliceRow = content.removeFromTop(34).withTrimmedTop(2);
             const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
             for (auto& button : sampleSliceButtons)
                 button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
             auto sliceEditRow = content.removeFromTop(36).withTrimmedTop(2);
-            sampleSliceStatusLabel.setBounds(sliceEditRow.removeFromLeft(318).reduced(8, 4));
-            sampleSliceStoreButton.setBounds(sliceEditRow.removeFromLeft(72).reduced(4));
-            sampleSliceRecallButton.setBounds(sliceEditRow.removeFromLeft(78).reduced(4));
-            sampleSliceDiceButton.setBounds(sliceEditRow.removeFromLeft(64).reduced(4));
-            sampleSliceReverseEditButton.setBounds(sliceEditRow.removeFromLeft(58).reduced(4));
-            sampleSliceChokeButton.setBounds(sliceEditRow.removeFromLeft(70).reduced(4));
-            sampleSlicePanButton.setBounds(sliceEditRow.removeFromLeft(58).reduced(4));
-            sampleSliceGhostButton.setBounds(sliceEditRow.removeFromLeft(72).reduced(4));
+            const auto statusWidth = juce::jlimit(238, 310, sliceEditRow.getWidth() / 3);
+            sampleSliceStatusLabel.setBounds(sliceEditRow.removeFromLeft(statusWidth).reduced(8, 4));
+            const std::array<juce::TextButton*, 9> sampleActionButtons {
+                &sampleSliceStoreButton,
+                &sampleSliceRecallButton,
+                &sampleSliceDiceButton,
+                &sampleSliceReverseEditButton,
+                &sampleSliceChokeButton,
+                &sampleSlicePanButton,
+                &sampleSliceGhostButton,
+                &sampleSliceNudgeButton,
+                &sampleSliceFadeButton
+            };
+            const auto actionWidth = juce::jmax(44, sliceEditRow.getWidth() / static_cast<int>(sampleActionButtons.size()));
+            for (auto* button : sampleActionButtons)
+                button->setBounds(sliceEditRow.removeFromLeft(actionWidth).reduced(3));
             auto cutRow = content.removeFromTop(42).withTrimmedTop(4);
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -4017,6 +4526,8 @@ void NateVSTAudioProcessorEditor::resized()
             rotateSequencerLeftButton.setVisible(true);
             rotateSequencerRightButton.setVisible(true);
             exportSequencerMidiButton.setVisible(true);
+            exportSequencerChainButton.setVisible(true);
+            sequencerSceneChainLiveButton.setVisible(true);
             applyGrooveTransformButton.setVisible(true);
             randomSequencerButton.setVisible(true);
             mutateSequencerButton.setVisible(true);
@@ -4027,7 +4538,10 @@ void NateVSTAudioProcessorEditor::resized()
             for (auto& button : sequencerSceneCaptureButtons)
                 button.setVisible(true);
             sequencerGrid.setVisible(true);
-            sequencerSectionLabel.setBounds(content.removeFromTop(28));
+            sequencerExpandButton.setVisible(true);
+            auto sequencerHeader = content.removeFromTop(28);
+            sequencerExpandButton.setBounds(sequencerHeader.removeFromRight(30).reduced(3, 1));
+            sequencerSectionLabel.setBounds(sequencerHeader);
             auto timingRow = content.removeFromTop(44);
             sequencerEnabledButton.setBounds(timingRow.removeFromLeft(62).reduced(4));
             auto rateRow = timingRow.removeFromLeft(150);
@@ -4059,9 +4573,11 @@ void NateVSTAudioProcessorEditor::resized()
             rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             rotateSequencerRightButton.setBounds(utilityRow.removeFromLeft(58).reduced(4));
             exportSequencerMidiButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
-            sequencerLockDestinationBox.setBounds(utilityRow.removeFromLeft(132).reduced(4));
-            sequencerGrooveTransformBox.setBounds(utilityRow.removeFromLeft(184).reduced(4));
-            applyGrooveTransformButton.setBounds(utilityRow.removeFromLeft(76).reduced(4));
+            exportSequencerChainButton.setBounds(utilityRow.removeFromLeft(72).reduced(4));
+            sequencerSceneChainLiveButton.setBounds(utilityRow.removeFromLeft(64).reduced(4));
+            sequencerLockDestinationBox.setBounds(utilityRow.removeFromLeft(124).reduced(4));
+            sequencerGrooveTransformBox.setBounds(utilityRow.removeFromLeft(174).reduced(4));
+            applyGrooveTransformButton.setBounds(utilityRow.removeFromLeft(70).reduced(4));
             setSliderVisible(sequencerRootSlider, sequencerRootLabel, true);
             setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
             setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
@@ -4071,7 +4587,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
             setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
             setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, true);
-            layoutKnobRow(content.removeFromTop(84).withTrimmedTop(6), {
+            layoutKnobRow(content.removeFromTop(68).withTrimmedTop(4), {
                 &sequencerRootSlider,
                 &sequencerGateSlider,
                 &sequencerSwingSlider,
@@ -4390,6 +4906,7 @@ void NateVSTAudioProcessorEditor::resized()
             nextPresetButton.setVisible(true);
             loadPresetButton.setVisible(true);
             auditionPresetButton.setVisible(true);
+            warmPresetPreviewsButton.setVisible(true);
             favoritePresetButton.setVisible(true);
             refreshPresetsButton.setVisible(true);
             comparePresetButton.setVisible(true);
@@ -4439,6 +4956,7 @@ void NateVSTAudioProcessorEditor::resized()
             auto primaryActions = browserArea.removeFromTop(38).withTrimmedTop(3);
             loadPresetButton.setBounds(primaryActions.removeFromLeft(76).reduced(2, 4));
             auditionPresetButton.setBounds(primaryActions.removeFromLeft(92).reduced(2, 4));
+            warmPresetPreviewsButton.setBounds(primaryActions.removeFromLeft(72).reduced(2, 4));
             favoritePresetButton.setBounds(primaryActions.removeFromLeft(70).reduced(2, 4));
             if (compactBrowser)
             {
@@ -4453,6 +4971,11 @@ void NateVSTAudioProcessorEditor::resized()
                 revertPresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
                 comparePresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
             }
+            const auto browserHeaderText = compactBrowser
+                ? juce::String("SOUND / META        PREVIEW        INFO")
+                : juce::String("SOUND        FOLDER / PACK        KEY / BPM / RATING        MACROS");
+            if (presetBrowserHeaderLabel.getText() != browserHeaderText)
+                presetBrowserHeaderLabel.setText(browserHeaderText, juce::dontSendNotification);
             presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(30).reduced(6, 5));
             presetBrowserList.setBounds(browserArea.reduced(2, 5));
 
@@ -4535,6 +5058,7 @@ void NateVSTAudioProcessorEditor::resized()
     redoEditButton.toFront(false);
     selectedControlAddModButton.toFront(false);
     selectedControlOpenModButton.toFront(false);
+    layoutFocusOverlay();
 }
 
 bool NateVSTAudioProcessorEditor::isInterestedInFileDrag(const juce::StringArray& files)
@@ -4617,14 +5141,18 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         std::pair<RandomLabPage, const char*> { RandomLabPage::save, "Save" }
     };
 
-    const std::array<LayoutSizeAuditSpec, 4> layoutSizes {
+    const std::array<LayoutSizeAuditSpec, 7> layoutSizes {
         LayoutSizeAuditSpec { "Min", editorMinWidth, editorMinHeight },
+        LayoutSizeAuditSpec { "MinTall", editorMinWidth, 900 },
         LayoutSizeAuditSpec { "Default", editorDefaultWidth, editorDefaultHeight },
+        LayoutSizeAuditSpec { "DefaultTall", editorDefaultWidth, 900 },
+        LayoutSizeAuditSpec { "WideMinHeight", 1180, editorMinHeight },
         LayoutSizeAuditSpec { "Wide", 1180, 820 },
         LayoutSizeAuditSpec { "Max", editorMaxWidth, editorMaxHeight }
     };
 
     const auto originalPanel = activePanel;
+    const auto originalFocusOverlay = activeFocusOverlay;
     const auto originalFxModule = selectedFxModule;
     const auto originalRandomLabPage = activeRandomLabPage;
     const auto originalWidth = getWidth();
@@ -4635,6 +5163,314 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     {
         resized();
         appendVisibleLayoutIssues(*this, *this, panelName, {}, issues);
+
+        if (panelName.contains("Focus"))
+        {
+            if (! focusOverlayPanel.isVisible())
+            {
+                issues.add(panelName + ": focus overlay panel is not visible");
+            }
+            else
+            {
+                const auto overlayOrigin = focusOverlayPanel.getBounds().getPosition();
+                const auto panelBounds = focusOverlayPanel.getPanelBounds().translated(overlayOrigin.x,
+                                                                                       overlayOrigin.y);
+
+                if (getHeight() >= 900 && panelBounds.getHeight() < 620)
+                {
+                    issues.add(panelName + ": focus overlay panel does not expand for tall editor sizes "
+                               + panelBounds.toString());
+                }
+
+                if (getWidth() >= 1180 && panelBounds.getWidth() < 980)
+                {
+                    issues.add(panelName + ": focus overlay panel does not use wide editor space "
+                               + panelBounds.toString());
+                }
+            }
+        }
+
+        if (panelName.contains("SAMPLE/Chop Focus"))
+        {
+            if (! expandedSampleWaveformDisplay.isVisible())
+            {
+                issues.add(panelName + ": expanded sample waveform is not visible");
+            }
+            else
+            {
+                const auto waveformBounds = getLocalArea(expandedSampleWaveformDisplay.getParentComponent(),
+                                                         expandedSampleWaveformDisplay.getBounds());
+                const auto minimumWaveformHeight = getHeight() >= 900 ? 480
+                                             : getHeight() >= editorDefaultHeight ? 330
+                                                                                  : 270;
+
+                if (waveformBounds.getHeight() < minimumWaveformHeight)
+                {
+                    issues.add(panelName + ": expanded sample waveform is too short for focused chop editing "
+                               + waveformBounds.toString());
+                }
+            }
+        }
+
+        if (panelName.contains("SYNTH"))
+        {
+            if (! houseLayerRackDisplay.isVisible())
+            {
+                issues.add(panelName + ": HouseLayerRackDisplay is not visible in the SYNTH source card");
+            }
+            else
+            {
+                const auto rackBounds = getLocalArea(houseLayerRackDisplay.getParentComponent(),
+                                                     houseLayerRackDisplay.getBounds());
+                if (rackBounds.getHeight() < 38 || rackBounds.getWidth() < 240)
+                {
+                    issues.add(panelName + ": HouseLayerRackDisplay is too small "
+                               + rackBounds.toString());
+                }
+
+                const auto rackMetrics = houseLayerRackDisplay.getLayoutMetricsForAudit();
+                if (! rackMetrics.readable)
+                {
+                    issues.add(panelName + ": HouseLayerRackDisplay cards are not readable min "
+                               + juce::String(rackMetrics.minCardWidth, 1) + "x"
+                               + juce::String(rackMetrics.minCardHeight, 1));
+                }
+
+                for (const auto* sourceControl : {
+                         static_cast<const juce::Component*>(&osc1LevelSlider),
+                         static_cast<const juce::Component*>(&osc2LevelSlider),
+                         static_cast<const juce::Component*>(&subLevelSlider),
+                         static_cast<const juce::Component*>(&noiseLevelSlider),
+                         static_cast<const juce::Component*>(&noiseDecaySlider),
+                         static_cast<const juce::Component*>(&oscWavetablePositionSlider),
+                         static_cast<const juce::Component*>(&osc2WavetablePositionSlider),
+                         static_cast<const juce::Component*>(&noiseTypeBox) })
+                {
+                    if (sourceControl == nullptr || ! sourceControl->isVisible())
+                        continue;
+
+                    const auto controlBounds = getLocalArea(sourceControl->getParentComponent(),
+                                                            sourceControl->getBounds());
+                    if (rackBounds.intersects(controlBounds))
+                    {
+                        issues.add(panelName + ": HouseLayerRackDisplay overlaps "
+                                   + layoutAuditComponentName(*sourceControl, 0)
+                                   + " at " + rackBounds.toString()
+                                   + " / " + controlBounds.toString());
+                    }
+                }
+            }
+
+            if (panelName.contains("Source Focus"))
+            {
+                if (! expandedHouseLayerRackDisplay.isVisible())
+                {
+                    issues.add(panelName + ": expanded source layer rack is not visible");
+                }
+                else
+                {
+                    const auto expandedMetrics = expandedHouseLayerRackDisplay.getLayoutMetricsForAudit();
+                    if (! expandedMetrics.readable || expandedMetrics.minCardWidth < 84.0f || expandedMetrics.minCardHeight < 130.0f)
+                    {
+                        issues.add(panelName + ": expanded source layer rack cards are too small "
+                                   + juce::String(expandedMetrics.minCardWidth, 1) + "x"
+                                   + juce::String(expandedMetrics.minCardHeight, 1));
+                    }
+                }
+            }
+        }
+
+        auto visibleModRows = 0;
+        auto minModRowHeight = std::numeric_limits<int>::max();
+        for (const auto& row : modMatrixRows)
+        {
+            if (! row.isVisible())
+                continue;
+
+            ++visibleModRows;
+            minModRowHeight = juce::jmin(minModRowHeight, row.getBounds().getHeight());
+        }
+
+        if (visibleModRows > 0)
+        {
+            if (minModRowHeight < 20)
+            {
+                issues.add(panelName + ": MOD matrix rows are too short at "
+                           + juce::String(minModRowHeight) + "px");
+            }
+
+            if (modRouteMapDisplay.isVisible() && minModRowHeight < 24)
+            {
+                issues.add(panelName + ": MOD route map is visible while matrix rows are only "
+                           + juce::String(minModRowHeight) + "px tall");
+            }
+        }
+
+        if (panelName.contains("MOD"))
+        {
+            for (const auto& sourceMeter : modSourceRows)
+            {
+                if (! sourceMeter.isVisible())
+                    continue;
+
+                const auto sourceBounds = getLocalArea(sourceMeter.getParentComponent(),
+                                                       sourceMeter.getBounds());
+                if (sourceBounds.getHeight() < 10)
+                {
+                    issues.add(panelName + ": MOD source meter is too short for compact rendering "
+                               + sourceBounds.toString());
+                }
+            }
+
+            for (const auto& amountSlider : modAmountSliders)
+            {
+                if (! amountSlider.isVisible())
+                    continue;
+
+                const auto sliderBounds = getLocalArea(amountSlider.getParentComponent(),
+                                                       amountSlider.getBounds());
+                const auto textBoxWidth = static_cast<int>(amountSlider.getProperties()
+                                                               .getWithDefault("compactTextBoxWidth", 62));
+                const auto trackWidth = sliderBounds.getWidth() - textBoxWidth;
+                if (trackWidth < 34)
+                {
+                    issues.add(panelName + ": MOD route amount slider track is too narrow "
+                               + juce::String(trackWidth)
+                               + "px in " + sliderBounds.toString());
+                }
+            }
+        }
+
+        const auto expectedKeyboardKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
+                                                                                 pianoKeyboard.getLowestVisibleKey());
+        if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyboardKeyWidth) > 0.25f)
+        {
+            issues.add(panelName + ": piano keyboard key width "
+                       + juce::String(pianoKeyboard.getKeyWidth(), 2)
+                       + " does not match responsive width "
+                       + juce::String(expectedKeyboardKeyWidth, 2)
+                       + " for bounds "
+                       + pianoKeyboard.getBounds().toString());
+        }
+
+        const auto keyboardPaintCoverage = static_cast<float>(whiteKeyCountInRange(pianoKeyboard.getLowestVisibleKey(),
+                                                                                  keyboardHighestNote))
+                                         * pianoKeyboard.getKeyWidth();
+        if (keyboardPaintCoverage < static_cast<float>(pianoKeyboard.getWidth()) - 1.0f)
+        {
+            issues.add(panelName + ": piano keyboard painted width "
+                       + juce::String(keyboardPaintCoverage, 2)
+                       + " leaves unused space inside bounds "
+                       + pianoKeyboard.getBounds().toString());
+        }
+
+        for (const auto* keyboardControl : {
+                 static_cast<const juce::Component*>(&keyboardOctaveDownButton),
+                 static_cast<const juce::Component*>(&keyboardRangeLabel),
+                 static_cast<const juce::Component*>(&keyboardOctaveUpButton),
+                 static_cast<const juce::Component*>(&keyboardPanicButton) })
+        {
+            if (keyboardControl == nullptr || ! keyboardControl->isVisible())
+                continue;
+
+            const auto controlBounds = getLocalArea(keyboardControl->getParentComponent(),
+                                                    keyboardControl->getBounds());
+            if (controlBounds.getWidth() < 34 || controlBounds.getHeight() < 20)
+            {
+                issues.add(panelName + ": keyboard control "
+                           + layoutAuditComponentName(*keyboardControl, 0)
+                           + " is too compressed "
+                           + controlBounds.toString());
+            }
+        }
+
+        if (panelName.contains("SEQ"))
+        {
+            const auto isSequencerFocus = panelName.contains("Pattern Focus");
+            const auto& gridForAudit = isSequencerFocus ? expandedSequencerGrid : sequencerGrid;
+            if (isSequencerFocus && ! expandedSequencerGrid.isVisible())
+                issues.add(panelName + ": expanded sequencer grid is not visible");
+
+            const auto metrics = gridForAudit.getLayoutMetricsForAudit();
+            const auto sequencerGridBounds = getLocalArea(gridForAudit.getParentComponent(),
+                                                          gridForAudit.getBounds());
+            const auto minimumGridWidth = isSequencerFocus ? 760 : 680;
+            const auto minimumGridHeight = isSequencerFocus ? 320 : 236;
+            const auto minimumStepCellWidth = isSequencerFocus ? 44.0f : 36.0f;
+            const auto minimumNoteRowHeight = isSequencerFocus ? 8.0f : 5.75f;
+            const auto minimumLaneRowHeight = isSequencerFocus ? 11.0f : 8.75f;
+            const auto minimumLabelWidth = isSequencerFocus ? 42 : 38;
+            const auto focusedGridHeightFloor = getHeight() >= 900 ? 520
+                                                : getHeight() >= editorDefaultHeight ? 400
+                                                                                    : minimumGridHeight;
+
+            if (sequencerGridBounds.getWidth() < minimumGridWidth || sequencerGridBounds.getHeight() < minimumGridHeight)
+            {
+                issues.add(panelName + ": sequencer grid bounds are too compressed for 16-step editing "
+                           + sequencerGridBounds.toString());
+            }
+
+            if (isSequencerFocus && sequencerGridBounds.getHeight() < focusedGridHeightFloor)
+            {
+                issues.add(panelName + ": expanded sequencer grid does not grow enough for focused pattern editing "
+                           + sequencerGridBounds.toString());
+            }
+
+            if (metrics.stepCellWidth < minimumStepCellWidth)
+            {
+                issues.add(panelName + ": sequencer step cells are too narrow "
+                           + juce::String(metrics.stepCellWidth, 2)
+                           + "px in " + sequencerGridBounds.toString());
+            }
+
+            if (metrics.noteRowHeight < minimumNoteRowHeight)
+            {
+                issues.add(panelName + ": sequencer note rows are too short "
+                           + juce::String(metrics.noteRowHeight, 2)
+                           + "px in " + sequencerGridBounds.toString());
+            }
+
+            if (metrics.laneRowHeight < minimumLaneRowHeight)
+            {
+                issues.add(panelName + ": sequencer modulation lane rows are too short "
+                           + juce::String(metrics.laneRowHeight, 2)
+                           + "px in " + sequencerGridBounds.toString());
+            }
+
+            if (metrics.noteLabels.getWidth() < minimumLabelWidth || metrics.laneLabels.getWidth() < minimumLabelWidth)
+            {
+                issues.add(panelName + ": sequencer label columns are too narrow note "
+                           + metrics.noteLabels.toString()
+                           + " lane " + metrics.laneLabels.toString());
+            }
+        }
+
+        if (panelName.contains("LIBRARY") && presetBrowserList.isVisible())
+        {
+            const auto browserBounds = getLocalArea(presetBrowserList.getParentComponent(),
+                                                    presetBrowserList.getBounds());
+            const auto rowLayout = presetBrowserRowLayoutForWidth(browserBounds.getWidth(),
+                                                                  presetBrowserList.getRowHeight());
+            if (rowLayout.compact)
+            {
+                if (rowLayout.showsMacroStrip)
+                {
+                    issues.add(panelName + ": compact preset browser row still reserves macro-strip space");
+                }
+
+                if (rowLayout.nameWidth < 136)
+                {
+                    issues.add(panelName + ": compact preset browser name/meta column is too narrow "
+                               + juce::String(rowLayout.nameWidth)
+                               + "px in " + browserBounds.toString());
+                }
+
+                if (presetBrowserHeaderLabel.getText().contains("MACROS"))
+                {
+                    issues.add(panelName + ": compact preset browser header still advertises the dense macro column");
+                }
+            }
+        }
     };
 
     for (const auto& layoutSize : layoutSizes)
@@ -4650,6 +5486,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         for (const auto& panel : panels)
         {
             activePanel = panel.panel;
+            activeFocusOverlay = FocusOverlay::none;
             updatePanelVisibility();
 
             if (panel.panel == Panel::effects)
@@ -4673,10 +5510,34 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 auditCurrentLayout(layoutPrefix + panel.name);
             }
         }
+
+        for (const auto panel : { Panel::home, Panel::mod })
+        {
+            activePanel = panel;
+            activeFocusOverlay = FocusOverlay::macroEditor;
+            updatePanelVisibility();
+            auditCurrentLayout(layoutPrefix + (panel == Panel::home ? "HOME/Macro Focus" : "MOD/Macro Focus"));
+        }
+
+        activePanel = Panel::sample;
+        activeFocusOverlay = FocusOverlay::sampleChopEditor;
+        updatePanelVisibility();
+        auditCurrentLayout(layoutPrefix + "SAMPLE/Chop Focus");
+
+        activePanel = Panel::synth;
+        activeFocusOverlay = FocusOverlay::sourceLayerEditor;
+        updatePanelVisibility();
+        auditCurrentLayout(layoutPrefix + "SYNTH/Source Focus");
+
+        activePanel = Panel::sequencer;
+        activeFocusOverlay = FocusOverlay::sequencerEditor;
+        updatePanelVisibility();
+        auditCurrentLayout(layoutPrefix + "SEQ/Pattern Focus");
     }
 
     setSize(originalWidth, originalHeight);
     activePanel = originalPanel;
+    activeFocusOverlay = originalFocusOverlay;
     selectedFxModule = originalFxModule;
     activeRandomLabPage = originalRandomLabPage;
     updatePanelVisibility();
@@ -4695,20 +5556,23 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     applyFineDragMode(slider, 0.32);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
+    slider.setWantsKeyboardFocus(false);
+    slider.setMouseClickGrabsKeyboardFocus(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 18);
     const auto tooltipText = controlFeelTooltip(labelText);
     slider.setTooltip(tooltipText);
     slider.getProperties().set("baseTooltip", tooltipText);
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    const auto& theme = uiTheme();
+    slider.setColour(juce::Slider::textBoxTextColourId, theme.text);
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, theme.field);
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
     label.setText(labelText, juce::dontSendNotification);
     label.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     label.setJustificationType(juce::Justification::centred);
-    label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    label.setColour(juce::Label::textColourId, theme.textMuted);
     label.attachToComponent(&slider, false);
     addAndMakeVisible(label);
 
@@ -4724,6 +5588,7 @@ void NateVSTAudioProcessorEditor::configureSlider(juce::Slider& slider,
     {
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
     };
+    slider.onDragEnd = [this] { returnKeyboardFocusToPiano(); };
 
     registerModulationMenuTarget(slider, labelText, parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
@@ -4739,21 +5604,24 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     applyFineDragMode(slider, 0.40);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
+    slider.setWantsKeyboardFocus(false);
+    slider.setMouseClickGrabsKeyboardFocus(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 62, 18);
     const auto tooltipText = controlFeelTooltip(labelText);
     slider.setTooltip(tooltipText);
     slider.getProperties().set("baseTooltip", tooltipText);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
-    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    const auto& theme = uiTheme();
+    slider.setColour(juce::Slider::trackColourId, theme.accent);
+    slider.setColour(juce::Slider::backgroundColourId, theme.outline);
+    slider.setColour(juce::Slider::textBoxTextColourId, theme.text);
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, theme.field);
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
     label.setText(labelText, juce::dontSendNotification);
     label.setJustificationType(juce::Justification::centredLeft);
-    label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    label.setColour(juce::Label::textColourId, theme.textMuted);
     label.attachToComponent(&slider, true);
     addAndMakeVisible(label);
 
@@ -4769,9 +5637,25 @@ void NateVSTAudioProcessorEditor::configureHorizontalSlider(juce::Slider& slider
     {
         updateSelectedControlInspector(labelText, parameterID, sliderPointer->getValue());
     };
+    slider.onDragEnd = [this] { returnKeyboardFocusToPiano(); };
 
     registerModulationMenuTarget(slider, labelText, parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
+}
+
+void NateVSTAudioProcessorEditor::configureModAmountSlider(juce::Slider& slider,
+                                                            juce::Label& label,
+                                                            const juce::String& labelText,
+                                                            const juce::String& parameterID)
+{
+    configureHorizontalSlider(slider, label, labelText, parameterID);
+    slider.setMouseDragSensitivity(120);
+    applyFineDragMode(slider, 0.34);
+    slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
+    slider.setNumDecimalPlacesToDisplay(2);
+    slider.getProperties().set("compactTextBoxWidth", 0);
+    slider.setTooltip("Mod route amount: drag to set depth, Shift or Cmd for fine movement, double-click to reset, or right-click for route actions. The selected-control strip shows the exact value.");
+    slider.getProperties().set("baseTooltip", slider.getTooltip());
 }
 
 void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider& slider,
@@ -4782,16 +5666,19 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
     applyFineDragMode(slider, 0.38);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
+    slider.setWantsKeyboardFocus(false);
+    slider.setMouseClickGrabsKeyboardFocus(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
     const auto tooltipText = juce::String("Curve point: drag to adjust, hold Shift or Cmd for fine movement, double-click to reset, or type a value.");
     slider.setTooltip(tooltipText);
     slider.getProperties().set("baseTooltip", tooltipText);
     slider.setNumDecimalPlacesToDisplay(2);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
-    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    const auto& theme = uiTheme();
+    slider.setColour(juce::Slider::trackColourId, theme.accent);
+    slider.setColour(juce::Slider::backgroundColourId, theme.outline);
+    slider.setColour(juce::Slider::textBoxTextColourId, theme.text);
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, theme.field);
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
@@ -4807,6 +5694,7 @@ void NateVSTAudioProcessorEditor::configureCompactHorizontalSlider(juce::Slider&
     {
         updateSelectedControlInspector("Curve", parameterID, sliderPointer->getValue());
     };
+    slider.onDragEnd = [this] { returnKeyboardFocusToPiano(); };
 
     registerModulationMenuTarget(slider, "Curve", parameterID);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
@@ -4822,6 +5710,8 @@ void NateVSTAudioProcessorEditor::configureRandomSectionSlider(juce::Slider& sli
     applyFineDragMode(slider, 0.36);
     slider.setSliderSnapsToMousePosition(false);
     slider.setScrollWheelEnabled(false);
+    slider.setWantsKeyboardFocus(false);
+    slider.setMouseClickGrabsKeyboardFocus(false);
     slider.setPopupDisplayEnabled(true, true, this);
     slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 16);
     slider.setNumDecimalPlacesToDisplay(2);
@@ -4829,17 +5719,18 @@ void NateVSTAudioProcessorEditor::configureRandomSectionSlider(juce::Slider& sli
         + " strength: drag to scale how far generated values move this section, Shift or Cmd for fine movement, double-click to reset.";
     slider.setTooltip(tooltipText);
     slider.getProperties().set("baseTooltip", tooltipText);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff8ee6c9));
-    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff263035));
-    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffdce7e4));
-    slider.setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff101619));
+    const auto& theme = uiTheme();
+    slider.setColour(juce::Slider::trackColourId, theme.accent);
+    slider.setColour(juce::Slider::backgroundColourId, theme.outline);
+    slider.setColour(juce::Slider::textBoxTextColourId, theme.text);
+    slider.setColour(juce::Slider::textBoxBackgroundColourId, theme.field);
     slider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
 
     label.setText(labelText, juce::dontSendNotification);
     label.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     label.setJustificationType(juce::Justification::centredLeft);
-    label.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    label.setColour(juce::Label::textColourId, theme.textMuted);
     addAndMakeVisible(label);
 
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
@@ -4854,6 +5745,7 @@ void NateVSTAudioProcessorEditor::configureRandomSectionSlider(juce::Slider& sli
     {
         updateSelectedControlInspector("Rand " + labelText, parameterID, sliderPointer->getValue());
     };
+    slider.onDragEnd = [this] { returnKeyboardFocusToPiano(); };
 
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.getValueTreeState(), parameterID, slider));
 }
@@ -5068,7 +5960,7 @@ void NateVSTAudioProcessorEditor::configureSectionLabel(juce::Label& label, cons
     label.setText(text, juce::dontSendNotification);
     label.setFont(juce::FontOptions(13.0f, juce::Font::bold));
     label.setJustificationType(juce::Justification::centredLeft);
-    label.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
+    label.setColour(juce::Label::textColourId, uiTheme().accent);
     addAndMakeVisible(label);
 }
 
@@ -5129,7 +6021,86 @@ void NateVSTAudioProcessorEditor::exportSequencerMidiClip()
                                  setRandomStatus(audioProcessor.exportSequencerMidiFile(file)
                                                      ? "MIDI exported"
                                                      : "MIDI export skipped");
+	                             });
+}
+
+void NateVSTAudioProcessorEditor::exportSequencerSceneChainMidiClip()
+{
+    const auto chainBars = audioProcessor.getSequencerSceneChainClipBars();
+    const auto chainSuffix = chainBars == 0 ? juce::String() : " " + juce::String(chainBars) + " Bar";
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Export chained sequencer MIDI",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory).getChildFile("Nate VST Scene Chain" + chainSuffix + ".mid"),
+        "*.mid;*.midi");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
+                                 | juce::FileBrowserComponent::canSelectFiles
+                                 | juce::FileBrowserComponent::warnAboutOverwriting,
+                             [this] (const juce::FileChooser& chooser)
+                             {
+                                 auto file = chooser.getResult();
+                                 if (file == juce::File{})
+                                     return;
+
+                                 if (! file.hasFileExtension(".mid;.midi"))
+                                     file = file.withFileExtension(".mid");
+
+                                 setRandomStatus(audioProcessor.exportSequencerSceneChainMidiFile(file)
+                                                     ? "Chain MIDI exported"
+                                                     : "Chain export skipped");
                              });
+}
+
+bool NateVSTAudioProcessorEditor::beginSequencerMidiDrag(juce::Component& sourceComponent, bool sceneChain)
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    pruneSequencerDragMidiFiles();
+
+    const auto dragDirectory = juce::File::getSpecialLocation(juce::File::tempDirectory)
+        .getChildFile("Nate VST MIDI Drag");
+
+    if (! dragDirectory.createDirectory())
+    {
+        setRandomStatus("MIDI drag folder unavailable");
+        return false;
+    }
+
+    const auto chainBars = sceneChain ? audioProcessor.getSequencerSceneChainClipBars() : 0;
+    const auto chainSuffix = chainBars == 0 ? juce::String() : " " + juce::String(chainBars) + " Bar";
+    const auto file = dragDirectory.getNonexistentChildFile(sceneChain ? "Nate VST Scene Chain" + chainSuffix
+                                                                      : "Nate VST Sequence",
+                                                            ".mid",
+                                                            false);
+    const auto exported = sceneChain ? audioProcessor.exportSequencerSceneChainMidiFile(file)
+                                    : audioProcessor.exportSequencerMidiFile(file);
+    if (! exported || ! file.existsAsFile())
+    {
+        setRandomStatus(sceneChain ? "Chain MIDI drag skipped" : "MIDI drag skipped");
+        return false;
+    }
+
+    juce::StringArray files;
+    files.add(file.getFullPathName());
+    if (! juce::DragAndDropContainer::performExternalDragDropOfFiles(files, false, &sourceComponent))
+    {
+        file.deleteFile();
+        setRandomStatus("MIDI drag unavailable");
+        return false;
+    }
+
+    sequencerDragMidiFiles.push_back(file);
+    setRandomStatus(sceneChain ? ("Drag" + chainSuffix + " chain MIDI into Ableton") : "Drag MIDI into Ableton");
+    return true;
+}
+
+void NateVSTAudioProcessorEditor::pruneSequencerDragMidiFiles()
+{
+    for (const auto& file : sequencerDragMidiFiles)
+        if (file.existsAsFile())
+            file.deleteFile();
+
+    sequencerDragMidiFiles.clear();
 }
 
 void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
@@ -5149,7 +6120,14 @@ void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
 void NateVSTAudioProcessorEditor::updateSampleNameLabel()
 {
     const auto sampleName = audioProcessor.getLoadedSampleName();
-    sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName : "No sample", juce::dontSendNotification);
+    const auto sampleMissing = audioProcessor.hasMissingSampleReference();
+    const auto missingFile = juce::File(audioProcessor.getLoadedSamplePath()).getFileName();
+    sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName
+                            : sampleMissing && missingFile.isNotEmpty() ? "Missing: " + missingFile
+                                                                         : "No sample",
+                            juce::dontSendNotification);
+    sampleNameLabel.setColour(juce::Label::textColourId,
+                              sampleMissing ? juce::Colour(0xffffc36b) : juce::Colour(0xffa8b6b8));
 }
 
 void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
@@ -5202,6 +6180,8 @@ void NateVSTAudioProcessorEditor::applySampleSliceStyleDefaults(size_t sliceInde
     const std::array<float, 8> pitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
     const std::array<float, 8> garagePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
     const std::array<float, 8> garageRamp { 7.0f, 0.0f, -5.0f, 12.0f, 0.0f, -7.0f, 5.0f, -12.0f };
+    setPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f);
 
     switch (styleIndex)
     {
@@ -5273,6 +6253,8 @@ void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t slice
     setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceStutter[safeIndex], readPlainParameterValue(Parameters::ID::sampleStutterEnabled, 0.0f));
     setPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], readPlainParameterValue(Parameters::ID::sampleStutterRepeats, 3.0f));
+    setPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], readPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f));
+    setPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], readPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f));
 }
 
 void NateVSTAudioProcessorEditor::recallSampleSliceSettings(size_t sliceIndex)
@@ -5335,6 +6317,8 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     const auto repeats = static_cast<float>(2 + random.nextInt(5));
     const auto pan = random.nextFloat() < 0.68f ? (random.nextFloat() * 0.9f) - 0.45f : 0.0f;
     const auto probability = random.nextFloat() < 0.34f ? 0.62f + (random.nextFloat() * 0.28f) : 1.0f;
+    const auto nudge = random.nextFloat() < 0.52f ? ((random.nextFloat() * 5.0f) - 2.5f) : 0.0f;
+    const auto fade = random.nextFloat() < 0.44f ? 0.22f + (random.nextFloat() * 0.48f) : 0.0f;
 
     captureGlobalEdit("Dice sample slice");
     setPlainParameterValue(Parameters::ID::sampleTranspose, pitch);
@@ -5345,12 +6329,15 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     setPlainParameterValue(Parameters::ID::sampleStutterRepeats, repeats);
     setPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], pan);
     setPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], probability);
+    setPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], nudge);
+    setPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], fade);
     captureCurrentSampleSliceSettings(safeIndex, true);
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Diced slice " + juce::String(static_cast<int>(safeIndex + 1)) + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
@@ -5372,6 +6359,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
@@ -5393,6 +6381,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
@@ -5416,6 +6405,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
@@ -5439,6 +6429,55 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+}
+
+void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceNudge()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto currentNudge = sampleSliceHasCustomSettings(safeIndex)
+        ? readPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f)
+        : 0.0f;
+    const auto nextNudge = currentNudge < -0.1f ? 1.5f : currentNudge > 0.1f ? 0.0f : -1.5f;
+
+    captureGlobalEdit("Nudge sample slice");
+    setPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], nextNudge);
+    captureCurrentSampleSliceSettings(safeIndex, true);
+
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
+                    + " " + sliceNudgeText(nextNudge)
+                    + (didAudition ? " auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+}
+
+void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceFade()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto currentFade = sampleSliceHasCustomSettings(safeIndex)
+        ? readPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f)
+        : 0.0f;
+    const auto nextFade = currentFade < 0.12f ? 0.35f : currentFade < 0.55f ? 0.75f : 0.0f;
+
+    captureGlobalEdit("Fade sample slice");
+    setPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], nextFade);
+    captureCurrentSampleSliceSettings(safeIndex, true);
+
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
+                    + " fade " + sliceFadeText(nextFade)
+                    + (didAudition ? " auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
 }
 
 bool NateVSTAudioProcessorEditor::sampleSliceHasCustomSettings(size_t sliceIndex) const
@@ -5475,6 +6514,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
         preview.repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f));
         preview.pan = readPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f);
         preview.probability = readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f);
+        preview.nudgePercent = readPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f);
+        preview.fade = readPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f);
     }
     const auto sliceKeysMode = readPlainParameterValue(Parameters::ID::samplePlaybackMode, 1.0f) >= 1.5f;
     const auto pitchText = (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1) + "st";
@@ -5484,6 +6525,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
         + juce::String(juce::roundToInt(regionUpper * 100.0f)) + "%"
         + " | " + pitchText
         + " | " + juce::String(preview.gain, 1) + "dB"
+        + " | " + sliceNudgeText(preview.nudgePercent)
+        + " F " + sliceFadeText(preview.fade)
         + " | " + slicePanText(preview.pan)
         + " " + sliceChanceText(preview.probability)
         + (preview.reverse ? " | rev" : " | fwd")
@@ -5498,6 +6541,10 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
     sampleSlicePanButton.setButtonText("Pan");
     sampleSliceGhostButton.setButtonText("Ghost");
     sampleSliceGhostButton.setToggleState(preview.probability < 0.995f, juce::dontSendNotification);
+    sampleSliceNudgeButton.setButtonText("Nudge");
+    sampleSliceNudgeButton.setToggleState(std::abs(preview.nudgePercent) > 0.1f, juce::dontSendNotification);
+    sampleSliceFadeButton.setButtonText("Fade");
+    sampleSliceFadeButton.setToggleState(preview.fade > 0.12f, juce::dontSendNotification);
     sampleSliceRecallButton.setEnabled(custom);
 }
 
@@ -5545,6 +6592,8 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
             preview.repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f));
             preview.pan = readPlainParameterValue(Parameters::ID::sampleSlicePan[index], 0.0f);
             preview.probability = readPlainParameterValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+            preview.nudgePercent = readPlainParameterValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
+            preview.fade = readPlainParameterValue(Parameters::ID::sampleSliceFade[index], 0.0f);
         }
         sampleSliceButtons[index].setToggleState(isSelected, juce::dontSendNotification);
         sampleSliceButtons[index].setButtonText(juce::String(static_cast<int>(index + 1)) + (custom ? "*" : ""));
@@ -5554,10 +6603,12 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
                                              + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
                                              + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
                                              + " st | Gain " + juce::String(preview.gain, 1)
-                                             + " dB | Pan " + slicePanText(preview.pan)
-                                             + " | Chance " + sliceChanceText(preview.probability)
-                                             + " | " + (preview.reverse ? "Reverse" : "Forward")
-                                             + " | " + (preview.choke ? "Choke" : "Open")
+                                                 + " dB | Pan " + slicePanText(preview.pan)
+                                                 + " | Chance " + sliceChanceText(preview.probability)
+                                                 + " | " + sliceNudgeText(preview.nudgePercent)
+                                                 + " | Fade " + sliceFadeText(preview.fade)
+                                                 + " | " + (preview.reverse ? "Reverse" : "Forward")
+                                                 + " | " + (preview.choke ? "Choke" : "Open")
                                              + " | " + (preview.stutter ? "Stutter" : "No stutter"));
     }
 
@@ -5610,13 +6661,85 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
             sampleSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
     }
 
-    sampleWaveformDisplay.setModulationState(juce::jlimit(-1.0f, 1.0f, startModAmount),
-                                             juce::jlimit(-1.0f, 1.0f, mixModAmount),
-                                             juce::jlimit(-1.0f, 1.0f, pitchModAmount),
-                                             juce::jlimit(-1.0f, 1.0f, rampModAmount),
-                                             juce::jlimit(-1.0f, 1.0f, stutterModAmount),
-                                             sampleRouteCount,
-                                             sampleSources.joinIntoString(", "));
+    const auto clippedStartMod = juce::jlimit(-1.0f, 1.0f, startModAmount);
+    const auto clippedMixMod = juce::jlimit(-1.0f, 1.0f, mixModAmount);
+    const auto clippedPitchMod = juce::jlimit(-1.0f, 1.0f, pitchModAmount);
+    const auto clippedRampMod = juce::jlimit(-1.0f, 1.0f, rampModAmount);
+    const auto clippedStutterMod = juce::jlimit(-1.0f, 1.0f, stutterModAmount);
+    const auto sampleSourceSummary = sampleSources.joinIntoString(", ");
+    auto applyModulationState = [&] (UI::SampleWaveformDisplay& display)
+    {
+        display.setModulationState(clippedStartMod,
+                                   clippedMixMod,
+                                   clippedPitchMod,
+                                   clippedRampMod,
+                                   clippedStutterMod,
+                                   sampleRouteCount,
+                                   sampleSourceSummary);
+    };
+    applyModulationState(sampleWaveformDisplay);
+    applyModulationState(expandedSampleWaveformDisplay);
+
+    std::array<UI::SampleWaveformDisplay::SliceMarker, 8> sliceMarkers;
+    const auto currentStart = juce::jlimit(0.0f, 1.0f, readParameter(Parameters::ID::sampleStart, 0.0f));
+    const auto currentEnd = juce::jlimit(0.0f, 1.0f, readParameter(Parameters::ID::sampleEnd, 1.0f));
+    const auto orderedCurrentStart = juce::jmin(currentStart, currentEnd);
+    const auto orderedCurrentEnd = juce::jmax(currentStart, currentEnd);
+    const auto sliceCount = static_cast<float>(sliceMarkers.size());
+    const auto styleIndex = sampleSliceStyleBox.getSelectedItemIndex();
+    for (size_t index = 0; index < sliceMarkers.size(); ++index)
+    {
+        const auto custom = sampleSliceHasCustomSettings(index);
+        const auto defaultStart = static_cast<float>(index) / sliceCount;
+        const auto defaultEnd = static_cast<float>(index + 1) / sliceCount;
+        const auto markerStart = juce::jlimit(0.0f,
+                                              1.0f,
+                                              custom ? readPlainParameterValue(Parameters::ID::sampleSliceStart[index], defaultStart)
+                                                     : defaultStart);
+        const auto markerEnd = juce::jlimit(0.0f,
+                                            1.0f,
+                                            custom ? readPlainParameterValue(Parameters::ID::sampleSliceEnd[index], defaultEnd)
+                                                   : defaultEnd);
+        const auto orderedMarkerStart = juce::jmin(markerStart, markerEnd);
+        const auto orderedMarkerEnd = juce::jmax(markerStart, markerEnd);
+        auto preview = defaultSlicePreviewSettings(index, styleIndex);
+        if (custom)
+        {
+            preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
+            preview.gain = readPlainParameterValue(Parameters::ID::sampleSliceGain[index], -6.0f);
+            preview.reverse = readPlainParameterValue(Parameters::ID::sampleSliceReverse[index], 0.0f) >= 0.5f;
+            preview.stutter = readPlainParameterValue(Parameters::ID::sampleSliceStutter[index], 0.0f) >= 0.5f;
+            preview.choke = readPlainParameterValue(Parameters::ID::sampleSliceChoke[index], 0.0f) >= 0.5f;
+            preview.repeats = juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f));
+            preview.pan = readPlainParameterValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+            preview.probability = readPlainParameterValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+            preview.nudgePercent = readPlainParameterValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
+            preview.fade = readPlainParameterValue(Parameters::ID::sampleSliceFade[index], 0.0f);
+        }
+
+        auto& marker = sliceMarkers[index];
+        const auto nudgeAmount = preview.nudgePercent / 100.0f;
+        const auto nudgedStart = juce::jlimit(0.0f, 1.0f, orderedMarkerStart + nudgeAmount);
+        const auto nudgedEnd = juce::jlimit(0.0f, 1.0f, orderedMarkerEnd + nudgeAmount);
+        marker.start = juce::jmin(nudgedStart, nudgedEnd);
+        marker.end = juce::jmax(nudgedStart, nudgedEnd);
+        marker.pitch = preview.pitch;
+        marker.gain = preview.gain;
+        marker.pan = preview.pan;
+        marker.probability = preview.probability;
+        marker.nudgePercent = preview.nudgePercent;
+        marker.fade = preview.fade;
+        marker.repeats = preview.repeats;
+        marker.custom = custom;
+        marker.selected = index == selectedSampleSliceIndex
+            || (std::abs(orderedCurrentStart - orderedMarkerStart) < 0.005f
+                && std::abs(orderedCurrentEnd - orderedMarkerEnd) < 0.005f);
+        marker.reverse = preview.reverse;
+        marker.stutter = preview.stutter;
+        marker.choke = preview.choke;
+    }
+    sampleWaveformDisplay.setSliceMarkers(sliceMarkers);
+    expandedSampleWaveformDisplay.setSliceMarkers(sliceMarkers);
 
     const auto sampleName = audioProcessor.getLoadedSampleName();
     if (sampleName.isEmpty())
@@ -5624,22 +6747,25 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
         if (sampleWaveformKey.isNotEmpty())
         {
             sampleWaveformDisplay.setOverview({});
+            expandedSampleWaveformDisplay.setOverview({});
             sampleWaveformKey.clear();
         }
 
         sampleWaveformDisplay.setRange(0.0f, 1.0f);
+        expandedSampleWaveformDisplay.setRange(0.0f, 1.0f);
         return;
     }
 
     if (sampleWaveformKey != sampleName)
     {
-        sampleWaveformDisplay.setOverview(audioProcessor.createSamplePeakOverview(256));
+        const auto overview = audioProcessor.createSamplePeakOverview(256);
+        sampleWaveformDisplay.setOverview(overview);
+        expandedSampleWaveformDisplay.setOverview(overview);
         sampleWaveformKey = sampleName;
     }
 
-    const auto start = readPlainParameterValue(Parameters::ID::sampleStart, 0.0f);
-    const auto end = readPlainParameterValue(Parameters::ID::sampleEnd, 1.0f);
-    sampleWaveformDisplay.setRange(start, end);
+    sampleWaveformDisplay.setRange(currentStart, currentEnd);
+    expandedSampleWaveformDisplay.setRange(currentStart, currentEnd);
 }
 
 int NateVSTAudioProcessorEditor::selectedRandomMutationScope() const
@@ -5658,7 +6784,7 @@ void NateVSTAudioProcessorEditor::triggerRandomGenerate()
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     setRandomStatus("Generated");
 }
@@ -5674,7 +6800,7 @@ void NateVSTAudioProcessorEditor::triggerRandomMutate()
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     setRandomStatus("Mutated");
 }
@@ -5690,7 +6816,7 @@ void NateVSTAudioProcessorEditor::triggerRandomVariation()
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     setRandomStatus("Variation");
 }
@@ -5706,7 +6832,7 @@ void NateVSTAudioProcessorEditor::triggerRandomWild()
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     setRandomStatus("Wild");
 }
@@ -5729,7 +6855,7 @@ void NateVSTAudioProcessorEditor::triggerRandomSectionRoll(size_t sectionIndex)
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     setRandomStatus("Rolled " + sectionName);
 }
@@ -5750,7 +6876,7 @@ void NateVSTAudioProcessorEditor::recallRandomCandidate(size_t slotIndex)
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
     prepareRandomPresetDraft("Candidate " + juce::String(static_cast<int>(slotIndex + 1)));
     setRandomStatus("Recalled candidate " + juce::String(static_cast<int>(slotIndex + 1)));
@@ -5772,7 +6898,7 @@ void NateVSTAudioProcessorEditor::auditionRandomCandidate(size_t slotIndex)
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
 
     auto note = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 60.0f)
                                  + (readPlainParameterValue(Parameters::ID::sequencerOctave, 0.0f) * 12.0f));
@@ -5814,7 +6940,7 @@ void NateVSTAudioProcessorEditor::releaseRandomCandidateAudition(bool updateStat
     updateSampleNameLabel();
     updateSampleWaveformDisplay();
     updateWavetableDisplay();
-    sequencerGrid.repaint();
+    repaintSequencerGrids();
     updateRandomCandidateButtons();
 
     if (updateStatus)
@@ -6226,6 +7352,26 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 
     keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardLowestNote);
     keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
+}
+
+void NateVSTAudioProcessorEditor::returnKeyboardFocusToPiano()
+{
+    for (const auto* textEditor : {
+             static_cast<const juce::TextEditor*>(&presetSearchEditor),
+             static_cast<const juce::TextEditor*>(&presetNameEditor),
+             static_cast<const juce::TextEditor*>(&presetAuthorEditor),
+             static_cast<const juce::TextEditor*>(&presetNotesEditor) })
+    {
+        if (textEditor != nullptr && textEditor->hasKeyboardFocus(true))
+            return;
+    }
+
+    juce::Component::SafePointer<NateVSTAudioProcessorEditor> safeEditor(this);
+    juce::MessageManager::callAsync([safeEditor]
+    {
+        if (safeEditor != nullptr)
+            safeEditor->pianoKeyboard.grabKeyboardFocus();
+    });
 }
 
 void NateVSTAudioProcessorEditor::addFxModule(FxModule module)
@@ -7328,6 +8474,21 @@ void NateVSTAudioProcessorEditor::setPlainParameterValue(const juce::String& par
     }
 }
 
+float NateVSTAudioProcessorEditor::macroAssignmentAmountForRoute(int sourceIndex, int destinationIndex, float fallback) const
+{
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+
+        if (currentSource == sourceIndex && currentDestination == destinationIndex && std::abs(amount) > 0.001f)
+            return amount;
+    }
+
+    return fallback;
+}
+
 juce::String NateVSTAudioProcessorEditor::formattedParameterValue(const juce::String& parameterID, double plainValue) const
 {
     if (auto* parameter = audioProcessor.getValueTreeState().getParameter(parameterID))
@@ -7520,6 +8681,7 @@ void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::Stri
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateHouseLayerRackDisplay();
     updateFilterResponseDisplay();
     updateModMatrixRows();
     updateModInspectorStatus();
@@ -7591,9 +8753,181 @@ int NateVSTAudioProcessorEditor::selectedMacroAssignmentDestinationIndex() const
 void NateVSTAudioProcessorEditor::setActivePanel(Panel panel)
 {
     activePanel = panel;
+    activeFocusOverlay = FocusOverlay::none;
     updatePanelVisibility();
     resized();
     repaint();
+}
+
+void NateVSTAudioProcessorEditor::openMacroFocusOverlay()
+{
+    activeFocusOverlay = FocusOverlay::macroEditor;
+    updatePerformanceXYPad();
+    updateMacroAssignmentEditorStatus();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::openSampleChopFocusOverlay()
+{
+    activeFocusOverlay = FocusOverlay::sampleChopEditor;
+    updateSampleSliceButtons();
+    updateSampleWaveformDisplay();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::openSourceLayerFocusOverlay()
+{
+    activeFocusOverlay = FocusOverlay::sourceLayerEditor;
+    updateHouseLayerRackDisplay();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::openSequencerFocusOverlay()
+{
+    activeFocusOverlay = FocusOverlay::sequencerEditor;
+    updateSequencerGridContext();
+    repaintSequencerGrids();
+    resized();
+    repaint();
+}
+
+void NateVSTAudioProcessorEditor::closeFocusOverlay()
+{
+    activeFocusOverlay = FocusOverlay::none;
+    resized();
+    repaint();
+}
+
+juce::Rectangle<int> NateVSTAudioProcessorEditor::focusOverlayBounds() const
+{
+    auto bounds = getLocalBounds().reduced(16);
+    bounds.removeFromTop(42);
+    bounds.removeFromTop(14);
+    bounds.removeFromBottom(pianoKeyboardHeight);
+    bounds.removeFromBottom(10);
+    return bounds.reduced(18);
+}
+
+void NateVSTAudioProcessorEditor::layoutFocusOverlay()
+{
+    const auto showMacroEditor = activeFocusOverlay == FocusOverlay::macroEditor;
+    const auto showSampleChopEditor = activeFocusOverlay == FocusOverlay::sampleChopEditor;
+    const auto showSourceLayerEditor = activeFocusOverlay == FocusOverlay::sourceLayerEditor;
+    const auto showSequencerEditor = activeFocusOverlay == FocusOverlay::sequencerEditor;
+    const auto showOverlay = showMacroEditor || showSampleChopEditor || showSourceLayerEditor || showSequencerEditor;
+
+    focusOverlayPanel.setVisible(showOverlay);
+    focusOverlayTitleLabel.setVisible(showOverlay);
+    focusOverlayCloseButton.setVisible(showOverlay);
+    expandedMacroPerformanceMap.setVisible(showMacroEditor);
+    expandedMacroAssignmentPad.setVisible(showMacroEditor);
+    expandedSampleWaveformDisplay.setVisible(showSampleChopEditor);
+    expandedHouseLayerRackDisplay.setVisible(showSourceLayerEditor);
+    expandedSequencerGrid.setVisible(showSequencerEditor);
+    sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
+
+    if (! showOverlay)
+        return;
+
+    focusOverlayPanel.setBounds(focusOverlayBounds());
+
+    const auto overlayOrigin = focusOverlayPanel.getBounds().getPosition();
+    auto panelBounds = focusOverlayPanel.getPanelBounds().translated(overlayOrigin.x, overlayOrigin.y);
+    auto header = panelBounds.reduced(18, 14).removeFromTop(28);
+    focusOverlayCloseButton.setBounds(header.removeFromRight(74).reduced(2, 1));
+    focusOverlayTitleLabel.setText(showSampleChopEditor ? "SAMPLE CHOP FOCUS"
+                                                        : showSourceLayerEditor ? "HOUSE SOURCE LAYERS"
+                                                                                : showSequencerEditor ? "SEQ PATTERN EDITOR"
+                                                                                                      : "EXPANDED MACRO EDITOR",
+                                   juce::dontSendNotification);
+    focusOverlayTitleLabel.setBounds(header.reduced(2, 1));
+
+    auto content = focusOverlayPanel.getContentBounds().translated(overlayOrigin.x, overlayOrigin.y);
+    if (showMacroEditor)
+    {
+        const auto macroShapeWidth = juce::jlimit(230, 330, content.getWidth() / 3);
+        expandedMacroPerformanceMap.setBounds(content.removeFromLeft(macroShapeWidth).reduced(6, 4));
+        expandedMacroAssignmentPad.setBounds(content.reduced(6, 4));
+    }
+    else if (showSampleChopEditor)
+    {
+        for (auto& button : sampleSliceButtons)
+            button.setVisible(true);
+        sampleSliceStatusLabel.setVisible(true);
+        sampleSliceStoreButton.setVisible(true);
+        sampleSliceRecallButton.setVisible(true);
+        sampleSliceDiceButton.setVisible(true);
+        sampleSliceReverseEditButton.setVisible(true);
+        sampleSliceChokeButton.setVisible(true);
+        sampleSlicePanButton.setVisible(true);
+        sampleSliceGhostButton.setVisible(true);
+        sampleSliceNudgeButton.setVisible(true);
+        sampleSliceFadeButton.setVisible(true);
+
+        auto waveformArea = content.removeFromTop(juce::jmax(190, content.getHeight() - 116));
+        expandedSampleWaveformDisplay.setBounds(waveformArea.reduced(6, 4));
+
+        auto sliceRow = content.removeFromTop(38).withTrimmedTop(2);
+        const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
+        for (auto& button : sampleSliceButtons)
+            button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
+
+        sampleSliceStatusLabel.setBounds(content.removeFromTop(30).reduced(8, 3));
+
+        auto actionRow = content.removeFromTop(42).withTrimmedTop(4);
+        const std::array<juce::TextButton*, 9> actionButtons {
+            &sampleSliceStoreButton,
+            &sampleSliceRecallButton,
+            &sampleSliceDiceButton,
+            &sampleSliceReverseEditButton,
+            &sampleSliceChokeButton,
+            &sampleSlicePanButton,
+            &sampleSliceGhostButton,
+            &sampleSliceNudgeButton,
+            &sampleSliceFadeButton
+        };
+        const auto actionWidth = actionRow.getWidth() / static_cast<int>(actionButtons.size());
+        for (auto* button : actionButtons)
+            button->setBounds(actionRow.removeFromLeft(actionWidth).reduced(4));
+    }
+    else if (showSourceLayerEditor)
+    {
+        expandedHouseLayerRackDisplay.setBounds(content.reduced(8, 8));
+    }
+    else if (showSequencerEditor)
+    {
+        auto chainRow = content.removeFromTop(38).withTrimmedTop(2);
+        sequencerSceneChainLengthButton.setBounds(chainRow.removeFromLeft(104).reduced(4));
+        expandedSequencerGrid.setBounds(content.reduced(8, 8));
+    }
+
+    focusOverlayPanel.toFront(false);
+    focusOverlayTitleLabel.toFront(false);
+    expandedMacroPerformanceMap.toFront(false);
+    expandedMacroAssignmentPad.toFront(false);
+    expandedSampleWaveformDisplay.toFront(false);
+    expandedHouseLayerRackDisplay.toFront(false);
+    expandedSequencerGrid.toFront(false);
+    sequencerSceneChainLengthButton.toFront(false);
+    if (showSampleChopEditor)
+    {
+        for (auto& button : sampleSliceButtons)
+            button.toFront(false);
+        sampleSliceStatusLabel.toFront(false);
+        sampleSliceStoreButton.toFront(false);
+        sampleSliceRecallButton.toFront(false);
+        sampleSliceDiceButton.toFront(false);
+        sampleSliceReverseEditButton.toFront(false);
+        sampleSliceChokeButton.toFront(false);
+        sampleSlicePanButton.toFront(false);
+        sampleSliceGhostButton.toFront(false);
+        sampleSliceNudgeButton.toFront(false);
+        sampleSliceFadeButton.toFront(false);
+    }
+    focusOverlayCloseButton.toFront(false);
 }
 
 void NateVSTAudioProcessorEditor::setActiveRandomLabPage(RandomLabPage page)
@@ -7699,9 +9033,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
-        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &modRouteMapDisplay,
+        &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel,
+        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
         &waveformBox, &osc2WaveBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -7711,21 +9045,22 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
+        &homeMacroExpandButton, &modMacroExpandButton, &sampleChopExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
         &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &loadSampleButton, &clearSampleButton,
-        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton,
+        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &applyGrooveTransformButton,
-        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton,
-        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,
+        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton,
+        &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &loadPresetButton, &auditionPresetButton, &refreshPresetsButton, &favoritePresetButton, &comparePresetButton, &revertPresetButton, &candidateFavoriteButton,
+        &savePresetButton, &loadPresetButton, &auditionPresetButton, &warmPresetPreviewsButton, &refreshPresetsButton, &favoritePresetButton, &comparePresetButton, &revertPresetButton, &candidateFavoriteButton,
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
@@ -7735,7 +9070,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &performanceXYPad, &sampleWaveformDisplay, &wavetableDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -7927,6 +9262,7 @@ void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& paramet
         sequencerRateBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
 
     updateSegmentedSelectors();
+    returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
@@ -7949,6 +9285,8 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     squareWaveButton.setToggleState(waveformIndex == 2, juce::dontSendNotification);
     triangleWaveButton.setToggleState(waveformIndex == 3, juce::dontSendNotification);
     wavetableWaveButton.setToggleState(waveformIndex == 4, juce::dontSendNotification);
+    organWaveButton.setToggleState(waveformIndex == 5, juce::dontSendNotification);
+    housePianoWaveButton.setToggleState(waveformIndex == 6, juce::dontSendNotification);
 
     const auto osc2WaveformIndex = getChoiceIndex(osc2WaveBox, Parameters::ID::osc2Wave, 1);
     osc2SineWaveButton.setToggleState(osc2WaveformIndex == 0, juce::dontSendNotification);
@@ -7956,6 +9294,8 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     osc2SquareWaveButton.setToggleState(osc2WaveformIndex == 2, juce::dontSendNotification);
     osc2TriangleWaveButton.setToggleState(osc2WaveformIndex == 3, juce::dontSendNotification);
     osc2WavetableWaveButton.setToggleState(osc2WaveformIndex == 4, juce::dontSendNotification);
+    osc2OrganWaveButton.setToggleState(osc2WaveformIndex == 5, juce::dontSendNotification);
+    osc2HousePianoWaveButton.setToggleState(osc2WaveformIndex == 6, juce::dontSendNotification);
 
     const auto filterModeIndex = getChoiceIndex(filterModeBox, Parameters::ID::filterMode, 0);
     lowpassFilterButton.setToggleState(filterModeIndex == 0, juce::dontSendNotification);
@@ -8177,6 +9517,128 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
         juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
         wtRouteCount,
         wtSources.joinIntoString(", "));
+}
+
+void NateVSTAudioProcessorEditor::updateHouseLayerRackDisplay()
+{
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+    const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    const auto osc1 = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f));
+    const auto osc2 = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f));
+    const auto macroWeight = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::macroWeight, 0.0f));
+    const auto sub = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::subLevel, 0.0f) + (macroWeight * 0.32f));
+    const auto noise = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::noiseLevel, 0.0f));
+    const auto noiseChoices = Parameters::noiseTypeChoices();
+    const auto noiseIndex = juce::jlimit(0, noiseChoices.size() - 1, juce::roundToInt(readPlainParameterValue(Parameters::ID::noiseType, 0.0f)));
+    const auto noiseSource = noiseChoices[noiseIndex];
+    const auto sampleName = audioProcessor.getLoadedSampleName();
+    const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f;
+    const auto sampleGain = juce::Decibels::decibelsToGain(readPlainParameterValue(Parameters::ID::sampleGain, -6.0f));
+    const auto sampleLoaded = audioProcessor.hasLoadedSample();
+    const auto sampleMissing = audioProcessor.hasMissingSampleReference();
+    const auto sampleMix = sampleEnabled && sampleLoaded
+        ? juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleMix, 0.0f) * sampleGain)
+        : 0.0f;
+    const auto playbackMode = juce::jlimit(0, 2, juce::roundToInt(readPlainParameterValue(Parameters::ID::samplePlaybackMode, 0.0f)));
+    const auto sampleModeName = playbackMode == 2 ? juce::String("Slice Keys")
+                              : playbackMode == 1 ? juce::String("One Shot")
+                                                  : juce::String("Gate");
+    const auto sliceChoices = Parameters::sampleSliceStyleChoices();
+    const auto sliceIndex = juce::jlimit(0, sliceChoices.size() - 1, juce::roundToInt(readPlainParameterValue(Parameters::ID::sampleSliceStyle, 0.0f)));
+    const auto activeThreshold = 0.04f;
+
+    UI::HouseLayerRackDisplay::State state;
+    state.layers = {
+        UI::HouseLayerRackDisplay::Layer {
+            "SUB",
+            macroWeight > activeThreshold ? "Mono +W" : "Mono",
+            juce::String("Bass-safe low layer") + (macroWeight > activeThreshold ? juce::String(" with Weight macro") : juce::String()),
+            sub,
+            sub > activeThreshold,
+            true,
+            false
+        },
+        UI::HouseLayerRackDisplay::Layer {
+            bodyRoleForWave(osc1Wave),
+            sourceNameForWave(osc1Wave),
+            "Main source body",
+            osc1,
+            osc1 > activeThreshold,
+            false,
+            osc1Wave == 4
+        },
+        UI::HouseLayerRackDisplay::Layer {
+            characterRoleForWave(osc2Wave),
+            sourceNameForWave(osc2Wave),
+            "Upper color or stab layer",
+            osc2,
+            osc2 > activeThreshold,
+            false,
+            osc2Wave == 4
+        },
+        UI::HouseLayerRackDisplay::Layer {
+            "NOISE",
+            noiseSource,
+            noiseSource + " transient and dust layer",
+            noise,
+            noise > activeThreshold,
+            false,
+            true
+        },
+        UI::HouseLayerRackDisplay::Layer {
+            "CHOP",
+            sampleLoaded ? sampleModeName : (sampleMissing ? juce::String("Missing") : juce::String("Empty")),
+            sampleLoaded ? (sampleModeName + " | " + sliceChoices[sliceIndex] + " slice style")
+                         : (sampleMissing ? juce::String("Relink missing sample before chop playback")
+                                          : juce::String("Load a sample to enable chop layer")),
+            sampleMix,
+            sampleMix > activeThreshold,
+            false,
+            true
+        }
+    };
+
+    const auto activeLayers = std::count_if(state.layers.begin(),
+                                            state.layers.end(),
+                                            [activeThreshold] (const UI::HouseLayerRackDisplay::Layer& layer)
+                                            {
+                                                return layer.active && layer.level > activeThreshold;
+                                            });
+    const auto hasHouseSource = osc1Wave == 5 || osc1Wave == 6 || osc2Wave == 5 || osc2Wave == 6;
+    state.summary = hasHouseSource ? "House source color active"
+                  : activeLayers >= 3 ? "Layered house source"
+                  : sampleMissing ? "Sample missing - relink needed"
+                  : sampleLoaded && sampleMix > activeThreshold ? "Sample-led house layer"
+                  : "House layer rack";
+
+    expandedHouseLayerRackDisplay.setState(state);
+    houseLayerRackDisplay.setState(std::move(state));
+}
+
+void NateVSTAudioProcessorEditor::focusHouseLayer(size_t layerIndex)
+{
+    struct LayerTarget
+    {
+        const char* label = "";
+        const char* parameterID = "";
+        float fallback = 0.0f;
+    };
+
+    static constexpr std::array<LayerTarget, UI::HouseLayerRackDisplay::layerCount> targets {
+        LayerTarget { "Layer Sub", Parameters::ID::subLevel, 0.0f },
+        LayerTarget { "Layer Body", Parameters::ID::osc1Level, 1.0f },
+        LayerTarget { "Layer Character", Parameters::ID::osc2Level, 0.0f },
+        LayerTarget { "Layer Transient", Parameters::ID::noiseLevel, 0.0f },
+        LayerTarget { "Layer Chop", Parameters::ID::sampleMix, 0.0f }
+    };
+
+    if (layerIndex >= targets.size())
+        return;
+
+    const auto& target = targets[layerIndex];
+    const auto value = readPlainParameterValue(target.parameterID, target.fallback);
+    updateSelectedControlInspector(target.label, target.parameterID, value);
+    updateSelectedControlActionState();
 }
 
 void NateVSTAudioProcessorEditor::updateFilterResponseDisplay()
@@ -8592,14 +10054,85 @@ void NateVSTAudioProcessorEditor::updateMacroAssignmentEditorStatus()
     const auto targetAmount = juce::roundToInt(modMacroAssignAmountSlider.getValue());
     const auto targetText = destinationChoices[destinationIndex]
         + " " + (targetAmount >= 0 ? "+" : "") + juce::String(targetAmount) + "%";
-    const auto summary = routes.isEmpty()
-        ? sourceName + ": no assignments | target " + targetText
-        : sourceName + ": " + routes.joinIntoString(", ");
+    const auto routeCountText = routes.isEmpty()
+        ? juce::String("no routes")
+        : juce::String(routes.size()) + (routes.size() == 1 ? " route" : " routes");
+    const auto summary = sourceName + " | " + routeCountText + " | target " + targetText;
+    const auto tooltip = routes.isEmpty()
+        ? summary
+        : sourceName + ": " + routes.joinIntoString(", ") + " | target " + targetText;
 
     modMacroAssignStatusLabel.setText(summary, juce::dontSendNotification);
-    modMacroAssignStatusLabel.setTooltip(summary + " | Add updates a matching route, Replace keeps only the target route for this macro");
+    modMacroAssignStatusLabel.setTooltip(tooltip + " | Drag the assignment pad to add or update the selected route");
     modMacroAssignAddButton.setButtonText(selectedRouteExists ? "Update" : "Add");
     modMacroAssignClearButton.setEnabled(! routes.isEmpty());
+    updateMacroAssignmentPad();
+}
+
+void NateVSTAudioProcessorEditor::updateMacroAssignmentPad()
+{
+    const auto sourceChoices = Parameters::modulationSourceChoices();
+    const auto destinationChoices = Parameters::modulationDestinationChoices();
+    const auto selectedSourceIndex = selectedMacroAssignmentSourceIndex();
+    const auto selectedDestinationIndex = selectedMacroAssignmentDestinationIndex();
+
+    UI::MacroAssignmentPad::State state;
+    state.selectedSourceIndex = selectedSourceIndex;
+    state.selectedDestinationIndex = selectedDestinationIndex;
+    state.targetAmount = static_cast<float>(modMacroAssignAmountSlider.getValue() / 100.0);
+    state.summary = modMacroAssignStatusLabel.getTooltip();
+
+    for (size_t index = 0; index < state.macroNames.size(); ++index)
+    {
+        const auto sourceIndex = firstMacroModSourceIndex + static_cast<int>(index);
+        state.macroSourceIndices[index] = sourceIndex;
+        state.macroNames[index] = juce::isPositiveAndBelow(sourceIndex, sourceChoices.size())
+            ? sourceChoices[sourceIndex]
+            : ("Macro " + juce::String(static_cast<int>(index + 1)));
+    }
+
+    for (auto destinationIndex = 1; destinationIndex < destinationChoices.size(); ++destinationIndex)
+    {
+        UI::MacroAssignmentPad::Destination destination;
+        destination.index = destinationIndex;
+        destination.name = destinationChoices[destinationIndex];
+
+        for (size_t slotIndex = 0; slotIndex < Parameters::ID::modMatrixSource.size(); ++slotIndex)
+        {
+            const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f));
+            const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f));
+            const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+
+            if (currentSource == selectedSourceIndex
+                && currentDestination == destinationIndex
+                && std::abs(amount) > 0.001f)
+            {
+                destination.assigned = true;
+                destination.amount = amount;
+                destination.enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f) >= 0.5f;
+                break;
+            }
+        }
+
+        state.destinations.push_back(destination);
+    }
+
+    for (size_t slotIndex = 0; slotIndex < Parameters::ID::modMatrixSource.size(); ++slotIndex)
+    {
+        const auto currentSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f));
+        const auto currentDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f));
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+
+        if (currentDestination <= 0 || std::abs(amount) <= 0.001f)
+            continue;
+
+        const auto macroIndex = currentSource - firstMacroModSourceIndex;
+        if (juce::isPositiveAndBelow(macroIndex, state.macroRouteCounts.size()))
+            ++state.macroRouteCounts[static_cast<size_t>(macroIndex)];
+    }
+
+    macroAssignmentPad.setState(state);
+    expandedMacroAssignmentPad.setState(state);
 }
 
 void NateVSTAudioProcessorEditor::setModInspectorDestination(int destinationIndex)
@@ -9254,8 +10787,13 @@ void NateVSTAudioProcessorEditor::updatePerformanceXYPad()
         return 0.0f;
     };
 
-    performanceXYPad.setValues(readParameter(Parameters::ID::macroMotion),
-                               readParameter(Parameters::ID::macroSpace));
+    UI::MacroPerformanceMap::ValueArray macroValues {};
+    for (size_t index = 0; index < macroValues.size(); ++index)
+        macroValues[index] = readParameter(macroPerformanceParameterIDs[index]);
+
+    performanceXYPad.setValues(macroValues[2], macroValues[3]);
+    macroPerformanceMap.setValues(macroValues);
+    expandedMacroPerformanceMap.setValues(macroValues);
 }
 
 void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
@@ -9311,6 +10849,10 @@ void NateVSTAudioProcessorEditor::updateHomeOverviewDisplay()
         state.sourceName = "Sample + Synth";
     else if (osc1Wave == 4)
         state.sourceName = osc2Level > 0.04f ? "Dual Wavetable" : "Wavetable Synth";
+    else if (osc1Wave == 5)
+        state.sourceName = osc2Level > 0.04f ? "Dual Organ" : "Drawbar Organ";
+    else if (osc1Wave == 6)
+        state.sourceName = osc2Level > 0.04f ? "Layered Piano" : "House Piano";
     else
         state.sourceName = osc2Level > 0.04f ? "Dual Synth" : "Synth Engine";
 
@@ -9340,6 +10882,7 @@ void NateVSTAudioProcessorEditor::updateHomeSignalFlowDisplay()
     const auto noise = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::noiseLevel, 0.0f));
     const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f;
     const auto sampleMix = sampleEnabled ? juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleMix, 0.0f)) : 0.0f;
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
     const auto sourceAmount = juce::jlimit(0.0f, 1.0f, std::max({ osc1, osc2, sub, noise, sampleMix }));
     const auto activeSources = (osc1 > 0.04f ? 1 : 0)
         + (osc2 > 0.04f ? 1 : 0)
@@ -9349,7 +10892,11 @@ void NateVSTAudioProcessorEditor::updateHomeSignalFlowDisplay()
 
     auto sourceDetail = sampleEnabled ? juce::String("Sample+") : juce::String("Synth");
     if (! sampleEnabled)
-        sourceDetail = activeSources > 2 ? juce::String("Layered") : juce::String(activeSources > 1 ? "Dual" : "Synth");
+        sourceDetail = activeSources > 2 ? juce::String("Layered")
+                     : activeSources > 1 ? juce::String("Dual")
+                     : osc1Wave == 5 ? juce::String("Organ")
+                     : osc1Wave == 6 ? juce::String("Piano")
+                     : juce::String("Synth");
 
     const auto filterMode = juce::jlimit(0, 2, juce::roundToInt(readPlainParameterValue(Parameters::ID::filterMode, 0.0f)));
     const auto filterCharacter = juce::jlimit(0, 3, juce::roundToInt(readPlainParameterValue(Parameters::ID::filterCharacter, 0.0f)));
@@ -9457,6 +11004,8 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
     state.selectedName = selectedName.isNotEmpty() ? selectedName : juce::String("Choose a sound");
     state.sourceName = sampleEnabled ? juce::String("Sample")
                     : osc1Wave == 4 ? juce::String("WT")
+                    : osc1Wave == 5 ? juce::String("Organ")
+                    : osc1Wave == 6 ? juce::String("Piano")
                     : osc2 > 0.05f ? juce::String("Dual")
                     : juce::String("Synth");
     state.selectedMeta = state.sourceName + " | Use Library for full search";
@@ -9548,6 +11097,21 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
 void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
 {
     const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
+    const auto liveChainEnabled = audioProcessor.isSequencerSceneChainPlaybackEnabled();
+    const auto liveChainLength = audioProcessor.getSequencerSceneChainPlaybackLength();
+    const auto chainBars = audioProcessor.getSequencerSceneChainClipBars();
+    sequencerSceneChainLiveButton.setToggleState(liveChainEnabled, juce::dontSendNotification);
+    sequencerSceneChainLiveButton.setButtonText(liveChainEnabled
+                                                   ? "Live " + juce::String(juce::jmax(1, liveChainLength))
+                                                   : "Live");
+    sequencerSceneChainLiveButton.setTooltip(liveChainEnabled
+                                                 ? "Live scene-chain playback is following captured scene steps"
+                                                 : "Play captured A/B/Fill/Drop scene steps as a live 2/4-bar chain");
+    sequencerSceneChainLengthButton.setButtonText(chainBars == 0 ? "Auto" : juce::String(chainBars) + " Bar");
+    sequencerSceneChainLengthButton.setTooltip(chainBars == 0
+                                                   ? "Auto chain length follows captured scenes; click for forced 2 bars"
+                                                   : "Forced " + juce::String(chainBars) + "-bar scene-chain MIDI/live length; click to cycle");
+
     for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
     {
         const auto slot = static_cast<int>(index);
@@ -9573,8 +11137,17 @@ void NateVSTAudioProcessorEditor::updateSequencerGridContext()
     const auto root = juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 36.0f));
     const auto octaveOffset = juce::roundToInt(readParameter(Parameters::ID::sequencerOctave, 0.0f)) * 12;
     const auto scaleMode = juce::roundToInt(readParameter(Parameters::ID::sequencerScale, 0.0f));
-    sequencerGrid.setRootNote(juce::jlimit(0, 127, root + octaveOffset));
+    const auto displayRoot = juce::jlimit(0, 127, root + octaveOffset);
+    sequencerGrid.setRootNote(displayRoot);
     sequencerGrid.setScaleMode(scaleMode);
+    expandedSequencerGrid.setRootNote(displayRoot);
+    expandedSequencerGrid.setScaleMode(scaleMode);
+}
+
+void NateVSTAudioProcessorEditor::repaintSequencerGrids()
+{
+    sequencerGrid.repaint();
+    expandedSequencerGrid.repaint();
 }
 
 void NateVSTAudioProcessorEditor::timerCallback()
@@ -9596,6 +11169,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateHouseLayerRackDisplay();
     updateFilterResponseDisplay();
     updateHostSyncStatus();
     updateModMatrixRows();
@@ -9612,6 +11186,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updatePerformanceXYPad();
     updateHomeOverviewDisplay();
     updateHomeSignalFlowDisplay();
+    updateSequencerSceneButtons();
     updateSequencerGridContext();
     updateSampleSliceButtons();
     updateSampleWaveformDisplay();
@@ -9648,11 +11223,62 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
     const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("-");
     const auto sourcePrefix = preset.isFavorite ? juce::String("F ") : juce::String();
     const auto nameColour = preset.isFavorite ? juce::Colour(0xffffd27a) : juce::Colour(0xffedf7f4);
-    const auto macroWidth = juce::jlimit(118, 230, row.getWidth() / 3);
-    auto macroArea = row.removeFromRight(macroWidth);
+    const auto layout = presetBrowserRowLayoutForWidth(width, height);
+
+    if (layout.compact)
+    {
+        auto infoArea = row.removeFromRight(layout.infoWidth);
+        row.removeFromRight(5);
+        auto previewArea = row.removeFromRight(layout.previewWidth);
+        row.removeFromRight(5);
+        auto nameArea = row;
+
+        g.setFont(juce::FontOptions(11.2f, juce::Font::bold));
+        g.setColour(nameColour);
+        g.drawFittedText(sourcePrefix + preset.name,
+                         nameArea.removeFromTop(15).reduced(2, 0),
+                         juce::Justification::centredLeft,
+                         1,
+                         0.58f);
+
+        g.setFont(juce::FontOptions(8.8f, juce::Font::plain));
+        g.setColour(juce::Colour(0xff9dafb2));
+        g.drawFittedText(categoryText + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm),
+                         nameArea.reduced(2, 0),
+                         juce::Justification::centredLeft,
+                         1,
+                         0.48f);
+
+        drawPresetPreviewLevelBadge(g, previewArea.removeFromTop(15), preset);
+        g.setFont(juce::FontOptions(8.2f, juce::Font::bold));
+        g.setColour(juce::Colour(0xffb8c6c5));
+        g.drawFittedText(presetInspectorRoleName(inferPresetAuditionRole(&preset)),
+                         previewArea.reduced(2, 0),
+                         juce::Justification::centred,
+                         1,
+                         0.54f);
+
+        auto pill = infoArea.removeFromTop(16).toFloat().reduced(0.0f, 1.0f);
+        g.setColour(preset.isFactory ? juce::Colour(0xff182b3b) : juce::Colour(0xff1d2d28));
+        g.fillRoundedRectangle(pill, 4.0f);
+        g.setColour(preset.isFactory ? juce::Colour(0xff7bb7ff) : juce::Colour(0xff8ee6c9));
+        g.drawRoundedRectangle(pill, 4.0f, 1.0f);
+        g.setFont(juce::FontOptions(8.2f, juce::Font::bold));
+        g.drawFittedText(preset.isFactory ? "FCT" : "USER", pill.toNearestInt(), juce::Justification::centred, 1);
+
+        g.setFont(juce::FontOptions(8.4f, juce::Font::bold));
+        g.setColour(juce::Colour(0xffc5d1d0));
+        g.drawFittedText(ratingText,
+                         infoArea.reduced(1, 0),
+                         juce::Justification::centred,
+                         1,
+                         0.58f);
+        return;
+    }
+
+    auto macroArea = row.removeFromRight(layout.macroWidth);
     row.removeFromRight(8);
-    const auto infoWidth = juce::jlimit(86, 160, row.getWidth() / 3);
-    auto infoArea = row.removeFromRight(infoWidth);
+    auto infoArea = row.removeFromRight(layout.infoWidth);
     row.removeFromRight(8);
     auto nameArea = row;
 
@@ -9666,7 +11292,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
 
     g.setFont(juce::FontOptions(9.0f, juce::Font::plain));
     g.setColour(juce::Colour(0xff9dafb2));
-    g.drawFittedText(categoryText + " | " + preset.pack,
+    g.drawFittedText(categoryText + " | " + preset.pack + " | " + presetPreviewSummaryText(preset),
                      nameArea.reduced(2, 0),
                      juce::Justification::centredLeft,
                      1,
@@ -9688,6 +11314,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
                      1,
                      0.56f);
 
+    drawPresetPreviewLevelBadge(g, macroArea.removeFromTop(15), preset);
     drawPresetMacroValueStrip(g, macroArea, preset);
 }
 
@@ -9714,6 +11341,7 @@ void NateVSTAudioProcessorEditor::selectedRowsChanged(int lastRowSelected)
     updateFavoritePresetButton();
     presetStatusLabel.setText("Selected " + preset.name + " | " + preset.pack + " | "
                                   + preset.key + " | " + formatPresetBpm(preset.bpm)
+                                  + " | " + presetPreviewSummaryText(preset)
                                   + " | " + presetMacroPreviewText(preset),
                               juce::dontSendNotification);
     updatePresetLibrarySummary();
@@ -9953,6 +11581,16 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     ignorePresetBrowserSelection = false;
 
     const auto* selectedPreset = findPreset(presetBox.getText());
+    auto previewReadyCount = 0;
+    auto previewStaleCount = 0;
+    for (const auto& preset : visiblePresetBrowserPresets)
+    {
+        if (preset.previewAvailable && ! preset.previewStale)
+            ++previewReadyCount;
+        else if (preset.previewStale)
+            ++previewStaleCount;
+    }
+
     auto statusText = juce::String(presetBox.getNumItems()) + " presets | Filter: " + filter;
     if (tagFilter != "All Tags")
         statusText += " | Tag: " + tagFilter;
@@ -9960,11 +11598,15 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     if (searchText.isNotEmpty())
         statusText += " | Search: " + searchText;
     if (selectedPreset != nullptr)
-        statusText += " | " + presetMacroPreviewText(*selectedPreset);
+        statusText += " | " + presetPreviewSummaryText(*selectedPreset) + " | " + presetMacroPreviewText(*selectedPreset);
+    if (previewReadyCount > 0 || previewStaleCount > 0)
+        statusText += " | Previews: " + juce::String(previewReadyCount) + " ready"
+            + (previewStaleCount > 0 ? " / " + juce::String(previewStaleCount) + " stale" : juce::String());
     statusText += " | User: " + audioProcessor.getPresetDirectory().getFullPathName();
     presetStatusLabel.setText(statusText, juce::dontSendNotification);
     presetStatusLabel.setTooltip(selectedPreset != nullptr
-                                     ? presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + formatPresetBpm(selectedPreset->bpm)
+                                     ? presetPreviewSummaryText(*selectedPreset) + " | "
+                                           + presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + formatPresetBpm(selectedPreset->bpm)
                                            + (selectedPreset->notes.trim().isNotEmpty() ? " | " + selectedPreset->notes.replaceCharacter('\n', ' ') : juce::String())
                                      : juce::String("Preset browser status"));
     presetBox.setTooltip(selectedPreset != nullptr
@@ -10360,7 +12002,7 @@ void NateVSTAudioProcessorEditor::loadSelectedPreset()
         updateFavoritePresetButton();
         updatePresetCompareButtons();
         updateSampleNameLabel();
-        sequencerGrid.repaint();
+        repaintSequencerGrids();
         return;
     }
 
@@ -10400,20 +12042,6 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
         return;
     }
 
-    if (! audioProcessor.loadPreset(presetName))
-    {
-        presetStatusLabel.setText("Select a preset to audition", juce::dontSendNotification);
-        return;
-    }
-
-    clearPresetCompareState();
-    refreshPresetList();
-    presetBox.setText(presetName, juce::dontSendNotification);
-    presetNameEditor.setText(presetName, juce::dontSendNotification);
-    updateFavoritePresetButton();
-    updateSampleNameLabel();
-    sequencerGrid.repaint();
-
     NateVSTAudioProcessor::PresetInfo auditionPresetInfo;
     auto hasAuditionPresetInfo = false;
     for (const auto& preset : audioProcessor.getPresetLibrary())
@@ -10426,26 +12054,79 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
         break;
     }
 
-    auto readParameter = [this] (const juce::String& parameterID, float fallback)
+    if (! audioProcessor.startPresetPreviewPlayback(presetName))
     {
-        if (const auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
-            return value->load();
+        presetStatusLabel.setText("Preview render failed for " + presetName, juce::dontSendNotification);
+        return;
+    }
 
-        return fallback;
-    };
+    refreshPresetList();
+    presetBox.setText(presetName, juce::dontSendNotification);
+    presetNameEditor.setText(presetName, juce::dontSendNotification);
+    updateFavoritePresetButton();
 
-    auto note = juce::roundToInt(readParameter(Parameters::ID::sequencerRoot, 60.0f)
-                                 + (readParameter(Parameters::ID::sequencerOctave, 0.0f) * 12.0f));
-    while (note < 48)
-        note += 12;
-    while (note > 72)
-        note -= 12;
-
-    const auto phraseName = startPresetAuditionPhrase(hasAuditionPresetInfo ? &auditionPresetInfo : nullptr,
-                                                      juce::jlimit(0, 127, note));
-
-    presetStatusLabel.setText("Auditioning " + presetName + " | " + phraseName,
+    const auto previewInfo = audioProcessor.getPresetPreviewInfo(presetName);
+    const auto roleText = hasAuditionPresetInfo ? presetInspectorRoleName(inferPresetAuditionRole(&auditionPresetInfo))
+                                                : juce::String("Preset");
+    presetStatusLabel.setText("Previewing " + presetName + " | " + roleText + " | "
+                                  + (previewInfo.status.isNotEmpty() ? previewInfo.status : juce::String("Rendered preview")),
                               juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::warmVisiblePresetPreviews()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+    audioProcessor.stopPresetPreviewPlayback();
+
+    static constexpr auto maxWarmCount = 8;
+    const auto selectedName = presetBox.getText().trim();
+    juce::StringArray presetNames;
+    if (selectedName.isNotEmpty())
+        presetNames.addIfNotAlreadyThere(selectedName);
+
+    for (const auto& preset : visiblePresetBrowserPresets)
+    {
+        if (presetNames.size() >= maxWarmCount)
+            break;
+
+        const auto ready = preset.previewAvailable
+            && ! preset.previewStale
+            && preset.previewPeak > 0.001f
+            && preset.previewRms > 0.00005f
+            && std::isfinite(preset.previewPeak)
+            && std::isfinite(preset.previewRms);
+
+        if (! ready)
+            presetNames.addIfNotAlreadyThere(preset.name);
+    }
+
+    if (presetNames.isEmpty())
+    {
+        for (const auto& preset : visiblePresetBrowserPresets)
+        {
+            presetNames.addIfNotAlreadyThere(preset.name);
+            if (presetNames.size() >= maxWarmCount)
+                break;
+        }
+    }
+
+    if (presetNames.isEmpty())
+    {
+        presetStatusLabel.setText("No visible presets to warm", juce::dontSendNotification);
+        return;
+    }
+
+    const auto result = audioProcessor.ensurePresetPreviews(presetNames, false);
+    refreshPresetList();
+    if (selectedName.isNotEmpty())
+    {
+        presetBox.setText(selectedName, juce::dontSendNotification);
+        presetNameEditor.setText(selectedName, juce::dontSendNotification);
+    }
+
+    updateFavoritePresetButton();
+    presetStatusLabel.setText(result.status + " | Warmed visible crate previews", juce::dontSendNotification);
 }
 
 void NateVSTAudioProcessorEditor::updatePresetAudition()
@@ -10479,6 +12160,8 @@ void NateVSTAudioProcessorEditor::updatePresetAudition()
 
 void NateVSTAudioProcessorEditor::releasePresetAuditionNote()
 {
+    audioProcessor.stopPresetPreviewPlayback();
+
     if (presetAuditionNotes.empty())
         return;
 
@@ -10781,6 +12464,7 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
 {
     const auto presetName = presetBox.getText().trim();
     auditionPresetButton.setEnabled(presetName.isNotEmpty());
+    warmPresetPreviewsButton.setEnabled(! visiblePresetBrowserPresets.empty());
     favoritePresetButton.setEnabled(presetName.isNotEmpty());
     favoritePresetButton.setToggleState(presetName.isNotEmpty() && audioProcessor.isPresetFavorite(presetName),
                                         juce::dontSendNotification);
@@ -10806,8 +12490,11 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
         presetKeyBox.setText(preset.key, juce::dontSendNotification);
         presetBpmBox.setText(formatPresetBpm(preset.bpm), juce::dontSendNotification);
         const auto preview = presetMacroPreviewText(preset);
-        presetBox.setTooltip(preset.name + " | " + preview);
-        presetStatusLabel.setTooltip(preview + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm));
+        const auto renderedPreview = presetPreviewSummaryText(preset);
+        presetBox.setTooltip(preset.name + " | " + renderedPreview + " | " + preview);
+        auditionPresetButton.setTooltip("Play rendered audio preview for " + preset.name + " without loading the patch");
+        warmPresetPreviewsButton.setTooltip("Render previews for the selected preset and visible crate rows");
+        presetStatusLabel.setTooltip(renderedPreview + " | " + preview + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm));
         break;
     }
 

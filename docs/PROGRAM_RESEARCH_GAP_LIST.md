@@ -46,15 +46,15 @@ Nate VST already has a useful skeleton:
 - JUCE/CMake/VST3 project that builds on macOS and installs into the user VST3 folder.
 - House/UKG/tech-house/minimal/techno product direction.
 - Subtractive synth layer with oscillator mix, sub, noise, filter character/slope, drive, envelopes, unison, Osc Warp, and output guard.
-- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, and LIBRARY panels.
+- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, and INFO panels.
 - Performance macros, XY macro pad, randomization, A/B snapshots, and low-end guidance.
 - LFO curve editor, pump curve editor, modulation matrix, macro assignment editing, route bypass/delete, destination badges, and S&H/Smooth/Chaos movement.
-- Sample waveform area, chop window, phrase markers, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
-- Piano-roll style 16-step sequencer with scale/chord helpers, velocity/probability/timing/length lanes, groove templates, host sync, undo, rotate, variation, and MIDI export.
+- Sample waveform area, chop window, phrase markers, visual selected/custom slice overlays, expanded chop focus overlay, slice pads, Slice Keys, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, pitch ramp, and UKG chop helpers.
+- Piano-roll style 16-step sequencer with scale/chord helpers, velocity/probability/timing/length/lock/ratchet/condition/slide lanes, groove templates, host sync, undo, rotate, variation, and MIDI export with groove/ratchet/condition/slide timing.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, tone/EQ, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, compact browser rows, and audition.
 - Factory starter presets for UKG, house, tech-house, techno, and minimal.
-- Local pluginval validation has been used during feature slices, but CI, automated non-GUI tests, and a repeatable Ableton release checklist are still missing.
+- CTest now includes GUI layout coverage plus non-GUI library/render smoke coverage for the factory pack. CI, a repo-backed pluginval gate, and a repeatable Ableton release checklist are still missing.
 
 The main gap is now professional depth: source engines, motion design, focused browsing, sampler chops, high-quality drive/filter behavior, and visual modulation need to feel closer to mature instruments.
 
@@ -158,7 +158,7 @@ Reference pattern:
 Nate VST gaps:
 
 - Sequencer has useful note lanes plus a first assignable per-step Lock lane for safe cutoff, drive, warp, pump, delay, reverb, and wavetable-position movement; deeper multi-lane and sample-accurate modulation remains open.
-- No pattern scenes or pattern chaining.
+- Pattern scenes exist as A/B/Fill/Drop, first-pass live scene-chain step/control playback is implemented, Build 4-Bar Chain can generate A/B/Fill/Drop phrase scenes, and the expanded SEQ focus can force Auto, 2-bar, or 4-bar chain length; deeper pattern chaining with arranger controls, deeper per-scene automation/rate behavior, repeat counts, and follow behavior remains open.
 - No vector/motion recorder for XY gestures.
 - No motion lanes for wavetable/sample/filter/FX properties.
 - Randomization does not yet create lane-based motion or "more garage/more warehouse" transforms.
@@ -172,9 +172,9 @@ Reference pattern:
 
 Nate VST gaps:
 
-- MIDI drag export is not direct from the UI into Ableton yet.
+- First-pass current-pattern and scene-chain `.mid` drag export is direct from the SEQ UI; richer Ableton clip handoff still needs host validation.
 - MIDI drag import is missing.
-- Audio drag/drop into SAMPLE and sample replacement are still missing.
+- WAV/AIFF audio drag/drop into SAMPLE is implemented; preserve-settings sample replacement, relink, and audio drag-out are still missing.
 - Ableton save/reopen/freeze/flatten checklist should become a repeatable release test.
 - Automation naming and parameter migration need an audit before adding many engines.
 - AU support, signing, notarization, installer/copy script, and release notes need a release workflow.
@@ -188,9 +188,9 @@ Reference pattern:
 
 Nate VST gaps:
 
-- No drag/drop audio loading onto the waveform yet.
+- WAV/AIFF drag/drop audio loading onto the waveform is implemented.
 - No sample key/BPM detection or confidence display.
-- No fast cue-style chop map with color labels, pad roles, and per-slice audition.
+- First fast cue-style chop map is implemented as waveform slice-state overlays with click selection/audition; richer color labels, pad roles, hover audition, and larger library-scale maps remain open.
 - No preserve-settings sample replacement for trying different vocals or stabs inside the same chop pattern.
 - No audio drag-out/render-to-audio workflow for moving a generated chop back into Ableton.
 
@@ -232,8 +232,8 @@ Reference pattern:
 
 Nate VST gaps:
 
-- Sample slicing has first Slice Keys and per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory; it still needs transient/manual markers, per-slice nudge/fades/playback modes, and slice lanes.
-- Organ/drawbar-style source is missing.
+- Sample slicing has first Slice Keys, visual eight-pad slice overlays, expanded chop focus editing, and per-slice region/pitch/gain/pan/probability/reverse/stutter/choke/nudge/fade memory; it still needs transient/manual markers, per-slice playback modes, full relink, and slice lanes.
+- First procedural Organ source mode is implemented; deeper drawbar controls, source snippets, and sampled organ content remain open.
 - Dred/Reese recipe tools are missing as first-class actions.
 - Groove templates need more microtiming and lane-specific swing.
 - Factory packs need more UKG construction kits, not just individual presets.
@@ -278,8 +278,8 @@ Nate VST gaps:
 31. Add oscillator ring modulation.
 32. Add protected FM/PM between oscillators.
 33. Add focused 3-operator FM for bells, metallic stabs, pings, and techno hits.
-34. Add additive/drawbar organ source for UKG and speed garage.
-35. Add legal/original sampled-PCM starter sources for house organ and piano-style stabs.
+34. Add additive/drawbar organ source for UKG and speed garage. First procedural Organ waveform pass is implemented as an appended source mode; editable drawbars and source snippets remain open.
+35. Add legal/original sampled-PCM starter sources for house organ and piano-style stabs. First procedural House Piano waveform pass is implemented; bundled sampled/PCM content remains open.
 36. Add noise colors: white, pink, brown, air, vinyl, metallic, and digital hash.
 37. Add supersaw detune curve, phase spread, and mono-safe spread.
 38. Add per-voice analog drift.
@@ -337,13 +337,13 @@ Nate VST gaps:
 ### 5. Sampler, Chop, And UKG Additions
 
 83. Add drag-and-drop WAV/AIFF import onto the waveform.
-84. Add missing sample and relink handling.
+84. Expand missing sample handling into full relink/dependency workflow beyond the first stale-audio clear and missing-path UI status guard.
 85. Add transient slice detection.
 86. Add beat-grid slicing.
 87. Add equal-region slicing.
 88. Add manual slice marker creation.
-89. Add per-slice start/end/nudge. First stored start/end region memory implemented; manual marker nudge remains open.
-90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pan/pitch/reverse/stutter/choke memory pass implemented; fades remain open.
+89. Add per-slice start/end/nudge. First stored start/end region memory and stepped nudge controls are implemented; manual marker nudge remains open.
+90. Add per-slice gain, pan, pitch, reverse, fade, and choke. First gain/pan/pitch/reverse/stutter/choke/fade memory pass implemented; deeper per-slice envelope editing remains open.
 91. Add per-slice probability. First trigger-probability pass implemented with the SAMPLE `Ghost` action.
 92. Add per-slice stutter and retrigger.
 93. Add slice audition on click/hover.
@@ -359,34 +359,34 @@ Nate VST gaps:
 103. Add UKG chop templates: call/response, late swing, reverse pickup, stutter tag, sparse hook, and pitch-ramp answer.
 104. Add organ bass recipe tools.
 105. Add Dred/Reese bass recipe tools.
-106. Add house organ/piano stab starter tools using original sources.
+106. Add house organ/piano stab starter tools using original sources. First procedural Organ/House Piano source modes are implemented and seeded into selected factory presets; larger starter tools and packs remain open.
 107. Add sample pack browser.
 
 ### 6. Sequencer, Piano Roll, And Groove Additions
 
 108. Add multiple sequencer patterns per preset.
 109. Add pattern scenes: A, B, fill, drop, breakdown, transition.
-110. Add pattern chaining.
-111. Add per-step ratchet/retrigger.
-112. Add per-step slide/glide.
+110. Add deeper pattern chaining beyond the first live scene-chain playback, Build 4-Bar Chain, and forced chain-length passes.
+111. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
+112. Add deeper per-step slide/glide. First saved lane/live-export overlap pass implemented.
 113. Add per-step accent tied to amp, filter, and drive.
 114. Add per-step assignable modulation lane. First single-destination Lock lane implemented; multiple simultaneous lanes, per-step destination changes, and sample-accurate scheduling remain open.
 115. Add per-step sample slice lane.
 116. Add per-step pump lane.
 117. Add per-step delay throw lane.
 118. Add per-step reverb throw lane.
-119. Add step conditions: first, not first, fill, every 2, every 4, random.
+119. Add deeper step conditions: first, not first, every 4, random, follow, and per-repeat probability. First Always/Odd/Even/Fill condition lane is implemented.
 120. Add scale quantize and key lock in the piano roll.
-121. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ, and dub chords.
+121. Add deeper chord paint tools for minor 7, minor 9, major 7, sus, garage organ, and dub chords beyond the first Chord Stab Paint transform.
 122. Add voicing spread and inversion tools.
 123. Add humanize for timing, velocity, gate, and pitch.
 124. Add groove library: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, broken percussion.
 125. Add groove amount per lane.
 126. Add swing microtiming visualization.
 127. Add Euclidean generator.
-128. Add bassline contour generator.
+128. Add bassline contour generator. First Bass Contour Shape transform is implemented; deeper multi-phrase generation remains open.
 129. Add recombine tool: keep rhythm, change notes.
-130. Add MIDI drag export into Ableton.
+130. Add richer MIDI drag/export validation in Ableton. First current-pattern and scene-chain `.mid` drag-out is implemented.
 131. Add MIDI drag import from files or clips.
 132. Add pattern undo history separate from global undo.
 
@@ -449,7 +449,7 @@ Nate VST gaps:
 181. Extend the implemented preset-load compare/revert, Save Target preview, and two-click overwrite guard into full edited-vs-saved safe-overwrite compare.
 182. Add preset version history.
 183. Add missing sample and wavetable warnings in browser rows.
-184. Add rendered per-preset audio preview files; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
+184. Expand the implemented rendered per-preset preview cache/playback into background/batch generation, waveform/level row badges, manual regeneration, and preview loudness consistency.
 185. Add audition auto-advance.
 186. Expand the implemented role-aware audition phrases into editable preview MIDI patterns by category.
 187. Add find-similar presets using metadata and parameter distance.
@@ -472,7 +472,7 @@ Nate VST gaps:
 201. Add construction kits with sequence, macros, key, BPM, and recommended FX.
 202. Add genre init buttons on HOME or LAB.
 203. Add factory macro names and performance descriptions.
-204. Add factory preset loudness validation.
+204. Expand factory preset loudness validation beyond the first `FactoryPresetRenderAudit` finite/non-silent/peak smoke gate into role targets and pack consistency.
 205. Add factory mono-bass validation.
 206. Add factory stuck-note validation.
 207. Add factory preset safety metadata.
@@ -617,7 +617,7 @@ Key extra lessons:
 ### 16. Sequencer, MIDI Tools, And Groove Generation
 
 305. Add multiple pattern slots per preset: A, B, Fill, Break, Drop, Alt, and Init.
-306. Add pattern chaining with per-pattern length, repeat count, and follow probability.
+306. Add deeper pattern chaining with arranger-style scene editing, repeat count, follow probability, and deeper per-scene automation/rate behavior beyond the first live step/control-chain and forced-length passes.
 307. Add pattern clip export by dragging MIDI from the SEQ panel to Ableton.
 308. Add MIDI import by dropping a MIDI file into the sequencer.
 309. Add scale-aware note generation like Seed/Rhythm-style tools, biased toward club patterns.
@@ -627,8 +627,8 @@ Key extra lessons:
 313. Add techno/minimal transform presets: pulse, skip, sparse pluck, delayed hit, and machine repeat.
 314. Add Euclidean rhythm generation for plucks, percussive synth hits, and FX triggers.
 315. Add density, accent, split, shift, and probability controls for generated patterns.
-316. Add per-step ratchet/retrigger with repeat count, repeat curve, and velocity falloff.
-317. Add per-step slide/glide for basslines.
+316. Expand per-step ratchet/retrigger beyond the first repeat-count lane with repeat curves, per-ratchet probability, and deeper velocity falloff.
+317. Add deeper per-step slide/glide for basslines beyond the first overlap pass.
 318. Add per-step chord type and inversion locks.
 319. Add per-step modulation lanes assignable to cutoff, drive, warp, sample start, pump, delay throw, reverb throw, width, and pitch.
 320. Add per-step FX activation lanes for Infiltrator-style rhythmic throws inside Nate VST.
@@ -723,8 +723,8 @@ Key extra lessons:
 2. Add selected-control inspector, stronger group focus, and UI scale modes.
 3. Add drag/menu modulation assignment, selected-route view, and route min/max editing.
 4. Add deeper random-walk controls, LFO 3, MSEG, and route movement processors after the first Chaos and LFO 2 passes.
-5. Add multiple sequencer patterns, ratchets, per-step modulation, and chord paint.
-6. Add transient/manual slicing with per-slice controls.
+5. Add deeper pattern chaining beyond the first forced-length mode, deeper per-scene automation/rate behavior, deeper slide/glide controls beyond the first overlap pass, richer condition options, MIDI import, richer per-step modulation, and deeper chord paint beyond the first Chord Stab Paint transform.
+6. Add transient/manual slicing with deeper per-slice playback controls beyond the current eight-pad visual overlay and stored slice-memory/nudge/fade pass.
 7. Add UKG recipe tools for organ bass, Dred/Reese, late stabs, and vocal chop motifs.
 8. Add wavetable playback, preview, and factory tables.
 9. Add multiband drive with oversampling, gain compensation, and loudness tests.
@@ -736,8 +736,8 @@ Key extra lessons:
 
 1. Componentize the editor, add screenshot/layout regression checks, and introduce UI scale modes before adding more dense panels.
 2. Add selected-control inspector, modulation rings, drag/right-click modulation assignment, and per-route min/max editing.
-3. Add pattern slots, ratchets, per-step modulation lanes, and MIDI drag export/import so the sequencer becomes Ableton-useful.
-4. Add transient/manual slicing, per-slice controls, zero-cross snap, and UKG vocal-chop templates.
+3. Add deeper pattern chaining beyond the first forced-length mode, deeper per-scene automation/rate behavior, richer per-step modulation lanes, deeper slide/glide controls beyond the first overlap pass, deeper condition vocabulary, and MIDI drag import/validation so the sequencer becomes more Ableton-useful.
+4. Add transient/manual slicing, deeper per-slice playback controls beyond the first zero-cross/nudge/fade pass, and UKG vocal-chop templates.
 5. Add true wavetable playback, visual table display, safe factory tables, and oscillator aliasing tests.
 6. Add multiband drive, oversampling, gain compensation, clipper/limiter, and drive loudness tests.
 7. Add MSEG/function generators, step LFO, route processors, and source activity meters.

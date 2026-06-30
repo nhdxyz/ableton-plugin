@@ -181,6 +181,8 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
         sampleSliceStutter[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutter[index]);
         sampleSliceChoke[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceChoke[index]);
         sampleSliceStutterRepeats[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceStutterRepeats[index]);
+        sampleSliceNudge[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceNudge[index]);
+        sampleSliceFade[index] = parameters.getRawParameterValue(Parameters::ID::sampleSliceFade[index]);
     }
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -212,11 +214,21 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
+    modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
+    modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
+    modEnv1Release = parameters.getRawParameterValue(Parameters::ID::modEnv1Release);
+    modEnv1Depth = parameters.getRawParameterValue(Parameters::ID::modEnv1Depth);
 }
 
 void SamplePlayer::prepare(double sampleRate)
 {
     playbackSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
+    sampleModEnvelope.setSampleRate(playbackSampleRate);
+    sampleModEnvelope.reset();
+    sampleModEnvelopeValue = 0.0f;
+    sampleModVelocity = 0.0f;
+    sampleModActiveNotes = 0;
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
     sampleModSmoothRandomValue = sampleModLfoStepValue;
@@ -237,6 +249,10 @@ void SamplePlayer::clear()
     sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     sampleModLfo2Phase = 0.0f;
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sampleModEnvelope.reset();
+    sampleModEnvelopeValue = 0.0f;
+    sampleModVelocity = 0.0f;
+    sampleModActiveNotes = 0;
 }
 
 void SamplePlayer::stopAllVoices()
@@ -355,6 +371,7 @@ void SamplePlayer::setRegion(SampleRegion newRegion)
     newRegion.transposeSemitones = juce::jlimit(-36.0f, 36.0f, newRegion.transposeSemitones);
     newRegion.pan = juce::jlimit(-1.0f, 1.0f, newRegion.pan);
     newRegion.probability = juce::jlimit(0.0f, 1.0f, newRegion.probability);
+    newRegion.fade = juce::jlimit(0.0f, 1.0f, newRegion.fade);
     region = newRegion;
 }
 
@@ -365,6 +382,7 @@ bool SamplePlayer::triggerAudition(int midiNoteNumber, float velocity, double bp
     if (sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return false;
 
+    triggerSampleModulationNoteOn(velocity);
     updateSampleModulation(0, bpm, std::nullopt);
     startVoice(*sampleData, midiNoteNumber, velocity, bpm, true);
     return true;
@@ -377,6 +395,7 @@ bool SamplePlayer::triggerSliceAudition(int sliceIndex, int midiNoteNumber, floa
     if (sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return false;
 
+    triggerSampleModulationNoteOn(velocity);
     updateSampleModulation(0, bpm, std::nullopt);
     startVoice(*sampleData, midiNoteNumber, velocity, bpm, true, juce::jlimit(0, 7, sliceIndex), true);
     return true;
@@ -394,6 +413,7 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer,
     if (! lock.isLocked() || sampleData == nullptr || sampleData->buffer.getNumSamples() == 0)
         return;
 
+    handleSampleModulationMidi(midi);
     updateSampleModulation(outputBuffer.getNumSamples(), bpm, ppqPosition);
 
     auto cursor = 0;
@@ -414,11 +434,65 @@ void SamplePlayer::render(juce::AudioBuffer<float>& outputBuffer,
         else if (message.isNoteOff())
             stopVoicesForNote(message.getNoteNumber());
         else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
             voices = {};
+            releaseSampleModulationNote();
+        }
     }
 
     if (cursor < outputBuffer.getNumSamples())
         renderActiveVoices(*sampleData, outputBuffer, cursor, outputBuffer.getNumSamples() - cursor);
+}
+
+void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
+{
+    for (const auto metadata : midi)
+    {
+        const auto message = metadata.getMessage();
+
+        if (message.isNoteOn())
+        {
+            triggerSampleModulationNoteOn(message.getFloatVelocity());
+        }
+        else if (message.isNoteOff())
+        {
+            sampleModActiveNotes = juce::jmax(0, sampleModActiveNotes - 1);
+            if (sampleModActiveNotes == 0)
+                sampleModEnvelope.noteOff();
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            releaseSampleModulationNote();
+        }
+    }
+}
+
+void SamplePlayer::triggerSampleModulationNoteOn(float velocity)
+{
+    sampleModVelocity = juce::jlimit(0.0f, 1.0f, velocity);
+    sampleModActiveNotes = juce::jmin(128, sampleModActiveNotes + 1);
+    sampleModEnvelope.noteOn();
+}
+
+void SamplePlayer::releaseSampleModulationNote()
+{
+    sampleModActiveNotes = 0;
+    sampleModEnvelope.noteOff();
+}
+
+float SamplePlayer::processSampleModulationEnvelope(int numSamples)
+{
+    sampleModEnvelopeParameters.attack = juce::jmax(0.001f, readParameter(modEnv1Attack, 0.01f));
+    sampleModEnvelopeParameters.decay = juce::jmax(0.001f, readParameter(modEnv1Decay, 0.2f));
+    sampleModEnvelopeParameters.sustain = juce::jlimit(0.0f, 1.0f, readParameter(modEnv1Sustain, 0.5f));
+    sampleModEnvelopeParameters.release = juce::jmax(0.001f, readParameter(modEnv1Release, 0.2f));
+    sampleModEnvelope.setParameters(sampleModEnvelopeParameters);
+
+    const auto samplesToProcess = juce::jmax(1, numSamples);
+    for (auto sampleIndex = 0; sampleIndex < samplesToProcess; ++sampleIndex)
+        sampleModEnvelopeValue = sampleModEnvelope.getNextSample();
+
+    return juce::jlimit(0.0f, 1.0f, sampleModEnvelopeValue * readParameter(modEnv1Depth, 1.0f));
 }
 
 void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition)
@@ -427,6 +501,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
 
     const auto lfoValue = processSampleModulationLfo(numSamples, bpm, ppqPosition);
     const auto lfo2Value = processSampleModulationLfo2(numSamples, bpm, ppqPosition);
+    const auto modEnvelopeValue = processSampleModulationEnvelope(numSamples);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
     {
@@ -438,7 +513,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
         if (! enabled || sourceIndex == 0 || destinationIndex < 12 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value) * amount;
+        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
 
         switch (destinationIndex)
         {
@@ -605,11 +680,13 @@ float SamplePlayer::evaluateSampleLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const
+float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
         case 1: return lfoValue;
+        case 2: return modEnvelopeValue;
+        case 3: return sampleModVelocity;
         case 4: return readParameter(macroTone, 0.0f);
         case 5: return readParameter(macroDirt, 0.0f);
         case 6: return readParameter(macroMotion, 0.0f);
@@ -707,8 +784,10 @@ void SamplePlayer::startVoice(const SampleData& data,
         bpm,
         playbackSampleRate);
     voiceToUse->samplesUntilStutter = voiceToUse->stutterIntervalSamples;
-    voiceToUse->fadeInTotalSamples = boundaryFadeSamplesForSpan(currentRegion.endSample - currentRegion.startSample);
+    const auto sliceFadeSamples = fadeSamplesForSpan(currentRegion.endSample - currentRegion.startSample, currentRegion.fade);
+    voiceToUse->fadeInTotalSamples = sliceFadeSamples;
     voiceToUse->fadeInSamplesRemaining = voiceToUse->fadeInTotalSamples;
+    voiceToUse->fadeOutTotalSamples = sliceFadeSamples;
 }
 
 void SamplePlayer::stopVoicesForNote(int midiNoteNumber)
@@ -758,7 +837,7 @@ void SamplePlayer::renderVoice(Voice& voice,
         {
             voice.position = voice.reverse ? static_cast<double>(voice.endSample - 1)
                                            : static_cast<double>(voice.startSample);
-            voice.fadeInTotalSamples = juce::jmin(stutterFadeSamples, boundaryFadeSamplesForSpan(voice.endSample - voice.startSample));
+            voice.fadeInTotalSamples = juce::jmin(stutterFadeSamples, voice.fadeOutTotalSamples);
             voice.fadeInSamplesRemaining = voice.fadeInTotalSamples;
             --voice.stutterRepeatsRemaining;
             voice.samplesUntilStutter += voice.stutterIntervalSamples;
@@ -781,11 +860,10 @@ void SamplePlayer::renderVoice(Voice& voice,
         const auto sourceSamplesUntilEnd = voice.reverse
             ? juce::jmax(0.0, voice.position - static_cast<double>(voice.startSample))
             : juce::jmax(0.0, static_cast<double>(voice.endSample - 1) - voice.position);
-        const auto boundaryFadeSamples = boundaryFadeSamplesForSpan(voice.endSample - voice.startSample);
         const auto fadeOutGain = juce::jlimit(0.0f,
                                               1.0f,
                                               static_cast<float>((sourceSamplesUntilEnd / incrementMagnitude)
-                                                                 / static_cast<double>(boundaryFadeSamples)));
+                                                                 / static_cast<double>(juce::jmax(1, voice.fadeOutTotalSamples))));
 
         for (auto channel = 0; channel < outputChannels; ++channel)
         {
@@ -843,6 +921,25 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceInd
     currentRegion.startSample = juce::jlimit(0, juce::jmax(0, numSamples - minimumWindow), static_cast<int>(orderedStart * static_cast<float>(numSamples)));
     currentRegion.endSample = juce::jlimit(currentRegion.startSample + minimumWindow, numSamples, static_cast<int>(orderedEnd * static_cast<float>(numSamples)));
     const auto sliceSettings = sliceMode ? slicePlaybackSettings(sliceIndex) : SlicePlaybackSettings {};
+    if (sliceMode && std::abs(sliceSettings.nudgePercent) > 0.001f)
+    {
+        const auto nudgeSamples = static_cast<int>(std::round((sliceSettings.nudgePercent / 100.0f) * static_cast<float>(numSamples)));
+        auto shiftedStart = currentRegion.startSample + nudgeSamples;
+        auto shiftedEnd = currentRegion.endSample + nudgeSamples;
+        if (shiftedStart < 0)
+        {
+            shiftedEnd -= shiftedStart;
+            shiftedStart = 0;
+        }
+        if (shiftedEnd > numSamples)
+        {
+            shiftedStart -= shiftedEnd - numSamples;
+            shiftedEnd = numSamples;
+        }
+
+        currentRegion.startSample = juce::jlimit(0, juce::jmax(0, numSamples - minimumWindow), shiftedStart);
+        currentRegion.endSample = juce::jlimit(currentRegion.startSample + minimumWindow, numSamples, shiftedEnd);
+    }
     currentRegion.reverse = sliceMode
         ? sliceSettings.reverse
         : readParameter(sampleReverse, 0.0f) > 0.5f;
@@ -854,6 +951,7 @@ SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceInd
         : readParameter(sampleTranspose, 0.0f);
     currentRegion.pan = sliceMode ? sliceSettings.pan : 0.0f;
     currentRegion.probability = sliceMode ? sliceSettings.probability : 1.0f;
+    currentRegion.fade = sliceMode ? sliceSettings.fade : 0.0f;
     return snapRegionToCleanBoundaries(data.buffer, currentRegion);
 }
 
@@ -873,6 +971,8 @@ SamplePlayer::SlicePlaybackSettings SamplePlayer::slicePlaybackSettings(int slic
     settings.stutter = readParameter(sampleSliceStutter[safeIndex], 0.0f) >= 0.5f;
     settings.choke = readParameter(sampleSliceChoke[safeIndex], 0.0f) >= 0.5f;
     settings.stutterRepeats = juce::jlimit(1, 8, static_cast<int>(std::round(readParameter(sampleSliceStutterRepeats[safeIndex], 3.0f))));
+    settings.nudgePercent = juce::jlimit(-5.0f, 5.0f, readParameter(sampleSliceNudge[safeIndex], 0.0f));
+    settings.fade = juce::jlimit(0.0f, 1.0f, readParameter(sampleSliceFade[safeIndex], 0.0f));
     return settings;
 }
 
@@ -940,6 +1040,16 @@ bool SamplePlayer::sliceStutterEnabled(int sliceIndex) const
 int SamplePlayer::sliceStutterRepeats(int sliceIndex) const
 {
     return slicePlaybackSettings(sliceIndex).stutterRepeats;
+}
+
+int SamplePlayer::fadeSamplesForSpan(int sourceSpan, float fadeAmount) const
+{
+    const auto baseFade = boundaryFadeSamplesForSpan(sourceSpan);
+    const auto maxMusicalFade = juce::jmin(juce::jmax(baseFade, sourceSpan / 3),
+                                          static_cast<int>(playbackSampleRate * 0.08));
+    const auto fadeSamples = baseFade + static_cast<int>(std::round(juce::jlimit(0.0f, 1.0f, fadeAmount)
+                                                                    * static_cast<float>(juce::jmax(0, maxMusicalFade - baseFade))));
+    return juce::jlimit(1, juce::jmax(1, sourceSpan / 2), fadeSamples);
 }
 
 double SamplePlayer::incrementForVoice(const Voice& voice) const

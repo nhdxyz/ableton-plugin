@@ -17,16 +17,17 @@ struct SampleData
     juce::String fileName;
 };
 
-struct SampleRegion
-{
-    int startSample = 0;
-    int endSample = 0;
-    bool reverse = false;
-    float gain = 1.0f;
-    float transposeSemitones = 0.0f;
-    float pan = 0.0f;
-    float probability = 1.0f;
-};
+    struct SampleRegion
+    {
+        int startSample = 0;
+        int endSample = 0;
+        bool reverse = false;
+        float gain = 1.0f;
+        float transposeSemitones = 0.0f;
+        float pan = 0.0f;
+        float probability = 1.0f;
+        float fade = 0.0f;
+    };
 
 struct SamplePeakOverview
 {
@@ -88,6 +89,7 @@ private:
         float gain = 1.0f;
         float pan = 0.0f;
         int sliceIndex = -1;
+        int fadeOutTotalSamples = 0;
     };
 
     Parameters::APVTS& parameters;
@@ -104,6 +106,11 @@ private:
     float sampleModChaosValue = 0.0f;
     float sampleModLfo2Phase = 0.0f;
     float sampleModLfo2StepValue = 0.0f;
+    juce::ADSR sampleModEnvelope;
+    juce::ADSR::Parameters sampleModEnvelopeParameters;
+    float sampleModEnvelopeValue = 0.0f;
+    float sampleModVelocity = 0.0f;
+    int sampleModActiveNotes = 0;
 
     struct SampleModulationOffsets
     {
@@ -124,6 +131,8 @@ private:
         bool stutter = false;
         bool choke = false;
         int stutterRepeats = 3;
+        float nudgePercent = 0.0f;
+        float fade = 0.0f;
     };
 
     SampleModulationOffsets sampleModulation;
@@ -154,6 +163,8 @@ private:
     std::array<std::atomic<float>*, 8> sampleSliceStutter {};
     std::array<std::atomic<float>*, 8> sampleSliceChoke {};
     std::array<std::atomic<float>*, 8> sampleSliceStutterRepeats {};
+    std::array<std::atomic<float>*, 8> sampleSliceNudge {};
+    std::array<std::atomic<float>*, 8> sampleSliceFade {};
     std::array<std::atomic<float>*, 8> modMatrixSources {};
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
     std::array<std::atomic<float>*, 8> modMatrixAmounts {};
@@ -179,12 +190,21 @@ private:
     std::atomic<float>* lfo2Shape = nullptr;
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2Phase = nullptr;
+    std::atomic<float>* modEnv1Attack = nullptr;
+    std::atomic<float>* modEnv1Decay = nullptr;
+    std::atomic<float>* modEnv1Sustain = nullptr;
+    std::atomic<float>* modEnv1Release = nullptr;
+    std::atomic<float>* modEnv1Depth = nullptr;
 
+    void handleSampleModulationMidi(const juce::MidiBuffer& midi);
+    void triggerSampleModulationNoteOn(float velocity);
+    void releaseSampleModulationNote();
+    float processSampleModulationEnvelope(int numSamples);
     void updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateSampleLfoCurve(float phase) const;
-    float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const;
+    float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
     int sliceIndexForMidiNote(int midiNoteNumber) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot, int forcedSliceIndex = -1, bool ignoreSliceProbability = false);
     void stopVoicesForNote(int midiNoteNumber);
@@ -197,6 +217,7 @@ private:
     bool sliceChokeEnabled(int sliceIndex) const;
     bool sliceStutterEnabled(int sliceIndex) const;
     int sliceStutterRepeats(int sliceIndex) const;
+    int fadeSamplesForSpan(int sourceSpan, float fadeAmount) const;
     double incrementForVoice(const Voice& voice) const;
     double rampProgressForVoice(const Voice& voice) const;
     float readParameter(std::atomic<float>* parameter, float fallback) const;

@@ -11,13 +11,13 @@ This is product-pattern research only. Do not copy proprietary layouts, presets,
 Based on the current repo docs and recent implementation notes, Nate VST already has these foundations:
 
 - Mac-first JUCE/CMake VST3 project for Ableton.
-- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, top meter, and bottom keyboard panels.
+- HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, top meter, and bottom keyboard panels.
 - Subtractive synth with two oscillators, sub, noise, filter, drive, envelopes, unison, Osc Warp, and output guard.
 - Bandlimited quality pass for bright oscillator sources.
 - Randomization Lab with section locks, recipes, mutate/vary/wild, snapshots, undo/redo, and genre direction.
 - Modulation matrix, LFO/curve display, source badges, right-click assignment path, macro editor, LFO 2, S&H, Smooth, and Chaos movement sources.
 - Sample Lab with waveform display, phrase/chop controls, slice pads, Slice Keys, per-slice region, pitch, gain, pan, probability, reverse, stutter, and choke memory.
-- Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length lanes, groove templates, host sync, undo, rotation, variation, and MIDI export.
+- Piano-roll style sequencer with scale/chord helpers, velocity, probability, timing, length, lock, ratchet, and condition lanes, groove templates, host sync, undo, rotation, variation, and MIDI export with groove/ratchet/condition timing.
 - Addable/reorderable FX rack with delay, reverb, drive, pump, EQ/tone, width, guard, modulation FX, throws, and module presets.
 - Preset library with recursive folders, categories, favorites, 1-5 ratings, metadata, search, sort, filters, macro previews, audition, user/factory separation, centered browser actions, a labeled Save Plan card, and a left crate rail with folder/pack/style coverage.
 - HOME output visualization with oscilloscope shape, held spectrum peaks, grouped sub/low/mid/presence/air balance, stereo width/correlation, low-end side-risk, and Guard/output status.
@@ -84,9 +84,9 @@ If we only pick the next 15 big work tracks, they should be:
 2. Drag-to-modulate workflow with visible modulation rings and source colors on knobs.
 3. MSEG/curve editor usable as LFO, envelope, step motion, filter motion, and FX shaper source.
 4. Source rack with Layer A/B, mute/solo, pan, width, routing, copy/paste, and layer snippets.
-5. UKG organ/drawbar source, Reese/Dred bass builder, and mono-safe bass utility.
+5. UKG organ/drawbar source, Reese/Dred bass builder, and mono-safe bass utility. First procedural Organ source pass is implemented; Reese/Dred builder and deeper utility work remain open.
 6. Per-step modulation lanes for cutoff, drive, pump, delay throw, reverb throw, sample slice, and wavetable position. First single-destination Lock lane implemented; multi-lane expansion remains open.
-7. Pattern scenes, pattern chaining, fills, and Ableton-friendly MIDI drag/export/import.
+7. Pattern scenes, first-pass live scene-chain playback, first-pass Build 4-Bar Chain scene generation, first forced scene-chain length modes, deeper pattern chaining, fills, and Ableton-friendly MIDI drag/export/import.
 8. Drag-and-drop audio import with transient/grid/manual slicing.
 9. Time-stretch, key/BPM detection, hot-swap, and formant-safe vocal chop investigation.
 10. Multiband distortion with oversampling, gain compensation, mid/side mode, and per-band modulation.
@@ -100,7 +100,7 @@ If we only pick the next 15 big work tracks, they should be:
 
 ### UI, Layout, And Interaction
 
-1. Split `PluginEditor` into child components for HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, top bar, and keyboard.
+1. Split `PluginEditor` into child components for HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, top bar, and keyboard.
 2. Add a shared `PanelFrame`, `KnobGroup`, `SectionHeader`, `ModuleHeader`, `BrowserRow`, `RouteBadge`, and `LaneEditor` UI library.
 3. Add resizable UI at 85%, 100%, 125%, and 150%.
 4. Add Ableton laptop compact mode.
@@ -181,8 +181,8 @@ If we only pick the next 15 big work tracks, they should be:
 70. Add FM/PM between oscillators with protected gain.
 71. Add dedicated 3-operator FM source for UKG bells, organ edges, metallic stabs, and techno pings.
 72. Add additive/partial source for hollow bells and glassy minimal tones.
-73. Add drawbar/organ source for UKG, speed garage, and house organ bass.
-74. Add original/legal PCM-style house organ, string, piano, and stab source.
+73. Add drawbar/organ source for UKG, speed garage, and house organ bass. First procedural Organ waveform pass is implemented; editable drawbars and source snippets remain open.
+74. Add original/legal PCM-style house organ, string, piano, and stab source. First procedural House Piano waveform pass is implemented; bundled PCM-style sample content remains open.
 75. Add resonator/modal source for minimal plucks and percussive mallet tones.
 76. Add granular source for vocal clouds, pads, and transition texture.
 77. Add spectral/resynthesis investigation for advanced vocal and stab textures.
@@ -245,10 +245,10 @@ If we only pick the next 15 big work tracks, they should be:
 
 126. Add multiple patterns per preset.
 127. Add pattern scene buttons: A, B, fill, drop, breakdown, and transition.
-128. Add pattern chaining and song slots.
+128. Add deeper pattern chaining and song slots beyond the first live scene-chain playback, Build 4-Bar Chain, and forced chain-length passes.
 129. Add fill trigger and one-shot fill mode.
-130. Add per-step ratchet/retrigger.
-131. Add per-step slide/glide.
+130. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
+131. Add deeper per-step slide/glide beyond the first saved lane/live-export overlap pass.
 132. Add per-step accent linked to amp, filter, and drive.
 133. Add per-step sample slice lane.
 134. Add per-step wavetable position lane.
@@ -258,18 +258,18 @@ If we only pick the next 15 big work tracks, they should be:
 138. Add per-step delay throw lane.
 139. Add per-step reverb throw lane.
 140. Add per-step FX select/probability lane.
-141. Add step conditions: first, not first, every 2, every 4, fill only, random, and previous-hit dependent.
+141. Add deeper step conditions: first, not first, every 4, random, follow, and previous-hit dependent. First Always/Odd/Even/Fill condition lane is implemented.
 142. Add probability ranges instead of single probability values.
 143. Add lane-specific groove amount.
 144. Add UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal sparse, dub techno pulse, warehouse straight, and broken percussion groove templates.
 145. Add swing microtiming visualization.
 146. Add groove template browser and user groove save.
 147. Add Euclidean generator.
-148. Add bassline contour generator.
+148. Add bassline contour generator. First Bass Contour Shape transform is implemented; deeper multi-phrase generation remains open.
 149. Add recombine tool that keeps rhythm but changes pitches.
 150. Add density control for generated patterns.
 151. Add scale-aware note generation.
-152. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ, dub chord, and house stab voicings.
+152. Add deeper chord paint tools for minor 7, minor 9, major 7, sus, garage organ, dub chord, and house stab voicings beyond the first Chord Stab Paint transform.
 153. Add voicing spread and inversion lock.
 154. Add strum direction curves.
 155. Add MIDI drag export directly from UI to Ableton.
@@ -323,17 +323,17 @@ If we only pick the next 15 big work tracks, they should be:
 197. Add speed garage organ bass template.
 198. Add Dred bass builder with reverse-feeling filter motion.
 199. Add Reese builder with clean sub and stereo upper harmonics.
-200. Add organ/drawbar bass builder.
+200. Add organ/drawbar bass builder. First procedural Organ source pass is implemented; a deeper builder remains open.
 201. Add UKG chopped vocal starter with swing, pitch, pan, and delay/reverb throw assignments.
 202. Add Todd Edwards-style micro vocal chop transform as a broad pattern idea, not a preset copy.
 203. Add late stab generator with ghost hits and swing amount.
 204. Add dub chord builder with bandpass/noise/reverb/delay motion.
-205. Add house piano stab builder with legal/original sources.
+205. Add house piano stab builder with legal/original sources. First procedural House Piano source pass is implemented; a deeper builder and sampled content remain open.
 206. Add tech-house rubber bass builder.
 207. Add minimal click pluck builder.
 208. Add techno warehouse stab builder.
 209. Add acid-style filter sequence builder.
-210. Add organ chord memory presets for minor 7, minor 9, sus, and garage voicings.
+210. Add organ chord memory presets for minor 7, minor 9, sus, and garage voicings. First Organ/House Piano source seeding is implemented in selected factory presets; broader voicing-specific packs remain open.
 211. Add call/response bassline generator.
 212. Add sparse vocal tag generator.
 213. Add offbeat chord stab pattern.
@@ -404,7 +404,7 @@ If we only pick the next 15 big work tracks, they should be:
 272. Add pack installer/import/export.
 273. Add dependency report for missing samples and wavetables.
 274. Add "collect and save" pack export.
-275. Expand beyond the current 88-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, smart-crate, and curated metadata coverage is implemented.
+275. Expand beyond the current 96-preset factory pack with Tech-House Loops, Vocal Tags, sampler-based garage chops, larger organ-stab variations, and pack-level QA metadata. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Dub Techno, Warehouse Hit, Reese/Dred Bass, Organ Stab, house construction kits, smart-crate, and curated metadata coverage is implemented.
 276. Add sample pack browser integrated with SAMPLE.
 277. Add sample preview in context with the internal sequencer.
 278. Add browsing by musical role: Sub, Top Bass, Organ, Chord, Stab, Pluck, Vocal Chop, FX Throw, Texture, Sequence.
@@ -415,7 +415,7 @@ If we only pick the next 15 big work tracks, they should be:
 
 281. Add CI for macOS build and tests.
 282. Add pluginval CI or release-gate script.
-283. Add automated preset load smoke test for all factory presets.
+283. Expand the implemented automated factory preset load/render smoke tests into role loudness, mono-bass, and stuck-note reports.
 284. Add parameter migration tests for old presets.
 285. Add automation smoothing tests.
 286. Add stuck-note/all-notes-off tests.

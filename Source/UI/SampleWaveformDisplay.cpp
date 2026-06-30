@@ -42,6 +42,41 @@ void SampleWaveformDisplay::setRange(float newStart, float newEnd)
     repaint();
 }
 
+void SampleWaveformDisplay::setSliceMarkers(const std::array<SliceMarker, 8>& newMarkers)
+{
+    auto markersChanged = false;
+
+    for (size_t index = 0; index < sliceMarkers.size(); ++index)
+    {
+        const auto& current = sliceMarkers[index];
+        const auto& next = newMarkers[index];
+        if (std::abs(current.start - next.start) >= 0.001f
+            || std::abs(current.end - next.end) >= 0.001f
+            || std::abs(current.pitch - next.pitch) >= 0.01f
+            || std::abs(current.gain - next.gain) >= 0.01f
+            || std::abs(current.pan - next.pan) >= 0.01f
+            || std::abs(current.probability - next.probability) >= 0.01f
+            || std::abs(current.nudgePercent - next.nudgePercent) >= 0.05f
+            || std::abs(current.fade - next.fade) >= 0.01f
+            || current.repeats != next.repeats
+            || current.custom != next.custom
+            || current.selected != next.selected
+            || current.reverse != next.reverse
+            || current.stutter != next.stutter
+            || current.choke != next.choke)
+        {
+            markersChanged = true;
+            break;
+        }
+    }
+
+    if (! markersChanged)
+        return;
+
+    sliceMarkers = newMarkers;
+    repaint();
+}
+
 void SampleWaveformDisplay::setModulationState(float startAmount,
                                                float mixAmount,
                                                float pitchAmount,
@@ -161,6 +196,53 @@ void SampleWaveformDisplay::paint(juce::Graphics& g)
     g.setColour(regionColour.withAlpha(0.8f));
     g.drawRoundedRectangle(selection, 3.0f, 1.2f);
 
+    const auto sliceLane = sliceLaneBounds();
+    g.setColour(juce::Colour(0xff0d1113).withAlpha(0.78f));
+    g.fillRoundedRectangle(sliceLane, 4.0f);
+
+    for (size_t index = 0; index < sliceMarkers.size(); ++index)
+    {
+        const auto& marker = sliceMarkers[index];
+        const auto markerStart = juce::jlimit(0.0f, 1.0f, juce::jmin(marker.start, marker.end));
+        const auto markerEnd = juce::jlimit(0.0f, 1.0f, juce::jmax(marker.start, marker.end));
+        const auto markerStartX = juce::jmap(markerStart, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        const auto markerEndX = juce::jmap(markerEnd, 0.0f, 1.0f, plot.getX(), plot.getRight());
+        auto markerBounds = juce::Rectangle<float> { markerStartX,
+                                                     sliceLane.getY() + 2.0f,
+                                                     juce::jmax(5.0f, markerEndX - markerStartX),
+                                                     sliceLane.getHeight() - 4.0f };
+        const auto markerColour = marker.selected ? regionColour : (marker.custom ? accent : juce::Colour(0xff39474d));
+        g.setColour(markerColour.withAlpha(marker.selected ? 0.34f : marker.custom ? 0.2f : 0.12f));
+        g.fillRoundedRectangle(markerBounds, 3.0f);
+        g.setColour(markerColour.withAlpha(marker.selected ? 0.95f : 0.58f));
+        g.drawRoundedRectangle(markerBounds, 3.0f, marker.selected ? 1.4f : 0.9f);
+
+        auto labelBounds = markerBounds.reduced(2.0f, 0.0f).toNearestInt();
+        const auto pitchText = std::abs(marker.pitch) >= 0.05f
+            ? ((marker.pitch >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(marker.pitch)))
+            : juce::String("0");
+        auto flagText = juce::String(static_cast<int>(index + 1)) + (marker.custom ? "*" : "");
+        if (marker.reverse)
+            flagText += " R";
+        if (marker.stutter)
+            flagText += " x" + juce::String(juce::jlimit(1, 8, marker.repeats));
+        if (marker.choke)
+            flagText += " C";
+        if (marker.probability < 0.995f)
+            flagText += " " + juce::String(juce::roundToInt(marker.probability * 100.0f)) + "%";
+        if (std::abs(marker.pan) > 0.05f)
+            flagText += marker.pan < 0.0f ? " L" : " R";
+        if (std::abs(marker.nudgePercent) > 0.1f)
+            flagText += marker.nudgePercent > 0.0f ? " >" : " <";
+        if (marker.fade > 0.12f)
+            flagText += marker.fade > 0.55f ? " F+" : " F";
+        flagText += " " + pitchText;
+
+        g.setFont(juce::FontOptions(markerBounds.getWidth() > 54.0f ? 8.0f : 7.0f, marker.selected ? juce::Font::bold : juce::Font::plain));
+        g.setColour(marker.selected ? juce::Colour(0xffffffff) : juce::Colour(0xffb8c6c9));
+        g.drawFittedText(flagText, labelBounds, juce::Justification::centred, 1, 0.55f);
+    }
+
     if (std::abs(startModAmount) > 0.01f)
     {
         const auto modLow = juce::jlimit(0.0f, 1.0f, orderedStart + (juce::jmin(0.0f, startModAmount) * 0.36f));
@@ -249,6 +331,17 @@ void SampleWaveformDisplay::mouseDown(const juce::MouseEvent& event)
     const auto normalised = positionToNormalised(event.position.x);
     const auto startDistance = std::abs(normalised - startNormalised);
     const auto endDistance = std::abs(normalised - endNormalised);
+    if (sliceLaneBounds().contains(event.position) && onSliceSelected)
+    {
+        const auto sliceIndex = sliceIndexAtPosition(event.position.x);
+        if (sliceIndex >= 0 && startDistance >= 0.025f && endDistance >= 0.025f)
+        {
+            dragMode = DragMode::none;
+            onSliceSelected(static_cast<size_t>(sliceIndex));
+            return;
+        }
+    }
+
     dragAnchor = normalised;
 
     if (startDistance < 0.025f || endDistance < 0.025f)
@@ -290,10 +383,43 @@ juce::Rectangle<float> SampleWaveformDisplay::plotBounds() const
     return getLocalBounds().toFloat().reduced(10.0f, 17.0f).withTrimmedTop(3.0f);
 }
 
+juce::Rectangle<float> SampleWaveformDisplay::sliceLaneBounds() const
+{
+    const auto plot = plotBounds();
+    const auto laneHeight = juce::jlimit(16.0f, 30.0f, plot.getHeight() * 0.24f);
+    return plot.withY(plot.getBottom() - laneHeight).withHeight(laneHeight);
+}
+
 float SampleWaveformDisplay::positionToNormalised(float xPosition) const
 {
     const auto plot = plotBounds();
     return juce::jlimit(0.0f, 1.0f, (xPosition - plot.getX()) / juce::jmax(1.0f, plot.getWidth()));
+}
+
+int SampleWaveformDisplay::sliceIndexAtPosition(float xPosition) const
+{
+    const auto normalised = positionToNormalised(xPosition);
+    auto bestIndex = -1;
+    auto bestDistance = 2.0f;
+
+    for (size_t index = 0; index < sliceMarkers.size(); ++index)
+    {
+        const auto& marker = sliceMarkers[index];
+        const auto start = juce::jlimit(0.0f, 1.0f, juce::jmin(marker.start, marker.end));
+        const auto end = juce::jlimit(0.0f, 1.0f, juce::jmax(marker.start, marker.end));
+        if (normalised >= start && normalised <= end)
+            return static_cast<int>(index);
+
+        const auto centre = (start + end) * 0.5f;
+        const auto distance = std::abs(normalised - centre);
+        if (distance < bestDistance)
+        {
+            bestDistance = distance;
+            bestIndex = static_cast<int>(index);
+        }
+    }
+
+    return bestIndex;
 }
 
 void SampleWaveformDisplay::applyRange(float start, float end)

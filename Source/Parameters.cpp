@@ -14,7 +14,7 @@ namespace Parameters
 {
 juce::StringArray waveformChoices()
 {
-    return { "Sine", "Saw", "Square", "Triangle", "Wavetable" };
+    return { "Sine", "Saw", "Square", "Triangle", "Wavetable", "Organ", "House Piano" };
 }
 
 juce::StringArray filterModeChoices()
@@ -821,6 +821,19 @@ APVTS::ParameterLayout createLayout()
             1,
             8,
             3));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceNudge[index],
+            "Sample Slice " + labelIndex + " Nudge",
+            juce::NormalisableRange<float> { -5.0f, 5.0f, 0.05f },
+            0.0f,
+            juce::AudioParameterFloatAttributes().withLabel("%")));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::sampleSliceFade[index],
+            "Sample Slice " + labelIndex + " Fade",
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            0.0f));
     }
 
     add(std::make_unique<juce::AudioParameterBool>(

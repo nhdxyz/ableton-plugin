@@ -20,7 +20,11 @@ public:
     void prepare(double sampleRate, int maximumBlockSize, int numChannels);
     void reset();
     void setSequencerLock(int destinationIndex, float amount) noexcept;
-    void process(juce::AudioBuffer<float>& buffer, float outputGainDb, double bpm, std::optional<double> ppqPosition);
+    void process(juce::AudioBuffer<float>& buffer,
+                 const juce::MidiBuffer& midi,
+                 float outputGainDb,
+                 double bpm,
+                 std::optional<double> ppqPosition);
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
     void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
     void requestSendTailKill() noexcept;
@@ -73,6 +77,11 @@ private:
     float fxModChaosValue = 0.0f;
     float fxModLfo2Phase = 0.0f;
     float fxModLfo2StepValue = 0.0f;
+    juce::ADSR fxModEnvelope;
+    juce::ADSR::Parameters fxModEnvelopeParameters;
+    float fxModEnvelopeValue = 0.0f;
+    float fxModVelocity = 0.0f;
+    int fxModActiveNotes = 0;
     int sequencerLockDestination = 0;
     float sequencerLockAmount = 0.0f;
     int delayWritePosition = 0;
@@ -192,13 +201,22 @@ private:
     std::atomic<float>* lfo2Shape = nullptr;
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2Phase = nullptr;
+    std::atomic<float>* modEnv1Attack = nullptr;
+    std::atomic<float>* modEnv1Decay = nullptr;
+    std::atomic<float>* modEnv1Sustain = nullptr;
+    std::atomic<float>* modEnv1Release = nullptr;
+    std::atomic<float>* modEnv1Depth = nullptr;
 
     std::array<int, fxModuleCount> orderedModuleIndices() const;
+    void handleFxModulationMidi(const juce::MidiBuffer& midi);
+    void triggerFxModulationNoteOn(float velocity);
+    void releaseFxModulationNote();
+    float processFxModulationEnvelope(int numSamples);
     void updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateFxLfoCurve(float phase) const;
-    float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value) const;
+    float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
     void processModule(int moduleIndex,
                        juce::AudioBuffer<float>& buffer,
                        double bpm,

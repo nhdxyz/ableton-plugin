@@ -66,9 +66,11 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Useful-only validation now renders a short internal audition through the synth/sample/FX chain to detect quiet, clipped, non-finite, or heavy-tail candidates before candidate capture, then appends render feedback to LAB status, History, and generated preset notes.
 - Random Lab now retries rejected render candidates before filling a candidate slot, restoring the original pre-random state between attempts and reporting retry exhaustion when locks make a bad result impossible to fix.
 - Random Lab now applies recipe-aware safe fallbacks after retry exhaustion, recovering from the original pre-random state with bass/mid/noise/general init shapes, relaxed Output/FX safety locks when needed, and explicit blocked-source-lock reporting.
+- The synth source choices now append procedural `Organ` and `House Piano` modes after the existing waveform indices, keeping old presets stable while giving house chord, piano, and organ-bass presets stronger original source character.
 - Library scan results now keep all eight macro values per preset, and the Browser renders them as a compact Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw strip for faster performance-preset triage.
 - LIBRARY now separates Crates, Browser, Save Target, and Preset Profile areas, shows selected-preset role, traits, cue, Tone/Dirt/Motion/Space profile, and macro shape in a dedicated adaptive summary component, and keeps HOME preset access to recall/audition instead of save metadata.
-- The repo-managed factory pack now covers 88 UKG, speed-garage, bass-house, breakbeat-garage, house, Chicago-house, classic-house, funky-house, acid-house, indie-dance, Italo-disco, Balearic-house, nu-disco, deep-tech, afro-tech, French-house, soulful-house, garage-house, breaks-house, tribal tech-house, melodic-house, afro-melodic house, progressive-house, hard-house, piano-house, disco-house, Latin-house, organic-house, afro-house, lo-fi/Detroit/progressive-house, future-garage, electro-house, electro-breaks, tech-house, microhouse, Romanian-minimal, deep-minimal, minimal/FM, dub-techno, raw/hypnotic techno, peak-time/Detroit/hardgroove/warehouse-techno, melodic-techno, Amapiano-inspired, and techno starter presets, with newer presets carrying curated `preset_notes` for the Library inspector.
+- The repo-managed factory pack now covers 96 UKG, speed-garage, bass-house, breakbeat-garage, house, deep-house construction kits, piano-house riffs, jackin organ bass kits, Chicago-house, classic-house, funky-house, acid-house, indie-dance, Italo-disco, Balearic-house, nu-disco, deep-tech, afro-tech, French-house, soulful-house, garage-house, breaks-house, tribal tech-house, melodic-house, afro-melodic house, progressive-house, hard-house, piano-house, disco-house, Latin-house, organic-house, afro-house, lo-fi/Detroit/progressive-house, future-garage, electro-house, electro-breaks, tech-house, tech-house rubber hook kits, microhouse, Romanian-minimal, deep-minimal, minimal/FM, dub-techno, dub-house chord throws, dirty house tools, raw/hypnotic techno, peak-time/Detroit/hardgroove/warehouse-techno, melodic-techno, Amapiano-inspired, and techno starter presets, with newer presets carrying curated `preset_notes` and selected generated ratchet fills for the Library inspector and SEQ starter patterns.
+- `FactoryPresetRenderAudit` now renders every repo-managed factory preset through the real preset loader and synth/sample/FX path, catching non-finite, silent, and runaway-peak output before factory content is accepted. Role loudness targets, rendered preview files, mono-bass reports, and stuck-note validation remain future work.
 - The LIBRARY panel now has a preset-vault polish pass with quick genre/source filter buttons, a left crate rail, centered selected-preset navigation/actions above the browser list, and a clearer right-side save metadata flow while preserving existing preset files and metadata.
 - HOME now includes stereo field/correlation visualization and a Club Monitor beside the spectrum display, exposing full-band width, balance, correlation, low-end side risk, short-history sub/side/pump/Guard/peak risk, held spectrum peaks, and grouped sub/low/mid/presence/air energy for mono-safe house and club mix decisions.
 - LIBRARY now captures a full state pair around explicit preset loads, enabling Before/Loaded comparison and Revert without changing preset files, APVTS parameters, or Ableton automation IDs.
@@ -78,7 +80,7 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 - Library Save now has a redesigned visual Save Plan summary for name, destination trail, labeled Name/Folder/Pack/Cue/Notes readiness, pack, key, BPM, author, notes length, generated state, and overwrite status, while selected-preset rating lives with browser inspect actions instead of the save metadata row.
 - HOME now replaces the old preset-recall block with a Patch Snapshot view showing selected-preset metadata, patch role, source type, output safety, A/B readiness, sequencer/pump state, performance-meter energy, and active Random Lab candidate status above compact recall/audition controls.
 - LIBRARY Crates now includes a compact crate-map summary for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged preset counts, so browser organization is visible without a full editable sidebar mode.
-- Library Save dropdowns now include the newer house/techno style folders and pack targets used by the 88-preset factory pack, including House/Acid, House/Indie Dance, House/Italo Disco, House/Nu Disco, House/Balearic, House/Afro Melodic, House/Progressive, House/Hard House, House/Lo-Fi, House/Keys, House/Plucks, Tech House/Afro Tech, Techno/Dub, Techno/Hardgroove, Techno/Peak Time, Techno/Detroit, Techno/Melodic, Minimal/FM, Minimal/Deep, Romanian Minimal, Electro Breaks, House Chords, Dub Stabs, Minimal Plucks, Dub Techno Tools, and Electro Breaks Tools.
+- Library Save dropdowns now include the newer house/techno style folders and pack targets used by the 96-preset factory pack, including House/Acid, House/Indie Dance, House/Italo Disco, House/Nu Disco, House/Balearic, House/Afro Melodic, House/Progressive, House/Hard House, House/Lo-Fi, House/Keys, House/Plucks, House Chords, House Tools, Dub Stabs, Garage Chops, Tech House Tools, Tech House/Afro Tech, Techno/Dub, Techno/Hardgroove, Techno/Peak Time, Techno/Detroit, Techno/Melodic, Minimal/FM, Minimal/Deep, Romanian Minimal, Electro Breaks, Minimal Plucks, Dub Techno Tools, and Electro Breaks Tools.
 
 ## Highest-Value Randomization Backlog
 
@@ -122,8 +124,8 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 4. Expand duplicate handling with rename-as-copy, version history, and duplicate/near-duplicate detection beyond the implemented same-folder overwrite guard.
 5. Add preset version history for user presets.
 6. Add per-preset notes and "source recipe" metadata.
-7. Add rendered audio preview files, regeneration, and auto-preview; the current first pass is runtime role-aware MIDI audition from the Audition button.
-8. Add preview phrase selection by preset role: bass, stab, pluck, chord, FX, chop.
+7. Expand the implemented rendered preset preview cache/playback with background generation, regeneration controls, auto-preview, waveform/level row badges, and preview loudness consistency.
+8. Add editable preview phrase selection by preset role: bass, stab, pluck, chord, FX, chop, and construction-kit sequence.
 9. Add missing sample/wavetable dependency warnings directly in Library rows.
 10. Add preset pack import/export with folder structure and metadata manifest.
 11. Add "collect and save" for samples/wavetables used by a preset pack.
@@ -146,12 +148,12 @@ Use these as product-pattern references only. Do not copy proprietary layouts, p
 
 ## Next Implementation Slice
 
-Best next slice: add deeper generated-candidate history and candidate-row favorite/rating handoff.
+Best next slice: expand the four generated-candidate slots into deeper history with per-row notes and favorite/rating controls beyond the implemented shared Save Slot handoff.
 
 Why:
 - It directly supports randomization as the best feature.
 - It keeps users from losing good ideas while exploring.
-- It naturally connects candidate slots to favorite, rating, notes, and browser organization.
+- It naturally connects candidate history rows to favorite, rating, notes, and browser organization.
 - It can be implemented without changing plugin parameter IDs.
 
 Candidate polish behavior:

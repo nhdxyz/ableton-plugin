@@ -31,18 +31,25 @@ Reference products:
 
 - Roland ZENOLOGY / ZEN-Core.
 - Xfer Serum.
+- reFX NEXUS.
 - u-he synths such as Diva, Hive, Zebra, and Repro.
 - Korg instruments such as wavestate, modwave, opsix, MS-20, and Wavestation.
 - Arturia Pigments and similar modern hybrid instruments for sequencer/modulation organization.
+- Native Instruments MASSIVE X and UVI Falcon for source/modulation/sampler depth.
 - Cableguys ShaperBox-style focused rhythmic shaping workflows.
 
 Current research references:
 
 - Roland ZENOLOGY Pro: https://www.roland.com/us/products/rc_zenology_pro/
 - Xfer Serum 2: https://xferrecords.com/products/serum-2
+- reFX NEXUS5: https://refx.com/nexus/
 - u-he Diva: https://u-he.com/products/diva/
 - Korg Collection: https://www.korg.com/us/products/software/korg_collection/
+- Korg wavestate native: https://www.korg.com/us/products/software/wavestate_native/
+- Korg modwave native: https://www.korg.com/us/products/software/modwave_native/
 - Arturia Pigments: https://www.arturia.com/products/software-instruments/pigments/overview
+- Native Instruments MASSIVE X: https://www.native-instruments.com/en/products/komplete/synths/massive-x/
+- UVI Falcon: https://www.uvi.net/falcon
 - Cableguys ShaperBox: https://www.cableguys.com/shaperbox
 - Ableton Simpler: https://www.ableton.com/en/live-manual/12/live-instrument-reference/#simpler
 
@@ -55,14 +62,14 @@ Current UI research takeaway:
 - Long option sets still belong in dropdowns or browser lists.
 - Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
 - The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset session state, recall/audition, randomization, and deeper-panel navigation should all be close at hand while full save metadata stays in LIBRARY.
-- Latest reference review points to low-risk polish before new engines: per-control modulation inspection, deeper preset metadata/audition, tighter UKG chop trimming, selective groove transforms, editable macro assignments, FX module presets, and genre-specific init templates.
-- Larger engine tracks should stay deliberate: wavetable oscillator support, layered partials, motion sequencing lanes, advanced sampler slicing, character filter/drive models, FM/operator options, and vector morphing.
-- Current deep review says Nate VST is no longer missing the basics for a house-focused synth; the biggest remaining gaps are polish and depth: visual drag-style modulation, stronger source engines, per-slice chop lanes, construction-kit browsing, per-lane sequencer modulation, and oversampled nonlinear quality modes.
+- The 2026-06-29 house competitor refresh lives in `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md` and is the current source for next-gap decisions.
+- Latest reference review says Nate VST is past the basic skeleton stage. The biggest remaining house gaps are deeper original/legal source material, serious sampler slicing and time workflow, Ableton-native clip/audio drag-out flow beyond first-pass MIDI drag-out, a house drum/kick-bass construction lane, faster visual modulation, multiband/bass-safe drive, expansion-ready content packs, broader construction-kit content, and release-grade Ableton validation.
+- Larger engine tracks should stay deliberate: true wavetable import/warp, lightweight source layers, FM/operator or partial-style sources, drawbar/PCM-style house sources from original material, advanced sampler slicing, character filter/drive models, and motion sequencing lanes.
 - UI status should make timing trust obvious. SEQ and FX now show host-sync state so Ableton BPM/PPQ lock, stopped-host state, and internal fallback are visible while building groove-heavy patches.
 
 Current add-list research:
 
-- The current prioritized research list lives in `docs/NEXT_FEATURE_RESEARCH.md`. Use it to choose the next issue slices after each deep review. It maps the current competitor/product findings to concrete Nate VST work and existing GitHub issues.
+- The current prioritized research list lives in `docs/NEXT_FEATURE_RESEARCH.md`, with the 2026-06-29 house competitor refresh in `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md`. Use those to choose the next issue slices after each deep review. They map competitor/product findings to concrete Nate VST work and existing GitHub issues.
 
 Deep backlog:
 
@@ -398,7 +405,7 @@ Do not build these first, but keep the architecture open for them:
 - Preset browser with tags.
 - Favorite presets.
 - Factory sound packs.
-- Skin/theme options.
+- Skin/theme options: first centralized UI theme tokens and contrast validation are implemented for the current Dark Club palette plus planned Analyzer/Warm Studio palettes; a later selector should use a non-automatable settings preference, not APVTS preset/automation state.
 - MPE support.
 - Separate audio effect version.
 
@@ -992,7 +999,7 @@ Top bar:
 - Mono/poly toggle.
 - Output meter.
 - Randomize button later.
-- Settings button.
+- Settings button or popover later; planned home for non-audio preferences such as visual theme selection now that first theme tokens exist.
 
 Possible first-page layout:
 
@@ -1023,14 +1030,14 @@ Possible long-term tab layout:
 Current implemented panel layout:
 
 - HOME: performance shaping, macro/XY movement, compact Random Lab actions, output/low-end analysis, a compact signal-flow strip, A/B snapshots, and a Session area for selected-preset metadata, compare state, active random-candidate state, recall, and audition.
-- SYNTH: oscillator waveform segments, source mix, mono/unison controls, Osc Warp, wavetable preview, filter response, filter character/slope, drive/output, and amp controls.
+- SYNTH: oscillator waveform segments, source mix, a live/clickable house layer rack plus expanded source-layer focus overlay for Sub/Body/Character/Transient/Chop roles, mono/unison controls, Osc Warp, WT position controls, filter response, filter character/slope, drive/output, and amp controls.
 - LAB: focused Generate, Mutate, Recipe, History, and Save pages with section locks, section strengths, candidate slots, cue/compare, save-from-slot, favorite/rating handoff, and generated-preset notes.
-- SAMPLE: sample load/clear, waveform region editing, phrase markers, slice pads, Slice Keys, reverse, pitch, gain, pan, probability, stutter, choke, and UKG chop helpers.
-- SEQ: piano-roll style sequencer, segmented rate selector, pattern/groove templates, chord memory, velocity/probability/timing/length lanes, A/B/Fill/Drop scenes, host-sync status, and MIDI export.
-- FX: addable/reorderable Tone, Distortion, Bitcrush, Pump, Tremolo, Ring, Comb, Phaser, Flanger, Chorus, Delay, Reverb, Width, and Guard modules with module presets and send-style throws.
+- SAMPLE: sample load/clear, waveform region editing, phrase markers, slice pads, Slice Keys, reverse, pitch, gain, pan, probability, stutter, choke, nudge, fade, UKG chop helpers, and an adaptive expanded chop focus overlay.
+- SEQ: piano-roll style sequencer, segmented rate selector, pattern/groove templates, chord memory, velocity/probability/timing/length/lock/ratchet/condition/slide lanes, A/B/Fill/Drop scenes, adaptive expanded pattern focus overlay with `Auto` / `2 Bar` / `4 Bar` scene-chain length mode, host-sync status, first-pass live scene-chain playback, `Build 4-Bar Chain` scene generation, single-pattern MIDI export, captured scene-chain MIDI export, and first-pass drag-to-Ableton MIDI handoff from the `MIDI` and `Chain` buttons.
+- FX: addable/reorderable Tone, Distortion, Bitcrush, Pump, Tremolo, Ring, Comb, Phaser, Flanger, Chorus, Delay, Reverb, and Width modules with module presets and send-style throws, followed by a fixed final Guard safety stage.
 - LIBRARY: Find, Browser, Save Patch, and Inspect work areas with smart crates, search/sort/filter, previous/next/load/audition/favorite, compare/revert, ratings, recursive category/subfolder saves, author/pack/key/BPM metadata, notes/templates, visual Save Target preview, and preset folder status.
 - TOP BAR: panel tabs plus a compact stereo output meter.
-- BOTTOM BAR: persistent piano keyboard for mouse auditioning patches.
+- BOTTOM BAR: persistent responsive piano keyboard for mouse auditioning patches.
 
 Suggested first UI size:
 
@@ -1048,11 +1055,12 @@ Suggested first UI size:
 - Clear numeric readouts where exact values matter.
 - Modulation rings or overlays around controls are partially implemented through wavetable, filter, sample, and MOD route visual feedback; remaining work is per-knob rings and drag-to-modulate.
 - HOME includes a final-output oscilloscope, spectrum, and stereo/correlation display; remaining work is freeze/zoom and expanded analyzer modes.
-- The SYNTH panel includes a wavetable display for the current internal wavetable-style source; remaining work is true wavetable playback/import/editing.
-- The SAMPLE panel includes a waveform display with chop handles and modulation overlays; remaining work is transient detection, manual slicing depth, and time-stretch/formant tools.
-- The SEQ panel includes a compact piano-roll style grid with note rows and editable lanes; remaining work is ratchets, conditions, and deeper per-step modulation.
-- A persistent bottom piano keyboard is implemented for quick note auditioning.
-- A performance XY pad is implemented for Motion/Space macro movement; remaining work is assignable XY targets and recordable gestures.
+- The SYNTH panel includes a compact house layer rack that visualizes existing Osc 1, Osc 2, Sub, Noise, and Sample Mix state as house-production roles; remaining work is a real source-rack architecture with mute/solo/trim/pan plus true wavetable import/editing.
+- The SAMPLE panel includes a waveform display with chop handles, modulation overlays, selected/custom slice-state badges, slice-lane click selection, an adaptive expanded chop focus overlay, and first-pass per-slice nudge/fade actions; remaining work is transient detection, manual slicing depth, per-slice playback modes, slice-to-sequencer flow, full relink, and time-stretch/formant tools.
+- The SEQ panel includes a compact piano-roll style grid with note rows plus editable velocity, probability, timing, length, lock, ratchet, first-pass condition, and first-pass slide lanes plus an adaptive expanded pattern focus overlay, a first Bass Contour shape tool for house bassline movement with slide gestures, a first Chord Stab Paint shape tool for one-click House 9 stab phrases, a `Build 4-Bar Chain` Shape transform for A/B/Fill/Drop phrase generation, first-pass live scene-chain step/control playback, an expanded-focus `Auto` / `2 Bar` / `4 Bar` chain length mode, and first-pass MIDI drag-out for current and scene-chain patterns; remaining work is arranger-style chain editing, deeper per-scene automation/rate/follow behavior, deeper glide/portamento controls, deeper condition vocabulary, MIDI import, audio/loop drag-out, and deeper per-step modulation.
+- A persistent bottom piano keyboard is implemented for quick note auditioning, with responsive key width based on the visible note range so wide editor sizes keep the playable key range filling the bottom bar.
+- The Library preset browser has an adaptive compact row mode that keeps sound name/metadata readable and collapses the full macro strip into preview/source/rating columns when the browser gets narrow; remaining work is screenshot regression, waveform badges, background preview generation, and deeper construction-kit pack browsing.
+- A performance XY pad is implemented for Motion/Space macro movement, and HOME/MOD now share an editable macro shape map plus an expanded macro focus overlay for all eight performance macros; remaining work is assignable XY targets and recordable gestures.
 
 ### Visual Sections
 
@@ -1331,7 +1339,7 @@ README.md
 PLAN.md
 ```
 
-The exact structure may change depending on whether the project starts from plain JUCE or Pamplejuce.
+The project is currently a plain JUCE/CMake codebase using CMake FetchContent for JUCE. The exact module layout can still change as panels are extracted and source engines grow.
 
 Recommended architecture direction:
 
@@ -1357,6 +1365,8 @@ Recommended architecture direction:
 
 ## Development Milestones
 
+Current implementation status: Milestones 0 through 9 have first-pass code in the repo: JUCE/CMake VST3 scaffold, MIDI-driven synth audio, custom editor panels, randomization, FX rack, sampler workflow, sequencer workflow with scenes, groove templates, lock/ratchet/condition/slide lanes, preset/library behavior, and CTest audit executables. Milestone 10 is still the active release-prep track; the first automated factory preset render smoke gate is in place, while pluginval/Ableton manual validation, repeated Live Set save/reopen testing, CPU checks, CI, signing/notarization, and installer/copy workflow remain open.
+
 ### Milestone 0: Project Setup
 
 - Initialize git.
@@ -1364,7 +1374,7 @@ Recommended architecture direction:
 - Add `README.md`.
 - Add this `PLAN.md`.
 - Choose license direction.
-- Decide whether to use plain JUCE or Pamplejuce.
+- Plain JUCE/CMake selected for the current repo.
 
 ### Milestone 1: Empty Plugin Build
 
@@ -1493,40 +1503,15 @@ Optional:
 - clang-format.
 - cppcheck or clang-tidy later.
 
-## Open Decisions
+## Resolved And Open Decisions
 
 ### Project Name
 
-Still undecided. Placeholder names:
+Resolved for the current codebase: the CMake project, plugin product, and docs use `Nate VST`.
 
-- Nate VST
-- PulseForge
-- Circuit Floor
-- MonoGrid
-- DriveCell
-- Niteform
-- Voltline
+### Plain JUCE Selection
 
-Need a name that is easy to search, not already taken by another plugin, and not too genre-locked.
-
-### Plain JUCE vs Pamplejuce
-
-Plain JUCE:
-
-- Smaller and easier to understand from scratch.
-- Less template machinery.
-- More manual setup for validation and CI.
-
-Pamplejuce:
-
-- More complete starting point.
-- Includes modern CMake patterns and plugin validation workflows.
-- More files and conventions upfront.
-
-Recommendation:
-
-- Use Pamplejuce if the goal is to move quickly toward a serious plugin project.
-- Use plain JUCE if the goal is to learn every piece from scratch.
+Resolved for the current codebase: use plain JUCE through the existing CMake FetchContent setup. Pamplejuce remains only a historical option, not an active branch of the plan.
 
 ### UI Style
 
@@ -1588,9 +1573,15 @@ These can all be reconsidered later. They are distractions before the synth make
 
 ## Immediate Next Steps
 
-1. Validate the current source-warp, filter-character/slope, SEQ chord-memory, and UI declutter passes in Ableton with house, UKG, tech-house, minimal, and techno preset workflows.
-2. Expand slice styles into stored per-slice lanes with choke behavior and sequencer-triggered slice playback.
-3. Expand the first modulation inspector beyond implemented per-route bypass/delete and sample/FX destinations into richer route editing, macro assignment views, and eventually sequencer modulation lanes.
-4. Expand FX presets into user-saveable module presets, per-module randomize/compare actions, and direct modulation access to FX mix/depth controls.
-5. Expand browser metadata and audition workflow with macro preview values and per-pack construction kits now that ratings, sort modes, favorites, recursive folders, category subfolder saves, and author/pack/key/BPM metadata are in place.
-6. Start larger engine work only after the current subtractive/source-warp/sampler/SEQ/FX workflow feels strong in real sessions.
+Completed from the 2026-06-29 code audit: sample/FX `Mod Env 1` and `Velocity` source parity, nonzero delay/reverb/send tail reporting, stricter SEQ/grid/bottom-keyboard layout audit coverage, and first focused sampler-chop behavior coverage.
+
+The 2026-06-29 large-VST refresh adds one important correction: competing with Serum 2, NEXUS 5, ZENOLOGY, KORG, Ableton, Serato, and Scaler does not mean adding every generic synth feature. Nate VST should stay house-first and win on source identity, relationship-aware construction kits, visual editing, Ableton drag-out flow, and mix-safe club transforms.
+
+1. Expand the implemented rendered preview cache, visible-row warmer, and level badges into fully background generation, waveform badges, explicit regeneration controls, and preview loudness consistency.
+2. Move #73 forward with stronger original house source material beyond the first live/expanded source rack: drawbar organ controls, legal/original digital-PCM-style chord/piano stabs, rubber/Reese/acid bass snippets, and wavetable/warp foundations.
+3. Move #77 forward with transient/manual slice markers, per-slice playback modes beyond the first nudge/fade pass, full relink handling beyond the first missing-file stale-audio guard, and slice-to-sequencer lanes before deeper time-stretch/formant work.
+4. Move #74 forward with arranger-style chain editing, deeper per-scene automation/rate/follow behavior, deeper glide/portamento behavior, deeper condition options, and deeper drag/import workflows. Captured scene-chain MIDI export, first-pass MIDI drag-out, first-pass live scene-chain step/control playback, first-pass `Build 4-Bar Chain` scene generation, adaptive expanded-focus `Auto` / `2 Bar` / `4 Bar` chain length mode, first-pass odd/even/fill conditions, a first slide lane with live/export legato overlap, a first Bass Contour shape tool, and a first Chord Stab Paint shape tool are now implemented, but arranger-style chain editing, MIDI import/validation, and audio/loop drag-out remain open.
+5. Use #84 for the newly identified house drum/kick-bass lane: kit pads, sample discovery, groove/accent lanes, kick/bass checks, rendered loop/one-shot drag-out, and construction-kit stems.
+6. Use #83 for expansion-ready content packs before the next major factory-pack push: manifest, versioning, license metadata, previews, dependencies, relink, and user/factory separation.
+7. Move #80 forward with deterministic house transforms: make it more house, tighten low end, more groove, darker dub, shorter stab, delay throw variation, and reset mix-safe.
+8. Expand the UI overhaul with deeper FX and Mod Matrix focus panels after the adaptive Macro/Sample/Source/Sequencer overlays, then keep Ableton validation under #81 running after each source/sampler/sequencer slice.

@@ -59,6 +59,12 @@ public:
         juce::int64 lastModifiedMs = 0;
         bool isFactory = false;
         bool isFavorite = false;
+        bool previewAvailable = false;
+        bool previewStale = false;
+        float previewPeak = 0.0f;
+        float previewRms = 0.0f;
+        double previewDurationSeconds = 0.0;
+        juce::int64 previewLastModifiedMs = 0;
     };
 
     struct PresetSaveOptions
@@ -71,6 +77,32 @@ public:
         bool generated = false;
         juce::String generatedRecipe;
         juce::String notes;
+    };
+
+    struct PresetPreviewInfo
+    {
+        juce::File file;
+        bool available = false;
+        bool stale = false;
+        float peak = 0.0f;
+        float rms = 0.0f;
+        double durationSeconds = 0.0;
+        juce::int64 lastModifiedMs = 0;
+        juce::String status;
+    };
+
+    struct PresetPreviewBatchResult
+    {
+        int requested = 0;
+        int rendered = 0;
+        int alreadyReady = 0;
+        int stale = 0;
+        int failed = 0;
+        juce::StringArray renderedPresetNames;
+        juce::StringArray readyPresetNames;
+        juce::StringArray stalePresetNames;
+        juce::StringArray failedPresetNames;
+        juce::String status;
     };
 
     int getNumPrograms() override;
@@ -108,11 +140,14 @@ public:
     bool promoteRandomCandidateToPerformanceSnapshot(int candidateSlotIndex, int snapshotSlotIndex);
     bool loadSampleFile(const juce::File& file);
     void clearSample();
+    bool hasLoadedSample() const;
+    bool hasMissingSampleReference() const;
     bool randomizeSampleCut();
     bool randomizeUkgVocalChop();
     bool triggerSampleAudition();
     bool triggerSampleSliceAudition(int sliceIndex);
     juce::String getLoadedSampleName() const;
+    juce::String getLoadedSamplePath() const;
     Sampler::SamplePeakOverview createSamplePeakOverview(int pointCount) const;
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);
@@ -127,7 +162,13 @@ public:
     bool recallSequencerPatternScene(int slotIndex);
     bool hasSequencerPatternScene(int slotIndex) const;
     juce::String getSequencerPatternSceneSummary(int slotIndex) const;
+    void setSequencerSceneChainPlaybackEnabled(bool shouldEnable);
+    bool isSequencerSceneChainPlaybackEnabled() const noexcept;
+    void setSequencerSceneChainClipBars(int barCount);
+    int getSequencerSceneChainClipBars() const noexcept;
+    int getSequencerSceneChainPlaybackLength() const;
     bool exportSequencerMidiFile(const juce::File& destination) const;
+    bool exportSequencerSceneChainMidiFile(const juce::File& destination) const;
     void clearSequencerPattern();
     juce::String getActiveRandomizationLockSummary() const;
     juce::String getRandomHistorySummary() const;
@@ -139,8 +180,17 @@ public:
     bool loadPreset(const juce::String& presetName);
     juce::StringArray getPresetNames() const;
     std::vector<PresetInfo> getPresetLibrary() const;
+    void invalidatePresetLibraryCache() const;
     juce::File getPresetDirectory() const;
     juce::File getFactoryPresetDirectory() const;
+    juce::File getPresetPreviewDirectory() const;
+    PresetPreviewInfo getPresetPreviewInfo(const juce::String& presetName) const;
+    PresetPreviewInfo ensurePresetPreview(const juce::String& presetName);
+    PresetPreviewBatchResult ensurePresetPreviews(const juce::StringArray& presetNames, bool regenerateExisting = false);
+    PresetPreviewBatchResult ensurePresetPreviews(int maxRenderCount, bool regenerateExisting = false);
+    bool startPresetPreviewPlayback(const juce::String& presetName);
+    void stopPresetPreviewPlayback();
+    bool isPresetPreviewPlaying() const noexcept;
     bool isPresetFavorite(const juce::String& presetName) const;
     bool setPresetFavorite(const juce::String& presetName, bool shouldBeFavorite);
     int getPresetRating(const juce::String& presetName) const;
@@ -218,6 +268,13 @@ private:
         bool shouldRetry = false;
     };
 
+    struct PresetPreviewRenderResult
+    {
+        juce::AudioBuffer<float> buffer;
+        PresetPreviewInfo info;
+        bool rendered = false;
+    };
+
     struct GlobalEditSnapshot
     {
         juce::ValueTree state;
@@ -264,6 +321,12 @@ private:
     double meterSampleRate = 44100.0;
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
+    juce::SpinLock presetPreviewLock;
+    juce::AudioBuffer<float> presetPreviewPlaybackBuffer;
+    std::atomic<bool> presetPreviewPlaying { false };
+    int presetPreviewPlaybackPosition = 0;
+    mutable bool presetLibraryCacheValid = false;
+    mutable std::vector<PresetInfo> presetLibraryCache;
     std::mt19937 sampleRandomEngine;
     juce::ValueTree randomUndoState;
     juce::ValueTree randomRedoState;
@@ -271,6 +334,8 @@ private:
     juce::ValueTree sequencerUndoState;
     std::array<juce::ValueTree, 2> performanceSnapshots;
     std::array<juce::ValueTree, 4> sequencerPatternScenes;
+    std::atomic<int> sequencerSceneChainPlaybackEnabled { 0 };
+    std::atomic<int> sequencerSceneChainClipBars { 0 };
     std::array<RandomCandidateSnapshot, 4> randomCandidateSnapshots;
     std::vector<GlobalEditSnapshot> globalUndoStack;
     std::vector<GlobalEditSnapshot> globalRedoStack;
@@ -315,12 +380,17 @@ private:
     void restoreModulationFromState(const juce::ValueTree& state);
     void restoreOutputFromState(const juce::ValueTree& state);
     void restoreLockedSectionsFromState(const juce::ValueTree& state);
+    bool restoreSampleFileReference(const juce::String& samplePath);
     void restoreSampleFromState(const juce::ValueTree& state);
     void restoreSequencerFromState(const juce::ValueTree& state);
-    juce::ValueTree createSequencerSceneState();
+    juce::ValueTree createSequencerSceneState() const;
+    void buildSequencerFourBarSceneChain();
     void restoreSequencerScenesFromState(const juce::ValueTree& state);
     void appendSequencerScenesToState(juce::ValueTree& state) const;
     void removeSequencerSceneChildren(juce::ValueTree& state) const;
+    std::vector<juce::ValueTree> createSequencerSceneChainSegments(int clipBars) const;
+    void refreshSequencerSceneChainPlayback();
+    bool writeSequencerMidiFile(const juce::File& destination, const std::vector<juce::ValueTree>& segments) const;
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
@@ -329,6 +399,8 @@ private:
     Sequencer::HostPosition getHostPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;
     void updateOutputSpectrumSnapshot(const juce::AudioBuffer<float>& buffer) noexcept;
+    void mixPresetPreviewPlayback(juce::AudioBuffer<float>& buffer) noexcept;
+    PresetPreviewRenderResult renderPresetPreviewBuffer(const juce::String& presetName) const;
     bool savePresetState(const juce::String& presetName, const PresetSaveOptions& options, juce::ValueTree state);
     juce::ValueTree createPluginState();
     juce::ValueTree createPluginState(bool includePerformanceSnapshots);
@@ -343,6 +415,7 @@ private:
     juce::File presetFileForName(const juce::String& presetName) const;
     juce::File presetFileForName(const juce::String& presetName, const juce::String& category) const;
     juce::File factoryPresetFileForName(const juce::String& presetName) const;
+    juce::File presetPreviewFileForName(const juce::String& presetName) const;
     juce::File findPresetFileInDirectory(const juce::File& directory, const juce::String& presetName) const;
     juce::File presetDirectoryForCategory(const juce::String& category) const;
     juce::File libraryStateFile() const;

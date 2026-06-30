@@ -45,9 +45,9 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 2. Source layer architecture: two full layers with mute, solo, blend, pan, width, filter routing, and layer presets.
 3. Drag-style modulation workflow with modulation rings, route inspector, per-route range, curves, smoothing, and colored source activity.
 4. MSEG and step-mod lanes for filter, pitch, wavetable position, FX mix, pump, delay, sample slice, and macro movement.
-5. Serious UKG sampler: drag/drop import, transient slicing, beat-grid slicing, manual markers, per-slice fades, nudge, mode, probability, choke, and slice lanes.
+5. Serious UKG sampler: WAV/AIFF drag/drop plus the first eight-pad visual slice overlay, expanded chop focus pass, stepped per-slice nudge/fade, and missing-file stale-audio guard are implemented; remaining depth is transient slicing, beat-grid slicing, manual markers, per-slice playback modes, probability lanes, deeper choke groups, full relink/sample replacement, and slice lanes.
 6. Time-stretch, formant-safe pitch, and short granular modes for vocal chops.
-7. Groove sequencer expansion: multiple patterns, pattern scenes, per-step modulation, ratchets, slides, step conditions, chord paint, MIDI drag-out, and MIDI drag-in.
+7. Groove sequencer expansion: multiple patterns, pattern scenes, per-step modulation, first-pass ratchets/conditions, slides, first-pass Chord Stab Paint, richer Ableton drag-out validation, and MIDI drag-in.
 8. Club FX upgrade: multiband distortion, volume/filter/time/noise/pitch shapers, sidechain input, transient shaper, compressor, limiter/clipper, and granular FX.
 9. Library upgrade: rendered audio previews, smart folders, sample browser, construction kits, dependency checks, and "find similar" later.
 10. UI architecture upgrade: split `PluginEditor` into pages/components, add layout tests, screenshot regression, scale modes, and focused subviews.
@@ -88,8 +88,8 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 27. Add ring modulation between oscillators.
 28. Add protected FM/PM between oscillators.
 29. Add a focused three-operator FM engine for UKG bells, metallic stabs, pings, and techno hits.
-30. Add additive/drawbar organ source for UKG and speed garage.
-31. Add legal original PCM-style starter sources for house organ, piano-ish stabs, strings, and digital bells.
+30. Add additive/drawbar organ source for UKG and speed garage. First procedural Organ waveform pass is implemented; deeper drawbar editing and source snippets remain open.
+31. Add legal original PCM-style starter sources for house organ, piano-ish stabs, strings, and digital bells. First procedural House Piano source pass is implemented for original house stabs; bundled PCM-style sample content remains open.
 32. Add granular sample oscillator for texture and vocal cloud patches.
 33. Add spectral/resynthesis investigation for future vocal and texture engines.
 34. Add resonator/physical-model source for minimal plucks.
@@ -150,11 +150,11 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 80. Add transient slice detection.
 81. Add beat-grid slice detection.
 82. Add equal-region slicing with user-selected count.
-83. Add manual marker creation, deletion, and nudge.
+83. Add manual marker creation, deletion, and marker nudge beyond the first stepped per-slice nudge pass.
 84. Add zero-cross snapping at slice boundaries.
-85. Add per-slice fade in/out.
+85. Add deeper per-slice fade in/out editing beyond the first stepped fade pass.
 86. Add per-slice playback mode: one-shot, gate, loop, thru, reverse, and ping-pong later.
-87. Add per-slice start offset and end nudge as small buttons/handles.
+87. Add per-slice start offset and end nudge as draggable handles beyond the first stepped nudge button.
 88. Add per-slice pitch envelope/ramp with UKG pickup presets.
 89. Add per-slice FX send.
 90. Add per-slice color labels and role labels: kick, stab, vox, fill, ghost, pickup, answer.
@@ -175,26 +175,26 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 
 103. Add multiple patterns per preset.
 104. Add pattern scenes: A, B, fill, drop, breakdown, transition, and random variation.
-105. Add pattern chaining.
+105. Add deeper pattern chaining beyond the first live scene-chain playback, Build 4-Bar Chain, and forced chain-length passes.
 106. Add 32-step and 64-step modes.
-107. Add per-step ratchet/retrigger.
-108. Add per-step slide/glide.
+107. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
+108. Add deeper per-step slide/glide beyond the first saved lane/live-export overlap pass.
 109. Add per-step accent mapped to amp, filter, and drive.
 110. Add per-step modulation lanes with safe destination picking.
 111. Add per-step sample slice lane.
 112. Add per-step pump depth lane.
 113. Add per-step delay throw and reverb throw lanes.
-114. Add step conditions: first, not first, every 2, every 4, fill, random, and follow.
+114. Add deeper step conditions: first, not first, every 4, random, follow, and per-repeat probability. First Always/Odd/Even/Fill condition lane is implemented.
 115. Add probability ranges rather than a single probability value.
-116. Add chord paint tools for minor 7, minor 9, major 7, sus, garage organ, and dub chords.
+116. Add deeper chord paint tools for minor 7, minor 9, major 7, sus, garage organ, and dub chords beyond the first Chord Stab Paint transform.
 117. Add scale quantize and key lock.
 118. Add groove template library: UKG 2-step, speed garage, deep house shuffle, tech-house roll, minimal offbeat, dub techno pulse, warehouse straight, and broken percussion.
 119. Add lane-specific groove amount.
 120. Add swing microtiming visualization.
 121. Add Euclidean generator for minimal blips and percussion-style synth hits.
-122. Add bassline contour generator for UKG and tech-house.
+122. Add bassline contour generator for UKG and tech-house. First Bass Contour Shape transform is implemented; deeper multi-phrase generation remains open.
 123. Add recombine tool: keep rhythm, change notes.
-124. Add MIDI drag-out directly from the UI into Ableton.
+124. Add richer MIDI drag-out validation directly from the UI into Ableton. First current-pattern and scene-chain `.mid` drag-out is implemented.
 125. Add MIDI drag-in from dropped clips/files.
 126. Add host-transport jump stress tests.
 
@@ -230,7 +230,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 
 ### 8. Browser, Presets, Samples, And Packs
 
-154. Add rendered audio preview files per preset; runtime role-aware MIDI audition phrases are implemented as the first preview pass.
+154. Expand the implemented rendered preset preview cache/playback with background generation, waveform/level row badges, manual regeneration, and preview loudness consistency.
 155. Add auto-play preview while arrowing through presets.
 156. Add macro preview columns in the browser.
 157. Expand smart collections beyond the first implemented filter-menu crate pass with New This Week, editable user crates, pack crates, full-browser sidebar browsing, and multi-select metadata actions.
@@ -247,7 +247,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 168. Add "replace sample with similar" later.
 169. Add project-specific crates/playlists.
 170. Expand implemented author, pack, and notes metadata with license fields and batch editing.
-171. Expand beyond the current 88-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Warehouse Techno, Dub Stabs, smart-crate, and curated preset metadata coverage is implemented.
+171. Expand beyond the current 96-preset factory pack with Club FX, license metadata, pack-level QA, vocal tags, and more tech-house loop starters. First Speed Garage, Bass House, Chicago House, Classic House, Funky House, Melodic House, Romanian Minimal, Electro Breaks, Deep Tech, Indie Dance, Italo Disco, Balearic House, Acid House, Nu Disco, Afro Tech, Afro Melodic, Progressive House, Hard House, Peak Time Techno, Detroit Techno, Melodic Techno, Deep Minimal, Lo-Fi House, Minimal FM, French House, Soulful House, Garage House, Microhouse, Raw Techno, Tribal Tech House, Breaks House, Hardgroove, Future Garage, Amapiano-inspired, Warehouse Techno, Dub Stabs, house construction kits, smart-crate, and curated preset metadata coverage is implemented.
 
 ### 9. Randomization And Sound Discovery
 
@@ -286,6 +286,6 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 1. UI architecture and screenshot/layout tests. This protects every future feature.
 2. Wavetable oscillator plus visual table display. This is the biggest missing synth-engine signal compared with modern competitors.
 3. Drag-style modulation and visible modulation rings. This immediately makes the plugin feel more professional.
-4. UKG sampler drag/drop plus transient/manual slicing. This directly supports the genre target.
+4. UKG sampler drag/drop plus transient/manual slicing beyond the current eight-pad visual slice overlay. This directly supports the genre target.
 5. Volume/filter/time shaper module. This gives the FX rack a modern rhythmic club-processing identity.
 6. Construction-kit preset type. This ties synth, sample, sequence, key, BPM, and macros into a workflow that is more useful for actual house production than isolated patches.

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Theme.h"
+
 #include <juce_gui_basics/juce_gui_basics.h>
 
 namespace UI
@@ -8,6 +10,9 @@ class LookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
     LookAndFeel();
+
+    void setTheme(const Theme& theme);
+    const Theme& theme() const noexcept { return currentTheme; }
 
     void drawRotarySlider(juce::Graphics& g,
                           int x,
@@ -40,5 +45,8 @@ public:
                         juce::TextButton& button,
                         bool shouldDrawButtonAsHighlighted,
                         bool shouldDrawButtonAsDown) override;
+
+private:
+    Theme currentTheme;
 };
 }

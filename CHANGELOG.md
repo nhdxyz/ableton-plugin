@@ -2,11 +2,218 @@
 
 ## 2026-06-29
 
+### Focus Overlay Expansion Pass
+
+- Raised the reusable focus overlay from a fixed small modal into an adaptive editor surface that uses more width and height on tall/wide host windows.
+- Expanded SAMPLE chop focus and SEQ pattern focus now get materially larger waveform/grid editing areas at 900px+ editor heights instead of staying capped at the old compact overlay size.
+- Extended `EditorLayoutAudit` with tall-focus panel checks for overlay growth, expanded SAMPLE waveform height, and expanded SEQ grid height so future UI density work cannot silently re-cramp those editors.
+
+### MOD Compact Matrix Fit
+
+- Added a compact paint path for very short MOD source-meter rows so the source list remains readable at minimum editor sizes instead of trying to render full badge/meter chrome in a 12px row.
+- Switched MOD matrix amount sliders to track-first compact controls with popup/selected-control value feedback, avoiding inline text boxes that consumed most of the route amount cell.
+- Extended `EditorLayoutAudit` with MOD source-meter height and route amount track-width checks so the matrix cannot silently regress into unreadable rows.
+
+### SEQ Chord Stab Paint
+
+- Added a `Chord Stab Paint` SEQ Shape transform that seeds a House 9 chord-stab phrase from an empty or existing pattern, with short gated stabs, delay-lock movement, a fill-conditioned pickup, and house-shuffle timing.
+- Kept `Build 4-Bar Chain` on the Shape menu after the new paint tool and updated the chain-builder audit indexes so scene-chain generation remains covered.
+- Extended `SequencerHousePatternAudit` to verify Chord Stab Paint's chord color, voicing, groove, delay-lock destination, fill condition, ratchet gesture, and undo behavior.
+
+### Library Compact Row Fit
+
+- Added a compact preset-browser row layout that prioritizes preset name/metadata, preview status, role, factory/user source, and rating when the central Library browser gets narrow.
+- Collapsed the dense macro strip out of compact rows and swapped the Library header between full and compact column labels so the browser no longer advertises columns it cannot fit.
+- Extended `EditorLayoutAudit` to verify compact Library rows keep a readable name/meta column and do not reserve macro-strip space at minimum host sizes.
+
+### SEQ Slide Lane And Fill Parity
+
+- Added a saved per-step `Slide` lane to the compact and expanded SEQ grids, with diagonal note markers and ratchet-safe clamping so slide states stay readable without breaking repeat fills.
+- Made slide steps hold their note into the next triggered note in live sequencer playback and exported/dragged MIDI, giving house basslines a first Ableton-friendly legato/glide handoff.
+- Updated Bass Contour to seed slide gestures on passing/pickup notes and tightened the compact SEQ knob row so the eight-lane grid remains readable at minimum host sizes.
+- Aligned live scene-chain Fill conditions with exported forced-chain behavior, so a 2-bar chain treats the final active scene as the Fill segment instead of waiting for bar four.
+- Extended `SequencerRatchetAudit`, `GlobalEditHistoryAudit`, and `EditorLayoutAudit` to cover slide state, live/export overlap, two-scene Fill behavior, global undo/redo, and compact/expanded grid readability.
+
+### Sampler Slice Nudge And Fade
+
+- Added stored per-slice `Nudge` and `Fade` parameters for all eight Slice Keys pads so vocal chops can be shifted early/late and softened without moving the main sample range.
+- Applied slice nudge in the sampler voice region calculation and mapped slice fade into independent attack/release boundary fades for forward, reverse, and stuttered slice playback.
+- Added compact and expanded SAMPLE-panel `Nudge`/`Fade` actions with waveform badges/status text, while replacing the fixed compact action widths with an even action layout to reduce padding and fit pressure.
+- Extended `SamplerChopAudit` to verify nudge/fade default reset and audible Slice Keys playback changes.
+
+### SEQ Live Scene-Control Parity
+
+- Cached captured scene controls beside scene steps for live scene-chain playback, covering root, gate, swing, groove, scale, chord color, voicing, strum, accent, octave, and probability.
+- Updated the processor bridge so live scene chains and Chain MIDI export use the same captured scene control data instead of letting live playback drift from the exported Ableton clip.
+- Extended `SequencerRatchetAudit` so chained scenes with different roots and chord colors must render those differences during live playback.
+
+### Sampler Missing-File Safety
+
+- Made saved sample restore clear any stale in-memory sample when the saved file path is missing or unreadable, while preserving the saved path for relink/status instead of silently playing a previously loaded sample.
+- Added missing-sample UI status in the SAMPLE label and SYNTH source-layer rack so moved sample dependencies read as missing rather than empty.
+- Extended `SamplerChopAudit` to restore a missing-sample state over a different loaded sample and verify the stale audio is silent.
+
+### SEQ Chain Length Modes
+
+- Added an expanded SEQ focus `Auto` / `2 Bar` / `4 Bar` chain length control so live scene-chain playback and Chain MIDI save/drag can force A/B into A/B/A/B or trim larger scene sets to 2 bars.
+- Routed live chain caching and scene-chain MIDI export through the same effective segment builder so Auto, forced 2-bar, and forced 4-bar behavior stay consistent.
+- Added forced-length suffixes to Chain MIDI save/drag filenames and status text for clearer Ableton drops.
+- Extended `SequencerPatternSceneAudit` to cover forced 4-bar export, forced 2-bar export, and state restore.
+
+### SEQ Four-Bar Chain Builder
+
+- Added a `Build 4-Bar Chain` SEQ Shape action that turns the current pattern into captured `A`, `B`, `Fill`, and `Drop` scene variations for fast house phrase starts.
+- The builder creates pickup, fill-ratchet, and drop gestures, enables live scene-chain playback, and keeps the existing `Chain` MIDI save/drag path usable without adding another compact SEQ control.
+- Expanded SEQ undo so scene slots and live-chain state restore when backing out chain-building edits.
+- Extended `SequencerPatternSceneAudit` to cover the generated four-scene chain, undo restore, state restore, and four-bar MIDI export anchors.
+
+### SEQ Live Scene-Chain Playback
+
+- Added a first-pass SEQ `Live` toggle that plays captured `A`, `B`, `Fill`, and `Drop` scene step data as a live scene chain instead of limiting scene chains to `.mid` export/drag-out.
+- Cached captured scene steps into the real-time sequencer with atomic step storage so bar-to-bar phrase alternation stays audio-thread safe while current sequencer global controls remain live.
+- Persisted the live-chain toggle through plugin state restore and refreshed the cached chain after scene capture, scene restore, and current-pattern fallback changes.
+- Extended sequencer audits so live scene-chain note alternation and enabled-state restore are covered alongside scene export.
+
+### SEQ Step Conditions
+
+- Added a saved per-step `Cond` lane to the compact and expanded SEQ grids with Always, Odd-cycle, Even-cycle, and Fill-cycle states for quick 2-bar/4-bar house variation.
+- Made sequencer playback honor conditions before probability, reset/sync phrase cycles from transport position, and promote Bass Contour end fills to fourth-cycle fill events instead of firing every bar.
+- Persisted conditions through preset/session state, A/B/Fill/Drop scenes, global edit history, scene summaries, and single-pattern/scene-chain MIDI save or drag export.
+- Extended sequencer and layout audits so condition clamp/restore/playback/export behavior and the then-new condition lane remained covered.
+
+### SEQ MIDI Drag-Out
+
+- Made the SEQ `MIDI` and `Chain` buttons dual-purpose: clicking still opens the existing save dialog, while dragging starts a native external `.mid` file drag for dropping the current pattern or captured A/B/Fill/Drop chain into Ableton.
+- The drag path reuses the tested sequencer MIDI writer, creates temporary drag files, reports drag-ready/unavailable states in the status strip, and cleans up stale drag files on the next drag or editor teardown.
+
+### MOD Matrix Compact Layout Guard
+
+- Tightened the MOD route-map visibility rule so the source-to-destination overview only appears when the remaining matrix area can still hold four readable route rows per bank.
+- Added a focused layout-audit check for MOD matrix row height, including a guard against showing the route map while matrix rows are too compressed.
+
+### SEQ Scene-Chain MIDI Export
+
+- Added a SEQ `Chain` export action that writes captured `A`, `B`, `Fill`, and `Drop` scene snapshots as one sequential MIDI file for faster Ableton arrangement starts.
+- Refactored sequencer MIDI export to render from scene state so each exported segment preserves its own root, rate, gate, swing/groove, scale, chord color, voicing, strum, velocity, timing, length, and ratchet data.
+- Extended `SequencerPatternSceneAudit` to verify that captured A/B scenes export at the expected chained bar offsets.
+
+### SEQ Pattern Focus Overlay
+
+- Added a compact `>` affordance to the SEQ panel that opens a larger in-editor `SEQ PATTERN EDITOR` overlay for piano-roll and velocity/probability/timing/length/lock/ratchet lane editing.
+- Reused the same sequencer step callbacks for compact and expanded grids so pattern painting, lane edits, randomization, scenes, preset loads, and groove transforms stay synchronized.
+- Expanded `EditorLayoutAudit` to cover the SEQ pattern focus overlay at every audited editor size with stricter expanded-grid row, lane, label, and 16-step cell readability checks.
+
+### Library Responsiveness, Keyboard Focus, And SEQ Hit Testing
+
+- Added a processor-side preset-library metadata cache so repeated Library UI refreshes do not keep reparsing every preset and preview WAV metadata during the same interaction; saving presets, changing ratings/favorites, rendering previews, or pressing Library `Refresh` invalidates the cache.
+- Made configured sliders avoid stealing computer-keyboard focus and return focus to the bottom audition keyboard after slider gestures or segmented waveform/filter/rate changes, while leaving Library text-entry fields alone.
+- Tightened SEQ lane hit testing so velocity/probability/timing/length/lock/ratchet lane drags outside the lane rectangle no longer clamp to the first or last step.
+
+### SEQ Bass Contour Shape
+
+- Added a `Bass Contour` option to the SEQ `Shape` menu that reshapes enabled bass steps into a house-ready contour with root anchors, lower passing notes, pickup timing, cutoff-lock movement, and a small end-fill ratchet.
+- The transform also pushes the current pattern into bass-safe sequencer state: chord mode off, octave down, House Shuffle groove, tighter gate, stronger accent, and cutoff lock as the default movement destination.
+- Extended the house sequencer audit so Bass Contour note offsets, timing, ratchet fill behavior, and global sequencer state are covered by tests.
+
+### Bottom Keyboard Visible-Range Resize Fix
+
+- Changed the bottom audition keyboard's responsive key-width calculation to use the currently visible note range instead of the full hidden available range, so the C2-starting keyboard fills wide editor bounds instead of stopping early.
+- Increased the white-key width ceiling enough for the intended C2-C7 visible span to cover the maximum editor width while keeping compact-host sizes at the existing minimum key width.
+- Updated the editor layout audit to validate painted keyboard coverage from the current lowest visible key.
+
+### House Source Layer Rack Focus
+
+- Made the SYNTH house layer rack interactive, with hover feedback and click-to-focus behavior for Sub, Body, Character/Stab, Transient/Noise, and Chop layers in the selected-control strip.
+- Added an expanded `HOUSE SOURCE LAYERS` focus overlay from the SYNTH source card so the source-role rack can be edited visually at a larger size without crowding the compact panel.
+- Made the rack state live in the editor timer and more code-truthful: it now reflects actual noise color, sample playback mode/slice style, sample gain-adjusted chop level, and Weight-macro sub support.
+- Added internal rack-card readability metrics to the UI layout audit and covered the expanded source-focus overlay across audited editor sizes.
+
+### Library Preview Batch Warming And Level Badges
+
+- Added a processor-level rendered-preview batch API that can warm targeted preset names, skip already-ready previews, force safe regeneration, and report rendered/ready/stale/failed counts without loading patches into the active processor.
+- Added a LIBRARY `Warm` action that renders previews for the selected preset plus visible missing/stale browser rows, keeping preview generation tied to the current crate instead of forcing whole-library work.
+- Added ready/stale/render level badges to preset browser rows using cached preview peak/RMS metadata, and expanded `PresetPreviewAudit` to cover batch rendering, cached-skip behavior, forced regeneration, recents preservation, and library preview level metadata.
+
+### Modulation Parity, Sampler Chop Audit, And SEQ Layout Hardening
+
+- Implemented `Mod Env 1` and `Velocity` source parity for sample and FX modulation destinations, so the globally exposed source choices now drive Sample Start/Mix/Pitch/Ramp/Stutter plus FX Pump, Delay, Reverb, Width, Drive, and send amounts.
+- Changed processor tail reporting from zero to a nonzero FX tail window for delay/reverb/send behavior, and extended `EffectsSendAudit` to guard against regressing that host-facing tail report.
+- Made the SEQ piano-roll lane area adaptive at compact heights, reduced the SEQ knob-row footprint slightly, and expanded `EditorLayoutAudit` across more width/height combinations with explicit sequencer row/cell readability and bottom-keyboard control compression checks.
+- Added `ModulationSourceParityAudit` for sample/FX Mod Env and Velocity routes, plus `SamplerChopAudit` for sample-load slice reset, Slice Keys custom-slice playback, probability suppression, and UKG vocal-chop randomizer setup.
+
+### House VST Competitor Research Refresh
+
+- Added `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md`, a current house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, KORG Collection/wavestate/modwave, Pigments, MASSIVE X, Phase Plant, Falcon, Saturn 2, ShaperBox, and Ableton Live instruments.
+- Added a large-VST benchmark addendum for Serum 2, NEXUS 5, ZENOLOGY Pro, KORG Collection/Gadget/wavestate/modwave, Ableton, Serato, and Scaler-style production workflows, clarifying that Nate VST should compete through house-first source identity, construction kits, visual editing, Ableton drag-out flow, and mix-safe transforms rather than generic feature breadth.
+- Reconciled the research against the local codebase rather than treating older markdown as truth, calling out implemented source, sequencer, sampler, modulation, library, UI, preview, and validation work separately from remaining gaps.
+- Updated the next-build order toward concrete missing work: background preview rendering, deeper house source material, transient/manual slicing, Ableton-native MIDI/clip flow, route ranges/curves/slew, multiband drive, construction kits, expandable focus panels, and Ableton release validation. The follow-up parity/tail-reporting slice is now implemented above.
+
+### Library Rendered Preview Cache And Audition
+
+- Added first-pass rendered preset preview cache/playback so Library audition renders representative house roles through an isolated processor and plays the resulting WAV buffer without loading the patch into the active processor.
+- Added preview-ready/stale/render-on-audition status to library metadata, selected-row status, and browser tooltips so browsing can distinguish cached, stale, and not-yet-rendered presets.
+- Added `PresetPreviewAudit` for representative bass, chord, rubber-hook, vocal-chop, and FX roles, covering cache creation, preview readability, non-destructive recents behavior, and preview playback start/stop.
+
+### House Layer Rack Visualization
+
+- Added a themed `HouseLayerRackDisplay` to the SYNTH source card so existing Osc 1, Osc 2, Sub, Noise, and Sample Mix state is shown as house-production roles: Sub, Body, Character/Stab, Transient/Noise, and Chop.
+- Kept this as a visual APVTS-safe pass over the current source parameters, preserving preset and Ableton automation compatibility while making Organ, House Piano, Wavetable, mono sub, transient, and sample-chop layers easier to read.
+- Rebalanced the compact SYNTH source card at minimum/default/wide/max sizes and extended `EditorLayoutAudit` with explicit rack visibility, usable-bounds, overlap, and bottom-keyboard coverage checks.
+
+### Theme Token Foundation And UI Contrast Audit
+
+- Added a centralized UI theme-token foundation with the current Dark Club palette plus planned Analyzer and Warm Studio palettes for later selectable themes.
+- Routed shared button, slider, editor chrome, keyboard, list, text-editor, and common status/section-label colors through the theme tokens without adding any APVTS, preset, or automation state.
+- Added `ThemeAudit` to verify critical text/accent contrast across all planned palettes before a future settings dropdown exposes theme selection.
+
+### Sample Chop Focus Overlay
+
+- Added selected/custom slice overlays to the SAMPLE waveform, showing each eight-pad region with compact pitch, pan, chance, reverse, stutter, and choke badges.
+- Added waveform slice-lane click selection so clicking a slice region selects and auditions the matching pad while preserving draggable start/end handle behavior.
+- Added an expanded SAMPLE chop focus overlay that reuses the existing slice pads and edit actions with a larger waveform, and extended `EditorLayoutAudit` to cover `SAMPLE/Chop Focus` at all audited editor sizes.
+
+### Visual Macro Editing Overhaul
+
+- Added a reusable `MacroPerformanceMap` so HOME edits all eight performance macros as a compact visual shape while keeping the Motion/Space XY pad for fast gesture movement.
+- Reworked the MOD macro area into a visual macro shape map plus a draggable `MacroAssignmentPad` for selecting macro sources, destination targets, bipolar depths, and clear actions without the previous cramped source/destination/amount row.
+- Added an in-editor expanded macro focus overlay opened from HOME or MOD via a compact `>` button, giving the same macro shape and assignment controls a larger precision surface without introducing a new modal/window framework.
+- Kept the new MOD assignment pad backed by the existing saved modulation matrix slots and extended the layout audit path so HOME/MOD resizing catches empty or overflowing visual controls.
+
+### Resizable Keyboard Layout Hardening
+
+- Made the bottom audition keyboard resize its white-key width from the available bottom-bar area, so wide editor sizes no longer leave a blank tail after the painted key range.
+- Extended `EditorLayoutAudit` with keyboard key-width and painted-coverage checks across minimum, default, wide, and maximum editor sizes.
+- Kept broader UI condensation/text-overlap work tracked under the editor extraction and layout-overlap roadmap rather than folding a full panel rewrite into this focused resize fix.
+
+### Sequencer Ratchets And MIDI Export Parity
+
+- Added a saved per-step ratchet value to the 16-step sequencer, exposed it as a `Rat` lane in the SEQ grid, and clamped repeat counts to 1x-4x for quick house, garage, tech-house, and minimal fill gestures.
+- Made sequencer playback schedule ratcheted chord/stab/bass hits across audio blocks, include ratchets in random mutations, pattern scenes, preset/session state, factory preset generation, and SEQ summaries, and seed selected house/UKG/minimal construction-kit presets with repeat fills.
+- Updated MIDI export so ratchets render as repeated note events and appended groove modes share playback/export timing behavior, with `SequencerRatchetAudit` covering state restore, playback note timing, and exported MIDI ticks.
+
+### Factory Preset Render Validation
+
+- Added `FactoryPresetRenderAudit`, which copies the repo-managed factory pack into the factory preset scan path, loads each preset by name, renders through the real synth/sample/FX path, and fails on non-finite, silent, or runaway-peak output.
+- Made the factory preset audit copy step replace stale repo-managed preset files before scanning so regenerated XML is what the tests actually validate.
+- Lifted Microhouse Dust Pluck and Minimal FM Bubble output levels from `-12 dB` to `-6 dB` after the render audit exposed them as below the factory non-silent smoke gate.
+
+### House Source Character Modes
+
+- Added appended `Organ` and `House Piano` waveform choices after the existing Sine, Saw, Square, Triangle, and Wavetable indices so old presets and Ableton automation mappings keep their source assignments.
+- Implemented procedural additive drawbar-organ and house-piano source profiles, exposed them in the SYNTH source buttons and HOME source summaries, and biased the organ/chord random recipes toward the new modes.
+- Retargeted selected house factory presets to the new original/procedural source modes and added `SourceCharacterAudit` to verify choice ordering plus finite, audible, distinct Organ and House Piano rendering.
+
+### House Construction-Kit Preset Expansion
+
+- Expanded the repo-managed factory pack from 88 to 96 presets with Deep House Ninth Chord Kit, Piano House Lift Riff, Jackin Organ Bass Kit, Disco Filter Sweep Stab, Tech House Rubber Hook Kit, Dub House Chord Throw, Dirty House Tool Stab, and Garage House Chord Kit.
+- Added curated key, BPM, pack, tag, note, sequence, macro, source, and FX defaults for house construction-kit roles including deep-house chords, piano-house riffs, jackin organ bass, disco/filter stabs, tech-house rubber hooks, dub throws, dirty tools, and garage-house chord kits.
+- Updated `FactoryPresetLibraryAudit` to require the 96-preset pack and load-check the curated named expansion presets with metadata, notes, tags, macro values, and load-by-name coverage.
+
 ### Library Save Plan And 88-Preset Style Expansion
 
 - Reworked the LIBRARY save card into a clearer `SAVE PLAN` view with a destination trail and labeled Name, Folder, Pack, Cue, and Notes readiness segments instead of unlabeled readiness dots.
 - Expanded the repo-managed factory pack from 80 to 88 presets with Indie Dance Rubber Bass, Italo Disco Arp Lead, Balearic Sunset Pad, Afro Tech Perc Bass, Hard House Rave Stab, Melodic Techno Reese Lead, Deep Minimal Sub Groove, and Lo-Fi House Vinyl Chord.
-- Added Library category/filter/tag coverage for Indie Dance, Italo Disco, Balearic House, Afro Tech, Hard House, Melodic Techno, Deep Minimal, and Lo-Fi House, and updated `FactoryPresetLibraryAudit` to require and load-check the 88-preset pack.
+- Added Library category/filter/tag coverage for Indie Dance, Italo Disco, Balearic House, Afro Tech, Hard House, Melodic Techno, Deep Minimal, and Lo-Fi House, and updated `FactoryPresetLibraryAudit` to require the 88-preset pack and load-check the curated named expansion presets.
 
 ### HOME Club Monitor And 80-Preset Style Expansion
 
@@ -273,7 +480,7 @@
 ### Resizable Editor Layout Audit
 
 - Enabled host editor resizing from the current 940x710 compact layout up to a 1440x980 expanded workspace.
-- Expanded `EditorLayoutAudit` to sweep default, wide, and maximum editor sizes across all panels, every Random Lab page, and every FX detail module.
+- Expanded `EditorLayoutAudit` to sweep minimum, default, wide, and maximum editor sizes across all panels, every Random Lab page, and every FX detail module.
 - Added the first automated guardrail for future resizable UI work before deeper panel extraction, compact browser modes, and screenshot regression tests.
 
 ### Library Macro Value Strip
@@ -482,7 +689,7 @@
 
 ### Editor Layout Audit Test
 
-- Added a CTest-backed `NateVSTLayoutAudit` executable that instantiates the real processor/editor and audits every visible component across HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module.
+- Added a CTest-backed `NateVSTLayoutAudit` executable that instantiates the real processor/editor and audits every visible component across HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, and every FX detail module.
 - The audit now fails on visible controls with empty bounds or bounds that overflow the fixed editor surface, giving future UI-heavy feature work a repeatable local safety check.
 - Added an editor-side `runLayoutAudit()` hook so the same bounds audit can be reused as the UI is componentized.
 
@@ -1022,7 +1229,7 @@
 - Grouped the Add FX menu by production role: Tone & Drive, Movement, and Space & Utility.
 - Made the FX rack switch to a compact two-column layout when many fixed modules are visible, reducing overflow risk as the effect list grows.
 - Prevented Guard from being removed from the rack so output safety remains available.
-- Tuned rotary controls to use velocity-aware movement with a less cramped drag feel while keeping double-click reset, value popups, snap-to-click disabled, and mouse-wheel edits disabled.
+- Tuned rotary controls to use direct drag with a less cramped full-range movement while keeping double-click reset, value popups, snap-to-click disabled, and mouse-wheel edits disabled.
 
 ### FX Rack Row UI
 

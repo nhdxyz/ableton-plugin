@@ -34,18 +34,26 @@ Instead, improve the internal UI system:
 
 Implemented foundation pass:
 
-- The editor now opens at the established 940x710 layout and can resize up to 1440x980 in hosts that expose plugin resize handles.
-- `EditorLayoutAudit` now sweeps default, wide, and maximum editor sizes across every panel, every Random Lab page, and every FX detail module before future panel extraction and screenshot regression tests.
+- The editor now opens at 1040x760, preserves 940x710 as the compact minimum, and can resize up to 1440x980 in hosts that expose plugin resize handles.
+- `EditorLayoutAudit` now sweeps minimum, default, wide, and maximum editor sizes across every panel, every Random Lab page, every FX detail module, and the expanded macro/sample/source/SEQ focus overlays before future panel extraction and screenshot regression tests. It also verifies the SYNTH house layer rack stays visible/non-overlapping, adaptive focus overlays grow at tall/wide sizes, expanded SAMPLE/SEQ editing surfaces stay large enough, and the bottom audition keyboard uses visible-range responsive key widths and paints across the available bottom-bar area at wide sizes.
+- `ThemeAudit` validates critical contrast across the current Dark Club palette and planned Analyzer/Warm Studio palettes so future theme selection cannot introduce unreadable text/accent surfaces silently.
 - HOME now uses a five-zone dashboard with a central live overview display for source balance, macro state, cutoff, drive, pump/send/output status, and Guard activity. This moves HOME closer to a performance cockpit while keeping detailed source, modulation, and FX editing in focused panels.
 - HOME now includes a compact `SOURCE -> FILTER -> MOTION -> FX -> GUARD -> OUT` signal-flow strip, making active sound path, movement, effects, Guard state, and output safety visible without opening SYNTH or FX.
 - HOME preset access is now a compact Patch Snapshot view with selected-preset metadata, patch role, source type, output safety, A/B readiness, sequencer/pump state, active Random Lab candidate status, six performance meters, and recall/audition controls. The deeper save workflow lives in LIBRARY.
 - LIBRARY now uses Crates, Browser, Save Target, and Preset Profile work areas, plus a compact crate-map summary, an adaptive selected-preset profile card, and a dedicated Save Plan summary with library stats, visible/total/user/factory/folder/pack/generated/macro-rich/style counts, role/trait/cue context, Tone/Dirt/Motion/Space profile meters, destination trail, labeled Name/Folder/Pack/Cue/Notes readiness, generated/overwrite status, centered browser actions, and clearer rating placement.
 - SYNTH now includes a compact filter response display, giving the filter group a visual center for cutoff/resonance/mode edits instead of expanding the page with more always-visible controls.
+- SYNTH now includes a compact themed house layer rack in the source card, reading existing Osc 1, Osc 2, Sub, Noise, and Sample Mix state as Sub, Body, Character/Stab, Transient/Noise, and Chop layers without adding new preset state.
 - HOME now includes a compact output spectrum analyzer fed by final-output snapshot telemetry, with held-peak ticks and grouped sub/low/mid/presence/air balance so the dashboard distinguishes patch intent from actual club-band energy.
 - HOME now includes a compact Club Monitor under the low-end guidance area, showing short-history sub level, low-side stereo risk, Pump reduction, Guard reduction, peak risk, and SAFE/HOT/CLIP-style status for fast house and club-mix decisions.
 - The filter response display now includes modulation range overlays for filter destinations, making MOD assignments visible directly in the sound-shaping view.
-- The wavetable display now includes Osc 1/Osc 2 position modulation range overlays, extending graph-level MOD feedback into the source area.
-- The sample waveform display now includes Sample Start modulation range overlays and compact route summaries for Mix, Pitch, Ramp, and Stutter, extending graph-level MOD feedback into UKG chop work.
+- Osc 1/Osc 2 WT position controls remain in SYNTH; the earlier compact source-graph slot has been repurposed for the broader house layer rack until deeper wavetable import/editing gets a dedicated visual surface.
+- The sample waveform display now includes Sample Start modulation range overlays, compact route summaries for Mix, Pitch, Ramp, and Stutter, selected/custom slice-state badges, slice-lane click selection, and an expanded chop focus overlay, extending graph-level MOD feedback into UKG chop work.
+
+Theme architecture direction:
+
+- First centralized UI theme tokens are implemented for shared LookAndFeel controls, editor chrome, keyboard, lists, text editors, and common labels. Custom analyzer/waveform/rack components still contain direct color constants and should be migrated in later passes.
+- Keep theme selection out of APVTS automation and preset state. Visual theme should be a non-audio editor preference, likely stored with user settings once a Settings panel or popover exists.
+- Three built-in visual themes are planned in code as Dark Club, Analyzer, and Warm Studio. Dark Club remains the active user-facing palette until a settings selector, screenshot review, and broader component-token migration are complete.
 
 ## Current Problems
 
@@ -61,7 +69,7 @@ The eight performance macros are useful, but their assignments still need cleare
 
 The next modulation pass should avoid putting the whole matrix on HOME. HOME should stay fast. The deeper assignment workflow belongs in a focused MOD area.
 
-Implemented since the first pass: MOD now includes a destination inspector, a responsive source-to-destination route map, and a two-bank eight-slot routing matrix, so route movement is easier to scan while route rows remain readable for creating or clearing house/UKG movement destinations. Remaining work is deeper route editing, per-route ranges/processors, drag-to-modulate, and more destination types.
+Implemented since the first pass: MOD now includes a destination inspector, a responsive source-to-destination route map, and a two-bank eight-slot routing matrix, so route movement is easier to scan while route rows remain readable for creating or clearing house/UKG movement destinations. The route map now hides unless there is enough remaining height for readable route rows, and the layout audit checks that constraint. Remaining work is deeper route editing, per-route ranges/processors, drag-to-modulate, and more destination types.
 
 ### Knobs Still Feel Too Small
 
@@ -92,7 +100,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Output visualization: HOME now includes final-output oscilloscope, spectrum, and stereo/correlation displays fed from safe UI-side telemetry. The spectrum card now has compact held peaks and sub/low/mid/presence/air balance; future work should add manual analyzer freeze, zoomed oscilloscope/spectrum modes, stereo correlation overlay options, and optional FFT detail in an expanded analyzer page.
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
-- Sampler depth: vocal chops need slice markers, choke behavior, pitch/formant controls, reverse/stutter variations, and better metadata than a single start/end range.
+- Sampler depth: the waveform now shows eight saved slice regions with selected/custom state and performance badges plus first-pass nudge/fade actions, but vocal chops still need transient/manual marker creation, per-slice playback modes, pitch/formant controls, and better metadata than the current fixed eight-pad model.
 - Browser workflow: large synths make preset search, tags, categories, favorites, ratings, sort modes, folders, and per-section browsing feel central rather than secondary.
 - Latest UI reference pass: Serum 2 emphasizes a visual creative workflow and large genre-organized preset ecosystem; Pigments emphasizes color-coded drag-and-drop modulation, Play View, and generative sequencing; Hive emphasizes rearrangeable/modulatable FX, a deep matrix that does not get in the way, XY pads, and scope feedback; Korg modwave emphasizes Kaoss-style gesture control and multi-lane Motion Sequencing. Nate VST should keep adding visual state summaries, motion views, and organized house-focused content rather than returning to dense control grids.
 - Timing lock: implemented as a first pass. The internal sequencer follows host play-state and PPQ position so house, techno, and UKG patterns recover cleanly after Ableton loop jumps and transport repositioning. SEQ and FX now expose a compact host-sync status badge for lock/stopped/internal fallback state. Remaining work is deeper per-lane modulation sync and richer phase visualization.
@@ -233,7 +241,7 @@ These make the most sense for house, tech house, techno, minimal, and club sound
 
 1. Flanger
 
-Good for metallic movement, short stereo motion, and classic electronic sweeps. This can likely reuse JUCE delay/chorus-style DSP patterns with shorter delay times and more feedback.
+Implemented as the Flanger module with rate, depth, feedback, mix, rack enable state, and stable APVTS parameters. It covers metallic movement, short stereo motion, and classic electronic sweeps; future work is preset expansion, deeper modulation/routing, and quality testing under heavier feedback settings.
 
 2. Bitcrusher And Downsample
 
@@ -321,20 +329,21 @@ Do not use knobs for every parameter.
 Groups:
 
 - Perform: Sub, Cutoff, Drive, Output.
-- Macros: Tone, Dirt, Weight, Bounce, Warp, Throw, plus the Motion/Space XY pad.
+- Macros: editable eight-point macro shape for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw, plus the Motion/Space XY pad.
 - Signal Flow: source, filter, motion, FX, Guard, and output status.
 - Random Lab: recipe, generate, mutate, variation, undo, status.
 - Patch Snapshot: selected preset, role/source/safety state, Tone/Dirt/Move/Space/Weight/Bounce performance meters, compare state, sequencer/pump state, random-candidate status, and recall/audition controls.
 
-Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, macros, randomization, signal-flow status, Patch Snapshot state, and preset recall/audition. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, full save metadata, and full envelope editing stay in focused panels.
+Current HOME implementation now keeps only the fast patch-building controls visible: Sub/Cutoff/Drive/Output, visual macros, randomization, signal-flow status, Patch Snapshot state, and preset recall/audition. Oscillator waveform selection, filter mode, mono/unison/glide, resonance, filter envelope, noise level, full save metadata, and full envelope editing stay in focused panels.
 
-HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The full eight-macro performance bank belongs on MOD; HOME keeps the most performance-critical macro controls plus the Motion/Space XY pad.
+HOME should keep moving toward fewer permanent controls and more "jump to panel" style affordances later. The shared eight-macro shape map keeps performance edits visual on HOME and MOD, while deeper assignment editing stays in MOD.
 
 ### SYNTH
 
 Groups:
 
 - Osc 1 and Osc 2.
+- House layer rack: Sub, Body, Character/Stab, Transient/Noise, and Chop balance.
 - Sub and noise.
 - Filter.
 - Amp envelope.
@@ -373,7 +382,7 @@ Groups:
 - Assignment matrix.
 - Destination preview.
 
-MOD should be a new panel or a replacement for overloading the SYNTH/HOME panels.
+MOD is now the focused assignment panel instead of overloading SYNTH or HOME. Future MOD work should deepen route ranges, route processors, drag assignment, and destination previews without moving the whole matrix back onto HOME.
 
 ## Implementation Phases
 
@@ -425,9 +434,9 @@ Each effect should include:
 
 ### Phase 5: Modulation Visibility
 
-- Add a MOD panel. Implemented first as a visible macro-routing panel.
+- Add a MOD panel. Implemented as a focused modulation workflow with source rows, macro assignment editing, route map, destination inspector, and editable matrix rows.
 - Add LFO 1 and Mod Env 1. Implemented for per-voice synth modulation.
-- Add an 8-slot matrix. Implemented for safe synth destinations.
+- Add an 8-slot matrix. Implemented for safe synth, sample, FX, and send destinations.
 - First modulation-visibility pass implemented as active route rows, matrix headers/status, route tooltips, and draggable LFO curve points.
 - Add small modulation indicators to macro and destination knobs. Implemented first as destination rings for the current matrix targets.
 - Keep HOME focused on performance, not assignment editing.
@@ -485,17 +494,18 @@ Build the next larger slices in this order:
    First variation pass implemented as a SEQ-panel `Vary` action that mutates notes, velocity, probability, timing, length, and ghost steps without replacing the pattern.
    First safety pass implemented as a SEQ-panel `Undo` action that restores the prior generated, varied, template, copy, rotate, or clear state.
    First broader club-template pass implemented as `House Chord`, `Tech Bass`, `Minimal Pluck`, and `Techno Pulse` templates in the SEQ pattern selector.
-	   First Ableton handoff pass implemented as SEQ-panel `.mid` export that follows the current pattern's rate, root, octave, gate, swing/groove timing, scale quantization, velocity, and accent settings.
+   First Ableton handoff pass implemented as SEQ-panel `.mid` export, followed by captured A/B/Fill/Drop scene-chain `.mid` export that preserves each segment's rate, root, octave, gate, swing/groove timing, per-step ratchets, first-pass odd/even/fill conditions, scale quantization, chord color, voicing, strum, velocity, and accent settings. First direct-drag pass lets the `MIDI` and `Chain` buttons drag temporary `.mid` files into Ableton while keeping click-to-save behavior. First live scene-chain playback pass adds a `Live` toggle that alternates captured scene steps during playback, and the expanded SEQ focus can force Auto, 2-bar, or 4-bar chain length for live/export/drag behavior while deeper arranger controls and per-scene parameter playback remain open.
 	   First chord-memory pass implemented as a saved default-off SEQ `Memory` toggle that expands live MIDI through the current chord mode and voicing while preserving matched note-offs.
 	   First declutter pass moved duplicate quick-template buttons behind the pattern dropdown, grouped random/edit actions, added SEQ control/grid panel framing, and gave the grid more room.
-	   First selective-transform pass implemented as SEQ `Shape` tools for Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, and Humanize edits.
-	   First transport-feedback pass implemented as a SEQ status badge showing host lock, stopped-host state, or internal fallback tempo.
+	   First selective-transform pass implemented as SEQ `Shape` tools for Tighten, Straight Anchors, Swung Ghosts, Late Stabs, Vocal Push, Humanize, Bass Contour, Chord Stab Paint, and Build 4-Bar Chain edits.
+	   First transport-feedback pass implemented as a SEQ status badge showing host lock, stopped-host state, or internal fallback tempo. First expanded-editor pass implemented as a SEQ pattern focus overlay for larger piano-roll and per-step lane editing, followed by an adaptive overlay sizing pass so tall host windows give the grid substantially more editing height.
 3. Sample waveform slicer: visible waveform, slice markers, per-slice pitch/reverse/gain/stutter, choke behavior, and sequencer-triggered slice lanes.
    First slice-grid pass implemented as eight SAMPLE-panel pads that map the start/end window to equal phrase sections and audition the selected chop through the sampler.
    Second slice-grid pass implemented as a SAMPLE-panel waveform overview with a draggable start/end region, visible phrase markers, duration/selection readout, and host-automatable start/end writes.
    First click-safety pass implemented as internal zero-cross/low-energy boundary snapping plus adaptive fade-in/fade-out guards for chop playback and stutter restarts.
    First slice-style pass implemented as a saved SAMPLE `Slice Style` selector that lets pads apply Clean, Pitch, Reverse, Stutter, or Garage pitch/reverse/gain/stutter behaviors.
    First modulation pass implemented as global LFO/macro destinations for Sample Start, Mix, Pitch, Ramp, and Stutter.
+   First visual-editing pass implemented selected/custom slice overlays with pitch, pan, chance, reverse, stutter, and choke badges plus an expanded SAMPLE chop focus overlay. The focus overlay now expands on taller host windows so the waveform area behaves like a real chop editor rather than a small modal.
    `UKG Vocal Chop Starter` now opens with Garage slice style selected in the factory pack.
 4. Browser depth: text search, multi-tags, ratings, sort modes, category folders, pack/source filters, smart tags such as `Mono Safe`, `UKG`, `Vocal Chop`, and one-click audition.
    First broader factory-pack pass implemented as house, tech-house, minimal, and techno preset categories with matching Library filters.
@@ -505,6 +515,7 @@ Build the next larger slices in this order:
    First rating/organization pass implemented 1-5 star ratings in `Library.xml`, sort modes, rated/star filters, recursive preset scanning, and category subfolder saves for user presets.
    First pack/key/tempo metadata pass implemented author, pack, key, and BPM preset XML fields, LIBRARY save controls, metadata search, pack/BPM filters, and sort modes for pack, BPM, key, and author.
    First macro-value strip pass implemented structured Tone/Dirt/Motion/Space/Weight/Bounce/Warp/Throw values in Library scan results, an eight-meter Browser column, searchable value tokens, and `PresetSaveAudit` coverage.
+   First compact-row fit pass implemented a responsive Library row mode that keeps sound name/metadata readable at narrow browser widths, collapses the dense macro strip into preview/source/rating columns, swaps the header labels, and is covered by `EditorLayoutAudit`.
    The crate-map pass now uses `PresetCrateMapDisplay` in the LIBRARY Crates column for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged preset counts.
 5. Source/tone expansion: one strong wavetable lane first, followed by character filter flavors, slopes, drive, and optional quality/oversampling modes.
    First quality pass implemented in the existing oscillator lane with bandlimited saw/square/triangle playback, keeping the next bigger source work focused on wavetable/warp instead of fixing basic aliasing later.
@@ -547,8 +558,11 @@ Build the next larger slices in this order:
 
 8. Modulation visibility workflow: rings, route badges, source activity meters, drag assignment, hover inspection, macro assignment, and route processors.
    First source-meter pass implemented compact MOD source activity meters for LFO 1, Mod Env, Velocity, eight macros, S&H, Smooth, Chaos, and LFO 2 without adding new host parameters.
+   First compact-density pass added a short-row paint mode for MOD source meters and changed matrix amount rows to track-first sliders with selected-control value feedback, with `EditorLayoutAudit` coverage for source-meter height and amount-track width.
    First MSEG-tool pass implemented MOD-panel curve transform buttons for invert, reverse, smooth, quantize, controlled random dice, and UKG swing shapes while preserving existing LFO 1 curve parameters.
-   First route-map pass implemented a responsive MOD routing overview that summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while preserving compact-mode matrix row space.
+   First route-map pass implemented a responsive MOD routing overview that summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while preserving compact-mode matrix row space. The compact-height guard now keeps that map hidden unless the matrix rows remain readable.
+   First visual macro-editing pass replaced the HOME macro knob cluster with an editable eight-point macro shape map and replaced the visible MOD source/destination/amount assignment strip with a draggable macro assignment pad backed by the existing matrix slots.
+   First expandable-editor pass added a reusable in-editor focus overlay and HOME/MOD `>` affordances for a larger macro shape plus assignment editor, with layout audit coverage instead of a new modal/window framework. The overlay now uses adaptive width/height caps, and `EditorLayoutAudit` checks tall-window growth for the panel plus expanded SAMPLE and SEQ editor heights.
 
 ## Acceptance Criteria For The Next Big UI Pass
 
@@ -557,7 +571,7 @@ Build the next larger slices in this order:
 - Current modules can be selected and edited in a focused detail area.
 - Rack selected state, enabled state, bypass state, and Guard safety state are visually distinct in the custom rack-row component.
 - Remaining UI polish: direct grid gestures now edit velocity, probability, timing, and length lanes; dense knob rows still need a larger-control design pass rather than only shorter drag travel.
-- Knobs feel easier to grab and read. Current pass uses velocity-aware rotary behavior and larger full-range drag than the previous very short drag.
+- Knobs feel easier to grab and read. Current pass uses direct rotary drag with shorter full-range movement, disabled snap-to-click, double-click reset, value popups, and disabled wheel edits to avoid accidental jumps while scrolling.
 - HOME feels less like a control dump. Current pass limits HOME to Perform, Macros, Random Lab, Signal Flow, and Patch Snapshot while keeping deeper controls on focused panels.
-- HOME macro controls stay readable as a two-row performance bank beside the Motion/Space XY pad instead of a single compressed six-knob strip.
+- HOME macro controls stay readable as an editable macro shape map beside the Motion/Space XY pad instead of a compressed knob strip, with a larger focus overlay available when precision editing is needed.
 - A clear path exists for adding more FX without redesigning the page again.

@@ -26,7 +26,7 @@ Reference pages checked during the editable-matrix pass:
 
 - Keep HOME focused on playability: macros, source mix, randomization, Patch Snapshot state, and preset recall.
 - Keep SYNTH focused on oscillator, filter, amp, and core tone shaping.
-- Put deeper assignment work in a future MOD panel instead of crowding HOME.
+- Keep deeper assignment work in the dedicated MOD panel instead of crowding HOME.
 - Make the first modulation implementation small, automatable, and easy to validate.
 - Prefer visible movement indicators over hidden behavior.
 - Keep stable parameter IDs; changing them later can break Ableton sets and user presets.
@@ -146,7 +146,8 @@ Start with 8 slots. This is enough to be useful without becoming hard to validat
 
 HOME:
 
-- Show the performance-critical macro controls and the Motion/Space XY pad without turning HOME into a full modulation matrix.
+- Show the performance-critical macro shape map and the Motion/Space XY pad without turning HOME into a full modulation matrix.
+- Provide a compact expand affordance when the macro shape needs a larger editing surface.
 - Keep fast patch-shaping and preset recall visible.
 - Show a small moving indicator when macro/LFO modulation is active.
 - Keep deeper source, routing, and assignment editing in focused panels.
@@ -162,9 +163,9 @@ MOD:
 - Mod envelope controls.
 - Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, Smooth, and Chaos, each with route count/depth and a compact activity meter.
 - Matrix rows.
-- Assignment amount controls.
+- Visual macro assignment controls.
 - Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, live source activity meters, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
-- Current implementation also includes a compact macro assignment editor: choose a performance macro, destination, and depth, then Add/Update, Replace, or Clear that macro's routes without exposing the full routing matrix on HOME.
+- Current implementation also includes a visual macro assignment editor: click a performance macro, click or drag a destination chip, drag bipolar depth, and clear that macro's routes while reusing the saved matrix slots instead of exposing the full routing matrix on HOME. HOME and MOD can open the same expanded in-editor macro focus overlay for larger macro-shape and assignment editing.
 - Current implementation includes right-click `Modulate` menus on matrix-targetable sliders, so producers can add LFO, macro, S&H, Smooth, Chaos, or LFO 2 routes directly from cutoff, drive, Osc Warp, sample chop, and FX movement controls.
 - Current implementation now shows modulation feedback on both rotary and horizontal sliders: knobs draw source-colored amount rings, while horizontal sample/FX/matrix controls draw source-colored modulation stripes and compact route badges. Tooltips keep the normal control guidance and append active source/depth status.
 - Current implementation includes a first hover-to-inspect pass: moving over a MOD-targetable control updates the top selected-control strip with the current value, automation ID, and active route summary.
@@ -214,9 +215,9 @@ Visible workflow slice:
    - Warp -> oscillator 2 bend and filter edge.
    - Throw -> delay and reverb push.
 4. Reuse the same APVTS macro parameters, so values remain saved in Ableton state and `.natevstpreset` files.
-5. Keep HOME focused on the first four fast controls and show all eight macro sources in the deeper MOD workflow.
+5. Keep HOME focused on fast performance controls while MOD shows the full eight-macro source bank and detailed assignment workflow.
 
-Macro assignment workflow slice:
+Macro assignment workflow slices:
 
 1. Added a MOD-panel macro assignment lane for the eight performance macros.
 2. Reused the existing saved matrix slots instead of adding new host automation IDs.
@@ -225,6 +226,9 @@ Macro assignment workflow slice:
 5. Added Clear behavior for all routes owned by the selected macro.
 6. Added a live macro summary showing the selected macro's active destinations and depths.
 7. Kept HOME as the performance surface while detailed macro editing stays in MOD.
+8. Replaced the cramped visible source/destination/amount row with a draggable visual assignment pad that shows macro route counts, selected target depth, assigned destination chips, and full details in tooltips.
+9. Added a shared macro shape map so HOME and MOD can edit Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw visually without duplicating dense knob rows.
+10. Added a larger in-editor macro focus overlay opened from HOME or MOD so dense visual editors can scale up without adding a separate modal/window lifetime path.
 
 Right-click assignment workflow slice:
 

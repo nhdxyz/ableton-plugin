@@ -2,6 +2,8 @@
 
 Research date: 2026-06-28
 
+Current house-focused refresh: 2026-06-29, see `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md`.
+
 This document turns the current reference review into an implementation backlog for Nate VST. It is intentionally feature-focused and avoids copying proprietary UI, presets, wavetables, samples, DSP code, branding, or product-specific workflows.
 
 ## Reference Set
@@ -31,26 +33,27 @@ Primary FX, groove, and club-workflow references:
 ## Current Nate VST Strengths
 
 - Focused house, UKG, tech-house, techno, and minimal direction.
-- Stable JUCE/VST3 foundation with local pluginval validation used during feature slices.
+- Stable JUCE/VST3 foundation with broad local CTest coverage; a repo-backed pluginval gate and repeatable Ableton validation checklist remain open.
 - PolyBLEP oscillator pass for better bright-note behavior.
 - Filter character and slope options.
 - Oscillator warp control.
 - FX rack with add/select workflow, module summaries, sync delay, pump, width, guard, and custom pump curves.
 - MOD panel with sources, destinations, route bypass/delete, curve presets, macro assignment editing, and destination badges.
-- Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing lanes, groove timing, templates, and host transport sync.
-- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
-- Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, recursive preset scanning, visual save preview, left crate rail folder/pack/style coverage, centered browser actions, and HOME Patch Snapshot recall/performance state.
+- Sequencer with piano-roll editing, chord memory, editable velocity/probability/timing/length/lock/ratchet/condition/slide lanes, groove timing, templates, first-pass Chord Stab Paint, first-pass `Build 4-Bar Chain` scene generation, first-pass live scene-chain step/control playback, expanded-focus `Auto` / `2 Bar` / `4 Bar` chain length mode, single-pattern and scene-chain MIDI export, first-pass MIDI drag-out from the `MIDI` and `Chain` buttons, scenes, and host transport sync.
+- Sampler/chop workflow for UKG vocal and stab material, including Slice Keys, visual selected/custom slice overlays, expanded chop focus editing, and first per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory.
+- Live/clickable SYNTH house source rack with expanded source-layer focus overlay for Sub, Body, Character/Stab, Transient/Noise, and Chop roles.
+- Library with folders, categories, favorites, ratings, metadata, macro previews, search, sort, recursive preset scanning, visual save preview, left crate rail folder/pack/style coverage, centered browser actions, HOME Patch Snapshot recall/performance state, rendered preview cache/playback, visible-row preview warming, preview level badges, and compact-width browser rows that keep preset name/metadata readable.
 - Factory preset generator for genre-targeted packs.
 
 ## Product Gaps
 
 The largest remaining gap is no longer "does the plugin have enough controls." It is now "does each control feel fast, visual, musical, and reliable inside Ableton." The next work should favor interaction quality, source depth, browser usefulness, and club-specific timing tools over adding more unfocused knobs.
 
-See `docs/PROGRAM_RESEARCH_GAP_LIST.md` for the latest program-by-program research matrix and `docs/COMPETITOR_GAP_ANALYSIS.md` for the expanded 2026-06-28 competitor refresh. This file remains the shorter implementation backlog.
+See `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md` for the current house-focused competitor refresh. `docs/PROGRAM_RESEARCH_GAP_LIST.md` and `docs/COMPETITOR_GAP_ANALYSIS.md` remain older broad research matrices. This file remains the shorter implementation backlog.
 
 ## Priority 0: UI And Workflow Corrections
 
-1. Extract HOME, SYNTH, SAMPLE, MOD, SEQ, FX, LAB, and LIBRARY panels into smaller editor components.
+1. Extract HOME, SYNTH, SAMPLE, MOD, SEQ, FX, LAB, LIBRARY, and INFO panels into smaller editor components.
 2. Add automated layout overflow checks for every page and supported editor size. First CTest-backed editor bounds audit implemented for minimum, default, wide, and maximum editor sizes.
 3. Add screenshot-based UI regression checks for desktop scale factors.
 4. Add a debug overlay that marks component bounds when checking overlap.
@@ -72,24 +75,25 @@ Implemented control-feel sub-slice:
 
 Implemented UI test sub-slices:
 
-- `EditorLayoutAudit` now instantiates the real plugin editor and checks HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, LIBRARY, and every FX detail module for visible empty-bounds or editor-overflow failures through CTest.
-- The editor now opens at 1040x760, preserves 940x710 as the compact minimum, exposes host resize limits up to 1440x980, and `EditorLayoutAudit` sweeps minimum, default, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module.
+- `EditorLayoutAudit` now instantiates the real plugin editor and checks HOME, SYNTH, LAB, MOD, SAMPLE, SEQ, FX, LIBRARY, INFO, and every FX detail module for visible empty-bounds or editor-overflow failures through CTest.
+- The editor now opens at 1040x760, preserves 940x710 as the compact minimum, exposes host resize limits up to 1440x980, and `EditorLayoutAudit` sweeps minimum, minimum-tall, default, default-tall, wide-min-height, wide, and maximum sizes across every panel, every Random Lab page, and every FX detail module. The SYNTH house layer rack has explicit visible-bounds/overlap checks, the bottom audition keyboard now scales white-key width from the visible note range to the available bottom-bar area, the SEQ piano-roll grid has adaptive lane height plus an expanded pattern focus overlay, and the audit checks key-width/painted-coverage, keyboard-control compression, and compact/expanded SEQ row/cell readability so wide hosts do not leave a blank keyboard tail and compact hosts keep the sequencer usable.
 - First-pass global `Undo Edit`/`Redo Edit` is available from the persistent selected-control strip, with `GlobalEditHistoryAudit` verifying full-state restore across synth parameters, modulation routes, sequencer step data, and performance snapshots.
 - A dedicated `INFO` panel now keeps About/workflow/topic explanations and quick LAB/MOD/FX/LIBRARY jumps out of the primary sound-design panels, reducing always-on text clutter.
-- HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, reducing the need to show every sound-design control on the default dashboard.
+- HOME now has a central `HomeOverviewDisplay` for source balance, macro state, cutoff/drive, pump/send/output meters, and Guard reduction, plus an editable eight-point macro shape map for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw. A larger in-editor macro focus overlay can be opened from HOME or MOD for precision macro-shape and assignment editing. This reduces the need to show every sound-design control on the default dashboard.
 - HOME now has a compact signal-flow strip for Source, Filter, Motion, FX, Guard, and Output active-state visualization; deeper split, send, and parallel routing views remain future work.
 - LIBRARY now has dedicated Crates, Browser, Save Target, and Preset Profile work areas plus an adaptive `PresetLibrarySummary` profile card, a compact crate rail with folder/pack/style coverage, centered browser actions, and a redesigned Save Plan card with destination trail and labeled readiness, while HOME has a compact Patch Snapshot for role/source/safety, performance meters, compare, sequencer/pump, and random-candidate state above recall/audition.
 - SYNTH now has a dedicated `FilterResponseDisplay` above the filter controls, making cutoff, resonance, mode, character, slope, envelope amount, and drive visible without adding another row of knobs.
+- SYNTH now has a themed `HouseLayerRackDisplay` in the source card, showing existing Osc 1, Osc 2, Sub, Noise, and Sample Mix state as Sub, Body, Character/Stab, Transient/Noise, and Chop layers.
 - HOME now includes `OutputOscilloscopeDisplay` and `OutputSpectrumDisplay` fed by the real-time-safe final-output snapshot ring, making waveform shape, transient punch, clipping risk, held spectrum peaks, and sub/low/mid/presence/air energy visible without opening a separate analysis page.
 - The filter response display now shows MOD-matrix route depth for Filter Cutoff, Filter Res, Filter Env, and Drive, including cutoff range shading and source summaries.
-- The wavetable display now shows MOD-matrix route depth for Osc 1/Osc 2 WT position, including per-oscillator range shading, ghost waveforms, and source summaries.
-- The sample waveform display now shows MOD-matrix route depth for Sample Start, Mix, Pitch, Ramp, and Stutter, including start-range shading and source summaries for chop motion.
+- Osc 1/Osc 2 WT position controls and MOD destinations are implemented; the previous compact source-graph slot is now used by the broader house layer rack until deeper wavetable visual editing lands.
+- The sample waveform display now shows MOD-matrix route depth for Sample Start, Mix, Pitch, Ramp, and Stutter, including start-range shading, source summaries for chop motion, selected/custom slice badges, and an expanded chop focus overlay.
 
 ## Priority 1: Modulation And Movement
 
 16. Add drag-style modulation assignment from source chips to destination controls.
 17. Add right-click or menu assignment from any automatable control. First pass implemented for MOD-targetable sliders.
-18. Add a macro assignment editor showing destination, amount, polarity, and range. First pass implemented for macro source, destination, amount, add/update, replace, clear, and summary; explicit min/max range editing remains open.
+18. Add a macro assignment editor showing destination, amount, polarity, and range. First passes implemented hidden source/destination/amount backing controls plus a draggable visual macro assignment pad with route counts, assigned destination chips, add/update, clear, summary tooltips, and a larger audited focus overlay; explicit min/max range editing remains open.
 19. Add per-route curve shaping.
 20. Add per-route unipolar/bipolar mode.
 21. Add per-route smoothing.
@@ -135,18 +139,26 @@ Implemented wavetable sub-slice:
 
 - Added an internal generated wavetable mode as waveform index 4 for Osc 1 and Osc 2, preserving existing waveform indices.
 - Added Osc 1/Osc 2 wavetable position parameters and MOD destinations for WT position movement.
-- Added a compact SYNTH-panel wavetable display and seeded selected factory presets with the new source mode.
+- Added Osc 1/Osc 2 WT position controls and seeded selected factory presets with the new source mode.
 - Added a compact SYNTH-panel filter response display for immediate visual feedback while shaping house basses, UKG organ stabs, minimal plucks, and techno filter sweeps.
 - Added HOME output oscilloscope/spectrum analyzers for actual rendered waveform shape, transient punch, clipping risk, held spectrum peaks, and energy across sub, low, mid, presence, and air ranges.
 - Added the first modulation overlay on the filter response display so movement assigned in MOD is visible on the tone-shaping graph.
-- Added wavetable position modulation overlays so Osc 1/Osc 2 WT movement can be read directly from the source graph.
-- Added sample chop modulation overlays so Sample Start movement and related chop route depths can be read directly on the waveform.
+- Added a first visual house layer rack so Osc 1/Osc 2, sub, noise, and sample mix roles can be read directly in the SYNTH source card.
+- The house layer rack now stays live from the editor timer, shows actual noise color, sample playback mode/slice style, sample gain-adjusted chop level, and Weight-macro sub support, and opens into an expanded source-layer focus overlay with click-to-focus layer controls.
+- Added sample chop modulation and slice-state overlays so Sample Start movement, related chop route depths, and eight-pad custom/selected slice behavior can be read directly on the waveform.
 
 Implemented percussive noise sub-slice:
 
 - Added White, Pink, Brown, Air, Tick, Vinyl, and Digital noise colors with a Noise Decay parameter for transient ticks and longer texture layers.
 - Kept bass randomization sub-safe while giving UKG/house stabs, bells, minimal blips, and Noise FX role-aware attack/noise choices.
 - Added `NoiseSourceAudit` for choice stability, decaying Tick behavior, and sustained white/digital rendering.
+
+Implemented house source-character sub-slice:
+
+- Added appended procedural Organ and House Piano waveform modes after the existing Sine, Saw, Square, Triangle, and Wavetable indices so saved presets and Ableton automation mappings remain stable.
+- Exposed the new source modes in the SYNTH selectors and HOME source summaries, and biased organ/chord random recipes toward them without broadening bass/noise recipes.
+- Seeded selected house chord, piano, and organ-bass factory presets with the new original source modes and added `SourceCharacterAudit` for waveform choice ordering plus finite/audible source rendering.
+- Deeper drawbar controls, source snippets, sampled PCM-style house content, real source-rack lanes with per-layer controls, and source import remain open.
 
 46. Add supersaw/unison engine improvements with phase, detune curve, and stereo spread.
 47. Add analog drift with per-voice pitch, phase, and filter variation.
@@ -159,7 +171,7 @@ Implemented percussive noise sub-slice:
 
 51. Add transient-based slice detection.
 52. Add manual slice markers in the SAMPLE waveform view.
-53. Add per-slice start/end/nudge. First stored start/end region memory implemented for eight pads; manual marker nudge remains open.
+53. Add per-slice start/end/nudge. First stored start/end region memory and stepped nudge controls are implemented for eight pads; manual marker nudge remains open.
 54. Add per-slice pitch and gain. First memory/playback pass implemented for eight pads.
 55. Add per-slice reverse. First memory/playback pass implemented for eight pads.
 56. Add slice randomization with musical density limits. First `Dice` pass implemented for the selected slice.
@@ -182,9 +194,9 @@ Implemented sampler sub-slice:
 ## Priority 4: Sequencer, Piano Roll, And Groove
 
 66. Add multiple sequencer patterns per preset.
-67. Add pattern chaining.
+67. Add deeper pattern chaining beyond the first live scene-chain playback, Build 4-Bar Chain, and forced chain-length passes.
 68. Add per-step probability. First editable lane pass implemented in the SEQ grid.
-69. Add per-step ratchet/retrigger.
+69. Add per-step ratchet/retrigger. First saved lane/playback/export pass implemented; repeat curves, per-ratchet probability, and deeper velocity falloff remain open.
 70. Add per-step note length. First editable lane/playback/export pass implemented in the SEQ grid.
 71. Add per-step velocity lane. First editable lane pass implemented in the SEQ grid.
 72. Add per-step modulation lane assignments. First assignable Lock lane implemented; expand to multiple lanes, per-step destinations, and sample-accurate lock scheduling.
@@ -192,17 +204,18 @@ Implemented sampler sub-slice:
 74. Add per-step pump depth lane.
 75. Add per-step delay throw lane.
 76. Add scale quantize and key lock for the piano roll.
-77. Add chord paint tools for UKG stabs.
+77. Add deeper chord paint tools for UKG stabs beyond the first Chord Stab Paint transform.
 78. Add groove templates for 2-step, shuffle, swung 16ths, minimal offbeats, and techno pulse. First dedicated template pass implemented for House Shuffle, UKG 2-Step Push, Tech House Tight, Minimal Skip, and Techno Drive.
 79. Add humanize with separate timing, velocity, and gate controls.
-80. Add MIDI drag export from the internal sequencer into Ableton.
+80. Add MIDI drag export from the internal sequencer into Ableton. First-pass current-pattern and scene-chain `.mid` file drag-out is implemented; host validation and richer clip/audio handoff remain open.
 
 Implemented sequencer sub-slice:
 
-- The SEQ panel now has four pattern scenes, `A`, `B`, `Fill`, and `Drop`, with capture/recall buttons that store the full 16-step pattern, per-step lanes, chord/voicing/strum settings, groove settings, rate/root/gate/accent/probability, and lock destination/depth.
+- The SEQ panel now has four pattern scenes, `A`, `B`, `Fill`, and `Drop`, with capture/recall buttons that store the full 16-step pattern, per-step lanes, chord/voicing/strum settings, groove settings, rate/root/gate/accent/probability, and lock destination/depth; captured scenes can now be played as a first-pass live step/control chain, exported as one chained MIDI file in A/B/Fill/Drop order, and forced through Auto, 2-bar, or 4-bar chain length for live playback and Chain MIDI save/drag from the expanded SEQ focus.
 - Pattern scenes serialize into plugin state and preset state without becoming host automation parameters, and `SequencerPatternSceneAudit` verifies capture, recall, summary, and save/restore behavior.
 - Chord mode choices now include appended Maj 7, Dom 7, Sus, House 9, and Dub colors, and the SEQ preset menu includes Deep Chord, Dub Chord, Off Bass, and Rolling Bass starters. `SequencerHousePatternAudit` verifies these chord colors and presets.
 - Groove mode choices now append House Shuf, Tech, Minimal, and Drive while keeping the original indexes stable, and the SEQ transform menu can apply genre templates that shape per-step timing, velocity, probability, length, lock feel, swing, gate, accent, probability, and lock routing together. `SequencerHousePatternAudit` verifies the appended choices and template behavior.
+- Per-step ratchets are now saved in preset/session state, editable from the compact SEQ `Rat` lane and the expanded SEQ pattern focus overlay, rendered by playback, seeded in selected factory patterns, and included in exported MIDI; the first per-step `Cond` lane adds Always/Odd/Even/Fill phrase states for playback, scenes, state, and MIDI export; the first `Slide` lane saves legato overlap into live playback and exported/dragged MIDI. `SequencerRatchetAudit` verifies clamp, restore, playback timing, two-scene Fill parity, slide overlap, and MIDI ticks for repeat, condition, and slide behavior.
 
 ## Priority 5: FX And Club Processing
 
@@ -267,9 +280,9 @@ Implemented FX sub-slice:
 
 Implemented library sub-slice:
 
-- Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw.
-- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, and macro value strip with click-to-select and double-click-to-load behavior. The Crates column now includes quick filters, smart-crate/search/sort controls, centered browser actions, and a compact crate-map summary for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged counts, while Preset Profile shows a selected-preset role/trait/cue profile with Tone/Dirt/Motion/Space meters. The filter menu includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and audio preview rendering remain open.
-- The Library Audition button now plays runtime role-aware MIDI phrases for bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general presets. Rendered preview files, auto-preview, and editable preview phrase templates remain open.
+- Macro preview values are now parsed from saved preset XML and surfaced in Library search, status text, tooltips, a `Macro Rich` filter, a `Macros` sort mode, and a compact eight-value browser strip for Tone, Dirt, Motion, Space, Weight, Bounce, Warp, and Throw. Narrow Library rows now collapse that dense strip into preview/source/rating columns so preset identity stays readable.
+- A compact LIBRARY preset browser table now mirrors the active search/filter/sort result and shows name, category/folder, pack, key, BPM, rating, favorite marker, macro value strip, and preview-ready/stale/render-on-audition status with click-to-select and double-click-to-load behavior. The Crates column now includes quick filters, smart-crate/search/sort controls, centered browser actions, and a compact crate-map summary for visible/total, user/factory, folder, pack, generated, macro-rich, favorite, rated, and style-tagged counts, while Preset Profile shows a selected-preset role/trait/cue profile with Tone/Dirt/Motion/Space meters. The filter menu includes first-pass smart crates, while a larger full-browser sidebar, editable user crates, tag editing, and richer preview UI remain open.
+- The Library Audition button now starts rendered preview cache/playback for bass, chord/stab, garage-chop, groove, FX, lead/pluck, and general presets without loading the active patch, and the Library `Warm` action can batch-render the selected/visible crate rows with row level badges from cached preview peak/RMS metadata. Fully background rendering, waveform badges, auto-preview, and editable preview phrase templates remain open.
 - Library Save now has a two-click same-folder overwrite guard, and same-name presets in different category folders are preserved for real subfolder organization.
 
 ## Priority 8: Sound Quality And Safety
@@ -278,7 +291,7 @@ Implemented library sub-slice:
 125. Add high-quality/offline render mode if the host exposes enough context.
 126. Add denormal protection audit.
 127. Add anti-click smoothing audit for all automatable parameters.
-128. Add gain staging tests for randomizer and factory presets.
+128. Expand gain staging tests for randomizer and factory presets beyond the first `FactoryPresetRenderAudit` finite/non-silent/peak smoke gate.
 129. Add loudness-matched drive testing.
 130. Add oscillator aliasing test renders.
 131. Add voice stealing audit.
@@ -289,6 +302,7 @@ Implemented library sub-slice:
 Implemented safety sub-slice:
 
 - The persistent output meter now shows a club-production safety state from live output levels, and the Guard FX summary exposes current peak headroom plus active gain reduction. Deeper guard-hit history, limiter/clipper metering, and preset-level gain staging audits remain open.
+- `FactoryPresetRenderAudit` now renders every repo-managed factory preset through the real preset loader and synth/sample/FX path, failing non-finite, silent, and runaway-peak output. Role-specific loudness targets, mono-bass validation, stuck-note checks, and broader gain-staging reports remain open.
 
 ## Priority 9: Ableton And Distribution
 
@@ -304,13 +318,15 @@ Implemented safety sub-slice:
 
 ## Recommended Next Slices
 
-1. Build automated editor layout checks and component extraction for the largest pages.
-2. Expand the completed control-feel pass with larger hit areas, icon actions, selected-control inspector, and UI scale modes.
-3. Grow the compact LIBRARY browser and first smart-crate pass into a full browser with sidebar crates, tag editing, audio previews, and construction kits.
-4. Add drag/menu modulation assignment plus selected-parameter route views.
-5. Add sequencer ratchets, pattern slots, chord paint, and assignable per-step modulation lanes.
-6. Add transient/manual sample slice markers plus per-slice nudge/fades/playback modes beyond the first stored start/end/pan/probability pass.
-7. Add user tags, editable/full-browser smart crates, rendered preset preview files, and editable preview phrase templates in LIBRARY.
-8. Add wavetable oscillator playback after UI layout risk is reduced.
-9. Add multiband drive with oversampling, gain compensation, and loudness checks.
-10. Add UKG recipe tools for Dred bass, organ bass, late stabs, and vocal chop motifs.
+1. Expand rendered preset previews beyond the implemented visible-row warmer and level badges into background generation, Library waveform badges, explicit regeneration controls, and preview loudness consistency. The earlier sample/FX Mod Env and Velocity source-parity and nonzero tail-reporting correctness slice is now implemented and covered by focused audits.
+2. Move the house source-character pass forward with drawbar controls, legal/original digital-PCM-style chord/piano stabs, rubber/Reese/acid bass snippets, true wavetable import/playback, richer warp modes, and focused FM/operator color.
+3. Add transient/manual sample slice markers plus per-slice playback modes, full relink handling, and slice-to-sequencer lanes beyond the first stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes. `SamplerChopAudit` now protects the current load reset, Slice Keys, probability, nudge/fade playback changes, missing-file restore clearing, and UKG chop setup baseline.
+4. Add deeper sequencer arrangement tools: arranger-style chain editing beyond first-pass `Build 4-Bar Chain` and `Auto` / `2 Bar` / `4 Bar` modes, deeper per-scene automation/rate/follow behavior beyond first-pass live step/control chaining, richer Ableton audio/loop drag-out or export staging beyond first-pass MIDI drag-out, deeper chord-paint variants beyond first-pass Chord Stab Paint, deeper bassline contour generation beyond the first Bass Contour Shape transform, deeper slide/glide controls beyond the first overlap pass, richer condition vocabulary, MIDI import, and richer per-step modulation lanes.
+5. Add the #84 house drum/kick-bass construction lane: kit pads, sample discovery, groove/accent lanes, kick/bass phase-length checks, rendered loop/one-shot drag-out, and construction-kit stems.
+6. Define the #83 expansion-ready content pack manifest before the next large factory/content push: versioning, license metadata, preview media, dependencies, relink, and user/factory separation.
+7. Add deterministic house performance transforms: make it more house, tighten low end, more groove, darker dub, shorter stab, delay throw variation, and reset mix-safe.
+8. Add drag-to-modulate plus route min/max ranges, route curves, route slew, macro snapshots, and XY assignment editing.
+9. Add multiband/bass-safe drive with oversampling, gain compensation, clearer clip/limiter metering, and loudness checks.
+10. Grow the compact LIBRARY browser and first smart-crate pass into a full browser with sidebar crates, tag editing, construction kits, relationship-aware compatible preset groups, dependency tracking, and pack import/export.
+11. Build expandable Sequencer, FX, and Mod Matrix focus panels after the Macro and Sample focus overlays.
+12. Run Ableton workflow validation: scan, load, automate, save/reopen, duplicate track, freeze/flatten, missing sample behavior, direct MIDI/audio drag-out, and preset loudness consistency.

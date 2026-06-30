@@ -127,6 +127,40 @@ float wavetableSample(float phase, float phaseDelta, float position)
     return wavetableFrameSample(lowerFrame, phase, phaseDelta)
         + ((wavetableFrameSample(upperFrame, phase, phaseDelta) - wavetableFrameSample(lowerFrame, phase, phaseDelta)) * smoothMix);
 }
+
+float additiveHarmonic(float phase, float phaseDelta, float harmonic, float amount, float phaseOffset = 0.0f)
+{
+    if (harmonic * phaseDelta >= 0.45f)
+        return 0.0f;
+
+    return sineHarmonic(phase, harmonic, phaseOffset) * amount;
+}
+
+float organSample(float phase, float phaseDelta)
+{
+    const auto fundamental = additiveHarmonic(phase, phaseDelta, 1.0f, 0.92f);
+    const auto octave = additiveHarmonic(phase, phaseDelta, 2.0f, 0.72f);
+    const auto fifth = additiveHarmonic(phase, phaseDelta, 3.0f, 0.46f);
+    const auto secondOctave = additiveHarmonic(phase, phaseDelta, 4.0f, 0.34f);
+    const auto mutation = additiveHarmonic(phase, phaseDelta, 6.0f, 0.18f, 0.04f)
+        + additiveHarmonic(phase, phaseDelta, 8.0f, 0.12f, 0.11f);
+
+    return (fundamental + octave + fifth + secondOctave + mutation) * 0.42f;
+}
+
+float housePianoSample(float phase, float phaseDelta)
+{
+    auto sample = additiveHarmonic(phase, phaseDelta, 1.0f, 1.0f);
+    sample += additiveHarmonic(phase, phaseDelta, 2.0f, 0.62f, 0.02f);
+    sample += additiveHarmonic(phase, phaseDelta, 3.0f, 0.38f, 0.18f);
+    sample += additiveHarmonic(phase, phaseDelta, 5.0f, 0.26f, 0.08f);
+    sample += additiveHarmonic(phase, phaseDelta, 7.0f, 0.18f, 0.27f);
+    sample += additiveHarmonic(phase, phaseDelta, 10.0f, 0.1f, 0.36f);
+    sample += additiveHarmonic(phase, phaseDelta, 14.0f, 0.07f, 0.12f);
+
+    const auto tine = std::sin(sample * juce::MathConstants<float>::halfPi * 1.22f);
+    return ((sample * 0.72f) + (tine * 0.28f)) * 0.48f;
+}
 }
 
 void Oscillator::prepare(double newSampleRate)
@@ -192,6 +226,14 @@ float Oscillator::process()
 
         case Waveform::wavetable:
             sample = wavetableSample(phase, phaseDelta, wavetablePosition);
+            break;
+
+        case Waveform::organ:
+            sample = organSample(phase, phaseDelta);
+            break;
+
+        case Waveform::housePiano:
+            sample = housePianoSample(phase, phaseDelta);
             break;
     }
 

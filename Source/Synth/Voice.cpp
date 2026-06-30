@@ -347,14 +347,14 @@ void Voice::updateVoiceParameters(float envelopeValue)
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
-    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 4, waveIndex));
+    const auto waveform = static_cast<Waveform>(juce::jlimit(0, 6, waveIndex));
 
     const auto octaveOffset = static_cast<int>(readParameter(oscOctave, 0.0f)) * 12.0f;
     const auto tuneOffset = readParameter(oscTune, 0.0f);
     const auto pitchRatio = std::pow(2.0f, (octaveOffset + tuneOffset + pitchBendSemitones) / 12.0f);
 
     const auto osc2WaveIndex = static_cast<int>(readParameter(osc2Wave, 1.0f));
-    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 4, osc2WaveIndex));
+    const auto osc2Waveform = static_cast<Waveform>(juce::jlimit(0, 6, osc2WaveIndex));
 
     const auto osc2OctaveOffset = static_cast<int>(readParameter(osc2Octave, 0.0f)) * 12.0f;
     const auto motion = readParameter(macroMotion, 0.0f);

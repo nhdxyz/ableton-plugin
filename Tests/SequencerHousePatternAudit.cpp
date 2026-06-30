@@ -176,6 +176,47 @@ int main()
         return 1;
     }
 
+    processor.applySequencerPatternPreset(0);
+    if (! processor.applySequencerGrooveTransform(11)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 4.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerSwing, 0.0f), 0.24f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerChordMode, 1.0f), 0.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerOctave, 0.0f), -1.0f)
+        || processor.getSequencerStep(3).noteOffset != -7
+        || processor.getSequencerStep(3).timing < 0.45f
+        || processor.getSequencerStep(14).noteOffset != -2
+        || processor.getSequencerStep(14).ratchet < 2)
+    {
+        std::cerr << "Bass Contour template did not apply expected bassline contour/global state\n";
+        return 1;
+    }
+
+    processor.clearSequencerPattern();
+    if (! processor.applySequencerGrooveTransform(13)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerChordMode, 0.0f), 9.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerChordVoicing, 0.0f), 4.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerGrooveMode, 0.0f), 4.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sequencerLockDestination, 0.0f), 5.0f)
+        || processor.getSequencerStep(0).enabled
+        || ! processor.getSequencerStep(2).enabled
+        || processor.getSequencerStep(2).noteOffset != 0
+        || ! processor.getSequencerStep(6).enabled
+        || processor.getSequencerStep(6).noteOffset != 5
+        || processor.getSequencerStep(14).ratchet < 2
+        || processor.getSequencerStep(15).condition != 3)
+    {
+        std::cerr << "Chord Stab Paint template did not seed expected house-stab pattern/global state\n";
+        return 1;
+    }
+
+    if (! processor.undoSequencerEdit()
+        || processor.getSequencerStep(2).enabled
+        || processor.getSequencerStep(6).enabled)
+    {
+        std::cerr << "Chord Stab Paint template did not participate in sequencer undo\n";
+        return 1;
+    }
+
     std::cout << "Sequencer house pattern audit passed.\n";
     return 0;
 }

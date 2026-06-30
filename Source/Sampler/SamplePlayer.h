@@ -43,6 +43,12 @@ struct SamplePeakOverview
     }
 };
 
+struct SampleContentRange
+{
+    float start = 0.0f;
+    float end = 1.0f;
+};
+
 struct SliceMarkerRegion
 {
     float start = 0.0f;
@@ -67,9 +73,11 @@ public:
     void stopAllVoices();
 
     bool loadFile(const juce::File& file);
+    bool loadBuffer(const juce::AudioBuffer<float>& buffer, double sourceSampleRate, const juce::String& name);
     bool hasSample() const;
     juce::String getLoadedFileName() const;
     SamplePeakOverview createPeakOverview(int pointCount) const;
+    std::optional<SampleContentRange> findContentRange(float threshold, double paddingMs) const;
     SliceDetectionResult detectTransientSliceRegions() const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);

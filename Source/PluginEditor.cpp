@@ -1547,6 +1547,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
     configureSectionLabel(sampleSourceLabel, "SOURCE");
+    configureSectionLabel(sampleRecordLabel, "RECORDER");
     configureSectionLabel(sampleChopLabel, "CHOP");
     configureSectionLabel(sampleShapeLabel, "SHAPE");
     configureSectionLabel(sequencerSectionLabel, "SEQ");
@@ -1604,6 +1605,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleSliceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     sampleSliceStatusLabel.setTooltip("Selected slice memory: store or recall region, pitch, gain, reverse, choke, and stutter edits");
     addAndMakeVisible(sampleSliceStatusLabel);
+
+    sampleRecordStatusLabel.setText("Recorder idle", juce::dontSendNotification);
+    sampleRecordStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    sampleRecordStatusLabel.setFont(juce::FontOptions(11.0f));
+    sampleRecordStatusLabel.setMinimumHorizontalScale(0.62f);
+    sampleRecordStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
+    sampleRecordStatusLabel.setTooltip("Rolling sampler recorder status and captured duration");
+    addAndMakeVisible(sampleRecordStatusLabel);
 
     presetStatusLabel.setJustificationType(juce::Justification::centredLeft);
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -2961,6 +2970,83 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
     };
+    sampleCaptureButton.setTooltip("Start or stop recording the current synth/sample output into a short rolling sampler buffer");
+    sampleCaptureButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        if (audioProcessor.isSampleCaptureEnabled())
+        {
+            audioProcessor.stopSampleCapture();
+            setRandomStatus("Recorder stopped");
+        }
+        else
+        {
+            audioProcessor.beginSampleCapture();
+            setRandomStatus("Recording sampler snippet");
+        }
+        updateSampleRecorderStatus();
+    };
+    sampleCommitCaptureButton.setTooltip("Commit the recorded snippet into the sampler waveform and auto-trim silence");
+    sampleCommitCaptureButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Commit recorded snippet");
+        if (audioProcessor.commitSampleCaptureToSampler())
+        {
+            sampleWaveformKey.clear();
+            updateSampleNameLabel();
+            updateSampleWaveformDisplay();
+            updateSampleSliceButtons();
+            setRandomStatus("Recorded snippet committed");
+        }
+        else
+        {
+            setRandomStatus("Record first, then commit");
+        }
+        updateSampleRecorderStatus();
+    };
+    sampleAutoTrimButton.setTooltip("Trim the current sample range to the audible part of the recording");
+    sampleAutoTrimButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Auto trim sample");
+        setRandomStatus(audioProcessor.autoTrimSampleToContent() ? "Sample auto-trimmed" : "Trim skipped");
+        updateSampleWaveformDisplay();
+    };
+    sampleSpliceButton.setTooltip("Detect transients or split the recording into eight playable slice keys");
+    sampleSpliceButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Splice recorded sample");
+        setRandomStatus(audioProcessor.spliceSampleToSlices() ? "Sample spliced to slices" : "Splice skipped");
+        updateSampleSliceButtons();
+        updateSampleSliceEditorStatus();
+        updateSampleWaveformDisplay();
+    };
+    sampleMangleButton.setTooltip("Randomize the recorded sample's trim, slices, pitch, stutter, pan, probability, and safe FX movement");
+    sampleMangleButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Mangle recorded sample");
+        if (audioProcessor.randomizeRecordedSample())
+        {
+            updateSampleNameLabel();
+            updateSampleSliceButtons();
+            updateSampleSliceEditorStatus();
+            updateSampleWaveformDisplay();
+            updateFxRackControls();
+            setRandomStatus("Recorded sample mangled");
+        }
+        else
+        {
+            setRandomStatus("Mangle skipped");
+        }
+    };
     randomCutButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -3553,6 +3639,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(captureSnapshotBButton);
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
+    addAndMakeVisible(sampleCaptureButton);
+    addAndMakeVisible(sampleCommitCaptureButton);
+    addAndMakeVisible(sampleAutoTrimButton);
+    addAndMakeVisible(sampleSpliceButton);
+    addAndMakeVisible(sampleMangleButton);
     addAndMakeVisible(randomCutButton);
     addAndMakeVisible(ukgChopButton);
     addAndMakeVisible(sampleSliceStoreButton);
@@ -3704,6 +3795,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(expandedSequencerGrid);
     applyThemeColours();
     updateSampleNameLabel();
+    updateSampleRecorderStatus();
     updateSampleSliceButtons();
     updateHouseLayerRackDisplay();
     refreshPresetList();
@@ -4863,10 +4955,16 @@ void NateVSTAudioProcessorEditor::resized()
         {
             sampleSectionLabel.setVisible(true);
             sampleSourceLabel.setVisible(true);
+            sampleRecordLabel.setVisible(true);
             sampleChopLabel.setVisible(true);
             sampleShapeLabel.setVisible(true);
             loadSampleButton.setVisible(true);
             clearSampleButton.setVisible(true);
+            sampleCaptureButton.setVisible(true);
+            sampleCommitCaptureButton.setVisible(true);
+            sampleAutoTrimButton.setVisible(true);
+            sampleSpliceButton.setVisible(true);
+            sampleMangleButton.setVisible(true);
             randomCutButton.setVisible(true);
             ukgChopButton.setVisible(true);
             sampleEnabledButton.setVisible(true);
@@ -4891,6 +4989,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceNudgeButton.setVisible(true);
             sampleSliceFadeButton.setVisible(true);
             sampleNameLabel.setVisible(true);
+            sampleRecordStatusLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -4906,27 +5005,39 @@ void NateVSTAudioProcessorEditor::resized()
             auto chopArea = workspace.reduced(18, 12);
 
             sampleSourceLabel.setBounds(sourceArea.removeFromTop(22));
-            auto actionRow = sourceArea.removeFromTop(70).withTrimmedTop(2);
-            auto actionTop = actionRow.removeFromTop(34);
+            auto actionTop = sourceArea.removeFromTop(30);
             loadSampleButton.setBounds(actionTop.removeFromLeft(actionTop.getWidth() / 2).reduced(3, 4));
             clearSampleButton.setBounds(actionTop.reduced(3, 4));
-            auto actionBottom = actionRow.withTrimmedTop(2);
+            auto actionBottom = sourceArea.removeFromTop(30);
             sampleEnabledButton.setBounds(actionBottom.removeFromLeft(actionBottom.getWidth() / 2).reduced(3, 4));
             sampleReverseButton.setBounds(actionBottom.reduced(3, 4));
 
-            sampleNameLabel.setBounds(sourceArea.removeFromTop(30).reduced(5, 4));
-            sampleModeBox.setBounds(sourceArea.removeFromTop(34).reduced(4));
-            sampleSliceStyleBox.setBounds(sourceArea.removeFromTop(34).reduced(4));
-            auto stutterRow = sourceArea.removeFromTop(34);
+            sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
+            sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
+            sampleRecordStatusLabel.setBounds(sourceArea.removeFromTop(22).reduced(5, 3));
+            auto recordRow = sourceArea.removeFromTop(30);
+            sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordRow.getWidth() / 2).reduced(3, 4));
+            sampleCommitCaptureButton.setBounds(recordRow.reduced(3, 4));
+            auto recordToolRow = sourceArea.removeFromTop(30);
+            const auto recordToolWidth = recordToolRow.getWidth() / 3;
+            sampleAutoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
+            sampleSpliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
+            sampleMangleButton.setBounds(recordToolRow.reduced(3, 4));
+
+            sampleModeBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
+            sampleSliceStyleBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
+            auto stutterRow = sourceArea.removeFromTop(30);
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
             sampleStutterRateBox.setBounds(stutterRow.reduced(3, 4));
-            auto cutRecipeRow = sourceArea.removeFromTop(38).withTrimmedTop(2);
+            auto cutRecipeRow = sourceArea.removeFromTop(32).withTrimmedTop(2);
             randomCutButton.setBounds(cutRecipeRow.removeFromLeft(cutRecipeRow.getWidth() / 2).reduced(3, 4));
             ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
 
-            sampleShapeLabel.setBounds(sourceArea.removeFromTop(22).withTrimmedLeft(4));
-            layoutKnobRow(sourceArea.removeFromTop(84).withTrimmedTop(4), { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(sourceArea.removeFromTop(78).withTrimmedTop(4), { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+            sampleShapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
+            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(68, sourceArea.getHeight() / 2)).withTrimmedTop(3),
+                          { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(64, sourceArea.getHeight())).withTrimmedTop(3),
+                          { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
 
             auto chopHeader = chopArea.removeFromTop(24);
             sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
@@ -6729,6 +6840,24 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
                             juce::dontSendNotification);
     sampleNameLabel.setColour(juce::Label::textColourId,
                               sampleMissing ? juce::Colour(0xffffc36b) : juce::Colour(0xffa8b6b8));
+}
+
+void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
+{
+    const auto isRecording = audioProcessor.isSampleCaptureEnabled();
+    const auto seconds = audioProcessor.getSampleCaptureDurationSeconds();
+    sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Rec");
+    sampleCaptureButton.setColour(juce::TextButton::buttonColourId,
+                                  isRecording ? juce::Colour(0xff4a2725) : juce::Colour(0xff141d20));
+    sampleCaptureButton.setColour(juce::TextButton::textColourOffId,
+                                  isRecording ? juce::Colour(0xffff9a8a) : juce::Colour(0xffdce7e4));
+
+    const auto durationText = seconds >= 0.05f ? juce::String(seconds, 1) + "s" : juce::String("empty");
+    sampleRecordStatusLabel.setText(isRecording ? "Recording | " + durationText
+                                                : seconds >= 0.05f ? "Ready | " + durationText
+                                                                   : "Recorder idle",
+                                    juce::dontSendNotification);
+    sampleCommitCaptureButton.setEnabled(seconds >= 0.05f);
 }
 
 void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
@@ -10103,7 +10232,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
-        &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
+        &sampleSectionLabel, &sampleSourceLabel, &sampleRecordLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sampleRecordStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
@@ -10119,7 +10248,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
-        &loadSampleButton, &clearSampleButton,
+        &loadSampleButton, &clearSampleButton, &sampleCaptureButton, &sampleCommitCaptureButton, &sampleAutoTrimButton, &sampleSpliceButton, &sampleMangleButton,
         &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDetectButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
@@ -13127,6 +13256,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateSequencerGridContext();
     updateSequencerRootStepper();
     updateSampleSliceButtons();
+    updateSampleRecorderStatus();
     updateSampleWaveformDisplay();
     updateKeyboardRangeLabel();
     updateFxRackControls();

@@ -142,6 +142,14 @@ public:
     void clearSample();
     bool hasLoadedSample() const;
     bool hasMissingSampleReference() const;
+    void beginSampleCapture();
+    void stopSampleCapture();
+    bool isSampleCaptureEnabled() const noexcept;
+    float getSampleCaptureDurationSeconds() const noexcept;
+    bool commitSampleCaptureToSampler();
+    bool autoTrimSampleToContent();
+    bool spliceSampleToSlices();
+    bool randomizeRecordedSample();
     bool randomizeSampleCut();
     int detectSampleTransientSlices();
     bool randomizeUkgVocalChop();
@@ -322,6 +330,12 @@ private:
     double meterSampleRate = 44100.0;
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
+    juce::AudioBuffer<float> sampleCaptureBuffer;
+    juce::SpinLock sampleCaptureLock;
+    std::atomic<bool> sampleCaptureEnabled { false };
+    std::atomic<int> sampleCaptureWritePosition { 0 };
+    std::atomic<int> sampleCaptureSamplesRecorded { 0 };
+    double sampleCaptureSampleRate = 44100.0;
     juce::SpinLock presetPreviewLock;
     juce::AudioBuffer<float> presetPreviewPlaybackBuffer;
     std::atomic<bool> presetPreviewPlaying { false };
@@ -394,6 +408,8 @@ private:
     bool writeSequencerMidiFile(const juce::File& destination, const std::vector<juce::ValueTree>& segments) const;
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
+    void resetSampleParametersForNewSource(const juce::String& path);
+    void appendToSampleCapture(const juce::AudioBuffer<float>& buffer) noexcept;
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;

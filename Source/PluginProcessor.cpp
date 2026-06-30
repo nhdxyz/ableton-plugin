@@ -24,6 +24,7 @@ constexpr auto presetPreviewSampleRate = 44100.0;
 constexpr auto presetPreviewBlockSize = 512;
 constexpr auto presetPreviewChannelCount = 2;
 constexpr auto presetPreviewDurationSeconds = 2.35;
+constexpr auto sampleCaptureMaxSeconds = 8.0;
 constexpr auto sequencerFourBarChainTransformIndex = 12;
 constexpr auto sequencerChordStabPaintTransformIndex = 13;
 
@@ -811,6 +812,13 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    sampleCaptureSampleRate = meterSampleRate;
+    sampleCaptureBuffer.setSize(juce::jmax(1, getTotalNumOutputChannels()),
+                                juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxSeconds * sampleCaptureSampleRate))));
+    sampleCaptureBuffer.clear();
+    sampleCaptureEnabled.store(false, std::memory_order_relaxed);
+    sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
+    sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
     outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
     outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
@@ -836,6 +844,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
 
 void NateVSTAudioProcessor::releaseResources()
 {
+    sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     effectsRack.reset();
     patternSequencer.reset();
     clearChordMemoryActiveNotes();
@@ -894,6 +903,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                         midiMessages,
                         hostBpm,
                         hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
+    appendToSampleCapture(buffer);
     effectsRack.process(buffer,
                         midiMessages,
                         outputGain != nullptr ? outputGain->load() : -8.0f,
@@ -1539,39 +1549,17 @@ bool NateVSTAudioProcessor::promoteRandomCandidateToPerformanceSnapshot(int cand
 
 bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
 {
+    sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     if (! samplePlayer.loadFile(file))
         return false;
 
-    loadedSamplePath = file.getFullPathName();
-    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
-    setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
-    setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
-    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
-    setParameterPlainValue(Parameters::ID::samplePitchRamp, 0.0f);
-    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
-    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
-    {
-        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
-        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
-        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
-        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
-        setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
-        setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
-        setParameterPlainValue(Parameters::ID::sampleSliceFade[index], 0.0f);
-    }
+    resetSampleParametersForNewSource(file.getFullPathName());
     return true;
 }
 
 void NateVSTAudioProcessor::clearSample()
 {
+    sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     loadedSamplePath.clear();
     samplePlayer.clear();
     setParameterPlainValue(Parameters::ID::sampleEnabled, 0.0f);
@@ -1585,6 +1573,193 @@ bool NateVSTAudioProcessor::hasLoadedSample() const
 bool NateVSTAudioProcessor::hasMissingSampleReference() const
 {
     return loadedSamplePath.isNotEmpty() && ! samplePlayer.hasSample();
+}
+
+void NateVSTAudioProcessor::beginSampleCapture()
+{
+    if (sampleCaptureBuffer.getNumSamples() <= 0 || sampleCaptureBuffer.getNumChannels() <= 0)
+        return;
+
+    sampleCaptureEnabled.store(false, std::memory_order_release);
+    const juce::SpinLock::ScopedLockType captureLock(sampleCaptureLock);
+    sampleCaptureBuffer.clear();
+    sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
+    sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
+    sampleCaptureEnabled.store(true, std::memory_order_release);
+}
+
+void NateVSTAudioProcessor::stopSampleCapture()
+{
+    sampleCaptureEnabled.store(false, std::memory_order_release);
+}
+
+bool NateVSTAudioProcessor::isSampleCaptureEnabled() const noexcept
+{
+    return sampleCaptureEnabled.load(std::memory_order_acquire);
+}
+
+float NateVSTAudioProcessor::getSampleCaptureDurationSeconds() const noexcept
+{
+    const auto sampleRate = sampleCaptureSampleRate > 0.0 ? sampleCaptureSampleRate : 44100.0;
+    return static_cast<float>(sampleCaptureSamplesRecorded.load(std::memory_order_acquire)) / static_cast<float>(sampleRate);
+}
+
+bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
+{
+    sampleCaptureEnabled.store(false, std::memory_order_release);
+
+    const juce::SpinLock::ScopedLockType captureLock(sampleCaptureLock);
+    const auto availableSamples = juce::jlimit(0,
+                                               sampleCaptureBuffer.getNumSamples(),
+                                               sampleCaptureSamplesRecorded.load(std::memory_order_acquire));
+    if (availableSamples < 64 || sampleCaptureBuffer.getNumChannels() <= 0)
+        return false;
+
+    const auto captureChannels = juce::jlimit(1, 2, sampleCaptureBuffer.getNumChannels());
+    const auto maxSamples = sampleCaptureBuffer.getNumSamples();
+    const auto writePosition = juce::jlimit(0,
+                                            juce::jmax(0, maxSamples - 1),
+                                            sampleCaptureWritePosition.load(std::memory_order_acquire));
+    auto sourceStart = writePosition - availableSamples;
+    while (sourceStart < 0)
+        sourceStart += maxSamples;
+
+    juce::AudioBuffer<float> captured(captureChannels, availableSamples);
+    captured.clear();
+
+    const auto firstSpan = juce::jmin(availableSamples, maxSamples - sourceStart);
+    const auto secondSpan = availableSamples - firstSpan;
+    for (auto channel = 0; channel < captureChannels; ++channel)
+    {
+        captured.copyFrom(channel, 0, sampleCaptureBuffer, channel, sourceStart, firstSpan);
+        if (secondSpan > 0)
+            captured.copyFrom(channel, firstSpan, sampleCaptureBuffer, channel, 0, secondSpan);
+    }
+
+    const auto timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d-%H%M%S");
+    const auto captureName = "Recorded Snippet " + timestamp;
+    const auto capturesDirectory = juce::File::getSpecialLocation(juce::File::userMusicDirectory)
+        .getChildFile("Nate VST Captures");
+    const auto captureFile = capturesDirectory.getNonexistentChildFile(captureName, ".wav", false);
+
+    if (writePresetPreviewFile(captureFile, captured, sampleCaptureSampleRate)
+        && samplePlayer.loadFile(captureFile))
+    {
+        resetSampleParametersForNewSource(captureFile.getFullPathName());
+        autoTrimSampleToContent();
+        return true;
+    }
+
+    if (! samplePlayer.loadBuffer(captured, sampleCaptureSampleRate, captureName))
+        return false;
+
+    resetSampleParametersForNewSource({});
+    autoTrimSampleToContent();
+    return true;
+}
+
+bool NateVSTAudioProcessor::autoTrimSampleToContent()
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    const auto range = samplePlayer.findContentRange(0.006f, 12.0);
+    if (! range.has_value())
+        return false;
+
+    if (range->end - range->start < 0.002f)
+        return false;
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, juce::jlimit(0.0f, 1.0f, range->start));
+    setParameterPlainValue(Parameters::ID::sampleEnd, juce::jlimit(0.0f, 1.0f, range->end));
+    return true;
+}
+
+bool NateVSTAudioProcessor::spliceSampleToSlices()
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    const auto detected = detectSampleTransientSlices();
+    if (detected >= 0)
+        return true;
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
+
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 1.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
+    }
+
+    return true;
+}
+
+bool NateVSTAudioProcessor::randomizeRecordedSample()
+{
+    if (isRandomLockEnabled(Parameters::ID::randomLockSample) || ! samplePlayer.hasSample())
+        return false;
+
+    std::uniform_real_distribution<float> chance(0.0f, 1.0f);
+    std::uniform_real_distribution<float> gainDistribution(-10.0f, -2.0f);
+    std::uniform_real_distribution<float> panDistribution(-0.55f, 0.55f);
+    std::uniform_real_distribution<float> probabilityDistribution(0.62f, 1.0f);
+    std::uniform_real_distribution<float> nudgeDistribution(-3.0f, 3.0f);
+    std::uniform_real_distribution<float> fadeDistribution(0.0f, 0.55f);
+    std::uniform_int_distribution<int> pitchDistribution(0, 8);
+    std::uniform_int_distribution<int> stutterRepeatsDistribution(2, 6);
+    std::uniform_int_distribution<int> sliceStyleDistribution(0, 4);
+    constexpr std::array<float, 9> pitchChoices { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 5.0f, 7.0f, 10.0f, 12.0f };
+
+    autoTrimSampleToContent();
+    spliceSampleToSlices();
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceStyle, static_cast<float>(sliceStyleDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sampleReverse, chance(sampleRandomEngine) < 0.16f ? 1.0f : 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, chance(sampleRandomEngine) < 0.58f ? 1.0f : 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterRate, chance(sampleRandomEngine) < 0.62f ? 1.0f : 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterRepeats, static_cast<float>(stutterRepeatsDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sampleTranspose, pitchChoices[static_cast<size_t>(pitchDistribution(sampleRandomEngine))] * 0.5f);
+    setParameterPlainValue(Parameters::ID::samplePitchRamp, pitchChoices[static_cast<size_t>(pitchDistribution(sampleRandomEngine))]);
+    setParameterPlainValue(Parameters::ID::sampleGain, gainDistribution(sampleRandomEngine));
+    setParameterPlainValue(Parameters::ID::sampleMix, 0.72f + (chance(sampleRandomEngine) * 0.26f));
+
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 1.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], chance(sampleRandomEngine) < 0.20f ? 1.0f : 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], pitchChoices[static_cast<size_t>(pitchDistribution(sampleRandomEngine))]);
+        setParameterPlainValue(Parameters::ID::sampleSliceGain[index], gainDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::sampleSlicePan[index], panDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], probabilityDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], chance(sampleRandomEngine) < 0.34f ? 1.0f : 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], index % 2 == 0 ? 1.0f : (chance(sampleRandomEngine) < 0.35f ? 1.0f : 0.0f));
+        setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], static_cast<float>(stutterRepeatsDistribution(sampleRandomEngine)));
+        setParameterPlainValue(Parameters::ID::sampleSliceNudge[index], nudgeDistribution(sampleRandomEngine));
+        setParameterPlainValue(Parameters::ID::sampleSliceFade[index], fadeDistribution(sampleRandomEngine));
+    }
+
+    if (! isRandomLockEnabled(Parameters::ID::randomLockFx))
+    {
+        setParameterPlainValue(Parameters::ID::fxPumpEnabled, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxPumpDepth, 0.18f + chance(sampleRandomEngine) * 0.24f);
+        setParameterPlainValue(Parameters::ID::fxDelayEnabled, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxDelaySync, 1.0f);
+        setParameterPlainValue(Parameters::ID::fxDelayRate, chance(sampleRandomEngine) < 0.5f ? 2.0f : 3.0f);
+        setParameterPlainValue(Parameters::ID::fxDelayMix, 0.06f + chance(sampleRandomEngine) * 0.14f);
+        setParameterPlainValue(Parameters::ID::fxGuardEnabled, 1.0f);
+    }
+
+    return true;
 }
 
 bool NateVSTAudioProcessor::randomizeSampleCut()
@@ -6048,6 +6223,81 @@ void NateVSTAudioProcessor::setParameterPlainValue(const juce::String& parameter
         parameter->setValueNotifyingHost(parameter->convertTo0to1(plainValue));
         parameter->endChangeGesture();
     }
+}
+
+void NateVSTAudioProcessor::resetSampleParametersForNewSource(const juce::String& path)
+{
+    loadedSamplePath = path;
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleReverse, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleTranspose, 0.0f);
+    setParameterPlainValue(Parameters::ID::samplePitchRamp, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleGain, -6.0f);
+    setParameterPlainValue(Parameters::ID::sampleMix, 0.75f);
+    setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleStutterRepeats, 3.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
+        setParameterPlainValue(Parameters::ID::sampleSliceReverse[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceGain[index], -6.0f);
+        setParameterPlainValue(Parameters::ID::sampleSlicePan[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceProbability[index], 1.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStutter[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceChoke[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[index], 3.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceFade[index], 0.0f);
+    }
+}
+
+void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>& buffer) noexcept
+{
+    if (! sampleCaptureEnabled.load(std::memory_order_acquire))
+        return;
+
+    const juce::SpinLock::ScopedTryLockType captureLock(sampleCaptureLock);
+    if (! captureLock.isLocked())
+        return;
+
+    const auto maxSamples = sampleCaptureBuffer.getNumSamples();
+    const auto captureChannels = sampleCaptureBuffer.getNumChannels();
+    const auto sourceChannels = buffer.getNumChannels();
+    const auto blockSamples = buffer.getNumSamples();
+    if (maxSamples <= 0 || captureChannels <= 0 || sourceChannels <= 0 || blockSamples <= 0)
+        return;
+
+    auto writePosition = juce::jlimit(0,
+                                      juce::jmax(0, maxSamples - 1),
+                                      sampleCaptureWritePosition.load(std::memory_order_relaxed));
+    auto sourceOffset = 0;
+    auto remaining = blockSamples;
+    while (remaining > 0)
+    {
+        const auto span = juce::jmin(remaining, maxSamples - writePosition);
+        for (auto channel = 0; channel < captureChannels; ++channel)
+        {
+            const auto sourceChannel = juce::jmin(channel, sourceChannels - 1);
+            sampleCaptureBuffer.copyFrom(channel, writePosition, buffer, sourceChannel, sourceOffset, span);
+        }
+
+        sourceOffset += span;
+        remaining -= span;
+        writePosition = (writePosition + span) % maxSamples;
+    }
+
+    sampleCaptureWritePosition.store(writePosition, std::memory_order_release);
+    const auto recorded = sampleCaptureSamplesRecorded.load(std::memory_order_relaxed);
+    sampleCaptureSamplesRecorded.store(juce::jmin(maxSamples, recorded + blockSamples), std::memory_order_release);
 }
 
 double NateVSTAudioProcessor::getHostBpm() const

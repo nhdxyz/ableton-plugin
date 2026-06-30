@@ -236,9 +236,11 @@ private:
     juce::Label modMacroAssignStatusLabel;
     juce::Label sampleSectionLabel;
     juce::Label sampleSourceLabel;
+    juce::Label sampleRecordLabel;
     juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
     juce::Label sampleSliceStatusLabel;
+    juce::Label sampleRecordStatusLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
     juce::Label selectedControlHeaderLabel;
@@ -610,6 +612,11 @@ private:
     juce::TextButton captureSnapshotBButton { "Set B" };
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
+    juce::TextButton sampleCaptureButton { "Rec" };
+    juce::TextButton sampleCommitCaptureButton { "Commit" };
+    juce::TextButton sampleAutoTrimButton { "Trim" };
+    juce::TextButton sampleSpliceButton { "Splice" };
+    juce::TextButton sampleMangleButton { "Mangle" };
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton ukgChopButton { "UKG Chop" };
     std::array<juce::TextButton, 8> sampleSliceButtons;
@@ -860,6 +867,7 @@ private:
     void pruneSequencerDragMidiFiles();
     void loadSampleFile(const juce::File& file);
     void updateSampleNameLabel();
+    void updateSampleRecorderStatus();
     void setRandomStatus(const juce::String& action);
     void setActivePanel(Panel panel);
     void setActiveRandomLabPage(RandomLabPage page);

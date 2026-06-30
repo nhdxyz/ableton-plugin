@@ -293,6 +293,40 @@ bool SamplePlayer::loadFile(const juce::File& file)
     return true;
 }
 
+bool SamplePlayer::loadBuffer(const juce::AudioBuffer<float>& buffer, double sourceSampleRate, const juce::String& name)
+{
+    if (buffer.getNumSamples() <= 1 || buffer.getNumChannels() <= 0)
+        return false;
+
+    const auto channelCount = juce::jlimit(1, 2, buffer.getNumChannels());
+    const auto length = buffer.getNumSamples();
+
+    auto newSample = std::make_shared<SampleData>();
+    newSample->buffer.setSize(channelCount, length);
+    newSample->buffer.clear();
+    for (auto channel = 0; channel < channelCount; ++channel)
+        newSample->buffer.copyFrom(channel, 0, buffer, channel, 0, length);
+
+    if (buffer.getNumChannels() == 1 && channelCount > 1)
+        newSample->buffer.copyFrom(1, 0, newSample->buffer, 0, 0, length);
+
+    newSample->sourceSampleRate = sourceSampleRate > 0.0 ? sourceSampleRate : 44100.0;
+    newSample->fileName = name.isNotEmpty() ? name : juce::String("Recorded Snippet");
+
+    {
+        const juce::SpinLock::ScopedLockType lock(sampleLock);
+        sampleData = std::move(newSample);
+        voices = {};
+        region.startSample = 0;
+        region.endSample = length;
+        region.reverse = false;
+        region.gain = 1.0f;
+        region.transposeSemitones = 0.0f;
+    }
+
+    return true;
+}
+
 bool SamplePlayer::hasSample() const
 {
     const juce::SpinLock::ScopedLockType lock(sampleLock);
@@ -352,6 +386,52 @@ SamplePeakOverview SamplePlayer::createPeakOverview(int pointCount) const
     }
 
     return overview;
+}
+
+std::optional<SampleContentRange> SamplePlayer::findContentRange(float threshold, double paddingMs) const
+{
+    std::shared_ptr<SampleData> data;
+    {
+        const juce::SpinLock::ScopedLockType lock(sampleLock);
+        data = sampleData;
+    }
+
+    if (data == nullptr || data->buffer.getNumSamples() <= 1 || data->buffer.getNumChannels() <= 0)
+        return std::nullopt;
+
+    const auto totalSamples = data->buffer.getNumSamples();
+    const auto channelCount = data->buffer.getNumChannels();
+    const auto safeThreshold = juce::jlimit(0.0001f, 0.25f, threshold);
+    auto firstAudibleSample = -1;
+    auto lastAudibleSample = -1;
+
+    for (auto sampleIndex = 0; sampleIndex < totalSamples; ++sampleIndex)
+    {
+        auto peak = 0.0f;
+        for (auto channel = 0; channel < channelCount; ++channel)
+            peak = juce::jmax(peak, std::abs(data->buffer.getSample(channel, sampleIndex)));
+
+        if (peak >= safeThreshold)
+        {
+            if (firstAudibleSample < 0)
+                firstAudibleSample = sampleIndex;
+            lastAudibleSample = sampleIndex;
+        }
+    }
+
+    if (firstAudibleSample < 0 || lastAudibleSample <= firstAudibleSample)
+        return std::nullopt;
+
+    const auto paddingSamples = juce::jlimit(0,
+                                            totalSamples / 2,
+                                            static_cast<int>(std::round((paddingMs / 1000.0) * data->sourceSampleRate)));
+    firstAudibleSample = juce::jmax(0, firstAudibleSample - paddingSamples);
+    lastAudibleSample = juce::jmin(totalSamples - 1, lastAudibleSample + paddingSamples);
+
+    SampleContentRange range;
+    range.start = static_cast<float>(firstAudibleSample) / static_cast<float>(totalSamples);
+    range.end = static_cast<float>(lastAudibleSample + 1) / static_cast<float>(totalSamples);
+    return range;
 }
 
 SliceDetectionResult SamplePlayer::detectTransientSliceRegions() const

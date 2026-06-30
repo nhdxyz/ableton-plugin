@@ -24,6 +24,7 @@
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
+#include "UI/RandomMorphPad.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -774,6 +775,7 @@ private:
     UI::PresetCrateMapDisplay presetCrateMapDisplay;
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::PresetSaveSummary presetSaveSummary;
+    UI::RandomMorphPad randomMorphPad;
     UI::LowEndAssistant lowEndAssistant;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
@@ -974,6 +976,8 @@ private:
     void applyPresetQuickFilter(size_t index);
     void loadSelectedPreset();
     int selectedRandomMutationScope() const;
+    void updateRandomMorphPad();
+    void applyRandomMorphPad(float x, float y, bool createVariation);
     void triggerRandomGenerate();
     void triggerRandomMutate();
     void triggerRandomVariation();

@@ -109,7 +109,7 @@ void PresetLibrarySummary::setState(const State& newState)
 void PresetLibrarySummary::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().toFloat().reduced(1.0f);
-    const auto compact = bounds.getHeight() < 178.0f;
+    const auto compact = bounds.getHeight() < 250.0f;
     const auto accent = state.selectedFavorite ? juce::Colour(0xffffd27a)
                       : state.selectedFactory ? juce::Colour(0xff7bb7ff)
                       : juce::Colour(0xff8ee6c9);

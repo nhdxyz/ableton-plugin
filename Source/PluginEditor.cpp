@@ -184,23 +184,25 @@ PresetBrowserRowLayout presetBrowserRowLayoutForWidth(int width, int height)
         return layout;
 
     layout.compact = layout.paddedWidth < presetBrowserCompactRowBreakpoint;
+    layout.compact = layout.compact || height <= 34;
     if (layout.compact)
     {
-        constexpr auto gap = 5;
-        layout.previewWidth = juce::jlimit(58, 96, layout.paddedWidth / 4);
-        layout.infoWidth = juce::jlimit(48, 72, layout.paddedWidth / 5);
-        layout.macroWidth = layout.previewWidth;
+        constexpr auto gap = 4;
+        layout.previewWidth = juce::jlimit(60, 92, layout.paddedWidth / 5);
+        layout.infoWidth = juce::jlimit(52, 78, layout.paddedWidth / 6);
+        layout.macroWidth = 0;
         layout.showsMacroStrip = false;
         layout.nameWidth = juce::jmax(0, layout.paddedWidth - layout.previewWidth - layout.infoWidth - (gap * 2));
         return layout;
     }
 
     auto remainingWidth = layout.paddedWidth;
-    layout.macroWidth = juce::jlimit(118, 230, remainingWidth / 3);
-    remainingWidth -= layout.macroWidth + 8;
-    layout.infoWidth = juce::jlimit(86, 160, remainingWidth / 3);
-    remainingWidth -= layout.infoWidth + 8;
-    layout.previewWidth = layout.macroWidth;
+    layout.infoWidth = juce::jlimit(78, 118, remainingWidth / 5);
+    remainingWidth -= layout.infoWidth + 6;
+    layout.previewWidth = juce::jlimit(78, 118, remainingWidth / 5);
+    remainingWidth -= layout.previewWidth + 6;
+    layout.macroWidth = 0;
+    layout.showsMacroStrip = false;
     layout.nameWidth = juce::jmax(0, remainingWidth);
     return layout;
 }
@@ -1007,51 +1009,6 @@ void drawPresetPreviewLevelBadge(juce::Graphics& g,
                      0.58f);
 }
 
-void drawPresetMacroValueStrip(juce::Graphics& g,
-                               juce::Rectangle<int> area,
-                               const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    static constexpr std::array<const char*, 8> labels { "T", "D", "M", "S", "W", "B", "Wr", "Th" };
-
-    area = area.reduced(2, 2);
-    if (area.getWidth() <= 0 || area.getHeight() <= 0)
-        return;
-
-    const auto cellWidth = juce::jmax(16, area.getWidth() / static_cast<int>(labels.size()));
-    g.setFont(juce::FontOptions(area.getWidth() < 182 ? 8.2f : 8.8f, juce::Font::bold));
-
-    for (size_t index = 0; index < labels.size(); ++index)
-    {
-        auto cell = area.removeFromLeft(index + 1 == labels.size() ? area.getWidth() : cellWidth).reduced(1, 1);
-        if (cell.getWidth() <= 0)
-            continue;
-
-        const auto value = juce::jlimit(0.0f, 1.0f, preset.macroValues[index]);
-        const auto fill = juce::Colour(0xff8ee6c9).interpolatedWith(juce::Colour(0xffffd27a), juce::jlimit(0.0f, 1.0f, value * 0.8f));
-        auto meter = cell.reduced(1, 1).toFloat();
-        const auto activeHeight = meter.getHeight() * value;
-
-        g.setColour(juce::Colour(0xff172024));
-        g.fillRoundedRectangle(cell.toFloat(), 3.0f);
-
-        if (activeHeight > 0.5f)
-        {
-            auto active = meter.withY(meter.getBottom() - activeHeight).withHeight(activeHeight);
-            g.setColour(fill.withAlpha(0.62f));
-            g.fillRoundedRectangle(active, 2.0f);
-        }
-
-        g.setColour(value >= 0.30f ? fill : juce::Colour(0xff728083));
-        g.drawRoundedRectangle(cell.toFloat(), 3.0f, value >= 0.30f ? 1.1f : 0.8f);
-        g.setColour(value >= 0.30f ? juce::Colour(0xffedf7f4) : juce::Colour(0xffa8b6b8));
-        g.drawFittedText(juce::String(labels[index]) + juce::String(juce::roundToInt(value * 100.0f)),
-                         cell.reduced(1, 0),
-                         juce::Justification::centred,
-                         1,
-                         0.42f);
-    }
-}
-
 juce::StringArray presetTagChoices()
 {
     return {
@@ -1625,8 +1582,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
 
-    presetBrowserHeaderLabel.setText("SOUND        FOLDER / PACK        KEY / BPM / RATING        MACROS", juce::dontSendNotification);
-    presetBrowserHeaderLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    presetBrowserHeaderLabel.setText("SOUND / PACK        PREVIEW        INFO", juce::dontSendNotification);
+    presetBrowserHeaderLabel.setFont(juce::FontOptions(9.5f, juce::Font::bold));
     presetBrowserHeaderLabel.setJustificationType(juce::Justification::centredLeft);
     presetBrowserHeaderLabel.setMinimumHorizontalScale(0.58f);
     presetBrowserHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
@@ -1635,7 +1592,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(presetBrowserHeaderLabel);
 
     presetBrowserList.setModel(this);
-    presetBrowserList.setRowHeight(42);
+    presetBrowserList.setRowHeight(32);
     presetBrowserList.setMultipleSelectionEnabled(false);
     presetBrowserList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101619));
     presetBrowserList.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff344047));
@@ -1661,6 +1618,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomRecipeInfoLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
     randomRecipeInfoLabel.setTooltip("Selected Random Lab recipe intent, tempo range, use case, and generator bias");
     addAndMakeVisible(randomRecipeInfoLabel);
+
+    randomMorphPad.onChange = [this] (float x, float y)
+    {
+        applyRandomMorphPad(x, y, false);
+    };
+    randomMorphPad.onCommit = [this] (float x, float y)
+    {
+        applyRandomMorphPad(x, y, true);
+    };
+    addAndMakeVisible(randomMorphPad);
 
     modMatrixStatusLabel.setJustificationType(juce::Justification::centredRight);
     modMatrixStatusLabel.setFont(juce::FontOptions(11.0f));
@@ -4407,13 +4374,6 @@ void NateVSTAudioProcessorEditor::resized()
                     generateButton.setBounds(row.removeFromLeft(juce::jlimit(100, 132, row.getWidth())).reduced(4));
             };
 
-            auto showSectionAction = [&content, this]
-            {
-                randomSectionActionBox.setVisible(true);
-                auto row = content.removeFromTop(42).withTrimmedTop(4);
-                randomSectionActionBox.setBounds(row.removeFromLeft(juce::jlimit(180, 260, row.getWidth() / 3)).reduced(4));
-            };
-
             auto showLockAction = [&content, this]
             {
                 randomLockActionBox.setVisible(true);
@@ -4495,10 +4455,26 @@ void NateVSTAudioProcessorEditor::resized()
             {
                 case RandomLabPage::generate:
                 {
-                    showRecipeControls(true);
-                    showSectionAction();
-                    showRandomBiasKnobs();
+                    recipeBox.setVisible(true);
+                    randomScopeBox.setVisible(true);
+                    randomSectionActionBox.setVisible(true);
+                    generateButton.setVisible(true);
+                    variationButton.setVisible(true);
+                    randomMorphPad.setVisible(true);
+
+                    auto topRow = content.removeFromTop(48).withTrimmedTop(4);
+                    const auto actionButtonWidth = juce::jlimit(82, 118, topRow.getWidth() / 7);
+                    generateButton.setBounds(topRow.removeFromRight(actionButtonWidth).reduced(4));
+                    variationButton.setBounds(topRow.removeFromRight(actionButtonWidth).reduced(4));
+                    randomSectionActionBox.setBounds(topRow.removeFromRight(juce::jlimit(150, 220, topRow.getWidth() / 3)).reduced(4));
+                    randomScopeBox.setBounds(topRow.removeFromRight(juce::jlimit(118, 160, topRow.getWidth() / 4)).reduced(4));
+                    recipeBox.setBounds(topRow.reduced(4));
+
+                    const auto morphHeight = juce::jlimit(190, 278, juce::jmax(190, content.getHeight() - 178));
+                    updateRandomMorphPad();
+                    randomMorphPad.setBounds(content.removeFromTop(morphHeight).withTrimmedTop(6).reduced(4));
                     showSectionIntensityControls();
+                    showCandidateRow(true);
                     showStatus();
                     break;
                 }
@@ -5463,8 +5439,8 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
             auto libraryArea = content.withTrimmedTop(8);
-            const auto leftWidth = juce::jlimit(214, 276, libraryArea.getWidth() / 4);
-            const auto inspectorWidth = juce::jlimit(296, 372, libraryArea.getWidth() / 3);
+            const auto leftWidth = juce::jlimit(190, 238, libraryArea.getWidth() / 5);
+            const auto inspectorWidth = juce::jlimit(260, 320, libraryArea.getWidth() / 4);
             auto findArea = libraryArea.removeFromLeft(leftWidth).reduced(18, 14);
             auto inspectorArea = libraryArea.removeFromRight(inspectorWidth).reduced(18, 14);
             auto browserArea = libraryArea.reduced(18, 14);
@@ -5486,7 +5462,7 @@ void NateVSTAudioProcessorEditor::resized()
             refreshPresetsButton.setBounds(sortRefreshRow.removeFromRight(76).reduced(2, 4));
             presetSortBox.setBounds(sortRefreshRow.reduced(2, 4));
 
-            const auto crateMapHeight = juce::jlimit(132, 182, findArea.getHeight() - 36);
+            const auto crateMapHeight = juce::jlimit(96, 132, findArea.getHeight() - 36);
             presetCrateMapDisplay.setBounds(findArea.removeFromTop(crateMapHeight).reduced(2, 5));
             presetStatusLabel.setBounds(findArea.reduced(2, 4));
 
@@ -5514,18 +5490,19 @@ void NateVSTAudioProcessorEditor::resized()
                 revertPresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
                 comparePresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
             }
-            const auto browserHeaderText = compactBrowser
-                ? juce::String("SOUND / META        PREVIEW        INFO")
-                : juce::String("SOUND        FOLDER / PACK        KEY / BPM / RATING        MACROS");
+            const auto rowLayout = presetBrowserRowLayoutForWidth(browserArea.getWidth(), presetBrowserList.getRowHeight());
+            const auto browserHeaderText = rowLayout.compact
+                ? juce::String("SOUND / PACK        PREVIEW        INFO")
+                : juce::String("SOUND / PACK / TYPE        PREVIEW        SOURCE / RATING");
             if (presetBrowserHeaderLabel.getText() != browserHeaderText)
                 presetBrowserHeaderLabel.setText(browserHeaderText, juce::dontSendNotification);
-            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(30).reduced(6, 5));
+            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(24).reduced(6, 3));
             presetBrowserList.setBounds(browserArea.reduced(2, 5));
 
-            const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
+            const auto savePanelHeight = juce::jlimit(292, 340, inspectorArea.getHeight() - 120);
             auto saveArea = inspectorArea.removeFromTop(savePanelHeight).reduced(10, 8);
             librarySaveLabel.setBounds(saveArea.removeFromTop(24));
-            presetSaveSummary.setBounds(saveArea.removeFromTop(118).reduced(2, 5));
+            presetSaveSummary.setBounds(saveArea.removeFromTop(92).reduced(2, 5));
             auto nameRow = saveArea.removeFromTop(38).withTrimmedTop(2);
             presetNameEditor.setBounds(nameRow.reduced(2, 4));
             auto folderRow = saveArea.removeFromTop(36);
@@ -5537,7 +5514,7 @@ void NateVSTAudioProcessorEditor::resized()
             const auto keyCellWidth = keyRow.getWidth() / 2;
             presetKeyBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
             presetBpmBox.setBounds(keyRow.reduced(2, 4));
-            auto saveActionRow = saveArea.removeFromTop(38).withTrimmedTop(4);
+            auto saveActionRow = saveArea.removeFromTop(36).withTrimmedTop(4);
             presetNotesTemplateBox.setBounds(saveActionRow.removeFromLeft(154).reduced(2, 4));
             savePresetButton.setBounds(saveActionRow.reduced(2, 4));
             presetNotesEditor.setBounds(saveArea.reduced(2, 4));
@@ -7490,6 +7467,83 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
 int NateVSTAudioProcessorEditor::selectedRandomMutationScope() const
 {
     return juce::jmax(0, randomScopeBox.getSelectedId() - 1);
+}
+
+void NateVSTAudioProcessorEditor::updateRandomMorphPad()
+{
+    UI::RandomMorphPad::State state;
+    state.brightness = readPlainParameterValue(Parameters::ID::randomBrightnessBias, 0.0f);
+    state.motion = readPlainParameterValue(Parameters::ID::randomMotionBias, 0.0f);
+    state.drive = readPlainParameterValue(Parameters::ID::randomDriveBias, 0.0f);
+    state.amount = readPlainParameterValue(Parameters::ID::randomAmount, 0.45f);
+    state.chaos = readPlainParameterValue(Parameters::ID::randomChaos, 0.25f);
+    state.x = (state.brightness + 1.0f) * 0.5f;
+    state.y = (state.motion + 1.0f) * 0.5f;
+    state.recipe = recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("House");
+    state.scope = randomScopeBox.getText().trim().isNotEmpty() ? randomScopeBox.getText().trim() : juce::String("All");
+
+    const std::array<const char*, 7> sectionIDs {
+        Parameters::ID::randomSourceIntensity,
+        Parameters::ID::randomEnvelopeIntensity,
+        Parameters::ID::randomFilterIntensity,
+        Parameters::ID::randomSampleIntensity,
+        Parameters::ID::randomFxIntensity,
+        Parameters::ID::randomSequencerIntensity,
+        Parameters::ID::randomMacroIntensity
+    };
+
+    for (size_t index = 0; index < sectionIDs.size(); ++index)
+        state.sectionIntensities[index] = readPlainParameterValue(sectionIDs[index], 1.0f);
+
+    randomMorphPad.setState(state);
+}
+
+void NateVSTAudioProcessorEditor::applyRandomMorphPad(float x, float y, bool createVariation)
+{
+    x = juce::jlimit(0.0f, 1.0f, x);
+    y = juce::jlimit(0.0f, 1.0f, y);
+    const auto dx = x - 0.5f;
+    const auto dy = y - 0.5f;
+    const auto distance = juce::jlimit(0.0f, 1.0f, std::sqrt((dx * dx) + (dy * dy)) * 1.42f);
+
+    const auto amount = juce::jlimit(0.08f, 1.0f, 0.24f + (distance * 0.68f) + (y * 0.08f));
+    const auto chaos = juce::jlimit(0.0f, 1.0f, (distance * 0.72f) + (y * 0.20f));
+    const auto brightness = juce::jlimit(-1.0f, 1.0f, (x * 2.0f) - 1.0f);
+    const auto drive = juce::jlimit(-1.0f, 1.0f, ((1.0f - x) * 0.82f) + (distance * 0.74f) - 0.58f);
+    const auto motion = juce::jlimit(-1.0f, 1.0f, (y * 2.0f) - 1.0f);
+
+    setPlainParameterValue(Parameters::ID::randomAmount, amount);
+    setPlainParameterValue(Parameters::ID::randomChaos, chaos);
+    setPlainParameterValue(Parameters::ID::randomBrightnessBias, brightness);
+    setPlainParameterValue(Parameters::ID::randomDriveBias, drive);
+    setPlainParameterValue(Parameters::ID::randomMotionBias, motion);
+
+    const std::array<std::pair<const char*, float>, 7> sectionValues {
+        std::pair<const char*, float> { Parameters::ID::randomSourceIntensity, juce::jlimit(0.25f, 1.0f, 0.46f + (distance * 0.42f) + ((1.0f - std::abs(dx * 2.0f)) * 0.12f)) },
+        std::pair<const char*, float> { Parameters::ID::randomEnvelopeIntensity, juce::jlimit(0.20f, 1.0f, 0.42f + ((1.0f - y) * 0.38f) + (distance * 0.12f)) },
+        std::pair<const char*, float> { Parameters::ID::randomFilterIntensity, juce::jlimit(0.25f, 1.0f, 0.44f + (x * 0.38f) + (distance * 0.16f)) },
+        std::pair<const char*, float> { Parameters::ID::randomSampleIntensity, juce::jlimit(0.18f, 1.0f, 0.34f + ((1.0f - x) * y * 0.44f) + (distance * 0.16f)) },
+        std::pair<const char*, float> { Parameters::ID::randomFxIntensity, juce::jlimit(0.22f, 1.0f, 0.38f + (y * 0.42f) + (distance * 0.16f)) },
+        std::pair<const char*, float> { Parameters::ID::randomSequencerIntensity, juce::jlimit(0.20f, 1.0f, 0.32f + (y * 0.36f) + ((1.0f - x) * 0.18f) + (distance * 0.10f)) },
+        std::pair<const char*, float> { Parameters::ID::randomMacroIntensity, juce::jlimit(0.25f, 1.0f, 0.38f + (distance * 0.52f) + (y * 0.10f)) }
+    };
+
+    for (const auto& section : sectionValues)
+        setPlainParameterValue(section.first, section.second);
+
+    updateRandomMorphPad();
+    const auto status = "Map "
+        + juce::String(juce::roundToInt(x * 100.0f)) + "/"
+        + juce::String(juce::roundToInt(y * 100.0f))
+        + " | Amt " + juce::String(juce::roundToInt(amount * 100.0f))
+        + " | Chaos " + juce::String(juce::roundToInt(chaos * 100.0f));
+    setRandomStatus(status);
+
+    if (createVariation)
+    {
+        triggerRandomVariation();
+        setRandomStatus(status + " | Variation");
+    }
 }
 
 void NateVSTAudioProcessorEditor::triggerRandomGenerate()
@@ -9579,6 +9633,7 @@ void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::Stri
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateRandomMorphPad();
     updateHouseLayerRackDisplay();
     updateFilterResponseDisplay();
     updateModMatrixRows();
@@ -9990,7 +10045,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -12956,6 +13011,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     updateLfoCurveDisplay();
     updatePumpCurveDisplay();
     updateWavetableDisplay();
+    updateRandomMorphPad();
     updateHouseLayerRackDisplay();
     updateFilterResponseDisplay();
     updateHostSyncStatus();
@@ -13013,97 +13069,61 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
     const auto nameColour = preset.isFavorite ? juce::Colour(0xffffd27a) : juce::Colour(0xffedf7f4);
     const auto layout = presetBrowserRowLayoutForWidth(width, height);
 
-    if (layout.compact)
-    {
-        auto infoArea = row.removeFromRight(layout.infoWidth);
-        row.removeFromRight(5);
-        auto previewArea = row.removeFromRight(layout.previewWidth);
-        row.removeFromRight(5);
-        auto nameArea = row;
-
-        g.setFont(juce::FontOptions(11.2f, juce::Font::bold));
-        g.setColour(nameColour);
-        g.drawFittedText(sourcePrefix + preset.name,
-                         nameArea.removeFromTop(15).reduced(2, 0),
-                         juce::Justification::centredLeft,
-                         1,
-                         0.58f);
-
-        g.setFont(juce::FontOptions(8.8f, juce::Font::plain));
-        g.setColour(juce::Colour(0xff9dafb2));
-        g.drawFittedText(categoryText + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm),
-                         nameArea.reduced(2, 0),
-                         juce::Justification::centredLeft,
-                         1,
-                         0.48f);
-
-        drawPresetPreviewLevelBadge(g, previewArea.removeFromTop(15), preset);
-        g.setFont(juce::FontOptions(8.2f, juce::Font::bold));
-        g.setColour(juce::Colour(0xffb8c6c5));
-        g.drawFittedText(presetInspectorRoleName(inferPresetAuditionRole(&preset)),
-                         previewArea.reduced(2, 0),
-                         juce::Justification::centred,
-                         1,
-                         0.54f);
-
-        auto pill = infoArea.removeFromTop(16).toFloat().reduced(0.0f, 1.0f);
-        g.setColour(preset.isFactory ? juce::Colour(0xff182b3b) : juce::Colour(0xff1d2d28));
-        g.fillRoundedRectangle(pill, 4.0f);
-        g.setColour(preset.isFactory ? juce::Colour(0xff7bb7ff) : juce::Colour(0xff8ee6c9));
-        g.drawRoundedRectangle(pill, 4.0f, 1.0f);
-        g.setFont(juce::FontOptions(8.2f, juce::Font::bold));
-        g.drawFittedText(preset.isFactory ? "FCT" : "USER", pill.toNearestInt(), juce::Justification::centred, 1);
-
-        g.setFont(juce::FontOptions(8.4f, juce::Font::bold));
-        g.setColour(juce::Colour(0xffc5d1d0));
-        g.drawFittedText(ratingText,
-                         infoArea.reduced(1, 0),
-                         juce::Justification::centred,
-                         1,
-                         0.58f);
-        return;
-    }
-
-    auto macroArea = row.removeFromRight(layout.macroWidth);
-    row.removeFromRight(8);
     auto infoArea = row.removeFromRight(layout.infoWidth);
-    row.removeFromRight(8);
+    row.removeFromRight(layout.compact ? 4 : 6);
+    auto previewArea = row.removeFromRight(layout.previewWidth);
+    row.removeFromRight(layout.compact ? 4 : 6);
     auto nameArea = row;
 
-    g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    auto marker = nameArea.removeFromLeft(4).toFloat().reduced(0.0f, 2.0f);
+    g.setColour(preset.isFavorite ? juce::Colour(0xffffd27a)
+                                  : (preset.isFactory ? juce::Colour(0xff7bb7ff) : juce::Colour(0xff8ee6c9)));
+    g.fillRoundedRectangle(marker, 2.0f);
+    nameArea.removeFromLeft(5);
+
+    g.setFont(juce::FontOptions(layout.compact ? 10.7f : 11.5f, juce::Font::bold));
     g.setColour(nameColour);
     g.drawFittedText(sourcePrefix + preset.name,
-                     nameArea.removeFromTop(15).reduced(2, 0),
+                     nameArea.removeFromTop(layout.compact ? 13 : 15).reduced(1, 0),
                      juce::Justification::centredLeft,
                      1,
-                     0.64f);
+                     0.62f);
 
-    g.setFont(juce::FontOptions(9.0f, juce::Font::plain));
+    const auto roleText = presetInspectorRoleName(inferPresetAuditionRole(&preset));
+    const auto metaText = roleText + " | " + categoryText + " | " + preset.pack + " | "
+        + preset.key + " " + formatPresetBpm(preset.bpm);
+    g.setFont(juce::FontOptions(layout.compact ? 8.0f : 8.8f, juce::Font::plain));
     g.setColour(juce::Colour(0xff9dafb2));
-    g.drawFittedText(categoryText + " | " + preset.pack + " | " + presetPreviewSummaryText(preset),
-                     nameArea.reduced(2, 0),
+    g.drawFittedText(metaText,
+                     nameArea.reduced(1, 0),
                      juce::Justification::centredLeft,
                      1,
-                     0.58f);
+                     0.48f);
 
-    auto pill = infoArea.removeFromTop(16).toFloat().reduced(0.0f, 1.0f);
+    drawPresetPreviewLevelBadge(g, previewArea.removeFromTop(layout.compact ? 13 : 15), preset);
+    g.setFont(juce::FontOptions(7.7f, juce::Font::bold));
+    g.setColour(juce::Colour(0xffb8c6c5));
+    g.drawFittedText(roleText,
+                     previewArea.reduced(1, 0),
+                     juce::Justification::centred,
+                     1,
+                     0.50f);
+
+    auto pill = infoArea.removeFromTop(layout.compact ? 13 : 15).toFloat().reduced(0.0f, 1.0f);
     g.setColour(preset.isFactory ? juce::Colour(0xff182b3b) : juce::Colour(0xff1d2d28));
     g.fillRoundedRectangle(pill, 4.0f);
     g.setColour(preset.isFactory ? juce::Colour(0xff7bb7ff) : juce::Colour(0xff8ee6c9));
     g.drawRoundedRectangle(pill, 4.0f, 1.0f);
-    g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
-    g.drawFittedText(preset.isFactory ? "FACTORY" : "USER", pill.toNearestInt(), juce::Justification::centred, 1);
+    g.setFont(juce::FontOptions(7.8f, juce::Font::bold));
+    g.drawFittedText(preset.isFactory ? "FCT" : "USER", pill.toNearestInt(), juce::Justification::centred, 1);
 
-    g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xffc5d1d0));
-    g.drawFittedText(preset.key + " | " + formatPresetBpm(preset.bpm) + " | " + ratingText,
+    g.drawFittedText(ratingText,
                      infoArea.reduced(1, 0),
                      juce::Justification::centred,
                      1,
-                     0.56f);
-
-    drawPresetPreviewLevelBadge(g, macroArea.removeFromTop(15), preset);
-    drawPresetMacroValueStrip(g, macroArea, preset);
+                     0.58f);
 }
 
 juce::String NateVSTAudioProcessorEditor::getNameForRow(int rowNumber)

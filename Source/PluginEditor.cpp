@@ -19,12 +19,12 @@ constexpr auto editorMaxHeight = 1040;
 constexpr auto pianoKeyboardHeight = 80;
 constexpr auto keyboardControlsWidth = 356;
 constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
-constexpr auto keyboardMaximumWhiteKeyWidth = 112.0f;
+constexpr auto keyboardMaximumWhiteKeyWidth = 96.0f;
 constexpr auto keyboardLowestNote = 24;
-constexpr auto keyboardHighestNote = 76;
+constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 48;
-constexpr auto keyboardMinLowestVisibleNote = 36;
-constexpr auto keyboardMaxLowestVisibleNote = 60;
+constexpr auto keyboardMinLowestVisibleNote = 24;
+constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
 constexpr auto keyboardTypingMinBaseOctave = keyboardMinLowestVisibleNote / 12;
 constexpr auto keyboardTypingMaxBaseOctave = (keyboardHighestNote - keyboardTypingKeySpanSemitones) / 12;
@@ -119,6 +119,7 @@ static_assert(keyboardLowestNote <= keyboardMinLowestVisibleNote);
 static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
 static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
 static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
+static_assert((keyboardInitialLowestNote + 12) == 60);
 
 int clampedKeyboardLowestVisibleNote(int note) noexcept
 {
@@ -1628,7 +1629,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(presetBrowserHeaderLabel);
 
     presetBrowserList.setModel(this);
-    presetBrowserList.setRowHeight(32);
+    presetBrowserList.setRowHeight(30);
     presetBrowserList.setMultipleSelectionEnabled(false);
     presetBrowserList.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101619));
     presetBrowserList.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff344047));
@@ -3941,14 +3942,15 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::home)
     {
         auto homeContent = contentArea.reduced(18).withTrimmedTop(36);
-        auto topRow = homeContent.removeFromTop(258);
-        const auto engineColumnWidth = juce::jlimit(306, 350, topRow.getWidth() / 4);
-        const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
+        auto topRow = homeContent.removeFromTop(juce::jlimit(246, 300, homeContent.getHeight() / 2 + 18));
+        const auto engineColumnWidth = juce::jlimit(270, 318, topRow.getWidth() / 4);
+        const auto macroColumnWidth = juce::jlimit(276, 326, topRow.getWidth() / 3);
         auto engineArea = topRow.removeFromLeft(engineColumnWidth).reduced(5);
         auto shapeArea = topRow.removeFromRight(macroColumnWidth).reduced(5);
         auto overviewArea = topRow.reduced(5);
-        auto bottomRow = homeContent.withTrimmedTop(14);
-        auto labArea = bottomRow.removeFromLeft(juce::jlimit(330, 380, bottomRow.getWidth() / 3)).reduced(5);
+        homeContent.removeFromTop(8);
+        auto bottomRow = homeContent;
+        auto labArea = bottomRow.removeFromLeft(juce::jlimit(310, 366, bottomRow.getWidth() / 4 + 42)).reduced(5);
         auto libraryArea = bottomRow.reduced(5);
 
         for (auto area : { engineArea, overviewArea, shapeArea, labArea, libraryArea })
@@ -4078,8 +4080,8 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
     if (activePanel == Panel::library)
     {
         auto libraryContent = contentArea.reduced(18).withTrimmedTop(36);
-        const auto leftWidth = juce::jlimit(214, 276, libraryContent.getWidth() / 4);
-        const auto inspectorWidth = juce::jlimit(296, 372, libraryContent.getWidth() / 3);
+        const auto leftWidth = juce::jlimit(174, 212, libraryContent.getWidth() / 6);
+        const auto inspectorWidth = juce::jlimit(232, 286, libraryContent.getWidth() / 4);
         auto leftArea = libraryContent.removeFromLeft(leftWidth).reduced(5);
         auto inspectorArea = libraryContent.removeFromRight(inspectorWidth).reduced(5);
         auto browserArea = libraryContent.reduced(5);
@@ -4092,7 +4094,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
             g.drawRoundedRectangle(area.toFloat(), 6.0f, 1.0f);
         }
 
-        const auto savePanelHeight = juce::jlimit(360, 410, inspectorArea.getHeight() - 130);
+        const auto savePanelHeight = juce::jlimit(252, 304, inspectorArea.getHeight() - 96);
         auto saveArea = inspectorArea.reduced(10).removeFromTop(savePanelHeight);
         auto inspectArea = inspectorArea.reduced(10).withTrimmedTop(savePanelHeight + 12);
         auto drawInset = [&g, &theme] (juce::Rectangle<int> area, juce::Colour accent)
@@ -4109,7 +4111,7 @@ void NateVSTAudioProcessorEditor::paint(juce::Graphics& g)
         drawInset(saveArea, theme.accent);
         drawInset(inspectArea, theme.warning);
 
-        const auto browserHeaderHeight = browserArea.getWidth() < 520 ? 166 : 130;
+        const auto browserHeaderHeight = 154;
         auto browserHeader = browserArea.removeFromTop(browserHeaderHeight).reduced(10, 8);
         g.setColour(theme.panelRaised);
         g.fillRoundedRectangle(browserHeader.toFloat(), 5.0f);
@@ -4217,7 +4219,6 @@ void NateVSTAudioProcessorEditor::resized()
             generateButton.setVisible(true);
             mutateButton.setVisible(true);
             variationButton.setVisible(true);
-            randomMorphPad.setVisible(true);
             presetBox.setVisible(true);
             previousPresetButton.setVisible(true);
             nextPresetButton.setVisible(true);
@@ -4246,15 +4247,16 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
-            auto topRow = dashboard.removeFromTop(juce::jlimit(250, 318, dashboard.getHeight() / 2 + 28));
-            const auto engineColumnWidth = juce::jlimit(292, 340, topRow.getWidth() / 4);
-            const auto macroColumnWidth = juce::jlimit(286, 340, topRow.getWidth() / 3);
-            auto performArea = topRow.removeFromLeft(engineColumnWidth).reduced(18, 12);
-            auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(18, 12);
-            auto overviewArea = topRow.reduced(18, 12);
-            auto bottomRow = dashboard.withTrimmedTop(14);
-            auto labArea = bottomRow.removeFromLeft(juce::jlimit(386, 452, bottomRow.getWidth() / 3 + 28)).reduced(18, 12);
-            auto libraryArea = bottomRow.reduced(18, 12);
+            auto topRow = dashboard.removeFromTop(juce::jlimit(246, 300, dashboard.getHeight() / 2 + 18));
+            const auto engineColumnWidth = juce::jlimit(270, 318, topRow.getWidth() / 4);
+            const auto macroColumnWidth = juce::jlimit(276, 326, topRow.getWidth() / 3);
+            auto performArea = topRow.removeFromLeft(engineColumnWidth).reduced(14, 10);
+            auto macroArea = topRow.removeFromRight(macroColumnWidth).reduced(14, 10);
+            auto overviewArea = topRow.reduced(14, 10);
+            dashboard.removeFromTop(8);
+            auto bottomRow = dashboard;
+            auto labArea = bottomRow.removeFromLeft(juce::jlimit(310, 366, bottomRow.getWidth() / 4 + 42)).reduced(14, 10);
+            auto libraryArea = bottomRow.reduced(14, 10);
 
             homeEngineLabel.setBounds(performArea.removeFromTop(24));
             setSliderVisible(subLevelSlider, subLevelLabel, true);
@@ -4291,16 +4293,14 @@ void NateVSTAudioProcessorEditor::resized()
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             auto randomSelectRow = labArea.removeFromTop(38);
-            recipeBox.setBounds(randomSelectRow.removeFromLeft(juce::jlimit(190, 260, randomSelectRow.getWidth() / 2)).reduced(3, 4));
+            recipeBox.setBounds(randomSelectRow.removeFromLeft(juce::jlimit(168, 230, randomSelectRow.getWidth() / 2)).reduced(3, 4));
             randomScopeBox.setBounds(randomSelectRow.reduced(3, 4));
-            updateRandomMorphPad();
-            randomMorphPad.setBounds(labArea.removeFromTop(juce::jlimit(64, 118, labArea.getHeight() - 72)).withTrimmedTop(4).reduced(3, 2));
             auto labButtonRow = labArea.removeFromTop(38).withTrimmedTop(4);
             const auto labButtonWidth = juce::jmax(1, labButtonRow.getWidth() / 3);
             generateButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 4));
             variationButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 4));
             mutateButton.setBounds(labButtonRow.reduced(3, 4));
-            auto randomStatusRow = labArea.removeFromTop(34).withTrimmedTop(6);
+            auto randomStatusRow = labArea.removeFromTop(44).withTrimmedTop(8);
             randomStatusLabel.setBounds(randomStatusRow.reduced(5, 4));
 
             homeLibraryLabel.setBounds(libraryArea.removeFromTop(24));
@@ -5579,11 +5579,11 @@ void NateVSTAudioProcessorEditor::resized()
                 button.setVisible(true);
             librarySectionLabel.setBounds(content.removeFromTop(28));
             auto libraryArea = content.withTrimmedTop(8);
-            const auto leftWidth = juce::jlimit(190, 238, libraryArea.getWidth() / 5);
-            const auto inspectorWidth = juce::jlimit(260, 320, libraryArea.getWidth() / 4);
-            auto findArea = libraryArea.removeFromLeft(leftWidth).reduced(18, 14);
-            auto inspectorArea = libraryArea.removeFromRight(inspectorWidth).reduced(18, 14);
-            auto browserArea = libraryArea.reduced(18, 14);
+            const auto leftWidth = juce::jlimit(174, 212, libraryArea.getWidth() / 6);
+            const auto inspectorWidth = juce::jlimit(232, 286, libraryArea.getWidth() / 4);
+            auto findArea = libraryArea.removeFromLeft(leftWidth).reduced(12, 10);
+            auto inspectorArea = libraryArea.removeFromRight(inspectorWidth).reduced(12, 10);
+            auto browserArea = libraryArea.reduced(12, 10);
 
             libraryFindLabel.setBounds(findArea.removeFromTop(24));
             presetSearchEditor.setBounds(findArea.removeFromTop(38).reduced(2, 4));
@@ -5611,51 +5611,41 @@ void NateVSTAudioProcessorEditor::resized()
             previousPresetButton.setBounds(selectedRow.removeFromLeft(38).reduced(2, 4));
             nextPresetButton.setBounds(selectedRow.removeFromRight(38).reduced(2, 4));
             presetBox.setBounds(selectedRow.reduced(2, 4));
-            const auto compactBrowser = browserArea.getWidth() < 520;
             auto primaryActions = browserArea.removeFromTop(38).withTrimmedTop(3);
             loadPresetButton.setBounds(primaryActions.removeFromLeft(76).reduced(2, 4));
             auditionPresetButton.setBounds(primaryActions.removeFromLeft(92).reduced(2, 4));
             warmPresetPreviewsButton.setBounds(primaryActions.removeFromLeft(72).reduced(2, 4));
             favoritePresetButton.setBounds(primaryActions.removeFromLeft(70).reduced(2, 4));
-            if (compactBrowser)
-            {
-                auto compareActions = browserArea.removeFromTop(36).withTrimmedTop(1);
-                comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
-                revertPresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
-                presetRatingBox.setBounds(compareActions.reduced(2, 4));
-            }
-            else
-            {
-                presetRatingBox.setBounds(primaryActions.removeFromRight(112).reduced(2, 4));
-                revertPresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
-                comparePresetButton.setBounds(primaryActions.removeFromRight(82).reduced(2, 4));
-            }
+            auto compareActions = browserArea.removeFromTop(34).withTrimmedTop(1);
+            comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
+            revertPresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
+            presetRatingBox.setBounds(compareActions.reduced(2, 4));
             const auto rowLayout = presetBrowserRowLayoutForWidth(browserArea.getWidth(), presetBrowserList.getRowHeight());
             const auto browserHeaderText = rowLayout.compact
-                ? juce::String("SOUND / PACK        PREVIEW        INFO")
-                : juce::String("SOUND / PACK / TYPE        PREVIEW        SOURCE / RATING");
+                ? juce::String("SOUND / PACK     PREVIEW     INFO")
+                : juce::String("SOUND / PACK     PREVIEW     SOURCE / RATING");
             if (presetBrowserHeaderLabel.getText() != browserHeaderText)
                 presetBrowserHeaderLabel.setText(browserHeaderText, juce::dontSendNotification);
             presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(24).reduced(6, 3));
             presetBrowserList.setBounds(browserArea.reduced(2, 5));
 
-            const auto savePanelHeight = juce::jlimit(292, 340, inspectorArea.getHeight() - 120);
+            const auto savePanelHeight = juce::jlimit(252, 304, inspectorArea.getHeight() - 96);
             auto saveArea = inspectorArea.removeFromTop(savePanelHeight).reduced(10, 8);
             librarySaveLabel.setBounds(saveArea.removeFromTop(24));
-            presetSaveSummary.setBounds(saveArea.removeFromTop(92).reduced(2, 5));
-            auto nameRow = saveArea.removeFromTop(38).withTrimmedTop(2);
+            presetSaveSummary.setBounds(saveArea.removeFromTop(72).reduced(2, 5));
+            auto nameRow = saveArea.removeFromTop(34).withTrimmedTop(1);
             presetNameEditor.setBounds(nameRow.reduced(2, 4));
-            auto folderRow = saveArea.removeFromTop(36);
+            auto folderRow = saveArea.removeFromTop(32);
             presetCategoryBox.setBounds(folderRow.reduced(2, 4));
-            auto metadataRow = saveArea.removeFromTop(36);
+            auto metadataRow = saveArea.removeFromTop(32);
             presetAuthorEditor.setBounds(metadataRow.removeFromLeft(metadataRow.getWidth() / 2).reduced(2, 4));
             presetPackBox.setBounds(metadataRow.reduced(2, 4));
-            auto keyRow = saveArea.removeFromTop(36);
+            auto keyRow = saveArea.removeFromTop(32);
             const auto keyCellWidth = keyRow.getWidth() / 2;
             presetKeyBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
             presetBpmBox.setBounds(keyRow.reduced(2, 4));
-            auto saveActionRow = saveArea.removeFromTop(36).withTrimmedTop(4);
-            presetNotesTemplateBox.setBounds(saveActionRow.removeFromLeft(154).reduced(2, 4));
+            auto saveActionRow = saveArea.removeFromTop(32).withTrimmedTop(2);
+            presetNotesTemplateBox.setBounds(saveActionRow.removeFromLeft(118).reduced(2, 4));
             savePresetButton.setBounds(saveActionRow.reduced(2, 4));
             presetNotesEditor.setBounds(saveArea.reduced(2, 4));
 
@@ -6023,6 +6013,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + juce::String(keyboardPaintCoverage, 2)
                        + " leaves unused space inside bounds "
                        + pianoKeyboard.getBounds().toString());
+        }
+
+        const auto firstOctaveUpBaseNote = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote + 12) * 12;
+        if (firstOctaveUpBaseNote != 60)
+        {
+            issues.add(panelName + ": first keyboard octave-up maps to MIDI "
+                       + juce::String(firstOctaveUpBaseNote)
+                       + " instead of MIDI 60/C4");
         }
 
         for (const auto* keyboardControl : {
@@ -8458,11 +8456,11 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 
     const auto nextTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(lowestVisibleNote);
     const auto mappedBaseNote = juce::jlimit(0, keyboardHighestNote, nextTypingBaseOctave * 12);
-    const auto noteName = juce::MidiMessage::getMidiNoteName(mappedBaseNote, true, true, 3);
+    const auto noteName = juce::MidiMessage::getMidiNoteName(mappedBaseNote, true, true, 4);
     const auto mappedTopNote = juce::jlimit(0,
                                            keyboardHighestNote,
                                            mappedBaseNote + keyboardTypingKeySpanSemitones);
-    const auto mappedTopName = juce::MidiMessage::getMidiNoteName(mappedTopNote, true, true, 3);
+    const auto mappedTopName = juce::MidiMessage::getMidiNoteName(mappedTopNote, true, true, 4);
 
     if (keyboardTypingBaseOctave != nextTypingBaseOctave)
     {

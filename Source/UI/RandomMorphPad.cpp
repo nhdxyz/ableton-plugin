@@ -34,7 +34,7 @@ void RandomMorphPad::setState(State newState)
 
 juce::String RandomMorphPad::getTooltip()
 {
-    return "Random Lab sound map. Drag to steer tone, motion, chaos, drive, and section strengths; release to create a variation.";
+    return "Random Lab sound map. Drag to steer tone, motion, chaos, drive, macros, and section strengths in real time.";
 }
 
 void RandomMorphPad::paint(juce::Graphics& g)

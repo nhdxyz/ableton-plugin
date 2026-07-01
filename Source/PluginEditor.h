@@ -80,6 +80,7 @@ class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
                                            public juce::DragAndDropContainer,
                                            public juce::DragAndDropTarget,
+                                           private juce::KeyListener,
                                            private juce::Timer,
                                            private juce::ListBoxModel
 {
@@ -89,6 +90,8 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    using juce::Component::keyPressed;
+    using juce::Component::keyStateChanged;
     bool isInterestedInFileDrag(const juce::StringArray& files) override;
     void filesDropped(const juce::StringArray& files, int x, int y) override;
     bool isInterestedInDragSource(const juce::DragAndDropTarget::SourceDetails& dragSourceDetails) override;
@@ -613,7 +616,8 @@ private:
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton sampleCaptureButton { "Rec" };
-    juce::TextButton sampleCommitCaptureButton { "Commit" };
+    juce::TextButton sampleCommitCaptureButton { "Use" };
+    juce::TextButton sampleAuditionButton { "Play" };
     juce::TextButton sampleAutoTrimButton { "Trim" };
     juce::TextButton sampleSpliceButton { "Splice" };
     juce::TextButton sampleMangleButton { "Mangle" };
@@ -820,6 +824,7 @@ private:
     juce::String sampleWaveformKey;
     std::vector<juce::File> sequencerDragMidiFiles;
     int keyboardTypingBaseOctave = -1;
+    std::array<bool, 17> computerKeyboardNotesDown {};
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
     std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
@@ -1011,6 +1016,10 @@ private:
     void updatePresetAudition();
     void releasePresetAuditionNote();
     void returnKeyboardFocusToPiano();
+    bool keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) override;
+    bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
+    void releaseComputerKeyboardNotes();
+    int computerKeyboardBaseNote() const noexcept;
     juce::String startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote);
     bool hasPresetCompareSnapshots() const;
     bool capturePresetCompareBefore(const juce::String& presetName);

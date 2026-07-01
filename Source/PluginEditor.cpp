@@ -22,7 +22,7 @@ constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
 constexpr auto keyboardMaximumWhiteKeyWidth = 96.0f;
 constexpr auto keyboardLowestNote = 24;
 constexpr auto keyboardHighestNote = 96;
-constexpr auto keyboardInitialLowestNote = 48;
+constexpr auto keyboardInitialLowestNote = 60;
 constexpr auto keyboardMinLowestVisibleNote = 24;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
@@ -114,12 +114,15 @@ constexpr std::array<const char*, 34> momentaryFxParameterIDs {
 constexpr auto lastMacroModSourceIndex = 11;
 constexpr std::array<float, 8> defaultSlicePitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
 constexpr std::array<float, 8> defaultGarageSlicePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
+constexpr std::array<int, 17> computerKeyboardKeyCodes {
+    'a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';'
+};
 
 static_assert(keyboardLowestNote <= keyboardMinLowestVisibleNote);
 static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
 static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
 static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
-static_assert((keyboardInitialLowestNote + 12) == 60);
+static_assert(keyboardInitialLowestNote == 60);
 
 int clampedKeyboardLowestVisibleNote(int note) noexcept
 {
@@ -149,20 +152,6 @@ float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, i
     const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(visibleLowestNote, keyboardHighestNote));
     const auto fillWidth = static_cast<float>(juce::jmax(1, keyboardBounds.getWidth())) / whiteKeyCount;
     return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
-}
-
-void configureKeyboardTypingMap(juce::MidiKeyboardComponent& keyboard, int baseOctave)
-{
-    keyboard.clearKeyMappings();
-
-    constexpr std::array<char, 17> keys {
-        'a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';'
-    };
-
-    for (size_t index = 0; index < keys.size(); ++index)
-        keyboard.setKeyPressForNote({ keys[index], 0, 0 }, static_cast<int>(index));
-
-    keyboard.setKeyPressBaseOctave(juce::jlimit(0, 10, baseOctave));
 }
 
 struct PresetBrowserRowLayout
@@ -1411,7 +1400,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
     keyboardTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote);
-    configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
+    pianoKeyboard.clearKeyMappings();
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
     pianoKeyboard.setWantsKeyboardFocus(true);
     pianoKeyboard.setScrollButtonsVisible(false);
@@ -1421,6 +1410,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colour(0x338ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
+    addKeyListener(this);
+    pianoKeyboard.addKeyListener(this);
     addAndMakeVisible(pianoKeyboard);
 
     keyboardOctaveDownButton.setTooltip("Shift the laptop audition range down one octave");
@@ -1440,6 +1431,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardHomeButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardHomeButton.onClick = [this]
     {
+        releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
@@ -1453,6 +1445,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardPanicButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardPanicButton.onClick = [this]
     {
+        releaseComputerKeyboardNotes();
         releasePresetAuditionNote();
         audioProcessor.panicAllNotesOff();
         setRandomStatus("Panic: all notes off");
@@ -3008,6 +3001,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         }
         updateSampleRecorderStatus();
     };
+    sampleAuditionButton.setTooltip("Audition the loaded or recorded sampler source");
+    sampleAuditionButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        setRandomStatus(audioProcessor.triggerSampleAudition() ? "Sample audition" : "No sample to play");
+        returnKeyboardFocusToPiano();
+    };
     sampleAutoTrimButton.setTooltip("Trim the current sample range to the audible part of the recording");
     sampleAutoTrimButton.onClick = [this]
     {
@@ -3322,7 +3323,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 4); };
     organWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 5); };
     housePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 6); };
-    customWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 7); };
+    customWaveButton.onClick = [this]
+    {
+        setChoiceParameter(Parameters::ID::oscWave, 7);
+        setRandomStatus("Wave editor: Osc 1 custom");
+        updateWavetableDisplay();
+    };
     osc2SineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 0); };
     osc2SawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 1); };
     osc2SquareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 2); };
@@ -3330,7 +3336,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     osc2WavetableWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 4); };
     osc2OrganWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 5); };
     osc2HousePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 6); };
-    osc2CustomWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 7); };
+    osc2CustomWaveButton.onClick = [this]
+    {
+        setChoiceParameter(Parameters::ID::osc2Wave, 7);
+        setRandomStatus("Wave editor: Osc 2 custom");
+        updateWavetableDisplay();
+    };
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
@@ -3642,6 +3653,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(clearSampleButton);
     addAndMakeVisible(sampleCaptureButton);
     addAndMakeVisible(sampleCommitCaptureButton);
+    addAndMakeVisible(sampleAuditionButton);
     addAndMakeVisible(sampleAutoTrimButton);
     addAndMakeVisible(sampleSpliceButton);
     addAndMakeVisible(sampleMangleButton);
@@ -3808,6 +3820,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
     restoreFxMomentarySnapshot(fxMomentarySnapshot);
+    releaseComputerKeyboardNotes();
+    pianoKeyboard.removeKeyListener(this);
+    removeKeyListener(this);
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
     pruneSequencerDragMidiFiles();
@@ -4332,6 +4347,8 @@ void NateVSTAudioProcessorEditor::resized()
             synthAmpLabel.setVisible(true);
             waveformBox.setVisible(true);
             osc2WaveBox.setVisible(true);
+            customWaveButton.setVisible(true);
+            osc2CustomWaveButton.setVisible(true);
             wavetableToolBox.setVisible(true);
             wavetableDrawModeBox.setVisible(true);
             filterModeBox.setVisible(true);
@@ -4382,9 +4399,15 @@ void NateVSTAudioProcessorEditor::resized()
             synthSourceLabel.setBounds(sourceHeader);
 
             auto osc1Row = sourceArea.removeFromTop(34).withTrimmedTop(2);
+            customWaveButton.setButtonText("Edit O1");
+            customWaveButton.setTooltip("Select Osc 1 Custom and edit it in the center wave editor");
+            customWaveButton.setBounds(osc1Row.removeFromRight(78).reduced(4, 4));
             waveformBox.setBounds(osc1Row.reduced(4, 4));
 
             auto osc2Row = sourceArea.removeFromTop(34).withTrimmedTop(2);
+            osc2CustomWaveButton.setButtonText("Edit O2");
+            osc2CustomWaveButton.setTooltip("Select Osc 2 Custom and edit it in the center wave editor");
+            osc2CustomWaveButton.setBounds(osc2Row.removeFromRight(78).reduced(4, 4));
             osc2WaveBox.setBounds(osc2Row.reduced(4, 4));
 
             const auto compactSourceCard = sourceArea.getHeight() < 260;
@@ -4962,6 +4985,7 @@ void NateVSTAudioProcessorEditor::resized()
             clearSampleButton.setVisible(true);
             sampleCaptureButton.setVisible(true);
             sampleCommitCaptureButton.setVisible(true);
+            sampleAuditionButton.setVisible(true);
             sampleAutoTrimButton.setVisible(true);
             sampleSpliceButton.setVisible(true);
             sampleMangleButton.setVisible(true);
@@ -5016,8 +5040,10 @@ void NateVSTAudioProcessorEditor::resized()
             sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
             sampleRecordStatusLabel.setBounds(sourceArea.removeFromTop(22).reduced(5, 3));
             auto recordRow = sourceArea.removeFromTop(30);
-            sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordRow.getWidth() / 2).reduced(3, 4));
-            sampleCommitCaptureButton.setBounds(recordRow.reduced(3, 4));
+            const auto recordButtonWidth = recordRow.getWidth() / 3;
+            sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
+            sampleCommitCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
+            sampleAuditionButton.setBounds(recordRow.reduced(3, 4));
             auto recordToolRow = sourceArea.removeFromTop(30);
             const auto recordToolWidth = recordToolRow.getWidth() / 3;
             sampleAutoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
@@ -6015,11 +6041,11 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + pianoKeyboard.getBounds().toString());
         }
 
-        const auto firstOctaveUpBaseNote = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote + 12) * 12;
-        if (firstOctaveUpBaseNote != 60)
+        const auto defaultTypingBaseNote = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote) * 12;
+        if (defaultTypingBaseNote != 60)
         {
-            issues.add(panelName + ": first keyboard octave-up maps to MIDI "
-                       + juce::String(firstOctaveUpBaseNote)
+            issues.add(panelName + ": default laptop keyboard maps A to MIDI "
+                       + juce::String(defaultTypingBaseNote)
                        + " instead of MIDI 60/C4");
         }
 
@@ -6856,6 +6882,7 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
                                                                    : "Recorder idle",
                                     juce::dontSendNotification);
     sampleCommitCaptureButton.setEnabled(seconds >= 0.05f);
+    sampleAuditionButton.setEnabled(audioProcessor.hasLoadedSample());
 }
 
 void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
@@ -7674,6 +7701,12 @@ void NateVSTAudioProcessorEditor::applyRandomMorphPad(float x, float y, bool cre
     setPlainParameterValue(Parameters::ID::randomBrightnessBias, brightness);
     setPlainParameterValue(Parameters::ID::randomDriveBias, drive);
     setPlainParameterValue(Parameters::ID::randomMotionBias, motion);
+    setPlainParameterValue(Parameters::ID::macroTone, juce::jlimit(0.0f, 1.0f, x));
+    setPlainParameterValue(Parameters::ID::macroDirt, juce::jlimit(0.0f, 1.0f, 0.18f + (std::abs(drive) * 0.74f)));
+    setPlainParameterValue(Parameters::ID::macroMotion, juce::jlimit(0.0f, 1.0f, y));
+    setPlainParameterValue(Parameters::ID::macroSpace, juce::jlimit(0.0f, 1.0f, 0.18f + (y * 0.72f)));
+    setPlainParameterValue(Parameters::ID::macroWarp, juce::jlimit(0.0f, 1.0f, 0.20f + (distance * 0.70f)));
+    setPlainParameterValue(Parameters::ID::macroBounce, juce::jlimit(0.0f, 1.0f, chaos));
 
     const std::array<std::pair<const char*, float>, 7> sectionValues {
         std::pair<const char*, float> { Parameters::ID::randomSourceIntensity, juce::jlimit(0.25f, 1.0f, 0.46f + (distance * 0.42f) + ((1.0f - std::abs(dx * 2.0f)) * 0.12f)) },
@@ -7698,8 +7731,7 @@ void NateVSTAudioProcessorEditor::applyRandomMorphPad(float x, float y, bool cre
 
     if (createVariation)
     {
-        triggerRandomVariation();
-        setRandomStatus(status + " | Variation");
+        setRandomStatus(status + " | Live map");
     }
 }
 
@@ -8436,6 +8468,7 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
     const auto currentLowestNote = clampedKeyboardLowestVisibleNote(pianoKeyboard.getLowestVisibleKey());
     const auto nextLowestNote = clampedKeyboardLowestVisibleNote(currentLowestNote + semitones);
 
+    releaseComputerKeyboardNotes();
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
     pianoKeyboard.setLowestVisibleKey(nextLowestNote);
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextLowestNote));
@@ -8449,6 +8482,7 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
     const auto clampedLowestNote = clampedKeyboardLowestVisibleNote(lowestVisibleNote);
     if (lowestVisibleNote != clampedLowestNote)
     {
+        releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         pianoKeyboard.setLowestVisibleKey(clampedLowestNote);
         lowestVisibleNote = clampedLowestNote;
@@ -8464,8 +8498,8 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 
     if (keyboardTypingBaseOctave != nextTypingBaseOctave)
     {
+        releaseComputerKeyboardNotes();
         keyboardTypingBaseOctave = nextTypingBaseOctave;
-        configureKeyboardTypingMap(pianoKeyboard, keyboardTypingBaseOctave);
     }
 
     const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), lowestVisibleNote);
@@ -8480,6 +8514,80 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 
     keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardMinLowestVisibleNote);
     keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
+}
+
+int NateVSTAudioProcessorEditor::computerKeyboardBaseNote() const noexcept
+{
+    return juce::jlimit(keyboardLowestNote,
+                        keyboardHighestNote - keyboardTypingKeySpanSemitones,
+                        keyboardTypingBaseOctave * 12);
+}
+
+void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
+{
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+    const auto baseNote = computerKeyboardBaseNote();
+    for (size_t index = 0; index < computerKeyboardNotesDown.size(); ++index)
+    {
+        if (! computerKeyboardNotesDown[index])
+            continue;
+
+        computerKeyboardNotesDown[index] = false;
+        keyboardState.noteOff(1,
+                              juce::jlimit(0, 127, baseNote + static_cast<int>(index)),
+                              0.0f);
+    }
+}
+
+bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent)
+{
+    for (const auto keyCode : computerKeyboardKeyCodes)
+        if (key.getKeyCode() == keyCode)
+            return keyStateChanged(true, originatingComponent);
+
+    return false;
+}
+
+bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* originatingComponent)
+{
+    auto isTextEntryComponent = [] (juce::Component* component)
+    {
+        for (auto* current = component; current != nullptr; current = current->getParentComponent())
+            if (dynamic_cast<juce::TextEditor*>(current) != nullptr
+                || dynamic_cast<juce::ComboBox*>(current) != nullptr)
+                return true;
+
+        return false;
+    };
+
+    if (isTextEntryComponent(originatingComponent))
+    {
+        releaseComputerKeyboardNotes();
+        return false;
+    }
+
+    auto used = false;
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+    const auto baseNote = computerKeyboardBaseNote();
+    for (size_t index = 0; index < computerKeyboardKeyCodes.size(); ++index)
+    {
+        const auto note = juce::jlimit(0, 127, baseNote + static_cast<int>(index));
+        const auto isDown = juce::KeyPress::isKeyCurrentlyDown(computerKeyboardKeyCodes[index]);
+        if (isDown && ! computerKeyboardNotesDown[index])
+        {
+            computerKeyboardNotesDown[index] = true;
+            keyboardState.noteOn(1, note, 0.86f);
+            used = true;
+        }
+        else if (! isDown && computerKeyboardNotesDown[index])
+        {
+            computerKeyboardNotesDown[index] = false;
+            keyboardState.noteOff(1, note, 0.0f);
+            used = true;
+        }
+    }
+
+    return used;
 }
 
 void NateVSTAudioProcessorEditor::stepSequencerRoot(int semitones)
@@ -10246,7 +10354,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
-        &loadSampleButton, &clearSampleButton, &sampleCaptureButton, &sampleCommitCaptureButton, &sampleAutoTrimButton, &sampleSpliceButton, &sampleMangleButton,
+        &loadSampleButton, &clearSampleButton, &sampleCaptureButton, &sampleCommitCaptureButton, &sampleAuditionButton, &sampleAutoTrimButton, &sampleSpliceButton, &sampleMangleButton,
         &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDetectButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,

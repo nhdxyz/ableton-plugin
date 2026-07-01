@@ -16,18 +16,19 @@ constexpr auto editorDefaultWidth = 1280;
 constexpr auto editorDefaultHeight = 820;
 constexpr auto editorMaxWidth = 1680;
 constexpr auto editorMaxHeight = 1040;
-constexpr auto pianoKeyboardHeight = 80;
+constexpr auto pianoKeyboardHeight = 96;
 constexpr auto keyboardControlsWidth = 356;
 constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
 constexpr auto keyboardMaximumWhiteKeyWidth = 96.0f;
-constexpr auto keyboardLowestNote = 24;
+constexpr auto keyboardLowestNote = 36;
 constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardInitialLowestNote = 60;
-constexpr auto keyboardMinLowestVisibleNote = 24;
+constexpr auto keyboardMinLowestVisibleNote = 48;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
 constexpr auto keyboardTypingMinBaseOctave = keyboardMinLowestVisibleNote / 12;
 constexpr auto keyboardTypingMaxBaseOctave = (keyboardHighestNote - keyboardTypingKeySpanSemitones) / 12;
+constexpr auto abletonMiddleCOctave = 3;
 constexpr auto modMatrixTitleHeight = 28;
 constexpr auto modMatrixInspectorHeight = 30;
 constexpr auto modMatrixRouteMapHeight = 46;
@@ -123,6 +124,8 @@ static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
 static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
 static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
 static_assert(keyboardInitialLowestNote == 60);
+static_assert(keyboardMinLowestVisibleNote == 48);
+static_assert(keyboardMaxLowestVisibleNote == 72);
 
 int clampedKeyboardLowestVisibleNote(int note) noexcept
 {
@@ -134,6 +137,11 @@ int keyboardTypingBaseOctaveForLowestNote(int note) noexcept
     return juce::jlimit(keyboardTypingMinBaseOctave,
                        keyboardTypingMaxBaseOctave,
                        clampedKeyboardLowestVisibleNote(note) / 12);
+}
+
+juce::String abletonNoteName(int midiNote)
+{
+    return juce::MidiMessage::getMidiNoteName(midiNote, true, true, abletonMiddleCOctave);
 }
 
 int whiteKeyCountInRange(int lowestNote, int highestNote) noexcept
@@ -1382,9 +1390,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     setLookAndFeel(&lookAndFeel);
+    setWantsKeyboardFocus(true);
     setSize(editorDefaultWidth, editorDefaultHeight);
     setResizeLimits(editorMinWidth, editorMinHeight, editorMaxWidth, editorMaxHeight);
     setResizable(true, true);
+    addMouseListener(this, true);
 
     titleLabel.setText("Nate VST", juce::dontSendNotification);
     titleLabel.setFont(juce::FontOptions(24.0f, juce::Font::bold));
@@ -1418,27 +1428,28 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.addKeyListener(this);
     addAndMakeVisible(pianoKeyboard);
 
-    keyboardOctaveDownButton.setTooltip("Shift the laptop audition range down one octave");
+    keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the floor is A = C2 in Ableton note names");
     keyboardOctaveDownButton.setWantsKeyboardFocus(false);
     keyboardOctaveDownButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
     addAndMakeVisible(keyboardOctaveDownButton);
 
-    keyboardOctaveUpButton.setTooltip("Shift the laptop audition range up one octave");
+    keyboardOctaveUpButton.setTooltip("Shift laptop keys up one octave; Oct+ from Home maps A to C4 in Ableton note names");
     keyboardOctaveUpButton.setWantsKeyboardFocus(false);
     keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
 
-    keyboardHomeButton.setTooltip("Reset the audition keyboard to its default octave");
+    keyboardHomeButton.setTooltip("Reset laptop keys to A = C3 in Ableton note names");
     keyboardHomeButton.setWantsKeyboardFocus(false);
     keyboardHomeButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardHomeButton.onClick = [this]
     {
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
-        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
+        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
         returnKeyboardFocusToPiano();
     };
@@ -3025,6 +3036,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
     };
+    sampleCaptureButton.setButtonText("Record");
     sampleCaptureButton.setTooltip("Start or stop recording the current synth/sample output into a short rolling sampler buffer");
     sampleCaptureButton.onClick = [this]
     {
@@ -3041,7 +3053,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("Recording sampler snippet");
         }
         updateSampleRecorderStatus();
+        returnKeyboardFocusToPiano();
     };
+    sampleCommitCaptureButton.setButtonText("Commit");
     sampleCommitCaptureButton.setTooltip("Commit the recorded snippet into the sampler waveform and auto-trim silence");
     sampleCommitCaptureButton.onClick = [this]
     {
@@ -3061,6 +3075,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("Record first, then commit");
         }
         updateSampleRecorderStatus();
+        returnKeyboardFocusToPiano();
     };
     sampleAuditionButton.setTooltip("Audition the loaded or recorded sampler source");
     sampleAuditionButton.onClick = [this]
@@ -3078,6 +3093,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         captureGlobalEdit("Auto trim sample");
         setRandomStatus(audioProcessor.autoTrimSampleToContent() ? "Sample auto-trimmed" : "Trim skipped");
         updateSampleWaveformDisplay();
+        returnKeyboardFocusToPiano();
     };
     sampleSpliceButton.setTooltip("Detect transients or split the recording into eight playable slice keys");
     sampleSpliceButton.onClick = [this]
@@ -3089,6 +3105,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleSliceButtons();
         updateSampleSliceEditorStatus();
         updateSampleWaveformDisplay();
+        returnKeyboardFocusToPiano();
     };
     sampleMangleButton.setTooltip("Randomize the recorded sample's trim, slices, pitch, stutter, pan, probability, and safe FX movement");
     sampleMangleButton.onClick = [this]
@@ -3109,6 +3126,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         {
             setRandomStatus("Mangle skipped");
         }
+        returnKeyboardFocusToPiano();
     };
     randomCutButton.onClick = [this]
     {
@@ -3117,6 +3135,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         captureGlobalEdit("Random sample cut");
         setRandomStatus(audioProcessor.randomizeSampleCut() ? "Sample randomized" : "Sample skipped");
         updateSampleWaveformDisplay();
+        returnKeyboardFocusToPiano();
     };
     ukgChopButton.onClick = [this]
     {
@@ -3133,6 +3152,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         {
             setRandomStatus("UKG chop skipped");
         }
+        returnKeyboardFocusToPiano();
     };
     for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
     {
@@ -3894,6 +3914,7 @@ NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
     releaseComputerKeyboardNotes();
     pianoKeyboard.removeKeyListener(this);
     removeKeyListener(this);
+    removeMouseListener(this);
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
     pruneSequencerDragMidiFiles();
@@ -4267,7 +4288,7 @@ void NateVSTAudioProcessorEditor::resized()
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
     pianoKeyboard.setBounds(pianoKeyboardBounds);
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboardBounds,
-                                                                  pianoKeyboard.getLowestVisibleKey()));
+                                                                  computerKeyboardBaseNote()));
     updateKeyboardRangeLabel();
     bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
@@ -5153,13 +5174,13 @@ void NateVSTAudioProcessorEditor::resized()
 
             sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
             sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            sampleRecordStatusLabel.setBounds(sourceArea.removeFromTop(22).reduced(5, 3));
-            auto recordRow = sourceArea.removeFromTop(30);
+            sampleRecordStatusLabel.setBounds(sourceArea.removeFromTop(26).reduced(5, 3));
+            auto recordRow = sourceArea.removeFromTop(34).withTrimmedTop(2);
             const auto recordButtonWidth = recordRow.getWidth() / 3;
             sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
             sampleCommitCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
             sampleAuditionButton.setBounds(recordRow.reduced(3, 4));
-            auto recordToolRow = sourceArea.removeFromTop(30);
+            auto recordToolRow = sourceArea.removeFromTop(34).withTrimmedTop(2);
             const auto recordToolWidth = recordToolRow.getWidth() / 3;
             sampleAutoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
             sampleSpliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
@@ -5953,7 +5974,69 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     const auto originalRandomLabPage = activeRandomLabPage;
     const auto originalWidth = getWidth();
     const auto originalHeight = getHeight();
+    const auto originalKeyboardBaseOctave = keyboardTypingBaseOctave;
     juce::StringArray issues;
+
+    auto auditComputerKeyboardRange = [this, &issues]
+    {
+        auto expectBase = [&issues, this] (const juce::String& state, int expectedNote)
+        {
+            const auto baseNote = computerKeyboardBaseNote();
+            if (baseNote != expectedNote)
+            {
+                issues.add("Keyboard " + state + ": laptop A maps to MIDI "
+                           + juce::String(baseNote)
+                           + " (" + abletonNoteName(baseNote) + ") instead of MIDI "
+                           + juce::String(expectedNote)
+                           + " (" + abletonNoteName(expectedNote) + ")");
+            }
+        };
+
+        releaseComputerKeyboardNotes();
+        audioProcessor.getMidiKeyboardState().allNotesOff(1);
+        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
+        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        updateKeyboardRangeLabel();
+        expectBase("home", keyboardInitialLowestNote);
+        if (keyboardRangeLabel.getText() != "A C3\n; E4")
+            issues.add("Keyboard home: range label should read A C3 to ; E4, got "
+                       + keyboardRangeLabel.getText().quoted());
+
+        shiftKeyboardOctave(12);
+        expectBase("Oct+", keyboardMaxLowestVisibleNote);
+        if (keyboardRangeLabel.getText() != "A C4\n; E5")
+            issues.add("Keyboard Oct+: range label should read A C4 to ; E5, got "
+                       + keyboardRangeLabel.getText().quoted());
+
+        shiftKeyboardOctave(12);
+        expectBase("Oct+ clamp", keyboardMaxLowestVisibleNote);
+        if (keyboardOctaveUpButton.isEnabled())
+            issues.add("Keyboard Oct+ clamp: up button remains enabled at the top laptop range");
+
+        shiftKeyboardOctave(-12);
+        expectBase("return home", keyboardInitialLowestNote);
+
+        shiftKeyboardOctave(-12);
+        expectBase("Oct-", keyboardMinLowestVisibleNote);
+        if (keyboardRangeLabel.getText() != "A C2\n; E3")
+            issues.add("Keyboard Oct-: range label should read A C2 to ; E3, got "
+                       + keyboardRangeLabel.getText().quoted());
+
+        shiftKeyboardOctave(-12);
+        expectBase("Oct- clamp", keyboardMinLowestVisibleNote);
+        if (keyboardOctaveDownButton.isEnabled())
+            issues.add("Keyboard Oct- clamp: down button remains enabled at the bottom laptop range");
+
+        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
+        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        updateKeyboardRangeLabel();
+    };
+
+    setSize(editorDefaultWidth, editorDefaultHeight);
+    resized();
+    auditComputerKeyboardRange();
 
     auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
     {
@@ -5996,7 +6079,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             {
                 const auto waveformBounds = getLocalArea(expandedSampleWaveformDisplay.getParentComponent(),
                                                          expandedSampleWaveformDisplay.getBounds());
-                const auto minimumWaveformHeight = getHeight() >= 900 ? 480
+                const auto minimumWaveformHeight = getHeight() >= 900 ? 456
                                              : getHeight() >= editorDefaultHeight ? 330
                                                                                   : 270;
 
@@ -6137,7 +6220,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             }
         }
 
-        const auto keyboardLowestForAudit = clampedKeyboardLowestVisibleNote(pianoKeyboard.getLowestVisibleKey());
+        const auto keyboardLowestForAudit = computerKeyboardBaseNote();
         const auto expectedKeyboardKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
                                                                                  keyboardLowestForAudit);
         if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyboardKeyWidth) > 0.25f)
@@ -6166,7 +6249,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         {
             issues.add(panelName + ": default laptop keyboard maps A to MIDI "
                        + juce::String(defaultTypingBaseNote)
-                       + " instead of MIDI 60/C4");
+                       + " instead of MIDI 60/C3 in Ableton note names");
         }
 
         for (const auto* keyboardControl : {
@@ -6346,6 +6429,8 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     activeFocusOverlay = originalFocusOverlay;
     selectedFxModule = originalFxModule;
     activeRandomLabPage = originalRandomLabPage;
+    keyboardTypingBaseOctave = originalKeyboardBaseOctave;
+    updateKeyboardRangeLabel();
     updatePanelVisibility();
     resized();
 
@@ -6657,7 +6742,16 @@ void NateVSTAudioProcessorEditor::mouseEnter(const juce::MouseEvent& event)
 void NateVSTAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
 {
     if (! event.mods.isPopupMenu())
+    {
+        for (auto* current = event.originalComponent; current != nullptr; current = current->getParentComponent())
+        {
+            if (dynamic_cast<juce::TextEditor*>(current) != nullptr)
+                return;
+        }
+
+        returnKeyboardFocusToPiano();
         return;
+    }
 
     if (const auto routeAmountIndex = findModRouteAmountIndex(event.originalComponent); routeAmountIndex >= 0)
     {
@@ -6990,7 +7084,7 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
 {
     const auto isRecording = audioProcessor.isSampleCaptureEnabled();
     const auto seconds = audioProcessor.getSampleCaptureDurationSeconds();
-    sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Rec");
+    sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Record");
     sampleCaptureButton.setColour(juce::TextButton::buttonColourId,
                                   isRecording ? juce::Colour(0xff4a2725) : juce::Colour(0xff141d20));
     sampleCaptureButton.setColour(juce::TextButton::textColourOffId,
@@ -8585,61 +8679,56 @@ void NateVSTAudioProcessorEditor::setRandomStatus(const juce::String& action)
 
 void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
 {
-    const auto currentLowestNote = clampedKeyboardLowestVisibleNote(pianoKeyboard.getLowestVisibleKey());
-    const auto nextLowestNote = clampedKeyboardLowestVisibleNote(currentLowestNote + semitones);
+    const auto currentBaseNote = computerKeyboardBaseNote();
+    const auto nextBaseNote = clampedKeyboardLowestVisibleNote(currentBaseNote + semitones);
 
     releaseComputerKeyboardNotes();
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
-    pianoKeyboard.setLowestVisibleKey(nextLowestNote);
-    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextLowestNote));
+    keyboardTypingBaseOctave = nextBaseNote / 12;
+    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextBaseNote));
+    pianoKeyboard.setLowestVisibleKey(nextBaseNote);
     updateKeyboardRangeLabel();
     returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 {
-    auto lowestVisibleNote = pianoKeyboard.getLowestVisibleKey();
-    const auto clampedLowestNote = clampedKeyboardLowestVisibleNote(lowestVisibleNote);
-    if (lowestVisibleNote != clampedLowestNote)
-    {
-        releaseComputerKeyboardNotes();
-        audioProcessor.getMidiKeyboardState().allNotesOff(1);
-        pianoKeyboard.setLowestVisibleKey(clampedLowestNote);
-        lowestVisibleNote = clampedLowestNote;
-    }
-
-    const auto nextTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(lowestVisibleNote);
-    const auto mappedBaseNote = juce::jlimit(0, keyboardHighestNote, nextTypingBaseOctave * 12);
-    const auto noteName = juce::MidiMessage::getMidiNoteName(mappedBaseNote, true, true, 4);
-    const auto mappedTopNote = juce::jlimit(0,
-                                           keyboardHighestNote,
-                                           mappedBaseNote + keyboardTypingKeySpanSemitones);
-    const auto mappedTopName = juce::MidiMessage::getMidiNoteName(mappedTopNote, true, true, 4);
-
+    const auto unclampedBaseNote = keyboardTypingBaseOctave * 12;
+    const auto mappedBaseNote = clampedKeyboardLowestVisibleNote(unclampedBaseNote);
+    const auto nextTypingBaseOctave = mappedBaseNote / 12;
     if (keyboardTypingBaseOctave != nextTypingBaseOctave)
     {
         releaseComputerKeyboardNotes();
+        audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseOctave = nextTypingBaseOctave;
     }
 
-    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), lowestVisibleNote);
+    const auto noteName = abletonNoteName(mappedBaseNote);
+    const auto mappedTopNote = juce::jlimit(0,
+                                           keyboardHighestNote,
+                                           mappedBaseNote + keyboardTypingKeySpanSemitones);
+    const auto mappedTopName = abletonNoteName(mappedTopNote);
+
+    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), mappedBaseNote);
     if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
         pianoKeyboard.setKeyWidth(expectedKeyWidth);
+    pianoKeyboard.setLowestVisibleKey(mappedBaseNote);
 
-    const auto labelText = noteName + "\n" + mappedTopName;
+    const auto labelText = "A " + noteName + "\n; " + mappedTopName;
     if (keyboardRangeLabel.getText() != labelText)
         keyboardRangeLabel.setText(labelText, juce::dontSendNotification);
 
-    keyboardRangeLabel.setTooltip("Laptop keys A through ; map from " + noteName + " to " + mappedTopName);
+    keyboardRangeLabel.setTooltip("Laptop keys A through ; map from " + noteName + " to " + mappedTopName
+                                  + " using Ableton-style octave names");
 
-    keyboardOctaveDownButton.setEnabled(lowestVisibleNote > keyboardMinLowestVisibleNote);
-    keyboardOctaveUpButton.setEnabled(lowestVisibleNote < keyboardMaxLowestVisibleNote);
+    keyboardOctaveDownButton.setEnabled(mappedBaseNote > keyboardMinLowestVisibleNote);
+    keyboardOctaveUpButton.setEnabled(mappedBaseNote < keyboardMaxLowestVisibleNote);
 }
 
 int NateVSTAudioProcessorEditor::computerKeyboardBaseNote() const noexcept
 {
-    return juce::jlimit(keyboardLowestNote,
-                        keyboardHighestNote - keyboardTypingKeySpanSemitones,
+    return juce::jlimit(keyboardMinLowestVisibleNote,
+                        keyboardMaxLowestVisibleNote,
                         keyboardTypingBaseOctave * 12);
 }
 
@@ -11301,6 +11390,7 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                        pointIDs[0],
                                        values[0]);
         setRandomStatus("Wave tool: " + wavetableToolBox.getText());
+        returnKeyboardFocusToPiano();
     };
 
     auto changed = true;

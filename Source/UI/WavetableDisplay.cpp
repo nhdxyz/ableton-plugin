@@ -206,7 +206,7 @@ void WavetableDisplay::setState(float newOsc1Position,
 
 juce::String WavetableDisplay::getTooltip()
 {
-    return "Wave editor: drag WT to morph, select Custom and draw points. Drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+    return "3D wavetable editor: drag WT to morph frames, select Custom and draw points, drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
 }
 
 void WavetableDisplay::setCustomDrawMode(CustomDrawMode newMode)
@@ -237,6 +237,20 @@ void WavetableDisplay::paint(juce::Graphics& g)
     g.fillRoundedRectangle(bounds, 6.0f);
     g.setColour(inactive ? juce::Colour(0xff27343a) : juce::Colour(0xff40535a));
     g.drawRoundedRectangle(bounds, 6.0f, 1.0f);
+
+    g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff8ee6c9).withAlpha(inactive ? 0.35f : 0.86f));
+    g.drawFittedText("3D WT SURFACE",
+                     bounds.withTrimmedLeft(8.0f).withTrimmedTop(5.0f).withHeight(12.0f).toNearestInt(),
+                     juce::Justification::centredLeft,
+                     1,
+                     0.70f);
+    g.setColour(juce::Colour(0xff9fb0b6).withAlpha(inactive ? 0.28f : 0.78f));
+    g.drawFittedText("DRAW  PARTIALS  MORPH",
+                     bounds.withTrimmedRight(8.0f).withTrimmedTop(5.0f).withHeight(12.0f).toNearestInt(),
+                     juce::Justification::centredRight,
+                     1,
+                     0.70f);
 
     g.setColour(juce::Colour(0x223d4a50));
     for (auto line = 1; line < 4; ++line)
@@ -432,6 +446,13 @@ void WavetableDisplay::paint(juce::Graphics& g)
         const auto barWidth = barsArea.getWidth() / static_cast<float>(analysis.partials.size());
         g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
         g.fillRoundedRectangle(barsArea.expanded(1.0f), 3.0f);
+        g.setFont(juce::FontOptions(7.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff9fb0b6).withAlpha(0.74f));
+        g.drawFittedText("PARTIALS",
+                         barsArea.withTrimmedLeft(3.0f).withHeight(8.0f).toNearestInt(),
+                         juce::Justification::centredLeft,
+                         1,
+                         0.62f);
         for (size_t index = 0; index < analysis.partials.size(); ++index)
         {
             auto cell = juce::Rectangle<float>(barsArea.getX() + (static_cast<float>(index) * barWidth),

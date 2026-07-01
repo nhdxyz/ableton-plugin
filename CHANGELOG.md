@@ -2,6 +2,14 @@
 
 ## 2026-07-01
 
+### UI Focus, Wave Editor Labels, And Synth Stab Pack
+
+- Made the editor request keyboard focus, listen for child-control mouse-up events, and return focus to the bottom audition keyboard after non-text control gestures, sample recorder actions, and wavetable tool actions so laptop-key auditioning is less likely to get stranded after touching a knob or button in Ableton.
+- Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so `Oct+` from Home reaches C4 and the computer keyboard cannot fall down to C0.
+- Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
+- Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.
+- Added a generated 16-preset `Club Synth Stabs` factory expansion for normal house/tech-house chord hits, organ jabs, gated rave stabs, and delay-throw chords, bringing the repo-managed factory pack to 438 presets.
+
 ### Performance Scenes, Expression Sources, And Sample Engine Modes
 
 - Expanded HOME performance snapshots from A/B to A/B/C/D scenes, with compact recall/store rows and state persistence through the existing plugin-state snapshot serializer.
@@ -11,7 +19,7 @@
 - Added Sample Engine Mode with Classic, Granular, Spectral, and Cloud options plus Grain, Spray, and Freeze controls on the SAMPLE page.
 - Implemented first-pass granular/cloud/spectral sample behavior using per-voice grain resets, start spray, freeze-position repeats, and pitch-smear behavior without adding audio-thread allocation.
 - Made recorded-sample and UKG chop randomization seed the new sample-engine controls so mangle/generate workflows can produce granular, cloud, and freeze-style snippets.
-- Updated documentation for the 422-preset factory library, A/B/C/D performance scenes, expressive modulation, and the new sampler engine controls.
+- Updated documentation for the 438-preset factory library, A/B/C/D performance scenes, expressive modulation, and the new sampler engine controls.
 
 ## 2026-06-30
 

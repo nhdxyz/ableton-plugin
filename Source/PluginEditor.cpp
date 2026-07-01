@@ -1529,7 +1529,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(synthSectionLabel, "SYNTH");
     configureSectionLabel(synthSourceLabel, "SOURCE MIX");
     configureSectionLabel(synthVoiceLabel, "PITCH + VOICE");
-    configureSectionLabel(synthFilterLabel, "FILTER DRIVE");
+    configureSectionLabel(synthFilterLabel, "WAVE + FILTER");
     configureSectionLabel(synthAmpLabel, "AMP + OUTPUT");
     configureSectionLabel(randomSectionLabel, "LAB");
     configureSectionLabel(modSectionLabel, "MOD");
@@ -3567,16 +3567,22 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         addAndMakeVisible(button);
     }
 
+    const std::array<ModWorkflowPage, 4> modWorkflowPages {
+        ModWorkflowPage::matrix,
+        ModWorkflowPage::sources,
+        ModWorkflowPage::macros,
+        ModWorkflowPage::curves
+    };
     const std::array<juce::String, 4> modWorkflowLabels {
-        "Sources",
         "Matrix",
+        "Sources",
         "Macros",
         "Curves"
     };
 
     const std::array<juce::String, 4> modWorkflowTooltips {
-        "Inspect live modulation sources and envelope/LFO activity",
         "Edit active source-to-destination routes",
+        "Inspect live modulation sources and envelope/LFO activity",
         "Assign performance macros to destinations",
         "Edit LFO and MSEG curve shapes"
     };
@@ -3588,9 +3594,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         button.setTooltip(modWorkflowTooltips[index]);
         button.setWantsKeyboardFocus(false);
         button.setMouseClickGrabsKeyboardFocus(false);
-        button.onClick = [this, index]
+        button.onClick = [this, page = modWorkflowPages[index]]
         {
-            setActiveModWorkflowPage(static_cast<ModWorkflowPage>(index));
+            setActiveModWorkflowPage(page);
         };
         addAndMakeVisible(button);
     }
@@ -4739,6 +4745,32 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto modContent = content.withTrimmedTop(8).reduced(18, 10);
 
+            auto layoutCompactSourceRail = [this] (juce::Rectangle<int>& area)
+            {
+                modSourceLabel.setVisible(true);
+
+                auto railArea = area.removeFromTop(74);
+                modSourceLabel.setBounds(railArea.removeFromTop(18).withTrimmedLeft(4));
+                railArea = railArea.withTrimmedTop(4);
+
+                constexpr auto sourceColumnCount = 5;
+                constexpr auto sourceRowCount = 3;
+                const auto sourceCellHeight = juce::jmax(10, railArea.getHeight() / sourceRowCount);
+                for (size_t index = 0; index < modSourceRows.size(); ++index)
+                {
+                    modSourceRows[index].setVisible(true);
+                    const auto row = static_cast<int>(index) / sourceColumnCount;
+                    const auto column = static_cast<int>(index) % sourceColumnCount;
+                    auto rowArea = railArea.withTrimmedTop(row * sourceCellHeight).withHeight(sourceCellHeight);
+                    const auto cellWidth = rowArea.getWidth() / sourceColumnCount;
+                    modSourceRows[index].setBounds(rowArea.withTrimmedLeft(column * cellWidth)
+                                                          .withWidth(cellWidth)
+                                                          .reduced(3, 2));
+                }
+
+                area.removeFromTop(8);
+            };
+
             auto layoutSources = [this] (juce::Rectangle<int> area)
             {
                 modSourceLabel.setVisible(true);
@@ -4803,8 +4835,9 @@ void NateVSTAudioProcessorEditor::resized()
                 });
             };
 
-            auto layoutMacros = [this] (juce::Rectangle<int> area)
+            auto layoutMacros = [this, &layoutCompactSourceRail] (juce::Rectangle<int> area)
             {
+                layoutCompactSourceRail(area);
                 modMacroLabel.setVisible(true);
                 modMacroAssignLabel.setVisible(true);
                 modMacroAssignStatusLabel.setVisible(true);
@@ -4825,8 +4858,9 @@ void NateVSTAudioProcessorEditor::resized()
                 macroAssignmentPad.setBounds(area.reduced(4));
             };
 
-            auto layoutCurves = [this] (juce::Rectangle<int> area)
+            auto layoutCurves = [this, &layoutCompactSourceRail] (juce::Rectangle<int> area)
             {
+                layoutCompactSourceRail(area);
                 modLfoLabel.setVisible(true);
                 lfo1ShapeBox.setVisible(true);
                 lfo1SyncRateBox.setVisible(true);
@@ -4853,8 +4887,9 @@ void NateVSTAudioProcessorEditor::resized()
                 layoutKnobRow(area.removeFromTop(knobHeight).withTrimmedTop(6), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
             };
 
-            auto layoutMatrix = [this] (juce::Rectangle<int> matrixArea)
+            auto layoutMatrix = [this, &layoutCompactSourceRail] (juce::Rectangle<int> matrixArea)
             {
+                layoutCompactSourceRail(matrixArea);
                 modMatrixLabel.setVisible(true);
                 modMatrixStatusLabel.setVisible(true);
                 modInspectorLabel.setVisible(true);
@@ -10264,8 +10299,15 @@ void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
 
 void NateVSTAudioProcessorEditor::updateModWorkflowButtons()
 {
+    const std::array<ModWorkflowPage, 4> modWorkflowPages {
+        ModWorkflowPage::matrix,
+        ModWorkflowPage::sources,
+        ModWorkflowPage::macros,
+        ModWorkflowPage::curves
+    };
+
     for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
-        modWorkflowButtons[index].setToggleState(activeModWorkflowPage == static_cast<ModWorkflowPage>(index),
+        modWorkflowButtons[index].setToggleState(activeModWorkflowPage == modWorkflowPages[index],
                                                  juce::dontSendNotification);
 }
 

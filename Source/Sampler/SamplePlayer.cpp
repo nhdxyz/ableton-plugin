@@ -160,6 +160,10 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     sampleEnd = parameters.getRawParameterValue(Parameters::ID::sampleEnd);
     sampleReverse = parameters.getRawParameterValue(Parameters::ID::sampleReverse);
     samplePlaybackMode = parameters.getRawParameterValue(Parameters::ID::samplePlaybackMode);
+    sampleEngineMode = parameters.getRawParameterValue(Parameters::ID::sampleEngineMode);
+    sampleGrainSize = parameters.getRawParameterValue(Parameters::ID::sampleGrainSize);
+    sampleGrainSpray = parameters.getRawParameterValue(Parameters::ID::sampleGrainSpray);
+    sampleSpectralFreeze = parameters.getRawParameterValue(Parameters::ID::sampleSpectralFreeze);
     sampleTranspose = parameters.getRawParameterValue(Parameters::ID::sampleTranspose);
     samplePitchRamp = parameters.getRawParameterValue(Parameters::ID::samplePitchRamp);
     sampleGain = parameters.getRawParameterValue(Parameters::ID::sampleGain);
@@ -228,6 +232,10 @@ void SamplePlayer::prepare(double sampleRate)
     sampleModEnvelope.reset();
     sampleModEnvelopeValue = 0.0f;
     sampleModVelocity = 0.0f;
+    sampleModWheel = 0.0f;
+    sampleModAftertouch = 0.0f;
+    sampleModPitchBend = 0.0f;
+    sampleModNote = 0.0f;
     sampleModActiveNotes = 0;
     sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModSmoothRandomStartValue = sampleModLfoStepValue;
@@ -252,6 +260,10 @@ void SamplePlayer::clear()
     sampleModEnvelope.reset();
     sampleModEnvelopeValue = 0.0f;
     sampleModVelocity = 0.0f;
+    sampleModWheel = 0.0f;
+    sampleModAftertouch = 0.0f;
+    sampleModPitchBend = 0.0f;
+    sampleModNote = 0.0f;
     sampleModActiveNotes = 0;
 }
 
@@ -716,6 +728,7 @@ void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
 
         if (message.isNoteOn())
         {
+            sampleModNote = juce::jlimit(-1.0f, 1.0f, (static_cast<float>(message.getNoteNumber()) - 60.0f) / 36.0f);
             triggerSampleModulationNoteOn(message.getFloatVelocity());
         }
         else if (message.isNoteOff())
@@ -723,6 +736,31 @@ void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
             sampleModActiveNotes = juce::jmax(0, sampleModActiveNotes - 1);
             if (sampleModActiveNotes == 0)
                 sampleModEnvelope.noteOff();
+        }
+        else if (message.isController())
+        {
+            if (message.getControllerNumber() == 1)
+                sampleModWheel = static_cast<float>(message.getControllerValue()) / 127.0f;
+            else if (message.isResetAllControllers())
+            {
+                sampleModWheel = 0.0f;
+                sampleModAftertouch = 0.0f;
+                sampleModPitchBend = 0.0f;
+            }
+        }
+        else if (message.isPitchWheel())
+        {
+            sampleModPitchBend = juce::jlimit(-1.0f,
+                                               1.0f,
+                                               (static_cast<float>(message.getPitchWheelValue()) - 8192.0f) / 8192.0f);
+        }
+        else if (message.isAftertouch())
+        {
+            sampleModAftertouch = static_cast<float>(message.getAfterTouchValue()) / 127.0f;
+        }
+        else if (message.isChannelPressure())
+        {
+            sampleModAftertouch = static_cast<float>(message.getChannelPressureValue()) / 127.0f;
         }
         else if (message.isAllNotesOff() || message.isAllSoundOff())
         {
@@ -963,6 +1001,10 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 13: return sampleModSmoothRandomValue;
         case 14: return sampleModChaosValue;
         case 15: return lfo2Value;
+        case 16: return sampleModWheel;
+        case 17: return sampleModAftertouch;
+        case 18: return sampleModPitchBend;
+        case 19: return sampleModNote;
         default: return 0.0f;
     }
 }
@@ -1011,12 +1053,23 @@ void SamplePlayer::startVoice(const SampleData& data,
         return;
     }
 
+    const auto engineMode = sliceIndex >= 0
+        ? 0
+        : juce::jlimit(0, 3, static_cast<int>(std::round(readParameter(sampleEngineMode, 0.0f))));
+    const auto grainSizeSeconds = juce::jlimit(0.01f, 0.4f, readParameter(sampleGrainSize, 0.08f));
+    const auto grainSpray = juce::jlimit(0.0f, 1.0f, readParameter(sampleGrainSpray, 0.0f));
+    const auto spectralFreeze = juce::jlimit(0.0f, 1.0f, readParameter(sampleSpectralFreeze, 0.0f));
+    const auto sourceSpan = juce::jmax(1, currentRegion.endSample - currentRegion.startSample);
+    const auto grainSizeSamples = juce::jlimit(64,
+                                               sourceSpan,
+                                               static_cast<int>(std::round(grainSizeSeconds * data.sourceSampleRate)));
     const auto reverse = currentRegion.reverse;
     const auto transpose = currentRegion.transposeSemitones
         + (sliceIndex >= 0 ? 0.0f : static_cast<float>(midiNoteNumber - 60))
         + (sampleModulation.pitch * 12.0f);
     const auto sourceRatio = data.sourceSampleRate / playbackSampleRate;
     const auto pitchRatio = std::pow(2.0, static_cast<double>(transpose) / 12.0);
+    const auto enginePitchSmear = engineMode == 2 ? (1.0 - static_cast<double>(spectralFreeze) * 0.92) : 1.0;
 
     voiceToUse->active = true;
     voiceToUse->startSample = currentRegion.startSample;
@@ -1031,9 +1084,23 @@ void SamplePlayer::startVoice(const SampleData& data,
     voiceToUse->sourceRatio = sourceRatio;
     voiceToUse->baseTransposeSemitones = transpose;
     voiceToUse->pitchRampSemitones = juce::jlimit(-24.0f, 24.0f, readParameter(samplePitchRamp, 0.0f) + (sampleModulation.ramp * 12.0f));
-    voiceToUse->increment = sourceRatio * pitchRatio * (reverse ? -1.0 : 1.0);
+    voiceToUse->increment = sourceRatio * pitchRatio * enginePitchSmear * (reverse ? -1.0 : 1.0);
     voiceToUse->position = reverse ? static_cast<double>(currentRegion.endSample - 1)
                                    : static_cast<double>(currentRegion.startSample);
+    voiceToUse->engineMode = engineMode;
+    voiceToUse->grainSizeSamples = grainSizeSamples;
+    voiceToUse->grainSpray = grainSpray;
+    voiceToUse->spectralFreeze = spectralFreeze;
+    voiceToUse->grainResetsRemaining = 0;
+    voiceToUse->grainIntervalSamples = juce::jmax(16.0, grainSizeSeconds * playbackSampleRate * (engineMode == 3 ? 0.38 : 0.72));
+    voiceToUse->samplesUntilGrain = voiceToUse->grainIntervalSamples;
+    if (engineMode == 1 || engineMode == 3 || (engineMode == 2 && spectralFreeze > 0.02f))
+    {
+        voiceToUse->grainResetsRemaining = engineMode == 2 ? 96 : engineMode == 3 ? 64 : 32;
+        if (engineMode == 3)
+            voiceToUse->pan = juce::jlimit(-1.0f, 1.0f, currentRegion.pan + ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.55f);
+        resetVoiceToEngineGrain(*voiceToUse);
+    }
     voiceToUse->stutterEnabled = (sliceIndex >= 0 ? sliceStutterEnabled(sliceIndex) : readParameter(sampleStutterEnabled, 0.0f) >= 0.5f)
         || sampleModulation.stutter > 0.05f;
     voiceToUse->stutterRepeatsRemaining = voiceToUse->stutterEnabled
@@ -1099,12 +1166,23 @@ void SamplePlayer::renderVoice(Voice& voice,
     {
         if (voice.stutterEnabled && voice.stutterRepeatsRemaining > 0 && voice.samplesUntilStutter <= 0.0)
         {
-            voice.position = voice.reverse ? static_cast<double>(voice.endSample - 1)
-                                           : static_cast<double>(voice.startSample);
+            if (voice.engineMode > 0)
+                resetVoiceToEngineGrain(voice);
+            else
+                voice.position = voice.reverse ? static_cast<double>(voice.endSample - 1)
+                                               : static_cast<double>(voice.startSample);
             voice.fadeInTotalSamples = juce::jmin(stutterFadeSamples, voice.fadeOutTotalSamples);
             voice.fadeInSamplesRemaining = voice.fadeInTotalSamples;
             --voice.stutterRepeatsRemaining;
             voice.samplesUntilStutter += voice.stutterIntervalSamples;
+        }
+        else if (voice.engineMode > 0 && voice.grainResetsRemaining > 0 && voice.samplesUntilGrain <= 0.0)
+        {
+            resetVoiceToEngineGrain(voice);
+            voice.fadeInTotalSamples = juce::jmin(stutterFadeSamples, voice.fadeOutTotalSamples);
+            voice.fadeInSamplesRemaining = voice.fadeInTotalSamples;
+            --voice.grainResetsRemaining;
+            voice.samplesUntilGrain += voice.grainIntervalSamples;
         }
 
         if ((! voice.reverse && voice.position >= static_cast<double>(voice.endSample - 1))
@@ -1151,10 +1229,38 @@ void SamplePlayer::renderVoice(Voice& voice,
             --voice.fadeInSamplesRemaining;
 
         voice.increment = incrementForVoice(voice);
+        if (voice.engineMode == 2)
+            voice.increment *= 1.0 - (static_cast<double>(voice.spectralFreeze) * 0.92);
         voice.position += voice.increment;
         if (voice.stutterEnabled)
             voice.samplesUntilStutter -= 1.0;
+        if (voice.engineMode > 0)
+            voice.samplesUntilGrain -= 1.0;
     }
+}
+
+void SamplePlayer::resetVoiceToEngineGrain(Voice& voice)
+{
+    const auto sourceSpan = juce::jmax(1, voice.endSample - voice.startSample);
+    const auto grainSize = juce::jlimit(64, sourceSpan, voice.grainSizeSamples > 0 ? voice.grainSizeSamples : sourceSpan);
+    const auto maxStart = juce::jmax(voice.startSample, voice.endSample - grainSize);
+    auto grainStart = voice.startSample;
+
+    if (voice.engineMode == 2)
+    {
+        const auto freezeOffset = static_cast<int>(std::round(voice.spectralFreeze * static_cast<float>(maxStart - voice.startSample)));
+        grainStart = juce::jlimit(voice.startSample, maxStart, voice.startSample + freezeOffset);
+    }
+    else
+    {
+        const auto available = juce::jmax(0, maxStart - voice.startSample);
+        const auto spray = voice.engineMode == 3 ? 1.0f : juce::jlimit(0.0f, 1.0f, voice.grainSpray);
+        const auto spraySamples = static_cast<int>(std::round(static_cast<float>(available) * spray));
+        grainStart += spraySamples > 0 ? sampleModulationRandom.nextInt(spraySamples + 1) : 0;
+    }
+
+    voice.position = voice.reverse ? static_cast<double>(juce::jlimit(voice.startSample, voice.endSample - 1, grainStart + grainSize - 1))
+                                   : static_cast<double>(juce::jlimit(voice.startSample, voice.endSample - 1, grainStart));
 }
 
 SampleRegion SamplePlayer::currentRegionFor(const SampleData& data, int sliceIndex) const

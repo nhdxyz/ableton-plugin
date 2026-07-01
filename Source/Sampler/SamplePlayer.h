@@ -109,10 +109,17 @@ private:
         int fadeInTotalSamples = 0;
         double stutterIntervalSamples = 1.0;
         double samplesUntilStutter = 0.0;
+        double grainIntervalSamples = 1.0;
+        double samplesUntilGrain = 0.0;
         float gain = 1.0f;
         float pan = 0.0f;
+        float grainSpray = 0.0f;
+        float spectralFreeze = 0.0f;
         int sliceIndex = -1;
         int fadeOutTotalSamples = 0;
+        int engineMode = 0;
+        int grainSizeSamples = 0;
+        int grainResetsRemaining = 0;
     };
 
     Parameters::APVTS& parameters;
@@ -133,6 +140,10 @@ private:
     juce::ADSR::Parameters sampleModEnvelopeParameters;
     float sampleModEnvelopeValue = 0.0f;
     float sampleModVelocity = 0.0f;
+    float sampleModWheel = 0.0f;
+    float sampleModAftertouch = 0.0f;
+    float sampleModPitchBend = 0.0f;
+    float sampleModNote = 0.0f;
     int sampleModActiveNotes = 0;
 
     struct SampleModulationOffsets
@@ -167,6 +178,10 @@ private:
     std::atomic<float>* sampleEnd = nullptr;
     std::atomic<float>* sampleReverse = nullptr;
     std::atomic<float>* samplePlaybackMode = nullptr;
+    std::atomic<float>* sampleEngineMode = nullptr;
+    std::atomic<float>* sampleGrainSize = nullptr;
+    std::atomic<float>* sampleGrainSpray = nullptr;
+    std::atomic<float>* sampleSpectralFreeze = nullptr;
     std::atomic<float>* sampleTranspose = nullptr;
     std::atomic<float>* samplePitchRamp = nullptr;
     std::atomic<float>* sampleGain = nullptr;
@@ -233,6 +248,7 @@ private:
     void stopVoicesForNote(int midiNoteNumber);
     void renderActiveVoices(const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
     void renderVoice(Voice& voice, const SampleData& data, juce::AudioBuffer<float>& outputBuffer, int startSampleInBlock, int numSamples);
+    void resetVoiceToEngineGrain(Voice& voice);
     SampleRegion currentRegionFor(const SampleData& data, int sliceIndex) const;
     SlicePlaybackSettings slicePlaybackSettings(int sliceIndex) const;
     SlicePlaybackSettings defaultSlicePlaybackSettings(int sliceIndex) const;

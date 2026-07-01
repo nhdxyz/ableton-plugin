@@ -208,6 +208,7 @@ public:
     void notePresetLoaded(const juce::String& presetName);
     void capturePerformanceSnapshot(int slotIndex);
     bool recallPerformanceSnapshot(int slotIndex);
+    bool morphPerformanceSnapshots(int leftSlotIndex, int rightSlotIndex, float amount);
     bool hasPerformanceSnapshot(int slotIndex) const;
     void captureGlobalEditState(const juce::String& label);
     bool undoGlobalEdit();
@@ -347,7 +348,7 @@ private:
     juce::ValueTree randomRedoState;
     juce::ValueTree randomCandidateAuditionReturnState;
     juce::ValueTree sequencerUndoState;
-    std::array<juce::ValueTree, 2> performanceSnapshots;
+    std::array<juce::ValueTree, 4> performanceSnapshots;
     std::array<juce::ValueTree, 4> sequencerPatternScenes;
     std::atomic<int> sequencerSceneChainPlaybackEnabled { 0 };
     std::atomic<int> sequencerSceneChainClipBars { 0 };

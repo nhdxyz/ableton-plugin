@@ -1,5 +1,18 @@
 # Nate VST Changelog
 
+## 2026-07-01
+
+### Performance Scenes, Expression Sources, And Sample Engine Modes
+
+- Expanded HOME performance snapshots from A/B to A/B/C/D scenes, with compact recall/store rows and state persistence through the existing plugin-state snapshot serializer.
+- Added processor-side performance-scene morphing so two stored scenes can be interpolated while discrete parameters switch safely at the midpoint.
+- Added MOD source choices for Mod Wheel, Aftertouch, Pitch Bend, and Note position after the existing source indexes so old presets keep their routing compatibility.
+- Wired the new expressive sources through synth voices, sample modulation, and FX modulation; synth voices now respond to CC1, aftertouch/channel pressure, pitch bend, and key position as assignable matrix sources.
+- Added Sample Engine Mode with Classic, Granular, Spectral, and Cloud options plus Grain, Spray, and Freeze controls on the SAMPLE page.
+- Implemented first-pass granular/cloud/spectral sample behavior using per-voice grain resets, start spray, freeze-position repeats, and pitch-smear behavior without adding audio-thread allocation.
+- Made recorded-sample and UKG chop randomization seed the new sample-engine controls so mangle/generate workflows can produce granular, cloud, and freeze-style snippets.
+- Updated documentation for the 422-preset factory library, A/B/C/D performance scenes, expressive modulation, and the new sampler engine controls.
+
 ## 2026-06-30
 
 ### Bass-Safe Drive V1

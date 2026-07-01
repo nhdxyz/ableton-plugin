@@ -21,7 +21,7 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 - `Env`: amp attack, decay, sustain, and release.
 - `Filter`: filter mode, cutoff, resonance, and filter envelope amount.
 - `Source`: oscillator waveforms, oscillator/sub/noise levels, Osc Warp, and unison settings.
-- `Sample`: sample enable, slice range, reverse, playback mode, stutter, pitch, pitch ramp, gain, mix, and loaded sample path.
+- `Sample`: sample enable, slice range, reverse, playback mode, sample engine mode, grain size, grain spray, spectral freeze, stutter, pitch, pitch ramp, gain, mix, and loaded sample path.
 - `FX`: tone, distortion, pump including custom curve points, phaser, chorus, delay, reverb, Width, and Guard parameters.
 - `Output`: output gain, with safety preserved.
 - `Seq`: sequencer enable/rate/root/gate/swing/groove/scale/chord/voicing/strum/accent/octave/probability/random amount, lock destination/depth, and step pattern, including per-step timing, length, and lock values.
@@ -31,6 +31,8 @@ Locks are applied after the selected recipe runs. This keeps the recipe engine s
 The LAB and HOME `Scope` selector can limit Generate, Vary, Mutate, or Wild to a single section. `All` keeps the full recipe behavior. `Source`, `Env`, `Filter`, `Sample`, `FX`, `Seq`, and `Macros` restore every other section from the pre-randomization snapshot after the recipe runs. Scoped actions also restore modulation and output gain so focused edits do not quietly change hidden routing or level.
 
 Recipe generation can seed visible MOD routes for synth, FX, and sample movement. Current synth destinations include Osc Warp for source-level harmonic motion. Current FX destinations cover Pump Depth, Delay Mix, Reverb Mix, Width, and FX Drive. Current sample destinations cover Start, Mix, Pitch, Ramp, and Stutter. These use LFO 1 or macro sources where the target supports them, so generated house/UKG patches can expose source grit, ducking, throw, space, drive, and chop motion directly in the matrix. Generated routes are enabled by default, while the MOD panel can bypass individual slots later without deleting their settings.
+
+Recorded sample mangle and UKG chop randomization can now seed `Classic`, `Granular`, `Spectral`, or `Cloud` sample engine behavior. Grain size, spray, and freeze are randomized inside conservative ranges so generated snippets can become texture beds, cloud chops, or frozen vocal/perc fragments without requiring a separate editor pass.
 
 ## Output Safety
 

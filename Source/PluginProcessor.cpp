@@ -1716,6 +1716,7 @@ bool NateVSTAudioProcessor::randomizeRecordedSample()
     std::uniform_int_distribution<int> pitchDistribution(0, 8);
     std::uniform_int_distribution<int> stutterRepeatsDistribution(2, 6);
     std::uniform_int_distribution<int> sliceStyleDistribution(0, 4);
+    std::uniform_int_distribution<int> engineModeDistribution(0, 3);
     constexpr std::array<float, 9> pitchChoices { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 5.0f, 7.0f, 10.0f, 12.0f };
 
     autoTrimSampleToContent();
@@ -1723,6 +1724,10 @@ bool NateVSTAudioProcessor::randomizeRecordedSample()
 
     setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleEngineMode, static_cast<float>(engineModeDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sampleGrainSize, 0.025f + (chance(sampleRandomEngine) * 0.16f));
+    setParameterPlainValue(Parameters::ID::sampleGrainSpray, chance(sampleRandomEngine) * 0.88f);
+    setParameterPlainValue(Parameters::ID::sampleSpectralFreeze, chance(sampleRandomEngine) < 0.38f ? 0.25f + (chance(sampleRandomEngine) * 0.68f) : 0.0f);
     setParameterPlainValue(Parameters::ID::sampleSliceStyle, static_cast<float>(sliceStyleDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sampleReverse, chance(sampleRandomEngine) < 0.16f ? 1.0f : 0.0f);
     setParameterPlainValue(Parameters::ID::sampleStutterEnabled, chance(sampleRandomEngine) < 0.58f ? 1.0f : 0.0f);
@@ -1836,10 +1841,12 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
 
     std::uniform_real_distribution<float> startDistribution(0.0f, 0.9f);
     std::uniform_real_distribution<float> lengthDistribution(0.018f, 0.16f);
+    std::uniform_real_distribution<float> chance(0.0f, 1.0f);
     std::uniform_int_distribution<int> pitchDistribution(0, 4);
     std::uniform_int_distribution<int> rampDistribution(0, 5);
     std::uniform_int_distribution<int> stutterRateDistribution(1, 2);
     std::uniform_int_distribution<int> stutterRepeatsDistribution(2, 5);
+    std::uniform_int_distribution<int> engineModeDistribution(0, 3);
     std::uniform_real_distribution<float> gainDistribution(-10.0f, -3.0f);
     std::uniform_real_distribution<float> mixDistribution(0.62f, 1.0f);
     std::uniform_real_distribution<float> delayTimeDistribution(0.11f, 0.26f);
@@ -1855,6 +1862,10 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
     setParameterPlainValue(Parameters::ID::sampleEnd, end);
     setParameterPlainValue(Parameters::ID::sampleReverse, reverseDistribution(sampleRandomEngine) ? 1.0f : 0.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleEngineMode, static_cast<float>(engineModeDistribution(sampleRandomEngine)));
+    setParameterPlainValue(Parameters::ID::sampleGrainSize, 0.018f + (chance(sampleRandomEngine) * 0.18f));
+    setParameterPlainValue(Parameters::ID::sampleGrainSpray, chance(sampleRandomEngine) * 0.78f);
+    setParameterPlainValue(Parameters::ID::sampleSpectralFreeze, chance(sampleRandomEngine) < 0.34f ? 0.18f + (chance(sampleRandomEngine) * 0.72f) : 0.0f);
     setParameterPlainValue(Parameters::ID::sampleStutterEnabled, 1.0f);
     setParameterPlainValue(Parameters::ID::sampleStutterRate, static_cast<float>(stutterRateDistribution(sampleRandomEngine)));
     setParameterPlainValue(Parameters::ID::sampleStutterRepeats, static_cast<float>(stutterRepeatsDistribution(sampleRandomEngine)));
@@ -4136,6 +4147,48 @@ bool NateVSTAudioProcessor::recallPerformanceSnapshot(int slotIndex)
     return true;
 }
 
+bool NateVSTAudioProcessor::morphPerformanceSnapshots(int leftSlotIndex, int rightSlotIndex, float amount)
+{
+    if (leftSlotIndex < 0
+        || rightSlotIndex < 0
+        || leftSlotIndex >= static_cast<int>(performanceSnapshots.size())
+        || rightSlotIndex >= static_cast<int>(performanceSnapshots.size()))
+        return false;
+
+    const auto& leftSnapshot = performanceSnapshots[static_cast<size_t>(leftSlotIndex)];
+    const auto& rightSnapshot = performanceSnapshots[static_cast<size_t>(rightSlotIndex)];
+    if (! leftSnapshot.isValid() || ! rightSnapshot.isValid())
+        return false;
+
+    const auto blend = juce::jlimit(0.0f, 1.0f, amount);
+    for (auto childIndex = 0; childIndex < leftSnapshot.getNumChildren(); ++childIndex)
+    {
+        const auto leftParameterState = leftSnapshot.getChild(childIndex);
+        const auto parameterID = leftParameterState.getProperty("id").toString();
+        if (parameterID.isEmpty())
+            continue;
+
+        auto* parameter = parameters.getParameter(parameterID);
+        if (parameter == nullptr)
+            continue;
+
+        const auto rightParameterState = rightSnapshot.getChildWithProperty("id", parameterID);
+        if (! rightParameterState.isValid())
+            continue;
+
+        const auto leftValue = static_cast<float>(leftParameterState.getProperty("value", getParameterPlainValue(parameterID, 0.0f)));
+        const auto rightValue = static_cast<float>(rightParameterState.getProperty("value", leftValue));
+        const auto shouldStep = parameter->isDiscrete() || parameter->getNumSteps() <= 128;
+        const auto morphedValue = shouldStep
+            ? (blend < 0.5f ? leftValue : rightValue)
+            : leftValue + ((rightValue - leftValue) * blend);
+
+        setParameterPlainValue(parameterID, morphedValue);
+    }
+
+    return true;
+}
+
 bool NateVSTAudioProcessor::hasPerformanceSnapshot(int slotIndex) const
 {
     return slotIndex >= 0
@@ -6232,6 +6285,10 @@ void NateVSTAudioProcessor::resetSampleParametersForNewSource(const juce::String
     setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
     setParameterPlainValue(Parameters::ID::samplePlaybackMode, 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleEngineMode, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleGrainSize, 0.08f);
+    setParameterPlainValue(Parameters::ID::sampleGrainSpray, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSpectralFreeze, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleReverse, 0.0f);
     setParameterPlainValue(Parameters::ID::sampleTranspose, 0.0f);
     setParameterPlainValue(Parameters::ID::samplePitchRamp, 0.0f);
@@ -6642,6 +6699,10 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerChordStrum = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordStrum).isValid();
     const auto hasSequencerChordMemory = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerChordMemory).isValid();
     const auto hasSampleSliceStyle = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStyle).isValid();
+    const auto hasSampleEngineControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleEngineMode).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleGrainSize).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleGrainSpray).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSpectralFreeze).isValid();
     const auto hasSampleSliceEdits = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceCustom[0]).isValid();
     const auto hasSampleSliceRegions = stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceStart[0]).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::sampleSliceEnd[0]).isValid();
@@ -6689,6 +6750,13 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::sequencerChordMemory, 0.0f);
     if (! hasSampleSliceStyle)
         setParameterPlainValue(Parameters::ID::sampleSliceStyle, 0.0f);
+    if (! hasSampleEngineControls)
+    {
+        setParameterPlainValue(Parameters::ID::sampleEngineMode, 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleGrainSize, 0.08f);
+        setParameterPlainValue(Parameters::ID::sampleGrainSpray, 0.0f);
+        setParameterPlainValue(Parameters::ID::sampleSpectralFreeze, 0.0f);
+    }
     if (! hasSampleSliceEdits)
     {
         for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)

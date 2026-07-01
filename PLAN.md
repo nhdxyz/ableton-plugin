@@ -63,7 +63,7 @@ Current UI research takeaway:
 - Timing and motion tools should be direct but focused: expose a small mode selector and visible lane markers before building a full editor page.
 - The first screen should function as a production dashboard, not a decorative landing page: quick patch shaping, preset session state, recall/audition, randomization, and deeper-panel navigation should all be close at hand while full save metadata stays in LIBRARY.
 - The 2026-06-29 house competitor refresh lives in `docs/HOUSE_VST_COMPETITOR_RESEARCH_2026_06_29.md` and is the current source for next-gap decisions.
-- Latest reference review says Nate VST is past the basic skeleton stage. The biggest remaining house gaps are deeper original/legal source material, serious sampler slicing and time workflow, Ableton-native clip/audio drag-out flow beyond first-pass MIDI drag-out, a house drum/kick-bass construction lane, faster visual modulation, full multiband/oversampled drive beyond the first Bass Safe Drive pass, expansion-ready content packs, broader construction-kit content, and release-grade Ableton validation.
+- Latest reference review says Nate VST is past the basic skeleton stage. The biggest remaining house gaps are deeper original/legal source material, serious sampler slicing and time workflow beyond the first granular/cloud/freeze pass, Ableton-native clip/audio drag-out flow beyond first-pass MIDI drag-out, a house drum/kick-bass construction lane, full multiband/oversampled drive beyond the first Bass Safe Drive pass, expansion-ready content packs, broader construction-kit content, and release-grade Ableton validation.
 - Larger engine tracks should stay deliberate: true wavetable import/warp, lightweight source layers, FM/operator or partial-style sources, drawbar/PCM-style house sources from original material, advanced sampler slicing, character filter/drive models, and motion sequencing lanes.
 - UI status should make timing trust obvious. SEQ and FX now show host-sync state so Ableton BPM/PPQ lock, stopped-host state, and internal fallback are visible while building groove-heavy patches.
 
@@ -110,8 +110,8 @@ Useful ideas:
 
 How this plugin should adapt those ideas:
 
-- Add wavetable synthesis after the subtractive core is working.
-- Make modulation visible and understandable.
+- Keep expanding the implemented wavetable/custom-wave editor: it already has custom point editing, draw modes, tools, single-cycle WAV import/export, additive partial tools, and morph frames.
+- Make modulation visible and understandable. The current MOD pass includes visual source meters, route rows, right-click assignment, drag source assignment, destination rings/stripes, expression sources, and A/B/C/D performance scenes.
 - Use modulation rings, small indicators, or value overlays so users can see what is moving.
 - Add a modulation matrix only when there are enough sources and destinations to justify it.
 - Treat wavetable import/editor features as future work, not MVP work.

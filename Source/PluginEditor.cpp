@@ -1197,7 +1197,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 15> sourceTexts {
+    static const std::array<const char*, 19> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -1212,7 +1212,11 @@ juce::String modSourceSummaryText(size_t index)
         "S&H: stepped random movement",
         "Smooth: slewed random drift",
         "Chaos: wandering random walk",
-        "LFO 2: secondary groove motion"
+        "LFO 2: secondary groove motion",
+        "Mod Wheel: MIDI CC1 expression",
+        "Aftertouch: pressure expression",
+        "Pitch Bend: bipolar wheel source",
+        "Note: key position source"
     };
 
     if (index < sourceTexts.size())
@@ -2257,6 +2261,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
 
+    sampleEngineBox.addItemList(Parameters::sampleEngineModeChoices(), 1);
+    sampleEngineBox.setTextWhenNothingSelected("Engine");
+    sampleEngineBox.setTooltip("Classic playback, Granular spray, Spectral freeze/smear, or Cloud grain playback for recorded/imported snippets");
+    addAndMakeVisible(sampleEngineBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleEngineMode, sampleEngineBox));
+
     sampleSliceStyleBox.addItemList(Parameters::sampleSliceStyleChoices(), 1);
     sampleSliceStyleBox.setTextWhenNothingSelected("Slice Style");
     sampleSliceStyleBox.setTooltip("Choose how default slice pads set pitch, reverse, choke, and stutter behavior");
@@ -2816,6 +2826,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sampleGainSlider, sampleGainLabel, "Gain", Parameters::ID::sampleGain);
     configureSlider(sampleMixSlider, sampleMixLabel, "Mix", Parameters::ID::sampleMix);
     configureSlider(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, "Repeat", Parameters::ID::sampleStutterRepeats);
+    configureSlider(sampleGrainSizeSlider, sampleGrainSizeLabel, "Grain", Parameters::ID::sampleGrainSize);
+    configureSlider(sampleGrainSpraySlider, sampleGrainSprayLabel, "Spray", Parameters::ID::sampleGrainSpray);
+    configureSlider(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, "Freeze", Parameters::ID::sampleSpectralFreeze);
     configureSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
     configureSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
     configureSlider(sequencerSwingSlider, sequencerSwingLabel, "Swing", Parameters::ID::sequencerSwing);
@@ -2951,6 +2964,54 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releasePresetAuditionNote();
         captureGlobalEdit("Capture snapshot B");
         audioProcessor.capturePerformanceSnapshot(1);
+        updatePerformanceSnapshotButtons();
+    };
+    recallSnapshotCButton.setTooltip("Recall performance snapshot C");
+    recallSnapshotCButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        if (audioProcessor.hasPerformanceSnapshot(2))
+            captureGlobalEdit("Recall snapshot C");
+        if (audioProcessor.recallPerformanceSnapshot(2))
+        {
+            updateSampleNameLabel();
+            updateSampleWaveformDisplay();
+            repaintSequencerGrids();
+            updatePerformanceSnapshotButtons();
+        }
+    };
+    captureSnapshotCButton.setTooltip("Store the current patch in performance snapshot C");
+    captureSnapshotCButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Capture snapshot C");
+        audioProcessor.capturePerformanceSnapshot(2);
+        updatePerformanceSnapshotButtons();
+    };
+    recallSnapshotDButton.setTooltip("Recall performance snapshot D");
+    recallSnapshotDButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        if (audioProcessor.hasPerformanceSnapshot(3))
+            captureGlobalEdit("Recall snapshot D");
+        if (audioProcessor.recallPerformanceSnapshot(3))
+        {
+            updateSampleNameLabel();
+            updateSampleWaveformDisplay();
+            repaintSequencerGrids();
+            updatePerformanceSnapshotButtons();
+        }
+    };
+    captureSnapshotDButton.setTooltip("Store the current patch in performance snapshot D");
+    captureSnapshotDButton.onClick = [this]
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        captureGlobalEdit("Capture snapshot D");
+        audioProcessor.capturePerformanceSnapshot(3);
         updatePerformanceSnapshotButtons();
     };
     loadSampleButton.onClick = [this] { chooseSampleFile(); };
@@ -3655,6 +3716,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(captureSnapshotAButton);
     addAndMakeVisible(recallSnapshotBButton);
     addAndMakeVisible(captureSnapshotBButton);
+    addAndMakeVisible(recallSnapshotCButton);
+    addAndMakeVisible(captureSnapshotCButton);
+    addAndMakeVisible(recallSnapshotDButton);
+    addAndMakeVisible(captureSnapshotDButton);
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
     addAndMakeVisible(sampleCaptureButton);
@@ -4265,6 +4330,10 @@ void NateVSTAudioProcessorEditor::resized()
             captureSnapshotAButton.setVisible(true);
             recallSnapshotBButton.setVisible(true);
             captureSnapshotBButton.setVisible(true);
+            recallSnapshotCButton.setVisible(true);
+            captureSnapshotCButton.setVisible(true);
+            recallSnapshotDButton.setVisible(true);
+            captureSnapshotDButton.setVisible(true);
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
@@ -4304,13 +4373,20 @@ void NateVSTAudioProcessorEditor::resized()
             const auto xyWidth = juce::jlimit(106, 128, macroControlArea.getWidth() / 3);
             performanceXYPad.setBounds(macroControlArea.removeFromRight(xyWidth).reduced(4, 0));
             macroPerformanceMap.setBounds(macroControlArea.reduced(4, 0));
-            auto snapshotRow = macroArea.removeFromTop(40).withTrimmedTop(5);
-            performanceStatusLabel.setBounds(snapshotRow.removeFromLeft(juce::jlimit(76, 112, snapshotRow.getWidth() / 3)).reduced(4, 4));
-            const auto snapshotButtonWidth = juce::jmax(1, snapshotRow.getWidth() / 4);
-            recallSnapshotAButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
-            captureSnapshotAButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
-            recallSnapshotBButton.setBounds(snapshotRow.removeFromLeft(snapshotButtonWidth).reduced(3, 4));
-            captureSnapshotBButton.setBounds(snapshotRow.reduced(3, 4));
+            auto snapshotArea = macroArea.removeFromTop(68).withTrimmedTop(5);
+            performanceStatusLabel.setBounds(snapshotArea.removeFromLeft(juce::jlimit(68, 96, snapshotArea.getWidth() / 4)).reduced(4, 4));
+            auto recallRow = snapshotArea.removeFromTop(30);
+            auto storeRow = snapshotArea.withTrimmedTop(2);
+            const auto recallButtonWidth = juce::jmax(1, recallRow.getWidth() / 4);
+            recallSnapshotAButton.setBounds(recallRow.removeFromLeft(recallButtonWidth).reduced(3, 4));
+            recallSnapshotBButton.setBounds(recallRow.removeFromLeft(recallButtonWidth).reduced(3, 4));
+            recallSnapshotCButton.setBounds(recallRow.removeFromLeft(recallButtonWidth).reduced(3, 4));
+            recallSnapshotDButton.setBounds(recallRow.reduced(3, 4));
+            const auto storeButtonWidth = juce::jmax(1, storeRow.getWidth() / 4);
+            captureSnapshotAButton.setBounds(storeRow.removeFromLeft(storeButtonWidth).reduced(3, 4));
+            captureSnapshotBButton.setBounds(storeRow.removeFromLeft(storeButtonWidth).reduced(3, 4));
+            captureSnapshotCButton.setBounds(storeRow.removeFromLeft(storeButtonWidth).reduced(3, 4));
+            captureSnapshotDButton.setBounds(storeRow.reduced(3, 4));
 
             homeLabLabel.setBounds(labArea.removeFromTop(24));
             auto randomSelectRow = labArea.removeFromTop(38);
@@ -4749,12 +4825,12 @@ void NateVSTAudioProcessorEditor::resized()
             {
                 modSourceLabel.setVisible(true);
 
-                auto railArea = area.removeFromTop(74);
+                auto railArea = area.removeFromTop(94);
                 modSourceLabel.setBounds(railArea.removeFromTop(18).withTrimmedLeft(4));
                 railArea = railArea.withTrimmedTop(4);
 
                 constexpr auto sourceColumnCount = 5;
-                constexpr auto sourceRowCount = 3;
+                constexpr auto sourceRowCount = 4;
                 const auto sourceCellHeight = juce::jmax(10, railArea.getHeight() / sourceRowCount);
                 for (size_t index = 0; index < modSourceRows.size(); ++index)
                 {
@@ -4788,7 +4864,7 @@ void NateVSTAudioProcessorEditor::resized()
                 modSourceLabel.setBounds(sourceArea.removeFromTop(22));
                 auto sourceListArea = sourceArea.withTrimmedTop(6);
                 constexpr auto sourceColumnCount = 5;
-                constexpr auto sourceRowCount = 3;
+                constexpr auto sourceRowCount = 4;
                 const auto sourceCellHeight = juce::jmax(1, sourceListArea.getHeight() / sourceRowCount);
                 for (size_t index = 0; index < modSourceRows.size(); ++index)
                 {
@@ -5029,6 +5105,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
             sampleModeBox.setVisible(true);
+            sampleEngineBox.setVisible(true);
             sampleSliceStyleBox.setVisible(true);
             sampleStutterEnabledButton.setVisible(true);
             sampleStutterRateBox.setVisible(true);
@@ -5057,6 +5134,9 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(sampleGainSlider, sampleGainLabel, true);
             setSliderVisible(sampleMixSlider, sampleMixLabel, true);
             setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
+            setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, true);
+            setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, true);
+            setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, true);
 
             auto workspace = content.withTrimmedTop(8);
             auto sourceArea = workspace.removeFromLeft(juce::jlimit(260, 310, workspace.getWidth() / 4)).reduced(18, 12);
@@ -5085,7 +5165,9 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSpliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
             sampleMangleButton.setBounds(recordToolRow.reduced(3, 4));
 
-            sampleModeBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
+            auto sampleModeRow = sourceArea.removeFromTop(30);
+            sampleModeBox.setBounds(sampleModeRow.removeFromLeft(sampleModeRow.getWidth() / 2).reduced(4));
+            sampleEngineBox.setBounds(sampleModeRow.reduced(4));
             sampleSliceStyleBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
             auto stutterRow = sourceArea.removeFromTop(30);
             sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
@@ -5095,10 +5177,13 @@ void NateVSTAudioProcessorEditor::resized()
             ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
 
             sampleShapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(68, sourceArea.getHeight() / 2)).withTrimmedTop(3),
+            const auto sampleShapeRowHeight = juce::jlimit(46, 64, sourceArea.getHeight() / 3);
+            layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
                           { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(64, sourceArea.getHeight())).withTrimmedTop(3),
-                          { &samplePitchRampSlider, &sampleStutterRepeatsSlider });
+            layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
+                          { &samplePitchRampSlider, &sampleStutterRepeatsSlider, &sampleGrainSizeSlider });
+            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(3),
+                          { &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
 
             auto chopHeader = chopArea.removeFromTop(24);
             sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
@@ -10382,7 +10467,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleRecordLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sampleRecordStatusLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -10396,6 +10481,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
+        &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &loadSampleButton, &clearSampleButton, &sampleCaptureButton, &sampleCommitCaptureButton, &sampleAuditionButton, &sampleAutoTrimButton, &sampleSpliceButton, &sampleMangleButton,
         &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDetectButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
@@ -10527,6 +10613,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sampleGainSlider, sampleGainLabel, false);
     setSliderVisible(sampleMixSlider, sampleMixLabel, false);
     setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);
+    setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, false);
+    setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, false);
+    setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, false);
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
     setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, false);
@@ -12026,6 +12115,14 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
             return bipolarActivity(value, readPlainParameterValue(Parameters::ID::lfo2Depth, 0.25f));
         }
 
+        case 16:
+        case 17:
+        case 18:
+            return 0.0f;
+
+        case 19:
+            return 0.5f;
+
         default:
             return 0.0f;
     }
@@ -12841,12 +12938,18 @@ void NateVSTAudioProcessorEditor::updatePerformanceSnapshotButtons()
 {
     const auto hasSnapshotA = audioProcessor.hasPerformanceSnapshot(0);
     const auto hasSnapshotB = audioProcessor.hasPerformanceSnapshot(1);
+    const auto hasSnapshotC = audioProcessor.hasPerformanceSnapshot(2);
+    const auto hasSnapshotD = audioProcessor.hasPerformanceSnapshot(3);
 
     recallSnapshotAButton.setEnabled(hasSnapshotA);
     recallSnapshotBButton.setEnabled(hasSnapshotB);
-    performanceStatusLabel.setText(juce::String(hasSnapshotA ? "A ready" : "A empty")
-                                       + " | "
-                                       + juce::String(hasSnapshotB ? "B ready" : "B empty"),
+    recallSnapshotCButton.setEnabled(hasSnapshotC);
+    recallSnapshotDButton.setEnabled(hasSnapshotD);
+    performanceStatusLabel.setText(juce::String("Scenes ")
+                                       + (hasSnapshotA ? "A" : "-")
+                                       + (hasSnapshotB ? "B" : "-")
+                                       + (hasSnapshotC ? "C" : "-")
+                                       + (hasSnapshotD ? "D" : "-"),
                                    juce::dontSendNotification);
 }
 

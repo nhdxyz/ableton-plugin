@@ -29,6 +29,8 @@ public:
     void stopNote(float velocity, bool allowTailOff) override;
     void pitchWheelMoved(int newPitchWheelValue) override;
     void controllerMoved(int controllerNumber, int newControllerValue) override;
+    void aftertouchChanged(int newAftertouchValue) override;
+    void channelPressureChanged(int newChannelPressureValue) override;
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     void prepare(double sampleRate, int maximumBlockSize);
@@ -63,6 +65,10 @@ private:
     juce::Random modulationRandom;
 
     float noteVelocity = 0.0f;
+    float modWheel = 0.0f;
+    float aftertouch = 0.0f;
+    float pitchBendNormalised = 0.0f;
+    float notePosition = 0.0f;
     float currentFrequencyHz = 440.0f;
     float targetFrequencyHz = 440.0f;
     float glideStartFrequencyHz = 440.0f;

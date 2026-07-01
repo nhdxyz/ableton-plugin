@@ -43,6 +43,10 @@ Start with a small set:
 - `Smooth`: slewed random drift clocked from the same LFO timing path, better for organic cutoff, warp, pitch, sample-start, and FX movement.
 - `Chaos`: bounded random-walk movement clocked by LFO timing, useful for subtle warehouse drive instability, minimal pitch edge, and evolving sample/FX motion.
 - `LFO 2`: secondary synced/free LFO for independent groove, chop, and FX motion without stealing the main MSEG-style LFO.
+- `Mod Wheel`: MIDI CC1 expression for hands-on filter, wavetable, drive, sample, or FX movement.
+- `Aftertouch`: poly/channel pressure expression routed through synth, sample, and FX modulation paths.
+- `Pitch Bend`: bipolar pitch-wheel movement as an assignable source separate from normal synth pitch bend.
+- `Note`: normalized key position, useful for higher notes opening cutoff, WT position, or FX brightness.
 - `seq_lane_1`: a later per-step modulation lane tied to the existing sequencer.
 
 Avoid adding every possible source at once. More sources can follow after the matrix and UI prove stable.
@@ -87,7 +91,7 @@ Initial macro behavior should be explicit and simple:
 - Each assignment stores source, destination, bipolar amount, and optional curve later.
 - Randomization may move macro assignments, but should preserve output safety.
 - Warp now affects oscillator bend and Osc Warp source harmonics, so it can push bass and stab character before filter/FX processing.
-- Osc Warp is a per-voice synth destination, so LFO 1, LFO 2, Mod Env 1, Velocity, macro sources, S&H, Smooth, and Chaos can all target it. The FX and sample destinations currently use global LFO 1, LFO 2, macro, S&H, Smooth, and Chaos sources until a proper global Mod Env/Velocity strategy exists.
+- Osc Warp is a per-voice synth destination, so LFO 1, LFO 2, Mod Env 1, Velocity, macro sources, S&H, Smooth, Chaos, Mod Wheel, Aftertouch, Pitch Bend, and Note can all target it. Sample and FX destinations now share the same producer-facing source list for LFO, envelope, velocity, macro, random, and expression sources.
 
 Possible parameter IDs:
 
@@ -161,7 +165,7 @@ MOD:
 
 - LFO controls.
 - Mod envelope controls.
-- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, Smooth, and Chaos, each with route count/depth and a compact activity meter.
+- Source rows for LFO 1, Mod Env 1, Velocity, the eight macro sources, S&H, Smooth, Chaos, LFO 2, Mod Wheel, Aftertouch, Pitch Bend, and Note, each with route count/depth and a compact activity meter.
 - Matrix rows.
 - Visual macro assignment controls.
 - Current implementation includes active/bypassed route rows, per-slot route bypass/delete, route tooltips, source route counts/depth summaries, live source activity meters, matrix status text, destination rings, S&H, Smooth, and Chaos as appended sources, and direct dragging on LFO curve points.
@@ -173,6 +177,8 @@ MOD:
 - Current implementation includes right-click amount menus on MOD matrix amount sliders for quick invert, +/-25%, +/-50%, duplicate, and clear actions.
 - Current implementation includes a compact LFO 1 MSEG tool strip for invert, reverse, smooth, quantize, controlled random dice, and UKG swing curve shaping without adding new host parameters.
 - Current implementation includes a responsive route map above the MOD matrix at default and larger editor sizes. It summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while hiding at the minimum compact size to preserve editable row height.
+- Current implementation includes appended expression sources for Mod Wheel, Aftertouch, Pitch Bend, and Note position. These are appended after the original source indices, preserving old preset/session routing.
+- HOME performance storage now uses A/B/C/D scenes. The processor also exposes a first morph path between stored scenes, blending continuous parameters while switching discrete choices safely at the midpoint.
 
 SEQ:
 

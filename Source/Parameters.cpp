@@ -113,6 +113,11 @@ juce::StringArray sampleSliceStyleChoices()
     return { "Clean", "Pitch", "Reverse", "Stutter", "Garage" };
 }
 
+juce::StringArray sampleEngineModeChoices()
+{
+    return { "Classic", "Granular", "Spectral", "Cloud" };
+}
+
 juce::StringArray lfoShapeChoices()
 {
     return { "Sine", "Triangle", "Saw", "Square", "Step", "Curve" };
@@ -140,7 +145,28 @@ juce::StringArray pumpCurveChoices()
 
 juce::StringArray modulationSourceChoices()
 {
-    return { "Off", "LFO 1", "Mod Env 1", "Velocity", "Tone", "Dirt", "Motion", "Space", "Weight", "Bounce", "Warp", "Throw", "S&H", "Smooth", "Chaos", "LFO 2" };
+    return {
+        "Off",
+        "LFO 1",
+        "Mod Env 1",
+        "Velocity",
+        "Tone",
+        "Dirt",
+        "Motion",
+        "Space",
+        "Weight",
+        "Bounce",
+        "Warp",
+        "Throw",
+        "S&H",
+        "Smooth",
+        "Chaos",
+        "LFO 2",
+        "Mod Wheel",
+        "Aftertouch",
+        "Pitch Bend",
+        "Note"
+    };
 }
 
 juce::StringArray modulationDestinationChoices()
@@ -724,6 +750,31 @@ APVTS::ParameterLayout createLayout()
         "Sample Playback Mode",
         juce::StringArray { "Gate", "One Shot", "Slice Keys" },
         1));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleEngineMode,
+        "Sample Engine Mode",
+        sampleEngineModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sampleGrainSize,
+        "Sample Grain Size",
+        skewedRange(0.01f, 0.4f, 0.08f),
+        0.08f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sampleGrainSpray,
+        "Sample Grain Spray",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::sampleSpectralFreeze,
+        "Sample Spectral Freeze",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::sampleTranspose,

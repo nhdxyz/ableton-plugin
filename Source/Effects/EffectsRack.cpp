@@ -318,6 +318,10 @@ void EffectsRack::reset()
     fxModEnvelope.reset();
     fxModEnvelopeValue = 0.0f;
     fxModVelocity = 0.0f;
+    fxModWheel = 0.0f;
+    fxModAftertouch = 0.0f;
+    fxModPitchBend = 0.0f;
+    fxModNote = 0.0f;
     fxModActiveNotes = 0;
     sequencerLockDestination = 0;
     sequencerLockAmount = 0.0f;
@@ -387,6 +391,7 @@ void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
 
         if (message.isNoteOn())
         {
+            fxModNote = juce::jlimit(-1.0f, 1.0f, (static_cast<float>(message.getNoteNumber()) - 60.0f) / 36.0f);
             triggerFxModulationNoteOn(message.getFloatVelocity());
         }
         else if (message.isNoteOff())
@@ -394,6 +399,31 @@ void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
             fxModActiveNotes = juce::jmax(0, fxModActiveNotes - 1);
             if (fxModActiveNotes == 0)
                 fxModEnvelope.noteOff();
+        }
+        else if (message.isController())
+        {
+            if (message.getControllerNumber() == 1)
+                fxModWheel = static_cast<float>(message.getControllerValue()) / 127.0f;
+            else if (message.isResetAllControllers())
+            {
+                fxModWheel = 0.0f;
+                fxModAftertouch = 0.0f;
+                fxModPitchBend = 0.0f;
+            }
+        }
+        else if (message.isPitchWheel())
+        {
+            fxModPitchBend = juce::jlimit(-1.0f,
+                                           1.0f,
+                                           (static_cast<float>(message.getPitchWheelValue()) - 8192.0f) / 8192.0f);
+        }
+        else if (message.isAftertouch())
+        {
+            fxModAftertouch = static_cast<float>(message.getAfterTouchValue()) / 127.0f;
+        }
+        else if (message.isChannelPressure())
+        {
+            fxModAftertouch = static_cast<float>(message.getChannelPressureValue()) / 127.0f;
         }
         else if (message.isAllNotesOff() || message.isAllSoundOff())
         {
@@ -646,6 +676,10 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, f
         case 13: return fxModSmoothRandomValue;
         case 14: return fxModChaosValue;
         case 15: return lfo2Value;
+        case 16: return fxModWheel;
+        case 17: return fxModAftertouch;
+        case 18: return fxModPitchBend;
+        case 19: return fxModNote;
         default: return 0.0f;
     }
 }

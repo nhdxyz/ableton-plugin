@@ -82,6 +82,10 @@ private:
     juce::ADSR::Parameters fxModEnvelopeParameters;
     float fxModEnvelopeValue = 0.0f;
     float fxModVelocity = 0.0f;
+    float fxModWheel = 0.0f;
+    float fxModAftertouch = 0.0f;
+    float fxModPitchBend = 0.0f;
+    float fxModNote = 0.0f;
     int fxModActiveNotes = 0;
     int sequencerLockDestination = 0;
     float sequencerLockAmount = 0.0f;

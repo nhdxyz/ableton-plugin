@@ -51,7 +51,7 @@ Implication for Nate VST:
 
 - Nate VST should not compete by raw preset count. It should compete by house usefulness per preset.
 - Presets should become relationship-aware: compatible basses, chords, stabs, chops, FX tools, key/BPM, sequence intent, macro intent, and suggested Ableton clip use.
-- The Library now has metadata, smart crates, ratings/favorites, rendered preview cache/playback, visible-row preview warming, preview level badges, compact-width browser rows, and 96 factory presets. Missing next: fully background preview generation, waveform preview badges, construction-kit browsing, dependency/relink warnings, pack import/export, and user crate editing.
+- The Library now has metadata, smart crates, ratings/favorites, rendered preview cache/playback, visible-row preview warming, preview level badges, compact-width browser rows, and 422 factory presets. Missing next: fully background preview generation, waveform preview badges, construction-kit browsing, dependency/relink warnings, pack import/export, and user crate editing.
 
 ### ZENOLOGY And Roland-Style Layered Tones
 
@@ -104,7 +104,7 @@ Implemented in code:
 - 16-step sequencer includes note, velocity, probability, timing, length, lock, ratchet, first-pass condition states, groove templates, chord/stab colors, first-pass Chord Stab Paint, A/B/Fill/Drop scenes, first-pass `Build 4-Bar Chain` scene generation, first-pass live scene-chain step/control playback, `Auto` / `2 Bar` / `4 Bar` scene-chain length mode, pattern tools, single-pattern MIDI file export, captured scene-chain MIDI export, and first-pass MIDI file drag-out from the `MIDI` and `Chain` buttons.
 - Sampler/chop workflow includes WAV/AIFF loading, waveform display, eight slice pads, per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory, Slice Keys, and expanded chop focus overlay.
 - MOD includes LFOs, Mod Env, Velocity, S&H, Smooth, Chaos, LFO 2, macro sources, right-click assignment, modulation rings/stripes, route map, matrix bypass/delete/duplicate, macro assignment pad, and macro focus overlay.
-- Library includes recursive user/factory scanning, metadata, ratings, favorites, smart crates, style filters, crate map, selected-preset profile, compare/revert, safe overwrite, 96 repo-managed factory presets, construction-kit style metadata, rendered preview cache/playback, visible-row preview warming, preview level badges, and compact rows that keep sound identity readable at narrow widths.
+- Library includes recursive user/factory scanning, metadata, ratings, favorites, smart crates, style filters, crate map, selected-preset profile, compare/revert, safe overwrite, 422 repo-managed factory presets, construction-kit style metadata, rendered preview cache/playback, visible-row preview warming, preview level badges, and compact rows that keep sound identity readable at narrow widths.
 - Test suite covers layout, theme contrast, factory preset metadata/rendering, rendered preset previews, sequencer scenes/ratchets/conditions/house patterns, source character, random candidates, Guard/Pump/stereo/spectrum telemetry, global edit history, and FX sends.
 
 ## Competitor Lessons That Matter For House
@@ -133,12 +133,12 @@ Highest-impact source issue mapping:
 
 NEXUS5 and ZENOLOGY show the value of a preset-first workflow with a large browser, expansions, custom banks, and fast audition. Pigments and Serum also make presets and previews central to discovery.
 
-Nate VST now has metadata, smart crates, preview cache/playback, ratings, favorites, crate maps, and 96 curated factory presets. The gap is now scale, preview workflow polish, and construction-kit browsing:
+Nate VST now has metadata, smart crates, preview cache/playback, ratings, favorites, crate maps, and 422 curated factory presets. The gap is now preview workflow polish, deeper pack navigation, and construction-kit browsing:
 
 - Fully background rendered preview generation so the UI does not block on first audition. A visible-row batch warming action is implemented as the first safe manual pass.
 - Waveform preview badges in Library rows. Level badges are implemented from cached peak/RMS metadata.
 - Construction-kit mode that groups preset, key, BPM, sequence, macro intent, and suggested Ableton clip notes.
-- Larger house packs: deep house chords, piano house, jackin organ bass, disco/filter stabs, tech-house rubber hooks, dub chords, dirty tools, vocal chops, and loop starters.
+- Deeper relationship-aware house packs: compatible bass/chord/stab/chop/FX pairings, loop starters, construction-kit chains, and pack-level QA metadata.
 - Missing-sample/wavetable dependency tracking and relink.
 - Pack import/export and editable user crates.
 

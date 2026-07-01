@@ -95,6 +95,10 @@
   <PARAM id="sample_end" value="0.22" />
   <PARAM id="sample_reverse" value="0" />
   <PARAM id="sample_playback_mode" value="2" />
+  <PARAM id="sample_engine_mode" value="0" />
+  <PARAM id="sample_grain_size" value="0.08" />
+  <PARAM id="sample_grain_spray" value="0" />
+  <PARAM id="sample_spectral_freeze" value="0" />
   <PARAM id="sample_transpose" value="7" />
   <PARAM id="sample_pitch_ramp" value="-7" />
   <PARAM id="sample_gain" value="-5" />

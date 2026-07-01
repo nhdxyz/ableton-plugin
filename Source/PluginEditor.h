@@ -288,6 +288,7 @@ private:
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLockDestinationBox;
     juce::ComboBox sampleModeBox;
+    juce::ComboBox sampleEngineBox;
     juce::ComboBox sampleSliceStyleBox;
     juce::ComboBox sampleStutterRateBox;
     juce::ComboBox presetBox;
@@ -416,6 +417,9 @@ private:
     juce::Slider sampleGainSlider;
     juce::Slider sampleMixSlider;
     juce::Slider sampleStutterRepeatsSlider;
+    juce::Slider sampleGrainSizeSlider;
+    juce::Slider sampleGrainSpraySlider;
+    juce::Slider sampleSpectralFreezeSlider;
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
     juce::Slider sequencerSwingSlider;
@@ -536,6 +540,9 @@ private:
     juce::Label sampleGainLabel;
     juce::Label sampleMixLabel;
     juce::Label sampleStutterRepeatsLabel;
+    juce::Label sampleGrainSizeLabel;
+    juce::Label sampleGrainSprayLabel;
+    juce::Label sampleSpectralFreezeLabel;
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
     juce::Label sequencerSwingLabel;
@@ -613,6 +620,10 @@ private:
     juce::TextButton captureSnapshotAButton { "Set A" };
     juce::TextButton recallSnapshotBButton { "B" };
     juce::TextButton captureSnapshotBButton { "Set B" };
+    juce::TextButton recallSnapshotCButton { "C" };
+    juce::TextButton captureSnapshotCButton { "Set C" };
+    juce::TextButton recallSnapshotDButton { "D" };
+    juce::TextButton captureSnapshotDButton { "Set D" };
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton sampleCaptureButton { "Rec" };
@@ -764,7 +775,7 @@ private:
     juce::Label sequencerRootValueLabel;
     juce::Label sequencerStepEditorLabel;
     juce::Label fxRackStatusLabel;
-    std::array<UI::ModSourceMeter, 15> modSourceRows;
+    std::array<UI::ModSourceMeter, 19> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;

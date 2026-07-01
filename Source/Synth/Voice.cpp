@@ -161,6 +161,7 @@ void Voice::setSequencerLock(int destinationIndex, float amount) noexcept
 void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     noteVelocity = velocity;
+    notePosition = juce::jlimit(-1.0f, 1.0f, (static_cast<float>(midiNoteNumber) - 60.0f) / 36.0f);
     pitchWheelMoved(currentPitchWheelPosition);
     targetFrequencyHz = frequencyForNote(midiNoteNumber);
     const auto glideSeconds = readParameter(glideTime, 0.0f);
@@ -238,11 +239,30 @@ void Voice::stopNote(float, bool allowTailOff)
 void Voice::pitchWheelMoved(int newPitchWheelValue)
 {
     const auto normalised = (static_cast<float>(newPitchWheelValue) - 8192.0f) / 8192.0f;
-    pitchBendSemitones = juce::jlimit(-1.0f, 1.0f, normalised) * 2.0f;
+    pitchBendNormalised = juce::jlimit(-1.0f, 1.0f, normalised);
+    pitchBendSemitones = pitchBendNormalised * 2.0f;
 }
 
-void Voice::controllerMoved(int, int)
+void Voice::controllerMoved(int controllerNumber, int newControllerValue)
 {
+    if (controllerNumber == 1)
+        modWheel = static_cast<float>(newControllerValue) / 127.0f;
+    else if (controllerNumber == 121)
+    {
+        modWheel = 0.0f;
+        aftertouch = 0.0f;
+        pitchBendNormalised = 0.0f;
+    }
+}
+
+void Voice::aftertouchChanged(int newAftertouchValue)
+{
+    aftertouch = static_cast<float>(juce::jlimit(0, 127, newAftertouchValue)) / 127.0f;
+}
+
+void Voice::channelPressureChanged(int newChannelPressureValue)
+{
+    aftertouch = static_cast<float>(juce::jlimit(0, 127, newChannelPressureValue)) / 127.0f;
 }
 
 void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
@@ -736,6 +756,10 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo
         case 13: return lfoSmoothRandomValue;
         case 14: return lfoChaosValue;
         case 15: return lfo2Value;
+        case 16: return modWheel;
+        case 17: return aftertouch;
+        case 18: return pitchBendNormalised;
+        case 19: return notePosition;
         default: return 0.0f;
     }
 }

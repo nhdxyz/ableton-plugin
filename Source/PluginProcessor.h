@@ -337,8 +337,8 @@ private:
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
     juce::AudioBuffer<float> sampleCaptureBuffer;
-    juce::SpinLock sampleCaptureLock;
     std::atomic<bool> sampleCaptureEnabled { false };
+    std::atomic<int> sampleCaptureActiveWriters { 0 };
     std::atomic<int> sampleCaptureWritePosition { 0 };
     std::atomic<int> sampleCaptureSamplesRecorded { 0 };
     double sampleCaptureSampleRate = 44100.0;
@@ -416,6 +416,7 @@ private:
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void resetSampleParametersForNewSource(const juce::String& path);
     void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
+    void waitForSampleCaptureWritersToFinish();
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;

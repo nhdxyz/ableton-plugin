@@ -5,7 +5,7 @@
 ### UI Focus, Wave Editor Labels, And Synth Stab Pack
 
 - Made the editor request keyboard focus, listen for child-control mouse-up events, and return focus to the bottom audition keyboard after non-text control gestures, sample recorder actions, and wavetable tool actions so laptop-key auditioning is less likely to get stranded after touching a knob or button in Ableton.
-- Changed the bottom audition keyboard home/startup mapping to `A=C4` and explicitly sync the JUCE piano component's own QWERTY base octave to the same mapping, preventing focused piano-key events from falling back to the framework's default C0 range.
+- Changed the bottom audition keyboard home/startup mapping to `A=C4`, explicitly sync the JUCE piano component's own QWERTY base octave and visual C-label octave to the same Ableton-style convention, and route focused piano-strip laptop-key events through the editor's clamped mapping so they cannot fall back to the framework's default C0 range.
 - Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so Home lands on C4 and the computer keyboard cannot fall down to C0.
 - Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
 - Made the SAMPLE recorder stateful in the UI: the status label now distinguishes empty, recording, captured-ready, and loaded-sample states, while Commit/Play/Trim/Splice/Mangle stay disabled until their required audio exists.
@@ -13,6 +13,7 @@
 - Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.
 - Added a dedicated `Edit Wave` action beside the SYNTH wavetable toolbar so users can enter the custom-wave editor directly; it switches Osc 1 to Custom when needed and focuses the inspector/status on drawing, partial bars, morph frames, and single-cycle WAV import/export.
 - Reduced editor-side wavetable refresh work by skipping hidden-display updates, only reading custom point arrays for active Custom oscillators, and building WT modulation source labels only when a WT route exists.
+- Refocused MOD Matrix into the primary routing surface by removing the compact source rail from that mode, leaving source activity to the dedicated Sources/Macros/Curves pages and giving all eight matrix rows more vertical room.
 - Added a top morph-frame rail, miniature frame waves, Osc 1/Osc 2 position pins, and a spectral-tilt heat strip to the wavetable editor so custom-wave and WT-position edits read more like a modern wavetable surface instead of a flat scope.
 - Added `WavetableDisplayAudit` coverage for readable frame/plot/partial/spectrum zones, render coverage, direct custom-point edits, and partial-bar edits.
 - Added a generated 16-preset `Club Synth Stabs` factory expansion for normal house/tech-house chord hits, organ jabs, gated rave stabs, and delay-throw chords, bringing the repo-managed factory pack to 438 presets.

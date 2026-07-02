@@ -1413,6 +1413,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+    pianoKeyboard.setOctaveForMiddleC(abletonMiddleCOctave);
     keyboardTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote);
     syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
@@ -5019,9 +5020,8 @@ void NateVSTAudioProcessorEditor::resized()
                 layoutKnobRow(area.removeFromTop(knobHeight).withTrimmedTop(6), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
             };
 
-            auto layoutMatrix = [this, &layoutCompactSourceRail] (juce::Rectangle<int> matrixArea)
+            auto layoutMatrix = [this] (juce::Rectangle<int> matrixArea)
             {
-                layoutCompactSourceRail(matrixArea);
                 modMatrixLabel.setVisible(true);
                 modMatrixStatusLabel.setVisible(true);
                 modInspectorLabel.setVisible(true);
@@ -5993,6 +5993,13 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         std::pair<RandomLabPage, const char*> { RandomLabPage::save, "Save" }
     };
 
+    const std::array<std::pair<ModWorkflowPage, const char*>, 4> modWorkflowPages {
+        std::pair<ModWorkflowPage, const char*> { ModWorkflowPage::matrix, "Matrix" },
+        std::pair<ModWorkflowPage, const char*> { ModWorkflowPage::sources, "Sources" },
+        std::pair<ModWorkflowPage, const char*> { ModWorkflowPage::macros, "Macros" },
+        std::pair<ModWorkflowPage, const char*> { ModWorkflowPage::curves, "Curves" }
+    };
+
     const std::array<LayoutSizeAuditSpec, 7> layoutSizes {
         LayoutSizeAuditSpec { "Min", editorMinWidth, editorMinHeight },
         LayoutSizeAuditSpec { "MinTall", editorMinWidth, 900 },
@@ -6007,6 +6014,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     const auto originalFocusOverlay = activeFocusOverlay;
     const auto originalFxModule = selectedFxModule;
     const auto originalRandomLabPage = activeRandomLabPage;
+    const auto originalModWorkflowPage = activeModWorkflowPage;
     const auto originalWidth = getWidth();
     const auto originalHeight = getHeight();
     const auto originalKeyboardBaseOctave = keyboardTypingBaseOctave;
@@ -6034,6 +6042,11 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
         expectBase("home", keyboardInitialLowestNote);
+        if (pianoKeyboard.getOctaveForMiddleC() != abletonMiddleCOctave)
+            issues.add("Keyboard home: piano strip C labels use middle-C octave "
+                       + juce::String(pianoKeyboard.getOctaveForMiddleC())
+                       + " instead of Ableton octave "
+                       + juce::String(abletonMiddleCOctave));
         if (keyboardRangeLabel.getText() != "A C4\n; E5")
             issues.add("Keyboard home: range label should read A C4 to ; E5, got "
                        + keyboardRangeLabel.getText().quoted());
@@ -6287,6 +6300,31 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 issues.add(panelName + ": MOD route map is visible while matrix rows are only "
                            + juce::String(minModRowHeight) + "px tall");
             }
+
+            if (panelName.contains("MOD/Matrix"))
+            {
+                if (visibleModRows != static_cast<int>(modMatrixRows.size()))
+                {
+                    issues.add(panelName + ": focused Matrix mode hides route rows "
+                               + juce::String(visibleModRows) + "/"
+                               + juce::String(static_cast<int>(modMatrixRows.size())));
+                }
+
+                if (minModRowHeight < 28)
+                {
+                    issues.add(panelName + ": focused Matrix rows are still cramped at "
+                               + juce::String(minModRowHeight) + "px");
+                }
+
+                for (const auto& sourceMeter : modSourceRows)
+                {
+                    if (sourceMeter.isVisible())
+                    {
+                        issues.add(panelName + ": source meter remains visible on the focused Matrix surface");
+                        break;
+                    }
+                }
+            }
         }
 
         if (panelName.contains("MOD"))
@@ -6501,6 +6539,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                     auditCurrentLayout(layoutPrefix + panel.name + "/" + page.second);
                 }
             }
+            else if (panel.panel == Panel::mod)
+            {
+                for (const auto& page : modWorkflowPages)
+                {
+                    activeModWorkflowPage = page.first;
+                    auditCurrentLayout(layoutPrefix + panel.name + "/" + page.second);
+                }
+            }
             else
             {
                 auditCurrentLayout(layoutPrefix + panel.name);
@@ -6536,6 +6582,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     activeFocusOverlay = originalFocusOverlay;
     selectedFxModule = originalFxModule;
     activeRandomLabPage = originalRandomLabPage;
+    activeModWorkflowPage = originalModWorkflowPage;
     keyboardTypingBaseOctave = originalKeyboardBaseOctave;
     updateKeyboardRangeLabel();
     updatePanelVisibility();
@@ -8897,9 +8944,6 @@ void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
 
 bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent)
 {
-    if (originatingComponent == &pianoKeyboard)
-        return false;
-
     for (const auto keyCode : computerKeyboardKeyCodes)
         if (key.getKeyCode() == keyCode)
             return keyStateChanged(true, originatingComponent);
@@ -8909,9 +8953,6 @@ bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Co
 
 bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* originatingComponent)
 {
-    if (originatingComponent == &pianoKeyboard)
-        return false;
-
     auto isTextEntryComponent = [] (juce::Component* component)
     {
         for (auto* current = component; current != nullptr; current = current->getParentComponent())

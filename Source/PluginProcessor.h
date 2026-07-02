@@ -151,12 +151,15 @@ public:
     int getSampleCaptureSourceIndex() const noexcept;
     int getSampleCaptureStartModeIndex() const noexcept;
     int getSampleCaptureLengthModeIndex() const noexcept;
+    int getSampleCapturePreRollModeIndex() const noexcept;
     float getSampleCaptureThresholdDb() const noexcept;
     float getSampleCaptureSourcePeak() const noexcept;
     float getSampleCaptureTargetDurationSeconds() const noexcept;
+    float getSampleCapturePreRollDurationSeconds() const noexcept;
     juce::String getSampleCaptureSourceName() const;
     juce::String getSampleCaptureStartModeName() const;
     juce::String getSampleCaptureLengthModeName() const;
+    juce::String getSampleCapturePreRollModeName() const;
     bool commitSampleCaptureToSampler();
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
@@ -319,6 +322,7 @@ private:
     std::atomic<float>* sampleRecordSource = nullptr;
     std::atomic<float>* sampleRecordStart = nullptr;
     std::atomic<float>* sampleRecordLength = nullptr;
+    std::atomic<float>* sampleRecordPreRoll = nullptr;
     std::atomic<float>* sequencerChordMemory = nullptr;
     std::atomic<float>* sequencerLockDestination = nullptr;
     std::atomic<float>* sequencerLockDepth = nullptr;
@@ -347,12 +351,15 @@ private:
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
     juce::AudioBuffer<float> sampleCaptureBuffer;
+    juce::AudioBuffer<float> sampleCapturePreRollBuffer;
     std::atomic<bool> sampleCaptureEnabled { false };
     std::atomic<bool> sampleCaptureWaitingForThreshold { false };
     std::atomic<int> sampleCaptureActiveWriters { 0 };
     std::atomic<int> sampleCaptureWritePosition { 0 };
     std::atomic<int> sampleCaptureSamplesRecorded { 0 };
     std::atomic<int> sampleCaptureTargetSamples { 0 };
+    std::atomic<int> sampleCapturePreRollWritePosition { 0 };
+    std::atomic<int> sampleCapturePreRollSamplesReady { 0 };
     std::atomic<float> sampleCaptureSourcePeak { 0.0f };
     double sampleCaptureSampleRate = 44100.0;
     juce::SpinLock presetPreviewLock;
@@ -431,6 +438,13 @@ private:
     void updateSampleCaptureSourcePeak(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     float getSampleCaptureThresholdGain() const noexcept;
     int calculateSampleCaptureTargetSamples() const;
+    int calculateSampleCapturePreRollSamples() const noexcept;
+    void appendToSampleCapturePreRoll(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
+    void flushSampleCapturePreRoll() noexcept;
+    int appendSamplesToSampleCaptureBuffer(const juce::AudioBuffer<float>& source,
+                                           int sourceChannelLimit,
+                                           int sourceOffset,
+                                           int requestedSamples) noexcept;
     void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     void waitForSampleCaptureWritersToFinish();
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);

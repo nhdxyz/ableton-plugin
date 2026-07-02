@@ -400,6 +400,64 @@ int main()
             captureFile.deleteFile();
     }
 
+    NateVSTAudioProcessor preRollProcessor;
+    preRollProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(preRollProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::sampleRecordStart, 2.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::sampleRecordPreRoll, 2.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(preRollProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure threshold pre-roll recorder patch\n";
+        return 1;
+    }
+
+    preRollProcessor.beginSampleCapture();
+    const auto preRollSeconds = preRollProcessor.getSampleCapturePreRollDurationSeconds();
+    if (preRollSeconds < 0.24f || preRollSeconds > 0.26f)
+    {
+        std::cerr << "Unexpected recorder pre-roll duration: " << preRollSeconds << "s\n";
+        return 1;
+    }
+
+    feedHostInputBlocks(preRollProcessor, 0.02f, 32);
+    if (! preRollProcessor.isSampleCaptureWaitingForThreshold()
+        || preRollProcessor.getSampleCaptureDurationSeconds() > 0.001f)
+    {
+        std::cerr << "Recorder pre-roll leaked into capture before threshold: "
+                  << preRollProcessor.getSampleCaptureDurationSeconds() << "s\n";
+        return 1;
+    }
+
+    feedHostInputBlocks(preRollProcessor, 0.12f, 1);
+    const auto preRolledCaptureSeconds = preRollProcessor.getSampleCaptureDurationSeconds();
+    if (preRollProcessor.isSampleCaptureWaitingForThreshold()
+        || preRolledCaptureSeconds < 0.25f
+        || preRolledCaptureSeconds > 0.28f)
+    {
+        std::cerr << "Recorder pre-roll was not prepended at threshold start: "
+                  << preRolledCaptureSeconds << "s\n";
+        return 1;
+    }
+
+    if (! preRollProcessor.commitSampleCaptureToSampler())
+    {
+        std::cerr << "Recorder pre-roll capture did not commit\n";
+        return 1;
+    }
+
+    const auto preRollCapturePath = preRollProcessor.getLoadedSamplePath();
+    if (preRollCapturePath.isNotEmpty())
+    {
+        const juce::File captureFile(preRollCapturePath);
+        if (captureFile.existsAsFile())
+            captureFile.deleteFile();
+    }
+
     NateVSTAudioProcessor lengthProcessor;
     lengthProcessor.prepareToPlay(44100.0, 512);
     if (! setPlainParameter(lengthProcessor, Parameters::ID::sampleRecordSource, 1.0f)

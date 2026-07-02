@@ -189,7 +189,7 @@ Implemented house source-character sub-slice:
 
 Implemented sampler sub-slice:
 
-- The SAMPLE recorder now exposes the actual 16-second rolling capture-buffer fill as a compact progress meter plus a `REC -> READY -> USE -> PLAY` state rail, with source selection, threshold start, fixed bar-length capture, ready-to-commit, loaded-sample, and full/rolling states visible in the main SAMPLE panel.
+- The SAMPLE recorder now exposes the actual 16-second rolling capture-buffer fill as a compact progress meter plus a `REC -> READY -> USE -> PLAY` state rail, with source selection, threshold start, threshold pre-roll, fixed bar-length capture, ready-to-commit, loaded-sample, and full/rolling states visible in the main SAMPLE panel.
 - Slice Keys mode maps the eight SAMPLE pads across C3-G3, reads per-slice region/pitch/gain/pan/probability/reverse/stutter/choke memory at trigger time, and falls back to equal regions plus the selected slice style for untouched pads.
 - The SAMPLE UI now exposes Store, Recall, Dice, Rev, Choke, Pan, and Ghost actions with status/tooltips that show default or custom slice regions and behavior.
 - The waveform slice lane now supports direct boundary dragging for existing Slice Keys regions in both compact and expanded chop editing views.

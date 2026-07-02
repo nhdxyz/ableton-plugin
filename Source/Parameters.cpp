@@ -128,6 +128,11 @@ juce::StringArray sampleRecordLengthChoices()
     return { "Free", "1 Bar", "2 Bars", "4 Bars", "8 Bars" };
 }
 
+juce::StringArray sampleRecordPreRollChoices()
+{
+    return { "Pre Off", "Pre 100ms", "Pre 250ms", "Pre 500ms" };
+}
+
 juce::StringArray sampleEngineModeChoices()
 {
     return { "Classic", "Granular", "Spectral", "Cloud" };
@@ -860,6 +865,12 @@ APVTS::ParameterLayout createLayout()
         ID::sampleRecordLength,
         "Sample Record Length",
         sampleRecordLengthChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleRecordPreRoll,
+        "Sample Record Pre-Roll",
+        sampleRecordPreRollChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterChoice>(

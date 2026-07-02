@@ -23,6 +23,7 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - Start mode selector with `Immediate`, `Detect -36 dB`, `Detect -24 dB`, and `Detect -12 dB`.
 - Threshold-arm state that waits for the selected source to cross the selected threshold before filling the capture buffer.
 - Length selector with `Free`, `1 Bar`, `2 Bars`, `4 Bars`, and `8 Bars`; bar lengths auto-stop from the host tempo at record start.
+- Pre-roll selector with `Pre Off`, `Pre 100ms`, `Pre 250ms`, and `Pre 500ms`; threshold mode keeps lookback audio and prepends it when capture starts.
 
 ## Added First
 
@@ -30,13 +31,13 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - Post-FX and Host Input source-level telemetry in `SampleRecorderAudit`.
 - Threshold-start audit coverage for below-threshold waiting, above-threshold capture start, and sampler commit.
 - Fixed-length audit coverage for one-bar auto-stop timing and sampler commit.
+- Pre-roll audit coverage for below-threshold lookback, trigger-time prepend, and sampler commit.
 
 ## Next Recorder Priorities
 
-1. Pre-roll buffer: keep a short lookback so threshold recording does not clip the attack.
-2. Quantized transport start/stop: optionally wait for the next bar before fixed-length capture starts.
-3. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
-4. Take handling: keep the last few captures until one is committed.
-5. Drag/export audio: drag the committed capture as WAV into Ableton.
-6. Slice while recording: add marker taps or lazy-chop pads during capture.
-7. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.
+1. Quantized transport start/stop: optionally wait for the next bar before fixed-length capture starts.
+2. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
+3. Take handling: keep the last few captures until one is committed.
+4. Drag/export audio: drag the committed capture as WAV into Ableton.
+5. Slice while recording: add marker taps or lazy-chop pads during capture.
+6. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.

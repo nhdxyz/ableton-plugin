@@ -3094,10 +3094,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             const auto lengthStatus = audioProcessor.getSampleCaptureLengthModeIndex() > 0
                 ? juce::String(" | ") + audioProcessor.getSampleCaptureLengthModeName()
                 : juce::String();
+            const auto preRollStatus = audioProcessor.getSampleCapturePreRollModeIndex() > 0
+                ? juce::String(" | ") + audioProcessor.getSampleCapturePreRollModeName()
+                : juce::String();
             setRandomStatus(audioProcessor.isSampleCaptureWaitingForThreshold()
-                                ? "Recorder armed " + audioProcessor.getSampleCaptureStartModeName() + lengthStatus
+                                ? "Recorder armed " + audioProcessor.getSampleCaptureStartModeName() + lengthStatus + preRollStatus
                                 : "Recording " + audioProcessor.getSampleCaptureSourceName()
-                                      + lengthStatus);
+                                      + lengthStatus + preRollStatus);
         }
         updateSampleRecorderStatus();
         returnKeyboardFocusToPiano();
@@ -7376,8 +7379,10 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.getSampleCaptureSourceIndex(),
         audioProcessor.getSampleCaptureStartModeIndex(),
         audioProcessor.getSampleCaptureLengthModeIndex(),
+        audioProcessor.getSampleCapturePreRollModeIndex(),
         audioProcessor.getSampleCaptureSourcePeak(),
         audioProcessor.getSampleCaptureTargetDurationSeconds(),
+        audioProcessor.getSampleCapturePreRollDurationSeconds(),
         audioProcessor.isSampleCaptureWaitingForThreshold()
     });
 }

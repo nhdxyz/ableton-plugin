@@ -33,6 +33,14 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
                                                             Parameters::ID::sampleRecordLength,
                                                             lengthBox);
 
+    preRollBox.addItemList(Parameters::sampleRecordPreRollChoices(), 1);
+    preRollBox.setTextWhenNothingSelected("Pre");
+    preRollBox.setTooltip("Keep a short lookback while threshold-armed so the captured sample includes the attack before the trigger.");
+    addAndMakeVisible(preRollBox);
+    preRollAttachment = std::make_unique<ComboBoxAttachment>(valueTreeState,
+                                                             Parameters::ID::sampleRecordPreRoll,
+                                                             preRollBox);
+
     statusLabel.setText("Recorder idle", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centredLeft);
     statusLabel.setFont(juce::FontOptions(11.0f));
@@ -137,8 +145,10 @@ void SampleRecorderPanel::setState(const State& state)
         : juce::String("post-FX plugin output");
     const auto captureStartShortName = startModeShortName(state.captureStartModeIndex);
     const auto captureLengthShortName = lengthModeShortName(state.captureLengthModeIndex);
+    const auto capturePreRollShortName = preRollModeShortName(state.capturePreRollModeIndex);
     const auto sourceLevelText = formatPeakLabel(state.captureSourcePeak);
     const auto fixedTarget = state.targetSeconds > 0.05f;
+    const auto hasPreRoll = state.preRollSeconds > 0.001f;
     const auto progressTargetSeconds = fixedTarget ? juce::jmin(capacitySeconds, juce::jmax(0.1f, state.targetSeconds))
                                                    : capacitySeconds;
     const auto rollingProgressAmount = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / capacitySeconds));
@@ -157,6 +167,8 @@ void SampleRecorderPanel::setState(const State& state)
                                          : juce::String("empty / ") + targetText;
     const auto targetDescription = fixedTarget ? juce::String(" | ") + captureLengthShortName
                                                : juce::String();
+    const auto preRollDescription = hasPreRoll ? juce::String(" | ") + capturePreRollShortName
+                                               : juce::String();
     progressValue = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / progressTargetSeconds));
     progress.setTextToDisplay(durationText);
     progress.setColour(juce::ProgressBar::foregroundColourId,
@@ -170,10 +182,10 @@ void SampleRecorderPanel::setState(const State& state)
                                        : captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
     const auto statusText = state.waitingForThreshold
-        ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName + targetDescription
+        ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName + targetDescription + preRollDescription
         : state.isRecording
         ? (captureIsRolling ? juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | Rolling"
-                            : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + targetDescription + " | " + durationText)
+                            : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + targetDescription + preRollDescription + " | " + durationText)
         : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | Last " + capacityText
                                          : juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
                      : state.hasLoadedSample ? juce::String("Loaded | ") + captureSourceShortName + " " + sourceLevelText
@@ -207,7 +219,7 @@ void SampleRecorderPanel::setState(const State& state)
         juce::Colour(0xffd6bcff)
     };
     const std::array<juce::String, 4> stepTooltips {
-        state.waitingForThreshold ? juce::String("Armed for ") + captureStartShortName + " on " + captureSourceDescription
+        state.waitingForThreshold ? juce::String("Armed for ") + captureStartShortName + " on " + captureSourceDescription + preRollDescription
         : state.isRecording ? juce::String("Recording ") + captureSourceDescription + " into the rolling buffer"
                           : juce::String("Start recording ") + captureSourceDescription,
         hasCapture ? juce::String("Captured ") + durationText
@@ -253,6 +265,9 @@ void SampleRecorderPanel::setState(const State& state)
         ? "Free records until you stop or the rolling buffer fills."
         : fixedTarget ? captureLengthShortName + " auto-stops recording from the host tempo. Current target is " + targetText + "."
                       : captureLengthShortName + " auto-stops recording from the host tempo when Record starts.");
+    preRollBox.setTooltip(state.capturePreRollModeIndex <= 0
+        ? "Pre-roll is off. Threshold recording starts with the trigger block."
+        : capturePreRollShortName + " keeps a threshold lookback so the committed sample includes audio before the trigger.");
     autoTrimButton.setTooltip(state.hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
                                                     : "Load or commit a sample before trimming");
     spliceButton.setTooltip(state.hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
@@ -271,6 +286,9 @@ void SampleRecorderPanel::resized()
     auto recorderSettingsRow = area.removeFromTop(30);
     startBox.setBounds(recorderSettingsRow.removeFromLeft(recorderSettingsRow.getWidth() / 2).reduced(3, 4));
     lengthBox.setBounds(recorderSettingsRow.reduced(3, 4));
+
+    auto recorderPreRollRow = area.removeFromTop(30);
+    preRollBox.setBounds(recorderPreRollRow.reduced(3, 4));
 
     auto recorderStepArea = area.removeFromTop(24).reduced(4, 3);
     const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(stepLabels.size());
@@ -330,7 +348,8 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
     for (const auto* settingBox : {
              static_cast<const juce::ComboBox*>(&sourceBox),
              static_cast<const juce::ComboBox*>(&startBox),
-             static_cast<const juce::ComboBox*>(&lengthBox) })
+             static_cast<const juce::ComboBox*>(&lengthBox),
+             static_cast<const juce::ComboBox*>(&preRollBox) })
     {
         const auto bounds = settingBox->getBounds();
         if (bounds.getWidth() < 72 || bounds.getHeight() < 20)
@@ -418,5 +437,14 @@ juce::String SampleRecorderPanel::lengthModeShortName(int modeIndex)
         return choices[modeIndex];
 
     return "Free";
+}
+
+juce::String SampleRecorderPanel::preRollModeShortName(int modeIndex)
+{
+    const auto choices = Parameters::sampleRecordPreRollChoices();
+    if (juce::isPositiveAndBelow(modeIndex, choices.size()))
+        return choices[modeIndex];
+
+    return "Pre Off";
 }
 }

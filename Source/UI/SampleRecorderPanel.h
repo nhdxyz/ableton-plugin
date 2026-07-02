@@ -24,8 +24,10 @@ public:
         int captureSourceIndex = 0;
         int captureStartModeIndex = 0;
         int captureLengthModeIndex = 0;
+        int capturePreRollModeIndex = 0;
         float captureSourcePeak = 0.0f;
         float targetSeconds = 0.0f;
+        float preRollSeconds = 0.0f;
         bool waitingForThreshold = false;
     };
 
@@ -42,7 +44,7 @@ public:
     void setState(const State& state);
     void resized() override;
 
-    int preferredHeight() const noexcept { return 188; }
+    int preferredHeight() const noexcept { return 218; }
     juce::StringArray runLayoutAudit(const juce::String& panelName,
                                      bool hasCapture,
                                      bool hasLoadedSample) const;
@@ -54,6 +56,7 @@ private:
     juce::ComboBox sourceBox;
     juce::ComboBox startBox;
     juce::ComboBox lengthBox;
+    juce::ComboBox preRollBox;
     juce::Label statusLabel;
     std::array<juce::Label, 4> stepLabels;
     double progressValue = 0.0;
@@ -67,11 +70,13 @@ private:
     std::unique_ptr<ComboBoxAttachment> sourceAttachment;
     std::unique_ptr<ComboBoxAttachment> startAttachment;
     std::unique_ptr<ComboBoxAttachment> lengthAttachment;
+    std::unique_ptr<ComboBoxAttachment> preRollAttachment;
 
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);
     static juce::String formatPeakLabel(float peak);
     static juce::String startModeShortName(int modeIndex);
     static juce::String lengthModeShortName(int modeIndex);
+    static juce::String preRollModeShortName(int modeIndex);
 };
 }

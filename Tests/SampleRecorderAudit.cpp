@@ -223,7 +223,7 @@ int main()
     NateVSTAudioProcessor processor;
     processor.prepareToPlay(44100.0, 512);
     const auto captureCapacity = processor.getSampleCaptureCapacitySeconds();
-    if (captureCapacity < 7.9f || captureCapacity > 8.1f)
+    if (captureCapacity < 15.9f || captureCapacity > 16.1f)
     {
         std::cerr << "Unexpected recorder rolling-buffer capacity: " << captureCapacity << "s\n";
         return 1;
@@ -396,6 +396,59 @@ int main()
     if (thresholdCapturePath.isNotEmpty())
     {
         const juce::File captureFile(thresholdCapturePath);
+        if (captureFile.existsAsFile())
+            captureFile.deleteFile();
+    }
+
+    NateVSTAudioProcessor lengthProcessor;
+    lengthProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(lengthProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::sampleRecordStart, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::sampleRecordLength, 1.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(lengthProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure fixed-length recorder patch\n";
+        return 1;
+    }
+
+    lengthProcessor.beginSampleCapture();
+    const auto oneBarTargetSeconds = lengthProcessor.getSampleCaptureTargetDurationSeconds();
+    if (oneBarTargetSeconds < 1.85f || oneBarTargetSeconds > 2.05f)
+    {
+        std::cerr << "Unexpected one-bar recorder target: " << oneBarTargetSeconds << "s\n";
+        return 1;
+    }
+
+    feedHostInputBlocks(lengthProcessor, 0.14f, 220);
+    if (lengthProcessor.isSampleCaptureEnabled())
+    {
+        std::cerr << "Fixed-length recorder did not auto-stop\n";
+        return 1;
+    }
+
+    const auto fixedLengthSeconds = lengthProcessor.getSampleCaptureDurationSeconds();
+    if (std::abs(fixedLengthSeconds - oneBarTargetSeconds) > 0.025f)
+    {
+        std::cerr << "Fixed-length recorder duration mismatch: got "
+                  << fixedLengthSeconds << "s expected " << oneBarTargetSeconds << "s\n";
+        return 1;
+    }
+
+    if (! lengthProcessor.commitSampleCaptureToSampler())
+    {
+        std::cerr << "Fixed-length recorder capture did not commit\n";
+        return 1;
+    }
+
+    const auto lengthCapturePath = lengthProcessor.getLoadedSamplePath();
+    if (lengthCapturePath.isNotEmpty())
+    {
+        const juce::File captureFile(lengthCapturePath);
         if (captureFile.existsAsFile())
             captureFile.deleteFile();
     }

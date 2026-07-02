@@ -123,6 +123,11 @@ juce::StringArray sampleRecordStartChoices()
     return { "Immediate", "Detect -36 dB", "Detect -24 dB", "Detect -12 dB" };
 }
 
+juce::StringArray sampleRecordLengthChoices()
+{
+    return { "Free", "1 Bar", "2 Bars", "4 Bars", "8 Bars" };
+}
+
 juce::StringArray sampleEngineModeChoices()
 {
     return { "Classic", "Granular", "Spectral", "Cloud" };
@@ -849,6 +854,12 @@ APVTS::ParameterLayout createLayout()
         ID::sampleRecordStart,
         "Sample Record Start",
         sampleRecordStartChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleRecordLength,
+        "Sample Record Length",
+        sampleRecordLengthChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterChoice>(

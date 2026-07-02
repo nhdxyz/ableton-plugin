@@ -23,7 +23,9 @@ public:
         bool hasLoadedSample = false;
         int captureSourceIndex = 0;
         int captureStartModeIndex = 0;
+        int captureLengthModeIndex = 0;
         float captureSourcePeak = 0.0f;
+        float targetSeconds = 0.0f;
         bool waitingForThreshold = false;
     };
 
@@ -40,7 +42,7 @@ public:
     void setState(const State& state);
     void resized() override;
 
-    int preferredHeight() const noexcept { return 158; }
+    int preferredHeight() const noexcept { return 188; }
     juce::StringArray runLayoutAudit(const juce::String& panelName,
                                      bool hasCapture,
                                      bool hasLoadedSample) const;
@@ -51,6 +53,7 @@ private:
     juce::Label recordLabel;
     juce::ComboBox sourceBox;
     juce::ComboBox startBox;
+    juce::ComboBox lengthBox;
     juce::Label statusLabel;
     std::array<juce::Label, 4> stepLabels;
     double progressValue = 0.0;
@@ -63,10 +66,12 @@ private:
     juce::TextButton mangleButton { "Mangle" };
     std::unique_ptr<ComboBoxAttachment> sourceAttachment;
     std::unique_ptr<ComboBoxAttachment> startAttachment;
+    std::unique_ptr<ComboBoxAttachment> lengthAttachment;
 
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);
     static juce::String formatPeakLabel(float peak);
     static juce::String startModeShortName(int modeIndex);
+    static juce::String lengthModeShortName(int modeIndex);
 };
 }

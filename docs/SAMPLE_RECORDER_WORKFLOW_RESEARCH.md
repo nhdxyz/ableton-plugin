@@ -16,23 +16,25 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - Source selection between `Post-FX Output` and `Host Input`.
 - Post-FX capture records synth engine, sampler playback, FX rack, and output gain.
 - Host Input capture records audio routed by Ableton into the plugin input.
-- Rolling 8-second buffer with progress text and rolling/full state.
+- Rolling 16-second buffer with progress text and rolling/full state.
 - `REC -> READY -> USE -> PLAY` flow rail.
 - Commit, Play, Trim, Splice, and Mangle actions that enable only when usable.
 - Recorder CTest coverage for capture, commit, overview creation, playback, Post-FX gain capture, and Host Input capture.
 - Start mode selector with `Immediate`, `Detect -36 dB`, `Detect -24 dB`, and `Detect -12 dB`.
 - Threshold-arm state that waits for the selected source to cross the selected threshold before filling the capture buffer.
+- Length selector with `Free`, `1 Bar`, `2 Bars`, `4 Bars`, and `8 Bars`; bar lengths auto-stop from the host tempo at record start.
 
 ## Added First
 
 - Visible source-level readout in the recorder status line, e.g. `Post-FX -18 dB` or `Host In -inf dB`.
 - Post-FX and Host Input source-level telemetry in `SampleRecorderAudit`.
 - Threshold-start audit coverage for below-threshold waiting, above-threshold capture start, and sampler commit.
+- Fixed-length audit coverage for one-bar auto-stop timing and sampler commit.
 
 ## Next Recorder Priorities
 
-1. Sync length: capture 1, 2, 4, or 8 bars from host tempo/transport, with quantized stop.
-2. Pre-roll buffer: keep a short lookback so threshold recording does not clip the attack.
+1. Pre-roll buffer: keep a short lookback so threshold recording does not clip the attack.
+2. Quantized transport start/stop: optionally wait for the next bar before fixed-length capture starts.
 3. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
 4. Take handling: keep the last few captures until one is committed.
 5. Drag/export audio: drag the committed capture as WAV into Ableton.

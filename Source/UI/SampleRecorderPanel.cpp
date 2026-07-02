@@ -25,6 +25,14 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
                                                            Parameters::ID::sampleRecordStart,
                                                            startBox);
 
+    lengthBox.addItemList(Parameters::sampleRecordLengthChoices(), 1);
+    lengthBox.setTextWhenNothingSelected("Length");
+    lengthBox.setTooltip("Choose fixed capture length. Free records until you stop; bar lengths auto-stop from the host tempo.");
+    addAndMakeVisible(lengthBox);
+    lengthAttachment = std::make_unique<ComboBoxAttachment>(valueTreeState,
+                                                            Parameters::ID::sampleRecordLength,
+                                                            lengthBox);
+
     statusLabel.setText("Recorder idle", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centredLeft);
     statusLabel.setFont(juce::FontOptions(11.0f));
@@ -45,7 +53,7 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
     }
 
     progress.setPercentageDisplay(false);
-    progress.setTextToDisplay("0 / 8s");
+    progress.setTextToDisplay("0 / 16s");
     progress.setTooltip("Recorder rolling-buffer fill. When it reaches the end, the newest audio replaces the oldest audio.");
     addAndMakeVisible(progress);
 
@@ -122,15 +130,19 @@ void SampleRecorderPanel::setState(const State& state)
     const auto capacitySeconds = juce::jmax(0.1f, state.capacitySeconds);
     const auto seconds = juce::jmax(0.0f, state.seconds);
     const auto hasCapture = seconds >= 0.05f;
-    const auto progressAmount = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / capacitySeconds));
-    const auto captureIsRolling = progressAmount >= 0.995;
     const auto captureSourceShortName = state.captureSourceIndex == 1 ? juce::String("Host In")
                                                                       : juce::String("Post-FX");
     const auto captureSourceDescription = state.captureSourceIndex == 1
         ? juce::String("host input routed by Ableton into the plugin")
         : juce::String("post-FX plugin output");
     const auto captureStartShortName = startModeShortName(state.captureStartModeIndex);
+    const auto captureLengthShortName = lengthModeShortName(state.captureLengthModeIndex);
     const auto sourceLevelText = formatPeakLabel(state.captureSourcePeak);
+    const auto fixedTarget = state.targetSeconds > 0.05f;
+    const auto progressTargetSeconds = fixedTarget ? juce::jmin(capacitySeconds, juce::jmax(0.1f, state.targetSeconds))
+                                                   : capacitySeconds;
+    const auto rollingProgressAmount = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / capacitySeconds));
+    const auto captureIsRolling = ! fixedTarget && rollingProgressAmount >= 0.995;
 
     recordButton.setButtonText(state.waitingForThreshold ? "Cancel" : state.isRecording ? "Stop" : "Record");
     recordButton.setColour(juce::TextButton::buttonColourId,
@@ -139,22 +151,29 @@ void SampleRecorderPanel::setState(const State& state)
                            state.isRecording ? juce::Colour(0xffff9a8a) : juce::Colour(0xffdce7e4));
 
     const auto capacityText = juce::String(capacitySeconds, 0) + "s";
-    const auto durationText = hasCapture ? juce::String(seconds, 1) + " / " + capacityText
-                                         : juce::String("empty / ") + capacityText;
-    progressValue = progressAmount;
+    const auto targetText = fixedTarget ? juce::String(progressTargetSeconds, 1) + "s"
+                                        : capacityText;
+    const auto durationText = hasCapture ? juce::String(seconds, 1) + " / " + targetText
+                                         : juce::String("empty / ") + targetText;
+    const auto targetDescription = fixedTarget ? juce::String(" | ") + captureLengthShortName
+                                               : juce::String();
+    progressValue = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / progressTargetSeconds));
     progress.setTextToDisplay(durationText);
     progress.setColour(juce::ProgressBar::foregroundColourId,
                        state.isRecording ? juce::Colour(0xffff9a8a)
                                          : hasCapture ? juce::Colour(0xff8ee6c9)
                                                       : juce::Colour(0xff40535a));
-    progress.setTooltip("Recorder rolling-buffer fill: " + durationText
-                        + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
+    progress.setTooltip((fixedTarget ? juce::String("Recorder fixed-length progress: ")
+                                     : juce::String("Recorder rolling-buffer fill: "))
+                        + durationText
+                        + (fixedTarget ? ". Recorder auto-stops at " + captureLengthShortName + "."
+                                       : captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
     const auto statusText = state.waitingForThreshold
-        ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName
+        ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName + targetDescription
         : state.isRecording
         ? (captureIsRolling ? juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | Rolling"
-                            : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
+                            : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + targetDescription + " | " + durationText)
         : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | Last " + capacityText
                                          : juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
                      : state.hasLoadedSample ? juce::String("Loaded | ") + captureSourceShortName + " " + sourceLevelText
@@ -230,6 +249,10 @@ void SampleRecorderPanel::setState(const State& state)
     startBox.setTooltip(state.captureStartModeIndex <= 0
         ? "Immediate starts recording as soon as you press Record."
         : "Detect arms the recorder and starts only when " + captureSourceShortName + " crosses " + captureStartShortName + ".");
+    lengthBox.setTooltip(state.captureLengthModeIndex <= 0
+        ? "Free records until you stop or the rolling buffer fills."
+        : fixedTarget ? captureLengthShortName + " auto-stops recording from the host tempo. Current target is " + targetText + "."
+                      : captureLengthShortName + " auto-stops recording from the host tempo when Record starts.");
     autoTrimButton.setTooltip(state.hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
                                                     : "Load or commit a sample before trimming");
     spliceButton.setTooltip(state.hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
@@ -243,9 +266,11 @@ void SampleRecorderPanel::resized()
     auto area = getLocalBounds();
     auto recorderHeaderRow = area.removeFromTop(30);
     recordLabel.setBounds(recorderHeaderRow.removeFromLeft(82).withTrimmedLeft(4).reduced(0, 5));
-    const auto sourceWidth = juce::jmax(96, recorderHeaderRow.getWidth() * 56 / 100);
-    sourceBox.setBounds(recorderHeaderRow.removeFromLeft(sourceWidth).reduced(3, 4));
-    startBox.setBounds(recorderHeaderRow.reduced(3, 4));
+    sourceBox.setBounds(recorderHeaderRow.reduced(3, 4));
+
+    auto recorderSettingsRow = area.removeFromTop(30);
+    startBox.setBounds(recorderSettingsRow.removeFromLeft(recorderSettingsRow.getWidth() / 2).reduced(3, 4));
+    lengthBox.setBounds(recorderSettingsRow.reduced(3, 4));
 
     auto recorderStepArea = area.removeFromTop(24).reduced(4, 3);
     const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(stepLabels.size());
@@ -300,6 +325,19 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
         if (progressBounds.getWidth() < 120 || progressBounds.getHeight() < 8)
             issues.add(panelName + ": recorder progress meter is too small "
                        + progressBounds.toString());
+    }
+
+    for (const auto* settingBox : {
+             static_cast<const juce::ComboBox*>(&sourceBox),
+             static_cast<const juce::ComboBox*>(&startBox),
+             static_cast<const juce::ComboBox*>(&lengthBox) })
+    {
+        const auto bounds = settingBox->getBounds();
+        if (bounds.getWidth() < 72 || bounds.getHeight() < 20)
+            issues.add(panelName + ": recorder setting "
+                       + componentAuditName(*settingBox, "box")
+                       + " is too compressed "
+                       + bounds.toString());
     }
 
     for (const auto* recorderButton : {
@@ -371,5 +409,14 @@ juce::String SampleRecorderPanel::startModeShortName(int modeIndex)
         return choices[modeIndex];
 
     return "Immediate";
+}
+
+juce::String SampleRecorderPanel::lengthModeShortName(int modeIndex)
+{
+    const auto choices = Parameters::sampleRecordLengthChoices();
+    if (juce::isPositiveAndBelow(modeIndex, choices.size()))
+        return choices[modeIndex];
+
+    return "Free";
 }
 }

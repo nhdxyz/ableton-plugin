@@ -10,7 +10,7 @@ Then run this manual Ableton pass against the built VST3.
 
 ## Host Scan And Load
 
-- Copy or confirm `Nate VST.vst3` in `~/Library/Audio/Plug-Ins/VST3`.
+- Run `tools/install_vst3.sh` or confirm `Nate VST.vst3` in `~/Library/Audio/Plug-Ins/VST3`.
 - Rescan plugins in Ableton Live.
 - Load Nate VST on a fresh MIDI track.
 - Confirm the editor opens, resizes, and switches every main panel.

@@ -685,6 +685,7 @@ private:
     juce::TextButton organWaveButton { "Org" };
     juce::TextButton housePianoWaveButton { "Pno" };
     juce::TextButton customWaveButton { "Edit" };
+    juce::TextButton waveEditorFocusButton { "Edit Wave" };
     juce::TextButton osc2SineWaveButton { "Sine" };
     juce::TextButton osc2SawWaveButton { "Saw" };
     juce::TextButton osc2SquareWaveButton { "Square" };

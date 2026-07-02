@@ -2071,6 +2071,36 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(osc2WaveBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2Wave, osc2WaveBox));
 
+    waveEditorFocusButton.setTooltip("Open the center custom-wave editor. If no custom oscillator is active, Osc 1 switches to Custom so drawing, partial bars, frames, and WAV import/export are immediately editable.");
+    waveEditorFocusButton.setWantsKeyboardFocus(false);
+    waveEditorFocusButton.setMouseClickGrabsKeyboardFocus(false);
+    waveEditorFocusButton.onClick = [this]
+    {
+        const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
+        const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
+        const auto targetOsc2 = osc2IsCustom && ! osc1IsCustom;
+
+        if (! osc1IsCustom && ! osc2IsCustom)
+        {
+            captureGlobalEdit("Open wave editor");
+            setPlainParameterValue(Parameters::ID::oscWave, 7.0f);
+            waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
+            updateSegmentedSelectors();
+        }
+
+        updateWavetableDisplay();
+        updateSelectedControlInspector(targetOsc2 ? "O2 Wave Editor" : "O1 Wave Editor",
+                                       targetOsc2 ? Parameters::ID::osc2CustomWave[0]
+                                                  : Parameters::ID::oscCustomWave[0],
+                                       readPlainParameterValue(targetOsc2 ? Parameters::ID::osc2CustomWave[0]
+                                                                         : Parameters::ID::oscCustomWave[0],
+                                                               0.5f));
+        setRandomStatus(juce::String(targetOsc2 ? "O2" : "O1")
+                        + " Wave Editor ready: draw, partials, frames, or WAV import/export");
+        returnKeyboardFocusToPiano();
+    };
+    addAndMakeVisible(waveEditorFocusButton);
+
     wavetableDrawModeBox.addItem("Point Draw", 1);
     wavetableDrawModeBox.addItem("Line Draw", 2);
     wavetableDrawModeBox.addItem("Smooth Brush", 3);
@@ -4453,6 +4483,7 @@ void NateVSTAudioProcessorEditor::resized()
             osc2WaveBox.setVisible(true);
             customWaveButton.setVisible(true);
             osc2CustomWaveButton.setVisible(true);
+            waveEditorFocusButton.setVisible(true);
             wavetableToolBox.setVisible(true);
             wavetableDrawModeBox.setVisible(true);
             filterModeBox.setVisible(true);
@@ -4534,9 +4565,11 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto canvasHeader = canvasArea.removeFromTop(22);
             synthFilterLabel.setBounds(canvasHeader);
-            auto waveToolRow = canvasArea.removeFromTop(34).withTrimmedTop(2);
-            wavetableDrawModeBox.setBounds(waveToolRow.removeFromLeft(juce::jlimit(120, 160, waveToolRow.getWidth() / 3)).reduced(4));
-            wavetableToolBox.setBounds(waveToolRow.removeFromLeft(juce::jlimit(128, 180, waveToolRow.getWidth() / 2)).reduced(4));
+            auto waveToolRow = canvasArea.removeFromTop(36).withTrimmedTop(2);
+            const auto waveEditWidth = juce::jlimit(86, 112, waveToolRow.getWidth() / 3);
+            waveEditorFocusButton.setBounds(waveToolRow.removeFromRight(waveEditWidth).reduced(4));
+            wavetableDrawModeBox.setBounds(waveToolRow.removeFromLeft(juce::jlimit(102, 144, waveToolRow.getWidth() / 3)).reduced(4));
+            wavetableToolBox.setBounds(waveToolRow.reduced(4));
             const auto wavetableHeight = juce::jlimit(158, 238, canvasArea.getHeight() / 2);
             wavetableDisplay.setBounds(canvasArea.removeFromTop(wavetableHeight).reduced(2, 6));
 
@@ -6141,6 +6174,42 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                                    + " at " + rackBounds.toString()
                                    + " / " + controlBounds.toString());
                     }
+                }
+
+                for (const auto* waveControl : {
+                         static_cast<const juce::Component*>(&wavetableDrawModeBox),
+                         static_cast<const juce::Component*>(&wavetableToolBox),
+                         static_cast<const juce::Component*>(&waveEditorFocusButton) })
+                {
+                    if (waveControl == nullptr || ! waveControl->isVisible())
+                        continue;
+
+                    const auto controlBounds = getLocalArea(waveControl->getParentComponent(),
+                                                            waveControl->getBounds());
+                    if (controlBounds.getWidth() < 76 || controlBounds.getHeight() < 22)
+                    {
+                        issues.add(panelName + ": SYNTH wave editor control "
+                                   + layoutAuditComponentName(*waveControl, 0)
+                                   + " is too compressed "
+                                   + controlBounds.toString());
+                    }
+                }
+
+                const auto drawBounds = getLocalArea(wavetableDrawModeBox.getParentComponent(),
+                                                     wavetableDrawModeBox.getBounds());
+                const auto toolBounds = getLocalArea(wavetableToolBox.getParentComponent(),
+                                                     wavetableToolBox.getBounds());
+                const auto editBounds = getLocalArea(waveEditorFocusButton.getParentComponent(),
+                                                     waveEditorFocusButton.getBounds());
+                if (wavetableDrawModeBox.isVisible() && wavetableToolBox.isVisible() && drawBounds.intersects(toolBounds))
+                {
+                    issues.add(panelName + ": SYNTH wave draw-mode dropdown overlaps wave tools "
+                               + drawBounds.toString() + " / " + toolBounds.toString());
+                }
+                if (wavetableToolBox.isVisible() && waveEditorFocusButton.isVisible() && toolBounds.intersects(editBounds))
+                {
+                    issues.add(panelName + ": SYNTH wave tools dropdown overlaps Edit Wave action "
+                               + toolBounds.toString() + " / " + editBounds.toString());
                 }
             }
 
@@ -10608,7 +10677,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,
-        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton,
+        &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton, &sequencerRootDownButton, &sequencerRootUpButton,

@@ -10,6 +10,7 @@
 - Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
 - Added `SampleRecorderAudit` coverage so the SAMPLE recorder now verifies actual synth capture, commit-to-sampler behavior, waveform overview generation, and audible sampler playback.
 - Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.
+- Added a dedicated `Edit Wave` action beside the SYNTH wavetable toolbar so users can enter the custom-wave editor directly; it switches Osc 1 to Custom when needed and focuses the inspector/status on drawing, partial bars, morph frames, and single-cycle WAV import/export.
 - Added a top morph-frame rail, miniature frame waves, Osc 1/Osc 2 position pins, and a spectral-tilt heat strip to the wavetable editor so custom-wave and WT-position edits read more like a modern wavetable surface instead of a flat scope.
 - Added `WavetableDisplayAudit` coverage for readable frame/plot/partial/spectrum zones, render coverage, direct custom-point edits, and partial-bar edits.
 - Added a generated 16-preset `Club Synth Stabs` factory expansion for normal house/tech-house chord hits, organ jabs, gated rave stabs, and delay-throw chords, bringing the repo-managed factory pack to 438 presets.

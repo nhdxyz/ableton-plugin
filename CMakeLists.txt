@@ -471,3 +471,11 @@ if(EXISTS "${NATE_VST_FACTORY_PRESETS_SOURCE}")
         COMMENT "Installing Nate VST factory presets"
     )
 endif()
+
+add_custom_target(validate_release
+    COMMAND "${CMAKE_COMMAND}" -E env
+            "BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/validate_release.sh"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    USES_TERMINAL
+)

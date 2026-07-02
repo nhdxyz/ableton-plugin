@@ -758,7 +758,7 @@ private:
     juce::Label sequencerRootValueLabel;
     juce::Label sequencerStepEditorLabel;
     juce::Label fxRackStatusLabel;
-    std::array<UI::ModSourceMeter, 19> modSourceRows;
+    std::array<UI::ModSourceMeter, 20> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
     juce::TextEditor presetNameEditor;
     juce::TextEditor presetSearchEditor;
@@ -860,6 +860,10 @@ private:
     void showModulationMenuForControl(const ModulationMenuTarget& target, juce::Component& component);
     void showModRouteAmountMenu(size_t slotIndex, juce::Component& component);
     void setModRouteAmount(size_t slotIndex, float amount);
+    void applyModRouteShapePreset(size_t slotIndex, int presetId);
+    void applyStepLfoPreset(int presetId);
+    void resetModRouteShape(size_t slotIndex);
+    juce::String modRouteShapeSummary(size_t slotIndex) const;
     void addModRouteForParameter(const juce::String& parameterID, const juce::String& labelText, int sourceIndex);
     void configureSectionLabel(juce::Label& label, const juce::String& text);
     juce::Rectangle<int> layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<juce::Component*> components);

@@ -211,6 +211,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
         modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
         modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
         modMatrixEnabled[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixEnabled[index]);
+        modMatrixPolarities[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixPolarity[index]);
+        modMatrixCurves[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixCurve[index]);
+        modMatrixRangeMins[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMin[index]);
+        modMatrixRangeMaxes[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMax[index]);
+        modMatrixSlews[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSlew[index]);
     }
     for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
         lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
@@ -235,6 +240,13 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    stepLfoSync = parameters.getRawParameterValue(Parameters::ID::stepLfoSync);
+    stepLfoSyncRate = parameters.getRawParameterValue(Parameters::ID::stepLfoSyncRate);
+    stepLfoRate = parameters.getRawParameterValue(Parameters::ID::stepLfoRate);
+    stepLfoDepth = parameters.getRawParameterValue(Parameters::ID::stepLfoDepth);
+    stepLfoSlew = parameters.getRawParameterValue(Parameters::ID::stepLfoSlew);
+    for (size_t index = 0; index < stepLfoValues.size(); ++index)
+        stepLfoValues[index] = parameters.getRawParameterValue(Parameters::ID::stepLfoValue[index]);
     modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
     modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
     modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
@@ -337,6 +349,9 @@ void EffectsRack::reset()
     delayWritePosition = 0;
     sendDelayWritePosition = 0;
     combWritePosition = 0;
+    fxModRouteSmoothedValues.fill(0.0f);
+    fxModStepLfoPhase = 0.0f;
+    fxModStepLfoSmoothedValue = 0.0f;
 }
 
 void EffectsRack::setSequencerLock(int destinationIndex, float amount) noexcept
@@ -466,6 +481,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
 
     const auto lfoValue = processFxModulationLfo(numSamples, bpm, ppqPosition);
     const auto lfo2Value = processFxModulationLfo2(numSamples, bpm, ppqPosition);
+    const auto stepLfoValue = processFxStepLfo(numSamples, bpm, ppqPosition);
     const auto modEnvelopeValue = processFxModulationEnvelope(numSamples);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
@@ -478,7 +494,17 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         if (! enabled || sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
+        const auto sourceValue = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
+        const auto contribution = Modulation::processRouteValue(sourceValue,
+                                                                modMatrixPolarities[index],
+                                                                modMatrixCurves[index],
+                                                                modMatrixRangeMins[index],
+                                                                modMatrixRangeMaxes[index],
+                                                                modMatrixSlews[index],
+                                                                fxModRouteSmoothedValues[index],
+                                                                numSamples,
+                                                                currentSampleRate)
+            * amount;
 
         switch (destinationIndex)
         {
@@ -644,6 +670,22 @@ float EffectsRack::processFxModulationLfo2(int numSamples, double bpm, std::opti
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo2Depth, 0.25f);
 }
 
+float EffectsRack::processFxStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    return Modulation::processStepLfo(stepLfoSync,
+                                      stepLfoSyncRate,
+                                      stepLfoRate,
+                                      stepLfoDepth,
+                                      stepLfoSlew,
+                                      stepLfoValues,
+                                      fxModStepLfoPhase,
+                                      fxModStepLfoSmoothedValue,
+                                      numSamples,
+                                      currentSampleRate,
+                                      bpm,
+                                      ppqPosition);
+}
+
 float EffectsRack::evaluateFxLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -657,7 +699,7 @@ float EffectsRack::evaluateFxLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
+float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
@@ -680,6 +722,7 @@ float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, f
         case 17: return fxModAftertouch;
         case 18: return fxModPitchBend;
         case 19: return fxModNote;
+        case Modulation::stepLfoSourceIndex: return stepLfoValue;
         default: return 0.0f;
     }
 }

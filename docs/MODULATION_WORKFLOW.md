@@ -177,6 +177,8 @@ MOD:
 - Current implementation includes right-click amount menus on MOD matrix amount sliders for quick invert, +/-25%, +/-50%, duplicate, and clear actions.
 - Current implementation includes a compact LFO 1 MSEG tool strip for invert, reverse, smooth, quantize, controlled random dice, and UKG swing curve shaping without adding new host parameters.
 - Current implementation includes a responsive route map above the MOD matrix at default and larger editor sizes. It summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while hiding at the minimum compact size to preserve editable row height.
+- Current implementation includes saved route-shaping parameters for each MOD matrix slot: polarity, curve, min/max range clamps, and slew. The amount-slider right-click menu exposes quick shape presets and Step LFO pattern presets when that source is selected.
+- Current implementation includes `Step LFO` as an appended source after the existing source indices, with eight saved step values, sync/free rate, depth, slew, and starter patterns for classic gate, trance chopper, house lift, and techno ratchet motion.
 - Current implementation includes appended expression sources for Mod Wheel, Aftertouch, Pitch Bend, and Note position. These are appended after the original source indices, preserving old preset/session routing.
 - HOME performance storage now uses A/B/C/D scenes. The processor also exposes a first morph path between stored scenes, blending continuous parameters while switching discrete choices safely at the midpoint.
 
@@ -242,7 +244,7 @@ Right-click assignment workflow slice:
 2. Listed compatible modulation sources from the existing matrix source list.
 3. Disabled voice-only Mod Env and Velocity choices for global sample/FX destinations.
 4. Reused the existing inspector destination and route-allocation path, so right-click assignment updates matrix rows, destination rings, route summaries, and saved preset state.
-5. Kept drag-from-source assignment, explicit route ranges, route curves, and route processors as future work.
+5. Kept drag-from-source assignment and direct graphical route handles as future work; first saved range, curve, polarity, and slew processors are now available from the route amount menu.
 
 Visual feedback polish slice:
 
@@ -251,7 +253,7 @@ Visual feedback polish slice:
 3. Added compact horizontal route badges when the control has enough room.
 4. Preserved base tooltips and appended modulation source/depth text instead of replacing the original guidance.
 5. Added hover-to-inspect route feedback through the selected-control strip for MOD-targetable controls.
-6. Kept graphical hover route overlays, source activity meters, and per-route range handles as future work.
+6. Kept graphical hover route overlays and direct per-route range handles as future work.
 
 Route editing polish slice:
 
@@ -262,7 +264,7 @@ Route editing polish slice:
 5. Added right-click amount menus on route amount sliders.
 6. Added quick amount edits for invert, +25%, +50%, -25%, and -50%.
 7. Exposed duplicate and clear from the same amount menu for faster route editing.
-8. Kept explicit min/max route ranges, curve shaping, copy/paste buffers, and solo as future work.
+8. Kept graphical min/max route handles, copy/paste buffers, and solo as future work; saved range, polarity, curve, and slew presets are implemented.
 
 Editable engine slice:
 
@@ -285,8 +287,9 @@ Editable engine slice:
 11. Added saved per-slot route enable flags plus compact bypass/delete controls. Disabled routes keep their source/destination/amount for comparison but no longer affect synth, sample, FX, rings, or depth summaries.
 12. Added reusable LFO curve presets, a phase cursor on the curve display, current-value-relative destination rings, and compact route-count/depth badges on modulated knobs.
 13. Added direct LFO 1 MSEG transform tools for invert, reverse, smooth, quantize, controlled random dice, and UKG swing shapes while reusing the saved `lfo1_curve_*` parameters.
+14. Added first-pass route processors for saved per-slot polarity, curve, range, and slew, plus an appended Step LFO source with eight saved steps and starter pattern presets.
 
 Remaining modulation work:
 
 - Add a real global Mod Env/Velocity aggregation strategy before allowing those sources to drive sample or FX targets.
-- Expand draggable curve editing into per-slot curve modulation and bipolar/unipolar curve modes after the current LFO and Pump editors have been tested in Ableton.
+- Expand draggable curve editing into direct per-slot curve/range editing after the current LFO, Pump, and route-shaping presets have been tested in Ableton.

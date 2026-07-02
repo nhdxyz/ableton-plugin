@@ -1,5 +1,7 @@
 #include "PluginEditor.h"
 
+#include "Modulation/ModulationRouting.h"
+
 #include <algorithm>
 #include <cmath>
 #include <initializer_list>
@@ -1214,7 +1216,7 @@ juce::String controlFeelTooltip(const juce::String& labelText)
 
 juce::String modSourceSummaryText(size_t index)
 {
-    static const std::array<const char*, 19> sourceTexts {
+    static const std::array<const char*, 20> sourceTexts {
         "LFO 1: synced shape source",
         "Mod Env: assignable ADSR",
         "Velocity: note force",
@@ -1233,7 +1235,8 @@ juce::String modSourceSummaryText(size_t index)
         "Mod Wheel: MIDI CC1 expression",
         "Aftertouch: pressure expression",
         "Pitch Bend: bipolar wheel source",
-        "Note: key position source"
+        "Note: key position source",
+        "Step LFO: eight-step motion"
     };
 
     if (index < sourceTexts.size())
@@ -6924,6 +6927,24 @@ void NateVSTAudioProcessorEditor::showModRouteAmountMenu(size_t slotIndex, juce:
     menu.addItem(13, "Set -25%", isConfiguredRoute);
     menu.addItem(14, "Set -50%", isConfiguredRoute);
     menu.addSeparator();
+    const auto shapeSummary = modRouteShapeSummary(slotIndex);
+    menu.addSectionHeader(shapeSummary.isNotEmpty() ? "Shape: " + shapeSummary : "Shape");
+    menu.addItem(30, "Reset Shape", isConfiguredRoute, shapeSummary.isEmpty());
+    menu.addItem(31, "Unipolar +", isConfiguredRoute);
+    menu.addItem(32, "Invert Source", isConfiguredRoute);
+    menu.addItem(33, "Soft + Slew", isConfiguredRoute);
+    menu.addItem(34, "Gate Steps", isConfiguredRoute);
+    menu.addItem(35, "Narrow Range", isConfiguredRoute);
+    menu.addItem(36, "Positive Range", isConfiguredRoute);
+    menu.addItem(37, "Smooth Only", isConfiguredRoute);
+    menu.addSeparator();
+    const auto isStepLfoRoute = sourceIndex == Modulation::stepLfoSourceIndex;
+    menu.addSectionHeader("Step LFO Pattern");
+    menu.addItem(40, "Classic Gate", isConfiguredRoute && isStepLfoRoute);
+    menu.addItem(41, "Trance Chopper", isConfiguredRoute && isStepLfoRoute);
+    menu.addItem(42, "House Lift", isConfiguredRoute && isStepLfoRoute);
+    menu.addItem(43, "Techno Ratchet", isConfiguredRoute && isStepLfoRoute);
+    menu.addSeparator();
     menu.addItem(20, "Duplicate Route", isConfiguredRoute);
     menu.addItem(21, "Clear Route", isConfiguredRoute);
 
@@ -6942,6 +6963,22 @@ void NateVSTAudioProcessorEditor::showModRouteAmountMenu(size_t slotIndex, juce:
                                case 12: editor->setModRouteAmount(slotIndex, 0.50f); break;
                                case 13: editor->setModRouteAmount(slotIndex, -0.25f); break;
                                case 14: editor->setModRouteAmount(slotIndex, -0.50f); break;
+                               case 30:
+                               case 31:
+                               case 32:
+                               case 33:
+                               case 34:
+                               case 35:
+                               case 36:
+                               case 37:
+                                   editor->applyModRouteShapePreset(slotIndex, result - 30);
+                                   break;
+                               case 40:
+                               case 41:
+                               case 42:
+                               case 43:
+                                   editor->applyStepLfoPreset(result - 40);
+                                   break;
                                case 20: editor->duplicateModRoute(slotIndex); break;
                                case 21: editor->deleteModRoute(slotIndex); break;
                                default: break;
@@ -6967,6 +7004,143 @@ void NateVSTAudioProcessorEditor::setModRouteAmount(size_t slotIndex, float amou
                                      + " amount " + (amount >= 0.0f ? "+" : "")
                                      + juce::String(juce::roundToInt(amount * 100.0f)) + "%",
                                  juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::applyModRouteShapePreset(size_t slotIndex, int presetId)
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return;
+
+    captureGlobalEdit("Edit mod route shape");
+    resetModRouteShape(slotIndex);
+
+    switch (presetId)
+    {
+        case 1:
+            setPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 1.0f);
+            break;
+
+        case 2:
+            setPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 3.0f);
+            break;
+
+        case 3:
+            setPlainParameterValue(Parameters::ID::modMatrixCurve[slotIndex], 1.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixSlew[slotIndex], 0.28f);
+            break;
+
+        case 4:
+            setPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 1.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixCurve[slotIndex], 4.0f);
+            break;
+
+        case 5:
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMin[slotIndex], -0.55f);
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMax[slotIndex], 0.55f);
+            break;
+
+        case 6:
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMin[slotIndex], 0.0f);
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMax[slotIndex], 1.0f);
+            break;
+
+        case 7:
+            setPlainParameterValue(Parameters::ID::modMatrixSlew[slotIndex], 0.38f);
+            break;
+
+        case 0:
+        default:
+            break;
+    }
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    updateModInspectorStatus();
+    updateMacroAssignmentEditorStatus();
+
+    const auto summary = modRouteShapeSummary(slotIndex);
+    modMatrixStatusLabel.setText("S" + juce::String(static_cast<int>(slotIndex + 1))
+                                     + (summary.isNotEmpty() ? " shape " + summary : " shape reset"),
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::applyStepLfoPreset(int presetId)
+{
+    static constexpr std::array<std::array<float, 8>, 4> stepPresets {{
+        { 1.0f, -0.15f, 0.72f, -0.45f, 0.92f, 0.08f, -0.68f, 0.32f },
+        { 1.0f, -1.0f, 0.78f, -1.0f, 1.0f, -0.72f, 0.58f, -1.0f },
+        { -0.20f, 0.18f, 0.46f, 0.82f, -0.10f, 0.28f, 0.58f, 1.0f },
+        { 1.0f, 0.35f, -0.82f, 0.35f, 0.78f, -0.45f, 1.0f, -0.70f }
+    }};
+
+    static constexpr std::array<const char*, 4> names {
+        "Classic Gate",
+        "Trance Chopper",
+        "House Lift",
+        "Techno Ratchet"
+    };
+
+    const auto safePreset = juce::jlimit(0, static_cast<int>(stepPresets.size() - 1), presetId);
+    captureGlobalEdit("Load Step LFO pattern");
+    setPlainParameterValue(Parameters::ID::stepLfoSync, 1.0f);
+    setPlainParameterValue(Parameters::ID::stepLfoSyncRate, safePreset == 1 || safePreset == 3 ? 3.0f : 1.0f);
+    setPlainParameterValue(Parameters::ID::stepLfoRate, 2.0f);
+    setPlainParameterValue(Parameters::ID::stepLfoDepth, safePreset == 1 ? 0.72f : 0.58f);
+    setPlainParameterValue(Parameters::ID::stepLfoSlew, safePreset == 2 ? 0.18f : 0.0f);
+
+    for (size_t index = 0; index < Parameters::ID::stepLfoValue.size(); ++index)
+        setPlainParameterValue(Parameters::ID::stepLfoValue[index], stepPresets[static_cast<size_t>(safePreset)][index]);
+
+    updateModMatrixRows();
+    updateModDestinationIndicators();
+    modMatrixStatusLabel.setText("Loaded Step LFO " + juce::String(names[static_cast<size_t>(safePreset)]),
+                                 juce::dontSendNotification);
+}
+
+void NateVSTAudioProcessorEditor::resetModRouteShape(size_t slotIndex)
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return;
+
+    setPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixCurve[slotIndex], 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixRangeMin[slotIndex], -1.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixRangeMax[slotIndex], 1.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixSlew[slotIndex], 0.0f);
+}
+
+juce::String NateVSTAudioProcessorEditor::modRouteShapeSummary(size_t slotIndex) const
+{
+    if (slotIndex >= Parameters::ID::modMatrixSource.size())
+        return {};
+
+    juce::StringArray parts;
+    const auto polarityChoices = Parameters::modulationRoutePolarityChoices();
+    const auto curveChoices = Parameters::modulationRouteCurveChoices();
+    const auto polarityIndex = juce::jlimit(0,
+                                            polarityChoices.size() - 1,
+                                            juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 0.0f)));
+    const auto curveIndex = juce::jlimit(0,
+                                         curveChoices.size() - 1,
+                                         juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixCurve[slotIndex], 0.0f)));
+    const auto rangeMin = readPlainParameterValue(Parameters::ID::modMatrixRangeMin[slotIndex], -1.0f);
+    const auto rangeMax = readPlainParameterValue(Parameters::ID::modMatrixRangeMax[slotIndex], 1.0f);
+    const auto slew = readPlainParameterValue(Parameters::ID::modMatrixSlew[slotIndex], 0.0f);
+
+    if (polarityIndex > 0)
+        parts.add(polarityChoices[polarityIndex]);
+    if (curveIndex > 0)
+        parts.add(curveChoices[curveIndex]);
+    if (std::abs(rangeMin + 1.0f) > 0.002f || std::abs(rangeMax - 1.0f) > 0.002f)
+    {
+        const auto minPercent = juce::roundToInt(rangeMin * 100.0f);
+        const auto maxPercent = juce::roundToInt(rangeMax * 100.0f);
+        parts.add("Range " + juce::String(minPercent) + ".." + juce::String(maxPercent) + "%");
+    }
+    if (slew > 0.002f)
+        parts.add("Slew " + juce::String(juce::roundToInt(slew * 100.0f)) + "%");
+
+    return parts.joinIntoString(", ");
 }
 
 void NateVSTAudioProcessorEditor::addModRouteForParameter(const juce::String& parameterID,
@@ -12117,8 +12291,9 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
         const auto destinationText = choiceName(destinationChoices, destinationIndex);
         const auto isConfiguredRoute = sourceIndex > 0 && destinationIndex > 0 && std::abs(amount) > 0.001f;
         const auto isActiveRoute = enabled && isConfiguredRoute;
+        const auto shapeSummary = isConfiguredRoute ? modRouteShapeSummary(index) : juce::String {};
 
-        modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount, enabled);
+        modMatrixRows[index].setState(static_cast<int>(index + 1), sourceText, destinationText, amount, enabled, shapeSummary);
         if (isConfiguredRoute)
             routeMapRoutes.push_back({ sourceText, destinationText, amount, enabled });
         modSlotEnabledButtons[index].setButtonText(enabled ? "On" : "Off");
@@ -12293,6 +12468,19 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
 
         case 19:
             return 0.5f;
+
+        case 20:
+        {
+            const auto phase = lfoPhase(readPlainParameterValue(Parameters::ID::stepLfoSync, 1.0f) >= 0.5f,
+                                        juce::roundToInt(readPlainParameterValue(Parameters::ID::stepLfoSyncRate, 3.0f)),
+                                        readPlainParameterValue(Parameters::ID::stepLfoRate, 2.0f),
+                                        0.0f);
+            const auto stepIndex = juce::jlimit(0,
+                                                static_cast<int>(Parameters::ID::stepLfoValue.size() - 1),
+                                                static_cast<int>(std::floor(phase * static_cast<float>(Parameters::ID::stepLfoValue.size()))));
+            const auto value = readPlainParameterValue(Parameters::ID::stepLfoValue[static_cast<size_t>(stepIndex)], 0.0f);
+            return bipolarActivity(value, readPlainParameterValue(Parameters::ID::stepLfoDepth, 0.55f));
+        }
 
         default:
             return 0.0f;
@@ -12544,6 +12732,7 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], defaultAmount);
     setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+    resetModRouteShape(slotIndex);
 
     updateModMatrixRows();
     updateModDestinationIndicators();
@@ -12593,6 +12782,7 @@ void NateVSTAudioProcessorEditor::addMacroAssignment(bool replaceExisting)
             setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
             setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
             setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+            resetModRouteShape(index);
             continue;
         }
 
@@ -12657,6 +12847,7 @@ void NateVSTAudioProcessorEditor::clearSelectedMacroAssignments()
         setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+        resetModRouteShape(index);
         ++clearedCount;
     }
 
@@ -12720,6 +12911,16 @@ void NateVSTAudioProcessorEditor::duplicateModRoute(size_t slotIndex)
     setPlainParameterValue(Parameters::ID::modMatrixDestination[targetIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[targetIndex], amount);
     setPlainParameterValue(Parameters::ID::modMatrixEnabled[targetIndex], enabled >= 0.5f ? 1.0f : 0.0f);
+    setPlainParameterValue(Parameters::ID::modMatrixPolarity[targetIndex],
+                           readPlainParameterValue(Parameters::ID::modMatrixPolarity[slotIndex], 0.0f));
+    setPlainParameterValue(Parameters::ID::modMatrixCurve[targetIndex],
+                           readPlainParameterValue(Parameters::ID::modMatrixCurve[slotIndex], 0.0f));
+    setPlainParameterValue(Parameters::ID::modMatrixRangeMin[targetIndex],
+                           readPlainParameterValue(Parameters::ID::modMatrixRangeMin[slotIndex], -1.0f));
+    setPlainParameterValue(Parameters::ID::modMatrixRangeMax[targetIndex],
+                           readPlainParameterValue(Parameters::ID::modMatrixRangeMax[slotIndex], 1.0f));
+    setPlainParameterValue(Parameters::ID::modMatrixSlew[targetIndex],
+                           readPlainParameterValue(Parameters::ID::modMatrixSlew[slotIndex], 0.0f));
 
     updateModMatrixRows();
     updateModDestinationIndicators();
@@ -12746,6 +12947,7 @@ void NateVSTAudioProcessorEditor::deleteModRoute(size_t slotIndex)
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f);
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
     setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+    resetModRouteShape(slotIndex);
 
     updateModMatrixRows();
     updateModDestinationIndicators();
@@ -12789,6 +12991,7 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
         setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
         setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+        resetModRouteShape(index);
         ++clearedCount;
     }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Modulation/ModulationRouting.h"
 #include "../Parameters.h"
 
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -78,6 +79,9 @@ private:
     float fxModChaosValue = 0.0f;
     float fxModLfo2Phase = 0.0f;
     float fxModLfo2StepValue = 0.0f;
+    float fxModStepLfoPhase = 0.0f;
+    float fxModStepLfoSmoothedValue = 0.0f;
+    std::array<float, 8> fxModRouteSmoothedValues {};
     juce::ADSR fxModEnvelope;
     juce::ADSR::Parameters fxModEnvelopeParameters;
     float fxModEnvelopeValue = 0.0f;
@@ -186,6 +190,11 @@ private:
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
     std::array<std::atomic<float>*, 8> modMatrixAmounts {};
     std::array<std::atomic<float>*, 8> modMatrixEnabled {};
+    std::array<std::atomic<float>*, 8> modMatrixPolarities {};
+    std::array<std::atomic<float>*, 8> modMatrixCurves {};
+    std::array<std::atomic<float>*, 8> modMatrixRangeMins {};
+    std::array<std::atomic<float>*, 8> modMatrixRangeMaxes {};
+    std::array<std::atomic<float>*, 8> modMatrixSlews {};
     std::atomic<float>* macroTone = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;
@@ -207,6 +216,12 @@ private:
     std::atomic<float>* lfo2Shape = nullptr;
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2Phase = nullptr;
+    std::atomic<float>* stepLfoSync = nullptr;
+    std::atomic<float>* stepLfoSyncRate = nullptr;
+    std::atomic<float>* stepLfoRate = nullptr;
+    std::atomic<float>* stepLfoDepth = nullptr;
+    std::atomic<float>* stepLfoSlew = nullptr;
+    std::array<std::atomic<float>*, 8> stepLfoValues {};
     std::atomic<float>* modEnv1Attack = nullptr;
     std::atomic<float>* modEnv1Decay = nullptr;
     std::atomic<float>* modEnv1Sustain = nullptr;
@@ -221,8 +236,9 @@ private:
     void updateFxModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float processFxStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateFxLfoCurve(float phase) const;
-    float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
+    float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     void processModule(int moduleIndex,
                        juce::AudioBuffer<float>& buffer,
                        double bpm,

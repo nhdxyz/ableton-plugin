@@ -103,6 +103,13 @@ Voice::Voice(Parameters::APVTS& state)
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2PhaseParam = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
     lfo2Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo2Retrigger);
+    stepLfoSync = parameters.getRawParameterValue(Parameters::ID::stepLfoSync);
+    stepLfoSyncRate = parameters.getRawParameterValue(Parameters::ID::stepLfoSyncRate);
+    stepLfoRate = parameters.getRawParameterValue(Parameters::ID::stepLfoRate);
+    stepLfoDepth = parameters.getRawParameterValue(Parameters::ID::stepLfoDepth);
+    stepLfoSlew = parameters.getRawParameterValue(Parameters::ID::stepLfoSlew);
+    for (size_t index = 0; index < stepLfoValues.size(); ++index)
+        stepLfoValues[index] = parameters.getRawParameterValue(Parameters::ID::stepLfoValue[index]);
 
     modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
     modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
@@ -116,6 +123,11 @@ Voice::Voice(Parameters::APVTS& state)
         modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
         modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
         modMatrixEnabled[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixEnabled[index]);
+        modMatrixPolarities[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixPolarity[index]);
+        modMatrixCurves[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixCurve[index]);
+        modMatrixRangeMins[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMin[index]);
+        modMatrixRangeMaxes[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMax[index]);
+        modMatrixSlews[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSlew[index]);
     }
 }
 
@@ -140,6 +152,9 @@ void Voice::prepare(double sampleRate, int maximumBlockSize)
     modEnvelope.setSampleRate(sampleRate);
     leftFilter.prepare(sampleRate, maximumBlockSize);
     rightFilter.prepare(sampleRate, maximumBlockSize);
+    modRouteSmoothedValues.fill(0.0f);
+    stepLfoPhase = 0.0f;
+    stepLfoSmoothedValue = 0.0f;
 }
 
 void Voice::setHostBpm(double bpm) noexcept
@@ -220,6 +235,10 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
         lfo2Phase = 0.0f;
         lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
     }
+
+    stepLfoPhase = 0.0f;
+    stepLfoSmoothedValue = 0.0f;
+    modRouteSmoothedValues.fill(0.0f);
 }
 
 void Voice::stopNote(float, bool allowTailOff)
@@ -367,6 +386,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
 
     const auto lfoValue = processLfo(samplesToAdvance) * readParameter(lfo1Depth, 0.45f);
     const auto lfo2Value = processLfo2(samplesToAdvance) * readParameter(lfo2Depth, 0.25f);
+    const auto stepLfoValue = processStepLfo(samplesToAdvance);
     auto modEnvelopeRaw = 0.0f;
     for (auto sample = 0; sample < samplesToAdvance; ++sample)
         modEnvelopeRaw = modEnvelope.process();
@@ -391,7 +411,17 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
         if (! enabled || sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
+        const auto sourceValue = evaluateModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
+        const auto contribution = Modulation::processRouteValue(sourceValue,
+                                                                modMatrixPolarities[index],
+                                                                modMatrixCurves[index],
+                                                                modMatrixRangeMins[index],
+                                                                modMatrixRangeMaxes[index],
+                                                                modMatrixSlews[index],
+                                                                modRouteSmoothedValues[index],
+                                                                samplesToAdvance,
+                                                                currentSampleRate)
+            * amount;
 
         switch (destinationIndex)
         {
@@ -724,6 +754,21 @@ float Voice::processLfo2(int samplesToAdvance)
     return juce::jlimit(-1.0f, 1.0f, value);
 }
 
+float Voice::processStepLfo(int samplesToAdvance)
+{
+    return Modulation::processStepLfo(stepLfoSync,
+                                      stepLfoSyncRate,
+                                      stepLfoRate,
+                                      stepLfoDepth,
+                                      stepLfoSlew,
+                                      stepLfoValues,
+                                      stepLfoPhase,
+                                      stepLfoSmoothedValue,
+                                      samplesToAdvance,
+                                      currentSampleRate,
+                                      hostBpm);
+}
+
 float Voice::evaluateLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -737,7 +782,7 @@ float Voice::evaluateLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
+float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
@@ -760,6 +805,7 @@ float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo
         case 17: return aftertouch;
         case 18: return pitchBendNormalised;
         case 19: return notePosition;
+        case Modulation::stepLfoSourceIndex: return stepLfoValue;
         default: return 0.0f;
     }
 }

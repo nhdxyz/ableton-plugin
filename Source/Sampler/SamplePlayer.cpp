@@ -194,6 +194,11 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
         modMatrixDestinations[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixDestination[index]);
         modMatrixAmounts[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixAmount[index]);
         modMatrixEnabled[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixEnabled[index]);
+        modMatrixPolarities[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixPolarity[index]);
+        modMatrixCurves[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixCurve[index]);
+        modMatrixRangeMins[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMin[index]);
+        modMatrixRangeMaxes[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixRangeMax[index]);
+        modMatrixSlews[index] = parameters.getRawParameterValue(Parameters::ID::modMatrixSlew[index]);
     }
     for (size_t index = 0; index < lfo1CurvePoints.size(); ++index)
         lfo1CurvePoints[index] = parameters.getRawParameterValue(Parameters::ID::lfo1Curve[index]);
@@ -218,6 +223,13 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    stepLfoSync = parameters.getRawParameterValue(Parameters::ID::stepLfoSync);
+    stepLfoSyncRate = parameters.getRawParameterValue(Parameters::ID::stepLfoSyncRate);
+    stepLfoRate = parameters.getRawParameterValue(Parameters::ID::stepLfoRate);
+    stepLfoDepth = parameters.getRawParameterValue(Parameters::ID::stepLfoDepth);
+    stepLfoSlew = parameters.getRawParameterValue(Parameters::ID::stepLfoSlew);
+    for (size_t index = 0; index < stepLfoValues.size(); ++index)
+        stepLfoValues[index] = parameters.getRawParameterValue(Parameters::ID::stepLfoValue[index]);
     modEnv1Attack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
     modEnv1Decay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
     modEnv1Sustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
@@ -242,6 +254,9 @@ void SamplePlayer::prepare(double sampleRate)
     sampleModSmoothRandomValue = sampleModLfoStepValue;
     sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sampleModStepLfoPhase = 0.0f;
+    sampleModStepLfoSmoothedValue = 0.0f;
+    sampleModRouteSmoothedValues.fill(0.0f);
 }
 
 void SamplePlayer::clear()
@@ -257,6 +272,9 @@ void SamplePlayer::clear()
     sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
     sampleModLfo2Phase = 0.0f;
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    sampleModStepLfoPhase = 0.0f;
+    sampleModStepLfoSmoothedValue = 0.0f;
+    sampleModRouteSmoothedValues.fill(0.0f);
     sampleModEnvelope.reset();
     sampleModEnvelopeValue = 0.0f;
     sampleModVelocity = 0.0f;
@@ -803,6 +821,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
 
     const auto lfoValue = processSampleModulationLfo(numSamples, bpm, ppqPosition);
     const auto lfo2Value = processSampleModulationLfo2(numSamples, bpm, ppqPosition);
+    const auto stepLfoValue = processSampleStepLfo(numSamples, bpm, ppqPosition);
     const auto modEnvelopeValue = processSampleModulationEnvelope(numSamples);
 
     for (size_t index = 0; index < modMatrixSources.size(); ++index)
@@ -815,7 +834,17 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
         if (! enabled || sourceIndex == 0 || destinationIndex < 12 || std::abs(amount) <= 0.0001f)
             continue;
 
-        const auto contribution = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value, modEnvelopeValue) * amount;
+        const auto sourceValue = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
+        const auto contribution = Modulation::processRouteValue(sourceValue,
+                                                                modMatrixPolarities[index],
+                                                                modMatrixCurves[index],
+                                                                modMatrixRangeMins[index],
+                                                                modMatrixRangeMaxes[index],
+                                                                modMatrixSlews[index],
+                                                                sampleModRouteSmoothedValues[index],
+                                                                numSamples,
+                                                                playbackSampleRate)
+            * amount;
 
         switch (destinationIndex)
         {
@@ -969,6 +998,22 @@ float SamplePlayer::processSampleModulationLfo2(int numSamples, double bpm, std:
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo2Depth, 0.25f);
 }
 
+float SamplePlayer::processSampleStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition)
+{
+    return Modulation::processStepLfo(stepLfoSync,
+                                      stepLfoSyncRate,
+                                      stepLfoRate,
+                                      stepLfoDepth,
+                                      stepLfoSlew,
+                                      stepLfoValues,
+                                      sampleModStepLfoPhase,
+                                      sampleModStepLfoSmoothedValue,
+                                      numSamples,
+                                      playbackSampleRate,
+                                      bpm,
+                                      ppqPosition);
+}
+
 float SamplePlayer::evaluateSampleLfoCurve(float phase) const
 {
     constexpr auto pointCount = 8;
@@ -982,7 +1027,7 @@ float SamplePlayer::evaluateSampleLfoCurve(float phase) const
     return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
-float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const
+float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const
 {
     switch (sourceIndex)
     {
@@ -1005,6 +1050,7 @@ float SamplePlayer::evaluateSampleModulationSource(int sourceIndex, float lfoVal
         case 17: return sampleModAftertouch;
         case 18: return sampleModPitchBend;
         case 19: return sampleModNote;
+        case Modulation::stepLfoSourceIndex: return stepLfoValue;
         default: return 0.0f;
     }
 }

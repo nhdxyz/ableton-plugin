@@ -13,13 +13,15 @@ void ModMatrixRow::setState(int newSlotNumber,
                             const juce::String& newSourceText,
                             const juce::String& newDestinationText,
                             float newAmount,
-                            bool newEnabled)
+                            bool newEnabled,
+                            const juce::String& newShapeText)
 {
     newAmount = juce::jlimit(-1.0f, 1.0f, newAmount);
 
     if (slotNumber == newSlotNumber
         && sourceText == newSourceText
         && destinationText == newDestinationText
+        && shapeText == newShapeText
         && std::abs(amount - newAmount) < 0.001f
         && enabled == newEnabled)
     {
@@ -29,6 +31,7 @@ void ModMatrixRow::setState(int newSlotNumber,
     slotNumber = newSlotNumber;
     sourceText = newSourceText;
     destinationText = newDestinationText;
+    shapeText = newShapeText;
     amount = newAmount;
     enabled = newEnabled;
     repaint();
@@ -44,6 +47,7 @@ juce::String ModMatrixRow::getTooltip()
         + ": " + sourceText
         + " -> " + destinationText
         + " (" + (percent >= 0 ? "+" : "") + juce::String(percent) + "%)"
+        + (shapeText.isNotEmpty() ? " | " + shapeText : "")
         + (enabled ? "" : " bypassed");
 }
 

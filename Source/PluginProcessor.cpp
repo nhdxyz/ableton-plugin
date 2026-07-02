@@ -5444,7 +5444,9 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::lfo2Sync,
                 Parameters::ID::lfo2SyncRate,
                 Parameters::ID::lfo2Shape,
-                Parameters::ID::lfo2Retrigger
+                Parameters::ID::lfo2Retrigger,
+                Parameters::ID::stepLfoSync,
+                Parameters::ID::stepLfoSyncRate
             }, intensity);
             blendParameterGroupFromState(state, {
                 Parameters::ID::ampAttack,
@@ -5457,6 +5459,9 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::lfo2Rate,
                 Parameters::ID::lfo2Depth,
                 Parameters::ID::lfo2Phase,
+                Parameters::ID::stepLfoRate,
+                Parameters::ID::stepLfoDepth,
+                Parameters::ID::stepLfoSlew,
                 Parameters::ID::modEnv1Attack,
                 Parameters::ID::modEnv1Decay,
                 Parameters::ID::modEnv1Sustain,
@@ -5464,10 +5469,16 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::modEnv1Depth
             }, intensity);
             blendArray(Parameters::ID::lfo1Curve);
+            blendArray(Parameters::ID::stepLfoValue);
             blendArray(Parameters::ID::modMatrixAmount);
+            blendArray(Parameters::ID::modMatrixRangeMin);
+            blendArray(Parameters::ID::modMatrixRangeMax);
+            blendArray(Parameters::ID::modMatrixSlew);
             restoreDiscreteArray(Parameters::ID::modMatrixSource);
             restoreDiscreteArray(Parameters::ID::modMatrixDestination);
             restoreDiscreteArray(Parameters::ID::modMatrixEnabled);
+            restoreDiscreteArray(Parameters::ID::modMatrixPolarity);
+            restoreDiscreteArray(Parameters::ID::modMatrixCurve);
             break;
 
         case RandomMutationScope::filter:
@@ -5853,6 +5864,11 @@ void NateVSTAudioProcessor::restoreModulationFromState(const juce::ValueTree& st
         Parameters::ID::lfo2Depth,
         Parameters::ID::lfo2Phase,
         Parameters::ID::lfo2Retrigger,
+        Parameters::ID::stepLfoSync,
+        Parameters::ID::stepLfoSyncRate,
+        Parameters::ID::stepLfoRate,
+        Parameters::ID::stepLfoDepth,
+        Parameters::ID::stepLfoSlew,
         Parameters::ID::modEnv1Attack,
         Parameters::ID::modEnv1Decay,
         Parameters::ID::modEnv1Sustain,
@@ -5861,6 +5877,9 @@ void NateVSTAudioProcessor::restoreModulationFromState(const juce::ValueTree& st
     });
 
     for (const auto* parameterID : Parameters::ID::lfo1Curve)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::stepLfoValue)
         restoreParameterFromState(state, parameterID);
 
     for (const auto* parameterID : Parameters::ID::modMatrixSource)
@@ -5873,6 +5892,21 @@ void NateVSTAudioProcessor::restoreModulationFromState(const juce::ValueTree& st
         restoreParameterFromState(state, parameterID);
 
     for (const auto* parameterID : Parameters::ID::modMatrixEnabled)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixPolarity)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixCurve)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixRangeMin)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixRangeMax)
+        restoreParameterFromState(state, parameterID);
+
+    for (const auto* parameterID : Parameters::ID::modMatrixSlew)
         restoreParameterFromState(state, parameterID);
 }
 
@@ -6839,6 +6873,10 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasSequencerLockControls = stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDestination).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::sequencerLockDepth).isValid();
     const auto hasModMatrixEnabled = stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixEnabled[0]).isValid();
+    const auto hasStepLfoControls = stateForParameters.getChildWithProperty("id", Parameters::ID::stepLfoSync).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::stepLfoValue.back()).isValid();
+    const auto hasModMatrixRouteShape = stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixPolarity[0]).isValid()
+        && stateForParameters.getChildWithProperty("id", Parameters::ID::modMatrixSlew[0]).isValid();
 
     if (shouldRestorePerformanceSnapshots)
         restorePerformanceSnapshotsFromState(state);
@@ -6985,6 +7023,33 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     if (! hasModMatrixEnabled)
         for (const auto* parameterID : Parameters::ID::modMatrixEnabled)
             setParameterPlainValue(parameterID, 1.0f);
+
+    if (! hasStepLfoControls)
+    {
+        constexpr std::array<float, 8> defaultStepLfoValues {
+            1.0f, -0.15f, 0.62f, -0.45f, 0.84f, 0.18f, -0.72f, 0.36f
+        };
+
+        setParameterPlainValue(Parameters::ID::stepLfoSync, 1.0f);
+        setParameterPlainValue(Parameters::ID::stepLfoSyncRate, 3.0f);
+        setParameterPlainValue(Parameters::ID::stepLfoRate, 2.0f);
+        setParameterPlainValue(Parameters::ID::stepLfoDepth, 0.55f);
+        setParameterPlainValue(Parameters::ID::stepLfoSlew, 0.0f);
+        for (size_t index = 0; index < Parameters::ID::stepLfoValue.size(); ++index)
+            setParameterPlainValue(Parameters::ID::stepLfoValue[index], defaultStepLfoValues[index]);
+    }
+
+    if (! hasModMatrixRouteShape)
+    {
+        for (size_t index = 0; index < Parameters::ID::modMatrixPolarity.size(); ++index)
+        {
+            setParameterPlainValue(Parameters::ID::modMatrixPolarity[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixCurve[index], 0.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixRangeMin[index], -1.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixRangeMax[index], 1.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixSlew[index], 0.0f);
+        }
+    }
 
     restoreSampleFileReference(stateForParameters.getProperty("sample_file").toString());
 

@@ -58,6 +58,11 @@ void clearModMatrix(NateVSTAudioProcessor& processor)
         setPlainParameter(processor, Parameters::ID::modMatrixDestination[index], 0.0f);
         setPlainParameter(processor, Parameters::ID::modMatrixAmount[index], 0.0f);
         setPlainParameter(processor, Parameters::ID::modMatrixEnabled[index], 1.0f);
+        setPlainParameter(processor, Parameters::ID::modMatrixPolarity[index], 0.0f);
+        setPlainParameter(processor, Parameters::ID::modMatrixCurve[index], 0.0f);
+        setPlainParameter(processor, Parameters::ID::modMatrixRangeMin[index], -1.0f);
+        setPlainParameter(processor, Parameters::ID::modMatrixRangeMax[index], 1.0f);
+        setPlainParameter(processor, Parameters::ID::modMatrixSlew[index], 0.0f);
     }
 }
 

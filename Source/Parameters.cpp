@@ -170,7 +170,8 @@ juce::StringArray modulationSourceChoices()
         "Mod Wheel",
         "Aftertouch",
         "Pitch Bend",
-        "Note"
+        "Note",
+        "Step LFO"
     };
 }
 
@@ -200,6 +201,16 @@ juce::StringArray modulationDestinationChoices()
         "FX Send Delay",
         "FX Send Reverb"
     };
+}
+
+juce::StringArray modulationRoutePolarityChoices()
+{
+    return { "Bipolar", "Unipolar +", "Unipolar -", "Invert" };
+}
+
+juce::StringArray modulationRouteCurveChoices()
+{
+    return { "Linear", "Soft", "Tight", "Expo", "Gate" };
 }
 
 APVTS::ParameterLayout createLayout()
@@ -551,6 +562,49 @@ APVTS::ParameterLayout createLayout()
         "LFO 2 Retrigger",
         true));
 
+    add(std::make_unique<juce::AudioParameterBool>(
+        ID::stepLfoSync,
+        "Step LFO Sync",
+        true));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::stepLfoSyncRate,
+        "Step LFO Sync Rate",
+        lfoSyncRateChoices(),
+        3));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::stepLfoRate,
+        "Step LFO Rate",
+        skewedRange(0.05f, 20.0f, 2.0f),
+        2.0f,
+        juce::AudioParameterFloatAttributes().withLabel("Hz")));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::stepLfoDepth,
+        "Step LFO Depth",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.55f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::stepLfoSlew,
+        "Step LFO Slew",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    constexpr std::array<float, 8> defaultStepLfoValues {
+        1.0f, -0.15f, 0.62f, -0.45f, 0.84f, 0.18f, -0.72f, 0.36f
+    };
+
+    for (size_t index = 0; index < ID::stepLfoValue.size(); ++index)
+    {
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::stepLfoValue[index],
+            "Step LFO " + juce::String(static_cast<int>(index + 1)),
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+            defaultStepLfoValues[index]));
+    }
+
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::modEnv1Attack,
         "Mod Env 1 Attack",
@@ -608,6 +662,36 @@ APVTS::ParameterLayout createLayout()
             ID::modMatrixEnabled[index],
             "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Enabled",
             true));
+
+        add(std::make_unique<juce::AudioParameterChoice>(
+            ID::modMatrixPolarity[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Polarity",
+            modulationRoutePolarityChoices(),
+            0));
+
+        add(std::make_unique<juce::AudioParameterChoice>(
+            ID::modMatrixCurve[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Curve",
+            modulationRouteCurveChoices(),
+            0));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::modMatrixRangeMin[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Range Min",
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+            -1.0f));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::modMatrixRangeMax[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Range Max",
+            juce::NormalisableRange<float> { -1.0f, 1.0f, 0.001f },
+            1.0f));
+
+        add(std::make_unique<juce::AudioParameterFloat>(
+            ID::modMatrixSlew[index],
+            "Mod Slot " + juce::String(static_cast<int>(index + 1)) + " Slew",
+            juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+            0.0f));
     }
 
     add(std::make_unique<juce::AudioParameterFloat>(

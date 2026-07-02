@@ -68,7 +68,7 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 ## Highest-Level Gaps
 
 1. The synth source engine is still shallow compared with modern hybrid synths.
-2. Modulation is functional, but assignment, route ranges, and source parity are not yet complete.
+2. Modulation is functional and now has first-pass route shaping, but drag assignment, visual range editing, true MSEG lanes, and full source parity are not yet complete.
 3. The sampler is now a stronger visual chop starter with eight-pad slice overlays and focus editing, but not yet a serious UKG vocal and phrase instrument.
 4. The sequencer is useful and now has first-pass genre groove templates, saved/exported ratchets, odd/even/fill step conditions, a saved/exported Slide lane with live/export legato overlap, scene-chain export, first-pass `Build 4-Bar Chain` scene generation, first-pass live scene-chain step/control playback, adaptive expanded-focus `Auto` / `2 Bar` / `4 Bar` chain length mode, Bass Contour, Chord Stab Paint, and current/chain MIDI drag-out, but not yet arranger-style chain editing, deeper per-scene automation/rate/follow behavior, deeper glide/portamento controls, deeper condition vocabulary, multi-lane locks, MIDI import, audio drag-out, or full arrangement tools.
 5. The FX rack is broad, but still needs pro-level drive, shaper, and routing depth.
@@ -153,15 +153,15 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 58. Add visible modulation rings around modulated knobs and stripes/badges on modulated horizontal controls. Rotary rings, horizontal slider feedback, compact source badges, and source-colored accents are implemented.
 59. Add source-colored modulation badges with route amount. First source-color pass implemented for macro, LFO, envelope, S&H, Smooth, Chaos, and LFO 2 routes.
 60. Add hover-to-show routes for the parameter under the mouse. First pass implemented through the selected-control inspector; graphical hover overlays remain open.
-61. Add route min/max range editing. Visual macro assignment now shows macro route counts, assigned destination chips, draggable bipolar depth, and a larger focus overlay; explicit range handles remain open.
-62. Add per-route curve shaping.
-63. Add per-route smoothing and slew.
-64. Add per-route unipolar/bipolar and invert. First quick-invert amount menu pass implemented for MOD matrix amount sliders.
+61. Add route min/max range editing. First saved per-route range clamps are implemented through amount-menu shape presets; explicit graphical range handles remain open.
+62. Add per-route curve shaping. First saved route curve presets are implemented for linear, soft, tight, expo, and gate-style movement.
+63. Add per-route smoothing and slew. First saved per-route slew is implemented across synth, sample, and FX modulation routes.
+64. Add per-route unipolar/bipolar and invert. First saved route polarity modes are implemented for bipolar, unipolar positive, unipolar negative, and invert.
 65. Add per-route mute, solo, duplicate, copy, and paste. First duplicate-to-next-free-slot pass implemented in the MOD matrix.
 66. Add LFO 2 and LFO 3. First LFO 2 source pass implemented; LFO 3 remains open.
 67. Add smooth random and chaos sources in addition to current S&H. First Smooth and Chaos source passes implemented; deeper random-walk controls remain open.
 68. Add a true MSEG source with multi-point draw/edit.
-69. Add step LFO with per-step hold, slew, probability, and shape.
+69. Add step LFO with per-step hold, slew, probability, and shape. First eight-step source pass is implemented with saved step values, sync/free rate, depth, slew, and pattern presets; probability and per-step curves remain open.
 70. Add macro snapshots and morphing between macro states.
 71. Add editable macro names per preset.
 72. Add XY pad assignment editor with multiple destinations per axis.
@@ -345,9 +345,9 @@ Two focused research passes were run on 2026-06-28: one for modern synth/source 
 Top missing product capabilities:
 
 1. House source rack depth: true wavetable playback/import, richer warp modes, focused FM/operator color, deeper drawbar organ controls, original/legal digital-PCM-style chord and piano material, second layer, per-layer mute/solo/blend, and source snippets.
-2. Fast visual modulation: drag-to-modulate, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, rotary/linear modulation feedback now shows source-colored rings/badges while preserving base tooltips, MOD targets update the selected-control route summary on hover, and the macro assignment workflow now has a draggable visual pad backed by matrix slots.
+2. Fast visual modulation: drag-to-modulate, route range editing, route curves/slew/invert, source activity meters, and hover route overlays. First right-click assignment pass is implemented for MOD-targetable sliders, rotary/linear modulation feedback now shows source-colored rings/badges while preserving base tooltips, MOD targets update the selected-control route summary on hover, the macro assignment workflow now has a draggable visual pad backed by matrix slots, and the MOD amount menu now exposes first-pass saved route range, polarity, curve, and slew presets.
 3. Serious UKG slicing: marker add/remove, beat/time slicing, per-slice playback modes beyond the first transient Detect/direct boundary-drag/stored start/end/pan/probability/nudge/fade, visual overlay, and missing-file stale-audio guard passes, slice-to-sequencer lanes, and full missing-sample relink.
-4. Motion lanes: step-LFO/MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount.
+4. Motion lanes: the first eight-step LFO source and pattern presets are implemented for matrix routes; true drawn MSEG sources and sequencer lanes for sample slice, filter cutoff, wavetable position, pump depth, delay throw, reverb throw, drive, and macro amount remain open.
 5. Club FX quality: multiband drive, mid/side routing, oversampling, gain compensation, external sidechain/pump input, drawable shapers, reverse/dub delay, and granular/time fills. First Bass Safe Drive routing and pump telemetry passes are implemented; full multiband/oversampling and external sidechain routing remain open.
 6. Preset discovery: background audio previews beyond the first visible-row warmer, waveform badges, smart folders, custom tags, similar-preset search, construction-kit preset type, relationship-aware compatible preset groups, dependency warnings, and pack import/export.
 7. Genre generators: UKG vocal chop templates, Dred/Reese and organ-bass starters, tech-house bassline generator, minimal Euclidean/sparse tools, techno feedback/resonator scenes, and house chord/organ stabs.
@@ -392,7 +392,7 @@ Reference URLs used for this refresh:
 5. Add the house drum/kick-bass construction lane from #84 once the export/drag-out foundation is designed.
 6. Define the expansion-ready content pack manifest from #83 before the next large curated factory/content push.
 7. Add deterministic house performance transforms for "more house," "tighten low end," "more groove," "darker dub," "shorter stab," "delay throw variation," and "reset mix-safe."
-8. Expand the first right-click modulation assignment and visual-feedback passes with drag-from-source assignment, hover route overlays, per-route range editing, curves, and slew.
+8. Expand the first right-click modulation assignment and visual-feedback passes with drag-from-source assignment, hover route overlays, graphical per-route range handles, deeper curve editing, and copy/paste/solo route workflow.
 9. Add multiband drive with oversampling, gain compensation, clearer limiter/clip metering, and bass-safe routing. First Bass Safe Drive routing is implemented; full multiband/oversampling/loudness work remains open.
 10. Add full-browser mode, smart folders, user tag editing, dependency warnings, construction kits, relationship-aware preset groups, and pack import/export.
 11. Build expandable FX and Mod focus panels after the Macro, Sample, Source, and SEQ focus overlays, then continue component extraction and screenshot/layout regression.

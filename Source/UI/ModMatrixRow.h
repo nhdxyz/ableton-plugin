@@ -14,7 +14,8 @@ public:
                   const juce::String& newSourceText,
                   const juce::String& newDestinationText,
                   float newAmount,
-                  bool newEnabled);
+                  bool newEnabled,
+                  const juce::String& newShapeText = {});
     juce::String getTooltip() override;
     void paint(juce::Graphics& g) override;
 
@@ -22,6 +23,7 @@ private:
     int slotNumber = 1;
     juce::String sourceText { "Off" };
     juce::String destinationText { "Off" };
+    juce::String shapeText;
     float amount = 0.0f;
     bool enabled = true;
 

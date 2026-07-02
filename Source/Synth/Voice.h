@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Modulation/ModulationRouting.h"
 #include "../Parameters.h"
 #include "Distortion.h"
 #include "Envelope.h"
@@ -80,6 +81,9 @@ private:
     float lfoChaosValue = 0.0f;
     float lfo2Phase = 0.0f;
     float lfo2StepValue = 0.0f;
+    float stepLfoPhase = 0.0f;
+    float stepLfoSmoothedValue = 0.0f;
+    std::array<float, maxModSlots> modRouteSmoothedValues {};
     float currentOsc2LevelOffset = 0.0f;
     float currentDriveOffset = 0.0f;
     float noiseColourState = 0.0f;
@@ -175,6 +179,12 @@ private:
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2PhaseParam = nullptr;
     std::atomic<float>* lfo2Retrigger = nullptr;
+    std::atomic<float>* stepLfoSync = nullptr;
+    std::atomic<float>* stepLfoSyncRate = nullptr;
+    std::atomic<float>* stepLfoRate = nullptr;
+    std::atomic<float>* stepLfoDepth = nullptr;
+    std::atomic<float>* stepLfoSlew = nullptr;
+    std::array<std::atomic<float>*, 8> stepLfoValues {};
     std::atomic<float>* modEnv1Attack = nullptr;
     std::atomic<float>* modEnv1Decay = nullptr;
     std::atomic<float>* modEnv1Sustain = nullptr;
@@ -184,6 +194,11 @@ private:
     std::array<std::atomic<float>*, maxModSlots> modMatrixDestinations {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixAmounts {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixEnabled {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixPolarities {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixCurves {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixRangeMins {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixRangeMaxes {};
+    std::array<std::atomic<float>*, maxModSlots> modMatrixSlews {};
 
     void updateVoiceParameters(float envelopeValue, int samplesToAdvance);
     bool refreshCustomWavetableFrames(const CustomWaveParameterPoints& baseFrameParameters,
@@ -193,8 +208,9 @@ private:
     void updateGlide(int samplesToAdvance);
     float processLfo(int samplesToAdvance);
     float processLfo2(int samplesToAdvance);
+    float processStepLfo(int samplesToAdvance);
     float evaluateLfoCurve(float phase) const;
-    float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
+    float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     StereoSample renderUnisonStack();
     float processNoiseSample(int noiseTypeIndex);
     int getUnisonVoiceCount() const;

@@ -112,6 +112,21 @@ inline constexpr auto lfo2Shape = "lfo2_shape";
 inline constexpr auto lfo2Depth = "lfo2_depth";
 inline constexpr auto lfo2Phase = "lfo2_phase";
 inline constexpr auto lfo2Retrigger = "lfo2_retrigger";
+inline constexpr auto stepLfoSync = "step_lfo_sync";
+inline constexpr auto stepLfoSyncRate = "step_lfo_sync_rate";
+inline constexpr auto stepLfoRate = "step_lfo_rate";
+inline constexpr auto stepLfoDepth = "step_lfo_depth";
+inline constexpr auto stepLfoSlew = "step_lfo_slew";
+inline constexpr std::array<const char*, 8> stepLfoValue {
+    "step_lfo_value_1",
+    "step_lfo_value_2",
+    "step_lfo_value_3",
+    "step_lfo_value_4",
+    "step_lfo_value_5",
+    "step_lfo_value_6",
+    "step_lfo_value_7",
+    "step_lfo_value_8"
+};
 inline constexpr auto modEnv1Attack = "mod_env1_attack";
 inline constexpr auto modEnv1Decay = "mod_env1_decay";
 inline constexpr auto modEnv1Sustain = "mod_env1_sustain";
@@ -156,6 +171,56 @@ inline constexpr std::array<const char*, 8> modMatrixEnabled {
     "mod_slot_6_enabled",
     "mod_slot_7_enabled",
     "mod_slot_8_enabled"
+};
+inline constexpr std::array<const char*, 8> modMatrixPolarity {
+    "mod_slot_1_polarity",
+    "mod_slot_2_polarity",
+    "mod_slot_3_polarity",
+    "mod_slot_4_polarity",
+    "mod_slot_5_polarity",
+    "mod_slot_6_polarity",
+    "mod_slot_7_polarity",
+    "mod_slot_8_polarity"
+};
+inline constexpr std::array<const char*, 8> modMatrixCurve {
+    "mod_slot_1_curve",
+    "mod_slot_2_curve",
+    "mod_slot_3_curve",
+    "mod_slot_4_curve",
+    "mod_slot_5_curve",
+    "mod_slot_6_curve",
+    "mod_slot_7_curve",
+    "mod_slot_8_curve"
+};
+inline constexpr std::array<const char*, 8> modMatrixRangeMin {
+    "mod_slot_1_range_min",
+    "mod_slot_2_range_min",
+    "mod_slot_3_range_min",
+    "mod_slot_4_range_min",
+    "mod_slot_5_range_min",
+    "mod_slot_6_range_min",
+    "mod_slot_7_range_min",
+    "mod_slot_8_range_min"
+};
+inline constexpr std::array<const char*, 8> modMatrixRangeMax {
+    "mod_slot_1_range_max",
+    "mod_slot_2_range_max",
+    "mod_slot_3_range_max",
+    "mod_slot_4_range_max",
+    "mod_slot_5_range_max",
+    "mod_slot_6_range_max",
+    "mod_slot_7_range_max",
+    "mod_slot_8_range_max"
+};
+inline constexpr std::array<const char*, 8> modMatrixSlew {
+    "mod_slot_1_slew",
+    "mod_slot_2_slew",
+    "mod_slot_3_slew",
+    "mod_slot_4_slew",
+    "mod_slot_5_slew",
+    "mod_slot_6_slew",
+    "mod_slot_7_slew",
+    "mod_slot_8_slew"
 };
 inline constexpr auto randomAmount = "random_amount";
 inline constexpr auto randomChaos = "random_chaos";
@@ -467,5 +532,7 @@ juce::StringArray delayRateChoices();
 juce::StringArray pumpCurveChoices();
 juce::StringArray modulationSourceChoices();
 juce::StringArray modulationDestinationChoices();
+juce::StringArray modulationRoutePolarityChoices();
+juce::StringArray modulationRouteCurveChoices();
 APVTS::ParameterLayout createLayout();
 }

@@ -421,6 +421,17 @@ target_link_libraries(NateVSTModulationSourceParityAudit
 
 add_test(NAME ModulationSourceParityAudit COMMAND NateVSTModulationSourceParityAudit)
 
+add_executable(NateVSTModulationRouteShapeAudit Tests/ModulationRouteShapeAudit.cpp)
+
+target_link_libraries(NateVSTModulationRouteShapeAudit
+    PRIVATE
+        juce::juce_core
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME ModulationRouteShapeAudit COMMAND NateVSTModulationRouteShapeAudit)
+
 add_executable(NateVSTSamplerChopAudit Tests/SamplerChopAudit.cpp)
 
 target_link_libraries(NateVSTSamplerChopAudit

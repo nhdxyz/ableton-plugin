@@ -70,7 +70,7 @@ The eight performance macros are useful, but their assignments still need cleare
 
 The next modulation pass should avoid putting the whole matrix on HOME. HOME should stay fast. The deeper assignment workflow belongs in a focused MOD area.
 
-Implemented since the first pass: MOD now includes a destination inspector, a responsive source-to-destination route map, and a two-bank eight-slot routing matrix, so route movement is easier to scan while route rows remain readable for creating or clearing house/UKG movement destinations. The route map now hides unless there is enough remaining height for readable route rows, and the layout audit checks that constraint. Remaining work is deeper route editing, per-route ranges/processors, drag-to-modulate, and more destination types.
+Implemented since the first pass: MOD now includes a destination inspector, a responsive source-to-destination route map, and a two-bank eight-slot routing matrix, so route movement is easier to scan while route rows remain readable for creating or clearing house/UKG movement destinations. The route map now hides unless there is enough remaining height for readable route rows, and the layout audit checks that constraint. First-pass saved route processors now cover range clamps, polarity, curves, slew, and Step LFO pattern loading from the route amount menu. Remaining work is deeper visual route editing, drag-to-modulate, graphical range handles, and more destination types.
 
 ### Knobs Still Feel Too Small
 
@@ -97,7 +97,7 @@ Modern synths and club tools are converging around a few product expectations th
 - Oscillator engines: wavetable position/warp, sample/granular style sources, and stronger FM/phase movement are common in Serum 2, Pigments, Phase Plant, Current, and modwave.
 - Character filters: multiple filter slopes, modeled/nonlinear filter drive, and distinct filter flavors are a major part of Pigments, Diva, Hive, and Korg instruments. The first passes are implemented as Clean, Warm, Acid, and Dirty filter-drive modes plus selectable 12 dB/24 dB slope.
 - Filter visualization: modern synth workflows expect the tone-shaping curve to be visible while editing. Nate VST now has a SYNTH-page filter response display with first-pass modulation range overlays; future work should add live envelope sweep traces and spectrum context.
-- Modulation visualization: filter, wavetable position, sample chop range overlays, source activity meters, and a responsive MOD route map are implemented for first graph-level MOD feedback. Future work should extend this pattern to send FX, pump, sequencer lock lanes, drag-to-modulate, and per-route min/max ranges.
+- Modulation visualization: filter, wavetable position, sample chop range overlays, source activity meters, a responsive MOD route map, and first saved per-route shaping summaries are implemented for graph-level MOD feedback. Future work should extend this pattern to send FX, pump, sequencer lock lanes, drag-to-modulate, and direct per-route min/max handles.
 - Output visualization: HOME now includes final-output oscilloscope, spectrum, and stereo/correlation displays fed from safe UI-side telemetry. The spectrum card now has compact held peaks and sub/low/mid/presence/air balance; future work should add manual analyzer freeze, zoomed oscilloscope/spectrum modes, stereo correlation overlay options, and optional FFT detail in an expanded analyzer page.
 - Visible modulation: drag-style routing, modulation rings, animated source feedback, curve LFO/MSEG editing, and assignment summaries are table stakes in modern synth UIs.
 - Motion/groove tools: UKG, tech house, minimal, and techno benefit from per-lane swing, probability, step modulation, pump curves, delay throws, and key/scale helpers.
@@ -383,7 +383,7 @@ Groups:
 - Assignment matrix.
 - Destination preview.
 
-MOD is now the focused assignment panel instead of overloading SYNTH or HOME. Future MOD work should deepen route ranges, route processors, drag assignment, and destination previews without moving the whole matrix back onto HOME.
+MOD is now the focused assignment panel instead of overloading SYNTH or HOME. Future MOD work should turn the first saved route processors into more direct visual editing, then add drag assignment and destination previews without moving the whole matrix back onto HOME.
 
 ## Implementation Phases
 
@@ -562,6 +562,7 @@ Build the next larger slices in this order:
    First compact-density pass added a short-row paint mode for MOD source meters and changed matrix amount rows to track-first sliders with selected-control value feedback, with `EditorLayoutAudit` coverage for source-meter height and amount-track width.
    First MSEG-tool pass implemented MOD-panel curve transform buttons for invert, reverse, smooth, quantize, controlled random dice, and UKG swing shapes while preserving existing LFO 1 curve parameters.
    First route-map pass implemented a responsive MOD routing overview that summarizes configured routes as source-to-destination paths with depth, polarity, bypass state, and tooltips while preserving compact-mode matrix row space. The compact-height guard now keeps that map hidden unless the matrix rows remain readable.
+   First route-shaping pass implemented saved per-slot range, polarity, curve, and slew processors across synth, sample, and FX destinations, plus route amount-menu shape presets and Step LFO pattern presets.
    First visual macro-editing pass replaced the HOME macro knob cluster with an editable eight-point macro shape map and replaced the visible MOD source/destination/amount assignment strip with a draggable macro assignment pad backed by the existing matrix slots.
    First expandable-editor pass added a reusable in-editor focus overlay and HOME/MOD `>` affordances for a larger macro shape plus assignment editor, with layout audit coverage instead of a new modal/window framework. The overlay now uses adaptive width/height caps, and `EditorLayoutAudit` checks tall-window growth for the panel plus expanded SAMPLE and SEQ editor heights.
 

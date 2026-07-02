@@ -72,6 +72,19 @@ DEFAULTS = {
     "lfo2_depth": 0.25,
     "lfo2_phase": 0.25,
     "lfo2_retrigger": 1,
+    "step_lfo_sync": 1,
+    "step_lfo_sync_rate": 3,
+    "step_lfo_rate": 2.0,
+    "step_lfo_depth": 0.55,
+    "step_lfo_slew": 0.0,
+    "step_lfo_value_1": 1.0,
+    "step_lfo_value_2": -0.15,
+    "step_lfo_value_3": 0.62,
+    "step_lfo_value_4": -0.45,
+    "step_lfo_value_5": 0.84,
+    "step_lfo_value_6": 0.18,
+    "step_lfo_value_7": -0.72,
+    "step_lfo_value_8": 0.36,
     "mod_env1_attack": 0.01,
     "mod_env1_decay": 0.22,
     "mod_env1_sustain": 0.0,
@@ -218,6 +231,11 @@ for slot_index in range(1, 9):
     DEFAULTS[f"mod_slot_{slot_index}_source"] = 0
     DEFAULTS[f"mod_slot_{slot_index}_destination"] = 0
     DEFAULTS[f"mod_slot_{slot_index}_amount"] = 0.0
+    DEFAULTS[f"mod_slot_{slot_index}_polarity"] = 0
+    DEFAULTS[f"mod_slot_{slot_index}_curve"] = 0
+    DEFAULTS[f"mod_slot_{slot_index}_range_min"] = -1.0
+    DEFAULTS[f"mod_slot_{slot_index}_range_max"] = 1.0
+    DEFAULTS[f"mod_slot_{slot_index}_slew"] = 0.0
 
 for slice_index in range(1, 9):
     DEFAULTS[f"sample_slice_{slice_index}_custom"] = 0

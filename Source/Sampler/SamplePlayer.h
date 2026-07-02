@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Modulation/ModulationRouting.h"
 #include "../Parameters.h"
 
 #include <juce_audio_formats/juce_audio_formats.h>
@@ -136,6 +137,9 @@ private:
     float sampleModChaosValue = 0.0f;
     float sampleModLfo2Phase = 0.0f;
     float sampleModLfo2StepValue = 0.0f;
+    float sampleModStepLfoPhase = 0.0f;
+    float sampleModStepLfoSmoothedValue = 0.0f;
+    std::array<float, 8> sampleModRouteSmoothedValues {};
     juce::ADSR sampleModEnvelope;
     juce::ADSR::Parameters sampleModEnvelopeParameters;
     float sampleModEnvelopeValue = 0.0f;
@@ -207,6 +211,11 @@ private:
     std::array<std::atomic<float>*, 8> modMatrixDestinations {};
     std::array<std::atomic<float>*, 8> modMatrixAmounts {};
     std::array<std::atomic<float>*, 8> modMatrixEnabled {};
+    std::array<std::atomic<float>*, 8> modMatrixPolarities {};
+    std::array<std::atomic<float>*, 8> modMatrixCurves {};
+    std::array<std::atomic<float>*, 8> modMatrixRangeMins {};
+    std::array<std::atomic<float>*, 8> modMatrixRangeMaxes {};
+    std::array<std::atomic<float>*, 8> modMatrixSlews {};
     std::atomic<float>* macroTone = nullptr;
     std::atomic<float>* macroDirt = nullptr;
     std::atomic<float>* macroMotion = nullptr;
@@ -228,6 +237,12 @@ private:
     std::atomic<float>* lfo2Shape = nullptr;
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2Phase = nullptr;
+    std::atomic<float>* stepLfoSync = nullptr;
+    std::atomic<float>* stepLfoSyncRate = nullptr;
+    std::atomic<float>* stepLfoRate = nullptr;
+    std::atomic<float>* stepLfoDepth = nullptr;
+    std::atomic<float>* stepLfoSlew = nullptr;
+    std::array<std::atomic<float>*, 8> stepLfoValues {};
     std::atomic<float>* modEnv1Attack = nullptr;
     std::atomic<float>* modEnv1Decay = nullptr;
     std::atomic<float>* modEnv1Sustain = nullptr;
@@ -241,8 +256,9 @@ private:
     void updateSampleModulation(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
+    float processSampleStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float evaluateSampleLfoCurve(float phase) const;
-    float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float modEnvelopeValue) const;
+    float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     int sliceIndexForMidiNote(int midiNoteNumber) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot, int forcedSliceIndex = -1, bool ignoreSliceProbability = false);
     void stopVoicesForNote(int midiNoteNumber);

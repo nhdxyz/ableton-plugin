@@ -7,6 +7,7 @@
 - Made the editor request keyboard focus, listen for child-control mouse-up events, and return focus to the bottom audition keyboard after non-text control gestures, sample recorder actions, and wavetable tool actions so laptop-key auditioning is less likely to get stranded after touching a knob or button in Ableton.
 - Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so `Oct+` from Home reaches C4 and the computer keyboard cannot fall down to C0.
 - Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
+- Added `SampleRecorderAudit` coverage so the SAMPLE recorder now verifies actual synth capture, commit-to-sampler behavior, waveform overview generation, and audible sampler playback.
 - Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.
 - Added a top morph-frame rail, miniature frame waves, Osc 1/Osc 2 position pins, and a spectral-tilt heat strip to the wavetable editor so custom-wave and WT-position edits read more like a modern wavetable surface instead of a flat scope.
 - Added `WavetableDisplayAudit` coverage for readable frame/plot/partial/spectrum zones, render coverage, direct custom-point edits, and partial-bar edits.

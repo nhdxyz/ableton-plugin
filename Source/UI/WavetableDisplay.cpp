@@ -295,7 +295,9 @@ void WavetableDisplay::paint(juce::Graphics& g)
                          1,
                          0.62f);
 
-        auto rail = frameStrip.withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
+        auto rail = frameRailBounds();
+        if (rail.isEmpty())
+            rail = frameStrip.withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
         constexpr auto frameCount = 8;
         const auto cellWidth = rail.getWidth() / static_cast<float>(frameCount);
         const CustomPointArray* railCustomPoints = nullptr;
@@ -692,12 +694,24 @@ void WavetableDisplay::mouseDown(const juce::MouseEvent& event)
         return;
     }
 
+    if (frameRailBounds().contains(event.position))
+    {
+        beginFrameRailEdit(event);
+        return;
+    }
+
     beginEdit(event);
     applyMousePosition(event);
 }
 
 void WavetableDisplay::mouseDrag(const juce::MouseEvent& event)
 {
+    if (editingFrameRail)
+    {
+        applyFrameRailPosition(event);
+        return;
+    }
+
     if (editingPartial >= 0)
     {
         editPartial(event, editingPartial);
@@ -714,6 +728,7 @@ void WavetableDisplay::mouseUp(const juce::MouseEvent&)
 {
     editingCustomPoint = -1;
     editingPartial = -1;
+    editingFrameRail = false;
     lastDrawCustomPoint = -1;
     editGestureActive = false;
 }
@@ -761,6 +776,46 @@ void WavetableDisplay::mouseWheelMove(const juce::MouseEvent& event, const juce:
     const auto delta = (wheel.deltaY >= 0.0f ? 0.025f : -0.025f)
         * (event.mods.isShiftDown() || event.mods.isCommandDown() ? 0.35f : 1.0f);
     nudgePosition(event, delta);
+}
+
+void WavetableDisplay::beginFrameRailEdit(const juce::MouseEvent& event)
+{
+    editingOscillator = oscillatorForEvent(event);
+    editingCustomPoint = -1;
+    editingPartial = -1;
+    editingFrameRail = true;
+    editGestureActive = true;
+    lastDrawCustomPoint = -1;
+
+    if (onEditStart)
+        onEditStart();
+
+    applyFrameRailPosition(event);
+}
+
+void WavetableDisplay::applyFrameRailPosition(const juce::MouseEvent& event)
+{
+    const auto rail = frameRailBounds();
+    if (rail.isEmpty())
+        return;
+
+    const auto position = juce::jlimit(0.0f,
+                                      1.0f,
+                                      (event.position.x - rail.getX()) / juce::jmax(1.0f, rail.getWidth()));
+    if (editingOscillator == 2)
+    {
+        osc2Position = position;
+        if (onOsc2PositionChange)
+            onOsc2PositionChange(position);
+    }
+    else
+    {
+        osc1Position = position;
+        if (onOsc1PositionChange)
+            onOsc1PositionChange(position);
+    }
+
+    repaint();
 }
 
 void WavetableDisplay::beginEdit(const juce::MouseEvent& event)
@@ -1029,6 +1084,15 @@ juce::Rectangle<float> WavetableDisplay::frameStripBounds() const
         return {};
 
     return visualArea.removeFromTop(20.0f);
+}
+
+juce::Rectangle<float> WavetableDisplay::frameRailBounds() const
+{
+    const auto frameStrip = frameStripBounds();
+    if (frameStrip.isEmpty())
+        return {};
+
+    return frameStrip.withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
 }
 
 juce::Rectangle<float> WavetableDisplay::partialBarsBounds() const

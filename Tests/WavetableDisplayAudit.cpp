@@ -3,6 +3,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -109,6 +110,36 @@ int main()
     {
         changedPoints.emplace_back(oscillator, point);
     };
+    std::vector<float> osc1Positions;
+    display.onOsc1PositionChange = [&osc1Positions] (float position)
+    {
+        osc1Positions.push_back(position);
+    };
+
+    const auto rail = metrics.frameStrip.toFloat().withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
+    const auto railStartX = rail.getX() + (rail.getWidth() * 0.82f);
+    const auto railEndX = rail.getX() + (rail.getWidth() * 0.18f);
+    const auto railY = rail.getCentreY();
+    display.mouseDown(makeMouseEvent(display, railStartX, railY, railStartX, railY));
+    display.mouseDrag(makeMouseEvent(display, railEndX, railY, railStartX, railY, juce::ModifierKeys::leftButtonModifier, true));
+    display.mouseUp(makeMouseEvent(display, railEndX, railY, railStartX, railY));
+
+    if (! changedPoints.empty())
+    {
+        std::cerr << "Frame rail scan emitted custom point edits instead of only WT position edits\n";
+        return 1;
+    }
+
+    if (osc1Positions.size() < 2
+        || std::abs(osc1Positions.front() - 0.82f) > 0.04f
+        || std::abs(osc1Positions.back() - 0.18f) > 0.04f)
+    {
+        std::cerr << "Frame rail scan did not emit expected Osc 1 WT positions";
+        for (const auto position : osc1Positions)
+            std::cerr << ' ' << position;
+        std::cerr << '\n';
+        return 1;
+    }
 
     const auto plot = metrics.plot.toFloat();
     const auto drawX = plot.getX() + (plot.getWidth() * 0.52f);
@@ -136,6 +167,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable display audit passed for frame rail, 3D surface zones, render coverage, point editing, and partial editing.\n";
+    std::cout << "Wavetable display audit passed for frame rail scanning, 3D surface zones, render coverage, point editing, and partial editing.\n";
     return 0;
 }

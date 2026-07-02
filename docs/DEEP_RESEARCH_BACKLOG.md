@@ -140,6 +140,7 @@ Implemented wavetable sub-slice:
 - Added an internal generated wavetable mode as waveform index 4 for Osc 1 and Osc 2, preserving existing waveform indices.
 - Added Osc 1/Osc 2 wavetable position parameters and MOD destinations for WT position movement.
 - Added Osc 1/Osc 2 WT position controls and seeded selected factory presets with the new source mode.
+- Made the 3D wavetable display's top morph-frame rail a direct WT-position scan control, matching the visual editor expectation from modern wavetable instruments and preventing rail clicks from accidentally editing custom points.
 - Added a compact SYNTH-panel filter response display for immediate visual feedback while shaping house basses, UKG organ stabs, minimal plucks, and techno filter sweeps.
 - Added HOME output oscilloscope/spectrum analyzers for actual rendered waveform shape, transient punch, clipping risk, held spectrum peaks, and energy across sub, low, mid, presence, and air ranges.
 - Added the first modulation overlay on the filter response display so movement assigned in MOD is visible on the tone-shaping graph.

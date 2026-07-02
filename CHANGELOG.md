@@ -15,7 +15,8 @@
 - Reduced editor-side wavetable refresh work by skipping hidden-display updates, only reading custom point arrays for active Custom oscillators, and building WT modulation source labels only when a WT route exists.
 - Refocused MOD Matrix into the primary routing surface by removing the compact source rail from that mode, leaving source activity to the dedicated Sources/Macros/Curves pages and giving all eight matrix rows more vertical room.
 - Added a top morph-frame rail, miniature frame waves, Osc 1/Osc 2 position pins, and a spectral-tilt heat strip to the wavetable editor so custom-wave and WT-position edits read more like a modern wavetable surface instead of a flat scope.
-- Added `WavetableDisplayAudit` coverage for readable frame/plot/partial/spectrum zones, render coverage, direct custom-point edits, and partial-bar edits.
+- Made the top morph-frame rail interactive: clicking or dragging it now scans WT position directly instead of falling through into custom-point drawing, so frame browsing no longer accidentally edits the waveform.
+- Added `WavetableDisplayAudit` coverage for readable frame/plot/partial/spectrum zones, frame-rail scanning, render coverage, direct custom-point edits, and partial-bar edits.
 - Added a generated 16-preset `Club Synth Stabs` factory expansion for normal house/tech-house chord hits, organ jabs, gated rave stabs, and delay-throw chords, bringing the repo-managed factory pack to 438 presets.
 
 ### Performance Scenes, Expression Sources, And Sample Engine Modes

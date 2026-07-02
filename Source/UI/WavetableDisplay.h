@@ -118,8 +118,11 @@ private:
     int lastDrawCustomPoint = -1;
     float lastDrawCustomValue = 0.5f;
     bool editGestureActive = false;
+    bool editingFrameRail = false;
     CustomDrawMode customDrawMode = CustomDrawMode::point;
 
+    void beginFrameRailEdit(const juce::MouseEvent& event);
+    void applyFrameRailPosition(const juce::MouseEvent& event);
     void beginEdit(const juce::MouseEvent& event);
     void applyMousePosition(const juce::MouseEvent& event);
     void nudgePosition(const juce::MouseEvent& event, float delta);
@@ -130,6 +133,7 @@ private:
     void setCustomPointValue(int oscillator, size_t pointIndex, float value);
     juce::Rectangle<float> editorPlotBounds() const;
     juce::Rectangle<float> frameStripBounds() const;
+    juce::Rectangle<float> frameRailBounds() const;
     juce::Rectangle<float> partialBarsBounds() const;
     juce::Rectangle<float> spectrumBounds() const;
     int partialForEvent(const juce::MouseEvent& event) const noexcept;

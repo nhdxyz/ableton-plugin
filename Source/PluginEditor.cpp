@@ -3066,6 +3066,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         sampleWaveformKey = "cleared";
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
+        updateSampleRecorderStatus();
     };
     sampleCaptureButton.setButtonText("Record");
     sampleCaptureButton.setTooltip("Start or stop recording the current synth/sample output into a short rolling sampler buffer");
@@ -6128,6 +6129,36 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             }
         }
 
+        if (panelName.contains("SAMPLE") && sampleCaptureButton.isVisible())
+        {
+            const auto hasCapture = audioProcessor.getSampleCaptureDurationSeconds() >= 0.05f;
+            const auto hasLoadedSample = audioProcessor.hasLoadedSample();
+            if (! hasCapture && sampleCommitCaptureButton.isEnabled())
+            {
+                issues.add(panelName + ": recorder Commit is enabled without captured audio");
+            }
+
+            if (! hasLoadedSample)
+            {
+                for (const auto* sampleEditButton : {
+                         static_cast<const juce::Component*>(&sampleAuditionButton),
+                         static_cast<const juce::Component*>(&sampleAutoTrimButton),
+                         static_cast<const juce::Component*>(&sampleSpliceButton),
+                         static_cast<const juce::Component*>(&sampleMangleButton) })
+                {
+                    if (auto* button = dynamic_cast<const juce::Button*>(sampleEditButton))
+                    {
+                        if (button->isVisible() && button->isEnabled())
+                        {
+                            issues.add(panelName + ": sample edit action "
+                                       + layoutAuditComponentName(*button, 0)
+                                       + " is enabled before a sample is loaded");
+                        }
+                    }
+                }
+            }
+        }
+
         if (panelName.contains("SYNTH"))
         {
             if (! houseLayerRackDisplay.isVisible())
@@ -7140,6 +7171,7 @@ void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
         sampleWaveformKey.clear();
         updateSampleNameLabel();
         updateSampleWaveformDisplay();
+        updateSampleRecorderStatus();
     }
 }
 
@@ -7160,19 +7192,39 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
 {
     const auto isRecording = audioProcessor.isSampleCaptureEnabled();
     const auto seconds = audioProcessor.getSampleCaptureDurationSeconds();
+    const auto hasCapture = seconds >= 0.05f;
+    const auto hasLoadedSample = audioProcessor.hasLoadedSample();
     sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Record");
     sampleCaptureButton.setColour(juce::TextButton::buttonColourId,
                                   isRecording ? juce::Colour(0xff4a2725) : juce::Colour(0xff141d20));
     sampleCaptureButton.setColour(juce::TextButton::textColourOffId,
                                   isRecording ? juce::Colour(0xffff9a8a) : juce::Colour(0xffdce7e4));
 
-    const auto durationText = seconds >= 0.05f ? juce::String(seconds, 1) + "s" : juce::String("empty");
+    const auto durationText = hasCapture ? juce::String(seconds, 1) + "s" : juce::String("empty");
     sampleRecordStatusLabel.setText(isRecording ? "Recording | " + durationText
-                                                : seconds >= 0.05f ? "Ready | " + durationText
-                                                                   : "Recorder idle",
+                                                : hasCapture ? "Ready to Commit | " + durationText
+                                                             : hasLoadedSample ? "Loaded sample ready"
+                                                                               : "Record or Load a sample",
                                     juce::dontSendNotification);
-    sampleCommitCaptureButton.setEnabled(seconds >= 0.05f);
-    sampleAuditionButton.setEnabled(audioProcessor.hasLoadedSample());
+    sampleRecordStatusLabel.setColour(juce::Label::textColourId,
+                                      isRecording ? juce::Colour(0xffff9a8a)
+                                                  : hasCapture ? juce::Colour(0xff8ee6c9)
+                                                               : hasLoadedSample ? juce::Colour(0xffa8d8ff)
+                                                                                 : juce::Colour(0xffa8b6b8));
+
+    sampleCommitCaptureButton.setEnabled(hasCapture);
+    sampleAuditionButton.setEnabled(hasLoadedSample);
+    sampleAutoTrimButton.setEnabled(hasLoadedSample);
+    sampleSpliceButton.setEnabled(hasLoadedSample);
+    sampleMangleButton.setEnabled(hasLoadedSample);
+    sampleCommitCaptureButton.setTooltip(hasCapture ? "Commit the captured " + durationText + " snippet into the sampler and auto-trim silence"
+                                                    : "Record audio before committing a sampler snippet");
+    sampleAutoTrimButton.setTooltip(hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
+                                                    : "Load or commit a sample before trimming");
+    sampleSpliceButton.setTooltip(hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
+                                                  : "Load or commit a sample before slicing");
+    sampleMangleButton.setTooltip(hasLoadedSample ? "Randomize trim, slices, pitch, stutter, pan, probability, and safe FX movement"
+                                                  : "Load or commit a sample before mangling");
 }
 
 void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)

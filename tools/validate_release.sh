@@ -49,8 +49,8 @@ if [[ ! -d "$BUILD_DIR" ]]; then
     exit 1
 fi
 
-echo "== Build VST3 =="
-cmake --build "$BUILD_DIR" --target NateVST -j "$JOBS"
+echo "== Build VST3 and audit executables =="
+cmake --build "$BUILD_DIR" -j "$JOBS"
 echo
 
 if [[ ! -d "$PLUGIN_PATH" && ! -f "$PLUGIN_PATH" ]]; then

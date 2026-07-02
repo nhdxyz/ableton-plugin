@@ -303,6 +303,7 @@ private:
     using ChordMemoryNoteArray = Sequencer::PatternSequencer::ChordNoteArray;
     std::array<std::array<ChordMemoryNoteArray, 128>, 16> chordMemoryActiveNotes {};
     std::array<std::array<int, 128>, 16> chordMemoryActiveNoteCounts {};
+    juce::MidiBuffer chordMemoryScratchMidi;
 
     std::atomic<float>* outputGain = nullptr;
     std::atomic<float>* sequencerChordMemory = nullptr;

@@ -15,6 +15,8 @@ SynthEngine::SynthEngine(Parameters::APVTS& parameters)
 void SynthEngine::prepare(double sampleRate, int maximumBlockSize)
 {
     synthesiser.setCurrentPlaybackSampleRate(sampleRate);
+    monoMidiScratch.clear();
+    monoMidiScratch.ensureSize(static_cast<size_t>(juce::jmax(4096, maximumBlockSize * 4)));
 
     for (auto voiceIndex = 0; voiceIndex < synthesiser.getNumVoices(); ++voiceIndex)
         if (auto* voice = dynamic_cast<Voice*>(synthesiser.getVoice(voiceIndex)))
@@ -53,8 +55,8 @@ void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& mid
 
     if (monoMode != nullptr && monoMode->load() > 0.5f)
     {
-        auto monoMidi = enforceMonoIfNeeded(midi);
-        synthesiser.renderNextBlock(buffer, monoMidi, 0, buffer.getNumSamples());
+        enforceMonoIfNeeded(midi);
+        synthesiser.renderNextBlock(buffer, monoMidiScratch, 0, buffer.getNumSamples());
         return;
     }
 
@@ -66,9 +68,9 @@ void SynthEngine::allNotesOff()
     synthesiser.allNotesOff(0, false);
 }
 
-juce::MidiBuffer SynthEngine::enforceMonoIfNeeded(const juce::MidiBuffer& midi)
+void SynthEngine::enforceMonoIfNeeded(const juce::MidiBuffer& midi)
 {
-    juce::MidiBuffer monoMidi;
+    monoMidiScratch.clear();
 
     for (const auto metadata : midi)
     {
@@ -76,11 +78,9 @@ juce::MidiBuffer SynthEngine::enforceMonoIfNeeded(const juce::MidiBuffer& midi)
         const auto samplePosition = metadata.samplePosition;
 
         if (message.isNoteOn())
-            monoMidi.addEvent(juce::MidiMessage::allNotesOff(message.getChannel()), samplePosition);
+            monoMidiScratch.addEvent(juce::MidiMessage::allNotesOff(message.getChannel()), samplePosition);
 
-        monoMidi.addEvent(message, samplePosition);
+        monoMidiScratch.addEvent(message, samplePosition);
     }
-
-    return monoMidi;
 }
 }

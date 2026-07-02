@@ -20,7 +20,8 @@ public:
 private:
     juce::Synthesiser synthesiser;
     std::atomic<float>* monoMode = nullptr;
+    juce::MidiBuffer monoMidiScratch;
 
-    juce::MidiBuffer enforceMonoIfNeeded(const juce::MidiBuffer& midi);
+    void enforceMonoIfNeeded(const juce::MidiBuffer& midi);
 };
 }

@@ -808,6 +808,8 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
 {
     meterSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
     preparedSamplesPerBlock = samplesPerBlock > 0 ? samplesPerBlock : 512;
+    chordMemoryScratchMidi.clear();
+    chordMemoryScratchMidi.ensureSize(static_cast<size_t>(juce::jmax(8192, preparedSamplesPerBlock * 8)));
     synthEngine.prepare(sampleRate, samplesPerBlock);
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
@@ -938,7 +940,8 @@ void NateVSTAudioProcessor::applyChordMemoryToMidi(juce::MidiBuffer& midiMessage
     if (! shouldExpandNoteOns && ! hasActiveChordNotes)
         return;
 
-    juce::MidiBuffer expandedMidi;
+    auto& expandedMidi = chordMemoryScratchMidi;
+    expandedMidi.clear();
 
     auto releaseStoredChord = [this, &expandedMidi] (int channelIndex, int inputNote, int midiChannel, int samplePosition)
     {

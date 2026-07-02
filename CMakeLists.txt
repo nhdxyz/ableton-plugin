@@ -232,6 +232,19 @@ target_link_libraries(NateVSTKeyboardSpamCpuAudit
 
 add_test(NAME KeyboardSpamCpuAudit COMMAND NateVSTKeyboardSpamCpuAudit)
 
+add_executable(NateVSTProcessorPerformanceAudit Tests/ProcessorPerformanceAudit.cpp)
+
+target_link_libraries(NateVSTProcessorPerformanceAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME ProcessorPerformanceAudit COMMAND NateVSTProcessorPerformanceAudit)
+
 add_executable(NateVSTPresetPreviewAudit Tests/PresetPreviewAudit.cpp)
 
 target_link_libraries(NateVSTPresetPreviewAudit

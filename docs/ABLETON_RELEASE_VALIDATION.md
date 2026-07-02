@@ -46,6 +46,7 @@ Then run this manual Ableton pass against the built VST3.
 
 ## Safety Checks
 
+- Review `ProcessorPerformanceAudit` output from CTest for idle, poly synth + FX, and sequencer + FX realtime ratios.
 - Play the loudest factory bass and stab presets with Guard on and off.
 - Confirm no stuck notes after rapid MIDI input, transport stop/start, and plugin disable/enable.
 - Confirm the plugin does not clip unexpectedly at default preset levels.

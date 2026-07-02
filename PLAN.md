@@ -1365,7 +1365,7 @@ Recommended architecture direction:
 
 ## Development Milestones
 
-Current implementation status: Milestones 0 through 9 have first-pass code in the repo: JUCE/CMake VST3 scaffold, MIDI-driven synth audio, custom editor panels, randomization, FX rack, sampler workflow, sequencer workflow with scenes, groove templates, lock/ratchet/condition/slide lanes, preset/library behavior, and CTest audit executables. Milestone 10 is still the active release-prep track; the automated release gate now builds the VST3, runs the full CTest suite, and runs pluginval when available, the first VST3/factory-preset install script is in place, and a first macOS CI workflow runs the build/CTest gate without pluginval. Ableton manual validation, repeated Live Set save/reopen testing, CPU checks, signing/notarization, and richer installer packaging remain open.
+Current implementation status: Milestones 0 through 9 have first-pass code in the repo: JUCE/CMake VST3 scaffold, MIDI-driven synth audio, custom editor panels, randomization, FX rack, sampler workflow, sequencer workflow with scenes, groove templates, lock/ratchet/condition/slide lanes, preset/library behavior, and CTest audit executables. Milestone 10 is still the active release-prep track; the automated release gate now builds the VST3, runs the full CTest suite, runs pluginval when available, and includes first CPU realtime-ratio smoke coverage, the first VST3/factory-preset install script is in place, and a first macOS CI workflow runs the build/CTest gate without pluginval. Ableton manual validation, repeated Live Set save/reopen testing, host CPU checks, signing/notarization, and richer installer packaging remain open.
 
 ### Milestone 0: Project Setup
 
@@ -1463,7 +1463,7 @@ Current implementation status: Milestones 0 through 9 have first-pass code in th
 - Run GitHub Actions on macOS for configure, build, and CTest.
 - Test in Ableton with `docs/ABLETON_RELEASE_VALIDATION.md`.
 - Test repeated load/save of Live Sets.
-- Check CPU usage.
+- Check CPU usage with `ProcessorPerformanceAudit` and Ableton's CPU meter.
 - Check output clipping behavior.
 - Prepare GitHub Actions build if useful.
 

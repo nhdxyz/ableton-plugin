@@ -113,6 +113,11 @@ juce::StringArray sampleSliceStyleChoices()
     return { "Clean", "Pitch", "Reverse", "Stutter", "Garage" };
 }
 
+juce::StringArray sampleRecordSourceChoices()
+{
+    return { "Post-FX Output", "Host Input" };
+}
+
 juce::StringArray sampleEngineModeChoices()
 {
     return { "Classic", "Granular", "Spectral", "Cloud" };
@@ -744,6 +749,12 @@ APVTS::ParameterLayout createLayout()
         ID::sampleReverse,
         "Sample Reverse",
         false));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleRecordSource,
+        "Sample Record Source",
+        sampleRecordSourceChoices(),
+        0));
 
     add(std::make_unique<juce::AudioParameterChoice>(
         ID::samplePlaybackMode,

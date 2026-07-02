@@ -18,7 +18,8 @@ bool setPlainParameter(NateVSTAudioProcessor& processor, const juce::String& par
 
 bool configureCapturePatch(NateVSTAudioProcessor& processor)
 {
-    return setPlainParameter(processor, Parameters::ID::oscWave, 1.0f)
+    return setPlainParameter(processor, Parameters::ID::sampleRecordSource, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::oscWave, 1.0f)
         && setPlainParameter(processor, Parameters::ID::osc2Wave, 3.0f)
         && setPlainParameter(processor, Parameters::ID::osc1Level, 0.82f)
         && setPlainParameter(processor, Parameters::ID::osc2Level, 0.34f)
@@ -114,6 +115,62 @@ float recordCommittedOverviewPeak(float outputGainDb)
 
     processor.beginSampleCapture();
     processBlocks(processor, 36, 0, 24, 60);
+    if (! processor.commitSampleCaptureToSampler())
+        return -1.0f;
+
+    const auto overview = processor.createSamplePeakOverview(96);
+    auto peak = 0.0f;
+    for (const auto value : overview.maximums)
+        peak = juce::jmax(peak, std::abs(value));
+    for (const auto value : overview.minimums)
+        peak = juce::jmax(peak, std::abs(value));
+
+    const auto capturePath = processor.getLoadedSamplePath();
+    if (capturePath.isNotEmpty())
+    {
+        const juce::File captureFile(capturePath);
+        if (captureFile.existsAsFile())
+            captureFile.deleteFile();
+    }
+
+    return peak;
+}
+
+float recordHostInputOverviewPeak(float inputPeak)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(processor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        return -1.0f;
+    }
+
+    processor.beginSampleCapture();
+    juce::AudioBuffer<float> buffer(2, 512);
+    auto phase = 0.0;
+    const auto phaseDelta = juce::MathConstants<double>::twoPi * 440.0 / 44100.0;
+    for (auto block = 0; block < 32; ++block)
+    {
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            const auto value = static_cast<float>(std::sin(phase)) * inputPeak;
+            buffer.setSample(0, sample, value);
+            buffer.setSample(1, sample, value * 0.65f);
+            phase += phaseDelta;
+            if (phase >= juce::MathConstants<double>::twoPi)
+                phase -= juce::MathConstants<double>::twoPi;
+        }
+
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+
     if (! processor.commitSampleCaptureToSampler())
         return -1.0f;
 
@@ -239,6 +296,14 @@ int main()
     {
         std::cerr << "Recorder capture does not appear to include post-FX/output gain: unity "
                   << unityCapturePeak << " quiet " << quietCapturePeak << '\n';
+        return 1;
+    }
+
+    const auto hostInputPeak = recordHostInputOverviewPeak(0.18f);
+    if (hostInputPeak < 0.08f || hostInputPeak > 0.24f)
+    {
+        std::cerr << "Recorder Host Input source did not capture routed input as expected: "
+                  << hostInputPeak << '\n';
         return 1;
     }
 

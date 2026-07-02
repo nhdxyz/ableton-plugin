@@ -290,6 +290,7 @@ private:
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLockDestinationBox;
+    juce::ComboBox sampleRecordSourceBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleEngineBox;
     juce::ComboBox sampleSliceStyleBox;

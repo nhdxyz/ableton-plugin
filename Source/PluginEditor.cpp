@@ -2319,6 +2319,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerLockDestinationBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerLockDestination, sequencerLockDestinationBox));
 
+    sampleRecordSourceBox.addItemList(Parameters::sampleRecordSourceChoices(), 1);
+    sampleRecordSourceBox.setTextWhenNothingSelected("Source");
+    sampleRecordSourceBox.setTooltip("Choose what Record captures: Post-FX Output records this plugin after FX/output gain; Host Input records audio Ableton routes into the plugin input, such as a mic or sidechain source");
+    addAndMakeVisible(sampleRecordSourceBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleRecordSource, sampleRecordSourceBox));
+
     sampleModeBox.addItem("Gate", 1);
     sampleModeBox.addItem("One Shot", 2);
     sampleModeBox.addItem("Slice Keys", 3);
@@ -3093,7 +3099,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleRecorderStatus();
     };
     sampleCaptureButton.setButtonText("Record");
-    sampleCaptureButton.setTooltip("Start or stop recording the post-FX plugin output into a short rolling sampler buffer");
+    sampleCaptureButton.setTooltip("Start or stop recording the selected recorder source into a short rolling sampler buffer");
     sampleCaptureButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -3106,7 +3112,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         else
         {
             audioProcessor.beginSampleCapture();
-            setRandomStatus("Recording sampler snippet");
+            setRandomStatus("Recording " + audioProcessor.getSampleCaptureSourceName());
         }
         updateSampleRecorderStatus();
         returnKeyboardFocusToPiano();
@@ -5185,6 +5191,7 @@ void NateVSTAudioProcessorEditor::resized()
             ukgChopButton.setVisible(true);
             sampleEnabledButton.setVisible(true);
             sampleReverseButton.setVisible(true);
+            sampleRecordSourceBox.setVisible(true);
             sampleModeBox.setVisible(true);
             sampleEngineBox.setVisible(true);
             sampleSliceStyleBox.setVisible(true);
@@ -5234,7 +5241,9 @@ void NateVSTAudioProcessorEditor::resized()
             sampleReverseButton.setBounds(actionBottom.reduced(3, 4));
 
             sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
-            sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
+            auto recorderHeaderRow = sourceArea.removeFromTop(30);
+            sampleRecordLabel.setBounds(recorderHeaderRow.removeFromLeft(82).withTrimmedLeft(4).reduced(0, 5));
+            sampleRecordSourceBox.setBounds(recorderHeaderRow.reduced(3, 4));
             auto recorderStepArea = sourceArea.removeFromTop(24).reduced(4, 3);
             const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(sampleRecordStepLabels.size());
             for (auto& label : sampleRecordStepLabels)
@@ -7339,6 +7348,12 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
     const auto progress = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / capacitySeconds));
     const auto captureIsRolling = progress >= 0.995;
     const auto hasLoadedSample = audioProcessor.hasLoadedSample();
+    const auto captureSourceIndex = audioProcessor.getSampleCaptureSourceIndex();
+    const auto captureSourceShortName = captureSourceIndex == 1 ? juce::String("Host In")
+                                                                : juce::String("Post-FX");
+    const auto captureSourceDescription = captureSourceIndex == 1
+        ? juce::String("host input routed by Ableton into the plugin")
+        : juce::String("post-FX plugin output");
     sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Record");
     sampleCaptureButton.setColour(juce::TextButton::buttonColourId,
                                   isRecording ? juce::Colour(0xff4a2725) : juce::Colour(0xff141d20));
@@ -7357,13 +7372,16 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
     sampleRecordProgress.setTooltip("Recorder rolling-buffer fill: " + durationText
                                     + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
-    const auto statusText = isRecording ? (captureIsRolling ? juce::String("Recording post-FX | Rolling buffer")
-                                                            : juce::String("Recording post-FX | ") + durationText)
-                                        : hasCapture ? (captureIsRolling ? juce::String("Ready post-FX | Last ") + capacityText
-                                                                         : juce::String("Ready post-FX | ") + durationText)
+    const auto statusText = isRecording ? (captureIsRolling ? juce::String("Recording ") + captureSourceShortName + " | Rolling"
+                                                            : juce::String("Recording ") + captureSourceShortName + " | " + durationText)
+                                        : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " | Last " + capacityText
+                                                                         : juce::String("Ready ") + captureSourceShortName + " | " + durationText)
                                                      : hasLoadedSample ? juce::String("Loaded sample ready")
                                                                        : juce::String("Record or Load a sample");
     sampleRecordStatusLabel.setText(statusText, juce::dontSendNotification);
+    sampleRecordStatusLabel.setTooltip(captureSourceIndex == 1
+        ? "Recorder source: Host Input. Route a mic, track, or sidechain source to the plugin input in Ableton."
+        : "Recorder source: Post-FX Output. Captures synth + sampler through this plugin's FX and output gain.");
     sampleRecordStatusLabel.setColour(juce::Label::textColourId,
                                       isRecording ? juce::Colour(0xffff9a8a)
                                                   : hasCapture ? juce::Colour(0xff8ee6c9)
@@ -7383,8 +7401,8 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         juce::Colour(0xffd6bcff)
     };
     const std::array<juce::String, 4> stepTooltips {
-        isRecording ? juce::String("Recording post-FX output into the rolling buffer")
-                    : juce::String("Start recording the post-FX plugin output"),
+        isRecording ? juce::String("Recording ") + captureSourceDescription + " into the rolling buffer"
+                    : juce::String("Start recording ") + captureSourceDescription,
         hasCapture ? juce::String("Captured ") + durationText
                    : juce::String("Record audio to fill the capture buffer"),
         hasCapture ? "Commit the captured snippet into the sampler"
@@ -7414,6 +7432,11 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
     sampleMangleButton.setEnabled(hasLoadedSample);
     sampleCommitCaptureButton.setTooltip(hasCapture ? "Commit the captured " + durationText + " snippet into the sampler and auto-trim silence"
                                                     : "Record audio before committing a sampler snippet");
+    sampleCaptureButton.setTooltip(isRecording ? "Stop recording " + captureSourceDescription
+                                               : "Start recording " + captureSourceDescription);
+    sampleRecordSourceBox.setTooltip(captureSourceIndex == 1
+        ? "Host Input records audio Ableton routes into the plugin input. Select the mic or source in Ableton, then route it to this plugin."
+        : "Post-FX Output records this plugin after synth, sampler, FX rack, and output gain.");
     sampleAutoTrimButton.setTooltip(hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
                                                     : "Load or commit a sample before trimming");
     sampleSpliceButton.setTooltip(hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
@@ -10928,7 +10951,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleRecordLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sampleRecordStatusLabel, &sampleRecordProgress, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleRecordSourceBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

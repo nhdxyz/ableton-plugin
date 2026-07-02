@@ -788,7 +788,9 @@ juce::String presetMacroSummary(const std::array<float, 8>& macroValues, float& 
 }
 
 NateVSTAudioProcessor::NateVSTAudioProcessor()
-    : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+    : AudioProcessor(BusesProperties()
+                         .withInput("Host Input", juce::AudioChannelSet::stereo(), true)
+                         .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "PARAMETERS", Parameters::createLayout()),
       synthEngine(parameters),
       randomizer(parameters),
@@ -798,6 +800,7 @@ NateVSTAudioProcessor::NateVSTAudioProcessor()
       sampleRandomEngine(std::random_device{}())
 {
     outputGain = parameters.getRawParameterValue(Parameters::ID::outputGain);
+    sampleRecordSource = parameters.getRawParameterValue(Parameters::ID::sampleRecordSource);
     sequencerChordMemory = parameters.getRawParameterValue(Parameters::ID::sequencerChordMemory);
     sequencerLockDestination = parameters.getRawParameterValue(Parameters::ID::sequencerLockDestination);
     sequencerLockDepth = parameters.getRawParameterValue(Parameters::ID::sequencerLockDepth);
@@ -815,7 +818,10 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     patternSequencer.prepare(sampleRate);
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
     sampleCaptureSampleRate = meterSampleRate;
-    sampleCaptureBuffer.setSize(juce::jmax(1, getTotalNumOutputChannels()),
+    const auto captureChannels = juce::jlimit(1,
+                                              2,
+                                              juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()));
+    sampleCaptureBuffer.setSize(captureChannels,
                                 juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxSeconds * sampleCaptureSampleRate))));
     sampleCaptureBuffer.clear();
     sampleCaptureEnabled.store(false, std::memory_order_relaxed);
@@ -856,14 +862,23 @@ void NateVSTAudioProcessor::releaseResources()
 
 bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
+    const auto& mainInput = layouts.getMainInputChannelSet();
     const auto& mainOutput = layouts.getMainOutputChannelSet();
-    return mainOutput == juce::AudioChannelSet::mono()
+    const auto inputSupported = mainInput.isDisabled()
+        || mainInput == juce::AudioChannelSet::mono()
+        || mainInput == juce::AudioChannelSet::stereo();
+    const auto outputSupported = mainOutput == juce::AudioChannelSet::mono()
         || mainOutput == juce::AudioChannelSet::stereo();
+    return inputSupported && outputSupported;
 }
 
 void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    const auto captureSource = getSampleCaptureSourceIndex();
+    if (captureSource == 1)
+        appendToSampleCapture(buffer, getTotalNumInputChannels());
+
     buffer.clear();
 
     midiKeyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
@@ -910,7 +925,8 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                         outputGain != nullptr ? outputGain->load() : -8.0f,
                         hostBpm,
                         hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
-    appendToSampleCapture(buffer);
+    if (captureSource == 0)
+        appendToSampleCapture(buffer);
     mixPresetPreviewPlayback(buffer);
     updateOutputMeters(buffer);
 }
@@ -1611,6 +1627,22 @@ float NateVSTAudioProcessor::getSampleCaptureCapacitySeconds() const noexcept
 {
     const auto sampleRate = sampleCaptureSampleRate > 0.0 ? sampleCaptureSampleRate : 44100.0;
     return static_cast<float>(sampleCaptureBuffer.getNumSamples()) / static_cast<float>(sampleRate);
+}
+
+int NateVSTAudioProcessor::getSampleCaptureSourceIndex() const noexcept
+{
+    const auto sourceValue = sampleRecordSource != nullptr
+        ? sampleRecordSource->load(std::memory_order_relaxed)
+        : 0.0f;
+    return juce::jlimit(0, 1, juce::roundToInt(sourceValue));
+}
+
+juce::String NateVSTAudioProcessor::getSampleCaptureSourceName() const
+{
+    const auto choices = Parameters::sampleRecordSourceChoices();
+    const auto sourceIndex = getSampleCaptureSourceIndex();
+    return juce::isPositiveAndBelow(sourceIndex, choices.size()) ? choices[sourceIndex]
+                                                                 : juce::String("Post-FX Output");
 }
 
 bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
@@ -6326,7 +6358,7 @@ void NateVSTAudioProcessor::resetSampleParametersForNewSource(const juce::String
     }
 }
 
-void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>& buffer) noexcept
+void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit) noexcept
 {
     if (! sampleCaptureEnabled.load(std::memory_order_acquire))
         return;
@@ -6337,7 +6369,9 @@ void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>
 
     const auto maxSamples = sampleCaptureBuffer.getNumSamples();
     const auto captureChannels = sampleCaptureBuffer.getNumChannels();
-    const auto sourceChannels = buffer.getNumChannels();
+    const auto sourceChannels = sourceChannelLimit >= 0
+        ? juce::jmin(buffer.getNumChannels(), sourceChannelLimit)
+        : buffer.getNumChannels();
     const auto blockSamples = buffer.getNumSamples();
     if (maxSamples <= 0 || captureChannels <= 0 || sourceChannels <= 0 || blockSamples <= 0)
         return;

@@ -147,6 +147,8 @@ public:
     bool isSampleCaptureEnabled() const noexcept;
     float getSampleCaptureDurationSeconds() const noexcept;
     float getSampleCaptureCapacitySeconds() const noexcept;
+    int getSampleCaptureSourceIndex() const noexcept;
+    juce::String getSampleCaptureSourceName() const;
     bool commitSampleCaptureToSampler();
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
@@ -306,6 +308,7 @@ private:
     juce::MidiBuffer chordMemoryScratchMidi;
 
     std::atomic<float>* outputGain = nullptr;
+    std::atomic<float>* sampleRecordSource = nullptr;
     std::atomic<float>* sequencerChordMemory = nullptr;
     std::atomic<float>* sequencerLockDestination = nullptr;
     std::atomic<float>* sequencerLockDepth = nullptr;
@@ -412,7 +415,7 @@ private:
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void resetSampleParametersForNewSource(const juce::String& path);
-    void appendToSampleCapture(const juce::AudioBuffer<float>& buffer) noexcept;
+    void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;

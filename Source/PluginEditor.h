@@ -840,6 +840,7 @@ private:
     int keyboardTypingBaseOctave = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
     std::array<bool, 17> computerKeyboardNotesDown {};
+    bool globalKeyboardListenersInstalled = false;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
     std::vector<NateVSTAudioProcessor::PresetInfo> visiblePresetBrowserPresets;
@@ -1031,6 +1032,10 @@ private:
     void updatePresetAudition();
     void releasePresetAuditionNote();
     void returnKeyboardFocusToPiano();
+    void installGlobalKeyboardListeners();
+    void removeGlobalKeyboardListeners();
+    void installGlobalKeyboardListenersFor(juce::Component& component);
+    void removeGlobalKeyboardListenersFor(juce::Component& component);
     bool keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) override;
     bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
     void releaseComputerKeyboardNotes();

@@ -162,6 +162,12 @@ float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, i
     return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
 }
 
+template <typename... Components>
+bool anyComponentVisible(const Components&... components) noexcept
+{
+    return (... || components.isVisible());
+}
+
 struct PresetBrowserRowLayout
 {
     int paddedWidth = 0;
@@ -1425,8 +1431,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colour(0x338ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
-    addKeyListener(this);
-    pianoKeyboard.addKeyListener(this);
     addAndMakeVisible(pianoKeyboard);
 
     keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the floor is A = C2 in Ableton note names");
@@ -3944,6 +3948,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     updateSampleSliceButtons();
     updateHouseLayerRackDisplay();
     refreshPresetList();
+    installGlobalKeyboardListeners();
     setActivePanel(Panel::home);
     returnKeyboardFocusToPiano();
     startTimerHz(12);
@@ -3953,8 +3958,7 @@ NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
     restoreFxMomentarySnapshot(fxMomentarySnapshot);
     releaseComputerKeyboardNotes();
-    pianoKeyboard.removeKeyListener(this);
-    removeKeyListener(this);
+    removeGlobalKeyboardListeners();
     removeMouseListener(this);
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
@@ -9091,6 +9095,42 @@ void NateVSTAudioProcessorEditor::returnKeyboardFocusToPiano()
     });
 }
 
+void NateVSTAudioProcessorEditor::installGlobalKeyboardListeners()
+{
+    if (globalKeyboardListenersInstalled)
+        return;
+
+    installGlobalKeyboardListenersFor(*this);
+    globalKeyboardListenersInstalled = true;
+}
+
+void NateVSTAudioProcessorEditor::removeGlobalKeyboardListeners()
+{
+    if (! globalKeyboardListenersInstalled)
+        return;
+
+    removeGlobalKeyboardListenersFor(*this);
+    globalKeyboardListenersInstalled = false;
+}
+
+void NateVSTAudioProcessorEditor::installGlobalKeyboardListenersFor(juce::Component& component)
+{
+    component.addKeyListener(this);
+
+    for (auto childIndex = 0; childIndex < component.getNumChildComponents(); ++childIndex)
+        if (auto* child = component.getChildComponent(childIndex))
+            installGlobalKeyboardListenersFor(*child);
+}
+
+void NateVSTAudioProcessorEditor::removeGlobalKeyboardListenersFor(juce::Component& component)
+{
+    component.removeKeyListener(this);
+
+    for (auto childIndex = 0; childIndex < component.getNumChildComponents(); ++childIndex)
+        if (auto* child = component.getChildComponent(childIndex))
+            removeGlobalKeyboardListenersFor(*child);
+}
+
 void NateVSTAudioProcessorEditor::addFxModule(FxModule module)
 {
     captureGlobalEdit("Add FX " + fxModuleName(module));
@@ -13819,36 +13859,102 @@ void NateVSTAudioProcessorEditor::timerCallback()
         releaseRandomCandidateAudition(true);
     }
 
-    updateSegmentedSelectors();
-    updateLfoCurveDisplay();
-    updatePumpCurveDisplay();
-    updateWavetableDisplay();
-    updateRandomMorphPad();
-    updateHouseLayerRackDisplay();
-    updateFilterResponseDisplay();
-    updateHostSyncStatus();
-    updateModMatrixRows();
-    updateModInspectorStatus();
-    updateMacroAssignmentEditorStatus();
+    if (anyComponentVisible(sineWaveButton,
+                            sawWaveButton,
+                            squareWaveButton,
+                            triangleWaveButton,
+                            wavetableWaveButton,
+                            organWaveButton,
+                            housePianoWaveButton,
+                            customWaveButton,
+                            rateEighthButton,
+                            rateSixteenthButton,
+                            rateThirtySecondButton))
+    {
+        updateSegmentedSelectors();
+    }
+
+    if (lfoCurveDisplay.isVisible())
+        updateLfoCurveDisplay();
+    if (pumpCurveDisplay.isVisible())
+        updatePumpCurveDisplay();
+    if (wavetableDisplay.isVisible())
+        updateWavetableDisplay();
+    if (randomMorphPad.isVisible())
+        updateRandomMorphPad();
+    if (anyComponentVisible(houseLayerRackDisplay, expandedHouseLayerRackDisplay))
+        updateHouseLayerRackDisplay();
+    if (filterResponseDisplay.isVisible())
+        updateFilterResponseDisplay();
+    if (hostSyncStatusLabel.isVisible())
+        updateHostSyncStatus();
+
+    const auto modWorkflowVisible = anyComponentVisible(modRouteMapDisplay,
+                                                        modInspectorStatusLabel,
+                                                        modMacroAssignStatusLabel,
+                                                        macroAssignmentPad,
+                                                        expandedMacroAssignmentPad);
+    if (modWorkflowVisible)
+    {
+        updateModMatrixRows();
+        updateModInspectorStatus();
+        updateMacroAssignmentEditorStatus();
+    }
     updateModDestinationIndicators();
+
     updateOutputMeter();
-    updateOutputSpectrumDisplay();
-    updateOutputOscilloscopeDisplay();
-    updateStereoFieldDisplay();
-    updateClubMonitorDisplay();
-    updateLowEndAssistant();
-    updatePerformanceSnapshotButtons();
-    updatePerformanceXYPad();
-    updateHomeOverviewDisplay();
-    updateHomeSignalFlowDisplay();
-    updateSequencerSceneButtons();
-    updateSequencerGridContext();
-    updateSequencerRootStepper();
-    updateSampleSliceButtons();
-    updateSampleRecorderStatus();
-    updateSampleWaveformDisplay();
+    if (outputSpectrumDisplay.isVisible())
+        updateOutputSpectrumDisplay();
+    if (outputOscilloscopeDisplay.isVisible())
+        updateOutputOscilloscopeDisplay();
+    if (stereoFieldDisplay.isVisible())
+        updateStereoFieldDisplay();
+    if (clubMonitorDisplay.isVisible())
+        updateClubMonitorDisplay();
+    if (lowEndAssistant.isVisible())
+        updateLowEndAssistant();
+    if (anyComponentVisible(recallSnapshotAButton,
+                            captureSnapshotAButton,
+                            recallSnapshotBButton,
+                            captureSnapshotBButton,
+                            recallSnapshotCButton,
+                            captureSnapshotCButton,
+                            recallSnapshotDButton,
+                            captureSnapshotDButton))
+    {
+        updatePerformanceSnapshotButtons();
+    }
+    if (performanceXYPad.isVisible())
+        updatePerformanceXYPad();
+    if (homeOverviewDisplay.isVisible())
+        updateHomeOverviewDisplay();
+    if (homeSignalFlowDisplay.isVisible())
+        updateHomeSignalFlowDisplay();
+
+    const auto sequencerVisible = anyComponentVisible(sequencerGrid,
+                                                      expandedSequencerGrid,
+                                                      sequencerRootValueLabel,
+                                                      sequencerSceneChainLiveButton);
+    if (sequencerVisible)
+    {
+        updateSequencerSceneButtons();
+        updateSequencerGridContext();
+        updateSequencerRootStepper();
+    }
+
+    if (anyComponentVisible(sampleWaveformDisplay,
+                            expandedSampleWaveformDisplay,
+                            sampleSliceStatusLabel,
+                            sampleRecordStatusLabel))
+    {
+        updateSampleSliceButtons();
+        updateSampleRecorderStatus();
+        updateSampleWaveformDisplay();
+    }
+
     updateKeyboardRangeLabel();
-    updateFxRackControls();
+    if (fxRackStatusLabel.isVisible())
+        updateFxRackControls();
     refreshGlobalEditControls();
 }
 

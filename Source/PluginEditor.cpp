@@ -27,7 +27,7 @@ constexpr auto keyboardHighestNote = 96;
 constexpr auto keyboardVisualLowestNote = 36;
 constexpr auto keyboardVisualHighestNote = 84;
 constexpr auto keyboardInitialLowestNote = 72;
-constexpr auto keyboardMinLowestVisibleNote = 48;
+constexpr auto keyboardMinLowestVisibleNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
 constexpr auto abletonMiddleCOctave = 3;
@@ -131,7 +131,7 @@ static_assert(keyboardVisualHighestNote <= keyboardHighestNote);
 static_assert(keyboardVisualLowestNote == 36);
 static_assert(keyboardVisualHighestNote == 84);
 static_assert(keyboardInitialLowestNote == 72);
-static_assert(keyboardMinLowestVisibleNote == 48);
+static_assert(keyboardMinLowestVisibleNote == 36);
 static_assert(keyboardMaxLowestVisibleNote == 72);
 
 int clampedKeyboardLowestVisibleNote(int note) noexcept
@@ -6032,9 +6032,15 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);
-        expectBase("Oct- floor", keyboardMinLowestVisibleNote);
+        expectBase("Oct-", 48);
         if (keyboardRangeLabel.getText() != "A:C2\n;:E3")
-            issues.add("Keyboard Oct- floor: range label should read A:C2 to ;:E3, got "
+            issues.add("Keyboard Oct-: range label should read A:C2 to ;:E3, got "
+                       + keyboardRangeLabel.getText().quoted());
+
+        shiftKeyboardOctave(-12);
+        expectBase("Oct- floor", keyboardMinLowestVisibleNote);
+        if (keyboardRangeLabel.getText() != "A:C1\n;:E2")
+            issues.add("Keyboard Oct- floor: range label should read A:C1 to ;:E2, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);

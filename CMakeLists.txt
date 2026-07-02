@@ -77,6 +77,7 @@ target_sources(NateVST
         Source/UI/PresetSaveSummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/RandomMorphPad.cpp
+        Source/UI/SampleRecorderPanel.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp

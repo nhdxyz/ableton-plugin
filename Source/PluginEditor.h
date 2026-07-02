@@ -25,6 +25,7 @@
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
+#include "UI/SampleRecorderPanel.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -239,14 +240,9 @@ private:
     juce::Label modMacroAssignStatusLabel;
     juce::Label sampleSectionLabel;
     juce::Label sampleSourceLabel;
-    juce::Label sampleRecordLabel;
     juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
     juce::Label sampleSliceStatusLabel;
-    juce::Label sampleRecordStatusLabel;
-    std::array<juce::Label, 4> sampleRecordStepLabels;
-    double sampleRecordProgressValue = 0.0;
-    juce::ProgressBar sampleRecordProgress { sampleRecordProgressValue };
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
     juce::Label selectedControlHeaderLabel;
@@ -290,7 +286,6 @@ private:
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLockDestinationBox;
-    juce::ComboBox sampleRecordSourceBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleEngineBox;
     juce::ComboBox sampleSliceStyleBox;
@@ -630,12 +625,6 @@ private:
     juce::TextButton captureSnapshotDButton { "Set D" };
     juce::TextButton loadSampleButton { "Load" };
     juce::TextButton clearSampleButton { "Clear" };
-    juce::TextButton sampleCaptureButton { "Rec" };
-    juce::TextButton sampleCommitCaptureButton { "Use" };
-    juce::TextButton sampleAuditionButton { "Play" };
-    juce::TextButton sampleAutoTrimButton { "Trim" };
-    juce::TextButton sampleSpliceButton { "Splice" };
-    juce::TextButton sampleMangleButton { "Mangle" };
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton ukgChopButton { "UKG Chop" };
     std::array<juce::TextButton, 8> sampleSliceButtons;
@@ -805,6 +794,7 @@ private:
     UI::PresetSaveSummary presetSaveSummary;
     UI::RandomMorphPad randomMorphPad;
     UI::LowEndAssistant lowEndAssistant;
+    UI::SampleRecorderPanel sampleRecorderPanel;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::PumpCurveDisplay pumpCurveDisplay;

@@ -7134,7 +7134,8 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.getSampleCaptureDurationSeconds(),
         audioProcessor.getSampleCaptureCapacitySeconds(),
         audioProcessor.hasLoadedSample(),
-        audioProcessor.getSampleCaptureSourceIndex()
+        audioProcessor.getSampleCaptureSourceIndex(),
+        audioProcessor.getSampleCaptureSourcePeak()
     });
 }
 

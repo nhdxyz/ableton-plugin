@@ -121,6 +121,7 @@ void SampleRecorderPanel::setState(const State& state)
     const auto captureSourceDescription = state.captureSourceIndex == 1
         ? juce::String("host input routed by Ableton into the plugin")
         : juce::String("post-FX plugin output");
+    const auto sourceLevelText = formatPeakLabel(state.captureSourcePeak);
 
     recordButton.setButtonText(state.isRecording ? "Stop" : "Record");
     recordButton.setColour(juce::TextButton::buttonColourId,
@@ -141,16 +142,16 @@ void SampleRecorderPanel::setState(const State& state)
                         + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
     const auto statusText = state.isRecording
-        ? (captureIsRolling ? juce::String("Recording ") + captureSourceShortName + " | Rolling"
-                            : juce::String("Recording ") + captureSourceShortName + " | " + durationText)
-        : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " | Last " + capacityText
-                                         : juce::String("Ready ") + captureSourceShortName + " | " + durationText)
-                     : state.hasLoadedSample ? juce::String("Loaded sample ready")
-                                             : juce::String("Record or Load a sample");
+        ? (captureIsRolling ? juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | Rolling"
+                            : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
+        : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | Last " + capacityText
+                                         : juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
+                     : state.hasLoadedSample ? juce::String("Loaded | ") + captureSourceShortName + " " + sourceLevelText
+                                             : captureSourceShortName + " " + sourceLevelText + " | Record or Load";
     statusLabel.setText(statusText, juce::dontSendNotification);
     statusLabel.setTooltip(state.captureSourceIndex == 1
-        ? "Recorder source: Host Input. Route a mic, track, or sidechain source to the plugin input in Ableton."
-        : "Recorder source: Post-FX Output. Captures synth + sampler through this plugin's FX and output gain.");
+        ? "Recorder source: Host Input. Route a mic, track, or sidechain source to the plugin input in Ableton. Current peak: " + sourceLevelText
+        : "Recorder source: Post-FX Output. Captures synth + sampler through this plugin's FX and output gain. Current peak: " + sourceLevelText);
     statusLabel.setColour(juce::Label::textColourId,
                           state.isRecording ? juce::Colour(0xffff9a8a)
                                             : hasCapture ? juce::Colour(0xff8ee6c9)
@@ -204,8 +205,8 @@ void SampleRecorderPanel::setState(const State& state)
     recordButton.setTooltip(state.isRecording ? "Stop recording " + captureSourceDescription
                                               : "Start recording " + captureSourceDescription);
     sourceBox.setTooltip(state.captureSourceIndex == 1
-        ? "Host Input records audio Ableton routes into the plugin input. Select the mic or source in Ableton, then route it to this plugin."
-        : "Post-FX Output records this plugin after synth, sampler, FX rack, and output gain.");
+        ? "Host Input records audio Ableton routes into the plugin input. Select the mic or source in Ableton, route it to this plugin, then watch the Host In level in the recorder status."
+        : "Post-FX Output records this plugin after synth, sampler, FX rack, and output gain. Watch the Post-FX level in the recorder status.");
     autoTrimButton.setTooltip(state.hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
                                                     : "Load or commit a sample before trimming");
     spliceButton.setTooltip(state.hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
@@ -324,5 +325,17 @@ juce::String SampleRecorderPanel::componentAuditName(const juce::Component& comp
         return component.getComponentID();
 
     return fallback;
+}
+
+juce::String SampleRecorderPanel::formatPeakLabel(float peak)
+{
+    if (peak <= 0.000001f)
+        return "-inf dB";
+
+    const auto db = juce::Decibels::gainToDecibels(juce::jmax(peak, 0.000001f));
+    if (db < -60.0f)
+        return "<-60 dB";
+
+    return juce::String(db, 0) + " dB";
 }
 }

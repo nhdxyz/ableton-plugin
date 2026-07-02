@@ -829,6 +829,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     sampleCaptureActiveWriters.store(0, std::memory_order_relaxed);
     sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
     sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
+    sampleCaptureSourcePeak.store(0.0f, std::memory_order_relaxed);
     outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
     outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
@@ -879,7 +880,10 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     const auto captureSource = getSampleCaptureSourceIndex();
     if (captureSource == 1)
+    {
+        updateSampleCaptureSourcePeak(buffer, getTotalNumInputChannels());
         appendToSampleCapture(buffer, getTotalNumInputChannels());
+    }
 
     buffer.clear();
 
@@ -928,7 +932,10 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                         hostBpm,
                         hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
     if (captureSource == 0)
+    {
+        updateSampleCaptureSourcePeak(buffer);
         appendToSampleCapture(buffer);
+    }
     mixPresetPreviewPlayback(buffer);
     updateOutputMeters(buffer);
 }
@@ -1606,6 +1613,7 @@ void NateVSTAudioProcessor::beginSampleCapture()
     sampleCaptureBuffer.clear();
     sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
     sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
+    sampleCaptureSourcePeak.store(0.0f, std::memory_order_relaxed);
     sampleCaptureEnabled.store(true, std::memory_order_release);
 }
 
@@ -1637,6 +1645,11 @@ int NateVSTAudioProcessor::getSampleCaptureSourceIndex() const noexcept
         ? sampleRecordSource->load(std::memory_order_relaxed)
         : 0.0f;
     return juce::jlimit(0, 1, juce::roundToInt(sourceValue));
+}
+
+float NateVSTAudioProcessor::getSampleCaptureSourcePeak() const noexcept
+{
+    return sampleCaptureSourcePeak.load(std::memory_order_acquire);
 }
 
 juce::String NateVSTAudioProcessor::getSampleCaptureSourceName() const
@@ -6370,6 +6383,29 @@ void NateVSTAudioProcessor::resetSampleParametersForNewSource(const juce::String
         setParameterPlainValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
         setParameterPlainValue(Parameters::ID::sampleSliceFade[index], 0.0f);
     }
+}
+
+void NateVSTAudioProcessor::updateSampleCaptureSourcePeak(const juce::AudioBuffer<float>& buffer,
+                                                          int sourceChannelLimit) noexcept
+{
+    const auto sourceChannels = sourceChannelLimit >= 0
+        ? juce::jmin(buffer.getNumChannels(), sourceChannelLimit)
+        : buffer.getNumChannels();
+    const auto blockSamples = buffer.getNumSamples();
+    auto peak = 0.0f;
+
+    if (sourceChannels > 0 && blockSamples > 0)
+    {
+        for (auto channel = 0; channel < sourceChannels; ++channel)
+        {
+            const auto* samples = buffer.getReadPointer(channel);
+            for (auto sample = 0; sample < blockSamples; ++sample)
+                peak = juce::jmax(peak, std::abs(samples[sample]));
+        }
+    }
+
+    const auto previous = sampleCaptureSourcePeak.load(std::memory_order_relaxed);
+    sampleCaptureSourcePeak.store(juce::jmax(peak, previous * 0.86f), std::memory_order_release);
 }
 
 void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit) noexcept

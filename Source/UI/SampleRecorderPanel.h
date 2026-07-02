@@ -22,6 +22,7 @@ public:
         float capacitySeconds = 8.0f;
         bool hasLoadedSample = false;
         int captureSourceIndex = 0;
+        float captureSourcePeak = 0.0f;
     };
 
     explicit SampleRecorderPanel(juce::AudioProcessorValueTreeState& valueTreeState);
@@ -61,5 +62,6 @@ private:
 
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);
+    static juce::String formatPeakLabel(float peak);
 };
 }

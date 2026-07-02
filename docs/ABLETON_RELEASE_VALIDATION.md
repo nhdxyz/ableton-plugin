@@ -40,6 +40,7 @@ Then run this manual Ableton pass against the built VST3.
 
 - Record the plugin post-FX output into the sampler.
 - Route a mic or audio track into the plugin input and record Host Input.
+- Confirm the recorder status line shows the selected source and a moving dB level before and during recording.
 - Commit the capture, trim, splice, select slices, and save/reopen the Live Set.
 - Move or rename the sample file and confirm missing-sample UI behavior is readable.
 

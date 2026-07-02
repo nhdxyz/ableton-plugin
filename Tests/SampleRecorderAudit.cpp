@@ -136,7 +136,7 @@ float recordCommittedOverviewPeak(float outputGainDb)
     return peak;
 }
 
-float recordHostInputOverviewPeak(float inputPeak)
+float recordHostInputOverviewPeak(float inputPeak, float* sourcePeak = nullptr)
 {
     NateVSTAudioProcessor processor;
     processor.prepareToPlay(44100.0, 512);
@@ -170,6 +170,9 @@ float recordHostInputOverviewPeak(float inputPeak)
         juce::MidiBuffer midi;
         processor.processBlock(buffer, midi);
     }
+
+    if (sourcePeak != nullptr)
+        *sourcePeak = processor.getSampleCaptureSourcePeak();
 
     if (! processor.commitSampleCaptureToSampler())
         return -1.0f;
@@ -228,6 +231,13 @@ int main()
     {
         std::cerr << "Capture source render was not healthy: peak " << captureStats.peak
                   << " rms " << captureStats.rms << '\n';
+        return 1;
+    }
+
+    const auto postFxSourcePeak = processor.getSampleCaptureSourcePeak();
+    if (postFxSourcePeak < 0.01f || postFxSourcePeak > 1.0f)
+    {
+        std::cerr << "Recorder Post-FX source peak was not tracked: " << postFxSourcePeak << '\n';
         return 1;
     }
 
@@ -299,11 +309,18 @@ int main()
         return 1;
     }
 
-    const auto hostInputPeak = recordHostInputOverviewPeak(0.18f);
+    auto hostInputSourcePeak = 0.0f;
+    const auto hostInputPeak = recordHostInputOverviewPeak(0.18f, &hostInputSourcePeak);
     if (hostInputPeak < 0.08f || hostInputPeak > 0.24f)
     {
         std::cerr << "Recorder Host Input source did not capture routed input as expected: "
                   << hostInputPeak << '\n';
+        return 1;
+    }
+    if (hostInputSourcePeak < 0.16f || hostInputSourcePeak > 0.2f)
+    {
+        std::cerr << "Recorder Host Input source peak was not tracked: "
+                  << hostInputSourcePeak << '\n';
         return 1;
     }
 

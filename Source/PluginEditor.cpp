@@ -1609,14 +1609,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(sampleNameLabel);
 
-    sampleSliceStatusLabel.setText("S1 default | 0-13% | pitch 0 st | gain -6 dB", juce::dontSendNotification);
-    sampleSliceStatusLabel.setJustificationType(juce::Justification::centredLeft);
-    sampleSliceStatusLabel.setFont(juce::FontOptions(11.0f));
-    sampleSliceStatusLabel.setMinimumHorizontalScale(0.62f);
-    sampleSliceStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
-    sampleSliceStatusLabel.setTooltip("Selected slice memory: store or recall region, pitch, gain, reverse, choke, and stutter edits");
-    addAndMakeVisible(sampleSliceStatusLabel);
-
     presetStatusLabel.setJustificationType(juce::Justification::centredLeft);
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
@@ -3171,34 +3163,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         }
         returnKeyboardFocusToPiano();
     };
-    for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
-    {
-        auto& button = sampleSliceButtons[index];
-        button.setButtonText(juce::String(static_cast<int>(index + 1)));
-        button.setTooltip("Select and audition sample slice " + juce::String(static_cast<int>(index + 1)));
-        button.onClick = [this, index] { selectSampleSlice(index); };
-        addAndMakeVisible(button);
-    }
-    sampleSliceStoreButton.setTooltip("Store the current sample region, pitch, gain, pan, chance, reverse, choke, stutter, nudge, and fade settings into this slice");
-    sampleSliceStoreButton.onClick = [this] { storeSelectedSampleSliceSettings(); };
-    sampleSliceRecallButton.setTooltip("Recall this slice's stored region, pitch, gain, pan, chance, reverse, choke, stutter, nudge, and fade settings");
-    sampleSliceRecallButton.onClick = [this] { recallSelectedSampleSliceSettings(); };
-    sampleSliceDetectButton.setTooltip("Detect transient starts in the loaded sample and write eight custom slice regions");
-    sampleSliceDetectButton.onClick = [this] { detectSampleSliceMarkers(); };
-    sampleSliceDiceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
-    sampleSliceDiceButton.onClick = [this] { randomizeSelectedSampleSliceSettings(); };
-    sampleSliceReverseEditButton.setTooltip("Toggle reverse for the selected slice and store it");
-    sampleSliceReverseEditButton.onClick = [this] { toggleSelectedSampleSliceReverse(); };
-    sampleSliceChokeButton.setTooltip("Toggle slice-key choke for this slice, so choked slices cut each other off in Slice Keys mode");
-    sampleSliceChokeButton.onClick = [this] { toggleSelectedSampleSliceChoke(); };
-    sampleSlicePanButton.setTooltip("Cycle this slice between center, left, and right pan for Slice Keys playback");
-    sampleSlicePanButton.onClick = [this] { cycleSelectedSampleSlicePan(); };
-    sampleSliceGhostButton.setTooltip("Toggle ghost probability for this slice so Slice Keys can skip it sometimes");
-    sampleSliceGhostButton.onClick = [this] { toggleSelectedSampleSliceGhost(); };
-    sampleSliceNudgeButton.setTooltip("Cycle this slice timing between centered, early, and late for tighter vocal-chop placement");
-    sampleSliceNudgeButton.onClick = [this] { cycleSelectedSampleSliceNudge(); };
-    sampleSliceFadeButton.setTooltip("Cycle this slice boundary fade between tight, soft, and smooth envelopes");
-    sampleSliceFadeButton.onClick = [this] { cycleSelectedSampleSliceFade(); };
+    sampleChopPanel.onSliceSelected = [this] (size_t index) { selectSampleSlice(index); };
+    sampleChopPanel.onStoreClicked = [this] { storeSelectedSampleSliceSettings(); };
+    sampleChopPanel.onRecallClicked = [this] { recallSelectedSampleSliceSettings(); };
+    sampleChopPanel.onDetectClicked = [this] { detectSampleSliceMarkers(); };
+    sampleChopPanel.onDiceClicked = [this] { randomizeSelectedSampleSliceSettings(); };
+    sampleChopPanel.onReverseClicked = [this] { toggleSelectedSampleSliceReverse(); };
+    sampleChopPanel.onChokeClicked = [this] { toggleSelectedSampleSliceChoke(); };
+    sampleChopPanel.onPanClicked = [this] { cycleSelectedSampleSlicePan(); };
+    sampleChopPanel.onGhostClicked = [this] { toggleSelectedSampleSliceGhost(); };
+    sampleChopPanel.onNudgeClicked = [this] { cycleSelectedSampleSliceNudge(); };
+    sampleChopPanel.onFadeClicked = [this] { cycleSelectedSampleSliceFade(); };
     randomSequencerButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -3759,19 +3734,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(captureSnapshotDButton);
     addAndMakeVisible(loadSampleButton);
     addAndMakeVisible(clearSampleButton);
+    addAndMakeVisible(sampleChopPanel);
     addAndMakeVisible(sampleRecorderPanel);
     addAndMakeVisible(randomCutButton);
     addAndMakeVisible(ukgChopButton);
-    addAndMakeVisible(sampleSliceStoreButton);
-    addAndMakeVisible(sampleSliceRecallButton);
-    addAndMakeVisible(sampleSliceDetectButton);
-    addAndMakeVisible(sampleSliceDiceButton);
-    addAndMakeVisible(sampleSliceReverseEditButton);
-    addAndMakeVisible(sampleSliceChokeButton);
-    addAndMakeVisible(sampleSlicePanButton);
-    addAndMakeVisible(sampleSliceGhostButton);
-    addAndMakeVisible(sampleSliceNudgeButton);
-    addAndMakeVisible(sampleSliceFadeButton);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(mutateSequencerButton);
     addAndMakeVisible(undoSequencerButton);
@@ -3970,7 +3936,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     }
 
     for (auto* label : {
-             &sampleNameLabel, &sampleSliceStatusLabel, &presetStatusLabel, &randomStatusLabel,
+             &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
              &modMatrixStatusLabel, &modInspectorStatusLabel, &modMacroAssignStatusLabel,
              &performanceStatusLabel, &selectedControlStatusLabel, &fxRackStatusLabel })
     {
@@ -4006,6 +3972,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     houseLayerRackDisplay.setTheme(theme);
     expandedHouseLayerRackDisplay.setTheme(theme);
+    sampleChopPanel.applyTheme(theme);
     sampleRecorderPanel.applyTheme(theme);
 
     modMacroAssignAmountSlider.setColour(juce::Slider::trackColourId, theme.accent);
@@ -5141,19 +5108,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleStutterRateBox.setVisible(true);
             sampleChopExpandButton.setVisible(true);
             sampleWaveformDisplay.setVisible(true);
-            for (auto& button : sampleSliceButtons)
-                button.setVisible(true);
-            sampleSliceStatusLabel.setVisible(true);
-            sampleSliceStoreButton.setVisible(true);
-            sampleSliceRecallButton.setVisible(true);
-            sampleSliceDetectButton.setVisible(true);
-            sampleSliceDiceButton.setVisible(true);
-            sampleSliceReverseEditButton.setVisible(true);
-            sampleSliceChokeButton.setVisible(true);
-            sampleSlicePanButton.setVisible(true);
-            sampleSliceGhostButton.setVisible(true);
-            sampleSliceNudgeButton.setVisible(true);
-            sampleSliceFadeButton.setVisible(true);
+            sampleChopPanel.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
@@ -5219,28 +5174,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleChopLabel.setBounds(chopHeader.withTrimmedLeft(4));
             const auto waveformHeight = juce::jlimit(170, 260, chopArea.getHeight() / 2);
             sampleWaveformDisplay.setBounds(chopArea.removeFromTop(waveformHeight).reduced(4, 6));
-            auto sliceRow = chopArea.removeFromTop(36).withTrimmedTop(2);
-            const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
-            for (auto& button : sampleSliceButtons)
-                button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-            auto sliceEditRow = chopArea.removeFromTop(38).withTrimmedTop(2);
-            const auto statusWidth = juce::jlimit(230, 330, sliceEditRow.getWidth() / 3);
-            sampleSliceStatusLabel.setBounds(sliceEditRow.removeFromLeft(statusWidth).reduced(8, 4));
-            const std::array<juce::TextButton*, 10> sampleActionButtons {
-                &sampleSliceStoreButton,
-                &sampleSliceRecallButton,
-                &sampleSliceDetectButton,
-                &sampleSliceDiceButton,
-                &sampleSliceReverseEditButton,
-                &sampleSliceChokeButton,
-                &sampleSlicePanButton,
-                &sampleSliceGhostButton,
-                &sampleSliceNudgeButton,
-                &sampleSliceFadeButton
-            };
-            const auto actionWidth = juce::jmax(44, sliceEditRow.getWidth() / static_cast<int>(sampleActionButtons.size()));
-            for (auto* button : sampleActionButtons)
-                button->setBounds(sliceEditRow.removeFromLeft(actionWidth).reduced(3));
+            sampleChopPanel.setBounds(chopArea.removeFromTop(sampleChopPanel.compactHeight()));
             auto cutRow = chopArea.removeFromTop(54).withTrimmedTop(6);
             sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
             sampleEndSlider.setBounds(cutRow.reduced(48, 6));
@@ -7209,11 +7143,11 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
     if (sliceCount <= 0.0f)
         return;
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
     const auto hasCustomSettings = sampleSliceHasCustomSettings(safeIndex);
     const auto start = hasCustomSettings
         ? readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], static_cast<float>(safeIndex) / sliceCount)
@@ -7248,7 +7182,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
 
 void NateVSTAudioProcessorEditor::applySampleSliceStyleDefaults(size_t sliceIndex)
 {
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
     const auto styleIndex = juce::jlimit(0, 4, sampleSliceStyleBox.getSelectedItemIndex());
     const auto slicePosition = static_cast<int>(safeIndex);
     const std::array<float, 8> pitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
@@ -7313,8 +7247,8 @@ void NateVSTAudioProcessorEditor::applySampleSliceStyleDefaults(size_t sliceInde
 
 void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t sliceIndex, bool markCustom)
 {
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
     setPlainParameterValue(Parameters::ID::sampleSliceCustom[safeIndex], markCustom ? 1.0f : 0.0f);
     setPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex],
                            readPlainParameterValue(Parameters::ID::sampleStart, static_cast<float>(safeIndex) / sliceCount));
@@ -7333,8 +7267,8 @@ void NateVSTAudioProcessorEditor::captureCurrentSampleSliceSettings(size_t slice
 
 void NateVSTAudioProcessorEditor::recallSampleSliceSettings(size_t sliceIndex)
 {
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
     setPlainParameterValue(Parameters::ID::sampleStart,
                            readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], static_cast<float>(safeIndex) / sliceCount));
     setPlainParameterValue(Parameters::ID::sampleEnd,
@@ -7348,17 +7282,17 @@ void NateVSTAudioProcessorEditor::recallSampleSliceSettings(size_t sliceIndex)
 
 void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, float position)
 {
-    if (! audioProcessor.hasLoadedSample() || sampleSliceButtons.empty())
+    if (! audioProcessor.hasLoadedSample() || sampleChopPanel.getSliceCount() == 0)
         return;
 
     constexpr auto minimumSliceWidth = 0.004f;
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
-    const auto maxBoundaryIndex = sampleSliceButtons.size();
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
+    const auto maxBoundaryIndex = sampleChopPanel.getSliceCount();
     const auto safeBoundaryIndex = juce::jlimit<size_t>(0, maxBoundaryIndex, boundaryIndex);
 
     auto materializeSlice = [this] (size_t sliceIndex)
     {
-        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
         if (sampleSliceHasCustomSettings(safeIndex))
             return;
 
@@ -7378,14 +7312,14 @@ void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, 
 
     auto sliceStart = [this, sliceCount] (size_t sliceIndex)
     {
-        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
         const auto fallback = static_cast<float>(safeIndex) / sliceCount;
         return juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleSliceStart[safeIndex], fallback));
     };
 
     auto sliceEnd = [this, sliceCount] (size_t sliceIndex)
     {
-        const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+        const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
         const auto fallback = static_cast<float>(safeIndex + 1) / sliceCount;
         return juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::sampleSliceEnd[safeIndex], fallback));
     };
@@ -7408,7 +7342,7 @@ void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, 
     }
     else if (safeBoundaryIndex == maxBoundaryIndex)
     {
-        const auto lastSliceIndex = sampleSliceButtons.size() - 1;
+        const auto lastSliceIndex = sampleChopPanel.getSliceCount() - 1;
         materializeSlice(lastSliceIndex);
         position = clampBoundary(sliceStart(lastSliceIndex) + minimumSliceWidth, 1.0f, position);
         setPlainParameterValue(Parameters::ID::sampleSliceEnd[lastSliceIndex], position);
@@ -7428,7 +7362,7 @@ void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, 
         selectedSampleSliceIndex = rightIndex;
     }
 
-    const auto selectedIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto selectedIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     setPlainParameterValue(Parameters::ID::sampleEnabled, 1.0f);
     setPlainParameterValue(Parameters::ID::samplePlaybackMode, 2.0f);
     setPlainParameterValue(Parameters::ID::sampleStart, sliceStart(selectedIndex));
@@ -7456,7 +7390,7 @@ void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     captureGlobalEdit("Recall sample slice");
     recallSampleSliceSettings(safeIndex);
 
@@ -7505,7 +7439,7 @@ void NateVSTAudioProcessorEditor::randomizeSelectedSampleSliceSettings()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     static const std::array<float, 9> garagePitchChoices { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 5.0f, 7.0f, 10.0f, 12.0f };
     auto& random = juce::Random::getSystemRandom();
     const auto pitch = garagePitchChoices[static_cast<size_t>(random.nextInt(static_cast<int>(garagePitchChoices.size())))];
@@ -7544,7 +7478,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentReverse = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f
         : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).reverse;
@@ -7566,7 +7500,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentChoke = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f
         : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).choke;
@@ -7588,7 +7522,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentPan = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f)
         : 0.0f;
@@ -7612,7 +7546,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentProbability = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f)
         : 1.0f;
@@ -7636,7 +7570,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceNudge()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentNudge = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f)
         : 0.0f;
@@ -7660,7 +7594,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceFade()
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentFade = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f)
         : 0.0f;
@@ -7681,15 +7615,15 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceFade()
 
 bool NateVSTAudioProcessorEditor::sampleSliceHasCustomSettings(size_t sliceIndex) const
 {
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, sliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
     return readPlainParameterValue(Parameters::ID::sampleSliceCustom[safeIndex], 0.0f) >= 0.5f;
 }
 
 void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
 {
-    const auto safeIndex = juce::jlimit<size_t>(0, sampleSliceButtons.size() - 1, selectedSampleSliceIndex);
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto custom = sampleSliceHasCustomSettings(safeIndex);
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
     const auto defaultStart = static_cast<float>(safeIndex) / sliceCount;
     const auto defaultEnd = static_cast<float>(safeIndex + 1) / sliceCount;
     const auto regionStart = juce::jlimit(0.0f,
@@ -7733,18 +7667,15 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
         + (preview.stutter ? " | stut x" + juce::String(preview.repeats) : " | no stut")
         + (sliceKeysMode ? " | C3-G3" : "");
 
-    sampleSliceStatusLabel.setText(status, juce::dontSendNotification);
-    sampleSliceStatusLabel.setTooltip("Selected slice memory: " + status);
-    sampleSliceReverseEditButton.setToggleState(preview.reverse, juce::dontSendNotification);
-    sampleSliceChokeButton.setToggleState(preview.choke, juce::dontSendNotification);
-    sampleSlicePanButton.setButtonText("Pan");
-    sampleSliceGhostButton.setButtonText("Ghost");
-    sampleSliceGhostButton.setToggleState(preview.probability < 0.995f, juce::dontSendNotification);
-    sampleSliceNudgeButton.setButtonText("Nudge");
-    sampleSliceNudgeButton.setToggleState(std::abs(preview.nudgePercent) > 0.1f, juce::dontSendNotification);
-    sampleSliceFadeButton.setButtonText("Fade");
-    sampleSliceFadeButton.setToggleState(preview.fade > 0.12f, juce::dontSendNotification);
-    sampleSliceRecallButton.setEnabled(custom);
+    sampleChopPanel.setStatus(status, "Selected slice memory: " + status);
+    sampleChopPanel.setActionState({
+        preview.reverse,
+        preview.choke,
+        preview.probability < 0.995f,
+        std::abs(preview.nudgePercent) > 0.1f,
+        preview.fade > 0.12f,
+        custom
+    });
 }
 
 void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
@@ -7761,9 +7692,9 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
     const auto end = juce::jlimit(0.0f, 1.0f, readParameter(Parameters::ID::sampleEnd, 1.0f));
     const auto orderedStart = juce::jmin(start, end);
     const auto orderedEnd = juce::jmax(start, end);
-    const auto sliceCount = static_cast<float>(sampleSliceButtons.size());
+    const auto sliceCount = static_cast<float>(sampleChopPanel.getSliceCount());
 
-    for (size_t index = 0; index < sampleSliceButtons.size(); ++index)
+    for (size_t index = 0; index < sampleChopPanel.getSliceCount(); ++index)
     {
         const auto custom = sampleSliceHasCustomSettings(index);
         const auto defaultStart = static_cast<float>(index) / sliceCount;
@@ -7794,21 +7725,23 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
             preview.nudgePercent = readPlainParameterValue(Parameters::ID::sampleSliceNudge[index], 0.0f);
             preview.fade = readPlainParameterValue(Parameters::ID::sampleSliceFade[index], 0.0f);
         }
-        sampleSliceButtons[index].setToggleState(isSelected, juce::dontSendNotification);
-        sampleSliceButtons[index].setButtonText(juce::String(static_cast<int>(index + 1)) + (custom ? "*" : ""));
-        sampleSliceButtons[index].setTooltip("Slice " + juce::String(static_cast<int>(index + 1))
-                                             + (custom ? " custom" : " default")
-                                             + " | Region " + juce::String(juce::roundToInt(orderedSliceStart * 100.0f))
-                                             + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
-                                             + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
-                                             + " st | Gain " + juce::String(preview.gain, 1)
-                                                 + " dB | Pan " + slicePanText(preview.pan)
-                                                 + " | Chance " + sliceChanceText(preview.probability)
-                                                 + " | " + sliceNudgeText(preview.nudgePercent)
-                                                 + " | Fade " + sliceFadeText(preview.fade)
-                                                 + " | " + (preview.reverse ? "Reverse" : "Forward")
-                                                 + " | " + (preview.choke ? "Choke" : "Open")
-                                             + " | " + (preview.stutter ? "Stutter" : "No stutter"));
+        sampleChopPanel.setSliceButtonState(
+            index,
+            juce::String(static_cast<int>(index + 1)) + (custom ? "*" : ""),
+            "Slice " + juce::String(static_cast<int>(index + 1))
+                + (custom ? " custom" : " default")
+                + " | Region " + juce::String(juce::roundToInt(orderedSliceStart * 100.0f))
+                + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
+                + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
+                + " st | Gain " + juce::String(preview.gain, 1)
+                + " dB | Pan " + slicePanText(preview.pan)
+                + " | Chance " + sliceChanceText(preview.probability)
+                + " | " + sliceNudgeText(preview.nudgePercent)
+                + " | Fade " + sliceFadeText(preview.fade)
+                + " | " + (preview.reverse ? "Reverse" : "Forward")
+                + " | " + (preview.choke ? "Choke" : "Open")
+                + " | " + (preview.stutter ? "Stutter" : "No stutter"),
+            isSelected);
     }
 
     updateSampleSliceEditorStatus();
@@ -10472,6 +10405,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedMacroPerformanceMap.setVisible(showMacroEditor);
     expandedMacroAssignmentPad.setVisible(showMacroEditor);
     expandedSampleWaveformDisplay.setVisible(showSampleChopEditor);
+    sampleChopPanel.setVisible(showSampleChopEditor);
     expandedHouseLayerRackDisplay.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
     sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
@@ -10501,46 +10435,9 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     }
     else if (showSampleChopEditor)
     {
-        for (auto& button : sampleSliceButtons)
-            button.setVisible(true);
-        sampleSliceStatusLabel.setVisible(true);
-        sampleSliceStoreButton.setVisible(true);
-        sampleSliceRecallButton.setVisible(true);
-        sampleSliceDetectButton.setVisible(true);
-        sampleSliceDiceButton.setVisible(true);
-        sampleSliceReverseEditButton.setVisible(true);
-        sampleSliceChokeButton.setVisible(true);
-        sampleSlicePanButton.setVisible(true);
-        sampleSliceGhostButton.setVisible(true);
-        sampleSliceNudgeButton.setVisible(true);
-        sampleSliceFadeButton.setVisible(true);
-
         auto waveformArea = content.removeFromTop(juce::jmax(190, content.getHeight() - 116));
         expandedSampleWaveformDisplay.setBounds(waveformArea.reduced(6, 4));
-
-        auto sliceRow = content.removeFromTop(38).withTrimmedTop(2);
-        const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sampleSliceButtons.size());
-        for (auto& button : sampleSliceButtons)
-            button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
-
-        sampleSliceStatusLabel.setBounds(content.removeFromTop(30).reduced(8, 3));
-
-        auto actionRow = content.removeFromTop(42).withTrimmedTop(4);
-        const std::array<juce::TextButton*, 10> actionButtons {
-            &sampleSliceStoreButton,
-            &sampleSliceRecallButton,
-            &sampleSliceDetectButton,
-            &sampleSliceDiceButton,
-            &sampleSliceReverseEditButton,
-            &sampleSliceChokeButton,
-            &sampleSlicePanButton,
-            &sampleSliceGhostButton,
-            &sampleSliceNudgeButton,
-            &sampleSliceFadeButton
-        };
-        const auto actionWidth = actionRow.getWidth() / static_cast<int>(actionButtons.size());
-        for (auto* button : actionButtons)
-            button->setBounds(actionRow.removeFromLeft(actionWidth).reduced(4));
+        sampleChopPanel.setBounds(content.removeFromTop(sampleChopPanel.focusHeight()));
     }
     else if (showSourceLayerEditor)
     {
@@ -10558,25 +10455,10 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedMacroPerformanceMap.toFront(false);
     expandedMacroAssignmentPad.toFront(false);
     expandedSampleWaveformDisplay.toFront(false);
+    sampleChopPanel.toFront(false);
     expandedHouseLayerRackDisplay.toFront(false);
     expandedSequencerGrid.toFront(false);
     sequencerSceneChainLengthButton.toFront(false);
-    if (showSampleChopEditor)
-    {
-        for (auto& button : sampleSliceButtons)
-            button.toFront(false);
-        sampleSliceStatusLabel.toFront(false);
-        sampleSliceStoreButton.toFront(false);
-        sampleSliceRecallButton.toFront(false);
-        sampleSliceDetectButton.toFront(false);
-        sampleSliceDiceButton.toFront(false);
-        sampleSliceReverseEditButton.toFront(false);
-        sampleSliceChokeButton.toFront(false);
-        sampleSlicePanButton.toFront(false);
-        sampleSliceGhostButton.toFront(false);
-        sampleSliceNudgeButton.toFront(false);
-        sampleSliceFadeButton.toFront(false);
-    }
     focusOverlayCloseButton.toFront(false);
 }
 
@@ -10708,7 +10590,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
-        &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sequencerSectionLabel,
+        &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
@@ -10725,8 +10607,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
-        &loadSampleButton, &clearSampleButton, &sampleRecorderPanel,
-        &sampleSliceStoreButton, &sampleSliceRecallButton, &sampleSliceDetectButton, &sampleSliceDiceButton, &sampleSliceReverseEditButton, &sampleSliceChokeButton, &sampleSlicePanButton, &sampleSliceGhostButton, &sampleSliceNudgeButton, &sampleSliceFadeButton,
+        &loadSampleButton, &clearSampleButton, &sampleChopPanel, &sampleRecorderPanel,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,
@@ -10767,9 +10648,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : modWorkflowButtons)
-        button.setVisible(false);
-
-    for (auto& button : sampleSliceButtons)
         button.setVisible(false);
 
     for (auto& button : sequencerSceneRecallButtons)
@@ -13824,7 +13702,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
 
     if (anyComponentVisible(sampleWaveformDisplay,
                             expandedSampleWaveformDisplay,
-                            sampleSliceStatusLabel,
+                            sampleChopPanel,
                             sampleRecorderPanel))
     {
         updateSampleSliceButtons();

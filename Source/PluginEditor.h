@@ -25,6 +25,7 @@
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
+#include "UI/SampleChopPanel.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/StereoFieldDisplay.h"
@@ -242,7 +243,6 @@ private:
     juce::Label sampleSourceLabel;
     juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
-    juce::Label sampleSliceStatusLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
     juce::Label selectedControlHeaderLabel;
@@ -627,17 +627,6 @@ private:
     juce::TextButton clearSampleButton { "Clear" };
     juce::TextButton randomCutButton { "Rand Cut" };
     juce::TextButton ukgChopButton { "UKG Chop" };
-    std::array<juce::TextButton, 8> sampleSliceButtons;
-    juce::TextButton sampleSliceStoreButton { "Store" };
-    juce::TextButton sampleSliceRecallButton { "Recall" };
-    juce::TextButton sampleSliceDetectButton { "Detect" };
-    juce::TextButton sampleSliceDiceButton { "Dice" };
-    juce::TextButton sampleSliceReverseEditButton { "Rev" };
-    juce::TextButton sampleSliceChokeButton { "Choke" };
-    juce::TextButton sampleSlicePanButton { "Pan" };
-    juce::TextButton sampleSliceGhostButton { "Ghost" };
-    juce::TextButton sampleSliceNudgeButton { "Nudge" };
-    juce::TextButton sampleSliceFadeButton { "Fade" };
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
     juce::TextButton undoSequencerButton { "Undo" };
@@ -794,6 +783,7 @@ private:
     UI::PresetSaveSummary presetSaveSummary;
     UI::RandomMorphPad randomMorphPad;
     UI::LowEndAssistant lowEndAssistant;
+    UI::SampleChopPanel sampleChopPanel;
     UI::SampleRecorderPanel sampleRecorderPanel;
     juce::MidiKeyboardComponent pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;

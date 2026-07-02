@@ -6,6 +6,12 @@ Run the automated gate first:
 tools/validate_release.sh
 ```
 
+Create a local release archive after the gate passes:
+
+```sh
+tools/package_release.sh
+```
+
 Then run this manual Ableton pass against the built VST3.
 
 ## Host Scan And Load

@@ -500,3 +500,11 @@ add_custom_target(install_nate_vst3
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     USES_TERMINAL
 )
+
+add_custom_target(package_release
+    COMMAND "${CMAKE_COMMAND}" -E env
+            "BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/tools/package_release.sh"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    USES_TERMINAL
+)

@@ -15,6 +15,7 @@ cmake-build-*/
 Builds/
 DerivedData/
 out/
+dist/
 
 # CMake
 CMakeCache.txt
@@ -43,4 +44,3 @@ Exports/
 
 # Keep intentional source audio assets if they are added later.
 !Resources/Audio/.gitkeep
-

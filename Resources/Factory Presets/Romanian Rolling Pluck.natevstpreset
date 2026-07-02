@@ -26,7 +26,7 @@
   <PARAM id="filter_character" value="0" />
   <PARAM id="filter_slope" value="0" />
   <PARAM id="drive_amount" value="0.1" />
-  <PARAM id="output_gain" value="-11.5" />
+  <PARAM id="output_gain" value="-7.5" />
   <PARAM id="mono_mode" value="0" />
   <PARAM id="glide_time" value="0" />
   <PARAM id="unison_voices" value="1" />

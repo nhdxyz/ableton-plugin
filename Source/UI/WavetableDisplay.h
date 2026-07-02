@@ -13,6 +13,17 @@ class WavetableDisplay final : public juce::Component,
 public:
     static constexpr size_t customPointCount = 16;
     using CustomPointArray = std::array<float, customPointCount>;
+    struct LayoutMetrics
+    {
+        juce::Rectangle<int> frameStrip;
+        juce::Rectangle<int> plot;
+        juce::Rectangle<int> partialBars;
+        juce::Rectangle<int> spectrum;
+        bool frameStripVisible = false;
+        bool partialBarsVisible = false;
+        bool readable = false;
+    };
+
     enum class CustomDrawMode
     {
         point,
@@ -45,6 +56,7 @@ public:
                   bool newOsc2CustomActive = false);
     void setCustomDrawMode(CustomDrawMode newMode);
     juce::String getTooltip() override;
+    LayoutMetrics getLayoutMetricsForAudit() const;
     void paint(juce::Graphics& g) override;
     void mouseDown(const juce::MouseEvent& event) override;
     void mouseDrag(const juce::MouseEvent& event) override;
@@ -117,8 +129,16 @@ private:
     void editPartial(const juce::MouseEvent& event, int partialIndex);
     void setCustomPointValue(int oscillator, size_t pointIndex, float value);
     juce::Rectangle<float> editorPlotBounds() const;
+    juce::Rectangle<float> frameStripBounds() const;
     juce::Rectangle<float> partialBarsBounds() const;
+    juce::Rectangle<float> spectrumBounds() const;
     int partialForEvent(const juce::MouseEvent& event) const noexcept;
+    void drawMiniWave(juce::Graphics& g,
+                      juce::Rectangle<float> bounds,
+                      float position,
+                      const CustomPointArray* customPoints,
+                      juce::Colour colour,
+                      float alpha) const;
     static juce::Path makeCustomPath(juce::Rectangle<float> bounds, const CustomPointArray& points);
     static float sampleFrame(float phase, float position);
     static juce::Path makePath(juce::Rectangle<float> bounds, float position);

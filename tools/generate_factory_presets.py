@@ -8965,7 +8965,7 @@ PRESETS.extend([
             "fx_delay_rate": 2,
             "fx_delay_mix": 0.09,
             "fx_pump_depth": 0.08,
-            "output_gain": -11.5,
+            "output_gain": -7.5,
             "sequencer_root": 41,
             "sequencer_swing": 0.28,
         },

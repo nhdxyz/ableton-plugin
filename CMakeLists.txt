@@ -130,6 +130,20 @@ target_link_libraries(NateVSTSampleWaveformDisplayAudit
 
 add_test(NAME SampleWaveformDisplayAudit COMMAND NateVSTSampleWaveformDisplayAudit)
 
+add_executable(NateVSTWavetableDisplayAudit Tests/WavetableDisplayAudit.cpp)
+
+target_link_libraries(NateVSTWavetableDisplayAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME WavetableDisplayAudit COMMAND NateVSTWavetableDisplayAudit)
+
 add_executable(NateVSTThemeAudit Tests/ThemeAudit.cpp Source/UI/Theme.cpp)
 
 target_link_libraries(NateVSTThemeAudit

@@ -107,8 +107,8 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 
 ### B. Source Engines
 
-21. Add a true wavetable oscillator with position modulation. First internal generated-table playback and Osc 1/Osc 2 WT position pass implemented; import, browser, and warp modes remain open.
-22. Add a wavetable preview display with current frame and animated position. Osc 1/Osc 2 WT position controls are implemented, but the compact source-graph slot is currently used by the house layer rack; a dedicated drag/edit/import wavetable view remains open.
+21. Add a true wavetable oscillator with position modulation. First internal generated-table playback and Osc 1/Osc 2 WT position pass implemented; import, browser, and deeper warp modes remain open.
+22. Add a wavetable preview display with current frame and animated position. First dedicated drag/edit view is implemented with a 3D surface, morph-frame rail, Osc 1/Osc 2 pins, custom point editing, partial bars, and spectral tilt feedback; deeper multi-frame editing, browser integration, and true import remain open.
 23. Add factory wavetables for UKG organ/bell, house chord, tech-house rubber bass, dub stab, and techno noise.
 24. Add safe WAV wavetable import after factory playback is stable.
 25. Add wavetable interpolation quality modes.

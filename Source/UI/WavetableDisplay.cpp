@@ -206,7 +206,27 @@ void WavetableDisplay::setState(float newOsc1Position,
 
 juce::String WavetableDisplay::getTooltip()
 {
-    return "3D wavetable editor: drag WT to morph frames, select Custom and draw points, drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+    return "3D wavetable editor: top rail shows morph frames, drag WT to scan frames, select Custom and draw points, drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+}
+
+WavetableDisplay::LayoutMetrics WavetableDisplay::getLayoutMetricsForAudit() const
+{
+    LayoutMetrics metrics;
+    metrics.frameStrip = frameStripBounds().toNearestInt();
+    metrics.plot = editorPlotBounds().toNearestInt();
+    metrics.partialBars = partialBarsBounds().toNearestInt();
+    metrics.spectrum = spectrumBounds().toNearestInt();
+    metrics.frameStripVisible = ! metrics.frameStrip.isEmpty();
+    metrics.partialBarsVisible = ! metrics.partialBars.isEmpty();
+    metrics.readable = metrics.frameStrip.getWidth() >= 180
+        && metrics.frameStrip.getHeight() >= 14
+        && metrics.plot.getWidth() >= 180
+        && metrics.plot.getHeight() >= 72
+        && metrics.partialBars.getWidth() >= 120
+        && metrics.partialBars.getHeight() >= 18
+        && metrics.spectrum.getWidth() >= 72
+        && metrics.spectrum.getHeight() >= 18;
+    return metrics;
 }
 
 void WavetableDisplay::setCustomDrawMode(CustomDrawMode newMode)
@@ -223,11 +243,19 @@ void WavetableDisplay::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
     auto visualArea = bounds.reduced(8.0f, 8.0f);
+    const auto showFrameStrip = visualArea.getHeight() >= 118.0f && visualArea.getWidth() >= 180.0f;
+    auto frameStrip = juce::Rectangle<float>();
+    if (showFrameStrip)
+    {
+        frameStrip = visualArea.removeFromTop(20.0f);
+        visualArea.removeFromTop(4.0f);
+    }
+
     const auto showAnalysis = visualArea.getHeight() >= 112.0f;
     auto analysisArea = juce::Rectangle<float>();
     if (showAnalysis)
     {
-        analysisArea = visualArea.removeFromBottom(25.0f);
+        analysisArea = visualArea.removeFromBottom(28.0f);
         visualArea.removeFromBottom(4.0f);
     }
     const auto plot = visualArea;
@@ -251,6 +279,75 @@ void WavetableDisplay::paint(juce::Graphics& g)
                      juce::Justification::centredRight,
                      1,
                      0.70f);
+
+    if (showFrameStrip)
+    {
+        g.setColour(juce::Colour(0xff0d1316).withAlpha(0.96f));
+        g.fillRoundedRectangle(frameStrip, 4.0f);
+        g.setColour(juce::Colour(0xff2a3840));
+        g.drawRoundedRectangle(frameStrip, 4.0f, 1.0f);
+
+        g.setFont(juce::FontOptions(7.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff9fb0b6).withAlpha(0.76f));
+        g.drawFittedText("FRAMES",
+                         frameStrip.withWidth(42.0f).toNearestInt(),
+                         juce::Justification::centred,
+                         1,
+                         0.62f);
+
+        auto rail = frameStrip.withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
+        constexpr auto frameCount = 8;
+        const auto cellWidth = rail.getWidth() / static_cast<float>(frameCount);
+        const CustomPointArray* railCustomPoints = nullptr;
+        if (editingOscillator == 2 && osc2CustomActive)
+            railCustomPoints = &osc2CustomPoints;
+        else if (osc1CustomActive)
+            railCustomPoints = &osc1CustomPoints;
+        else if (osc2CustomActive)
+            railCustomPoints = &osc2CustomPoints;
+
+        for (auto frame = 0; frame < frameCount; ++frame)
+        {
+            auto cell = juce::Rectangle<float>(rail.getX() + (static_cast<float>(frame) * cellWidth),
+                                               rail.getY(),
+                                               cellWidth,
+                                               rail.getHeight()).reduced(1.3f, 0.8f);
+            const auto position = static_cast<float>(frame) / static_cast<float>(frameCount - 1);
+            const auto isNearO1 = osc1Active && std::abs(position - osc1Position) <= (0.52f / static_cast<float>(frameCount));
+            const auto isNearO2 = osc2Active && std::abs(position - osc2Position) <= (0.52f / static_cast<float>(frameCount));
+            g.setColour((isNearO1 ? juce::Colour(0xff183b34) : juce::Colour(0xff111a1e)).withAlpha(isNearO2 ? 0.98f : 0.88f));
+            g.fillRoundedRectangle(cell, 2.5f);
+            g.setColour((isNearO2 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff33444c)).withAlpha(isNearO1 ? 0.82f : 0.58f));
+            g.drawRoundedRectangle(cell, 2.5f, 0.8f);
+            drawMiniWave(g,
+                         cell.reduced(3.0f, 2.0f),
+                         position,
+                         railCustomPoints,
+                         isNearO2 && ! isNearO1 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff8ee6c9),
+                         inactive ? 0.16f : (isNearO1 || isNearO2 ? 0.92f : 0.42f));
+        }
+
+        const auto drawPositionPin = [&] (float position, juce::Colour colour, const char* label, float yOffset)
+        {
+            const auto x = rail.getX() + (rail.getWidth() * juce::jlimit(0.0f, 1.0f, position));
+            g.setColour(colour.withAlpha(0.16f));
+            g.drawLine(x, rail.getY(), x, rail.getBottom(), 2.6f);
+            g.setColour(colour);
+            g.fillEllipse(x - 3.5f, rail.getY() + yOffset, 7.0f, 7.0f);
+            g.setColour(juce::Colour(0xff101619));
+            g.setFont(juce::FontOptions(5.8f, juce::Font::bold));
+            g.drawFittedText(label,
+                             juce::Rectangle<float>(x - 4.0f, rail.getY() + yOffset - 0.5f, 8.0f, 8.0f).toNearestInt(),
+                             juce::Justification::centred,
+                             1,
+                             0.62f);
+        };
+
+        if (osc1Active)
+            drawPositionPin(osc1Position, juce::Colour(0xff8ee6c9), "1", 1.0f);
+        if (osc2Active)
+            drawPositionPin(osc2Position, juce::Colour(0xffc4a2ff), "2", 8.0f);
+    }
 
     g.setColour(juce::Colour(0x223d4a50));
     for (auto line = 1; line < 4; ++line)
@@ -478,12 +575,38 @@ void WavetableDisplay::paint(juce::Graphics& g)
             }
         }
 
+        auto spectrumArea = analysisArea.reduced(1.0f, 2.0f);
+        g.setColour(juce::Colour(0xff11191d).withAlpha(0.92f));
+        g.fillRoundedRectangle(spectrumArea.expanded(1.0f), 3.0f);
+        g.setFont(juce::FontOptions(7.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff9fb0b6).withAlpha(0.74f));
+        g.drawFittedText("SPECTRAL TILT",
+                         spectrumArea.withTrimmedLeft(3.0f).withHeight(8.0f).toNearestInt(),
+                         juce::Justification::centredLeft,
+                         1,
+                         0.62f);
+
+        auto heatArea = spectrumArea.withTrimmedTop(8.0f).reduced(2.0f, 1.0f);
+        const auto heatWidth = heatArea.getWidth() / static_cast<float>(analysis.partials.size());
+        for (size_t index = 0; index < analysis.partials.size(); ++index)
+        {
+            const auto value = analysis.partials[index];
+            const auto normalizedIndex = static_cast<float>(index) / static_cast<float>(analysis.partials.size() - 1);
+            const auto hue = 0.47f + (normalizedIndex * 0.14f);
+            const auto cell = juce::Rectangle<float>(heatArea.getX() + (static_cast<float>(index) * heatWidth),
+                                                     heatArea.getY(),
+                                                     heatWidth,
+                                                     heatArea.getHeight()).reduced(0.5f, 0.5f);
+            g.setColour(juce::Colour::fromHSV(hue, 0.48f, 0.28f + (value * 0.70f), 0.32f + (value * 0.60f)));
+            g.fillRoundedRectangle(cell, 1.5f);
+        }
+
         g.setColour(juce::Colour(0xff9fb0b6));
         g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
         const auto stats = "RMS " + juce::String(juce::roundToInt(analysis.rms * 100.0f)) + "%"
             + "  DC " + (analysis.dc >= 0.0f ? "+" : "") + juce::String(juce::roundToInt(analysis.dc * 100.0f)) + "%"
             + "  PK " + juce::String(juce::roundToInt(analysis.peak * 100.0f)) + "%";
-        g.drawFittedText(stats, analysisArea.toNearestInt().reduced(4, 2), juce::Justification::centredRight, 1, 0.72f);
+        g.drawFittedText(stats, spectrumArea.toNearestInt().reduced(4, 2), juce::Justification::centredBottom, 1, 0.72f);
     }
 
     if (inactive)
@@ -884,23 +1007,61 @@ void WavetableDisplay::editPartial(const juce::MouseEvent& event, int partialInd
 juce::Rectangle<float> WavetableDisplay::editorPlotBounds() const
 {
     auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() >= 118.0f && visualArea.getWidth() >= 180.0f)
+    {
+        visualArea.removeFromTop(20.0f);
+        visualArea.removeFromTop(4.0f);
+    }
+
     if (visualArea.getHeight() >= 112.0f)
     {
-        visualArea.removeFromBottom(25.0f);
+        visualArea.removeFromBottom(28.0f);
         visualArea.removeFromBottom(4.0f);
     }
 
     return visualArea;
 }
 
+juce::Rectangle<float> WavetableDisplay::frameStripBounds() const
+{
+    auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() < 118.0f || visualArea.getWidth() < 180.0f)
+        return {};
+
+    return visualArea.removeFromTop(20.0f);
+}
+
 juce::Rectangle<float> WavetableDisplay::partialBarsBounds() const
 {
     auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() >= 118.0f && visualArea.getWidth() >= 180.0f)
+    {
+        visualArea.removeFromTop(20.0f);
+        visualArea.removeFromTop(4.0f);
+    }
+
     if (visualArea.getHeight() < 112.0f)
         return {};
 
-    auto analysisArea = visualArea.removeFromBottom(25.0f);
+    auto analysisArea = visualArea.removeFromBottom(28.0f);
     analysisArea.removeFromRight(analysisArea.getWidth() * 0.42f);
+    return analysisArea.reduced(1.0f, 2.0f);
+}
+
+juce::Rectangle<float> WavetableDisplay::spectrumBounds() const
+{
+    auto visualArea = getLocalBounds().toFloat().reduced(9.0f, 8.0f);
+    if (visualArea.getHeight() >= 118.0f && visualArea.getWidth() >= 180.0f)
+    {
+        visualArea.removeFromTop(20.0f);
+        visualArea.removeFromTop(4.0f);
+    }
+
+    if (visualArea.getHeight() < 112.0f)
+        return {};
+
+    auto analysisArea = visualArea.removeFromBottom(28.0f);
+    analysisArea.removeFromLeft(analysisArea.getWidth() * 0.58f);
     return analysisArea.reduced(1.0f, 2.0f);
 }
 
@@ -917,6 +1078,47 @@ int WavetableDisplay::partialForEvent(const juce::MouseEvent& event) const noexc
     const auto normalised = juce::jlimit(0.0f, 0.999f,
                                         (event.position.x - bars.getX()) / juce::jmax(1.0f, bars.getWidth()));
     return juce::jlimit(0, 15, static_cast<int>(std::floor(normalised * 16.0f)));
+}
+
+void WavetableDisplay::drawMiniWave(juce::Graphics& g,
+                                    juce::Rectangle<float> bounds,
+                                    float position,
+                                    const CustomPointArray* customPoints,
+                                    juce::Colour colour,
+                                    float alpha) const
+{
+    if (bounds.getWidth() <= 4.0f || bounds.getHeight() <= 4.0f)
+        return;
+
+    juce::Path path;
+    constexpr auto points = 28;
+    for (auto index = 0; index < points; ++index)
+    {
+        const auto phase = static_cast<float>(index) / static_cast<float>(points - 1);
+        auto sample = 0.0f;
+        if (customPoints != nullptr)
+        {
+            const auto pointPosition = phase * static_cast<float>(customPoints->size());
+            const auto lowerIndex = static_cast<size_t>(std::floor(pointPosition)) % customPoints->size();
+            const auto upperIndex = (lowerIndex + 1) % customPoints->size();
+            const auto mix = pointPosition - std::floor(pointPosition);
+            sample = (((*customPoints)[lowerIndex] + (((*customPoints)[upperIndex] - (*customPoints)[lowerIndex]) * mix)) * 2.0f) - 1.0f;
+        }
+        else
+        {
+            sample = sampleFrame(phase, position);
+        }
+
+        const auto x = bounds.getX() + (bounds.getWidth() * phase);
+        const auto y = bounds.getCentreY() - (sample * bounds.getHeight() * 0.38f);
+        if (index == 0)
+            path.startNewSubPath(x, y);
+        else
+            path.lineTo(x, y);
+    }
+
+    g.setColour(colour.withAlpha(alpha));
+    g.strokePath(path, juce::PathStrokeType(0.85f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 
 float WavetableDisplay::sampleFrame(float phase, float position)

@@ -284,7 +284,7 @@ Modern flagship instruments are winning on workflow depth, not only feature coun
 ## Best Next Slices
 
 1. UI architecture and screenshot/layout tests. This protects every future feature.
-2. Wavetable oscillator plus visual table display. This is the biggest missing synth-engine signal compared with modern competitors.
+2. Wavetable oscillator plus visual table display. First dedicated visual/edit pass is now in place with a 3D surface, frame rail, partial bars, and spectral feedback; true user import, browser depth, and multi-frame editing remain the bigger synth-engine gaps.
 3. Drag-style modulation and visible modulation rings. This immediately makes the plugin feel more professional.
 4. UKG sampler drag/drop plus transient/manual slicing beyond the current eight-pad visual slice overlay. This directly supports the genre target.
 5. Volume/filter/time shaper module. This gives the FX rack a modern rhythmic club-processing identity.

@@ -4,7 +4,7 @@ Factory presets are repo-managed `.natevstpreset` XML files in:
 
 `Resources/Factory Presets`
 
-The factory pack currently includes 438 UK garage and broader club workflow starters. Representative named starters include:
+The factory pack currently includes 502 UK garage and broader club workflow starters. Representative named starters include:
 
 - `UKG 2-Step Bass`
 - `UKG Shuffle Bass`
@@ -33,6 +33,8 @@ The factory pack currently includes 438 UK garage and broader club workflow star
 - `Detroit House Chord Stab`
 - `Chicago House Acid Bass`
 - `Classic House Piano Chord`
+- `Classic House Warehouse Piano Stab`
+- `Classic House M1 Organ Bass`
 - `Funky House Clav Stab`
 - `Melodic House Arp Pluck`
 - `Jackin Organ Bass Kit`
@@ -49,12 +51,18 @@ The factory pack currently includes 438 UK garage and broader club workflow star
 - `Latin House Perc Organ`
 - `Organic House Kalimba Pluck`
 - `Electro House Sync Lead`
+- `Legacy Electro Octave Sequencer Line`
+- `Legacy Electro Cold Sync Hook`
 - `Acid House 303 Line`
 - `Indie Dance Rubber Bass`
 - `Hard House Rave Stab`
 - `Speed Garage Organ Bass`
 - `Bass House Wobble Hook`
 - `Hardgroove Techno Perc Stab`
+- `Classic Trance Supersaw Anthem Lead`
+- `Classic Trance Offbeat Rolling Bass`
+- `Classic Techno Hoover Alarm Lead`
+- `Classic Techno Detroit Minor Stab`
 - `Amapiano Log Drum Pluck`
 - `Future Garage Atmos Pad`
 - `Jackin House Organ Bass`
@@ -126,9 +134,9 @@ Waveform choices are append-only for preset and Ableton automation compatibility
 
 The UKG factory presets include conservative MOD-panel defaults where useful, such as synced curve-LFO cutoff motion on basses, slower Mod Env filter movement on Dred-style bass, Smooth random drift on selected warp/sample-start moves, and Mod Env/velocity cutoff movement on stabs and plucks. Presets also seed Osc Warp, Filter Character, and Filter Slope values, with restrained source warp on bass/stab patches, Warm/24 dB for tighter UKG bass weight, Dirty/24 dB for Dred pressure, and cleaner 12 dB settings for organ, chord, bell, and vocal-chop starters. Presets seed subtle EQ curves for bass weight, low-mid cleanup, vocal chop presence, and stab brightness. Stab, bell, late-hit, and vocal chop presets use light Tremolo/Auto Pan settings for synced motion. Bell, vocal chop, and late-stab presets use restrained Ring Mod and Comb resonance for metallic edge and tuned texture. Techno presets can seed restrained Chaos motion for unstable drive or FX movement.
 
-The house, tech-house, minimal, and techno factory presets use the newer SEQ template direction with saved groove, scale, probability, chord/voicing, strum, step timing, and per-step ratchet defaults. Bass presets keep mono-safe low-end, Width mono-below protection, Pump movement, source warp where harmonic edge helps, 24 dB slope where tighter filtering helps, and Guard enabled where needed; pluck and stab presets lean on Osc Warp, Filter Character/Slope, Comb, Ring Mod, Delay, Reverb, Width, and EQ for club-ready texture. House Chord Memory, House Organ Skank, Soulful House M1 Keys, Classic House Piano Chord, Deep House Ninth Chord Kit, Piano House Lift Riff, and Jackin Organ Bass Kit now seed the appended procedural Organ and House Piano source modes so house chord and organ patches start from stronger original source material instead of only generic oscillator blends. Selected UKG, tech-house, minimal, deep-house, and garage-house presets seed `seq_step_*_ratchet` values for quick repeat fills while preserving a 1x default for all other steps. Pump-enabled presets now store curve type, custom curve points, rate, and depth so UKG patches can prefer Garage ducking, tech-house/techno can stay tighter, minimal pulses can use gated movement, and custom duck shapes recall consistently. The latest expansion brings the repo-managed pack to 438 presets across the original UKG/house/techno starters plus larger packs for Afro House, Amapiano, ambient/evolving texture tools, bass house, hardgroove, deep/minimal variants, garage, electro, Club Synth Stabs, and construction-kit style patches with key, BPM, sequence, macro, and pack intent.
+The house, tech-house, minimal, trance, and techno factory presets use the newer SEQ template direction with saved groove, scale, probability, chord/voicing, strum, step timing, and per-step ratchet defaults. Bass presets keep mono-safe low-end, Width mono-below protection, Pump movement, source warp where harmonic edge helps, 24 dB slope where tighter filtering helps, and Guard enabled where needed; pluck and stab presets lean on Osc Warp, Filter Character/Slope, Comb, Ring Mod, Delay, Reverb, Width, and EQ for club-ready texture. House Chord Memory, House Organ Skank, Soulful House M1 Keys, Classic House Piano Chord, Deep House Ninth Chord Kit, Piano House Lift Riff, and Jackin Organ Bass Kit now seed the appended procedural Organ and House Piano source modes so house chord and organ patches start from stronger original source material instead of only generic oscillator blends. Selected UKG, tech-house, minimal, deep-house, and garage-house presets seed `seq_step_*_ratchet` values for quick repeat fills while preserving a 1x default for all other steps. Pump-enabled presets now store curve type, custom curve points, rate, and depth so UKG patches can prefer Garage ducking, tech-house/techno can stay tighter, minimal pulses can use gated movement, and custom duck shapes recall consistently. The latest expansion brings the repo-managed pack to 502 presets across the original UKG/house/techno starters plus larger packs for Afro House, Amapiano, ambient/evolving texture tools, bass house, hardgroove, deep/minimal variants, garage, 80s electro/synth-pop, 90s classic house, classic trance, classic techno, Club Synth Stabs, and construction-kit style patches with key, BPM, sequence, macro, and pack intent.
 
-Factory presets also include deterministic browser metadata. `preset_tags` are generated from category, role, sequencer usage, mono-safety, and FX choices. `preset_pack`, `preset_key`, `preset_bpm`, and optional `preset_notes` are assigned from generator data so the Library can search, sort, filter, and inspect curated usage context. The Library tag filter uses the generated tags for quick browsing by role and production need, such as `Bass`, `Chord`, `Pluck`, `Stab`, `Sequenced`, `Mono Safe`, `Pump`, `Wide`, `FX`, `Vocal Chop`, `Construction Kit`, `Organ`, `Bass House`, `Amapiano`, `Hardgroove`, `Future Garage`, `Speed Garage`, `Deep House`, `Piano House`, `Jackin House`, `Disco House`, `Dub House`, `Deep Tech`, `Indie Dance`, `Italo Disco`, `Balearic House`, `Acid House`, `Nu Disco`, `Afro Tech`, `Afro Melodic`, `Progressive House`, `Hard House`, `Peak Time Techno`, `Detroit Techno`, `Melodic Techno`, `Minimal FM`, `Deep Minimal`, `Lo-Fi House`, `French House`, `Soulful House`, `Garage House`, `Microhouse`, `Raw Techno`, `Tribal Tech House`, `Breaks House`, and broader genre tags. The Library also parses saved macro values from `macro_1` through `macro_8` so presets can be searched, filtered, sorted, and previewed by performance-macro intensity without changing preset files.
+Factory presets also include deterministic browser metadata. `preset_tags` are generated from category, role, sequencer usage, mono-safety, FX choices, and optional era/style pack tags. `preset_pack`, `preset_key`, `preset_bpm`, and optional `preset_notes` are assigned from generator data so the Library can search, sort, filter, and inspect curated usage context. The Library tag filter uses the generated tags for quick browsing by role and production need, such as `Bass`, `Chord`, `Pluck`, `Stab`, `Sequenced`, `Mono Safe`, `Pump`, `Wide`, `FX`, `Vocal Chop`, `Construction Kit`, `Organ`, `Bass House`, `Amapiano`, `Hardgroove`, `Future Garage`, `Speed Garage`, `Deep House`, `Piano House`, `Jackin House`, `Disco House`, `Dub House`, `Deep Tech`, `Indie Dance`, `Italo Disco`, `Balearic House`, `Acid House`, `Nu Disco`, `Afro Tech`, `Afro Melodic`, `Progressive House`, `Hard House`, `Peak Time Techno`, `Detroit Techno`, `Melodic Techno`, `Minimal FM`, `Deep Minimal`, `Lo-Fi House`, `French House`, `Soulful House`, `Garage House`, `Microhouse`, `Raw Techno`, `Tribal Tech House`, `Breaks House`, `80s Electro`, `Synth Pop`, `Classic House`, `Classic Trance`, `Classic Techno`, and broader genre tags. The Library also parses saved macro values from `macro_1` through `macro_8` so presets can be searched, filtered, sorted, and previewed by performance-macro intensity without changing preset files.
 
 `FactoryPresetRenderAudit` now renders every repo-managed factory preset through the real preset loader and synth/sample/FX path. It verifies finite, non-silent, peak-contained output and uses transient-aware thresholds for short ticks, hits, sweeps, and plucks. Microhouse Dust Pluck and Minimal FM Bubble were lifted to `-6 dB` output after this audit exposed them as too quiet for reliable factory audition.
 

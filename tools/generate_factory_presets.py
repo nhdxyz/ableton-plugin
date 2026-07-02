@@ -10227,6 +10227,30 @@ EXPANDED_FACTORY_GROUPS = [
         ],
     },
     {
+        "prefix": "Classic Trance",
+        "category": "Trance",
+        "pack": "90s 2000s Trance",
+        "key": "B Min",
+        "bpm": 136,
+        "root": 47,
+        "swing": 0.02,
+        "groove": 0,
+        "scale": 1,
+        "tone": 0.26,
+        "drive": 0.08,
+        "space": 0.38,
+        "motion": 0.22,
+        "recipe": 4,
+        "flavour": "late-90s and early-2000s trance plucks, gated pads, rolling basses, and anthem leads",
+        "tags": ["Classic Trance", "90s Trance", "2000s Trance"],
+        "items": [
+            ("Supersaw Anthem Lead", "lead"), ("Offbeat Rolling Bass", "bass"), ("Gate Heaven Pad", "pad"), ("Dream Pluck Echo", "pluck"),
+            ("Euro Rave Stab", "rave"), ("Acid Gate Line", "acid"), ("Ocean Bell Arp", "arp"), ("Breakdown Choir Pad", "wash"),
+            ("Binary FM Bell", "bell"), ("Minor Anthem Keys", "keys"), ("Peak Time Build Lead", "lead"), ("Gate Fill Sweep", "fx"),
+            ("Wide Chord Memory", "chord"), ("Laser Pluck Top", "pluck"), ("Sub Pulse Sequence", "bass"), ("Sunrise Reese Pad", "reese"),
+        ],
+    },
+    {
         "prefix": "Ambient",
         "category": "Ambient",
         "pack": "Ambient Electronica",
@@ -10316,6 +10340,54 @@ EXPANDED_FACTORY_GROUPS = [
             ("French Filter Lead", "lead"), ("Deep Sub Groove", "bass"), ("Lo Fi Dust Pad", "pad"), ("Jackin Acid Line", "acid"),
             ("Garage Chord Memory", "chord"), ("Funky Bell Top", "bell"), ("Chicago Organ Hit", "organ"), ("Warm Chord Wash", "wash"),
             ("Piano Lift Arp", "arp"), ("Dub House Stab", "stab"), ("Vinyl Texture Bed", "texture"), ("Filter Sweep FX", "fx"),
+        ],
+    },
+    {
+        "prefix": "Classic House",
+        "category": "House",
+        "pack": "90s Classic House",
+        "key": "C Min",
+        "bpm": 124,
+        "root": 48,
+        "swing": 0.2,
+        "groove": 1,
+        "scale": 3,
+        "tone": 0.08,
+        "drive": 0.1,
+        "space": 0.18,
+        "motion": 0.1,
+        "recipe": 4,
+        "flavour": "90s piano-house, organ bass, garage chords, rave stabs, and soulful club keys",
+        "tags": ["Classic House", "90s House", "Piano House"],
+        "items": [
+            ("Warehouse Piano Stab", "keys"), ("M1 Organ Bass", "organ"), ("Diva Seventh Chord", "chord"), ("Jersey Garage Chord", "chord"),
+            ("Basement Organ Skank", "organ"), ("Rave Piano Hit", "rave"), ("Club Clav Hook", "pluck"), ("Soulful Minor Keys", "keys"),
+            ("Deep Vinyl Pad", "pad"), ("Chicago Acid Jack", "acid"), ("Filter Disco Bass", "bass"), ("Gospel House Organ", "organ"),
+            ("Loft Party Bell", "bell"), ("Dubby Chord Throw", "stab"), ("Garage Topline Lead", "lead"), ("Classic Sweep FX", "fx"),
+        ],
+    },
+    {
+        "prefix": "Legacy Electro",
+        "category": "House",
+        "pack": "80s Electro Club",
+        "key": "F# Min",
+        "bpm": 122,
+        "root": 42,
+        "swing": 0.02,
+        "groove": 0,
+        "scale": 4,
+        "tone": 0.18,
+        "drive": 0.12,
+        "space": 0.2,
+        "motion": 0.18,
+        "recipe": 8,
+        "flavour": "80s electro, synth-pop club basslines, cold-wave hooks, and drum-machine-era chord stabs",
+        "tags": ["80s Electro", "Synth Pop", "Cold Wave"],
+        "items": [
+            ("Factory Floor Bass", "bass"), ("Octave Sequencer Line", "acid"), ("Cold Sync Hook", "lead"), ("Midnight FM Lead", "lead"),
+            ("Gated String Pad", "pad"), ("Metal Grid Arp", "arp"), ("Analog Club Bell", "bell"), ("Vocoder Chord Stab", "chord"),
+            ("Nocturnal Pulse Bass", "bass"), ("Neon Fifth Hit", "stab"), ("Tape Sweep Wash", "wash"), ("Digital Drum FX", "fx"),
+            ("Motor City Organ Jab", "organ"), ("Chromed Rave Gate", "rave"), ("Glass Pluck Memory", "pluck"), ("Shadow Reese Line", "reese"),
         ],
     },
     {
@@ -10411,6 +10483,30 @@ EXPANDED_FACTORY_GROUPS = [
         ],
     },
     {
+        "prefix": "Classic Techno",
+        "category": "Techno",
+        "pack": "90s 2000s Techno",
+        "key": "D Min",
+        "bpm": 138,
+        "root": 38,
+        "swing": 0.04,
+        "groove": 3,
+        "scale": 4,
+        "tone": 0.14,
+        "drive": 0.24,
+        "space": 0.12,
+        "motion": 0.16,
+        "recipe": 10,
+        "flavour": "90s warehouse techno, Detroit chord color, acid lines, hoover pressure, and early-2000s hardgroove tools",
+        "tags": ["Classic Techno", "90s Techno", "2000s Techno", "Detroit Techno"],
+        "items": [
+            ("Detroit Minor Stab", "chord"), ("Hoover Alarm Lead", "lead"), ("Warehouse Organ Hit", "organ"), ("Hardgroove Perc Stab", "stab"),
+            ("Acid Machine Line", "acid"), ("Rumble Pulse Bass", "bass"), ("FM Rave Bell", "bell"), ("Dub Chord Tunnel", "wash"),
+            ("Raw Reese Siren", "reese"), ("909 Floor Sub", "bass"), ("Metal Perc Ping", "fx"), ("Strobe Gate Chord", "rave"),
+            ("Motor City Arp", "arp"), ("Darkroom Pad", "pad"), ("Crusher Pluck", "pluck"), ("Peak Noise Sweep", "fx"),
+        ],
+    },
+    {
         "prefix": "Minimal",
         "category": "Minimal",
         "pack": "Minimal Expansion",
@@ -10471,6 +10567,7 @@ def make_expanded_factory_presets():
             }.get(role, "Tool")
             tags = [
                 group["category"],
+                *group.get("tags", []),
                 role_label,
                 "Sequenced",
                 "Factory Expansion",
@@ -10487,6 +10584,11 @@ def make_expanded_factory_presets():
             if role in {"fx"}:
                 tags.extend(["FX", "Sample"])
 
+            if group.get("tags"):
+                notes = f"{name} focuses on {role_label.lower()} duties for {group['flavour']}. Macros emphasize tone, dirt, motion, space, and guarded club output."
+            else:
+                notes = f"{name} is a {role_label.lower()} preset for {group['flavour']}. Macros emphasize tone, dirt, motion, space, and guarded club output."
+
             generated.append({
                 "name": name,
                 "category": group["category"],
@@ -10494,7 +10596,7 @@ def make_expanded_factory_presets():
                 "key": group["key"],
                 "bpm": group["bpm"],
                 "tags": ", ".join(dict.fromkeys(tags)),
-                "notes": f"{name} is a {role_label.lower()} preset for {group['flavour']}. Macros emphasize tone, dirt, motion, space, and guarded club output.",
+                "notes": notes,
                 "params": expanded_role_params(role, group, index),
                 "steps": expanded_steps(role, index),
             })

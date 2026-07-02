@@ -1430,6 +1430,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
     syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
+    pinPianoKeyboardVisualRange();
     pianoKeyboard.setWantsKeyboardFocus(true);
     pianoKeyboard.setScrollButtonsVisible(false);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xffd9e3df));
@@ -2281,6 +2282,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerGrooveTransformBox.setSelectedId(1, juce::dontSendNotification);
     sequencerGrooveTransformBox.setTooltip("Choose a timing transform or genre groove template for the current sequence");
     addAndMakeVisible(sequencerGrooveTransformBox);
+
+    sequencerLaneViewBox.addItem("All Lanes", 1);
+    sequencerLaneViewBox.addItem("Groove", 2);
+    sequencerLaneViewBox.addItem("Dynamics", 3);
+    sequencerLaneViewBox.addItem("Ratchets", 4);
+    sequencerLaneViewBox.addItem("Lock/Slide", 5);
+    sequencerLaneViewBox.setSelectedId(1, juce::dontSendNotification);
+    sequencerLaneViewBox.setTextWhenNothingSelected("Lane View");
+    sequencerLaneViewBox.setTooltip("Choose which step lanes are emphasized in the SEQ piano roll");
+    sequencerLaneViewBox.onChange = [this]
+    {
+        const auto laneViewMode = juce::jlimit(0, 4, sequencerLaneViewBox.getSelectedId() - 1);
+        sequencerGrid.setLaneViewMode(laneViewMode);
+        expandedSequencerGrid.setLaneViewMode(laneViewMode);
+        updateSequencerStepEditor();
+    };
+    addAndMakeVisible(sequencerLaneViewBox);
 
     sequencerLockDestinationBox.addItemList(Parameters::sequencerLockDestinationChoices(), 1);
     sequencerLockDestinationBox.setTextWhenNothingSelected("Lock");
@@ -4275,9 +4293,7 @@ void NateVSTAudioProcessorEditor::resized()
     keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(74).reduced(2, 4));
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
     pianoKeyboard.setBounds(pianoKeyboardBounds);
-    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboardBounds,
-                                                                  keyboardVisualLowestNote));
-    pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
+    pinPianoKeyboardVisualRange();
     updateKeyboardRangeLabel();
     bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
@@ -5205,6 +5221,7 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerChordMemoryButton.setVisible(true);
             sequencerPatternBox.setVisible(true);
             sequencerGrooveTransformBox.setVisible(true);
+            sequencerLaneViewBox.setVisible(true);
             sequencerLockDestinationBox.setVisible(true);
             sequencerRootDownButton.setVisible(true);
             sequencerRootUpButton.setVisible(true);
@@ -5272,6 +5289,9 @@ void NateVSTAudioProcessorEditor::resized()
             sequencerRootUpButton.setBounds(rootStepperRow.removeFromRight(38).reduced(4));
             sequencerRootValueLabel.setBounds(rootStepperRow.reduced(4));
             updateSequencerRootStepper();
+
+            auto laneViewRow = controlArea.removeFromTop(34).withTrimmedTop(2);
+            sequencerLaneViewBox.setBounds(laneViewRow.reduced(4));
 
             auto stepEditorArea = controlArea.removeFromTop(104).withTrimmedTop(4);
             sequencerStepEditorLabel.setBounds(stepEditorArea.removeFromTop(24).reduced(4, 2));
@@ -5982,8 +6002,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
-        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardVisualLowestNote));
-        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
+        pinPianoKeyboardVisualRange();
         updateKeyboardRangeLabel();
         expectBase("home", keyboardInitialLowestNote);
         if (pianoKeyboard.getOctaveForMiddleC() != abletonMiddleCOctave)
@@ -6024,8 +6043,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("Keyboard Oct- clamp: down button remains enabled at the bottom laptop range");
 
         keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
-        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardVisualLowestNote));
-        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
+        pinPianoKeyboardVisualRange();
         updateKeyboardRangeLabel();
     };
 
@@ -6514,6 +6532,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     activeModWorkflowPage = originalModWorkflowPage;
     keyboardTypingBaseNote = originalKeyboardBaseNote;
     updateKeyboardRangeLabel();
+    pinPianoKeyboardVisualRange();
     updatePanelVisibility();
     resized();
 
@@ -8955,12 +8974,7 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
                                            mappedBaseNote + keyboardTypingKeySpanSemitones);
     const auto mappedTopName = abletonNoteName(mappedTopNote);
 
-    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
-                                                                     keyboardVisualLowestNote);
-    if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
-        pianoKeyboard.setKeyWidth(expectedKeyWidth);
-    if (pianoKeyboard.getLowestVisibleKey() != keyboardVisualLowestNote)
-        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
+    pinPianoKeyboardVisualRange();
 
     const auto labelText = "A:" + noteName + "\n;:" + mappedTopName;
     if (keyboardRangeLabel.getText() != labelText)
@@ -8990,6 +9004,20 @@ void NateVSTAudioProcessorEditor::syncPianoKeyboardComputerMapping()
     // fall back to JUCE's default C0-ish keyboard mapping.
     pianoKeyboard.clearKeyMappings();
     syncedPianoKeyboardMappingBaseNote = baseNote;
+}
+
+void NateVSTAudioProcessorEditor::pinPianoKeyboardVisualRange()
+{
+    pianoKeyboard.setAvailableRange(keyboardVisualLowestNote, keyboardVisualHighestNote);
+    pianoKeyboard.setScrollButtonsVisible(false);
+
+    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
+                                                                     keyboardVisualLowestNote);
+    if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
+        pianoKeyboard.setKeyWidth(expectedKeyWidth);
+
+    if (pianoKeyboard.getLowestVisibleKey() != keyboardVisualLowestNote)
+        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
 }
 
 void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
@@ -9056,6 +9084,9 @@ bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* origina
         }
     }
 
+    if (used)
+        pinPianoKeyboardVisualRange();
+
     return used;
 }
 
@@ -9113,7 +9144,10 @@ void NateVSTAudioProcessorEditor::returnKeyboardFocusToPiano()
     juce::MessageManager::callAsync([safeEditor]
     {
         if (safeEditor != nullptr)
+        {
+            safeEditor->pinPianoKeyboardVisualRange();
             safeEditor->pianoKeyboard.grabKeyboardFocus();
+        }
     });
 }
 
@@ -10801,7 +10835,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

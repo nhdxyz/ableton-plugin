@@ -285,6 +285,7 @@ private:
     juce::ComboBox sequencerVoicingBox;
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
+    juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
     juce::ComboBox sampleModeBox;
     juce::ComboBox sampleEngineBox;
@@ -1027,6 +1028,7 @@ private:
     void releaseComputerKeyboardNotes();
     int computerKeyboardBaseNote() const noexcept;
     void syncPianoKeyboardComputerMapping();
+    void pinPianoKeyboardVisualRange();
     juce::String startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote);
     bool hasPresetCompareSnapshots() const;
     bool capturePresetCompareBefore(const juce::String& presetName);

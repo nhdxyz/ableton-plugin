@@ -4,6 +4,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include <array>
 #include <functional>
 
 namespace UI
@@ -20,6 +21,8 @@ public:
     void setCallbacks(StepGetter getter, StepSetter setter);
     void setRootNote(int newRootNote);
     void setScaleMode(int newScaleMode);
+    void setLaneViewMode(int newLaneViewMode);
+    int getLaneViewMode() const noexcept;
     int getSelectedStepIndex() const noexcept;
     Sequencer::Step getSelectedStepValue() const;
     void selectStep(int stepIndex);
@@ -77,6 +80,7 @@ private:
     int selectedStep = -1;
     int rootNote = 36;
     int scaleMode = 0;
+    int laneViewMode = 0;
     DragMode dragMode = DragMode::none;
 
     juce::Rectangle<int> gridBounds() const;
@@ -86,6 +90,9 @@ private:
     juce::Rectangle<int> stepHeaderBounds() const;
     int laneAreaHeightForCurrentBounds() const noexcept;
     float laneWeight(int lane) const noexcept;
+    bool isLaneVisible(int lane) const noexcept;
+    int visibleLaneCount() const noexcept;
+    float visibleLaneWeightTotal() const noexcept;
     float laneTopForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept;
     float laneHeightForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept;
     int stepForPosition(juce::Point<int> position) const;

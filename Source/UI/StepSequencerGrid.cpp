@@ -50,6 +50,21 @@ void StepSequencerGrid::setScaleMode(int newScaleMode)
     repaint();
 }
 
+void StepSequencerGrid::setLaneViewMode(int newLaneViewMode)
+{
+    newLaneViewMode = juce::jlimit(0, 4, newLaneViewMode);
+    if (laneViewMode == newLaneViewMode)
+        return;
+
+    laneViewMode = newLaneViewMode;
+    repaint();
+}
+
+int StepSequencerGrid::getLaneViewMode() const noexcept
+{
+    return laneViewMode;
+}
+
 int StepSequencerGrid::getSelectedStepIndex() const noexcept
 {
     return selectedStep;
@@ -281,7 +296,8 @@ StepSequencerGrid::LayoutMetrics StepSequencerGrid::getLayoutMetricsForAudit() c
     metrics.noteRowHeight = static_cast<float>(metrics.grid.getHeight()) / static_cast<float>(numRows);
     auto minLaneHeight = std::numeric_limits<float>::max();
     for (auto lane = 0; lane < laneCount; ++lane)
-        minLaneHeight = juce::jmin(minLaneHeight, laneHeightForIndex(metrics.lanes, lane));
+        if (isLaneVisible(lane))
+            minLaneHeight = juce::jmin(minLaneHeight, laneHeightForIndex(metrics.lanes, lane));
     metrics.laneRowHeight = minLaneHeight >= std::numeric_limits<float>::max() * 0.5f ? 0.0f : minLaneHeight;
     metrics.stepCellWidth = static_cast<float>(metrics.grid.getWidth()) / static_cast<float>(Sequencer::PatternSequencer::numSteps);
     return metrics;
@@ -372,13 +388,21 @@ juce::Rectangle<int> StepSequencerGrid::stepHeaderBounds() const
 int StepSequencerGrid::laneAreaHeightForCurrentBounds() const noexcept
 {
     const auto availableHeight = juce::jmax(0, getHeight() - (stepHeaderHeight + 10));
-    const auto maxLaneHeightForReadableNotes = juce::jmax(minimumLaneAreaHeight,
+    const auto visibleLanes = visibleLaneCount();
+    const auto minimumLaneHeight = visibleLanes >= laneCount ? minimumLaneAreaHeight
+                                 : visibleLanes >= 4 ? 104
+                                                     : 82;
+    const auto maximumLaneHeight = visibleLanes >= laneCount ? maximumLaneAreaHeight
+                                                             : 168;
+    const auto maxLaneHeightForReadableNotes = juce::jmax(minimumLaneHeight,
                                                           availableHeight - (numRows * targetMinimumNoteRowHeight));
-    const auto upperLimit = juce::jmin(maximumLaneAreaHeight, maxLaneHeightForReadableNotes);
-    const auto targetRatio = getHeight() >= 480 ? 0.46f : 0.42f;
+    const auto upperLimit = juce::jmax(minimumLaneHeight, juce::jmin(maximumLaneHeight, maxLaneHeightForReadableNotes));
+    const auto targetRatio = visibleLanes >= laneCount
+        ? (getHeight() >= 480 ? 0.46f : 0.42f)
+        : (getHeight() >= 480 ? 0.34f : 0.31f);
     const auto target = juce::roundToInt(static_cast<float>(availableHeight) * targetRatio);
 
-    return juce::jlimit(minimumLaneAreaHeight, upperLimit, target);
+    return juce::jlimit(minimumLaneHeight, upperLimit, target);
 }
 
 float StepSequencerGrid::laneWeight(int lane) const noexcept
@@ -386,23 +410,59 @@ float StepSequencerGrid::laneWeight(int lane) const noexcept
     return lane == 0 ? 3.4f : lane == 1 ? 1.25f : 1.0f;
 }
 
+bool StepSequencerGrid::isLaneVisible(int lane) const noexcept
+{
+    switch (laneViewMode)
+    {
+        case 1: return lane == 2 || lane == 3 || lane == 7;
+        case 2: return lane == 0 || lane == 1 || lane == 3;
+        case 3: return lane == 5 || lane == 6 || lane == 7;
+        case 4: return lane == 2 || lane == 3 || lane == 4 || lane == 7;
+        case 0:
+        default:
+            return lane >= 0 && lane < laneCount;
+    }
+}
+
+int StepSequencerGrid::visibleLaneCount() const noexcept
+{
+    auto count = 0;
+    for (auto lane = 0; lane < laneCount; ++lane)
+        if (isLaneVisible(lane))
+            ++count;
+
+    return juce::jmax(1, count);
+}
+
+float StepSequencerGrid::visibleLaneWeightTotal() const noexcept
+{
+    auto total = 0.0f;
+    for (auto lane = 0; lane < laneCount; ++lane)
+        if (isLaneVisible(lane))
+            total += laneWeight(lane);
+
+    return juce::jmax(1.0f, total);
+}
+
 float StepSequencerGrid::laneTopForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept
 {
     const auto safeLane = juce::jlimit(0, laneCount - 1, lane);
-    constexpr auto totalLaneWeight = 10.65f;
-    const auto unitHeight = static_cast<float>(lanes.getHeight()) / totalLaneWeight;
+    const auto unitHeight = static_cast<float>(lanes.getHeight()) / visibleLaneWeightTotal();
     auto y = static_cast<float>(lanes.getY());
     for (auto index = 0; index < safeLane; ++index)
-        y += unitHeight * laneWeight(index);
+        if (isLaneVisible(index))
+            y += unitHeight * laneWeight(index);
 
     return y;
 }
 
 float StepSequencerGrid::laneHeightForIndex(const juce::Rectangle<int>& lanes, int lane) const noexcept
 {
-    constexpr auto totalLaneWeight = 10.65f;
-    const auto unitHeight = static_cast<float>(lanes.getHeight()) / totalLaneWeight;
-    return unitHeight * laneWeight(lane);
+    if (! isLaneVisible(lane))
+        return 0.0f;
+
+    const auto unitHeight = static_cast<float>(lanes.getHeight()) / visibleLaneWeightTotal();
+    return unitHeight * laneWeight(juce::jlimit(0, laneCount - 1, lane));
 }
 
 int StepSequencerGrid::stepForPosition(juce::Point<int> position) const
@@ -435,13 +495,23 @@ int StepSequencerGrid::laneForPosition(juce::Point<int> position) const
 
     for (auto lane = 0; lane < laneCount; ++lane)
     {
+        if (! isLaneVisible(lane))
+            continue;
+
         const auto top = laneTopForIndex(bounds, lane);
         const auto height = laneHeightForIndex(bounds, lane);
         if (static_cast<float>(position.y) >= top && static_cast<float>(position.y) < top + height)
             return lane;
     }
 
-    return position.y >= bounds.getBottom() ? laneCount - 1 : -1;
+    if (position.y < bounds.getBottom())
+        return -1;
+
+    for (auto lane = laneCount - 1; lane >= 0; --lane)
+        if (isLaneVisible(lane))
+            return lane;
+
+    return -1;
 }
 
 int StepSequencerGrid::rowForPosition(juce::Point<int> position) const
@@ -521,6 +591,9 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
 
     for (auto lane = 0; lane < laneCount; ++lane)
     {
+        if (! isLaneVisible(lane))
+            continue;
+
         const auto laneHeight = laneHeightForIndex(lanes, lane);
         auto row = juce::Rectangle<float>(
             static_cast<float>(lanes.getX()),
@@ -669,10 +742,16 @@ void StepSequencerGrid::paintLaneRows(juce::Graphics& g) const
                            static_cast<float>(lanes.getBottom()));
     }
 
-    for (auto lane = 1; lane < laneCount; ++lane)
+    auto hasSeenVisibleLane = false;
+    for (auto lane = 0; lane < laneCount; ++lane)
     {
+        if (! isLaneVisible(lane))
+            continue;
+
         const auto y = static_cast<int>(std::round(laneTopForIndex(lanes, lane)));
-        g.drawHorizontalLine(y, static_cast<float>(labels.getX()), static_cast<float>(lanes.getRight()));
+        if (hasSeenVisibleLane)
+            g.drawHorizontalLine(y, static_cast<float>(labels.getX()), static_cast<float>(lanes.getRight()));
+        hasSeenVisibleLane = true;
     }
 
     g.drawRoundedRectangle(lanes.toFloat(), 5.0f, 1.0f);

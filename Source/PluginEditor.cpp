@@ -26,8 +26,6 @@ constexpr auto keyboardInitialLowestNote = 72;
 constexpr auto keyboardMinLowestVisibleNote = 48;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
-constexpr auto keyboardTypingMinBaseOctave = keyboardMinLowestVisibleNote / 12;
-constexpr auto keyboardTypingMaxBaseOctave = (keyboardHighestNote - keyboardTypingKeySpanSemitones) / 12;
 constexpr auto abletonMiddleCOctave = 3;
 constexpr auto modMatrixTitleHeight = 28;
 constexpr auto modMatrixInspectorHeight = 30;
@@ -132,11 +130,9 @@ int clampedKeyboardLowestVisibleNote(int note) noexcept
     return juce::jlimit(keyboardMinLowestVisibleNote, keyboardMaxLowestVisibleNote, note);
 }
 
-int keyboardTypingBaseOctaveForLowestNote(int note) noexcept
+int keyboardTypingBaseNoteForLowestNote(int note) noexcept
 {
-    return juce::jlimit(keyboardTypingMinBaseOctave,
-                       keyboardTypingMaxBaseOctave,
-                       clampedKeyboardLowestVisibleNote(note) / 12);
+    return clampedKeyboardLowestVisibleNote(note);
 }
 
 juce::String abletonNoteName(int midiNote)
@@ -1420,7 +1416,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
     pianoKeyboard.setOctaveForMiddleC(abletonMiddleCOctave);
-    keyboardTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote);
+    keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
     syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
     pianoKeyboard.setWantsKeyboardFocus(true);
@@ -1452,7 +1448,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
-        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
         syncPianoKeyboardComputerMapping();
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
@@ -6065,7 +6061,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     const auto originalModWorkflowPage = activeModWorkflowPage;
     const auto originalWidth = getWidth();
     const auto originalHeight = getHeight();
-    const auto originalKeyboardBaseOctave = keyboardTypingBaseOctave;
+    const auto originalKeyboardBaseNote = keyboardTypingBaseNote;
     juce::StringArray issues;
 
     auto auditComputerKeyboardRange = [this, &issues]
@@ -6081,11 +6077,19 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                            + juce::String(expectedNote)
                            + " (" + abletonNoteName(expectedNote) + ")");
             }
+
+            if (syncedPianoKeyboardMappingBaseNote != expectedNote)
+            {
+                issues.add("Keyboard " + state + ": synced QWERTY base MIDI "
+                           + juce::String(syncedPianoKeyboardMappingBaseNote)
+                           + " does not match expected MIDI "
+                           + juce::String(expectedNote));
+            }
         };
 
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
-        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
@@ -6127,7 +6131,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         if (keyboardOctaveDownButton.isEnabled())
             issues.add("Keyboard Oct- clamp: down button remains enabled at the bottom laptop range");
 
-        keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
@@ -6477,7 +6481,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + pianoKeyboard.getBounds().toString());
         }
 
-        const auto defaultTypingBaseNote = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote) * 12;
+        const auto defaultTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
         if (defaultTypingBaseNote != keyboardInitialLowestNote)
         {
             issues.add(panelName + ": default laptop keyboard maps A to MIDI "
@@ -6674,7 +6678,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     selectedFxModule = originalFxModule;
     activeRandomLabPage = originalRandomLabPage;
     activeModWorkflowPage = originalModWorkflowPage;
-    keyboardTypingBaseOctave = originalKeyboardBaseOctave;
+    keyboardTypingBaseNote = originalKeyboardBaseNote;
     updateKeyboardRangeLabel();
     updatePanelVisibility();
     resized();
@@ -9003,7 +9007,7 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
 
     releaseComputerKeyboardNotes();
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
-    keyboardTypingBaseOctave = nextBaseNote / 12;
+    keyboardTypingBaseNote = nextBaseNote;
     syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextBaseNote));
     pianoKeyboard.setLowestVisibleKey(nextBaseNote);
@@ -9013,14 +9017,12 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
 
 void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
 {
-    const auto unclampedBaseNote = keyboardTypingBaseOctave * 12;
-    const auto mappedBaseNote = clampedKeyboardLowestVisibleNote(unclampedBaseNote);
-    const auto nextTypingBaseOctave = mappedBaseNote / 12;
-    if (keyboardTypingBaseOctave != nextTypingBaseOctave)
+    const auto mappedBaseNote = clampedKeyboardLowestVisibleNote(keyboardTypingBaseNote);
+    if (keyboardTypingBaseNote != mappedBaseNote)
     {
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
-        keyboardTypingBaseOctave = nextTypingBaseOctave;
+        keyboardTypingBaseNote = mappedBaseNote;
     }
 
     syncPianoKeyboardComputerMapping();
@@ -9051,7 +9053,7 @@ int NateVSTAudioProcessorEditor::computerKeyboardBaseNote() const noexcept
 {
     return juce::jlimit(keyboardMinLowestVisibleNote,
                         keyboardMaxLowestVisibleNote,
-                        keyboardTypingBaseOctave * 12);
+                        keyboardTypingBaseNote);
 }
 
 void NateVSTAudioProcessorEditor::syncPianoKeyboardComputerMapping()
@@ -9060,13 +9062,9 @@ void NateVSTAudioProcessorEditor::syncPianoKeyboardComputerMapping()
     if (syncedPianoKeyboardMappingBaseNote == baseNote)
         return;
 
+    // Own laptop-key note triggering in the editor so DAW focus changes cannot
+    // fall back to JUCE's default C0-ish keyboard mapping.
     pianoKeyboard.clearKeyMappings();
-    pianoKeyboard.setKeyPressBaseOctave(baseNote / 12);
-
-    for (size_t index = 0; index < computerKeyboardKeyCodes.size(); ++index)
-        pianoKeyboard.setKeyPressForNote(juce::KeyPress(computerKeyboardKeyCodes[index], 0, 0),
-                                         static_cast<int>(index));
-
     syncedPianoKeyboardMappingBaseNote = baseNote;
 }
 

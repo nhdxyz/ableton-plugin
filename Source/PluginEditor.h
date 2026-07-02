@@ -838,7 +838,7 @@ private:
     double fxRackStatusOverrideUntilMs = 0.0;
     juce::String sampleWaveformKey;
     std::vector<juce::File> sequencerDragMidiFiles;
-    int keyboardTypingBaseOctave = -1;
+    int keyboardTypingBaseNote = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
     std::array<bool, 17> computerKeyboardNotesDown {};
     bool globalKeyboardListenersInstalled = false;

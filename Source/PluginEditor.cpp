@@ -22,6 +22,8 @@ constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
 constexpr auto keyboardMaximumWhiteKeyWidth = 96.0f;
 constexpr auto keyboardLowestNote = 36;
 constexpr auto keyboardHighestNote = 96;
+constexpr auto keyboardVisualLowestNote = 36;
+constexpr auto keyboardVisualHighestNote = 84;
 constexpr auto keyboardInitialLowestNote = 72;
 constexpr auto keyboardMinLowestVisibleNote = 48;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
@@ -121,6 +123,11 @@ static_assert(keyboardLowestNote <= keyboardMinLowestVisibleNote);
 static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
 static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
 static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
+static_assert(keyboardLowestNote <= keyboardVisualLowestNote);
+static_assert(keyboardVisualLowestNote <= keyboardVisualHighestNote);
+static_assert(keyboardVisualHighestNote <= keyboardHighestNote);
+static_assert(keyboardVisualLowestNote == 36);
+static_assert(keyboardVisualHighestNote == 84);
 static_assert(keyboardInitialLowestNote == 72);
 static_assert(keyboardMinLowestVisibleNote == 48);
 static_assert(keyboardMaxLowestVisibleNote == 72);
@@ -150,10 +157,10 @@ int whiteKeyCountInRange(int lowestNote, int highestNote) noexcept
     return juce::jmax(1, count);
 }
 
-float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, int lowestVisibleNote) noexcept
+float responsiveKeyboardKeyWidthForBounds(juce::Rectangle<int> keyboardBounds, int) noexcept
 {
-    const auto visibleLowestNote = clampedKeyboardLowestVisibleNote(lowestVisibleNote);
-    const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(visibleLowestNote, keyboardHighestNote));
+    const auto whiteKeyCount = static_cast<float>(whiteKeyCountInRange(keyboardVisualLowestNote,
+                                                                       keyboardVisualHighestNote));
     const auto fillWidth = static_cast<float>(juce::jmax(1, keyboardBounds.getWidth())) / whiteKeyCount;
     return juce::jlimit(keyboardMinimumWhiteKeyWidth, keyboardMaximumWhiteKeyWidth, fillWidth);
 }
@@ -1414,8 +1421,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(homeSessionDisplay);
     addAndMakeVisible(lowEndAssistant);
 
-    pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
-    pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+    pianoKeyboard.setAvailableRange(keyboardVisualLowestNote, keyboardVisualHighestNote);
+    pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
     pianoKeyboard.setOctaveForMiddleC(abletonMiddleCOctave);
     keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
     syncPianoKeyboardComputerMapping();
@@ -1430,19 +1437,19 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
     addAndMakeVisible(pianoKeyboard);
 
-    keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the floor is A = C2 in Ableton note names");
+    keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the piano strip stays fixed from C1 to C5");
     keyboardOctaveDownButton.setWantsKeyboardFocus(false);
     keyboardOctaveDownButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
     addAndMakeVisible(keyboardOctaveDownButton);
 
-    keyboardOctaveUpButton.setTooltip("Shift laptop keys up one octave; the ceiling is A = C4 in Ableton note names");
+    keyboardOctaveUpButton.setTooltip("Shift laptop keys up one octave; the piano strip stays fixed from C1 to C5");
     keyboardOctaveUpButton.setWantsKeyboardFocus(false);
     keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
 
-    keyboardHomeButton.setTooltip("Reset laptop keys to A = C4 in Ableton note names");
+    keyboardHomeButton.setTooltip("Reset laptop keys so A plays C4; the visible piano strip stays fixed from C1 to C5");
     keyboardHomeButton.setWantsKeyboardFocus(false);
     keyboardHomeButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardHomeButton.onClick = [this]
@@ -1451,14 +1458,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
         syncPianoKeyboardComputerMapping();
-        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
-        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
         returnKeyboardFocusToPiano();
     };
     addAndMakeVisible(keyboardHomeButton);
 
-    keyboardPanicButton.setTooltip("Stop held keyboard, chord-memory, synth, and sample voices");
+    keyboardPanicButton.setTooltip("Stop stuck or held notes from the keyboard, chord memory, synth, and sampler");
     keyboardPanicButton.setWantsKeyboardFocus(false);
     keyboardPanicButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardPanicButton.onClick = [this]
@@ -1466,7 +1471,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseComputerKeyboardNotes();
         releasePresetAuditionNote();
         audioProcessor.panicAllNotesOff();
-        setRandomStatus("Panic: all notes off");
+        setRandomStatus("All Off: stopped held notes");
     };
     addAndMakeVisible(keyboardPanicButton);
 
@@ -4268,7 +4273,8 @@ void NateVSTAudioProcessorEditor::resized()
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
     pianoKeyboard.setBounds(pianoKeyboardBounds);
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboardBounds,
-                                                                  computerKeyboardBaseNote()));
+                                                                  keyboardVisualLowestNote));
+    pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
     updateKeyboardRangeLabel();
     bounds.removeFromBottom(10);
     auto content = bounds.reduced(18);
@@ -5948,13 +5954,33 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                            + " does not match expected MIDI "
                            + juce::String(expectedNote));
             }
+
+            if (pianoKeyboard.getLowestVisibleKey() != keyboardVisualLowestNote)
+            {
+                issues.add("Keyboard " + state + ": visible piano strip starts at MIDI "
+                           + juce::String(pianoKeyboard.getLowestVisibleKey())
+                           + " (" + abletonNoteName(pianoKeyboard.getLowestVisibleKey())
+                           + ") instead of fixed MIDI "
+                           + juce::String(keyboardVisualLowestNote)
+                           + " (" + abletonNoteName(keyboardVisualLowestNote) + ")");
+            }
+
+            const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
+                                                                             keyboardVisualLowestNote);
+            if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
+            {
+                issues.add("Keyboard " + state + ": fixed piano key width "
+                           + juce::String(pianoKeyboard.getKeyWidth(), 2)
+                           + " does not match expected "
+                           + juce::String(expectedKeyWidth, 2));
+            }
         };
 
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
-        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
-        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardVisualLowestNote));
+        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
         updateKeyboardRangeLabel();
         expectBase("home", keyboardInitialLowestNote);
         if (pianoKeyboard.getOctaveForMiddleC() != abletonMiddleCOctave)
@@ -5962,14 +5988,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + juce::String(pianoKeyboard.getOctaveForMiddleC())
                        + " instead of Ableton octave "
                        + juce::String(abletonMiddleCOctave));
-        if (keyboardRangeLabel.getText() != "A C4\n; E5")
-            issues.add("Keyboard home: range label should read A C4 to ; E5, got "
+        if (keyboardRangeLabel.getText() != "A:C4\n;:E5")
+            issues.add("Keyboard home: range label should read A:C4 to ;:E5, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(12);
         expectBase("Oct+", keyboardMaxLowestVisibleNote);
-        if (keyboardRangeLabel.getText() != "A C4\n; E5")
-            issues.add("Keyboard Oct+: range label should read A C4 to ; E5, got "
+        if (keyboardRangeLabel.getText() != "A:C4\n;:E5")
+            issues.add("Keyboard Oct+: range label should read A:C4 to ;:E5, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(12);
@@ -5979,14 +6005,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
 
         shiftKeyboardOctave(-12);
         expectBase("Oct-", 60);
-        if (keyboardRangeLabel.getText() != "A C3\n; E4")
-            issues.add("Keyboard Oct-: range label should read A C3 to ; E4, got "
+        if (keyboardRangeLabel.getText() != "A:C3\n;:E4")
+            issues.add("Keyboard Oct-: range label should read A:C3 to ;:E4, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);
         expectBase("Oct- floor", keyboardMinLowestVisibleNote);
-        if (keyboardRangeLabel.getText() != "A C2\n; E3")
-            issues.add("Keyboard Oct- floor: range label should read A C2 to ; E3, got "
+        if (keyboardRangeLabel.getText() != "A:C2\n;:E3")
+            issues.add("Keyboard Oct- floor: range label should read A:C2 to ;:E3, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);
@@ -5995,8 +6021,8 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("Keyboard Oct- clamp: down button remains enabled at the bottom laptop range");
 
         keyboardTypingBaseNote = keyboardTypingBaseNoteForLowestNote(keyboardInitialLowestNote);
-        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
-        pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
+        pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardVisualLowestNote));
+        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
         updateKeyboardRangeLabel();
     };
 
@@ -6254,7 +6280,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             }
         }
 
-        const auto keyboardLowestForAudit = computerKeyboardBaseNote();
+        const auto keyboardLowestForAudit = keyboardVisualLowestNote;
         const auto expectedKeyboardKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
                                                                                  keyboardLowestForAudit);
         if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyboardKeyWidth) > 0.25f)
@@ -6267,8 +6293,16 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                        + pianoKeyboard.getBounds().toString());
         }
 
-        const auto keyboardPaintCoverage = static_cast<float>(whiteKeyCountInRange(keyboardLowestForAudit,
-                                                                                  keyboardHighestNote))
+        if (pianoKeyboard.getLowestVisibleKey() != keyboardVisualLowestNote)
+        {
+            issues.add(panelName + ": piano keyboard visible range starts at "
+                       + abletonNoteName(pianoKeyboard.getLowestVisibleKey())
+                       + " instead of fixed "
+                       + abletonNoteName(keyboardVisualLowestNote));
+        }
+
+        const auto keyboardPaintCoverage = static_cast<float>(whiteKeyCountInRange(keyboardVisualLowestNote,
+                                                                                  keyboardVisualHighestNote))
                                          * pianoKeyboard.getKeyWidth();
         if (keyboardPaintCoverage < static_cast<float>(pianoKeyboard.getWidth()) - 1.0f)
         {
@@ -8725,8 +8759,6 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
     keyboardTypingBaseNote = nextBaseNote;
     syncPianoKeyboardComputerMapping();
-    pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextBaseNote));
-    pianoKeyboard.setLowestVisibleKey(nextBaseNote);
     updateKeyboardRangeLabel();
     returnKeyboardFocusToPiano();
 }
@@ -8749,17 +8781,19 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
                                            mappedBaseNote + keyboardTypingKeySpanSemitones);
     const auto mappedTopName = abletonNoteName(mappedTopNote);
 
-    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), mappedBaseNote);
+    const auto expectedKeyWidth = responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(),
+                                                                     keyboardVisualLowestNote);
     if (std::abs(pianoKeyboard.getKeyWidth() - expectedKeyWidth) > 0.25f)
         pianoKeyboard.setKeyWidth(expectedKeyWidth);
-    pianoKeyboard.setLowestVisibleKey(mappedBaseNote);
+    if (pianoKeyboard.getLowestVisibleKey() != keyboardVisualLowestNote)
+        pianoKeyboard.setLowestVisibleKey(keyboardVisualLowestNote);
 
-    const auto labelText = "A " + noteName + "\n; " + mappedTopName;
+    const auto labelText = "A:" + noteName + "\n;:" + mappedTopName;
     if (keyboardRangeLabel.getText() != labelText)
         keyboardRangeLabel.setText(labelText, juce::dontSendNotification);
 
     keyboardRangeLabel.setTooltip("Laptop keys A through ; map from " + noteName + " to " + mappedTopName
-                                  + " using Ableton-style octave names");
+                                  + " using Ableton-style octave names; the visible piano strip stays C1 to C5");
 
     keyboardOctaveDownButton.setEnabled(mappedBaseNote > keyboardMinLowestVisibleNote);
     keyboardOctaveUpButton.setEnabled(mappedBaseNote < keyboardMaxLowestVisibleNote);

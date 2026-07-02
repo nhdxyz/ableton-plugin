@@ -11126,22 +11126,33 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
 
 void NateVSTAudioProcessorEditor::updateWavetableDisplay()
 {
+    if (! wavetableDisplay.isVisible())
+        return;
+
     const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
     const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    const auto osc1IsCustom = osc1Wave == 7;
+    const auto osc2IsCustom = osc2Wave == 7;
     UI::WavetableDisplay::CustomPointArray osc1CustomPoints {};
     UI::WavetableDisplay::CustomPointArray osc2CustomPoints {};
 
-    for (size_t index = 0; index < osc1CustomPoints.size(); ++index)
+    if (osc1IsCustom)
     {
-        osc1CustomPoints[index] = readPlainParameterValue(Parameters::ID::oscCustomWave[index], 0.5f);
-        osc2CustomPoints[index] = readPlainParameterValue(Parameters::ID::osc2CustomWave[index], 0.5f);
+        for (size_t index = 0; index < osc1CustomPoints.size(); ++index)
+            osc1CustomPoints[index] = readPlainParameterValue(Parameters::ID::oscCustomWave[index], 0.5f);
+    }
+
+    if (osc2IsCustom)
+    {
+        for (size_t index = 0; index < osc2CustomPoints.size(); ++index)
+            osc2CustomPoints[index] = readPlainParameterValue(Parameters::ID::osc2CustomWave[index], 0.5f);
     }
 
     auto osc1WtModAmount = 0.0f;
     auto osc2WtModAmount = 0.0f;
     auto wtRouteCount = 0;
     juce::StringArray wtSources;
-    const auto sourceChoices = Parameters::modulationSourceChoices();
+    juce::StringArray sourceChoices;
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
         if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))
@@ -11168,6 +11179,9 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
             continue;
 
         ++wtRouteCount;
+        if (sourceChoices.isEmpty())
+            sourceChoices = Parameters::modulationSourceChoices();
+
         if (juce::isPositiveAndBelow(sourceIndex, sourceChoices.size()))
             wtSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
     }
@@ -11175,8 +11189,8 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
     wavetableDisplay.setState(
         readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
         readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
-        osc1Wave == 4 || osc1Wave == 7,
-        osc2Wave == 4 || osc2Wave == 7,
+        osc1Wave == 4 || osc1IsCustom,
+        osc2Wave == 4 || osc2IsCustom,
         juce::jlimit(-1.0f, 1.0f, osc1WtModAmount),
         juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
         wtRouteCount,
@@ -11184,8 +11198,8 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
         readPlainParameterValue(Parameters::ID::oscWarp, 0.0f),
         osc1CustomPoints,
         osc2CustomPoints,
-        osc1Wave == 7,
-        osc2Wave == 7);
+        osc1IsCustom,
+        osc2IsCustom);
 }
 
 bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const

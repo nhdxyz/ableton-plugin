@@ -5,7 +5,8 @@
 ### UI Focus, Wave Editor Labels, And Synth Stab Pack
 
 - Made the editor request keyboard focus, listen for child-control mouse-up events, and return focus to the bottom audition keyboard after non-text control gestures, sample recorder actions, and wavetable tool actions so laptop-key auditioning is less likely to get stranded after touching a knob or button in Ableton.
-- Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so `Oct+` from Home reaches C4 and the computer keyboard cannot fall down to C0.
+- Changed the bottom audition keyboard home/startup mapping to `A=C4` and explicitly sync the JUCE piano component's own QWERTY base octave to the same mapping, preventing focused piano-key events from falling back to the framework's default C0 range.
+- Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so Home lands on C4 and the computer keyboard cannot fall down to C0.
 - Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
 - Added `SampleRecorderAudit` coverage so the SAMPLE recorder now verifies actual synth capture, commit-to-sampler behavior, waveform overview generation, and audible sampler playback.
 - Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.

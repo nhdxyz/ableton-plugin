@@ -22,7 +22,7 @@ constexpr auto keyboardMinimumWhiteKeyWidth = 20.0f;
 constexpr auto keyboardMaximumWhiteKeyWidth = 96.0f;
 constexpr auto keyboardLowestNote = 36;
 constexpr auto keyboardHighestNote = 96;
-constexpr auto keyboardInitialLowestNote = 60;
+constexpr auto keyboardInitialLowestNote = 72;
 constexpr auto keyboardMinLowestVisibleNote = 48;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
@@ -123,7 +123,7 @@ static_assert(keyboardLowestNote <= keyboardMinLowestVisibleNote);
 static_assert(keyboardMinLowestVisibleNote <= keyboardInitialLowestNote);
 static_assert(keyboardInitialLowestNote <= keyboardMaxLowestVisibleNote);
 static_assert(keyboardMaxLowestVisibleNote + keyboardTypingKeySpanSemitones <= keyboardHighestNote);
-static_assert(keyboardInitialLowestNote == 60);
+static_assert(keyboardInitialLowestNote == 72);
 static_assert(keyboardMinLowestVisibleNote == 48);
 static_assert(keyboardMaxLowestVisibleNote == 72);
 
@@ -1414,7 +1414,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setAvailableRange(keyboardLowestNote, keyboardHighestNote);
     pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
     keyboardTypingBaseOctave = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote);
-    pianoKeyboard.clearKeyMappings();
+    syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(keyboardMinimumWhiteKeyWidth);
     pianoKeyboard.setWantsKeyboardFocus(true);
     pianoKeyboard.setScrollButtonsVisible(false);
@@ -1434,13 +1434,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardOctaveDownButton.onClick = [this] { shiftKeyboardOctave(-12); };
     addAndMakeVisible(keyboardOctaveDownButton);
 
-    keyboardOctaveUpButton.setTooltip("Shift laptop keys up one octave; Oct+ from Home maps A to C4 in Ableton note names");
+    keyboardOctaveUpButton.setTooltip("Shift laptop keys up one octave; the ceiling is A = C4 in Ableton note names");
     keyboardOctaveUpButton.setWantsKeyboardFocus(false);
     keyboardOctaveUpButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardOctaveUpButton.onClick = [this] { shiftKeyboardOctave(12); };
     addAndMakeVisible(keyboardOctaveUpButton);
 
-    keyboardHomeButton.setTooltip("Reset laptop keys to A = C3 in Ableton note names");
+    keyboardHomeButton.setTooltip("Reset laptop keys to A = C4 in Ableton note names");
     keyboardHomeButton.setWantsKeyboardFocus(false);
     keyboardHomeButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardHomeButton.onClick = [this]
@@ -1448,6 +1448,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseComputerKeyboardNotes();
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseOctave = keyboardInitialLowestNote / 12;
+        syncPianoKeyboardComputerMapping();
         pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), keyboardInitialLowestNote));
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
@@ -5999,8 +6000,8 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         pianoKeyboard.setLowestVisibleKey(keyboardInitialLowestNote);
         updateKeyboardRangeLabel();
         expectBase("home", keyboardInitialLowestNote);
-        if (keyboardRangeLabel.getText() != "A C3\n; E4")
-            issues.add("Keyboard home: range label should read A C3 to ; E4, got "
+        if (keyboardRangeLabel.getText() != "A C4\n; E5")
+            issues.add("Keyboard home: range label should read A C4 to ; E5, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(12);
@@ -6015,12 +6016,15 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("Keyboard Oct+ clamp: up button remains enabled at the top laptop range");
 
         shiftKeyboardOctave(-12);
-        expectBase("return home", keyboardInitialLowestNote);
+        expectBase("Oct-", 60);
+        if (keyboardRangeLabel.getText() != "A C3\n; E4")
+            issues.add("Keyboard Oct-: range label should read A C3 to ; E4, got "
+                       + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);
-        expectBase("Oct-", keyboardMinLowestVisibleNote);
+        expectBase("Oct- floor", keyboardMinLowestVisibleNote);
         if (keyboardRangeLabel.getText() != "A C2\n; E3")
-            issues.add("Keyboard Oct-: range label should read A C2 to ; E3, got "
+            issues.add("Keyboard Oct- floor: range label should read A C2 to ; E3, got "
                        + keyboardRangeLabel.getText().quoted());
 
         shiftKeyboardOctave(-12);
@@ -6245,11 +6249,14 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         }
 
         const auto defaultTypingBaseNote = keyboardTypingBaseOctaveForLowestNote(keyboardInitialLowestNote) * 12;
-        if (defaultTypingBaseNote != 60)
+        if (defaultTypingBaseNote != keyboardInitialLowestNote)
         {
             issues.add(panelName + ": default laptop keyboard maps A to MIDI "
                        + juce::String(defaultTypingBaseNote)
-                       + " instead of MIDI 60/C3 in Ableton note names");
+                       + " instead of MIDI "
+                       + juce::String(keyboardInitialLowestNote)
+                       + "/" + abletonNoteName(keyboardInitialLowestNote)
+                       + " in Ableton note names");
         }
 
         for (const auto* keyboardControl : {
@@ -8685,6 +8692,7 @@ void NateVSTAudioProcessorEditor::shiftKeyboardOctave(int semitones)
     releaseComputerKeyboardNotes();
     audioProcessor.getMidiKeyboardState().allNotesOff(1);
     keyboardTypingBaseOctave = nextBaseNote / 12;
+    syncPianoKeyboardComputerMapping();
     pianoKeyboard.setKeyWidth(responsiveKeyboardKeyWidthForBounds(pianoKeyboard.getBounds(), nextBaseNote));
     pianoKeyboard.setLowestVisibleKey(nextBaseNote);
     updateKeyboardRangeLabel();
@@ -8702,6 +8710,8 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
         audioProcessor.getMidiKeyboardState().allNotesOff(1);
         keyboardTypingBaseOctave = nextTypingBaseOctave;
     }
+
+    syncPianoKeyboardComputerMapping();
 
     const auto noteName = abletonNoteName(mappedBaseNote);
     const auto mappedTopNote = juce::jlimit(0,
@@ -8732,6 +8742,22 @@ int NateVSTAudioProcessorEditor::computerKeyboardBaseNote() const noexcept
                         keyboardTypingBaseOctave * 12);
 }
 
+void NateVSTAudioProcessorEditor::syncPianoKeyboardComputerMapping()
+{
+    const auto baseNote = computerKeyboardBaseNote();
+    if (syncedPianoKeyboardMappingBaseNote == baseNote)
+        return;
+
+    pianoKeyboard.clearKeyMappings();
+    pianoKeyboard.setKeyPressBaseOctave(baseNote / 12);
+
+    for (size_t index = 0; index < computerKeyboardKeyCodes.size(); ++index)
+        pianoKeyboard.setKeyPressForNote(juce::KeyPress(computerKeyboardKeyCodes[index], 0, 0),
+                                         static_cast<int>(index));
+
+    syncedPianoKeyboardMappingBaseNote = baseNote;
+}
+
 void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
 {
     auto& keyboardState = audioProcessor.getMidiKeyboardState();
@@ -8750,6 +8776,9 @@ void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
 
 bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent)
 {
+    if (originatingComponent == &pianoKeyboard)
+        return false;
+
     for (const auto keyCode : computerKeyboardKeyCodes)
         if (key.getKeyCode() == keyCode)
             return keyStateChanged(true, originatingComponent);
@@ -8759,6 +8788,9 @@ bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Co
 
 bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* originatingComponent)
 {
+    if (originatingComponent == &pianoKeyboard)
+        return false;
+
     auto isTextEntryComponent = [] (juce::Component* component)
     {
         for (auto* current = component; current != nullptr; current = current->getParentComponent())

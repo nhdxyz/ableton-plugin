@@ -835,6 +835,7 @@ private:
     juce::String sampleWaveformKey;
     std::vector<juce::File> sequencerDragMidiFiles;
     int keyboardTypingBaseOctave = -1;
+    int syncedPianoKeyboardMappingBaseNote = -1;
     std::array<bool, 17> computerKeyboardNotesDown {};
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
@@ -1031,6 +1032,7 @@ private:
     bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
     void releaseComputerKeyboardNotes();
     int computerKeyboardBaseNote() const noexcept;
+    void syncPianoKeyboardComputerMapping();
     juce::String startPresetAuditionPhrase(const NateVSTAudioProcessor::PresetInfo* presetInfo, int rootNote);
     bool hasPresetCompareSnapshots() const;
     bool capturePresetCompareBefore(const juce::String& presetName);

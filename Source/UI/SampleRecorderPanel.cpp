@@ -41,6 +41,13 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
                                                              Parameters::ID::sampleRecordPreRoll,
                                                              preRollBox);
 
+    routeHintLabel.setText("Post-FX internal capture", juce::dontSendNotification);
+    routeHintLabel.setJustificationType(juce::Justification::centredLeft);
+    routeHintLabel.setFont(juce::FontOptions(10.5f));
+    routeHintLabel.setMinimumHorizontalScale(0.58f);
+    routeHintLabel.setTooltip("Recorder route and monitor safety hint");
+    addAndMakeVisible(routeHintLabel);
+
     statusLabel.setText("Recorder idle", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centredLeft);
     statusLabel.setFont(juce::FontOptions(11.0f));
@@ -121,6 +128,9 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
 void SampleRecorderPanel::applyTheme(const Theme& theme)
 {
     recordLabel.setColour(juce::Label::textColourId, theme.accent);
+    routeHintLabel.setColour(juce::Label::textColourId, theme.textDim);
+    routeHintLabel.setColour(juce::Label::backgroundColourId, theme.field.withAlpha(0.78f));
+    routeHintLabel.setColour(juce::Label::outlineColourId, theme.outline);
     statusLabel.setColour(juce::Label::textColourId, theme.textMuted);
     progress.setColour(juce::ProgressBar::backgroundColourId, theme.field);
     progress.setColour(juce::TextButton::textColourOffId, theme.textMuted);
@@ -180,6 +190,27 @@ void SampleRecorderPanel::setState(const State& state)
                         + durationText
                         + (fixedTarget ? ". Recorder auto-stops at " + captureLengthShortName + "."
                                        : captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
+
+    const auto sourceHasSignal = hasAudiblePeak(state.captureSourcePeak);
+    const auto routeHintText = state.captureSourceIndex == 1
+        ? sourceHasSignal ? juce::String("Host Input active | Live routes track/mic into plugin")
+                          : juce::String("Host Input idle | Choose sidechain/input route in Live")
+        : juce::String("Post-FX internal | captures synth + sampler + FX");
+    const auto monitorSafetyText = state.captureSourceIndex == 1
+        ? juce::String("No input thru-monitor here; use Ableton monitoring if needed.")
+        : juce::String("No external mic/input needed for this mode.");
+    routeHintLabel.setText(routeHintText, juce::dontSendNotification);
+    routeHintLabel.setTooltip(routeHintText + " | " + monitorSafetyText);
+    routeHintLabel.setColour(juce::Label::textColourId,
+                             state.captureSourceIndex == 1
+                                 ? sourceHasSignal ? juce::Colour(0xff8ee6c9)
+                                                   : juce::Colour(0xffffc36b)
+                                 : juce::Colour(0xff9fc7ff));
+    routeHintLabel.setColour(juce::Label::outlineColourId,
+                             state.captureSourceIndex == 1
+                                 ? sourceHasSignal ? juce::Colour(0xff3a7a68)
+                                                   : juce::Colour(0xff7a5730)
+                                 : juce::Colour(0xff365b7d));
 
     const auto statusText = state.waitingForThreshold
         ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName + targetDescription + preRollDescription
@@ -279,38 +310,41 @@ void SampleRecorderPanel::setState(const State& state)
 void SampleRecorderPanel::resized()
 {
     auto area = getLocalBounds();
-    auto recorderHeaderRow = area.removeFromTop(30);
+    auto recorderHeaderRow = area.removeFromTop(24);
     recordLabel.setBounds(recorderHeaderRow.removeFromLeft(82).withTrimmedLeft(4).reduced(0, 5));
-    sourceBox.setBounds(recorderHeaderRow.reduced(3, 4));
+    sourceBox.setBounds(recorderHeaderRow.reduced(3, 2));
 
-    auto recorderSettingsRow = area.removeFromTop(30);
-    startBox.setBounds(recorderSettingsRow.removeFromLeft(recorderSettingsRow.getWidth() / 2).reduced(3, 4));
-    lengthBox.setBounds(recorderSettingsRow.reduced(3, 4));
+    auto recorderSettingsRow = area.removeFromTop(24);
+    startBox.setBounds(recorderSettingsRow.removeFromLeft(recorderSettingsRow.getWidth() / 2).reduced(3, 2));
+    lengthBox.setBounds(recorderSettingsRow.reduced(3, 2));
 
-    auto recorderPreRollRow = area.removeFromTop(30);
-    preRollBox.setBounds(recorderPreRollRow.reduced(3, 4));
+    auto recorderPreRollRow = area.removeFromTop(24);
+    preRollBox.setBounds(recorderPreRollRow.reduced(3, 2));
 
-    auto recorderStepArea = area.removeFromTop(24).reduced(4, 3);
+    auto recorderRouteHintRow = area.removeFromTop(16);
+    routeHintLabel.setBounds(recorderRouteHintRow.reduced(5, 1));
+
+    auto recorderStepArea = area.removeFromTop(18).reduced(4, 2);
     const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(stepLabels.size());
     for (auto& label : stepLabels)
         label.setBounds(recorderStepArea.removeFromLeft(recorderStepWidth).reduced(2, 0));
 
-    auto recorderStatusArea = area.removeFromTop(34).reduced(5, 2);
-    statusLabel.setBounds(recorderStatusArea.removeFromTop(14));
+    auto recorderStatusArea = area.removeFromTop(26).reduced(5, 1);
+    statusLabel.setBounds(recorderStatusArea.removeFromTop(10));
     progress.setBounds(recorderStatusArea);
 
-    auto recordRow = area.removeFromTop(38).withTrimmedTop(2);
+    auto recordRow = area.removeFromTop(31).withTrimmedTop(1);
     const auto recordButtonWidth = juce::jmax(86, recordRow.getWidth() * 2 / 5);
     const auto commitButtonWidth = juce::jmax(70, recordRow.getWidth() * 3 / 10);
-    recordButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
-    commitButton.setBounds(recordRow.removeFromLeft(commitButtonWidth).reduced(3, 4));
-    auditionButton.setBounds(recordRow.reduced(3, 4));
+    recordButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 3));
+    commitButton.setBounds(recordRow.removeFromLeft(commitButtonWidth).reduced(3, 3));
+    auditionButton.setBounds(recordRow.reduced(3, 3));
 
-    auto recordToolRow = area.removeFromTop(32).withTrimmedTop(1);
+    auto recordToolRow = area.removeFromTop(25);
     const auto recordToolWidth = recordToolRow.getWidth() / 3;
-    autoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
-    spliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
-    mangleButton.setBounds(recordToolRow.reduced(3, 4));
+    autoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 2));
+    spliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 2));
+    mangleButton.setBounds(recordToolRow.reduced(3, 2));
 }
 
 juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelName,
@@ -357,6 +391,18 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
                        + componentAuditName(*settingBox, "box")
                        + " is too compressed "
                        + bounds.toString());
+    }
+
+    if (! routeHintLabel.isVisible())
+    {
+        issues.add(panelName + ": recorder route hint is hidden");
+    }
+    else
+    {
+        const auto routeHintBounds = routeHintLabel.getBounds();
+        if (routeHintBounds.getWidth() < 120 || routeHintBounds.getHeight() < 14)
+            issues.add(panelName + ": recorder route hint is too compressed "
+                       + routeHintBounds.toString());
     }
 
     for (const auto* recorderButton : {
@@ -419,6 +465,11 @@ juce::String SampleRecorderPanel::formatPeakLabel(float peak)
         return "<-60 dB";
 
     return juce::String(db, 0) + " dB";
+}
+
+bool SampleRecorderPanel::hasAudiblePeak(float peak) noexcept
+{
+    return peak > 0.001f;
 }
 
 juce::String SampleRecorderPanel::startModeShortName(int modeIndex)

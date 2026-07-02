@@ -5186,11 +5186,24 @@ void NateVSTAudioProcessorEditor::resized()
             sampleShapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
             if (sourceArea.getHeight() < 138)
             {
-                const auto sampleShapeRowHeight = juce::jmax(36, sourceArea.getHeight() / 2);
-                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(2),
+                const auto compactShapeHeight = sourceArea.getHeight();
+                const auto showSecondaryShapeRow = compactShapeHeight >= 72;
+                const auto sampleShapeRowHeight = showSecondaryShapeRow ? juce::jmax(36, compactShapeHeight / 2)
+                                                                        : juce::jmax(36, compactShapeHeight);
+                layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(2),
                               { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider, &samplePitchRampSlider });
-                layoutKnobRow(sourceArea.withTrimmedTop(2),
-                              { &sampleStutterRepeatsSlider, &sampleGrainSizeSlider, &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
+                if (showSecondaryShapeRow)
+                {
+                    layoutKnobRow(sourceArea.withTrimmedTop(2),
+                                  { &sampleStutterRepeatsSlider, &sampleGrainSizeSlider, &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
+                }
+                else
+                {
+                    setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);
+                    setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, false);
+                    setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, false);
+                    setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, false);
+                }
             }
             else
             {

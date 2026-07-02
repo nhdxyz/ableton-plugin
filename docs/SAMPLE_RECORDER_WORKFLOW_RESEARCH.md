@@ -24,6 +24,7 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - Threshold-arm state that waits for the selected source to cross the selected threshold before filling the capture buffer.
 - Length selector with `Free`, `1 Bar`, `2 Bars`, `4 Bars`, and `8 Bars`; bar lengths auto-stop from the host tempo at record start.
 - Pre-roll selector with `Pre Off`, `Pre 100ms`, `Pre 250ms`, and `Pre 500ms`; threshold mode keeps lookback audio and prepends it when capture starts.
+- Route/monitor hint that distinguishes internal Post-FX capture from Ableton-routed Host Input and warns when Host Input is idle.
 
 ## Added First
 
@@ -32,12 +33,12 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - Threshold-start audit coverage for below-threshold waiting, above-threshold capture start, and sampler commit.
 - Fixed-length audit coverage for one-bar auto-stop timing and sampler commit.
 - Pre-roll audit coverage for below-threshold lookback, trigger-time prepend, and sampler commit.
+- Layout audit coverage for the recorder route hint so compact hosts still show the selected routing path.
 
 ## Next Recorder Priorities
 
 1. Quantized transport start/stop: optionally wait for the next bar before fixed-length capture starts.
-2. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
-3. Take handling: keep the last few captures until one is committed.
-4. Drag/export audio: drag the committed capture as WAV into Ableton.
-5. Slice while recording: add marker taps or lazy-chop pads during capture.
-6. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.
+2. Take handling: keep the last few captures until one is committed.
+3. Drag/export audio: drag the committed capture as WAV into Ableton.
+4. Slice while recording: add marker taps or lazy-chop pads during capture.
+5. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.

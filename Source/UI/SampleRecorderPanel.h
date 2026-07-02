@@ -19,7 +19,7 @@ public:
     {
         bool isRecording = false;
         float seconds = 0.0f;
-        float capacitySeconds = 8.0f;
+        float capacitySeconds = 16.0f;
         bool hasLoadedSample = false;
         int captureSourceIndex = 0;
         int captureStartModeIndex = 0;
@@ -44,7 +44,7 @@ public:
     void setState(const State& state);
     void resized() override;
 
-    int preferredHeight() const noexcept { return 218; }
+    int preferredHeight() const noexcept { return 188; }
     juce::StringArray runLayoutAudit(const juce::String& panelName,
                                      bool hasCapture,
                                      bool hasLoadedSample) const;
@@ -57,6 +57,7 @@ private:
     juce::ComboBox startBox;
     juce::ComboBox lengthBox;
     juce::ComboBox preRollBox;
+    juce::Label routeHintLabel;
     juce::Label statusLabel;
     std::array<juce::Label, 4> stepLabels;
     double progressValue = 0.0;
@@ -75,6 +76,7 @@ private:
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);
     static juce::String formatPeakLabel(float peak);
+    static bool hasAudiblePeak(float peak) noexcept;
     static juce::String startModeShortName(int modeIndex);
     static juce::String lengthModeShortName(int modeIndex);
     static juce::String preRollModeShortName(int modeIndex);

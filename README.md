@@ -43,6 +43,8 @@ The `HOME` panel is the default dashboard for quick patch shaping, source balanc
 
 At default and larger editor sizes, the MOD routing section also shows a compact route map above the matrix so active and bypassed movement is visible as source-to-destination paths. At the minimum compact size, the map hides so the editable matrix rows remain usable in Ableton.
 
+The SAMPLE recorder shows a compact progress meter for the real rolling capture buffer, so recording, ready-to-commit, loaded-sample, and full/rolling states are visible without opening another page.
+
 User presets are stored at:
 
 ```text

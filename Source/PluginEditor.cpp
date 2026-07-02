@@ -1625,6 +1625,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleRecordStatusLabel.setTooltip("Rolling sampler recorder status and captured duration");
     addAndMakeVisible(sampleRecordStatusLabel);
 
+    sampleRecordProgress.setPercentageDisplay(false);
+    sampleRecordProgress.setTextToDisplay("0 / 8s");
+    sampleRecordProgress.setColour(juce::ProgressBar::backgroundColourId, juce::Colour(0xff101619));
+    sampleRecordProgress.setColour(juce::ProgressBar::foregroundColourId, juce::Colour(0xff8ee6c9));
+    sampleRecordProgress.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffa8b6b8));
+    sampleRecordProgress.setTooltip("Recorder rolling-buffer fill. When it reaches the end, the newest audio replaces the oldest audio.");
+    addAndMakeVisible(sampleRecordProgress);
+
     presetStatusLabel.setJustificationType(juce::Justification::centredLeft);
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
     addAndMakeVisible(presetStatusLabel);
@@ -5182,6 +5190,7 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSliceFadeButton.setVisible(true);
             sampleNameLabel.setVisible(true);
             sampleRecordStatusLabel.setVisible(true);
+            sampleRecordProgress.setVisible(true);
             sampleSectionLabel.setBounds(content.removeFromTop(28));
             setSliderVisible(sampleStartSlider, sampleStartLabel, true);
             setSliderVisible(sampleEndSlider, sampleEndLabel, true);
@@ -5209,7 +5218,9 @@ void NateVSTAudioProcessorEditor::resized()
 
             sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
             sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            sampleRecordStatusLabel.setBounds(sourceArea.removeFromTop(26).reduced(5, 3));
+            auto recorderStatusArea = sourceArea.removeFromTop(26).reduced(5, 2);
+            sampleRecordStatusLabel.setBounds(recorderStatusArea.removeFromTop(14));
+            sampleRecordProgress.setBounds(recorderStatusArea);
             auto recordRow = sourceArea.removeFromTop(34).withTrimmedTop(2);
             const auto recordButtonWidth = recordRow.getWidth() / 3;
             sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
@@ -6146,6 +6157,19 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         {
             const auto hasCapture = audioProcessor.getSampleCaptureDurationSeconds() >= 0.05f;
             const auto hasLoadedSample = audioProcessor.hasLoadedSample();
+            if (! sampleRecordProgress.isVisible())
+            {
+                issues.add(panelName + ": recorder progress meter is hidden");
+            }
+            else
+            {
+                const auto progressBounds = getLocalArea(sampleRecordProgress.getParentComponent(),
+                                                         sampleRecordProgress.getBounds());
+                if (progressBounds.getWidth() < 120 || progressBounds.getHeight() < 8)
+                    issues.add(panelName + ": recorder progress meter is too small "
+                               + progressBounds.toString());
+            }
+
             if (! hasCapture && sampleCommitCaptureButton.isEnabled())
             {
                 issues.add(panelName + ": recorder Commit is enabled without captured audio");
@@ -7239,7 +7263,10 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
 {
     const auto isRecording = audioProcessor.isSampleCaptureEnabled();
     const auto seconds = audioProcessor.getSampleCaptureDurationSeconds();
+    const auto capacitySeconds = juce::jmax(0.1f, audioProcessor.getSampleCaptureCapacitySeconds());
     const auto hasCapture = seconds >= 0.05f;
+    const auto progress = juce::jlimit(0.0, 1.0, static_cast<double>(seconds / capacitySeconds));
+    const auto captureIsRolling = progress >= 0.995;
     const auto hasLoadedSample = audioProcessor.hasLoadedSample();
     sampleCaptureButton.setButtonText(isRecording ? "Stop" : "Record");
     sampleCaptureButton.setColour(juce::TextButton::buttonColourId,
@@ -7247,12 +7274,25 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
     sampleCaptureButton.setColour(juce::TextButton::textColourOffId,
                                   isRecording ? juce::Colour(0xffff9a8a) : juce::Colour(0xffdce7e4));
 
-    const auto durationText = hasCapture ? juce::String(seconds, 1) + "s" : juce::String("empty");
-    sampleRecordStatusLabel.setText(isRecording ? "Recording | " + durationText
-                                                : hasCapture ? "Ready to Commit | " + durationText
-                                                             : hasLoadedSample ? "Loaded sample ready"
-                                                                               : "Record or Load a sample",
-                                    juce::dontSendNotification);
+    const auto capacityText = juce::String(capacitySeconds, 0) + "s";
+    const auto durationText = hasCapture ? juce::String(seconds, 1) + " / " + capacityText
+                                         : juce::String("empty / ") + capacityText;
+    sampleRecordProgressValue = progress;
+    sampleRecordProgress.setTextToDisplay(durationText);
+    sampleRecordProgress.setColour(juce::ProgressBar::foregroundColourId,
+                                   isRecording ? juce::Colour(0xffff9a8a)
+                                               : hasCapture ? juce::Colour(0xff8ee6c9)
+                                                            : juce::Colour(0xff40535a));
+    sampleRecordProgress.setTooltip("Recorder rolling-buffer fill: " + durationText
+                                    + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
+
+    const auto statusText = isRecording ? (captureIsRolling ? juce::String("Recording | Rolling buffer")
+                                                            : juce::String("Recording | ") + durationText)
+                                        : hasCapture ? (captureIsRolling ? juce::String("Ready | Last ") + capacityText
+                                                                         : juce::String("Ready to Commit | ") + durationText)
+                                                     : hasLoadedSample ? juce::String("Loaded sample ready")
+                                                                       : juce::String("Record or Load a sample");
+    sampleRecordStatusLabel.setText(statusText, juce::dontSendNotification);
     sampleRecordStatusLabel.setColour(juce::Label::textColourId,
                                       isRecording ? juce::Colour(0xffff9a8a)
                                                   : hasCapture ? juce::Colour(0xff8ee6c9)
@@ -10748,7 +10788,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
-        &sampleSectionLabel, &sampleSourceLabel, &sampleRecordLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sampleRecordStatusLabel, &sequencerSectionLabel,
+        &sampleSectionLabel, &sampleSourceLabel, &sampleRecordLabel, &sampleChopLabel, &sampleShapeLabel, &sampleSliceStatusLabel, &sampleRecordStatusLabel, &sampleRecordProgress, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,

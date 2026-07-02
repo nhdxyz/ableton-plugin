@@ -244,6 +244,8 @@ private:
     juce::Label sampleShapeLabel;
     juce::Label sampleSliceStatusLabel;
     juce::Label sampleRecordStatusLabel;
+    double sampleRecordProgressValue = 0.0;
+    juce::ProgressBar sampleRecordProgress { sampleRecordProgressValue };
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
     juce::Label selectedControlHeaderLabel;

@@ -1604,6 +1604,12 @@ float NateVSTAudioProcessor::getSampleCaptureDurationSeconds() const noexcept
     return static_cast<float>(sampleCaptureSamplesRecorded.load(std::memory_order_acquire)) / static_cast<float>(sampleRate);
 }
 
+float NateVSTAudioProcessor::getSampleCaptureCapacitySeconds() const noexcept
+{
+    const auto sampleRate = sampleCaptureSampleRate > 0.0 ? sampleCaptureSampleRate : 44100.0;
+    return static_cast<float>(sampleCaptureBuffer.getNumSamples()) / static_cast<float>(sampleRate);
+}
+
 bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
 {
     sampleCaptureEnabled.store(false, std::memory_order_release);

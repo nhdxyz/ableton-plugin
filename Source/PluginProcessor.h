@@ -146,6 +146,7 @@ public:
     void stopSampleCapture();
     bool isSampleCaptureEnabled() const noexcept;
     float getSampleCaptureDurationSeconds() const noexcept;
+    float getSampleCaptureCapacitySeconds() const noexcept;
     bool commitSampleCaptureToSampler();
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();

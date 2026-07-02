@@ -110,6 +110,12 @@ int main()
 {
     NateVSTAudioProcessor processor;
     processor.prepareToPlay(44100.0, 512);
+    const auto captureCapacity = processor.getSampleCaptureCapacitySeconds();
+    if (captureCapacity < 7.9f || captureCapacity > 8.1f)
+    {
+        std::cerr << "Unexpected recorder rolling-buffer capacity: " << captureCapacity << "s\n";
+        return 1;
+    }
 
     if (! configureCapturePatch(processor))
     {

@@ -9,6 +9,7 @@
 - Reworked the bottom audition keyboard into a taller 96px strip with Ableton-style octave labels, internal laptop-key octave state, and a clamped `A=C2` / `A=C3` / `A=C4` range so Home lands on C4 and the computer keyboard cannot fall down to C0.
 - Reformatted the SAMPLE recorder controls with clearer `Record`, `Commit`, and `Play` actions plus larger capture/tool rows.
 - Made the SAMPLE recorder stateful in the UI: the status label now distinguishes empty, recording, captured-ready, and loaded-sample states, while Commit/Play/Trim/Splice/Mangle stay disabled until their required audio exists.
+- Added a compact SAMPLE recorder progress meter tied to the real 8-second rolling capture buffer, including a rolling/full state so users can see when new audio is replacing the oldest snippet.
 - Added `SampleRecorderAudit` coverage so the SAMPLE recorder now verifies actual synth capture, commit-to-sampler behavior, waveform overview generation, and audible sampler playback.
 - Made the SYNTH wavetable component explicitly label its 3D wavetable surface, draw/partial/morph workflow, and editable partial bars so the existing Serum-style wave tools are easier to find.
 - Added a dedicated `Edit Wave` action beside the SYNTH wavetable toolbar so users can enter the custom-wave editor directly; it switches Osc 1 to Custom when needed and focuses the inspector/status on drawing, partial bars, morph frames, and single-cycle WAV import/export.

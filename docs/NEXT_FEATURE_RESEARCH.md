@@ -182,6 +182,9 @@ For the latest house-focused comparison against Serum 2, NEXUS5, ZENOLOGY Pro, K
 84. Add per-slice stutter and retrigger.
 85. Add slice audition on hover/click. First waveform slice-lane click selection/audition is implemented; hover audition remains open.
 86. Add keyboard mapping display for slices. First selected-slice status can call out C3-G3 Slice Keys mode; a dedicated visual keyboard map remains open.
+
+Implemented recorder note: the current 8-second SAMPLE recorder now has a rolling-buffer progress meter and compact-host layout coverage; deeper input/source selection and drag/drop import remain open.
+
 87. Add slice-to-sequencer lane.
 88. Add one-shot, gate, loop, and thru playback modes per slice.
 89. Add zero-cross snap per slice marker.

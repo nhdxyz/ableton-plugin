@@ -3093,7 +3093,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleRecorderStatus();
     };
     sampleCaptureButton.setButtonText("Record");
-    sampleCaptureButton.setTooltip("Start or stop recording the current synth/sample output into a short rolling sampler buffer");
+    sampleCaptureButton.setTooltip("Start or stop recording the post-FX plugin output into a short rolling sampler buffer");
     sampleCaptureButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -7357,10 +7357,10 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
     sampleRecordProgress.setTooltip("Recorder rolling-buffer fill: " + durationText
                                     + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
-    const auto statusText = isRecording ? (captureIsRolling ? juce::String("Recording | Rolling buffer")
-                                                            : juce::String("Recording | ") + durationText)
-                                        : hasCapture ? (captureIsRolling ? juce::String("Ready | Last ") + capacityText
-                                                                         : juce::String("Ready to Commit | ") + durationText)
+    const auto statusText = isRecording ? (captureIsRolling ? juce::String("Recording post-FX | Rolling buffer")
+                                                            : juce::String("Recording post-FX | ") + durationText)
+                                        : hasCapture ? (captureIsRolling ? juce::String("Ready post-FX | Last ") + capacityText
+                                                                         : juce::String("Ready post-FX | ") + durationText)
                                                      : hasLoadedSample ? juce::String("Loaded sample ready")
                                                                        : juce::String("Record or Load a sample");
     sampleRecordStatusLabel.setText(statusText, juce::dontSendNotification);
@@ -7383,8 +7383,8 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         juce::Colour(0xffd6bcff)
     };
     const std::array<juce::String, 4> stepTooltips {
-        isRecording ? juce::String("Recording into the rolling buffer")
-                    : juce::String("Start recording the current plugin output"),
+        isRecording ? juce::String("Recording post-FX output into the rolling buffer")
+                    : juce::String("Start recording the post-FX plugin output"),
         hasCapture ? juce::String("Captured ") + durationText
                    : juce::String("Record audio to fill the capture buffer"),
         hasCapture ? "Commit the captured snippet into the sampler"

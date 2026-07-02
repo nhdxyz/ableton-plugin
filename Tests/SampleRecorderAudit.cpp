@@ -104,6 +104,36 @@ RenderStats processBlocks(NateVSTAudioProcessor& processor,
     stats.rms = sampleCount > 0 ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(sampleCount))) : 0.0f;
     return stats;
 }
+
+float recordCommittedOverviewPeak(float outputGainDb)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    configureCapturePatch(processor);
+    setPlainParameter(processor, Parameters::ID::outputGain, outputGainDb);
+
+    processor.beginSampleCapture();
+    processBlocks(processor, 36, 0, 24, 60);
+    if (! processor.commitSampleCaptureToSampler())
+        return -1.0f;
+
+    const auto overview = processor.createSamplePeakOverview(96);
+    auto peak = 0.0f;
+    for (const auto value : overview.maximums)
+        peak = juce::jmax(peak, std::abs(value));
+    for (const auto value : overview.minimums)
+        peak = juce::jmax(peak, std::abs(value));
+
+    const auto capturePath = processor.getLoadedSamplePath();
+    if (capturePath.isNotEmpty())
+    {
+        const juce::File captureFile(capturePath);
+        if (captureFile.existsAsFile())
+            captureFile.deleteFile();
+    }
+
+    return peak;
+}
 }
 
 int main()
@@ -200,6 +230,15 @@ int main()
     {
         std::cerr << "Committed recorder sample did not render audibly: peak "
                   << sampleStats.peak << " rms " << sampleStats.rms << '\n';
+        return 1;
+    }
+
+    const auto unityCapturePeak = recordCommittedOverviewPeak(0.0f);
+    const auto quietCapturePeak = recordCommittedOverviewPeak(-24.0f);
+    if (unityCapturePeak <= 0.02f || quietCapturePeak <= 0.0f || quietCapturePeak >= unityCapturePeak * 0.25f)
+    {
+        std::cerr << "Recorder capture does not appear to include post-FX/output gain: unity "
+                  << unityCapturePeak << " quiet " << quietCapturePeak << '\n';
         return 1;
     }
 

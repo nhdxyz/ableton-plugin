@@ -1629,6 +1629,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleRecordStatusLabel.setTooltip("Rolling sampler recorder status and captured duration");
     addAndMakeVisible(sampleRecordStatusLabel);
 
+    const std::array<juce::String, 4> recorderStepTexts { "REC", "READY", "USE", "PLAY" };
+    for (size_t index = 0; index < sampleRecordStepLabels.size(); ++index)
+    {
+        auto& label = sampleRecordStepLabels[index];
+        label.setText(recorderStepTexts[index], juce::dontSendNotification);
+        label.setJustificationType(juce::Justification::centred);
+        label.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+        label.setMinimumHorizontalScale(0.72f);
+        label.setColour(juce::Label::textColourId, juce::Colour(0xff7f9196));
+        label.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
+        label.setColour(juce::Label::outlineColourId, juce::Colour(0xff263238));
+        label.setTooltip("Recorder flow state");
+        addAndMakeVisible(label);
+    }
+
     sampleRecordProgress.setPercentageDisplay(false);
     sampleRecordProgress.setTextToDisplay("0 / 8s");
     sampleRecordProgress.setColour(juce::ProgressBar::backgroundColourId, juce::Colour(0xff101619));
@@ -5158,6 +5173,8 @@ void NateVSTAudioProcessorEditor::resized()
             sampleSectionLabel.setVisible(true);
             sampleSourceLabel.setVisible(true);
             sampleRecordLabel.setVisible(true);
+            for (auto& label : sampleRecordStepLabels)
+                label.setVisible(true);
             sampleChopLabel.setVisible(true);
             sampleShapeLabel.setVisible(true);
             loadSampleButton.setVisible(true);
@@ -5222,15 +5239,20 @@ void NateVSTAudioProcessorEditor::resized()
 
             sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
             sampleRecordLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            auto recorderStatusArea = sourceArea.removeFromTop(26).reduced(5, 2);
+            auto recorderStepArea = sourceArea.removeFromTop(24).reduced(4, 3);
+            const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(sampleRecordStepLabels.size());
+            for (auto& label : sampleRecordStepLabels)
+                label.setBounds(recorderStepArea.removeFromLeft(recorderStepWidth).reduced(2, 0));
+            auto recorderStatusArea = sourceArea.removeFromTop(34).reduced(5, 2);
             sampleRecordStatusLabel.setBounds(recorderStatusArea.removeFromTop(14));
             sampleRecordProgress.setBounds(recorderStatusArea);
-            auto recordRow = sourceArea.removeFromTop(34).withTrimmedTop(2);
-            const auto recordButtonWidth = recordRow.getWidth() / 3;
+            auto recordRow = sourceArea.removeFromTop(38).withTrimmedTop(2);
+            const auto recordButtonWidth = juce::jmax(86, recordRow.getWidth() * 2 / 5);
+            const auto commitButtonWidth = juce::jmax(70, recordRow.getWidth() * 3 / 10);
             sampleCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
-            sampleCommitCaptureButton.setBounds(recordRow.removeFromLeft(recordButtonWidth).reduced(3, 4));
+            sampleCommitCaptureButton.setBounds(recordRow.removeFromLeft(commitButtonWidth).reduced(3, 4));
             sampleAuditionButton.setBounds(recordRow.reduced(3, 4));
-            auto recordToolRow = sourceArea.removeFromTop(34).withTrimmedTop(2);
+            auto recordToolRow = sourceArea.removeFromTop(32).withTrimmedTop(1);
             const auto recordToolWidth = recordToolRow.getWidth() / 3;
             sampleAutoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
             sampleSpliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 4));
@@ -5248,13 +5270,24 @@ void NateVSTAudioProcessorEditor::resized()
             ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
 
             sampleShapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            const auto sampleShapeRowHeight = juce::jlimit(46, 64, sourceArea.getHeight() / 3);
-            layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
-                          { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-            layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
-                          { &samplePitchRampSlider, &sampleStutterRepeatsSlider, &sampleGrainSizeSlider });
-            layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(3),
-                          { &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
+            if (sourceArea.getHeight() < 138)
+            {
+                const auto sampleShapeRowHeight = juce::jmax(36, sourceArea.getHeight() / 2);
+                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(2),
+                              { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider, &samplePitchRampSlider });
+                layoutKnobRow(sourceArea.withTrimmedTop(2),
+                              { &sampleStutterRepeatsSlider, &sampleGrainSizeSlider, &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
+            }
+            else
+            {
+                const auto sampleShapeRowHeight = juce::jlimit(46, 64, sourceArea.getHeight() / 3);
+                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
+                              { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
+                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
+                              { &samplePitchRampSlider, &sampleStutterRepeatsSlider, &sampleGrainSizeSlider });
+                layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(3),
+                              { &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
+            }
 
             auto chopHeader = chopArea.removeFromTop(24);
             sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
@@ -6161,6 +6194,20 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         {
             const auto hasCapture = audioProcessor.getSampleCaptureDurationSeconds() >= 0.05f;
             const auto hasLoadedSample = audioProcessor.hasLoadedSample();
+            for (const auto& stepLabel : sampleRecordStepLabels)
+            {
+                if (! stepLabel.isVisible())
+                {
+                    issues.add(panelName + ": recorder state rail label is hidden");
+                    continue;
+                }
+
+                const auto stepBounds = getLocalArea(stepLabel.getParentComponent(), stepLabel.getBounds());
+                if (stepBounds.getWidth() < 34 || stepBounds.getHeight() < 14)
+                    issues.add(panelName + ": recorder state rail label is too compressed "
+                               + stepBounds.toString());
+            }
+
             if (! sampleRecordProgress.isVisible())
             {
                 issues.add(panelName + ": recorder progress meter is hidden");
@@ -6172,6 +6219,22 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 if (progressBounds.getWidth() < 120 || progressBounds.getHeight() < 8)
                     issues.add(panelName + ": recorder progress meter is too small "
                                + progressBounds.toString());
+            }
+
+            for (const auto* recorderButton : {
+                     static_cast<const juce::Component*>(&sampleCaptureButton),
+                     static_cast<const juce::Component*>(&sampleCommitCaptureButton),
+                     static_cast<const juce::Component*>(&sampleAuditionButton) })
+            {
+                const auto buttonBounds = getLocalArea(recorderButton->getParentComponent(),
+                                                       recorderButton->getBounds());
+                if (buttonBounds.getWidth() < 58 || buttonBounds.getHeight() < 24)
+                {
+                    issues.add(panelName + ": recorder primary button "
+                               + layoutAuditComponentName(*recorderButton, 0)
+                               + " is too compressed "
+                               + buttonBounds.toString());
+                }
             }
 
             if (! hasCapture && sampleCommitCaptureButton.isEnabled())
@@ -7302,6 +7365,43 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
                                                   : hasCapture ? juce::Colour(0xff8ee6c9)
                                                                : hasLoadedSample ? juce::Colour(0xffa8d8ff)
                                                                                  : juce::Colour(0xffa8b6b8));
+
+    const std::array<bool, 4> stepActive {
+        isRecording,
+        hasCapture,
+        hasCapture,
+        hasLoadedSample
+    };
+    const std::array<juce::Colour, 4> stepColours {
+        juce::Colour(0xffff9a8a),
+        juce::Colour(0xff8ee6c9),
+        juce::Colour(0xff9fc7ff),
+        juce::Colour(0xffd6bcff)
+    };
+    const std::array<juce::String, 4> stepTooltips {
+        isRecording ? juce::String("Recording into the rolling buffer")
+                    : juce::String("Start recording the current plugin output"),
+        hasCapture ? juce::String("Captured ") + durationText
+                   : juce::String("Record audio to fill the capture buffer"),
+        hasCapture ? "Commit the captured snippet into the sampler"
+                   : juce::String("Commit becomes available after recording"),
+        hasLoadedSample ? "Loaded sample can be auditioned and edited"
+                        : juce::String("Load or commit audio before playback")
+    };
+
+    for (size_t index = 0; index < sampleRecordStepLabels.size(); ++index)
+    {
+        auto& label = sampleRecordStepLabels[index];
+        const auto active = stepActive[index];
+        const auto colour = stepColours[index];
+        label.setColour(juce::Label::backgroundColourId,
+                        active ? colour.withAlpha(0.24f) : juce::Colour(0xff101619));
+        label.setColour(juce::Label::outlineColourId,
+                        active ? colour.withAlpha(0.78f) : juce::Colour(0xff263238));
+        label.setColour(juce::Label::textColourId,
+                        active ? colour : juce::Colour(0xff7f9196));
+        label.setTooltip(stepTooltips[index]);
+    }
 
     sampleCommitCaptureButton.setEnabled(hasCapture);
     sampleAuditionButton.setEnabled(hasLoadedSample);
@@ -10888,6 +10988,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     for (auto& button : modWorkflowButtons)
         button.setVisible(false);
+
+    for (auto& label : sampleRecordStepLabels)
+        label.setVisible(false);
 
     for (auto& button : sampleSliceButtons)
         button.setVisible(false);

@@ -244,6 +244,7 @@ private:
     juce::Label sampleShapeLabel;
     juce::Label sampleSliceStatusLabel;
     juce::Label sampleRecordStatusLabel;
+    std::array<juce::Label, 4> sampleRecordStepLabels;
     double sampleRecordProgressValue = 0.0;
     juce::ProgressBar sampleRecordProgress { sampleRecordProgressValue };
     juce::Label sequencerSectionLabel;

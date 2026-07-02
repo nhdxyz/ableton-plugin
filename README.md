@@ -43,7 +43,7 @@ The `HOME` panel is the default dashboard for quick patch shaping, source balanc
 
 At default and larger editor sizes, the MOD routing section also shows a compact route map above the matrix so active and bypassed movement is visible as source-to-destination paths. At the minimum compact size, the map hides so the editable matrix rows remain usable in Ableton.
 
-The SAMPLE recorder shows a compact progress meter for the real rolling capture buffer, so recording, ready-to-commit, loaded-sample, and full/rolling states are visible without opening another page.
+The SAMPLE recorder shows a compact `REC -> READY -> USE -> PLAY` state rail plus a progress meter for the real rolling capture buffer, so recording, ready-to-commit, loaded-sample, and full/rolling states are visible without opening another page.
 
 Laptop-key auditioning now installs the same key listener across the editor component tree while explicitly ignoring text-entry and combo-box focus, so changing tabs or touching knobs/sliders is less likely to strand the computer keyboard until the virtual piano is clicked again. The editor timer also skips hidden analyzer, wavetable, sample, sequencer, and MOD-detail refresh work so off-page visualizers do not keep repainting while browsing or editing elsewhere.
 

@@ -118,6 +118,11 @@ juce::StringArray sampleRecordSourceChoices()
     return { "Post-FX Output", "Host Input" };
 }
 
+juce::StringArray sampleRecordStartChoices()
+{
+    return { "Immediate", "Detect -36 dB", "Detect -24 dB", "Detect -12 dB" };
+}
+
 juce::StringArray sampleEngineModeChoices()
 {
     return { "Classic", "Granular", "Spectral", "Cloud" };
@@ -838,6 +843,12 @@ APVTS::ParameterLayout createLayout()
         ID::sampleRecordSource,
         "Sample Record Source",
         sampleRecordSourceChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::sampleRecordStart,
+        "Sample Record Start",
+        sampleRecordStartChoices(),
         0));
 
     add(std::make_unique<juce::AudioParameterChoice>(

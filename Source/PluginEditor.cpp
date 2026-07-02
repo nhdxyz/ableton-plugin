@@ -3091,7 +3091,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         else
         {
             audioProcessor.beginSampleCapture();
-            setRandomStatus("Recording " + audioProcessor.getSampleCaptureSourceName());
+            setRandomStatus(audioProcessor.isSampleCaptureWaitingForThreshold()
+                                ? "Recorder armed " + audioProcessor.getSampleCaptureStartModeName()
+                                : "Recording " + audioProcessor.getSampleCaptureSourceName());
         }
         updateSampleRecorderStatus();
         returnKeyboardFocusToPiano();
@@ -7368,7 +7370,9 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.getSampleCaptureCapacitySeconds(),
         audioProcessor.hasLoadedSample(),
         audioProcessor.getSampleCaptureSourceIndex(),
-        audioProcessor.getSampleCaptureSourcePeak()
+        audioProcessor.getSampleCaptureStartModeIndex(),
+        audioProcessor.getSampleCaptureSourcePeak(),
+        audioProcessor.isSampleCaptureWaitingForThreshold()
     });
 }
 

@@ -17,6 +17,14 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
                                                             Parameters::ID::sampleRecordSource,
                                                             sourceBox);
 
+    startBox.addItemList(Parameters::sampleRecordStartChoices(), 1);
+    startBox.setTextWhenNothingSelected("Start");
+    startBox.setTooltip("Choose when recording begins: Immediate records at once; Detect waits until the selected source crosses the dB threshold");
+    addAndMakeVisible(startBox);
+    startAttachment = std::make_unique<ComboBoxAttachment>(valueTreeState,
+                                                           Parameters::ID::sampleRecordStart,
+                                                           startBox);
+
     statusLabel.setText("Recorder idle", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centredLeft);
     statusLabel.setFont(juce::FontOptions(11.0f));
@@ -121,9 +129,10 @@ void SampleRecorderPanel::setState(const State& state)
     const auto captureSourceDescription = state.captureSourceIndex == 1
         ? juce::String("host input routed by Ableton into the plugin")
         : juce::String("post-FX plugin output");
+    const auto captureStartShortName = startModeShortName(state.captureStartModeIndex);
     const auto sourceLevelText = formatPeakLabel(state.captureSourcePeak);
 
-    recordButton.setButtonText(state.isRecording ? "Stop" : "Record");
+    recordButton.setButtonText(state.waitingForThreshold ? "Cancel" : state.isRecording ? "Stop" : "Record");
     recordButton.setColour(juce::TextButton::buttonColourId,
                            state.isRecording ? juce::Colour(0xff4a2725) : juce::Colour(0xff141d20));
     recordButton.setColour(juce::TextButton::textColourOffId,
@@ -141,7 +150,9 @@ void SampleRecorderPanel::setState(const State& state)
     progress.setTooltip("Recorder rolling-buffer fill: " + durationText
                         + (captureIsRolling ? ". New audio is replacing the oldest audio." : "."));
 
-    const auto statusText = state.isRecording
+    const auto statusText = state.waitingForThreshold
+        ? juce::String("Armed ") + captureSourceShortName + " " + sourceLevelText + " | " + captureStartShortName
+        : state.isRecording
         ? (captureIsRolling ? juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | Rolling"
                             : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
         : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | Last " + capacityText
@@ -158,8 +169,14 @@ void SampleRecorderPanel::setState(const State& state)
                                                          : state.hasLoadedSample ? juce::Colour(0xffa8d8ff)
                                                                                  : juce::Colour(0xffa8b6b8));
 
+    const std::array<juce::String, 4> stepTexts {
+        state.waitingForThreshold ? juce::String("WAIT") : juce::String("REC"),
+        "READY",
+        "USE",
+        "PLAY"
+    };
     const std::array<bool, 4> stepActive {
-        state.isRecording,
+        state.isRecording || state.waitingForThreshold,
         hasCapture,
         hasCapture,
         state.hasLoadedSample
@@ -171,7 +188,8 @@ void SampleRecorderPanel::setState(const State& state)
         juce::Colour(0xffd6bcff)
     };
     const std::array<juce::String, 4> stepTooltips {
-        state.isRecording ? juce::String("Recording ") + captureSourceDescription + " into the rolling buffer"
+        state.waitingForThreshold ? juce::String("Armed for ") + captureStartShortName + " on " + captureSourceDescription
+        : state.isRecording ? juce::String("Recording ") + captureSourceDescription + " into the rolling buffer"
                           : juce::String("Start recording ") + captureSourceDescription,
         hasCapture ? juce::String("Captured ") + durationText
                    : juce::String("Record audio to fill the capture buffer"),
@@ -186,6 +204,7 @@ void SampleRecorderPanel::setState(const State& state)
         auto& label = stepLabels[index];
         const auto active = stepActive[index];
         const auto colour = stepColours[index];
+        label.setText(stepTexts[index], juce::dontSendNotification);
         label.setColour(juce::Label::backgroundColourId,
                         active ? colour.withAlpha(0.24f) : juce::Colour(0xff101619));
         label.setColour(juce::Label::outlineColourId,
@@ -202,11 +221,15 @@ void SampleRecorderPanel::setState(const State& state)
     mangleButton.setEnabled(state.hasLoadedSample);
     commitButton.setTooltip(hasCapture ? "Commit the captured " + durationText + " snippet into the sampler and auto-trim silence"
                                        : "Record audio before committing a sampler snippet");
-    recordButton.setTooltip(state.isRecording ? "Stop recording " + captureSourceDescription
-                                              : "Start recording " + captureSourceDescription);
+    recordButton.setTooltip(state.waitingForThreshold ? "Cancel threshold-armed recording"
+                                                      : state.isRecording ? "Stop recording " + captureSourceDescription
+                                                                          : "Start recording " + captureSourceDescription);
     sourceBox.setTooltip(state.captureSourceIndex == 1
         ? "Host Input records audio Ableton routes into the plugin input. Select the mic or source in Ableton, route it to this plugin, then watch the Host In level in the recorder status."
         : "Post-FX Output records this plugin after synth, sampler, FX rack, and output gain. Watch the Post-FX level in the recorder status.");
+    startBox.setTooltip(state.captureStartModeIndex <= 0
+        ? "Immediate starts recording as soon as you press Record."
+        : "Detect arms the recorder and starts only when " + captureSourceShortName + " crosses " + captureStartShortName + ".");
     autoTrimButton.setTooltip(state.hasLoadedSample ? "Trim the current sample range to the audible part of the recording"
                                                     : "Load or commit a sample before trimming");
     spliceButton.setTooltip(state.hasLoadedSample ? "Detect transients or split the recording into eight playable slice keys"
@@ -220,7 +243,9 @@ void SampleRecorderPanel::resized()
     auto area = getLocalBounds();
     auto recorderHeaderRow = area.removeFromTop(30);
     recordLabel.setBounds(recorderHeaderRow.removeFromLeft(82).withTrimmedLeft(4).reduced(0, 5));
-    sourceBox.setBounds(recorderHeaderRow.reduced(3, 4));
+    const auto sourceWidth = juce::jmax(96, recorderHeaderRow.getWidth() * 56 / 100);
+    sourceBox.setBounds(recorderHeaderRow.removeFromLeft(sourceWidth).reduced(3, 4));
+    startBox.setBounds(recorderHeaderRow.reduced(3, 4));
 
     auto recorderStepArea = area.removeFromTop(24).reduced(4, 3);
     const auto recorderStepWidth = recorderStepArea.getWidth() / static_cast<int>(stepLabels.size());
@@ -337,5 +362,14 @@ juce::String SampleRecorderPanel::formatPeakLabel(float peak)
         return "<-60 dB";
 
     return juce::String(db, 0) + " dB";
+}
+
+juce::String SampleRecorderPanel::startModeShortName(int modeIndex)
+{
+    const auto choices = Parameters::sampleRecordStartChoices();
+    if (juce::isPositiveAndBelow(modeIndex, choices.size()))
+        return choices[modeIndex];
+
+    return "Immediate";
 }
 }

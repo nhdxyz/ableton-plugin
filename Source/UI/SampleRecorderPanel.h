@@ -22,7 +22,9 @@ public:
         float capacitySeconds = 8.0f;
         bool hasLoadedSample = false;
         int captureSourceIndex = 0;
+        int captureStartModeIndex = 0;
         float captureSourcePeak = 0.0f;
+        bool waitingForThreshold = false;
     };
 
     explicit SampleRecorderPanel(juce::AudioProcessorValueTreeState& valueTreeState);
@@ -48,6 +50,7 @@ private:
 
     juce::Label recordLabel;
     juce::ComboBox sourceBox;
+    juce::ComboBox startBox;
     juce::Label statusLabel;
     std::array<juce::Label, 4> stepLabels;
     double progressValue = 0.0;
@@ -59,9 +62,11 @@ private:
     juce::TextButton spliceButton { "Splice" };
     juce::TextButton mangleButton { "Mangle" };
     std::unique_ptr<ComboBoxAttachment> sourceAttachment;
+    std::unique_ptr<ComboBoxAttachment> startAttachment;
 
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);
     static juce::String formatPeakLabel(float peak);
+    static juce::String startModeShortName(int modeIndex);
 };
 }

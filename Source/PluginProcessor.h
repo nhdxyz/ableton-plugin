@@ -145,11 +145,15 @@ public:
     void beginSampleCapture();
     void stopSampleCapture();
     bool isSampleCaptureEnabled() const noexcept;
+    bool isSampleCaptureWaitingForThreshold() const noexcept;
     float getSampleCaptureDurationSeconds() const noexcept;
     float getSampleCaptureCapacitySeconds() const noexcept;
     int getSampleCaptureSourceIndex() const noexcept;
+    int getSampleCaptureStartModeIndex() const noexcept;
+    float getSampleCaptureThresholdDb() const noexcept;
     float getSampleCaptureSourcePeak() const noexcept;
     juce::String getSampleCaptureSourceName() const;
+    juce::String getSampleCaptureStartModeName() const;
     bool commitSampleCaptureToSampler();
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
@@ -310,6 +314,7 @@ private:
 
     std::atomic<float>* outputGain = nullptr;
     std::atomic<float>* sampleRecordSource = nullptr;
+    std::atomic<float>* sampleRecordStart = nullptr;
     std::atomic<float>* sequencerChordMemory = nullptr;
     std::atomic<float>* sequencerLockDestination = nullptr;
     std::atomic<float>* sequencerLockDepth = nullptr;
@@ -339,6 +344,7 @@ private:
     juce::String loadedSamplePath;
     juce::AudioBuffer<float> sampleCaptureBuffer;
     std::atomic<bool> sampleCaptureEnabled { false };
+    std::atomic<bool> sampleCaptureWaitingForThreshold { false };
     std::atomic<int> sampleCaptureActiveWriters { 0 };
     std::atomic<int> sampleCaptureWritePosition { 0 };
     std::atomic<int> sampleCaptureSamplesRecorded { 0 };
@@ -418,6 +424,7 @@ private:
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void resetSampleParametersForNewSource(const juce::String& path);
     void updateSampleCaptureSourcePeak(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
+    float getSampleCaptureThresholdGain() const noexcept;
     void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     void waitForSampleCaptureWritersToFinish();
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);

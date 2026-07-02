@@ -194,6 +194,28 @@ float recordHostInputOverviewPeak(float inputPeak, float* sourcePeak = nullptr)
 
     return peak;
 }
+
+void feedHostInputBlocks(NateVSTAudioProcessor& processor, float inputPeak, int blocks)
+{
+    juce::AudioBuffer<float> buffer(2, 512);
+    auto phase = 0.0;
+    const auto phaseDelta = juce::MathConstants<double>::twoPi * 440.0 / 44100.0;
+    for (auto block = 0; block < blocks; ++block)
+    {
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            const auto value = static_cast<float>(std::sin(phase)) * inputPeak;
+            buffer.setSample(0, sample, value);
+            buffer.setSample(1, sample, value * 0.65f);
+            phase += phaseDelta;
+            if (phase >= juce::MathConstants<double>::twoPi)
+                phase -= juce::MathConstants<double>::twoPi;
+        }
+
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+}
 }
 
 int main()
@@ -322,6 +344,60 @@ int main()
         std::cerr << "Recorder Host Input source peak was not tracked: "
                   << hostInputSourcePeak << '\n';
         return 1;
+    }
+
+    NateVSTAudioProcessor thresholdProcessor;
+    thresholdProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(thresholdProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::sampleRecordStart, 2.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(thresholdProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure threshold recorder patch\n";
+        return 1;
+    }
+
+    thresholdProcessor.beginSampleCapture();
+    if (! thresholdProcessor.isSampleCaptureEnabled() || ! thresholdProcessor.isSampleCaptureWaitingForThreshold())
+    {
+        std::cerr << "Recorder did not arm for threshold capture\n";
+        return 1;
+    }
+
+    feedHostInputBlocks(thresholdProcessor, 0.01f, 12);
+    if (! thresholdProcessor.isSampleCaptureWaitingForThreshold()
+        || thresholdProcessor.getSampleCaptureDurationSeconds() > 0.001f)
+    {
+        std::cerr << "Recorder threshold mode captured below-threshold input: "
+                  << thresholdProcessor.getSampleCaptureDurationSeconds() << "s\n";
+        return 1;
+    }
+
+    feedHostInputBlocks(thresholdProcessor, 0.12f, 12);
+    if (thresholdProcessor.isSampleCaptureWaitingForThreshold()
+        || thresholdProcessor.getSampleCaptureDurationSeconds() < 0.1f)
+    {
+        std::cerr << "Recorder threshold mode did not start after above-threshold input: "
+                  << thresholdProcessor.getSampleCaptureDurationSeconds() << "s\n";
+        return 1;
+    }
+
+    if (! thresholdProcessor.commitSampleCaptureToSampler())
+    {
+        std::cerr << "Recorder threshold capture did not commit\n";
+        return 1;
+    }
+
+    const auto thresholdCapturePath = thresholdProcessor.getLoadedSamplePath();
+    if (thresholdCapturePath.isNotEmpty())
+    {
+        const juce::File captureFile(thresholdCapturePath);
+        if (captureFile.existsAsFile())
+            captureFile.deleteFile();
     }
 
     const auto capturePath = processor.getLoadedSamplePath();

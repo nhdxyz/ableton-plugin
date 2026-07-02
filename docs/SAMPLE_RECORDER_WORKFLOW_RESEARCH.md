@@ -20,19 +20,21 @@ The current recorder should stay compact in the SAMPLE panel, but it needs the s
 - `REC -> READY -> USE -> PLAY` flow rail.
 - Commit, Play, Trim, Splice, and Mangle actions that enable only when usable.
 - Recorder CTest coverage for capture, commit, overview creation, playback, Post-FX gain capture, and Host Input capture.
+- Start mode selector with `Immediate`, `Detect -36 dB`, `Detect -24 dB`, and `Detect -12 dB`.
+- Threshold-arm state that waits for the selected source to cross the selected threshold before filling the capture buffer.
 
 ## Added First
 
 - Visible source-level readout in the recorder status line, e.g. `Post-FX -18 dB` or `Host In -inf dB`.
 - Post-FX and Host Input source-level telemetry in `SampleRecorderAudit`.
+- Threshold-start audit coverage for below-threshold waiting, above-threshold capture start, and sampler commit.
 
 ## Next Recorder Priorities
 
-1. Threshold start: arm the recorder and begin capture when source level crosses a set dB threshold.
-2. Sync length: capture 1, 2, 4, or 8 bars from host tempo/transport, with quantized stop.
-3. Pre-roll buffer: keep a short lookback so threshold recording does not clip the attack.
-4. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
-5. Take handling: keep the last few captures until one is committed.
-6. Drag/export audio: drag the committed capture as WAV into Ableton.
-7. Slice while recording: add marker taps or lazy-chop pads during capture.
-8. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.
+1. Sync length: capture 1, 2, 4, or 8 bars from host tempo/transport, with quantized stop.
+2. Pre-roll buffer: keep a short lookback so threshold recording does not clip the attack.
+3. Monitor clarity: add a small Host Input route hint and feedback-safe monitor state.
+4. Take handling: keep the last few captures until one is committed.
+5. Drag/export audio: drag the committed capture as WAV into Ableton.
+6. Slice while recording: add marker taps or lazy-chop pads during capture.
+7. Normalize/fade options: post-commit level, fade-in, fade-out, and click cleanup.

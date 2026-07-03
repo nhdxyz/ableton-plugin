@@ -20,6 +20,14 @@ enum class Waveform
     custom
 };
 
+enum class WarpMode
+{
+    harmonic = 0,
+    fold,
+    bend,
+    sync
+};
+
 class Oscillator
 {
 public:
@@ -36,6 +44,7 @@ public:
     void setFrequency(float newFrequencyHz);
     void setWaveform(Waveform newWaveform);
     void setWarp(float newWarpAmount);
+    void setWarpMode(int newWarpMode);
     void setWavetablePosition(float newPosition);
     void setCustomWaveform(const CustomWavePoints& points);
     void setCustomWavetableFrames(const CustomWaveFrames& frames);
@@ -49,6 +58,7 @@ private:
     float phaseDelta = 0.0f;
     float triangleState = -1.0f;
     float warpAmount = 0.0f;
+    WarpMode warpMode = WarpMode::harmonic;
     float wavetablePosition = 0.0f;
     bool customFramesInitialised = false;
     CustomWavePoints customWavePoints {

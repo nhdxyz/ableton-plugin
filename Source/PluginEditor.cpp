@@ -2273,6 +2273,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(noiseTypeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::noiseType, noiseTypeBox));
 
+    oscWarpModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
+    oscWarpModeBox.setTextWhenNothingSelected("Warp Mode");
+    oscWarpModeBox.setTooltip("Choose how the Osc Warp amount reshapes both source oscillators: harmonic drive, fold, bend, or sync-style edge");
+    addAndMakeVisible(oscWarpModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWarpMode, oscWarpModeBox));
+
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     filterModeBox.setTextWhenNothingSelected("Filter Mode");
     filterModeBox.setTooltip("Choose low-pass, band-pass, or high-pass filter mode");
@@ -4598,6 +4604,7 @@ void NateVSTAudioProcessorEditor::resized()
             bandpassFilterButton.setVisible(false);
             highpassFilterButton.setVisible(false);
             noiseTypeBox.setVisible(true);
+            oscWarpModeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
@@ -4663,7 +4670,9 @@ void NateVSTAudioProcessorEditor::resized()
                 &noiseLevelSlider
             });
             auto sourceTextureRow = sourceArea.withTrimmedTop(2);
-            noiseTypeBox.setBounds(sourceTextureRow.removeFromTop(30).reduced(4, 4));
+            auto textureSelectRow = sourceTextureRow.removeFromTop(30);
+            oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(juce::jlimit(106, 132, textureSelectRow.getWidth() / 2)).reduced(4, 4));
+            noiseTypeBox.setBounds(textureSelectRow.reduced(4, 4));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
                 &oscWavetablePositionSlider,
@@ -11101,7 +11110,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,

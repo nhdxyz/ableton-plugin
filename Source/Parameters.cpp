@@ -47,6 +47,11 @@ juce::StringArray noiseTypeChoices()
     return { "White", "Pink", "Brown", "Air", "Tick", "Vinyl", "Digital" };
 }
 
+juce::StringArray oscWarpModeChoices()
+{
+    return { "Harmonic", "Fold", "Bend", "Sync" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -319,6 +324,12 @@ APVTS::ParameterLayout createLayout()
         "Osc Warp",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::oscWarpMode,
+        "Osc Warp Mode",
+        oscWarpModeChoices(),
+        0));
 
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::ampAttack,

@@ -4731,6 +4731,7 @@ juce::StringArray NateVSTAudioProcessor::getRandomCandidateChangedSections(int s
                     Parameters::ID::noiseType,
                     Parameters::ID::noiseDecay,
                     Parameters::ID::oscWarp,
+                    Parameters::ID::oscWarpMode,
                     Parameters::ID::oscWavetablePosition,
                     Parameters::ID::osc2WavetablePosition,
                     Parameters::ID::monoMode,
@@ -5556,6 +5557,7 @@ void NateVSTAudioProcessor::applyRandomSectionIntensity(const juce::ValueTree& s
                 Parameters::ID::osc2Wave,
                 Parameters::ID::osc2Octave,
                 Parameters::ID::noiseType,
+                Parameters::ID::oscWarpMode,
                 Parameters::ID::monoMode,
                 Parameters::ID::unisonVoices
             }, intensity);
@@ -5833,6 +5835,7 @@ void NateVSTAudioProcessor::restoreMutationScopeFromState(const juce::ValueTree&
                 Parameters::ID::noiseType,
                 Parameters::ID::noiseDecay,
                 Parameters::ID::oscWarp,
+                Parameters::ID::oscWarpMode,
                 Parameters::ID::oscWavetablePosition,
                 Parameters::ID::osc2WavetablePosition,
                 Parameters::ID::monoMode,
@@ -6103,6 +6106,7 @@ void NateVSTAudioProcessor::restoreLockedSectionsFromState(const juce::ValueTree
             Parameters::ID::noiseType,
             Parameters::ID::noiseDecay,
             Parameters::ID::oscWarp,
+            Parameters::ID::oscWarpMode,
             Parameters::ID::oscWavetablePosition,
             Parameters::ID::osc2WavetablePosition,
             Parameters::ID::unisonVoices,
@@ -7147,6 +7151,7 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
     const auto hasFilterCharacter = stateForParameters.getChildWithProperty("id", Parameters::ID::filterCharacter).isValid();
     const auto hasFilterSlope = stateForParameters.getChildWithProperty("id", Parameters::ID::filterSlope).isValid();
     const auto hasOscWarp = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarp).isValid();
+    const auto hasOscWarpMode = stateForParameters.getChildWithProperty("id", Parameters::ID::oscWarpMode).isValid();
     const auto hasNoiseSourceControls = stateForParameters.getChildWithProperty("id", Parameters::ID::noiseType).isValid()
         && stateForParameters.getChildWithProperty("id", Parameters::ID::noiseDecay).isValid();
     const auto hasFxSendControls = stateForParameters.getChildWithProperty("id", Parameters::ID::fxSendDelay).isValid()
@@ -7251,6 +7256,8 @@ void NateVSTAudioProcessor::restorePluginState(const juce::ValueTree& state, boo
         setParameterPlainValue(Parameters::ID::filterSlope, 0.0f);
     if (! hasOscWarp)
         setParameterPlainValue(Parameters::ID::oscWarp, 0.0f);
+    if (! hasOscWarpMode)
+        setParameterPlainValue(Parameters::ID::oscWarpMode, 0.0f);
     if (! hasNoiseSourceControls)
     {
         setParameterPlainValue(Parameters::ID::noiseType, 0.0f);

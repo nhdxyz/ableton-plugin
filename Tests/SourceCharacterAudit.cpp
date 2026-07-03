@@ -14,14 +14,15 @@ struct RenderStats
     std::vector<float> samples;
 };
 
-RenderStats renderWaveform(Synth::Waveform waveform)
+RenderStats renderWaveform(Synth::Waveform waveform, int warpMode = 0, float warpAmount = 0.0f)
 {
     Synth::Oscillator oscillator;
     oscillator.prepare(44100.0);
     oscillator.reset();
     oscillator.setWaveform(waveform);
     oscillator.setFrequency(110.0f);
-    oscillator.setWarp(0.0f);
+    oscillator.setWarp(warpAmount);
+    oscillator.setWarpMode(warpMode);
     oscillator.setWavetablePosition(0.42f);
 
     RenderStats stats;
@@ -77,6 +78,17 @@ int main()
         return 1;
     }
 
+    const auto warpModeChoices = Parameters::oscWarpModeChoices();
+    if (warpModeChoices.size() != 4
+        || warpModeChoices[0] != "Harmonic"
+        || warpModeChoices[1] != "Fold"
+        || warpModeChoices[2] != "Bend"
+        || warpModeChoices[3] != "Sync")
+    {
+        std::cerr << "Osc warp mode choices were reordered or missing\n";
+        return 1;
+    }
+
     const auto organStats = renderWaveform(Synth::Waveform::organ);
     const auto pianoStats = renderWaveform(Synth::Waveform::housePiano);
     const auto customStats = renderWaveform(Synth::Waveform::custom);
@@ -102,6 +114,29 @@ int main()
         return 1;
     }
 
+    const auto harmonicWarp = renderWaveform(Synth::Waveform::saw, 0, 0.68f);
+    const auto foldWarp = renderWaveform(Synth::Waveform::saw, 1, 0.68f);
+    const auto bendWarp = renderWaveform(Synth::Waveform::saw, 2, 0.68f);
+    const auto syncWarp = renderWaveform(Synth::Waveform::saw, 3, 0.68f);
+
+    for (const auto* stats : { &harmonicWarp, &foldWarp, &bendWarp, &syncWarp })
+    {
+        if (stats->rms <= 0.02f || stats->peak <= 0.05f || stats->peak > 1.05f)
+        {
+            std::cerr << "Warp mode rendered outside the expected audible/safe range: rms "
+                      << stats->rms << " peak " << stats->peak << '\n';
+            return 1;
+        }
+    }
+
+    if (meanAbsoluteDifference(harmonicWarp.samples, foldWarp.samples) <= 0.025f
+        || meanAbsoluteDifference(harmonicWarp.samples, bendWarp.samples) <= 0.025f
+        || meanAbsoluteDifference(harmonicWarp.samples, syncWarp.samples) <= 0.025f)
+    {
+        std::cerr << "Osc warp modes rendered too similarly to harmonic mode\n";
+        return 1;
+    }
+
     const auto difference = meanAbsoluteDifference(organStats.samples, pianoStats.samples);
     if (difference <= 0.04f)
     {
@@ -110,6 +145,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Source character audit passed for appended waveform choices, custom source rendering, and house source rendering.\n";
+    std::cout << "Source character audit passed for appended waveform choices, warp mode rendering, custom source rendering, and house source rendering.\n";
     return 0;
 }

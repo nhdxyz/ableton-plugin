@@ -64,6 +64,77 @@ float harmonicWarp(float sample, float amount)
     return juce::jlimit(-1.0f, 1.0f, saturated + ((folded - saturated) * foldedMix));
 }
 
+float foldWarp(float sample, float amount)
+{
+    amount = juce::jlimit(0.0f, 1.0f, amount);
+
+    if (amount <= 0.0001f)
+        return sample;
+
+    const auto drive = 1.0f + (amount * 5.2f);
+    const auto driven = sample * drive;
+    const auto folded = std::sin(driven * juce::MathConstants<float>::halfPi);
+    const auto clipped = std::tanh(driven) / std::tanh(drive);
+    const auto foldMix = 0.36f + (amount * 0.44f);
+
+    return juce::jlimit(-1.0f, 1.0f, clipped + ((folded - clipped) * foldMix));
+}
+
+float bendWarp(float sample, float amount)
+{
+    amount = juce::jlimit(0.0f, 1.0f, amount);
+
+    if (amount <= 0.0001f)
+        return sample;
+
+    const auto drive = 1.0f + (amount * 3.0f);
+    const auto bias = amount * 0.36f;
+    const auto positive = std::tanh((sample + bias) * drive);
+    const auto negative = std::tanh((sample - bias) * (1.0f + (amount * 1.4f)));
+    const auto shaped = sample >= 0.0f ? positive : negative;
+    const auto centre = std::tanh((sample >= 0.0f ? bias : -bias) * drive);
+    const auto normaliser = juce::jmax(0.35f, std::tanh(drive));
+
+    return juce::jlimit(-1.0f, 1.0f, (shaped - centre) / normaliser);
+}
+
+float syncWarp(float sample, float phase, float phaseDelta, float amount)
+{
+    amount = juce::jlimit(0.0f, 1.0f, amount);
+
+    if (amount <= 0.0001f)
+        return sample;
+
+    const auto ratio = 1.0f + (amount * 6.0f);
+    const auto syncPhase = wrapUnitPhase(phase * ratio);
+    const auto syncEdge = bandlimitedSaw(syncPhase, juce::jlimit(0.0f, 0.49f, phaseDelta * ratio));
+    const auto contour = std::sin(juce::MathConstants<float>::twoPi * syncPhase);
+    const auto syncSample = (syncEdge * 0.72f) + (contour * 0.28f);
+    const auto mix = 0.18f + (amount * 0.58f);
+
+    return juce::jlimit(-1.0f, 1.0f, sample + ((syncSample - sample) * mix));
+}
+
+float applyWarp(float sample, float phase, float phaseDelta, float amount, WarpMode mode)
+{
+    switch (mode)
+    {
+        case WarpMode::fold:
+            return foldWarp(sample, amount);
+
+        case WarpMode::bend:
+            return bendWarp(sample, amount);
+
+        case WarpMode::sync:
+            return syncWarp(sample, phase, phaseDelta, amount);
+
+        case WarpMode::harmonic:
+            break;
+    }
+
+    return harmonicWarp(sample, amount);
+}
+
 float sineHarmonic(float phase, float harmonic, float phaseOffset = 0.0f)
 {
     return std::sin(juce::MathConstants<float>::twoPi * ((phase * harmonic) + phaseOffset));
@@ -207,6 +278,28 @@ void Oscillator::setWarp(float newWarpAmount)
     warpAmount = juce::jlimit(0.0f, 1.0f, newWarpAmount);
 }
 
+void Oscillator::setWarpMode(int newWarpMode)
+{
+    switch (juce::jlimit(0, 3, newWarpMode))
+    {
+        case 1:
+            warpMode = WarpMode::fold;
+            break;
+
+        case 2:
+            warpMode = WarpMode::bend;
+            break;
+
+        case 3:
+            warpMode = WarpMode::sync;
+            break;
+
+        default:
+            warpMode = WarpMode::harmonic;
+            break;
+    }
+}
+
 void Oscillator::setWavetablePosition(float newPosition)
 {
     wavetablePosition = juce::jlimit(0.0f, 1.0f, newPosition);
@@ -243,19 +336,20 @@ void Oscillator::setCustomWavetableFrames(const CustomWaveFrames& frames)
 float Oscillator::process()
 {
     float sample = 0.0f;
+    const auto currentPhase = phase;
 
     switch (waveform)
     {
         case Waveform::sine:
-            sample = std::sin(juce::MathConstants<float>::twoPi * phase);
+            sample = std::sin(juce::MathConstants<float>::twoPi * currentPhase);
             break;
 
         case Waveform::saw:
-            sample = bandlimitedSaw(phase, phaseDelta);
+            sample = bandlimitedSaw(currentPhase, phaseDelta);
             break;
 
         case Waveform::square:
-            sample = bandlimitedSquare(phase, phaseDelta);
+            sample = bandlimitedSquare(currentPhase, phaseDelta);
             break;
 
         case Waveform::triangle:
@@ -263,25 +357,25 @@ float Oscillator::process()
             break;
 
         case Waveform::wavetable:
-            sample = wavetableSample(phase, phaseDelta, wavetablePosition);
+            sample = wavetableSample(currentPhase, phaseDelta, wavetablePosition);
             break;
 
         case Waveform::organ:
-            sample = organSample(phase, phaseDelta);
+            sample = organSample(currentPhase, phaseDelta);
             break;
 
         case Waveform::housePiano:
-            sample = housePianoSample(phase, phaseDelta);
+            sample = housePianoSample(currentPhase, phaseDelta);
             break;
 
         case Waveform::custom:
-            sample = customWavetable.sample(phase, wavetablePosition);
+            sample = customWavetable.sample(currentPhase, wavetablePosition);
             break;
     }
 
     if (waveform == Waveform::triangle)
     {
-        triangleState += bandlimitedSquare(phase, phaseDelta) * phaseDelta * 4.0f;
+        triangleState += bandlimitedSquare(currentPhase, phaseDelta) * phaseDelta * 4.0f;
         triangleState = juce::jlimit(-1.1f, 1.1f, triangleState);
     }
 
@@ -289,7 +383,7 @@ float Oscillator::process()
     if (phase >= 1.0f)
         phase -= std::floor(phase);
 
-    return harmonicWarp(juce::jlimit(-1.0f, 1.0f, sample), warpAmount);
+    return applyWarp(juce::jlimit(-1.0f, 1.0f, sample), currentPhase, phaseDelta, warpAmount, warpMode);
 }
 
 void Oscillator::updatePhaseDelta()

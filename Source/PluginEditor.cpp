@@ -1871,6 +1871,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateWavetableDisplay();
     };
     addAndMakeVisible(wavetableDisplay);
+    expandedWavetableDisplay.setComponentID("ExpandedWavetableDisplay");
+    expandedWavetableDisplay.onEditStart = wavetableDisplay.onEditStart;
+    expandedWavetableDisplay.onOsc1PositionChange = wavetableDisplay.onOsc1PositionChange;
+    expandedWavetableDisplay.onOsc2PositionChange = wavetableDisplay.onOsc2PositionChange;
+    expandedWavetableDisplay.onWarpChange = wavetableDisplay.onWarpChange;
+    expandedWavetableDisplay.onCustomPointChange = wavetableDisplay.onCustomPointChange;
+    addAndMakeVisible(expandedWavetableDisplay);
 
     sourceLabFrameStrip.onPositionEditStart = [this] (bool targetOsc2)
     {
@@ -3551,15 +3558,18 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modMacroAssignAmountSlider.onValueChange = [this] { updateMacroAssignmentEditorStatus(); };
     wavetableDrawModeBox.onChange = [this]
     {
+        auto mode = UI::WavetableDisplay::CustomDrawMode::point;
         switch (wavetableDrawModeBox.getSelectedId())
         {
-            case 2: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::line); break;
-            case 3: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::smooth); break;
-            case 4: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::step); break;
-            case 5: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::erase); break;
+            case 2: mode = UI::WavetableDisplay::CustomDrawMode::line; break;
+            case 3: mode = UI::WavetableDisplay::CustomDrawMode::smooth; break;
+            case 4: mode = UI::WavetableDisplay::CustomDrawMode::step; break;
+            case 5: mode = UI::WavetableDisplay::CustomDrawMode::erase; break;
             case 1:
-            default: wavetableDisplay.setCustomDrawMode(UI::WavetableDisplay::CustomDrawMode::point); break;
+            default: break;
         }
+        wavetableDisplay.setCustomDrawMode(mode);
+        expandedWavetableDisplay.setCustomDrawMode(mode);
         returnKeyboardFocusToPiano();
     };
     wavetableToolBox.onChange = [this] { applySelectedWavetableTool(); };
@@ -6260,11 +6270,26 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 else
                 {
                     const auto expandedMetrics = expandedHouseLayerRackDisplay.getLayoutMetricsForAudit();
-                    if (! expandedMetrics.readable || expandedMetrics.minCardWidth < 84.0f || expandedMetrics.minCardHeight < 130.0f)
+                    if (! expandedMetrics.readable || expandedMetrics.minCardWidth < 150.0f || expandedMetrics.minCardHeight < 72.0f)
                     {
                         issues.add(panelName + ": expanded source layer rack cards are too small "
                                    + juce::String(expandedMetrics.minCardWidth, 1) + "x"
                                    + juce::String(expandedMetrics.minCardHeight, 1));
+                    }
+                }
+
+                if (! expandedWavetableDisplay.isVisible())
+                {
+                    issues.add(panelName + ": expanded source lab wavetable editor is not visible");
+                }
+                else
+                {
+                    const auto expandedWaveMetrics = expandedWavetableDisplay.getLayoutMetricsForAudit();
+                    if (! expandedWaveMetrics.readable)
+                    {
+                        issues.add(panelName + ": expanded source lab wavetable editor is not readable plot "
+                                   + expandedWaveMetrics.plot.toString()
+                                   + " partials " + expandedWaveMetrics.partialBars.toString());
                     }
                 }
 
@@ -6275,7 +6300,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 else
                 {
                     const auto stripMetrics = sourceLabFrameStrip.getLayoutMetricsForAudit();
-                    if (! stripMetrics.readable || stripMetrics.minFrameWidth < 44.0f || stripMetrics.minLaneHeight < 64.0f)
+                    if (! stripMetrics.readable || stripMetrics.minFrameWidth < 44.0f || stripMetrics.minLaneHeight < 48.0f)
                     {
                         issues.add(panelName + ": source lab wavetable frame strip is too small "
                                    + juce::String(stripMetrics.minFrameWidth, 1) + "x"
@@ -10680,8 +10705,9 @@ void NateVSTAudioProcessorEditor::openSourceLayerFocusOverlay()
 {
     activeFocusOverlay = FocusOverlay::sourceLayerEditor;
     updateHouseLayerRackDisplay();
-    updateSourceLabFrameStrip();
     resized();
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
     repaint();
 }
 
@@ -10727,6 +10753,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedSampleWaveformDisplay.setVisible(showSampleChopEditor);
     sampleChopPanel.setVisible(showSampleChopEditor);
     expandedHouseLayerRackDisplay.setVisible(showSourceLayerEditor);
+    expandedWavetableDisplay.setVisible(showSourceLayerEditor);
     sourceLabFrameStrip.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
     sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
@@ -10762,9 +10789,13 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     }
     else if (showSourceLayerEditor)
     {
-        auto rackArea = content.removeFromTop(juce::jlimit(188, 240, content.getHeight() / 2));
-        expandedHouseLayerRackDisplay.setBounds(rackArea.reduced(8, 6));
-        sourceLabFrameStrip.setBounds(content.reduced(8, 6));
+        auto rackColumn = content.removeFromLeft(juce::jlimit(292, 340, static_cast<int>(content.getWidth() * 0.34f)));
+        expandedHouseLayerRackDisplay.setBounds(rackColumn.reduced(8, 6));
+        content.removeFromLeft(4);
+
+        auto frameStripArea = content.removeFromBottom(juce::jlimit(148, 170, content.getHeight() / 3));
+        sourceLabFrameStrip.setBounds(frameStripArea.reduced(8, 5));
+        expandedWavetableDisplay.setBounds(content.reduced(8, 5));
     }
     else if (showSequencerEditor)
     {
@@ -10780,6 +10811,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedSampleWaveformDisplay.toFront(false);
     sampleChopPanel.toFront(false);
     expandedHouseLayerRackDisplay.toFront(false);
+    expandedWavetableDisplay.toFront(false);
     sourceLabFrameStrip.toFront(false);
     expandedSequencerGrid.toFront(false);
     sequencerSceneChainLengthButton.toFront(false);
@@ -10950,7 +10982,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &sourceLabFrameStrip, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -11381,7 +11413,7 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
 
 void NateVSTAudioProcessorEditor::updateWavetableDisplay()
 {
-    if (! wavetableDisplay.isVisible())
+    if (! wavetableDisplay.isVisible() && ! expandedWavetableDisplay.isVisible())
         return;
 
     const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
@@ -11441,20 +11473,30 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
             wtSources.addIfNotAlreadyThere(sourceChoices[sourceIndex]);
     }
 
-    wavetableDisplay.setState(
-        readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
-        readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
-        osc1Wave == 4 || osc1IsCustom,
-        osc2Wave == 4 || osc2IsCustom,
-        juce::jlimit(-1.0f, 1.0f, osc1WtModAmount),
-        juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
-        wtRouteCount,
-        wtSources.joinIntoString(", "),
-        readPlainParameterValue(Parameters::ID::oscWarp, 0.0f),
-        osc1CustomPoints,
-        osc2CustomPoints,
-        osc1IsCustom,
-        osc2IsCustom);
+    auto applyWavetableState = [&] (UI::WavetableDisplay& display)
+    {
+        display.setState(
+            readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f),
+            readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f),
+            osc1Wave == 4 || osc1IsCustom,
+            osc2Wave == 4 || osc2IsCustom,
+            juce::jlimit(-1.0f, 1.0f, osc1WtModAmount),
+            juce::jlimit(-1.0f, 1.0f, osc2WtModAmount),
+            wtRouteCount,
+            wtSources.joinIntoString(", "),
+            readPlainParameterValue(Parameters::ID::oscWarp, 0.0f),
+            osc1CustomPoints,
+            osc2CustomPoints,
+            osc1IsCustom,
+            osc2IsCustom);
+    };
+
+    if (wavetableDisplay.isVisible())
+        applyWavetableState(wavetableDisplay);
+
+    if (expandedWavetableDisplay.isVisible())
+        applyWavetableState(expandedWavetableDisplay);
+
     updateSourceLabFrameStrip();
 }
 
@@ -14205,7 +14247,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
         updateLfoCurveDisplay();
     if (pumpCurveDisplay.isVisible())
         updatePumpCurveDisplay();
-    if (wavetableDisplay.isVisible())
+    if (wavetableDisplay.isVisible() || expandedWavetableDisplay.isVisible())
         updateWavetableDisplay();
     if (randomMorphPad.isVisible())
         updateRandomMorphPad();

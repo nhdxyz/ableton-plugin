@@ -18,6 +18,11 @@ bool useCompactLayerRack(juce::Rectangle<float> bounds)
 {
     return bounds.getHeight() < 58.0f;
 }
+
+bool useVerticalLayerRack(juce::Rectangle<float> bounds)
+{
+    return bounds.getWidth() < 520.0f && bounds.getHeight() >= 220.0f;
+}
 }
 
 HouseLayerRackDisplay::HouseLayerRackDisplay()
@@ -269,6 +274,22 @@ std::array<juce::Rectangle<float>, HouseLayerRackDisplay::layerCount> HouseLayer
     {
         inner.removeFromTop(14.0f);
         inner.removeFromTop(4.0f);
+    }
+
+    if (useVerticalLayerRack(bounds))
+    {
+        const auto gap = 4.0f;
+        const auto cardHeight = juce::jmax(22.0f, (inner.getHeight() - (gap * static_cast<float>(layerCount - 1))) / static_cast<float>(layerCount));
+        auto cardArea = inner;
+
+        for (size_t index = 0; index < layerCount; ++index)
+        {
+            cards[index] = cardArea.removeFromTop(cardHeight);
+            if (index + 1 < layerCount)
+                cardArea.removeFromTop(gap);
+        }
+
+        return cards;
     }
 
     const auto gap = 4.0f;

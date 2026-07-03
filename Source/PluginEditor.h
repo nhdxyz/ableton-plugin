@@ -795,6 +795,7 @@ private:
     UI::StepSequencerGrid sequencerGrid;
     UI::StepSequencerGrid expandedSequencerGrid;
     UI::WavetableDisplay wavetableDisplay;
+    UI::WavetableDisplay expandedWavetableDisplay;
     UI::WavetableFrameStrip sourceLabFrameStrip;
     UI::HouseLayerRackDisplay houseLayerRackDisplay;
     UI::HouseLayerRackDisplay expandedHouseLayerRackDisplay;

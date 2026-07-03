@@ -724,6 +724,8 @@ private:
     juce::TextButton focusOverlayCloseButton { "Close" };
     juce::TextButton sourceFrameTargetOsc1Button { "O1" };
     juce::TextButton sourceFrameTargetOsc2Button { "O2" };
+    juce::TextButton sourceFramePreviousButton { "<" };
+    juce::TextButton sourceFrameNextButton { ">" };
     juce::TextButton sourceFrameCopyButton { "Copy" };
     juce::TextButton sourceFramePasteButton { "Paste" };
     juce::TextButton sourceFrameFillButton { "Fill" };
@@ -920,6 +922,8 @@ private:
     void setSourceFrameActionTarget(bool targetOsc2);
     bool sourceFrameActionTargetIsOsc2() const;
     void updateSourceFrameActionButtons();
+    void selectCustomWaveFrame(bool targetOsc2, size_t frameIndex);
+    void stepSourceFrameActionTarget(int delta);
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
     size_t currentCustomWaveFrameIndex(bool targetOsc2) const;

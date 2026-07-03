@@ -2870,6 +2870,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
     configureSlider(noiseDecaySlider, noiseDecayLabel, "N Decay", Parameters::ID::noiseDecay);
     configureSlider(oscWarpSlider, oscWarpLabel, "Osc Warp", Parameters::ID::oscWarp);
+    configureSlider(osc2WarpSlider, osc2WarpLabel, "O2 Warp", Parameters::ID::osc2Warp);
     configureSlider(oscWavetablePositionSlider, oscWavetablePositionLabel, "WT 1", Parameters::ID::oscWavetablePosition);
     configureSlider(osc2WavetablePositionSlider, osc2WavetablePositionLabel, "WT 2", Parameters::ID::osc2WavetablePosition);
     configureSlider(unisonVoicesSlider, unisonVoicesLabel, "Voices", Parameters::ID::unisonVoices);
@@ -4620,6 +4621,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
             setSliderVisible(noiseDecaySlider, noiseDecayLabel, true);
             setSliderVisible(oscWarpSlider, oscWarpLabel, true);
+            setSliderVisible(osc2WarpSlider, osc2WarpLabel, true);
             setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, true);
             setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, true);
             setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
@@ -4678,6 +4680,7 @@ void NateVSTAudioProcessorEditor::resized()
             noiseTypeBox.setBounds(textureSelectRow.reduced(4, 4));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
+                &oscWarpSlider,
                 &oscWavetablePositionSlider,
                 &osc2WavetablePositionSlider
             });
@@ -4721,7 +4724,7 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(inspectorArea.removeFromTop(74).withTrimmedTop(4), {
                 &osc2OctaveSlider,
                 &osc2TuneSlider,
-                &oscWarpSlider
+                &osc2WarpSlider
             });
             layoutKnobRow(inspectorArea.removeFromTop(78).withTrimmedTop(5), {
                 &unisonVoicesSlider,
@@ -11207,6 +11210,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
     setSliderVisible(noiseDecaySlider, noiseDecayLabel, false);
     setSliderVisible(oscWarpSlider, oscWarpLabel, false);
+    setSliderVisible(osc2WarpSlider, osc2WarpLabel, false);
     setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, false);
     setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, false);
     setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, false);
@@ -12238,6 +12242,7 @@ void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseType, 5.0f);
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.09f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.12f);
+    setPlainParameterValue(Parameters::ID::osc2Warp, 0.18f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.32f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.55f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 3.0f);
@@ -12301,6 +12306,7 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseType, 6.0f);
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.07f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.42f);
+    setPlainParameterValue(Parameters::ID::osc2Warp, 0.30f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.14f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.72f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 5.0f);

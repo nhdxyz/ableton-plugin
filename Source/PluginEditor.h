@@ -368,6 +368,7 @@ private:
     juce::Slider noiseLevelSlider;
     juce::Slider noiseDecaySlider;
     juce::Slider oscWarpSlider;
+    juce::Slider osc2WarpSlider;
     juce::Slider oscWavetablePositionSlider;
     juce::Slider osc2WavetablePositionSlider;
     juce::Slider unisonVoicesSlider;
@@ -493,6 +494,7 @@ private:
     juce::Label noiseLevelLabel;
     juce::Label noiseDecayLabel;
     juce::Label oscWarpLabel;
+    juce::Label osc2WarpLabel;
     juce::Label oscWavetablePositionLabel;
     juce::Label osc2WavetablePositionLabel;
     juce::Label unisonVoicesLabel;

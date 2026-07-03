@@ -30,7 +30,8 @@ int main()
         || ! setPlainParameter(processor, Parameters::ID::macroWeight, 0.70f)
         || ! setPlainParameter(processor, Parameters::ID::macroBounce, 0.36f)
         || ! setPlainParameter(processor, Parameters::ID::macroWarp, 0.82f)
-        || ! setPlainParameter(processor, Parameters::ID::macroThrow, 0.28f))
+        || ! setPlainParameter(processor, Parameters::ID::macroThrow, 0.28f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.37f))
     {
         std::cerr << "Could not seed macro preview parameters\n";
         return 1;
@@ -87,6 +88,15 @@ int main()
         if (! state.isValid())
         {
             std::cerr << "Saved preset XML did not parse into a ValueTree\n";
+            cleanup();
+            return 1;
+        }
+
+        const auto osc2WarpState = state.getChildWithProperty("id", Parameters::ID::osc2Warp);
+        if (! osc2WarpState.isValid()
+            || std::abs(static_cast<float>(osc2WarpState.getProperty("value", -1.0f)) - 0.37f) > 0.002f)
+        {
+            std::cerr << "Saved preset did not preserve Osc 2 Warp\n";
             cleanup();
             return 1;
         }
@@ -180,6 +190,14 @@ int main()
     if (! processor.loadPreset(presetName))
     {
         std::cerr << "Saved categorized preset could not be loaded by name\n";
+        cleanup();
+        return 1;
+    }
+
+    if (auto* osc2Warp = processor.getValueTreeState().getRawParameterValue(Parameters::ID::osc2Warp);
+        osc2Warp == nullptr || std::abs(osc2Warp->load() - 0.37f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 2 Warp\n";
         cleanup();
         return 1;
     }

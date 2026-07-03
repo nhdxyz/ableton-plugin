@@ -325,6 +325,12 @@ APVTS::ParameterLayout createLayout()
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc2Warp,
+        "Osc 2 Warp",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
     add(std::make_unique<juce::AudioParameterChoice>(
         ID::oscWarpMode,
         "Osc Warp Mode",

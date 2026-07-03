@@ -148,6 +148,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
     auto noiseTypeIndex = 0;
     auto noiseDecay = 0.18f;
     auto oscWarpAmount = 0.0f;
+    auto osc2WarpAmount = 0.0f;
     auto oscWarpModeIndex = 0;
     auto oscWavetablePosition = 0.0f;
     auto osc2WavetablePosition = 0.35f;
@@ -1040,6 +1041,11 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
     if (oscWarpAmount < 0.08f)
         oscWarpModeIndex = 0;
 
+    osc2WarpAmount = juce::jlimit(0.0f,
+                                  0.72f,
+                                  oscWarpAmount + (osc2Level * randomFloat(-0.08f, 0.16f))
+                                      + (std::abs(osc2Tune) * 0.018f));
+
     if (subtle)
     {
         auto blend = [this, amount] (const juce::String& id, float target)
@@ -1064,6 +1070,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
         noiseLevel = blend(Parameters::ID::noiseLevel, noiseLevel);
         noiseDecay = blend(Parameters::ID::noiseDecay, noiseDecay);
         oscWarpAmount = blend(Parameters::ID::oscWarp, oscWarpAmount);
+        osc2WarpAmount = blend(Parameters::ID::osc2Warp, osc2WarpAmount);
         oscWavetablePosition = blend(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
         osc2WavetablePosition = blend(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);
         unisonVoiceCount = static_cast<int>(std::round(blend(Parameters::ID::unisonVoices, static_cast<float>(unisonVoiceCount))));
@@ -1152,6 +1159,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
         noiseTypeIndex = 0;
         noiseDecay = juce::jlimit(0.08f, 0.24f, noiseDecay);
         oscWarpAmount = juce::jlimit(0.04f, 0.3f, oscWarpAmount);
+        osc2WarpAmount = juce::jlimit(0.02f, 0.28f, osc2WarpAmount);
         unisonVoiceCount = juce::jlimit(1, 2, unisonVoiceCount);
         unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
         unisonSpread = juce::jlimit(0.0f, 0.08f, unisonSpread);
@@ -1210,6 +1218,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
     setChoice(Parameters::ID::noiseType, juce::jlimit(0, 6, noiseTypeIndex));
     setParameter(Parameters::ID::noiseDecay, noiseDecay);
     setParameter(Parameters::ID::oscWarp, oscWarpAmount);
+    setParameter(Parameters::ID::osc2Warp, osc2WarpAmount);
     setChoice(Parameters::ID::oscWarpMode, juce::jlimit(0, 3, oscWarpModeIndex));
     setParameter(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
     setParameter(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);

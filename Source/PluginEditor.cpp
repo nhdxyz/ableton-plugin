@@ -1811,6 +1811,48 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(focusOverlayTitleLabel);
     addAndMakeVisible(focusOverlayCloseButton);
 
+    sourceFrameTargetOsc1Button.setTooltip("Target Osc 1 for direct wavetable frame actions");
+    sourceFrameTargetOsc1Button.setClickingTogglesState(false);
+    sourceFrameTargetOsc1Button.onClick = [this] { setSourceFrameActionTarget(false); };
+    addAndMakeVisible(sourceFrameTargetOsc1Button);
+
+    sourceFrameTargetOsc2Button.setTooltip("Target Osc 2 for direct wavetable frame actions");
+    sourceFrameTargetOsc2Button.setClickingTogglesState(false);
+    sourceFrameTargetOsc2Button.onClick = [this] { setSourceFrameActionTarget(true); };
+    addAndMakeVisible(sourceFrameTargetOsc2Button);
+
+    sourceFrameCopyButton.setTooltip("Copy the active frame from the selected oscillator stack");
+    sourceFrameCopyButton.onClick = [this]
+    {
+        copyCurrentCustomWaveFrame(sourceFrameActionTargetIsOsc2());
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameCopyButton);
+
+    sourceFramePasteButton.setTooltip("Paste the copied frame to the active frame in the selected oscillator stack");
+    sourceFramePasteButton.onClick = [this]
+    {
+        pasteCurrentCustomWaveFrame(sourceFrameActionTargetIsOsc2());
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFramePasteButton);
+
+    sourceFrameFillButton.setTooltip("Fill the selected oscillator stack from the active frame");
+    sourceFrameFillButton.onClick = [this]
+    {
+        duplicateCurrentCustomWaveFrameAcrossStack(sourceFrameActionTargetIsOsc2());
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameFillButton);
+
+    sourceFrameInterpolateButton.setTooltip("Interpolate all selected oscillator frames between frame 1 and frame 8");
+    sourceFrameInterpolateButton.onClick = [this]
+    {
+        interpolateCustomWaveFrameEndpoints(sourceFrameActionTargetIsOsc2());
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameInterpolateButton);
+
     sampleWaveformDisplay.onRangeChange = [this] (float start, float end)
     {
         setPlainParameterValue(Parameters::ID::sampleStart, start);
@@ -1828,6 +1870,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableDisplay.onEditStart = [this] { captureGlobalEdit("Edit wavetable"); };
     wavetableDisplay.onOsc1PositionChange = [this] (float position)
     {
+        setSourceFrameActionTarget(false);
         setPlainParameterValue(Parameters::ID::oscWave, 4.0f);
         waveformBox.setSelectedItemIndex(4, juce::dontSendNotification);
         setPlainParameterValue(Parameters::ID::oscWavetablePosition, position);
@@ -1837,6 +1880,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     wavetableDisplay.onOsc2PositionChange = [this] (float position)
     {
+        setSourceFrameActionTarget(true);
         setPlainParameterValue(Parameters::ID::osc2Wave, 4.0f);
         osc2WaveBox.setSelectedItemIndex(4, juce::dontSendNotification);
         setPlainParameterValue(Parameters::ID::osc2WavetablePosition, position);
@@ -1856,6 +1900,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             return;
 
         const auto targetOsc2 = oscillator == 2;
+        setSourceFrameActionTarget(targetOsc2);
         const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
         const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
                                        : juce::String(Parameters::ID::oscWave);
@@ -1881,6 +1926,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     sourceLabFrameStrip.onPositionEditStart = [this] (bool targetOsc2)
     {
+        setSourceFrameActionTarget(targetOsc2);
         captureGlobalEdit(targetOsc2 ? "Scan Osc 2 wavetable stack" : "Scan Osc 1 wavetable stack");
     };
     sourceLabFrameStrip.onPositionChange = [this] (bool targetOsc2, float position)
@@ -2100,13 +2146,13 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
         const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
-        const auto targetOsc2 = osc2IsCustom && ! osc1IsCustom;
+        const auto targetOsc2 = wavetableTargetIsOsc2();
 
         if (! osc1IsCustom && ! osc2IsCustom)
         {
             captureGlobalEdit("Open wave editor");
-            setPlainParameterValue(Parameters::ID::oscWave, 7.0f);
-            waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
+            setPlainParameterValue(targetOsc2 ? Parameters::ID::osc2Wave : Parameters::ID::oscWave, 7.0f);
+            (targetOsc2 ? osc2WaveBox : waveformBox).setSelectedItemIndex(7, juce::dontSendNotification);
             updateSegmentedSelectors();
         }
 
@@ -3481,6 +3527,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     housePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 6); };
     customWaveButton.onClick = [this]
     {
+        setSourceFrameActionTarget(false);
         setChoiceParameter(Parameters::ID::oscWave, 7);
         setRandomStatus("Wave editor: Osc 1 custom");
         updateWavetableDisplay();
@@ -3494,6 +3541,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     osc2HousePianoWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::osc2Wave, 6); };
     osc2CustomWaveButton.onClick = [this]
     {
+        setSourceFrameActionTarget(true);
         setChoiceParameter(Parameters::ID::osc2Wave, 7);
         setRandomStatus("Wave editor: Osc 2 custom");
         updateWavetableDisplay();
@@ -6327,6 +6375,28 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                         issues.add(panelName + ": source lab wavetable frame strip is too small "
                                    + juce::String(stripMetrics.minFrameWidth, 1) + "x"
                                    + juce::String(stripMetrics.minLaneHeight, 1));
+                    }
+                }
+
+                for (const auto* button : {
+                         static_cast<const juce::Component*>(&sourceFrameTargetOsc1Button),
+                         static_cast<const juce::Component*>(&sourceFrameTargetOsc2Button),
+                         static_cast<const juce::Component*>(&sourceFrameCopyButton),
+                         static_cast<const juce::Component*>(&sourceFramePasteButton),
+                         static_cast<const juce::Component*>(&sourceFrameFillButton),
+                         static_cast<const juce::Component*>(&sourceFrameInterpolateButton) })
+                {
+                    if (! button->isVisible())
+                    {
+                        issues.add(panelName + ": source lab frame action control is not visible");
+                        continue;
+                    }
+
+                    const auto buttonBounds = button->getBounds();
+                    if (buttonBounds.getWidth() < 38 || buttonBounds.getHeight() < 20)
+                    {
+                        issues.add(panelName + ": source lab frame action control is too small "
+                                   + buttonBounds.toString());
                     }
                 }
             }
@@ -10777,6 +10847,12 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedHouseLayerRackDisplay.setVisible(showSourceLayerEditor);
     expandedWavetableDisplay.setVisible(showSourceLayerEditor);
     sourceLabFrameStrip.setVisible(showSourceLayerEditor);
+    sourceFrameTargetOsc1Button.setVisible(showSourceLayerEditor);
+    sourceFrameTargetOsc2Button.setVisible(showSourceLayerEditor);
+    sourceFrameCopyButton.setVisible(showSourceLayerEditor);
+    sourceFramePasteButton.setVisible(showSourceLayerEditor);
+    sourceFrameFillButton.setVisible(showSourceLayerEditor);
+    sourceFrameInterpolateButton.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
     sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
 
@@ -10817,7 +10893,18 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
 
         auto frameStripArea = content.removeFromBottom(juce::jlimit(148, 170, content.getHeight() / 3));
         sourceLabFrameStrip.setBounds(frameStripArea.reduced(8, 5));
+        auto frameActionRow = content.removeFromBottom(38).withTrimmedBottom(2);
+        auto targetArea = frameActionRow.removeFromLeft(98);
+        sourceFrameTargetOsc1Button.setBounds(targetArea.removeFromLeft(49).reduced(3, 5));
+        sourceFrameTargetOsc2Button.setBounds(targetArea.reduced(3, 5));
+        frameActionRow.removeFromLeft(8);
+        const auto actionWidth = juce::jmax(1, frameActionRow.getWidth() / 4);
+        sourceFrameCopyButton.setBounds(frameActionRow.removeFromLeft(actionWidth).reduced(3, 5));
+        sourceFramePasteButton.setBounds(frameActionRow.removeFromLeft(actionWidth).reduced(3, 5));
+        sourceFrameFillButton.setBounds(frameActionRow.removeFromLeft(actionWidth).reduced(3, 5));
+        sourceFrameInterpolateButton.setBounds(frameActionRow.reduced(3, 5));
         expandedWavetableDisplay.setBounds(content.reduced(8, 5));
+        updateSourceFrameActionButtons();
     }
     else if (showSequencerEditor)
     {
@@ -10835,6 +10922,12 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedHouseLayerRackDisplay.toFront(false);
     expandedWavetableDisplay.toFront(false);
     sourceLabFrameStrip.toFront(false);
+    sourceFrameTargetOsc1Button.toFront(false);
+    sourceFrameTargetOsc2Button.toFront(false);
+    sourceFrameCopyButton.toFront(false);
+    sourceFramePasteButton.toFront(false);
+    sourceFrameFillButton.toFront(false);
+    sourceFrameInterpolateButton.toFront(false);
     expandedSequencerGrid.toFront(false);
     sequencerSceneChainLengthButton.toFront(false);
     focusOverlayCloseButton.toFront(false);
@@ -10980,6 +11073,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
         &homeMacroExpandButton, &modMacroExpandButton, &sampleChopExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
+        &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
@@ -11524,6 +11618,9 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
 
 bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const
 {
+    if (sourceFrameActionTargetExplicit)
+        return sourceFrameActionTargetOsc2;
+
     const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
     const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
     return osc2IsCustom && ! osc1IsCustom;
@@ -11540,6 +11637,41 @@ size_t NateVSTAudioProcessorEditor::currentCustomWaveFrameIndex(bool targetOsc2)
         0,
         Parameters::customWaveMorphFrameCount - 1,
         static_cast<size_t>(juce::roundToInt(position * static_cast<float>(Parameters::customWaveMorphFrameCount - 1))));
+}
+
+void NateVSTAudioProcessorEditor::setSourceFrameActionTarget(bool targetOsc2)
+{
+    sourceFrameActionTargetOsc2 = targetOsc2;
+    sourceFrameActionTargetExplicit = true;
+    updateSourceFrameActionButtons();
+}
+
+bool NateVSTAudioProcessorEditor::sourceFrameActionTargetIsOsc2() const
+{
+    return wavetableTargetIsOsc2();
+}
+
+void NateVSTAudioProcessorEditor::updateSourceFrameActionButtons()
+{
+    const auto targetOsc2 = sourceFrameActionTargetIsOsc2();
+    const auto targetName = juce::String(targetOsc2 ? "O2" : "O1");
+    const auto frameNumber = juce::String(static_cast<int>(currentCustomWaveFrameIndex(targetOsc2) + 1));
+
+    sourceFrameTargetOsc1Button.setToggleState(! targetOsc2, juce::dontSendNotification);
+    sourceFrameTargetOsc2Button.setToggleState(targetOsc2, juce::dontSendNotification);
+    sourceFrameCopyButton.setEnabled(true);
+    sourceFramePasteButton.setEnabled(wavetableFrameClipboardValid);
+    sourceFrameFillButton.setEnabled(true);
+    sourceFrameInterpolateButton.setEnabled(true);
+
+    sourceFrameTargetOsc1Button.setTooltip("Target Osc 1 for direct wavetable frame actions");
+    sourceFrameTargetOsc2Button.setTooltip("Target Osc 2 for direct wavetable frame actions");
+    sourceFrameCopyButton.setTooltip("Copy " + targetName + " active frame " + frameNumber);
+    sourceFramePasteButton.setTooltip(wavetableFrameClipboardValid
+                                          ? "Paste copied WT frame to " + targetName + " active frame " + frameNumber
+                                          : "Copy a WT frame before pasting");
+    sourceFrameFillButton.setTooltip("Fill " + targetName + " stack from active frame " + frameNumber);
+    sourceFrameInterpolateButton.setTooltip("Interpolate " + targetName + " frames 1-8 into a smooth stack");
 }
 
 void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
@@ -11573,6 +11705,7 @@ void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
         + " | "
         + (osc2Custom ? juce::String("O2 custom") : "O2 " + sourceNameForWave(osc2Wave));
     sourceLabFrameStrip.setState(std::move(state));
+    updateSourceFrameActionButtons();
 }
 
 UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readCustomWaveFrame(bool targetOsc2,
@@ -12118,6 +12251,7 @@ void NateVSTAudioProcessorEditor::copyCurrentCustomWaveFrame(bool targetOsc2)
                                    wavetableFrameClipboard[0]);
     setRandomStatus("Copied " + juce::String(targetOsc2 ? "O2" : "O1") + " frame "
                     + juce::String(static_cast<int>(frameIndex + 1)));
+    updateSourceFrameActionButtons();
     returnKeyboardFocusToPiano();
 }
 
@@ -12137,6 +12271,7 @@ void NateVSTAudioProcessorEditor::pasteCurrentCustomWaveFrame(bool targetOsc2)
                          "Paste wavetable frame");
     setRandomStatus("Pasted copied WT frame to " + juce::String(targetOsc2 ? "O2" : "O1")
                     + " frame " + juce::String(static_cast<int>(frameIndex + 1)));
+    updateSourceFrameActionButtons();
     returnKeyboardFocusToPiano();
 }
 
@@ -12152,6 +12287,7 @@ void NateVSTAudioProcessorEditor::duplicateCurrentCustomWaveFrameAcrossStack(boo
                             "Fill wavetable stack from active frame",
                             "Filled " + juce::String(targetOsc2 ? "O2" : "O1")
                                 + " stack from frame " + juce::String(static_cast<int>(frameIndex + 1)));
+    updateSourceFrameActionButtons();
 }
 
 void NateVSTAudioProcessorEditor::interpolateCustomWaveFrameEndpoints(bool targetOsc2)
@@ -12178,6 +12314,7 @@ void NateVSTAudioProcessorEditor::interpolateCustomWaveFrameEndpoints(bool targe
                             "Interpolate wavetable end frames",
                             "Interpolated " + juce::String(targetOsc2 ? "O2" : "O1")
                                 + " frames 1-8 into a smooth stack");
+    updateSourceFrameActionButtons();
 }
 
 void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
@@ -12209,9 +12346,7 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
     if (selectedId <= 1)
         return;
 
-    const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
-    const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
-    const auto targetOsc2 = osc2IsCustom && ! osc1IsCustom;
+    const auto targetOsc2 = wavetableTargetIsOsc2();
     const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
     const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
                                    : juce::String(Parameters::ID::oscWave);

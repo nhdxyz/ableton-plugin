@@ -722,6 +722,12 @@ private:
     juce::TextButton sourceLayerExpandButton { ">" };
     juce::TextButton sequencerExpandButton { ">" };
     juce::TextButton focusOverlayCloseButton { "Close" };
+    juce::TextButton sourceFrameTargetOsc1Button { "O1" };
+    juce::TextButton sourceFrameTargetOsc2Button { "O2" };
+    juce::TextButton sourceFrameCopyButton { "Copy" };
+    juce::TextButton sourceFramePasteButton { "Paste" };
+    juce::TextButton sourceFrameFillButton { "Fill" };
+    juce::TextButton sourceFrameInterpolateButton { "Interp" };
     juce::TextButton lfoCurveInvertButton { "Inv" };
     juce::TextButton lfoCurveReverseButton { "Rev" };
     juce::TextButton lfoCurveSmoothButton { "Smooth" };
@@ -824,6 +830,8 @@ private:
     juce::String sampleWaveformKey;
     UI::WavetableDisplay::CustomPointArray wavetableFrameClipboard {};
     bool wavetableFrameClipboardValid = false;
+    bool sourceFrameActionTargetOsc2 = false;
+    bool sourceFrameActionTargetExplicit = false;
     std::vector<juce::File> sequencerDragMidiFiles;
     int keyboardTypingBaseNote = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
@@ -909,6 +917,9 @@ private:
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
     void updateSourceLabFrameStrip();
+    void setSourceFrameActionTarget(bool targetOsc2);
+    bool sourceFrameActionTargetIsOsc2() const;
+    void updateSourceFrameActionButtons();
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
     size_t currentCustomWaveFrameIndex(bool targetOsc2) const;

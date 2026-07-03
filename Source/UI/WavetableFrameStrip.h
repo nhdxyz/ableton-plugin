@@ -38,6 +38,7 @@ public:
     {
         int visibleFrameCards = 0;
         int selectedFrameCards = 0;
+        int actionBadgeCards = 0;
         float minFrameWidth = 0.0f;
         float minLaneHeight = 0.0f;
         bool readable = false;

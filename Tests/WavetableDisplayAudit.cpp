@@ -104,11 +104,13 @@ int main()
     }
 
     if (metrics.customFramePreviewCards != static_cast<int>(UI::WavetableDisplay::customFrameCount)
-        || ! metrics.customFramePreviewsVary)
+        || ! metrics.customFramePreviewsVary
+        || metrics.customFrameActionBadgeCards < 2)
     {
         std::cerr << "Wavetable custom frame previews are not exposing a varied 8-frame stack: cards="
                   << metrics.customFramePreviewCards
-                  << " vary=" << metrics.customFramePreviewsVary << '\n';
+                  << " vary=" << metrics.customFramePreviewsVary
+                  << " actionBadges=" << metrics.customFrameActionBadgeCards << '\n';
         return 1;
     }
 

@@ -82,7 +82,10 @@ WavetableFrameStrip::LayoutMetrics WavetableFrameStrip::getLayoutMetricsForAudit
 
             ++metrics.visibleFrameCards;
             if (laneState.active && static_cast<int>(frameIndex) == selectedFrame)
+            {
                 ++metrics.selectedFrameCards;
+                ++metrics.actionBadgeCards;
+            }
 
             metrics.minFrameWidth = metrics.minFrameWidth <= 0.0f
                 ? frame.getWidth()
@@ -175,6 +178,30 @@ void WavetableFrameStrip::paint(juce::Graphics& g)
                              juce::Justification::centred,
                              1,
                              0.58f);
+
+            if (activeFrame && frame.getWidth() >= 42.0f && frame.getHeight() >= 28.0f)
+            {
+                auto badgeRow = frame.reduced(4.0f, 3.0f).removeFromBottom(9.0f);
+                badgeRow.removeFromLeft(12.0f);
+                const auto gap = 2.0f;
+                const auto badgeWidth = (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f;
+                const std::array<juce::String, 3> labels { "C", "P", "S" };
+
+                for (size_t badgeIndex = 0; badgeIndex < labels.size(); ++badgeIndex)
+                {
+                    auto badge = badgeRow.removeFromLeft(badgeWidth);
+                    if (badgeIndex + 1 < labels.size())
+                        badgeRow.removeFromLeft(gap);
+
+                    g.setColour(juce::Colour(0xff0d1316).withAlpha(0.72f * cardAlpha));
+                    g.fillRoundedRectangle(badge, 2.0f);
+                    g.setColour(accent.withAlpha(0.70f * cardAlpha));
+                    g.drawRoundedRectangle(badge, 2.0f, 0.7f);
+                    g.setFont(juce::FontOptions(6.1f, juce::Font::bold));
+                    g.setColour(theme.text.withMultipliedAlpha(0.82f * cardAlpha));
+                    g.drawFittedText(labels[badgeIndex], badge.toNearestInt(), juce::Justification::centred, 1, 0.58f);
+                }
+            }
 
             if (selectedFrameCard)
             {

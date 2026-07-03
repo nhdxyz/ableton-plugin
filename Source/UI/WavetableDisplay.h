@@ -22,6 +22,7 @@ public:
         juce::Rectangle<int> partialBars;
         juce::Rectangle<int> spectrum;
         int customFramePreviewCards = 0;
+        int customFrameActionBadgeCards = 0;
         bool frameStripVisible = false;
         bool partialBarsVisible = false;
         bool customFramePreviewsVary = false;

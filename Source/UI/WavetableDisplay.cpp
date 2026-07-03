@@ -260,6 +260,11 @@ WavetableDisplay::LayoutMetrics WavetableDisplay::getLayoutMetricsForAudit() con
                 break;
             }
         }
+
+        if (osc1CustomActive)
+            ++metrics.customFrameActionBadgeCards;
+        if (osc2CustomActive)
+            ++metrics.customFrameActionBadgeCards;
     }
 
     metrics.readable = metrics.frameStrip.getWidth() >= 180
@@ -380,6 +385,29 @@ void WavetableDisplay::paint(juce::Graphics& g)
                              juce::Justification::centred,
                              1,
                              0.62f);
+
+            if ((isNearO1 || isNearO2) && cell.getWidth() >= 32.0f && cell.getHeight() >= 12.0f)
+            {
+                auto badgeRow = cell.reduced(2.0f, 2.0f).withTrimmedLeft(11.0f);
+                const auto gap = 1.0f;
+                const auto badgeWidth = juce::jmax(4.0f, (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f);
+                const std::array<juce::String, 3> labels { "C", "P", "S" };
+
+                for (size_t badgeIndex = 0; badgeIndex < labels.size(); ++badgeIndex)
+                {
+                    auto badge = badgeRow.removeFromLeft(badgeWidth);
+                    if (badgeIndex + 1 < labels.size())
+                        badgeRow.removeFromLeft(gap);
+
+                    g.setColour(juce::Colour(0xff0d1316).withAlpha(0.76f));
+                    g.fillRoundedRectangle(badge, 1.6f);
+                    g.setColour((isNearO2 && ! isNearO1 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff8ee6c9)).withAlpha(0.70f));
+                    g.drawRoundedRectangle(badge, 1.6f, 0.6f);
+                    g.setFont(juce::FontOptions(5.5f, juce::Font::bold));
+                    g.setColour(juce::Colour(0xffedf7f4).withAlpha(0.86f));
+                    g.drawFittedText(labels[badgeIndex], badge.toNearestInt(), juce::Justification::centred, 1, 0.56f);
+                }
+            }
         }
 
         const auto drawPositionPin = [&] (float position, juce::Colour colour, const char* label, float yOffset)

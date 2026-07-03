@@ -26,3 +26,13 @@ jobs:
         env:
           SKIP_PLUGINVAL: "1"
         run: tools/validate_release.sh
+
+      - name: Upload release validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nate-vst-release-validation
+          path: |
+            build/release-validation/
+            build/pluginval/
+          if-no-files-found: warn

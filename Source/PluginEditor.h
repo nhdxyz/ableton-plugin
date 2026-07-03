@@ -914,6 +914,8 @@ private:
                                  const juce::String& statusText);
     void importSingleCycleWave(bool targetOsc2);
     void exportSingleCycleWave(bool targetOsc2);
+    void importWavetableFrameStack(bool targetOsc2);
+    void exportWavetableFrameStack(bool targetOsc2);
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

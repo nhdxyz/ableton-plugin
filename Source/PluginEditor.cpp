@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 
 #include "Modulation/ModulationRouting.h"
+#include "Synth/WavetableFrameIO.h"
 #include "Synth/WavetableFrameRecipes.h"
 
 #include <algorithm>
@@ -2132,6 +2133,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addSectionHeading("Single-Cycle WAV");
     wavetableToolBox.addItem("Import WAV", 24);
     wavetableToolBox.addItem("Export WAV", 25);
+    wavetableToolBox.addItem("Import WT Stack", 52);
+    wavetableToolBox.addItem("Export WT Stack", 53);
     wavetableToolBox.addSectionHeading("Additive Partials");
     wavetableToolBox.addItem("Odd Harmonics", 26);
     wavetableToolBox.addItem("Even Harmonics", 27);
@@ -11667,6 +11670,117 @@ void NateVSTAudioProcessorEditor::exportSingleCycleWave(bool targetOsc2)
                              });
 }
 
+void NateVSTAudioProcessorEditor::importWavetableFrameStack(bool targetOsc2)
+{
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Import wavetable frame-stack WAV",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory),
+        "*.wav;*.aif;*.aiff");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+                             [this, targetOsc2] (const juce::FileChooser& chooser)
+                             {
+                                 const auto file = chooser.getResult();
+                                 if (! file.existsAsFile())
+                                     return;
+
+                                 juce::AudioFormatManager manager;
+                                 manager.registerBasicFormats();
+                                 std::unique_ptr<juce::AudioFormatReader> reader(manager.createReaderFor(file));
+                                 if (reader == nullptr || reader->lengthInSamples <= 1)
+                                 {
+                                     setRandomStatus("WT stack import failed");
+                                     return;
+                                 }
+
+                                 const auto readSamples = static_cast<int>(
+                                     juce::jlimit<juce::int64>(2, 524288, reader->lengthInSamples));
+                                 const auto sourceChannels = juce::jlimit(1, 2, static_cast<int>(reader->numChannels));
+                                 juce::AudioBuffer<float> buffer(sourceChannels, readSamples);
+                                 buffer.clear();
+                                 reader->read(&buffer, 0, readSamples, 0, true, sourceChannels > 1);
+
+                                 std::vector<float> mono;
+                                 mono.resize(static_cast<size_t>(readSamples));
+                                 for (auto sampleIndex = 0; sampleIndex < readSamples; ++sampleIndex)
+                                 {
+                                     auto sample = buffer.getSample(0, sampleIndex);
+                                     if (sourceChannels > 1)
+                                         sample = (sample + buffer.getSample(1, sampleIndex)) * 0.5f;
+
+                                     mono[static_cast<size_t>(sampleIndex)] = sample;
+                                 }
+
+                                 const auto frames = Synth::WavetableFrameIO::importContiguousSamples(mono.data(), mono.size());
+                                 if (Synth::WavetableFrameIO::maxFrameRange(frames) <= 0.001f)
+                                 {
+                                     setRandomStatus("WT stack import silent");
+                                     return;
+                                 }
+
+                                 writeCustomWaveFrameSet(targetOsc2,
+                                                         frames,
+                                                         "Import wavetable frame stack",
+                                                         "Imported " + file.getFileNameWithoutExtension() + " as "
+                                                             + juce::String(targetOsc2 ? "O2" : "O1") + " 8-frame WT stack");
+                             });
+}
+
+void NateVSTAudioProcessorEditor::exportWavetableFrameStack(bool targetOsc2)
+{
+    fileChooser = std::make_unique<juce::FileChooser>(
+        "Export wavetable frame-stack WAV",
+        juce::File::getSpecialLocation(juce::File::userMusicDirectory).getChildFile("Nate VST Wavetable Stack.wav"),
+        "*.wav");
+
+    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
+                                 | juce::FileBrowserComponent::canSelectFiles
+                                 | juce::FileBrowserComponent::warnAboutOverwriting,
+                             [this, targetOsc2] (const juce::FileChooser& chooser)
+                             {
+                                 auto file = chooser.getResult();
+                                 if (file == juce::File{})
+                                     return;
+
+                                 if (! file.hasFileExtension(".wav"))
+                                     file = file.withFileExtension(".wav");
+
+                                 std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> frames {};
+                                 for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+                                     frames[frameIndex] = readCustomWaveFrame(targetOsc2, frameIndex);
+
+                                 const auto samples = Synth::WavetableFrameIO::renderContiguousFrames(frames, 256);
+                                 juce::AudioBuffer<float> buffer(1, static_cast<int>(samples.size()));
+                                 for (size_t sampleIndex = 0; sampleIndex < samples.size(); ++sampleIndex)
+                                     buffer.setSample(0,
+                                                      static_cast<int>(sampleIndex),
+                                                      juce::jlimit(-1.0f, 1.0f, samples[sampleIndex]));
+
+                                 juce::WavAudioFormat format;
+                                 std::unique_ptr<juce::OutputStream> stream = file.createOutputStream();
+                                 if (stream == nullptr)
+                                 {
+                                     setRandomStatus("WT stack export failed");
+                                     return;
+                                 }
+
+                                 const auto writerOptions = juce::AudioFormatWriterOptions{}
+                                     .withSampleRate(44100.0)
+                                     .withNumChannels(1)
+                                     .withBitsPerSample(24);
+                                 auto writer = format.createWriterFor(stream, writerOptions);
+                                 if (writer == nullptr)
+                                 {
+                                     setRandomStatus("WT stack export failed");
+                                     return;
+                                 }
+
+                                 const auto ok = writer->writeFromAudioSampleBuffer(buffer, 0, buffer.getNumSamples());
+                                 setRandomStatus(ok ? "Exported 8-frame wavetable stack WAV" : "WT stack export failed");
+                                 returnKeyboardFocusToPiano();
+                             });
+}
+
 void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
 {
     const auto values = readMorphedCustomWaveFrame(targetOsc2);
@@ -12097,6 +12211,16 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                     Synth::WavetableFrameRecipes::raveSweep(),
                                     "Generate rave wave sweep",
                                     "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " rave frame sweep");
+            changed = false;
+            break;
+
+        case 52:
+            importWavetableFrameStack(targetOsc2);
+            changed = false;
+            break;
+
+        case 53:
+            exportWavetableFrameStack(targetOsc2);
             changed = false;
             break;
 

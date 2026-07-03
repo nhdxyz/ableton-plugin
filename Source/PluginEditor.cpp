@@ -11574,12 +11574,20 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
     const auto osc2IsCustom = osc2Wave == 7;
     UI::WavetableDisplay::CustomPointArray osc1CustomPoints {};
     UI::WavetableDisplay::CustomPointArray osc2CustomPoints {};
+    UI::WavetableDisplay::CustomFrameSet osc1CustomFrames {};
+    UI::WavetableDisplay::CustomFrameSet osc2CustomFrames {};
 
     if (osc1IsCustom)
-        osc1CustomPoints = readCustomWaveFrame(false, currentCustomWaveFrameIndex(false));
+    {
+        osc1CustomFrames = readCustomWaveFrameSet(false);
+        osc1CustomPoints = osc1CustomFrames[currentCustomWaveFrameIndex(false)];
+    }
 
     if (osc2IsCustom)
-        osc2CustomPoints = readCustomWaveFrame(true, currentCustomWaveFrameIndex(true));
+    {
+        osc2CustomFrames = readCustomWaveFrameSet(true);
+        osc2CustomPoints = osc2CustomFrames[currentCustomWaveFrameIndex(true)];
+    }
 
     auto osc1WtModAmount = 0.0f;
     auto osc2WtModAmount = 0.0f;
@@ -11634,7 +11642,9 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
             osc1CustomPoints,
             osc2CustomPoints,
             osc1IsCustom,
-            osc2IsCustom);
+            osc2IsCustom,
+            osc1CustomFrames,
+            osc2CustomFrames);
     };
 
     if (wavetableDisplay.isVisible())

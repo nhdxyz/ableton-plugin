@@ -35,19 +35,37 @@ juce::MouseEvent makeMouseEvent(UI::WavetableDisplay& display,
                             dragged);
 }
 
-UI::WavetableDisplay::CustomPointArray makeTestWave()
+UI::WavetableDisplay::CustomPointArray makeTestWave(float phaseOffset = 0.0f)
 {
     UI::WavetableDisplay::CustomPointArray points {};
     for (size_t index = 0; index < points.size(); ++index)
-        points[index] = static_cast<float>((index * 5) % points.size()) / static_cast<float>(points.size() - 1);
+    {
+        const auto phase = (static_cast<float>(index) / static_cast<float>(points.size())) + phaseOffset;
+        const auto sample = (std::sin(juce::MathConstants<float>::twoPi * phase) * 0.34f)
+            + (std::sin(juce::MathConstants<float>::twoPi * (phase * 2.0f + 0.13f)) * 0.18f)
+            + (std::sin(juce::MathConstants<float>::twoPi * (phase * 5.0f + 0.31f)) * 0.10f);
+        points[index] = juce::jlimit(0.0f, 1.0f, 0.5f + sample);
+    }
 
     return points;
+}
+
+UI::WavetableDisplay::CustomFrameSet makeTestFrames(float phaseOffset)
+{
+    UI::WavetableDisplay::CustomFrameSet frames {};
+    for (size_t frame = 0; frame < frames.size(); ++frame)
+        frames[frame] = makeTestWave(phaseOffset + (static_cast<float>(frame) * 0.047f));
+
+    return frames;
 }
 }
 
 int main()
 {
     juce::ScopedJuceInitialiser_GUI juceInitialiser;
+
+    const auto osc1Frames = makeTestFrames(0.0f);
+    const auto osc2Frames = makeTestFrames(0.19f);
 
     UI::WavetableDisplay display;
     display.setBounds(0, 0, 420, 188);
@@ -60,10 +78,12 @@ int main()
                      2,
                      "LFO 1, Tone",
                      0.42f,
-                     makeTestWave(),
-                     makeTestWave(),
+                     osc1Frames[2],
+                     osc2Frames[5],
                      true,
-                     true);
+                     true,
+                     osc1Frames,
+                     osc2Frames);
 
     const auto metrics = display.getLayoutMetricsForAudit();
     if (! metrics.readable || ! metrics.frameStripVisible || ! metrics.partialBarsVisible)
@@ -73,6 +93,15 @@ int main()
                   << " plot=" << metrics.plot.toString()
                   << " partials=" << metrics.partialBars.toString()
                   << " spectrum=" << metrics.spectrum.toString() << '\n';
+        return 1;
+    }
+
+    if (metrics.customFramePreviewCards != static_cast<int>(UI::WavetableDisplay::customFrameCount)
+        || ! metrics.customFramePreviewsVary)
+    {
+        std::cerr << "Wavetable custom frame previews are not exposing a varied 8-frame stack: cards="
+                  << metrics.customFramePreviewCards
+                  << " vary=" << metrics.customFramePreviewsVary << '\n';
         return 1;
     }
 
@@ -167,6 +196,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable display audit passed for frame rail scanning, 3D surface zones, render coverage, point editing, and partial editing.\n";
+    std::cout << "Wavetable display audit passed for varied custom frame previews, frame rail scanning, 3D surface zones, render coverage, point editing, and partial editing.\n";
     return 0;
 }

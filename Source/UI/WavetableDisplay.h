@@ -12,15 +12,19 @@ class WavetableDisplay final : public juce::Component,
 {
 public:
     static constexpr size_t customPointCount = 16;
+    static constexpr size_t customFrameCount = 8;
     using CustomPointArray = std::array<float, customPointCount>;
+    using CustomFrameSet = std::array<CustomPointArray, customFrameCount>;
     struct LayoutMetrics
     {
         juce::Rectangle<int> frameStrip;
         juce::Rectangle<int> plot;
         juce::Rectangle<int> partialBars;
         juce::Rectangle<int> spectrum;
+        int customFramePreviewCards = 0;
         bool frameStripVisible = false;
         bool partialBarsVisible = false;
+        bool customFramePreviewsVary = false;
         bool readable = false;
     };
 
@@ -53,7 +57,9 @@ public:
                   CustomPointArray newOsc1CustomPoints = {},
                   CustomPointArray newOsc2CustomPoints = {},
                   bool newOsc1CustomActive = false,
-                  bool newOsc2CustomActive = false);
+                  bool newOsc2CustomActive = false,
+                  CustomFrameSet newOsc1CustomFrames = {},
+                  CustomFrameSet newOsc2CustomFrames = {});
     void setCustomDrawMode(CustomDrawMode newMode);
     juce::String getTooltip() override;
     LayoutMetrics getLayoutMetricsForAudit() const;
@@ -104,6 +110,8 @@ private:
         0.146447f,
         0.308658f
     };
+    CustomFrameSet osc1CustomFrames {};
+    CustomFrameSet osc2CustomFrames {};
     float osc1ModAmount = 0.0f;
     float osc2ModAmount = 0.0f;
     int modRouteCount = 0;
@@ -137,12 +145,15 @@ private:
     juce::Rectangle<float> partialBarsBounds() const;
     juce::Rectangle<float> spectrumBounds() const;
     int partialForEvent(const juce::MouseEvent& event) const noexcept;
+    size_t activeCustomFrameIndex(int oscillator) const noexcept;
     void drawMiniWave(juce::Graphics& g,
                       juce::Rectangle<float> bounds,
                       float position,
                       const CustomPointArray* customPoints,
                       juce::Colour colour,
                       float alpha) const;
+    static float sampleCustomPoints(const CustomPointArray& points, float phase);
+    static float sampleCustomFrameSet(const CustomFrameSet& frames, float phase, float position);
     static juce::Path makeCustomPath(juce::Rectangle<float> bounds, const CustomPointArray& points);
     static float sampleFrame(float phase, float position);
     static juce::Path makePath(juce::Rectangle<float> bounds, float position);

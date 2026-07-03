@@ -40,10 +40,27 @@ WavetableDisplay::CustomPointArray sanitiseCustomPoints(WavetableDisplay::Custom
     return points;
 }
 
+WavetableDisplay::CustomFrameSet sanitiseCustomFrames(WavetableDisplay::CustomFrameSet frames)
+{
+    for (auto& frame : frames)
+        frame = sanitiseCustomPoints(frame);
+
+    return frames;
+}
+
 bool pointsDiffer(const WavetableDisplay::CustomPointArray& lhs, const WavetableDisplay::CustomPointArray& rhs)
 {
     for (size_t index = 0; index < lhs.size(); ++index)
         if (std::abs(lhs[index] - rhs[index]) >= 0.001f)
+            return true;
+
+    return false;
+}
+
+bool framesDiffer(const WavetableDisplay::CustomFrameSet& lhs, const WavetableDisplay::CustomFrameSet& rhs)
+{
+    for (size_t index = 0; index < lhs.size(); ++index)
+        if (pointsDiffer(lhs[index], rhs[index]))
             return true;
 
     return false;
@@ -159,7 +176,9 @@ void WavetableDisplay::setState(float newOsc1Position,
                                 CustomPointArray newOsc1CustomPoints,
                                 CustomPointArray newOsc2CustomPoints,
                                 bool newOsc1CustomActive,
-                                bool newOsc2CustomActive)
+                                bool newOsc2CustomActive,
+                                CustomFrameSet newOsc1CustomFrames,
+                                CustomFrameSet newOsc2CustomFrames)
 {
     newOsc1Position = juce::jlimit(0.0f, 1.0f, newOsc1Position);
     newOsc2Position = juce::jlimit(0.0f, 1.0f, newOsc2Position);
@@ -170,6 +189,8 @@ void WavetableDisplay::setState(float newOsc1Position,
     newWarp = juce::jlimit(0.0f, 1.0f, newWarp);
     newOsc1CustomPoints = sanitiseCustomPoints(newOsc1CustomPoints);
     newOsc2CustomPoints = sanitiseCustomPoints(newOsc2CustomPoints);
+    newOsc1CustomFrames = sanitiseCustomFrames(newOsc1CustomFrames);
+    newOsc2CustomFrames = sanitiseCustomFrames(newOsc2CustomFrames);
 
     if (std::abs(osc1Position - newOsc1Position) < 0.001f
         && std::abs(osc2Position - newOsc2Position) < 0.001f
@@ -183,7 +204,9 @@ void WavetableDisplay::setState(float newOsc1Position,
         && osc1CustomActive == newOsc1CustomActive
         && osc2CustomActive == newOsc2CustomActive
         && ! pointsDiffer(osc1CustomPoints, newOsc1CustomPoints)
-        && ! pointsDiffer(osc2CustomPoints, newOsc2CustomPoints))
+        && ! pointsDiffer(osc2CustomPoints, newOsc2CustomPoints)
+        && ! framesDiffer(osc1CustomFrames, newOsc1CustomFrames)
+        && ! framesDiffer(osc2CustomFrames, newOsc2CustomFrames))
     {
         return;
     }
@@ -201,6 +224,8 @@ void WavetableDisplay::setState(float newOsc1Position,
     osc2CustomActive = newOsc2CustomActive;
     osc1CustomPoints = newOsc1CustomPoints;
     osc2CustomPoints = newOsc2CustomPoints;
+    osc1CustomFrames = newOsc1CustomFrames;
+    osc2CustomFrames = newOsc2CustomFrames;
     repaint();
 }
 
@@ -218,6 +243,25 @@ WavetableDisplay::LayoutMetrics WavetableDisplay::getLayoutMetricsForAudit() con
     metrics.spectrum = spectrumBounds().toNearestInt();
     metrics.frameStripVisible = ! metrics.frameStrip.isEmpty();
     metrics.partialBarsVisible = ! metrics.partialBars.isEmpty();
+    const CustomFrameSet* previewFrames = nullptr;
+    if (osc1CustomActive)
+        previewFrames = &osc1CustomFrames;
+    else if (osc2CustomActive)
+        previewFrames = &osc2CustomFrames;
+
+    if (metrics.frameStripVisible && previewFrames != nullptr)
+    {
+        metrics.customFramePreviewCards = static_cast<int>(previewFrames->size());
+        for (size_t index = 1; index < previewFrames->size(); ++index)
+        {
+            if (pointsDiffer((*previewFrames)[0], (*previewFrames)[index]))
+            {
+                metrics.customFramePreviewsVary = true;
+                break;
+            }
+        }
+    }
+
     metrics.readable = metrics.frameStrip.getWidth() >= 180
         && metrics.frameStrip.getHeight() >= 14
         && metrics.plot.getWidth() >= 180
@@ -298,25 +342,25 @@ void WavetableDisplay::paint(juce::Graphics& g)
         auto rail = frameRailBounds();
         if (rail.isEmpty())
             rail = frameStrip.withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
-        constexpr auto frameCount = 8;
-        const auto cellWidth = rail.getWidth() / static_cast<float>(frameCount);
-        const CustomPointArray* railCustomPoints = nullptr;
+        const auto cellWidth = rail.getWidth() / static_cast<float>(customFrameCount);
+        const CustomFrameSet* railCustomFrames = nullptr;
         if (editingOscillator == 2 && osc2CustomActive)
-            railCustomPoints = &osc2CustomPoints;
+            railCustomFrames = &osc2CustomFrames;
         else if (osc1CustomActive)
-            railCustomPoints = &osc1CustomPoints;
+            railCustomFrames = &osc1CustomFrames;
         else if (osc2CustomActive)
-            railCustomPoints = &osc2CustomPoints;
+            railCustomFrames = &osc2CustomFrames;
 
-        for (auto frame = 0; frame < frameCount; ++frame)
+        for (size_t frame = 0; frame < customFrameCount; ++frame)
         {
             auto cell = juce::Rectangle<float>(rail.getX() + (static_cast<float>(frame) * cellWidth),
                                                rail.getY(),
                                                cellWidth,
                                                rail.getHeight()).reduced(1.3f, 0.8f);
-            const auto position = static_cast<float>(frame) / static_cast<float>(frameCount - 1);
-            const auto isNearO1 = osc1Active && std::abs(position - osc1Position) <= (0.52f / static_cast<float>(frameCount));
-            const auto isNearO2 = osc2Active && std::abs(position - osc2Position) <= (0.52f / static_cast<float>(frameCount));
+            const auto position = static_cast<float>(frame) / static_cast<float>(customFrameCount - 1);
+            const auto isNearO1 = osc1Active && std::abs(position - osc1Position) <= (0.52f / static_cast<float>(customFrameCount));
+            const auto isNearO2 = osc2Active && std::abs(position - osc2Position) <= (0.52f / static_cast<float>(customFrameCount));
+            const auto* railCustomPoints = railCustomFrames != nullptr ? &(*railCustomFrames)[frame] : nullptr;
             g.setColour((isNearO1 ? juce::Colour(0xff183b34) : juce::Colour(0xff111a1e)).withAlpha(isNearO2 ? 0.98f : 0.88f));
             g.fillRoundedRectangle(cell, 2.5f);
             g.setColour((isNearO2 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff33444c)).withAlpha(isNearO1 ? 0.82f : 0.58f));
@@ -361,7 +405,9 @@ void WavetableDisplay::paint(juce::Graphics& g)
     g.setColour(juce::Colour(0x335b6e75));
     g.drawLine(plot.getX(), plot.getCentreY(), plot.getRight(), plot.getCentreY(), 1.0f);
 
-    const auto drawSurface = [&] (float position, bool customActive, const CustomPointArray& customPoints, juce::Colour colour)
+    const auto drawSurface = [&] (bool customActive,
+                                  const CustomFrameSet& customFrames,
+                                  juce::Colour colour)
     {
         if (plot.getWidth() < 150.0f || plot.getHeight() < 74.0f)
             return;
@@ -371,8 +417,6 @@ void WavetableDisplay::paint(juce::Graphics& g)
         for (auto slice = 0; slice < sliceCount; ++slice)
         {
             const auto depth = static_cast<float>(slice) / static_cast<float>(sliceCount - 1);
-            const auto framePosition = customActive ? position
-                                                     : juce::jlimit(0.0f, 1.0f, depth);
             const auto xSkew = juce::jmap(depth, -12.0f, 14.0f);
             const auto ySkew = juce::jmap(depth, 17.0f, -15.0f);
             const auto alpha = juce::jmap(depth, 0.06f, 0.30f);
@@ -386,16 +430,12 @@ void WavetableDisplay::paint(juce::Graphics& g)
 
                 if (customActive)
                 {
-                    const auto pointPosition = phase * static_cast<float>(customPoints.size());
-                    const auto lowerIndex = static_cast<size_t>(std::floor(pointPosition)) % customPoints.size();
-                    const auto upperIndex = (lowerIndex + 1) % customPoints.size();
-                    const auto mix = pointPosition - std::floor(pointPosition);
-                    sample = ((customPoints[lowerIndex] + ((customPoints[upperIndex] - customPoints[lowerIndex]) * mix)) * 2.0f) - 1.0f;
+                    sample = sampleCustomFrameSet(customFrames, phase, depth);
                     sample *= 0.72f + (depth * 0.18f);
                 }
                 else
                 {
-                    sample = sampleFrame(phase, framePosition) * 0.80f;
+                    sample = sampleFrame(phase, juce::jlimit(0.0f, 1.0f, depth)) * 0.80f;
                 }
 
                 const auto x = surfaceBounds.getX() + (surfaceBounds.getWidth() * phase) + xSkew;
@@ -425,10 +465,10 @@ void WavetableDisplay::paint(juce::Graphics& g)
     };
 
     if (osc2Active)
-        drawSurface(osc2Position, osc2CustomActive, osc2CustomPoints, juce::Colour(0xffc4a2ff));
+        drawSurface(osc2CustomActive, osc2CustomFrames, juce::Colour(0xffc4a2ff));
 
     if (osc1Active)
-        drawSurface(osc1Position, osc1CustomActive, osc1CustomPoints, juce::Colour(0xff8ee6c9));
+        drawSurface(osc1CustomActive, osc1CustomFrames, juce::Colour(0xff8ee6c9));
 
     if (! inactive)
     {
@@ -739,22 +779,9 @@ void WavetableDisplay::mouseDoubleClick(const juce::MouseEvent& event)
     if (editingCustomPoint >= 0)
     {
         const auto target = oscillatorForEvent(event);
-        if (target == 2)
-        {
-            osc2CustomPoints[static_cast<size_t>(editingCustomPoint)] = defaultCustomWavePoints[static_cast<size_t>(editingCustomPoint)];
-            if (onCustomPointChange)
-                onCustomPointChange(2,
-                                    static_cast<size_t>(editingCustomPoint),
-                                    osc2CustomPoints[static_cast<size_t>(editingCustomPoint)]);
-        }
-        else
-        {
-            osc1CustomPoints[static_cast<size_t>(editingCustomPoint)] = defaultCustomWavePoints[static_cast<size_t>(editingCustomPoint)];
-            if (onCustomPointChange)
-                onCustomPointChange(1,
-                                    static_cast<size_t>(editingCustomPoint),
-                                    osc1CustomPoints[static_cast<size_t>(editingCustomPoint)]);
-        }
+        setCustomPointValue(target,
+                            static_cast<size_t>(editingCustomPoint),
+                            defaultCustomWavePoints[static_cast<size_t>(editingCustomPoint)]);
 
         editingCustomPoint = -1;
         editGestureActive = false;
@@ -1011,12 +1038,14 @@ void WavetableDisplay::setCustomPointValue(int oscillator, size_t pointIndex, fl
     if (oscillator == 2)
     {
         osc2CustomPoints[pointIndex] = value;
+        osc2CustomFrames[activeCustomFrameIndex(2)][pointIndex] = value;
         if (onCustomPointChange)
             onCustomPointChange(2, pointIndex, value);
     }
     else
     {
         osc1CustomPoints[pointIndex] = value;
+        osc1CustomFrames[activeCustomFrameIndex(1)][pointIndex] = value;
         if (onCustomPointChange)
             onCustomPointChange(1, pointIndex, value);
     }
@@ -1144,6 +1173,16 @@ int WavetableDisplay::partialForEvent(const juce::MouseEvent& event) const noexc
     return juce::jlimit(0, 15, static_cast<int>(std::floor(normalised * 16.0f)));
 }
 
+size_t WavetableDisplay::activeCustomFrameIndex(int oscillator) const noexcept
+{
+    const auto position = oscillator == 2 ? osc2Position : osc1Position;
+    return static_cast<size_t>(
+        juce::jlimit(0,
+                     static_cast<int>(customFrameCount - 1),
+                     juce::roundToInt(juce::jlimit(0.0f, 1.0f, position)
+                                      * static_cast<float>(customFrameCount - 1))));
+}
+
 void WavetableDisplay::drawMiniWave(juce::Graphics& g,
                                     juce::Rectangle<float> bounds,
                                     float position,
@@ -1162,11 +1201,7 @@ void WavetableDisplay::drawMiniWave(juce::Graphics& g,
         auto sample = 0.0f;
         if (customPoints != nullptr)
         {
-            const auto pointPosition = phase * static_cast<float>(customPoints->size());
-            const auto lowerIndex = static_cast<size_t>(std::floor(pointPosition)) % customPoints->size();
-            const auto upperIndex = (lowerIndex + 1) % customPoints->size();
-            const auto mix = pointPosition - std::floor(pointPosition);
-            sample = (((*customPoints)[lowerIndex] + (((*customPoints)[upperIndex] - (*customPoints)[lowerIndex]) * mix)) * 2.0f) - 1.0f;
+            sample = sampleCustomPoints(*customPoints, phase);
         }
         else
         {
@@ -1183,6 +1218,31 @@ void WavetableDisplay::drawMiniWave(juce::Graphics& g,
 
     g.setColour(colour.withAlpha(alpha));
     g.strokePath(path, juce::PathStrokeType(0.85f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+}
+
+float WavetableDisplay::sampleCustomPoints(const CustomPointArray& points, float phase)
+{
+    const auto pointPosition = juce::jlimit(0.0f, 0.999f, phase) * static_cast<float>(points.size());
+    const auto lowerIndex = static_cast<size_t>(std::floor(pointPosition)) % points.size();
+    const auto upperIndex = (lowerIndex + 1) % points.size();
+    const auto mix = pointPosition - std::floor(pointPosition);
+    return ((points[lowerIndex] + ((points[upperIndex] - points[lowerIndex]) * mix)) * 2.0f) - 1.0f;
+}
+
+float WavetableDisplay::sampleCustomFrameSet(const CustomFrameSet& frames, float phase, float position)
+{
+    const auto framePosition = juce::jlimit(0.0f, 1.0f, position) * static_cast<float>(frames.size() - 1);
+    const auto lowerFrame = static_cast<size_t>(juce::jlimit(0,
+                                                            static_cast<int>(frames.size() - 1),
+                                                            static_cast<int>(std::floor(framePosition))));
+    const auto upperFrame = static_cast<size_t>(juce::jlimit(0,
+                                                            static_cast<int>(frames.size() - 1),
+                                                            static_cast<int>(lowerFrame + 1)));
+    const auto mix = juce::jlimit(0.0f, 1.0f, framePosition - static_cast<float>(lowerFrame));
+    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
+    const auto lowerSample = sampleCustomPoints(frames[lowerFrame], phase);
+    const auto upperSample = sampleCustomPoints(frames[upperFrame], phase);
+    return lowerSample + ((upperSample - lowerSample) * smoothMix);
 }
 
 float WavetableDisplay::sampleFrame(float phase, float position)

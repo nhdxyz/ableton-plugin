@@ -180,6 +180,13 @@ private:
         sequencerEditor
     };
 
+    enum class WavetableFrameCardAction
+    {
+        copy,
+        paste,
+        storeMorph
+    };
+
     struct FxMomentarySnapshot
     {
         std::array<float, 34> values {};
@@ -938,6 +945,7 @@ private:
     void updateSourceFrameActionButtons();
     void selectCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void stepSourceFrameActionTarget(int delta);
+    void handleWavetableFrameCardAction(bool targetOsc2, size_t frameIndex, WavetableFrameCardAction action);
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
     size_t currentCustomWaveFrameIndex(bool targetOsc2) const;

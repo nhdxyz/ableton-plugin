@@ -231,7 +231,7 @@ void WavetableDisplay::setState(float newOsc1Position,
 
 juce::String WavetableDisplay::getTooltip()
 {
-    return "3D wavetable editor: top rail shows morph frames, drag WT to scan frames, select Custom and draw points, drag partial bars 1-16 for additive edits. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+    return "3D wavetable editor: top rail selects/scans morph frames; Option-click copies, Command-click pastes, Shift-click stores morph. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
 }
 
 WavetableDisplay::LayoutMetrics WavetableDisplay::getLayoutMetricsForAudit() const
@@ -755,6 +755,9 @@ void WavetableDisplay::mouseDown(const juce::MouseEvent& event)
 
 void WavetableDisplay::mouseDrag(const juce::MouseEvent& event)
 {
+    if (frameActionGestureActive)
+        return;
+
     if (editingFrameRail)
     {
         applyFrameRailPosition(event);
@@ -778,6 +781,7 @@ void WavetableDisplay::mouseUp(const juce::MouseEvent&)
     editingCustomPoint = -1;
     editingPartial = -1;
     editingFrameRail = false;
+    frameActionGestureActive = false;
     lastDrawCustomPoint = -1;
     editGestureActive = false;
 }
@@ -823,13 +827,44 @@ void WavetableDisplay::beginFrameRailEdit(const juce::MouseEvent& event)
     editGestureActive = true;
     lastDrawCustomPoint = -1;
 
+    const auto frameIndex = frameForRailEvent(event);
+    if (frameIndex >= 0 && handleFrameActionGesture(static_cast<size_t>(frameIndex), event))
+    {
+        editingFrameRail = false;
+        editGestureActive = false;
+        frameActionGestureActive = true;
+        return;
+    }
+
     if (onEditStart)
         onEditStart();
 
-    if (const auto frameIndex = frameForRailEvent(event); frameIndex >= 0)
+    if (frameIndex >= 0)
         applyFrameRailFrame(editingOscillator, static_cast<size_t>(frameIndex));
     else
         applyFrameRailPosition(event);
+}
+
+bool WavetableDisplay::handleFrameActionGesture(size_t frameIndex, const juce::MouseEvent& event)
+{
+    if (onFrameAction == nullptr)
+        return false;
+
+    auto action = FrameAction::copy;
+    if (event.mods.isCommandDown())
+        action = FrameAction::paste;
+    else if (event.mods.isAltDown())
+        action = FrameAction::copy;
+    else if (event.mods.isShiftDown())
+        action = FrameAction::storeMorph;
+    else
+        return false;
+
+    onFrameAction(editingOscillator,
+                  juce::jlimit<size_t>(0, customFrameCount - 1, frameIndex),
+                  action);
+    repaint();
+    return true;
 }
 
 void WavetableDisplay::applyFrameRailFrame(int oscillator, size_t frameIndex)

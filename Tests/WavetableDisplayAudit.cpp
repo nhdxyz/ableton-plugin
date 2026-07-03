@@ -9,6 +9,13 @@
 
 namespace
 {
+struct FrameActionEvent
+{
+    int oscillator = 1;
+    size_t frameIndex = 0;
+    UI::WavetableDisplay::FrameAction action = UI::WavetableDisplay::FrameAction::copy;
+};
+
 juce::MouseEvent makeMouseEvent(UI::WavetableDisplay& display,
                                 float x,
                                 float y,
@@ -144,6 +151,11 @@ int main()
     {
         osc1Positions.push_back(position);
     };
+    std::vector<FrameActionEvent> frameActions;
+    display.onFrameAction = [&frameActions] (int oscillator, size_t frameIndex, UI::WavetableDisplay::FrameAction action)
+    {
+        frameActions.push_back({ oscillator, frameIndex, action });
+    };
 
     const auto rail = metrics.frameStrip.toFloat().withTrimmedLeft(43.0f).withTrimmedRight(5.0f).reduced(1.0f, 2.0f);
     const auto cellWidth = rail.getWidth() / static_cast<float>(UI::WavetableDisplay::customFrameCount);
@@ -159,12 +171,75 @@ int main()
         return 1;
     }
 
+    if (! frameActions.empty())
+    {
+        std::cerr << "Exact frame-card selection emitted a frame-card edit action\n";
+        return 1;
+    }
+
     if (osc1Positions.empty() || std::abs(osc1Positions.back() - exactFramePosition) > 0.005f)
     {
         std::cerr << "Frame-card selection did not snap to exact frame 6 position";
         if (! osc1Positions.empty())
             std::cerr << ": " << osc1Positions.back();
         std::cerr << '\n';
+        return 1;
+    }
+
+    const auto frameActionPositionsBefore = osc1Positions.size();
+    const auto frameActionPointChangesBefore = changedPoints.size();
+    const auto frameThreeX = rail.getX() + (cellWidth * 2.5f);
+    const auto altClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::altModifier);
+    display.mouseDown(makeMouseEvent(display, frameThreeX, railY, frameThreeX, railY, altClick));
+    display.mouseDrag(makeMouseEvent(display,
+                                     frameThreeX + (cellWidth * 0.4f),
+                                     railY + 12.0f,
+                                     frameThreeX,
+                                     railY,
+                                     altClick,
+                                     true));
+    display.mouseUp(makeMouseEvent(display, frameThreeX, railY, frameThreeX, railY, altClick));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 1
+        || frameActions.back().frameIndex != 2
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::copy)
+    {
+        std::cerr << "Option-click on compact frame 3 did not emit an Osc 1 copy action\n";
+        return 1;
+    }
+
+    const auto frameSevenX = rail.getX() + (cellWidth * 6.5f);
+    const auto commandClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::commandModifier);
+    display.mouseDown(makeMouseEvent(display, frameSevenX, railY, frameSevenX, railY, commandClick));
+    display.mouseUp(makeMouseEvent(display, frameSevenX, railY, frameSevenX, railY, commandClick));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 2
+        || frameActions.back().frameIndex != 6
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::paste)
+    {
+        std::cerr << "Command-click on compact frame 7 did not emit an Osc 2 paste action\n";
+        return 1;
+    }
+
+    const auto frameTwoX = rail.getX() + (cellWidth * 1.5f);
+    const auto shiftClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::shiftModifier);
+    display.mouseDown(makeMouseEvent(display, frameTwoX, railY, frameTwoX, railY, shiftClick));
+    display.mouseUp(makeMouseEvent(display, frameTwoX, railY, frameTwoX, railY, shiftClick));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 2
+        || frameActions.back().frameIndex != 1
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::storeMorph)
+    {
+        std::cerr << "Shift-click on compact frame 2 did not emit an Osc 2 store-morph action\n";
+        return 1;
+    }
+
+    if (osc1Positions.size() != frameActionPositionsBefore || changedPoints.size() != frameActionPointChangesBefore)
+    {
+        std::cerr << "Compact frame-card edit gestures also emitted position or point edits\n";
         return 1;
     }
 
@@ -218,6 +293,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable display audit passed for varied custom frame previews, exact frame selection, frame rail scanning, 3D surface zones, render coverage, point editing, and partial editing.\n";
+    std::cout << "Wavetable display audit passed for varied custom frame previews, exact frame selection, direct frame-card actions, frame rail scanning, 3D surface zones, render coverage, point editing, and partial editing.\n";
     return 0;
 }

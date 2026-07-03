@@ -37,11 +37,19 @@ public:
         erase
     };
 
+    enum class FrameAction
+    {
+        copy,
+        paste,
+        storeMorph
+    };
+
     std::function<void()> onEditStart;
     std::function<void(float)> onOsc1PositionChange;
     std::function<void(float)> onOsc2PositionChange;
     std::function<void(float)> onWarpChange;
     std::function<void(int, size_t, float)> onCustomPointChange;
+    std::function<void(int, size_t, FrameAction)> onFrameAction;
 
     WavetableDisplay();
 
@@ -127,9 +135,11 @@ private:
     float lastDrawCustomValue = 0.5f;
     bool editGestureActive = false;
     bool editingFrameRail = false;
+    bool frameActionGestureActive = false;
     CustomDrawMode customDrawMode = CustomDrawMode::point;
 
     void beginFrameRailEdit(const juce::MouseEvent& event);
+    bool handleFrameActionGesture(size_t frameIndex, const juce::MouseEvent& event);
     void applyFrameRailFrame(int oscillator, size_t frameIndex);
     void applyFrameRailPosition(const juce::MouseEvent& event);
     void beginEdit(const juce::MouseEvent& event);

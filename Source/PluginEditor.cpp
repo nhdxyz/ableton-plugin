@@ -1910,6 +1910,38 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(sourceStackEmphasiseButton);
 
+    sourceFrameDuplicateSlotButton.setTooltip("Duplicate the active wavetable frame into the next slot");
+    sourceFrameDuplicateSlotButton.onClick = [this]
+    {
+        applyCustomWaveFrameSlotEdit(sourceFrameActionTargetIsOsc2(), WavetableFrameSlotEdit::duplicateAfter);
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameDuplicateSlotButton);
+
+    sourceFrameDeleteSlotButton.setTooltip("Delete the active wavetable frame slot and close the gap");
+    sourceFrameDeleteSlotButton.onClick = [this]
+    {
+        applyCustomWaveFrameSlotEdit(sourceFrameActionTargetIsOsc2(), WavetableFrameSlotEdit::deleteFrame);
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameDeleteSlotButton);
+
+    sourceFrameMoveLeftButton.setTooltip("Move the active wavetable frame one slot left");
+    sourceFrameMoveLeftButton.onClick = [this]
+    {
+        applyCustomWaveFrameSlotEdit(sourceFrameActionTargetIsOsc2(), WavetableFrameSlotEdit::moveLeft);
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameMoveLeftButton);
+
+    sourceFrameMoveRightButton.setTooltip("Move the active wavetable frame one slot right");
+    sourceFrameMoveRightButton.onClick = [this]
+    {
+        applyCustomWaveFrameSlotEdit(sourceFrameActionTargetIsOsc2(), WavetableFrameSlotEdit::moveRight);
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameMoveRightButton);
+
     sampleWaveformDisplay.onRangeChange = [this] (float start, float end)
     {
         setPlainParameterValue(Parameters::ID::sampleStart, start);
@@ -2389,6 +2421,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Paste Active Frame", 65);
     wavetableToolBox.addItem("Fill Stack From Active", 66);
     wavetableToolBox.addItem("Interpolate End Frames", 67);
+    wavetableToolBox.addItem("Duplicate Frame Slot", 74);
+    wavetableToolBox.addItem("Delete Frame Slot", 75);
+    wavetableToolBox.addItem("Move Frame Left", 76);
+    wavetableToolBox.addItem("Move Frame Right", 77);
     wavetableToolBox.addItem("Bake WT Position", 48);
     wavetableToolBox.addItem("Current Sweep", 49);
     wavetableToolBox.addItem("Classic House Stack", 50);
@@ -6622,7 +6658,11 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                          static_cast<const juce::Component*>(&sourceStackRotateLeftButton),
                          static_cast<const juce::Component*>(&sourceStackRotateRightButton),
                          static_cast<const juce::Component*>(&sourceStackSmoothButton),
-                         static_cast<const juce::Component*>(&sourceStackEmphasiseButton) })
+                         static_cast<const juce::Component*>(&sourceStackEmphasiseButton),
+                         static_cast<const juce::Component*>(&sourceFrameDuplicateSlotButton),
+                         static_cast<const juce::Component*>(&sourceFrameDeleteSlotButton),
+                         static_cast<const juce::Component*>(&sourceFrameMoveLeftButton),
+                         static_cast<const juce::Component*>(&sourceFrameMoveRightButton) })
                 {
                     if (! button->isVisible())
                     {
@@ -11099,6 +11139,10 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceStackRotateRightButton.setVisible(showSourceLayerEditor);
     sourceStackSmoothButton.setVisible(showSourceLayerEditor);
     sourceStackEmphasiseButton.setVisible(showSourceLayerEditor);
+    sourceFrameDuplicateSlotButton.setVisible(showSourceLayerEditor);
+    sourceFrameDeleteSlotButton.setVisible(showSourceLayerEditor);
+    sourceFrameMoveLeftButton.setVisible(showSourceLayerEditor);
+    sourceFrameMoveRightButton.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
     sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
 
@@ -11139,28 +11183,35 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
 
         auto frameStripArea = content.removeFromBottom(juce::jlimit(148, 170, content.getHeight() / 3));
         sourceLabFrameStrip.setBounds(frameStripArea.reduced(8, 5));
-        auto frameActionArea = content.removeFromBottom(106).withTrimmedBottom(2);
-        auto frameActionRow = frameActionArea.removeFromTop(34);
+        auto frameActionArea = content.removeFromBottom(juce::jlimit(124, 140, content.getHeight() / 4)).withTrimmedBottom(2);
+        const auto frameActionRowHeight = juce::jmax(30, frameActionArea.getHeight() / 4);
+        auto frameActionRow = frameActionArea.removeFromTop(frameActionRowHeight);
         auto targetArea = frameActionRow.removeFromLeft(98);
-        sourceFrameTargetOsc1Button.setBounds(targetArea.removeFromLeft(49).reduced(3, 5));
-        sourceFrameTargetOsc2Button.setBounds(targetArea.reduced(3, 5));
+        sourceFrameTargetOsc1Button.setBounds(targetArea.removeFromLeft(49).reduced(3, 4));
+        sourceFrameTargetOsc2Button.setBounds(targetArea.reduced(3, 4));
         frameActionRow.removeFromLeft(8);
-        sourceFramePreviousButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 5));
-        sourceFrameNextButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 5));
-        sourceFrameEvolveButton.setBounds(frameActionRow.removeFromLeft(92).reduced(3, 5));
-        auto editActionRow = frameActionArea.removeFromTop(34).withTrimmedTop(1);
+        sourceFramePreviousButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 4));
+        sourceFrameNextButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 4));
+        sourceFrameEvolveButton.setBounds(frameActionRow.removeFromLeft(92).reduced(3, 4));
+        auto editActionRow = frameActionArea.removeFromTop(frameActionRowHeight).withTrimmedTop(1);
         const auto actionWidth = juce::jmax(1, editActionRow.getWidth() / 4);
-        sourceFrameCopyButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 5));
-        sourceFramePasteButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 5));
-        sourceFrameFillButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 5));
-        sourceFrameInterpolateButton.setBounds(editActionRow.reduced(3, 5));
-        auto stackActionRow = frameActionArea.withTrimmedTop(1);
+        sourceFrameCopyButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 4));
+        sourceFramePasteButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 4));
+        sourceFrameFillButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 4));
+        sourceFrameInterpolateButton.setBounds(editActionRow.reduced(3, 4));
+        auto stackActionRow = frameActionArea.removeFromTop(frameActionRowHeight).withTrimmedTop(1);
         const auto stackActionWidth = juce::jmax(1, stackActionRow.getWidth() / 5);
-        sourceStackReverseButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 5));
-        sourceStackRotateLeftButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 5));
-        sourceStackRotateRightButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 5));
-        sourceStackSmoothButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 5));
-        sourceStackEmphasiseButton.setBounds(stackActionRow.reduced(3, 5));
+        sourceStackReverseButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 4));
+        sourceStackRotateLeftButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 4));
+        sourceStackRotateRightButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 4));
+        sourceStackSmoothButton.setBounds(stackActionRow.removeFromLeft(stackActionWidth).reduced(3, 4));
+        sourceStackEmphasiseButton.setBounds(stackActionRow.reduced(3, 4));
+        auto slotActionRow = frameActionArea.withTrimmedTop(1);
+        const auto slotActionWidth = juce::jmax(1, slotActionRow.getWidth() / 4);
+        sourceFrameDuplicateSlotButton.setBounds(slotActionRow.removeFromLeft(slotActionWidth).reduced(3, 4));
+        sourceFrameDeleteSlotButton.setBounds(slotActionRow.removeFromLeft(slotActionWidth).reduced(3, 4));
+        sourceFrameMoveLeftButton.setBounds(slotActionRow.removeFromLeft(slotActionWidth).reduced(3, 4));
+        sourceFrameMoveRightButton.setBounds(slotActionRow.reduced(3, 4));
         expandedWavetableDisplay.setBounds(content.reduced(8, 5));
         updateSourceFrameActionButtons();
     }
@@ -11194,6 +11245,10 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceStackRotateRightButton.toFront(false);
     sourceStackSmoothButton.toFront(false);
     sourceStackEmphasiseButton.toFront(false);
+    sourceFrameDuplicateSlotButton.toFront(false);
+    sourceFrameDeleteSlotButton.toFront(false);
+    sourceFrameMoveLeftButton.toFront(false);
+    sourceFrameMoveRightButton.toFront(false);
     expandedSequencerGrid.toFront(false);
     sequencerSceneChainLengthButton.toFront(false);
     focusOverlayCloseButton.toFront(false);
@@ -11342,6 +11397,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFramePreviousButton, &sourceFrameNextButton, &sourceFrameEvolveButton,
         &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &sourceStackReverseButton, &sourceStackRotateLeftButton, &sourceStackRotateRightButton, &sourceStackSmoothButton, &sourceStackEmphasiseButton,
+        &sourceFrameDuplicateSlotButton, &sourceFrameDeleteSlotButton, &sourceFrameMoveLeftButton, &sourceFrameMoveRightButton,
         &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
@@ -11932,12 +11988,15 @@ void NateVSTAudioProcessorEditor::updateSourceFrameActionButtons()
 {
     const auto targetOsc2 = sourceFrameActionTargetIsOsc2();
     const auto targetName = juce::String(targetOsc2 ? "O2" : "O1");
-    const auto frameNumber = juce::String(static_cast<int>(currentCustomWaveFrameIndex(targetOsc2) + 1));
+    const auto currentFrame = currentCustomWaveFrameIndex(targetOsc2);
+    const auto frameNumber = juce::String(static_cast<int>(currentFrame + 1));
+    const auto canMoveLeft = currentFrame > 0;
+    const auto canMoveRight = currentFrame + 1 < Parameters::customWaveMorphFrameCount;
 
     sourceFrameTargetOsc1Button.setToggleState(! targetOsc2, juce::dontSendNotification);
     sourceFrameTargetOsc2Button.setToggleState(targetOsc2, juce::dontSendNotification);
-    sourceFramePreviousButton.setEnabled(currentCustomWaveFrameIndex(targetOsc2) > 0);
-    sourceFrameNextButton.setEnabled(currentCustomWaveFrameIndex(targetOsc2) + 1 < Parameters::customWaveMorphFrameCount);
+    sourceFramePreviousButton.setEnabled(canMoveLeft);
+    sourceFrameNextButton.setEnabled(canMoveRight);
     sourceFrameCopyButton.setEnabled(true);
     sourceFramePasteButton.setEnabled(wavetableFrameClipboardValid);
     sourceFrameFillButton.setEnabled(true);
@@ -11947,6 +12006,10 @@ void NateVSTAudioProcessorEditor::updateSourceFrameActionButtons()
     sourceStackRotateRightButton.setEnabled(true);
     sourceStackSmoothButton.setEnabled(true);
     sourceStackEmphasiseButton.setEnabled(true);
+    sourceFrameDuplicateSlotButton.setEnabled(canMoveRight);
+    sourceFrameDeleteSlotButton.setEnabled(true);
+    sourceFrameMoveLeftButton.setEnabled(canMoveLeft);
+    sourceFrameMoveRightButton.setEnabled(canMoveRight);
 
     sourceFrameTargetOsc1Button.setTooltip("Target Osc 1 for direct wavetable frame actions");
     sourceFrameTargetOsc2Button.setTooltip("Target Osc 2 for direct wavetable frame actions");
@@ -11964,6 +12027,16 @@ void NateVSTAudioProcessorEditor::updateSourceFrameActionButtons()
     sourceStackRotateRightButton.setTooltip("Rotate " + targetName + " frame stack right");
     sourceStackSmoothButton.setTooltip("Smooth frame-to-frame motion in " + targetName);
     sourceStackEmphasiseButton.setTooltip("Punch up frame-to-frame motion and contrast in " + targetName);
+    sourceFrameDuplicateSlotButton.setTooltip(canMoveRight
+                                                  ? "Duplicate " + targetName + " frame " + frameNumber + " into the next slot"
+                                                  : targetName + " frame 8 cannot duplicate forward");
+    sourceFrameDeleteSlotButton.setTooltip("Delete " + targetName + " frame " + frameNumber + " and close the frame gap");
+    sourceFrameMoveLeftButton.setTooltip(canMoveLeft
+                                             ? "Move " + targetName + " frame " + frameNumber + " one slot left"
+                                             : targetName + " frame 1 cannot move left");
+    sourceFrameMoveRightButton.setTooltip(canMoveRight
+                                              ? "Move " + targetName + " frame " + frameNumber + " one slot right"
+                                              : targetName + " frame 8 cannot move right");
 }
 
 void NateVSTAudioProcessorEditor::selectCustomWaveFrame(bool targetOsc2, size_t frameIndex)
@@ -12785,6 +12858,98 @@ void NateVSTAudioProcessorEditor::applyCustomWaveFrameStackTransform(bool target
     updateSourceFrameActionButtons();
 }
 
+void NateVSTAudioProcessorEditor::applyCustomWaveFrameSlotEdit(bool targetOsc2, WavetableFrameSlotEdit edit)
+{
+    setSourceFrameActionTarget(targetOsc2);
+
+    constexpr auto frameCount = Parameters::customWaveMorphFrameCount;
+    const auto lastFrame = frameCount - 1;
+    const auto activeFrame = currentCustomWaveFrameIndex(targetOsc2);
+    const auto targetName = juce::String(targetOsc2 ? "O2" : "O1");
+    const auto sourceFrames = readCustomWaveFrameSet(targetOsc2);
+    std::array<UI::WavetableDisplay::CustomPointArray, frameCount> editedFrames {};
+    auto selectedFrame = activeFrame;
+    juce::String editLabel;
+    juce::String statusText;
+
+    switch (edit)
+    {
+        case WavetableFrameSlotEdit::duplicateAfter:
+            if (activeFrame >= lastFrame)
+            {
+                setRandomStatus(targetName + " frame 8 cannot duplicate forward");
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                return;
+            }
+
+            editedFrames = Synth::WavetableFrameRecipes::duplicateFrameSlot(sourceFrames, activeFrame);
+            selectedFrame = activeFrame + 1;
+            editLabel = "Duplicate wavetable frame slot";
+            statusText = "Duplicated " + targetName + " frame "
+                + juce::String(static_cast<int>(activeFrame + 1))
+                + " into slot " + juce::String(static_cast<int>(selectedFrame + 1));
+            break;
+
+        case WavetableFrameSlotEdit::deleteFrame:
+            editedFrames = Synth::WavetableFrameRecipes::deleteFrameSlot(sourceFrames, activeFrame);
+            selectedFrame = activeFrame >= lastFrame ? lastFrame - 1 : activeFrame;
+            editLabel = "Delete wavetable frame slot";
+            statusText = "Deleted " + targetName + " frame "
+                + juce::String(static_cast<int>(activeFrame + 1))
+                + " and closed the stack gap";
+            break;
+
+        case WavetableFrameSlotEdit::moveLeft:
+            if (activeFrame == 0)
+            {
+                setRandomStatus(targetName + " frame 1 cannot move left");
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                return;
+            }
+
+            selectedFrame = activeFrame - 1;
+            editedFrames = Synth::WavetableFrameRecipes::moveFrameSlot(sourceFrames, activeFrame, selectedFrame);
+            editLabel = "Move wavetable frame left";
+            statusText = "Moved " + targetName + " frame "
+                + juce::String(static_cast<int>(activeFrame + 1))
+                + " left to slot " + juce::String(static_cast<int>(selectedFrame + 1));
+            break;
+
+        case WavetableFrameSlotEdit::moveRight:
+            if (activeFrame >= lastFrame)
+            {
+                setRandomStatus(targetName + " frame 8 cannot move right");
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                return;
+            }
+
+            selectedFrame = activeFrame + 1;
+            editedFrames = Synth::WavetableFrameRecipes::moveFrameSlot(sourceFrames, activeFrame, selectedFrame);
+            editLabel = "Move wavetable frame right";
+            statusText = "Moved " + targetName + " frame "
+                + juce::String(static_cast<int>(activeFrame + 1))
+                + " right to slot " + juce::String(static_cast<int>(selectedFrame + 1));
+            break;
+    }
+
+    writeCustomWaveFrameSet(targetOsc2, editedFrames, editLabel, statusText);
+
+    const auto parameterID = targetOsc2 ? juce::String(Parameters::ID::osc2WavetablePosition)
+                                        : juce::String(Parameters::ID::oscWavetablePosition);
+    const auto position = static_cast<float>(selectedFrame) / static_cast<float>(lastFrame);
+    setPlainParameterValue(parameterID, position);
+    updateSelectedControlInspector(targetName + " Frame " + juce::String(static_cast<int>(selectedFrame + 1)),
+                                   parameterID,
+                                   position);
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
+    updateSourceFrameActionButtons();
+    returnKeyboardFocusToPiano();
+}
+
 void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
 {
     const auto values = readMorphedCustomWaveFrame(targetOsc2);
@@ -13355,6 +13520,26 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
         case 67:
             interpolateCustomWaveFrameEndpoints(targetOsc2);
+            changed = false;
+            break;
+
+        case 74:
+            applyCustomWaveFrameSlotEdit(targetOsc2, WavetableFrameSlotEdit::duplicateAfter);
+            changed = false;
+            break;
+
+        case 75:
+            applyCustomWaveFrameSlotEdit(targetOsc2, WavetableFrameSlotEdit::deleteFrame);
+            changed = false;
+            break;
+
+        case 76:
+            applyCustomWaveFrameSlotEdit(targetOsc2, WavetableFrameSlotEdit::moveLeft);
+            changed = false;
+            break;
+
+        case 77:
+            applyCustomWaveFrameSlotEdit(targetOsc2, WavetableFrameSlotEdit::moveRight);
             changed = false;
             break;
 

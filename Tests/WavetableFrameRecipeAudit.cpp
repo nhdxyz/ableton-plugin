@@ -136,12 +136,24 @@ int main()
     const auto blended = Synth::WavetableFrameRecipes::blendFrameStacks(house, rave, 0.5f);
     const auto morphed = Synth::WavetableFrameRecipes::morphBetweenFrameStacks(house, rave);
     const auto spliced = Synth::WavetableFrameRecipes::spliceFrameStacks(house, rave);
+    const auto duplicated = Synth::WavetableFrameRecipes::duplicateFrameSlot(rave, 2);
+    const auto duplicateAtEnd = Synth::WavetableFrameRecipes::duplicateFrameSlot(rave, 7);
+    const auto deleted = Synth::WavetableFrameRecipes::deleteFrameSlot(rave, 2);
+    const auto deletedAtEnd = Synth::WavetableFrameRecipes::deleteFrameSlot(rave, 7);
+    const auto movedLeft = Synth::WavetableFrameRecipes::moveFrameSlot(rave, 3, 2);
+    const auto movedRight = Synth::WavetableFrameRecipes::moveFrameSlot(rave, 2, 4);
 
     if (! framesAreSafe(reversed)
         || ! framesAreSafe(rotatedLeft)
         || ! framesAreSafe(rotatedRight)
         || ! framesAreSafe(smoothed)
         || ! framesAreSafe(emphasised)
+        || ! framesAreSafe(duplicated)
+        || ! framesAreSafe(duplicateAtEnd)
+        || ! framesAreSafe(deleted)
+        || ! framesAreSafe(deletedAtEnd)
+        || ! framesAreSafe(movedLeft)
+        || ! framesAreSafe(movedRight)
         || ! validateFrameSet("Blended stack", blended)
         || ! validateFrameSet("Morphed stack", morphed)
         || ! validateFrameSet("Spliced stack", spliced))
@@ -155,6 +167,37 @@ int main()
         || Synth::WavetableFrameRecipes::meanAbsoluteDifference(rotatedRight.front(), rave.back()) > 0.0001f)
     {
         std::cerr << "Frame-stack reverse/rotate transform did not preserve expected frame order\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicated[0], rave[0]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicated[2], rave[2]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicated[3], rave[2]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicated[4], rave[3]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicated[7], rave[6]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(duplicateAtEnd[7], rave[7]) > 0.0001f)
+    {
+        std::cerr << "Frame-slot duplicate transform did not insert the active frame correctly\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(deleted[0], rave[0]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(deleted[2], rave[3]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(deleted[6], rave[7]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(deleted[7], rave[7]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(deletedAtEnd[7], rave[6]) > 0.0001f)
+    {
+        std::cerr << "Frame-slot delete transform did not close the frame gap correctly\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(movedLeft[2], rave[3]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(movedLeft[3], rave[2]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(movedRight[2], rave[3]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(movedRight[3], rave[4]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(movedRight[4], rave[2]) > 0.0001f)
+    {
+        std::cerr << "Frame-slot move transform did not preserve frame order correctly\n";
         return 1;
     }
 
@@ -193,6 +236,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame recipe audit passed for generated frame sets, genre stacks, stack transforms, and O1/O2 stack-combine tools.\n";
+    std::cout << "Wavetable frame recipe audit passed for generated frame sets, genre stacks, stack transforms, frame-slot edits, and O1/O2 stack-combine tools.\n";
     return 0;
 }

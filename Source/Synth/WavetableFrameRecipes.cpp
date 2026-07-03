@@ -414,6 +414,65 @@ ControlFrameSet rotateFrameOrder(ControlFrameSet frames, int offset) noexcept
     return frames;
 }
 
+ControlFrameSet duplicateFrameSlot(ControlFrameSet frames, size_t frameIndex) noexcept
+{
+    if (frames.empty())
+        return frames;
+
+    const auto lastIndex = frames.size() - 1;
+    const auto safeIndex = std::min(frameIndex, lastIndex);
+    if (safeIndex >= lastIndex)
+        return frames;
+
+    for (auto index = lastIndex; index > safeIndex + 1; --index)
+        frames[index] = frames[index - 1];
+
+    frames[safeIndex + 1] = frames[safeIndex];
+    return frames;
+}
+
+ControlFrameSet deleteFrameSlot(ControlFrameSet frames, size_t frameIndex) noexcept
+{
+    if (frames.size() <= 1)
+        return frames;
+
+    const auto lastIndex = frames.size() - 1;
+    const auto safeIndex = std::min(frameIndex, lastIndex);
+
+    for (auto index = safeIndex; index < lastIndex; ++index)
+        frames[index] = frames[index + 1];
+
+    frames[lastIndex] = frames[lastIndex - 1];
+    return frames;
+}
+
+ControlFrameSet moveFrameSlot(ControlFrameSet frames, size_t fromFrameIndex, size_t toFrameIndex) noexcept
+{
+    if (frames.empty())
+        return frames;
+
+    const auto lastIndex = frames.size() - 1;
+    const auto fromIndex = std::min(fromFrameIndex, lastIndex);
+    const auto toIndex = std::min(toFrameIndex, lastIndex);
+    if (fromIndex == toIndex)
+        return frames;
+
+    const auto movingFrame = frames[fromIndex];
+    if (fromIndex < toIndex)
+    {
+        for (auto index = fromIndex; index < toIndex; ++index)
+            frames[index] = frames[index + 1];
+    }
+    else
+    {
+        for (auto index = fromIndex; index > toIndex; --index)
+            frames[index] = frames[index - 1];
+    }
+
+    frames[toIndex] = movingFrame;
+    return frames;
+}
+
 ControlFrameSet smoothFrameMotion(const ControlFrameSet& frames) noexcept
 {
     ControlFrameSet result {};

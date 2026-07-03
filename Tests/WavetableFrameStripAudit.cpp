@@ -80,10 +80,11 @@ int main()
     strip.setState(makeState());
 
     const auto metrics = strip.getLayoutMetricsForAudit();
-    if (! metrics.readable || metrics.visibleFrameCards != 16)
+    if (! metrics.readable || metrics.visibleFrameCards != 16 || metrics.selectedFrameCards != 2)
     {
         std::cerr << "Wavetable frame strip layout is not readable: cards="
                   << metrics.visibleFrameCards
+                  << " selected=" << metrics.selectedFrameCards
                   << " minFrameWidth=" << metrics.minFrameWidth
                   << " minLaneHeight=" << metrics.minLaneHeight << '\n';
         return 1;

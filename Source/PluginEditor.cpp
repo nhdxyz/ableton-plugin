@@ -2184,13 +2184,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         wavetableToolBox.addItem("Store Frame " + juce::String(frame), 31 + frame);
     for (auto frame = 1; frame <= 8; ++frame)
         wavetableToolBox.addItem("Load Frame " + juce::String(frame), 39 + frame);
+    wavetableToolBox.addItem("Copy Active Frame", 64);
+    wavetableToolBox.addItem("Paste Active Frame", 65);
+    wavetableToolBox.addItem("Fill Stack From Active", 66);
+    wavetableToolBox.addItem("Interpolate End Frames", 67);
     wavetableToolBox.addItem("Bake WT Position", 48);
     wavetableToolBox.addItem("Current Sweep", 49);
     wavetableToolBox.addItem("Classic House Stack", 50);
     wavetableToolBox.addItem("Rave Sweep", 51);
     wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
     wavetableToolBox.setTextWhenNothingSelected("Wave Tools");
-    wavetableToolBox.setTooltip("Apply custom-wave edits, import/export WAV single cycles, shape additive partials, generate frame stacks, or store/load eight WT morph frames");
+    wavetableToolBox.setTooltip("Apply custom-wave edits, copy/paste the active frame, import/export WAV single cycles, shape additive partials, generate frame stacks, or store/load eight WT morph frames");
     addAndMakeVisible(wavetableToolBox);
 
     noiseTypeBox.addItemList(Parameters::noiseTypeChoices(), 1);
@@ -6271,10 +6275,10 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                                + toolBounds.toString() + " / " + editBounds.toString());
                 }
 
-                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 })
+                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67 })
                 {
                     if (wavetableToolBox.indexOfItemId(itemId) < 0)
-                        issues.add(panelName + ": SYNTH wave tools are missing layer-stack command id "
+                        issues.add(panelName + ": SYNTH wave tools are missing custom-wave command id "
                                    + juce::String(itemId));
                 }
             }
@@ -11525,6 +11529,19 @@ bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const
     return osc2IsCustom && ! osc1IsCustom;
 }
 
+size_t NateVSTAudioProcessorEditor::currentCustomWaveFrameIndex(bool targetOsc2) const
+{
+    const auto position = juce::jlimit(0.0f,
+                                      1.0f,
+                                      readPlainParameterValue(targetOsc2 ? Parameters::ID::osc2WavetablePosition
+                                                                         : Parameters::ID::oscWavetablePosition,
+                                                              targetOsc2 ? 0.35f : 0.0f));
+    return juce::jlimit<size_t>(
+        0,
+        Parameters::customWaveMorphFrameCount - 1,
+        static_cast<size_t>(juce::roundToInt(position * static_cast<float>(Parameters::customWaveMorphFrameCount - 1))));
+}
+
 void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
 {
     UI::WavetableFrameStrip::State state;
@@ -12088,6 +12105,81 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
     returnKeyboardFocusToPiano();
 }
 
+void NateVSTAudioProcessorEditor::copyCurrentCustomWaveFrame(bool targetOsc2)
+{
+    const auto frameIndex = currentCustomWaveFrameIndex(targetOsc2);
+    wavetableFrameClipboard = readCustomWaveFrame(targetOsc2, frameIndex);
+    wavetableFrameClipboardValid = true;
+
+    updateSelectedControlInspector(targetOsc2 ? "O2 Frame Copy" : "O1 Frame Copy",
+                                   frameIndex == 0 ? (targetOsc2 ? Parameters::ID::osc2CustomWave[0]
+                                                                 : Parameters::ID::oscCustomWave[0])
+                                                   : Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, 0),
+                                   wavetableFrameClipboard[0]);
+    setRandomStatus("Copied " + juce::String(targetOsc2 ? "O2" : "O1") + " frame "
+                    + juce::String(static_cast<int>(frameIndex + 1)));
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::pasteCurrentCustomWaveFrame(bool targetOsc2)
+{
+    if (! wavetableFrameClipboardValid)
+    {
+        setRandomStatus("Copy a WT frame before pasting");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    const auto frameIndex = currentCustomWaveFrameIndex(targetOsc2);
+    writeCustomWaveFrame(targetOsc2,
+                         frameIndex,
+                         wavetableFrameClipboard,
+                         "Paste wavetable frame");
+    setRandomStatus("Pasted copied WT frame to " + juce::String(targetOsc2 ? "O2" : "O1")
+                    + " frame " + juce::String(static_cast<int>(frameIndex + 1)));
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::duplicateCurrentCustomWaveFrameAcrossStack(bool targetOsc2)
+{
+    const auto frameIndex = currentCustomWaveFrameIndex(targetOsc2);
+    const auto sourceFrame = readCustomWaveFrame(targetOsc2, frameIndex);
+
+    std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> frames {};
+    frames.fill(sourceFrame);
+    writeCustomWaveFrameSet(targetOsc2,
+                            frames,
+                            "Fill wavetable stack from active frame",
+                            "Filled " + juce::String(targetOsc2 ? "O2" : "O1")
+                                + " stack from frame " + juce::String(static_cast<int>(frameIndex + 1)));
+}
+
+void NateVSTAudioProcessorEditor::interpolateCustomWaveFrameEndpoints(bool targetOsc2)
+{
+    auto frames = readCustomWaveFrameSet(targetOsc2);
+    const auto first = frames.front();
+    const auto last = frames.back();
+    const auto lastFrame = static_cast<float>(frames.size() - 1);
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        const auto linearMix = static_cast<float>(frameIndex) / juce::jmax(1.0f, lastFrame);
+        const auto smoothMix = linearMix * linearMix * (3.0f - (2.0f * linearMix));
+
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+            frames[frameIndex][pointIndex] = juce::jlimit(0.0f,
+                                                          1.0f,
+                                                          first[pointIndex]
+                                                              + ((last[pointIndex] - first[pointIndex]) * smoothMix));
+    }
+
+    writeCustomWaveFrameSet(targetOsc2,
+                            frames,
+                            "Interpolate wavetable end frames",
+                            "Interpolated " + juce::String(targetOsc2 ? "O2" : "O1")
+                                + " frames 1-8 into a smooth stack");
+}
+
 void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
 {
     const auto values = readMorphedCustomWaveFrame(targetOsc2);
@@ -12593,6 +12685,26 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
         case 63:
             buildRaveTechnoSourceLayers();
+            changed = false;
+            break;
+
+        case 64:
+            copyCurrentCustomWaveFrame(targetOsc2);
+            changed = false;
+            break;
+
+        case 65:
+            pasteCurrentCustomWaveFrame(targetOsc2);
+            changed = false;
+            break;
+
+        case 66:
+            duplicateCurrentCustomWaveFrameAcrossStack(targetOsc2);
+            changed = false;
+            break;
+
+        case 67:
+            interpolateCustomWaveFrameEndpoints(targetOsc2);
             changed = false;
             break;
 

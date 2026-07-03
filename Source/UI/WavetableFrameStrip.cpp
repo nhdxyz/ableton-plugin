@@ -62,16 +62,27 @@ WavetableFrameStrip::LayoutMetrics WavetableFrameStrip::getLayoutMetricsForAudit
     const auto lanes = laneBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
     metrics.minLaneHeight = lanes.front().getHeight();
 
-    for (const auto& lane : lanes)
+    for (size_t laneIndex = 0; laneIndex < lanes.size(); ++laneIndex)
     {
+        const auto& lane = lanes[laneIndex];
+        const auto& laneState = laneIndex == 0 ? state.osc1 : state.osc2;
+        const auto selectedFrame = juce::jlimit<int>(
+            0,
+            static_cast<int>(frameCount - 1),
+            juce::roundToInt(clamp01(laneState.position) * static_cast<float>(frameCount - 1)));
+
         metrics.minLaneHeight = std::min(metrics.minLaneHeight, lane.getHeight());
         const auto frames = frameBoundsForLane(lane);
-        for (const auto& frame : frames)
+        for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
         {
+            const auto& frame = frames[frameIndex];
             if (frame.getWidth() <= 0.0f || frame.getHeight() <= 0.0f)
                 continue;
 
             ++metrics.visibleFrameCards;
+            if (laneState.active && static_cast<int>(frameIndex) == selectedFrame)
+                ++metrics.selectedFrameCards;
+
             metrics.minFrameWidth = metrics.minFrameWidth <= 0.0f
                 ? frame.getWidth()
                 : std::min(metrics.minFrameWidth, frame.getWidth());
@@ -112,6 +123,10 @@ void WavetableFrameStrip::paint(juce::Graphics& g)
         const auto frameBounds = frameBoundsForLane(laneBounds);
         const auto laneActiveAlpha = lane.active ? 1.0f : inactiveAlpha;
         const auto isHoveredLane = hoveredLane == static_cast<int>(laneIndex);
+        const auto selectedFrame = juce::jlimit<int>(
+            0,
+            static_cast<int>(frameCount - 1),
+            juce::roundToInt(clamp01(lane.position) * static_cast<float>(frameCount - 1)));
 
         g.setColour((lane.active ? accent.withAlpha(0.12f) : theme.panelAlt).withMultipliedAlpha(laneActiveAlpha));
         g.fillRoundedRectangle(laneBounds, 5.0f);
@@ -129,15 +144,20 @@ void WavetableFrameStrip::paint(juce::Graphics& g)
         for (size_t frameIndex = 0; frameIndex < frameBounds.size(); ++frameIndex)
         {
             const auto frame = frameBounds[frameIndex];
-            const auto activeFrame = static_cast<int>(frameIndex) == hoveredFrame
+            const auto hoveredFrameCard = static_cast<int>(frameIndex) == hoveredFrame
                 && hoveredLane == static_cast<int>(laneIndex);
+            const auto selectedFrameCard = lane.active && static_cast<int>(frameIndex) == selectedFrame;
+            const auto activeFrame = hoveredFrameCard || selectedFrameCard;
             const auto range = frameRange(lane.frames[frameIndex]);
             const auto cardAlpha = lane.active ? 1.0f : inactiveAlpha;
 
-            g.setColour((activeFrame ? accent.withAlpha(0.22f) : theme.panelAlt).withMultipliedAlpha(cardAlpha));
+            g.setColour((selectedFrameCard ? accent.withAlpha(0.26f)
+                                           : hoveredFrameCard ? accent.withAlpha(0.22f)
+                                                              : theme.panelAlt)
+                            .withMultipliedAlpha(cardAlpha));
             g.fillRoundedRectangle(frame, 4.0f);
             g.setColour((activeFrame ? accent : theme.outline.withAlpha(0.72f)).withMultipliedAlpha(cardAlpha));
-            g.drawRoundedRectangle(frame, 4.0f, activeFrame ? 1.3f : 1.0f);
+            g.drawRoundedRectangle(frame, 4.0f, selectedFrameCard ? 1.7f : (hoveredFrameCard ? 1.3f : 1.0f));
 
             auto waveArea = frame.reduced(4.0f, 5.0f);
             waveArea.removeFromBottom(8.0f);
@@ -154,6 +174,13 @@ void WavetableFrameStrip::paint(juce::Graphics& g)
                              juce::Justification::centred,
                              1,
                              0.58f);
+
+            if (selectedFrameCard)
+            {
+                const auto marker = frame.reduced(5.0f, 3.0f).removeFromTop(2.0f);
+                g.setColour(accent.withAlpha(0.88f));
+                g.fillRoundedRectangle(marker, 1.0f);
+            }
         }
 
         if (! frameBounds.empty())

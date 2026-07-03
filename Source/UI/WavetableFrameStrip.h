@@ -37,6 +37,7 @@ public:
     struct LayoutMetrics
     {
         int visibleFrameCards = 0;
+        int selectedFrameCards = 0;
         float minFrameWidth = 0.0f;
         float minLaneHeight = 0.0f;
         bool readable = false;

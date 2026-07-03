@@ -822,6 +822,8 @@ private:
     juce::String fxRackStatusOverride;
     double fxRackStatusOverrideUntilMs = 0.0;
     juce::String sampleWaveformKey;
+    UI::WavetableDisplay::CustomPointArray wavetableFrameClipboard {};
+    bool wavetableFrameClipboardValid = false;
     std::vector<juce::File> sequencerDragMidiFiles;
     int keyboardTypingBaseNote = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
@@ -909,6 +911,7 @@ private:
     void updateSourceLabFrameStrip();
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
+    size_t currentCustomWaveFrameIndex(bool targetOsc2) const;
     UI::WavetableDisplay::CustomPointArray readCustomWaveFrame(bool targetOsc2, size_t frameIndex) const;
     std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> readCustomWaveFrameSet(bool targetOsc2) const;
     UI::WavetableDisplay::CustomPointArray readMorphedCustomWaveFrame(bool targetOsc2) const;
@@ -928,6 +931,10 @@ private:
     void swapCustomWaveFrameStacks();
     void buildClassicHouseSourceLayers();
     void buildRaveTechnoSourceLayers();
+    void copyCurrentCustomWaveFrame(bool targetOsc2);
+    void pasteCurrentCustomWaveFrame(bool targetOsc2);
+    void duplicateCurrentCustomWaveFrameAcrossStack(bool targetOsc2);
+    void interpolateCustomWaveFrameEndpoints(bool targetOsc2);
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

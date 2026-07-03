@@ -31,6 +31,7 @@
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/WavetableDisplay.h"
+#include "UI/WavetableFrameStrip.h"
 #include "UI/XYMacroPad.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -794,6 +795,7 @@ private:
     UI::StepSequencerGrid sequencerGrid;
     UI::StepSequencerGrid expandedSequencerGrid;
     UI::WavetableDisplay wavetableDisplay;
+    UI::WavetableFrameStrip sourceLabFrameStrip;
     UI::HouseLayerRackDisplay houseLayerRackDisplay;
     UI::HouseLayerRackDisplay expandedHouseLayerRackDisplay;
     UI::FilterResponseDisplay filterResponseDisplay;
@@ -903,6 +905,7 @@ private:
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
+    void updateSourceLabFrameStrip();
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
     UI::WavetableDisplay::CustomPointArray readCustomWaveFrame(bool targetOsc2, size_t frameIndex) const;

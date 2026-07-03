@@ -1871,6 +1871,25 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateWavetableDisplay();
     };
     addAndMakeVisible(wavetableDisplay);
+
+    sourceLabFrameStrip.onPositionEditStart = [this] (bool targetOsc2)
+    {
+        captureGlobalEdit(targetOsc2 ? "Scan Osc 2 wavetable stack" : "Scan Osc 1 wavetable stack");
+    };
+    sourceLabFrameStrip.onPositionChange = [this] (bool targetOsc2, float position)
+    {
+        const auto parameterID = targetOsc2 ? juce::String(Parameters::ID::osc2WavetablePosition)
+                                           : juce::String(Parameters::ID::oscWavetablePosition);
+        const auto labelText = targetOsc2 ? juce::String("O2 WT Stack")
+                                          : juce::String("O1 WT Stack");
+        setPlainParameterValue(parameterID, position);
+        updateSelectedControlInspector(labelText, parameterID, position);
+        updateWavetableDisplay();
+        updateSourceLabFrameStrip();
+        returnKeyboardFocusToPiano();
+    };
+    addAndMakeVisible(sourceLabFrameStrip);
+
     houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
     houseLayerRackDisplay.onLayerEditStarted = [this] (size_t layerIndex) { beginHouseLayerLevelEdit(layerIndex); };
     houseLayerRackDisplay.onLayerLevelChanged = [this] (size_t layerIndex, float level) { setHouseLayerLevel(layerIndex, level); };
@@ -4014,6 +4033,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     houseLayerRackDisplay.setTheme(theme);
     expandedHouseLayerRackDisplay.setTheme(theme);
+    sourceLabFrameStrip.setTheme(theme);
     sampleChopPanel.applyTheme(theme);
     sampleRecorderPanel.applyTheme(theme);
 
@@ -6245,6 +6265,21 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                         issues.add(panelName + ": expanded source layer rack cards are too small "
                                    + juce::String(expandedMetrics.minCardWidth, 1) + "x"
                                    + juce::String(expandedMetrics.minCardHeight, 1));
+                    }
+                }
+
+                if (! sourceLabFrameStrip.isVisible())
+                {
+                    issues.add(panelName + ": source lab wavetable frame strip is not visible");
+                }
+                else
+                {
+                    const auto stripMetrics = sourceLabFrameStrip.getLayoutMetricsForAudit();
+                    if (! stripMetrics.readable || stripMetrics.minFrameWidth < 44.0f || stripMetrics.minLaneHeight < 64.0f)
+                    {
+                        issues.add(panelName + ": source lab wavetable frame strip is too small "
+                                   + juce::String(stripMetrics.minFrameWidth, 1) + "x"
+                                   + juce::String(stripMetrics.minLaneHeight, 1));
                     }
                 }
             }
@@ -10645,6 +10680,7 @@ void NateVSTAudioProcessorEditor::openSourceLayerFocusOverlay()
 {
     activeFocusOverlay = FocusOverlay::sourceLayerEditor;
     updateHouseLayerRackDisplay();
+    updateSourceLabFrameStrip();
     resized();
     repaint();
 }
@@ -10691,6 +10727,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedSampleWaveformDisplay.setVisible(showSampleChopEditor);
     sampleChopPanel.setVisible(showSampleChopEditor);
     expandedHouseLayerRackDisplay.setVisible(showSourceLayerEditor);
+    sourceLabFrameStrip.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
     sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
 
@@ -10704,7 +10741,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     auto header = panelBounds.reduced(18, 14).removeFromTop(28);
     focusOverlayCloseButton.setBounds(header.removeFromRight(74).reduced(2, 1));
     focusOverlayTitleLabel.setText(showSampleChopEditor ? "SAMPLE CHOP FOCUS"
-                                                        : showSourceLayerEditor ? "HOUSE SOURCE LAYERS"
+                                                        : showSourceLayerEditor ? "SOURCE LAB FOCUS"
                                                                                 : showSequencerEditor ? "SEQ PATTERN EDITOR"
                                                                                                       : "EXPANDED MACRO EDITOR",
                                    juce::dontSendNotification);
@@ -10725,7 +10762,9 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     }
     else if (showSourceLayerEditor)
     {
-        expandedHouseLayerRackDisplay.setBounds(content.reduced(8, 8));
+        auto rackArea = content.removeFromTop(juce::jlimit(188, 240, content.getHeight() / 2));
+        expandedHouseLayerRackDisplay.setBounds(rackArea.reduced(8, 6));
+        sourceLabFrameStrip.setBounds(content.reduced(8, 6));
     }
     else if (showSequencerEditor)
     {
@@ -10741,6 +10780,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     expandedSampleWaveformDisplay.toFront(false);
     sampleChopPanel.toFront(false);
     expandedHouseLayerRackDisplay.toFront(false);
+    sourceLabFrameStrip.toFront(false);
     expandedSequencerGrid.toFront(false);
     sequencerSceneChainLengthButton.toFront(false);
     focusOverlayCloseButton.toFront(false);
@@ -10910,7 +10950,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &sourceLabFrameStrip, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -11415,6 +11455,7 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
         osc2CustomPoints,
         osc1IsCustom,
         osc2IsCustom);
+    updateSourceLabFrameStrip();
 }
 
 bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const
@@ -11422,6 +11463,39 @@ bool NateVSTAudioProcessorEditor::wavetableTargetIsOsc2() const
     const auto osc1IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f)) == 7;
     const auto osc2IsCustom = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f)) == 7;
     return osc2IsCustom && ! osc1IsCustom;
+}
+
+void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
+{
+    UI::WavetableFrameStrip::State state;
+
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+    const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    const auto osc1Custom = osc1Wave == 7;
+    const auto osc2Custom = osc2Wave == 7;
+    const auto osc1Level = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f));
+    const auto osc2Level = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f));
+
+    state.osc1.label = "OSC 1";
+    state.osc1.detail = sourceNameForWave(osc1Wave) + " | " + juce::String(juce::roundToInt(osc1Level * 100.0f)) + "%";
+    state.osc1.position = readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f);
+    state.osc1.active = osc1Custom && osc1Level > 0.01f;
+
+    state.osc2.label = "OSC 2";
+    state.osc2.detail = sourceNameForWave(osc2Wave) + " | " + juce::String(juce::roundToInt(osc2Level * 100.0f)) + "%";
+    state.osc2.position = readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f);
+    state.osc2.active = osc2Custom && osc2Level > 0.01f;
+
+    for (size_t frameIndex = 0; frameIndex < Parameters::customWaveMorphFrameCount; ++frameIndex)
+    {
+        state.osc1.frames[frameIndex] = readCustomWaveFrame(false, frameIndex);
+        state.osc2.frames[frameIndex] = readCustomWaveFrame(true, frameIndex);
+    }
+
+    state.summary = (osc1Custom ? juce::String("O1 custom") : "O1 " + sourceNameForWave(osc1Wave))
+        + " | "
+        + (osc2Custom ? juce::String("O2 custom") : "O2 " + sourceNameForWave(osc2Wave));
+    sourceLabFrameStrip.setState(std::move(state));
 }
 
 UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readCustomWaveFrame(bool targetOsc2,
@@ -12400,6 +12474,7 @@ void NateVSTAudioProcessorEditor::setHouseLayerLevel(size_t layerIndex, float le
     setPlainParameterValue(target.parameterID, level);
     updateSelectedControlInspector(target.label, target.parameterID, level);
     updateHouseLayerRackDisplay();
+    updateSourceLabFrameStrip();
     updateHomeOverviewDisplay();
     updateHomeSignalFlowDisplay();
 }

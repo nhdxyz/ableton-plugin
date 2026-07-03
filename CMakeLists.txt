@@ -87,6 +87,7 @@ target_sources(NateVST
         Source/UI/StepSequencerGrid.cpp
         Source/UI/Theme.cpp
         Source/UI/WavetableDisplay.cpp
+        Source/UI/WavetableFrameStrip.cpp
         Source/UI/XYMacroPad.cpp
 )
 
@@ -161,6 +162,21 @@ target_link_libraries(NateVSTWavetableDisplayAudit
 )
 
 add_test(NAME WavetableDisplayAudit COMMAND NateVSTWavetableDisplayAudit)
+
+add_executable(NateVSTWavetableFrameStripAudit
+    Tests/WavetableFrameStripAudit.cpp
+    Source/UI/WavetableFrameStrip.cpp
+    Source/UI/Theme.cpp
+)
+
+target_link_libraries(NateVSTWavetableFrameStripAudit
+    PRIVATE
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME WavetableFrameStripAudit COMMAND NateVSTWavetableFrameStripAudit)
 
 add_executable(NateVSTThemeAudit Tests/ThemeAudit.cpp Source/UI/Theme.cpp)
 

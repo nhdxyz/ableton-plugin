@@ -289,6 +289,72 @@ ControlFrameSet raveSweep() noexcept
     };
 }
 
+ControlFrameSet reverseFrameOrder(ControlFrameSet frames) noexcept
+{
+    std::reverse(frames.begin(), frames.end());
+    return frames;
+}
+
+ControlFrameSet rotateFrameOrder(ControlFrameSet frames, int offset) noexcept
+{
+    if (frames.empty())
+        return frames;
+
+    const auto count = static_cast<int>(frames.size());
+    auto safeOffset = offset % count;
+    if (safeOffset < 0)
+        safeOffset += count;
+
+    std::rotate(frames.begin(), frames.begin() + safeOffset, frames.end());
+    return frames;
+}
+
+ControlFrameSet smoothFrameMotion(const ControlFrameSet& frames) noexcept
+{
+    ControlFrameSet result {};
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        const auto previousIndex = frameIndex == 0 ? frameIndex : frameIndex - 1;
+        const auto nextIndex = frameIndex + 1 >= frames.size() ? frameIndex : frameIndex + 1;
+
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+        {
+            result[frameIndex][pointIndex] = clampNormalised(
+                (frames[previousIndex][pointIndex] * 0.24f)
+                + (frames[frameIndex][pointIndex] * 0.52f)
+                + (frames[nextIndex][pointIndex] * 0.24f));
+        }
+    }
+
+    return result;
+}
+
+ControlFrameSet emphasiseFrameMotion(const ControlFrameSet& frames) noexcept
+{
+    ControlFrameSet result {};
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        const auto previousIndex = frameIndex == 0 ? frameIndex : frameIndex - 1;
+        const auto nextIndex = frameIndex + 1 >= frames.size() ? frameIndex : frameIndex + 1;
+
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+        {
+            const auto neighbourAverage = (frames[previousIndex][pointIndex] + frames[nextIndex][pointIndex]) * 0.5f;
+            const auto localContrast = frames[frameIndex][pointIndex] - neighbourAverage;
+            const auto centerContrast = frames[frameIndex][pointIndex] - 0.5f;
+            result[frameIndex][pointIndex] = clampNormalised(frames[frameIndex][pointIndex]
+                                                             + (localContrast * 0.32f)
+                                                             + (centerContrast * 0.16f));
+        }
+
+        result[frameIndex] = normalise(result[frameIndex]);
+    }
+
+    return result;
+}
+
 float meanAbsoluteDifference(const ControlPoints& first, const ControlPoints& second) noexcept
 {
     auto sum = 0.0f;

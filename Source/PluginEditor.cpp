@@ -2165,6 +2165,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Copy O1 Stack to O2", 54);
     wavetableToolBox.addItem("Copy O2 Stack to O1", 55);
     wavetableToolBox.addItem("Swap O1/O2 Stacks", 56);
+    wavetableToolBox.addItem("Reverse Target Stack", 57);
+    wavetableToolBox.addItem("Rotate Stack Left", 58);
+    wavetableToolBox.addItem("Rotate Stack Right", 59);
+    wavetableToolBox.addItem("Smooth Stack Motion", 60);
+    wavetableToolBox.addItem("Emphasize Stack Motion", 61);
     wavetableToolBox.addSectionHeading("Additive Partials");
     wavetableToolBox.addItem("Odd Harmonics", 26);
     wavetableToolBox.addItem("Even Harmonics", 27);
@@ -6264,7 +6269,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                                + toolBounds.toString() + " / " + editBounds.toString());
                 }
 
-                for (const auto itemId : { 54, 55, 56 })
+                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61 })
                 {
                     if (wavetableToolBox.indexOfItemId(itemId) < 0)
                         issues.add(panelName + ": SYNTH wave tools are missing layer-stack command id "
@@ -12420,6 +12425,46 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
         case 56:
             swapCustomWaveFrameStacks();
+            changed = false;
+            break;
+
+        case 57:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::reverseFrameOrder(readCustomWaveFrameSet(targetOsc2)),
+                                    "Reverse wavetable stack",
+                                    "Reversed " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack");
+            changed = false;
+            break;
+
+        case 58:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::rotateFrameOrder(readCustomWaveFrameSet(targetOsc2), 1),
+                                    "Rotate wavetable stack left",
+                                    "Rotated " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack left");
+            changed = false;
+            break;
+
+        case 59:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::rotateFrameOrder(readCustomWaveFrameSet(targetOsc2), -1),
+                                    "Rotate wavetable stack right",
+                                    "Rotated " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack right");
+            changed = false;
+            break;
+
+        case 60:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::smoothFrameMotion(readCustomWaveFrameSet(targetOsc2)),
+                                    "Smooth wavetable stack motion",
+                                    "Smoothed " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack motion");
+            changed = false;
+            break;
+
+        case 61:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::emphasiseFrameMotion(readCustomWaveFrameSet(targetOsc2)),
+                                    "Emphasize wavetable stack motion",
+                                    "Emphasized " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack motion");
             changed = false;
             break;
 

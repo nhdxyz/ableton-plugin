@@ -51,6 +51,44 @@ bool validateFrameSet(const char* label, const ControlFrameSet& frames)
 
     return true;
 }
+
+bool framesAreSafe(const ControlFrameSet& frames)
+{
+    for (const auto& frame : frames)
+        for (const auto value : frame)
+            if (! std::isfinite(value) || value < 0.0f || value > 1.0f)
+                return false;
+
+    return true;
+}
+
+float adjacentDifference(const ControlFrameSet& frames)
+{
+    auto sum = 0.0f;
+    for (size_t index = 1; index < frames.size(); ++index)
+        sum += Synth::WavetableFrameRecipes::meanAbsoluteDifference(frames[index - 1], frames[index]);
+
+    return sum / static_cast<float>(frames.size() - 1);
+}
+
+float averageFrameRange(const ControlFrameSet& frames)
+{
+    auto sum = 0.0f;
+    for (const auto& frame : frames)
+    {
+        auto minValue = frame.front();
+        auto maxValue = frame.front();
+        for (const auto value : frame)
+        {
+            minValue = std::min(minValue, value);
+            maxValue = std::max(maxValue, value);
+        }
+
+        sum += maxValue - minValue;
+    }
+
+    return sum / static_cast<float>(frames.size());
+}
 }
 
 int main()
@@ -76,6 +114,42 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame recipe audit passed for current, classic house, and rave frame sets.\n";
+    const auto reversed = Synth::WavetableFrameRecipes::reverseFrameOrder(rave);
+    const auto rotatedLeft = Synth::WavetableFrameRecipes::rotateFrameOrder(rave, 1);
+    const auto rotatedRight = Synth::WavetableFrameRecipes::rotateFrameOrder(rave, -1);
+    const auto smoothed = Synth::WavetableFrameRecipes::smoothFrameMotion(rave);
+    const auto emphasised = Synth::WavetableFrameRecipes::emphasiseFrameMotion(rave);
+
+    if (! framesAreSafe(reversed)
+        || ! framesAreSafe(rotatedLeft)
+        || ! framesAreSafe(rotatedRight)
+        || ! framesAreSafe(smoothed)
+        || ! framesAreSafe(emphasised))
+    {
+        std::cerr << "Frame-stack transform produced unsafe values\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(reversed.front(), rave.back()) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(rotatedLeft.front(), rave[1]) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(rotatedRight.front(), rave.back()) > 0.0001f)
+    {
+        std::cerr << "Frame-stack reverse/rotate transform did not preserve expected frame order\n";
+        return 1;
+    }
+
+    if (adjacentDifference(smoothed) >= adjacentDifference(rave))
+    {
+        std::cerr << "Frame-stack smooth transform did not reduce adjacent frame motion\n";
+        return 1;
+    }
+
+    if (averageFrameRange(emphasised) <= averageFrameRange(rave))
+    {
+        std::cerr << "Frame-stack emphasis transform did not increase average frame range\n";
+        return 1;
+    }
+
+    std::cout << "Wavetable frame recipe audit passed for generated frame sets and stack transforms.\n";
     return 0;
 }

@@ -72,6 +72,7 @@ OscillatorLaneOverview::OscillatorLaneOverview()
 {
     setComponentID("OscillatorLaneOverview");
     tooltipText = "Oscillator lanes: source level, wavetable position, and A/B warp stack overview";
+    setMouseCursor(juce::MouseCursor::PointingHandCursor);
 }
 
 void OscillatorLaneOverview::setTheme(const Theme& newTheme)
@@ -85,7 +86,8 @@ void OscillatorLaneOverview::setTheme(const Theme& newTheme)
 
 void OscillatorLaneOverview::setState(State newState)
 {
-    auto changed = state.summary != newState.summary;
+    auto changed = state.summary != newState.summary
+        || state.osc2Selected != newState.osc2Selected;
     for (size_t index = 0; index < laneCount; ++index)
         changed = changed || ! lanesEqual(state.lanes[index], newState.lanes[index]);
 
@@ -122,6 +124,7 @@ OscillatorLaneOverview::LayoutMetrics OscillatorLaneOverview::getLayoutMetricsFo
     if (metrics.visibleLanes <= 0)
         return metrics;
 
+    metrics.selectedLanes = 1;
     metrics.minLaneWidth = lanes.front().getWidth();
     metrics.minLaneHeight = lanes.front().getHeight();
     for (const auto& lane : lanes)
@@ -170,12 +173,15 @@ void OscillatorLaneOverview::paint(juce::Graphics& g)
         const auto& lane = state.lanes[index];
         const auto level = juce::jlimit(0.0f, 1.0f, lane.level);
         const auto active = lane.active && level > activeThreshold;
+        const auto hovered = hoveredLane == static_cast<int>(index);
+        const auto selected = state.osc2Selected == (index == 1);
         const auto accent = laneColour(theme, index, active);
 
-        g.setColour(active ? accent.withAlpha(0.16f) : theme.panelAlt);
+        g.setColour(selected ? accent.withAlpha(active ? 0.24f : 0.14f)
+                             : (active ? accent.withAlpha(0.16f) : theme.panelAlt));
         g.fillRoundedRectangle(laneBounds, 4.5f);
-        g.setColour(active ? accent.withAlpha(0.72f) : theme.outline);
-        g.drawRoundedRectangle(laneBounds, 4.5f, active ? 1.3f : 1.0f);
+        g.setColour(selected || hovered ? accent : (active ? accent.withAlpha(0.72f) : theme.outline));
+        g.drawRoundedRectangle(laneBounds, 4.5f, selected ? 1.8f : (hovered ? 1.4f : (active ? 1.3f : 1.0f)));
 
         auto textArea = laneBounds.reduced(5.0f, compact ? 3.0f : 4.0f);
         auto top = textArea.removeFromTop(compact ? 12.0f : 14.0f);
@@ -225,6 +231,65 @@ void OscillatorLaneOverview::paint(juce::Graphics& g)
     }
 }
 
+void OscillatorLaneOverview::mouseMove(const juce::MouseEvent& event)
+{
+    const auto hit = hitTargetAt(event.position);
+    const auto nextHoveredLane = hit.valid ? (hit.osc2 ? 1 : 0) : -1;
+    if (nextHoveredLane == hoveredLane)
+        return;
+
+    hoveredLane = nextHoveredLane;
+    repaint();
+}
+
+void OscillatorLaneOverview::mouseExit(const juce::MouseEvent&)
+{
+    if (hoveredLane < 0)
+        return;
+
+    hoveredLane = -1;
+    repaint();
+}
+
+void OscillatorLaneOverview::mouseDown(const juce::MouseEvent& event)
+{
+    const auto hit = hitTargetAt(event.position);
+    if (! hit.valid)
+        return;
+
+    editingLane = hit.osc2 ? 1 : 0;
+    hoveredLane = editingLane;
+
+    if (onLaneSelected)
+        onLaneSelected(hit.osc2);
+    if (onPositionEditStart)
+        onPositionEditStart(hit.osc2);
+
+    updatePositionAt(event.position);
+}
+
+void OscillatorLaneOverview::mouseDrag(const juce::MouseEvent& event)
+{
+    updatePositionAt(event.position);
+}
+
+void OscillatorLaneOverview::mouseUp(const juce::MouseEvent&)
+{
+    editingLane = -1;
+}
+
+void OscillatorLaneOverview::mouseDoubleClick(const juce::MouseEvent& event)
+{
+    const auto hit = hitTargetAt(event.position);
+    if (! hit.valid)
+        return;
+
+    if (onLaneSelected)
+        onLaneSelected(hit.osc2);
+    if (onOpenLaneEditor)
+        onOpenLaneEditor(hit.osc2);
+}
+
 std::array<juce::Rectangle<float>, OscillatorLaneOverview::laneCount>
 OscillatorLaneOverview::laneBoundsForArea(juce::Rectangle<float> bounds) const
 {
@@ -236,6 +301,48 @@ OscillatorLaneOverview::laneBoundsForArea(juce::Rectangle<float> bounds) const
     laneArea.removeFromLeft(gap);
     lanes[1] = laneArea;
     return lanes;
+}
+
+OscillatorLaneOverview::HitTarget OscillatorLaneOverview::hitTargetAt(juce::Point<float> position) const
+{
+    HitTarget hit;
+    const auto lanes = laneBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
+
+    for (size_t index = 0; index < lanes.size(); ++index)
+    {
+        if (! lanes[index].contains(position))
+            continue;
+
+        hit.valid = true;
+        hit.osc2 = index == 1;
+        hit.position = juce::jlimit(0.0f,
+                                    1.0f,
+                                    (position.x - lanes[index].getX()) / juce::jmax(1.0f, lanes[index].getWidth()));
+        return hit;
+    }
+
+    return hit;
+}
+
+void OscillatorLaneOverview::updatePositionAt(juce::Point<float> position)
+{
+    if (editingLane < 0)
+        return;
+
+    const auto hit = hitTargetAt(position);
+    if (! hit.valid || (hit.osc2 ? 1 : 0) != editingLane)
+        return;
+
+    auto& lane = state.lanes[hit.osc2 ? 1 : 0];
+    if (std::abs(lane.wavetablePosition - hit.position) < 0.001f)
+        return;
+
+    lane.wavetablePosition = hit.position;
+
+    if (onPositionChange)
+        onPositionChange(hit.osc2, hit.position);
+
+    repaint();
 }
 
 bool OscillatorLaneOverview::lanesEqual(const Lane& left, const Lane& right) noexcept

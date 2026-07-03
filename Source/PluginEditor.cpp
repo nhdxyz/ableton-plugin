@@ -1965,6 +1965,39 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(sourceLabFrameStrip);
 
+    oscillatorLaneOverview.onLaneSelected = [this] (bool targetOsc2)
+    {
+        setSourceFrameActionTarget(targetOsc2);
+        const auto parameterID = targetOsc2 ? juce::String(Parameters::ID::osc2Level)
+                                           : juce::String(Parameters::ID::osc1Level);
+        updateSelectedControlInspector(targetOsc2 ? "Osc 2 Lane" : "Osc 1 Lane",
+                                       parameterID,
+                                       readPlainParameterValue(parameterID, targetOsc2 ? 0.0f : 1.0f));
+        returnKeyboardFocusToPiano();
+    };
+    oscillatorLaneOverview.onPositionEditStart = [this] (bool targetOsc2)
+    {
+        setSourceFrameActionTarget(targetOsc2);
+        captureGlobalEdit(targetOsc2 ? "Scan Osc 2 lane WT" : "Scan Osc 1 lane WT");
+    };
+    oscillatorLaneOverview.onPositionChange = [this] (bool targetOsc2, float position)
+    {
+        const auto parameterID = targetOsc2 ? juce::String(Parameters::ID::osc2WavetablePosition)
+                                           : juce::String(Parameters::ID::oscWavetablePosition);
+        const auto labelText = targetOsc2 ? juce::String("O2 WT Lane")
+                                          : juce::String("O1 WT Lane");
+        setPlainParameterValue(parameterID, position);
+        updateSelectedControlInspector(labelText, parameterID, position);
+        updateWavetableDisplay();
+        updateSourceLabFrameStrip();
+        returnKeyboardFocusToPiano();
+    };
+    oscillatorLaneOverview.onOpenLaneEditor = [this] (bool targetOsc2)
+    {
+        setSourceFrameActionTarget(targetOsc2);
+        openSourceLayerFocusOverlay();
+        returnKeyboardFocusToPiano();
+    };
     addAndMakeVisible(oscillatorLaneOverview);
 
     houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
@@ -11769,6 +11802,7 @@ void NateVSTAudioProcessorEditor::setSourceFrameActionTarget(bool targetOsc2)
     sourceFrameActionTargetOsc2 = targetOsc2;
     sourceFrameActionTargetExplicit = true;
     updateSourceFrameActionButtons();
+    updateOscillatorLaneOverview();
 }
 
 bool NateVSTAudioProcessorEditor::sourceFrameActionTargetIsOsc2() const
@@ -13132,6 +13166,7 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
     };
 
     UI::OscillatorLaneOverview::State state;
+    state.osc2Selected = sourceFrameActionTargetIsOsc2();
     state.lanes = {
         UI::OscillatorLaneOverview::Lane {
             "OSC 1",

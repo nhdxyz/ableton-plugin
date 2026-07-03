@@ -179,6 +179,21 @@ target_link_libraries(NateVSTWavetableFrameStripAudit
 
 add_test(NAME WavetableFrameStripAudit COMMAND NateVSTWavetableFrameStripAudit)
 
+add_executable(NateVSTOscillatorLaneOverviewAudit
+    Tests/OscillatorLaneOverviewAudit.cpp
+    Source/UI/OscillatorLaneOverview.cpp
+    Source/UI/Theme.cpp
+)
+
+target_link_libraries(NateVSTOscillatorLaneOverviewAudit
+    PRIVATE
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME OscillatorLaneOverviewAudit COMMAND NateVSTOscillatorLaneOverviewAudit)
+
 add_executable(NateVSTThemeAudit Tests/ThemeAudit.cpp Source/UI/Theme.cpp)
 
 target_link_libraries(NateVSTThemeAudit

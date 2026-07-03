@@ -1992,6 +1992,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSourceLabFrameStrip();
         returnKeyboardFocusToPiano();
     };
+    oscillatorLaneOverview.onWarpEditStart = [this] (bool targetOsc2, bool warpB)
+    {
+        setSourceFrameActionTarget(targetOsc2);
+        captureGlobalEdit(juce::String(targetOsc2 ? "Edit Osc 2 lane " : "Edit Osc 1 lane ")
+                          + (warpB ? "Warp B" : "Warp A"));
+    };
+    oscillatorLaneOverview.onWarpChange = [this] (bool targetOsc2, bool warpB, float amount)
+    {
+        const auto parameterID = targetOsc2
+            ? (warpB ? juce::String(Parameters::ID::osc2WarpB) : juce::String(Parameters::ID::osc2Warp))
+            : (warpB ? juce::String(Parameters::ID::oscWarpB) : juce::String(Parameters::ID::oscWarp));
+        const auto labelText = juce::String(targetOsc2 ? "O2 " : "O1 ") + (warpB ? "Warp B" : "Warp A");
+        setPlainParameterValue(parameterID, amount);
+        updateSelectedControlInspector(labelText, parameterID, amount);
+        updateWavetableDisplay();
+        updateSourceLabFrameStrip();
+        returnKeyboardFocusToPiano();
+    };
     oscillatorLaneOverview.onOpenLaneEditor = [this] (bool targetOsc2)
     {
         setSourceFrameActionTarget(targetOsc2);

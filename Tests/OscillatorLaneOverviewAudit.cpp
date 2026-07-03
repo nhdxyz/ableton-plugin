@@ -8,6 +8,13 @@
 
 namespace
 {
+struct WarpChange
+{
+    bool osc2 = false;
+    bool warpB = false;
+    float amount = 0.0f;
+};
+
 juce::MouseEvent makeMouseEvent(UI::OscillatorLaneOverview& overview,
                                 float x,
                                 float y,
@@ -119,10 +126,17 @@ int main()
     std::vector<bool> selectedLanes;
     std::vector<bool> editStarts;
     std::vector<std::pair<bool, float>> changes;
+    std::vector<std::pair<bool, bool>> warpEditStarts;
+    std::vector<WarpChange> warpChanges;
     std::vector<bool> openedLanes;
     overview.onLaneSelected = [&selectedLanes] (bool osc2) { selectedLanes.push_back(osc2); };
     overview.onPositionEditStart = [&editStarts] (bool osc2) { editStarts.push_back(osc2); };
     overview.onPositionChange = [&changes] (bool osc2, float position) { changes.emplace_back(osc2, position); };
+    overview.onWarpEditStart = [&warpEditStarts] (bool osc2, bool warpB) { warpEditStarts.emplace_back(osc2, warpB); };
+    overview.onWarpChange = [&warpChanges] (bool osc2, bool warpB, float amount)
+    {
+        warpChanges.push_back({ osc2, warpB, amount });
+    };
     overview.onOpenLaneEditor = [&openedLanes] (bool osc2) { openedLanes.push_back(osc2); };
 
     const auto laneY = 66.0f;
@@ -176,6 +190,76 @@ int main()
         return 1;
     }
 
+    const auto warpBarY = 74.0f;
+    const auto warpBarWidth = 148.0f;
+    const auto positionChangesBeforeWarp = changes.size();
+    const auto positionEditStartsBeforeWarp = editStarts.size();
+
+    const auto osc1WarpAStartX = 12.0f;
+    const auto osc1WarpAX = osc1WarpAStartX + (warpBarWidth * 0.68f);
+    overview.mouseDown(makeMouseEvent(overview, osc1WarpAX, warpBarY, osc1WarpAX, warpBarY));
+    overview.mouseUp(makeMouseEvent(overview, osc1WarpAX, warpBarY, osc1WarpAX, warpBarY));
+
+    if (warpEditStarts.empty() || warpEditStarts.back().first || warpEditStarts.back().second)
+    {
+        std::cerr << "Osc 1 Warp A click did not start the right warp edit\n";
+        return 1;
+    }
+
+    if (warpChanges.empty() || warpChanges.back().osc2 || warpChanges.back().warpB || std::abs(warpChanges.back().amount - 0.68f) > 0.05f)
+    {
+        std::cerr << "Osc 1 Warp A click emitted wrong warp amount";
+        if (! warpChanges.empty())
+            std::cerr << ": osc2=" << warpChanges.back().osc2
+                      << " warpB=" << warpChanges.back().warpB
+                      << " amount=" << warpChanges.back().amount;
+        std::cerr << '\n';
+        return 1;
+    }
+
+    if (changes.size() != positionChangesBeforeWarp || editStarts.size() != positionEditStartsBeforeWarp)
+    {
+        std::cerr << "Warp A click also emitted a WT-position edit\n";
+        return 1;
+    }
+
+    const auto osc2WarpBStartX = 480.0f;
+    const auto osc2WarpBDownX = osc2WarpBStartX + (warpBarWidth * 0.16f);
+    const auto osc2WarpBDragX = osc2WarpBStartX + (warpBarWidth * 0.88f);
+    const auto positionChangesBeforeWarpDrag = changes.size();
+    overview.mouseDown(makeMouseEvent(overview, osc2WarpBDownX, warpBarY, osc2WarpBDownX, warpBarY));
+    overview.mouseDrag(makeMouseEvent(overview,
+                                      osc2WarpBDragX,
+                                      warpBarY - 18.0f,
+                                      osc2WarpBDownX,
+                                      warpBarY,
+                                      juce::ModifierKeys::leftButtonModifier,
+                                      true));
+    overview.mouseUp(makeMouseEvent(overview, osc2WarpBDragX, warpBarY - 18.0f, osc2WarpBDownX, warpBarY));
+
+    if (warpEditStarts.empty() || ! warpEditStarts.back().first || ! warpEditStarts.back().second)
+    {
+        std::cerr << "Osc 2 Warp B drag did not start the right warp edit\n";
+        return 1;
+    }
+
+    if (warpChanges.empty() || ! warpChanges.back().osc2 || ! warpChanges.back().warpB || std::abs(warpChanges.back().amount - 0.88f) > 0.05f)
+    {
+        std::cerr << "Osc 2 Warp B drag emitted wrong warp amount";
+        if (! warpChanges.empty())
+            std::cerr << ": osc2=" << warpChanges.back().osc2
+                      << " warpB=" << warpChanges.back().warpB
+                      << " amount=" << warpChanges.back().amount;
+        std::cerr << '\n';
+        return 1;
+    }
+
+    if (changes.size() != positionChangesBeforeWarpDrag)
+    {
+        std::cerr << "Warp B drag also emitted a WT-position edit\n";
+        return 1;
+    }
+
     overview.mouseDoubleClick(makeMouseEvent(overview, osc2DragX, laneY, osc2DragX, laneY));
     if (openedLanes.empty() || ! openedLanes.back())
     {
@@ -183,6 +267,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Oscillator lane overview audit passed for layout, render coverage, lane selection, WT drag, and editor open gestures.\n";
+    std::cout << "Oscillator lane overview audit passed for layout, render coverage, lane selection, WT drag, warp bar drag, and editor open gestures.\n";
     return 0;
 }

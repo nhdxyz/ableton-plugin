@@ -210,12 +210,10 @@ void OscillatorLaneOverview::paint(juce::Graphics& g)
 
         if (textArea.getHeight() >= 13.0f)
         {
-            auto barRow = textArea.removeFromTop(10.0f);
-            const auto gap = 4.0f;
-            auto aBar = barRow.removeFromLeft((barRow.getWidth() - gap) * 0.5f);
-            barRow.removeFromLeft(gap);
-            drawBar(g, aBar, theme, accent, "A " + lane.warpAMode, lane.warpA);
-            drawBar(g, barRow, theme, accent, "B " + lane.warpBMode, lane.warpB);
+            const auto bars = warpBarBoundsForLane(laneBounds);
+            drawBar(g, bars[0], theme, accent, "A " + lane.warpAMode, lane.warpA);
+            drawBar(g, bars[1], theme, accent, "B " + lane.warpBMode, lane.warpB);
+            textArea.removeFromTop(10.0f);
         }
 
         if (! compact && textArea.getHeight() >= 9.0f)
@@ -258,24 +256,40 @@ void OscillatorLaneOverview::mouseDown(const juce::MouseEvent& event)
         return;
 
     editingLane = hit.osc2 ? 1 : 0;
+    editingInteraction = hit.interaction;
+    editingWarpB = hit.warpB;
     hoveredLane = editingLane;
 
     if (onLaneSelected)
         onLaneSelected(hit.osc2);
-    if (onPositionEditStart)
-        onPositionEditStart(hit.osc2);
 
-    updatePositionAt(event.position);
+    if (hit.interaction == Interaction::warp)
+    {
+        if (onWarpEditStart)
+            onWarpEditStart(hit.osc2, hit.warpB);
+        updateWarpAt(event.position);
+    }
+    else
+    {
+        if (onPositionEditStart)
+            onPositionEditStart(hit.osc2);
+        updatePositionAt(event.position);
+    }
 }
 
 void OscillatorLaneOverview::mouseDrag(const juce::MouseEvent& event)
 {
-    updatePositionAt(event.position);
+    if (editingInteraction == Interaction::warp)
+        updateWarpAt(event.position);
+    else
+        updatePositionAt(event.position);
 }
 
 void OscillatorLaneOverview::mouseUp(const juce::MouseEvent&)
 {
     editingLane = -1;
+    editingInteraction = Interaction::position;
+    editingWarpB = false;
 }
 
 void OscillatorLaneOverview::mouseDoubleClick(const juce::MouseEvent& event)
@@ -303,6 +317,24 @@ OscillatorLaneOverview::laneBoundsForArea(juce::Rectangle<float> bounds) const
     return lanes;
 }
 
+std::array<juce::Rectangle<float>, 2>
+OscillatorLaneOverview::warpBarBoundsForLane(juce::Rectangle<float> laneBounds) const
+{
+    const auto compact = getLocalBounds().getHeight() < 84;
+    auto textArea = laneBounds.reduced(5.0f, compact ? 3.0f : 4.0f);
+    textArea.removeFromTop(compact ? 12.0f : 14.0f);
+    textArea.removeFromTop(compact ? 15.0f : 18.0f);
+    textArea.removeFromTop(compact ? 8.0f : 10.0f);
+
+    auto barRow = textArea.removeFromTop(10.0f);
+    const auto gap = 4.0f;
+    std::array<juce::Rectangle<float>, 2> bars {};
+    bars[0] = barRow.removeFromLeft((barRow.getWidth() - gap) * 0.5f);
+    barRow.removeFromLeft(gap);
+    bars[1] = barRow;
+    return bars;
+}
+
 OscillatorLaneOverview::HitTarget OscillatorLaneOverview::hitTargetAt(juce::Point<float> position) const
 {
     HitTarget hit;
@@ -315,6 +347,20 @@ OscillatorLaneOverview::HitTarget OscillatorLaneOverview::hitTargetAt(juce::Poin
 
         hit.valid = true;
         hit.osc2 = index == 1;
+        const auto bars = warpBarBoundsForLane(lanes[index]);
+        for (size_t barIndex = 0; barIndex < bars.size(); ++barIndex)
+        {
+            if (! bars[barIndex].contains(position))
+                continue;
+
+            hit.interaction = Interaction::warp;
+            hit.warpB = barIndex == 1;
+            hit.position = juce::jlimit(0.0f,
+                                        1.0f,
+                                        (position.x - bars[barIndex].getX()) / juce::jmax(1.0f, bars[barIndex].getWidth()));
+            return hit;
+        }
+
         hit.position = juce::jlimit(0.0f,
                                     1.0f,
                                     (position.x - lanes[index].getX()) / juce::jmax(1.0f, lanes[index].getWidth()));
@@ -329,18 +375,47 @@ void OscillatorLaneOverview::updatePositionAt(juce::Point<float> position)
     if (editingLane < 0)
         return;
 
-    const auto hit = hitTargetAt(position);
-    if (! hit.valid || (hit.osc2 ? 1 : 0) != editingLane)
+    const auto lanes = laneBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
+    if (! lanes[static_cast<size_t> (editingLane)].contains(position))
         return;
 
-    auto& lane = state.lanes[hit.osc2 ? 1 : 0];
-    if (std::abs(lane.wavetablePosition - hit.position) < 0.001f)
+    const auto nextPosition = juce::jlimit(0.0f,
+                                           1.0f,
+                                           (position.x - lanes[static_cast<size_t> (editingLane)].getX())
+                                               / juce::jmax(1.0f, lanes[static_cast<size_t> (editingLane)].getWidth()));
+    auto& lane = state.lanes[static_cast<size_t> (editingLane)];
+    if (std::abs(lane.wavetablePosition - nextPosition) < 0.001f)
         return;
 
-    lane.wavetablePosition = hit.position;
+    lane.wavetablePosition = nextPosition;
 
     if (onPositionChange)
-        onPositionChange(hit.osc2, hit.position);
+        onPositionChange(editingLane == 1, nextPosition);
+
+    repaint();
+}
+
+void OscillatorLaneOverview::updateWarpAt(juce::Point<float> position)
+{
+    if (editingLane < 0)
+        return;
+
+    const auto lanes = laneBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
+    const auto bars = warpBarBoundsForLane(lanes[static_cast<size_t> (editingLane)]);
+    const auto& activeBar = bars[editingWarpB ? 1 : 0];
+    const auto nextAmount = juce::jlimit(0.0f,
+                                         1.0f,
+                                         (position.x - activeBar.getX()) / juce::jmax(1.0f, activeBar.getWidth()));
+
+    auto& lane = state.lanes[static_cast<size_t> (editingLane)];
+    auto& amount = editingWarpB ? lane.warpB : lane.warpA;
+    if (std::abs(amount - nextAmount) < 0.001f)
+        return;
+
+    amount = nextAmount;
+
+    if (onWarpChange)
+        onWarpChange(editingLane == 1, editingWarpB, nextAmount);
 
     repaint();
 }

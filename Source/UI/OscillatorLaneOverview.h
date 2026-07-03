@@ -49,6 +49,8 @@ public:
     std::function<void(bool)> onLaneSelected;
     std::function<void(bool)> onPositionEditStart;
     std::function<void(bool, float)> onPositionChange;
+    std::function<void(bool, bool)> onWarpEditStart;
+    std::function<void(bool, bool, float)> onWarpChange;
     std::function<void(bool)> onOpenLaneEditor;
 
     OscillatorLaneOverview();
@@ -66,10 +68,18 @@ public:
     void mouseDoubleClick(const juce::MouseEvent& event) override;
 
 private:
+    enum class Interaction
+    {
+        position,
+        warp
+    };
+
     struct HitTarget
     {
         bool valid = false;
         bool osc2 = false;
+        bool warpB = false;
+        Interaction interaction = Interaction::position;
         float position = 0.0f;
     };
 
@@ -78,10 +88,14 @@ private:
     juce::String tooltipText;
     int hoveredLane = -1;
     int editingLane = -1;
+    Interaction editingInteraction = Interaction::position;
+    bool editingWarpB = false;
 
     std::array<juce::Rectangle<float>, laneCount> laneBoundsForArea(juce::Rectangle<float> bounds) const;
+    std::array<juce::Rectangle<float>, 2> warpBarBoundsForLane(juce::Rectangle<float> laneBounds) const;
     HitTarget hitTargetAt(juce::Point<float> position) const;
     void updatePositionAt(juce::Point<float> position);
+    void updateWarpAt(juce::Point<float> position);
     static bool lanesEqual(const Lane& left, const Lane& right) noexcept;
     static juce::String percentText(float value);
 };

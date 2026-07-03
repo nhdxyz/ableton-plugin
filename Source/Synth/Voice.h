@@ -135,6 +135,7 @@ private:
     std::atomic<float>* oscWarp = nullptr;
     std::atomic<float>* osc2Warp = nullptr;
     std::atomic<float>* oscWarpMode = nullptr;
+    std::atomic<float>* osc2WarpMode = nullptr;
     std::atomic<float>* oscWavetablePosition = nullptr;
     std::atomic<float>* osc2WavetablePosition = nullptr;
     CustomWaveParameterPoints oscCustomWave {};

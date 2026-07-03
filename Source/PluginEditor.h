@@ -273,6 +273,7 @@ private:
     juce::ComboBox wavetableDrawModeBox;
     juce::ComboBox noiseTypeBox;
     juce::ComboBox oscWarpModeBox;
+    juce::ComboBox osc2WarpModeBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox filterCharacterBox;
     juce::ComboBox filterSlopeBox;

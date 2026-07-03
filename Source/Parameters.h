@@ -26,6 +26,7 @@ inline constexpr auto noiseDecay = "noise_decay";
 inline constexpr auto oscWarp = "osc_warp";
 inline constexpr auto osc2Warp = "osc2_warp";
 inline constexpr auto oscWarpMode = "osc_warp_mode";
+inline constexpr auto osc2WarpMode = "osc2_warp_mode";
 inline constexpr auto oscWavetablePosition = "osc_wavetable_position";
 inline constexpr auto osc2WavetablePosition = "osc2_wavetable_position";
 inline constexpr std::array<const char*, 16> oscCustomWave {

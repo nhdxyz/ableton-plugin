@@ -337,6 +337,12 @@ APVTS::ParameterLayout createLayout()
         oscWarpModeChoices(),
         0));
 
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::osc2WarpMode,
+        "Osc 2 Warp Mode",
+        oscWarpModeChoices(),
+        0));
+
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::ampAttack,
         "Amp Attack",

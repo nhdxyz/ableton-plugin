@@ -150,6 +150,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
     auto oscWarpAmount = 0.0f;
     auto osc2WarpAmount = 0.0f;
     auto oscWarpModeIndex = 0;
+    auto osc2WarpModeIndex = 0;
     auto oscWavetablePosition = 0.0f;
     auto osc2WavetablePosition = 0.35f;
     auto unisonVoiceCount = 1;
@@ -1045,6 +1046,38 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
                                   0.72f,
                                   oscWarpAmount + (osc2Level * randomFloat(-0.08f, 0.16f))
                                       + (std::abs(osc2Tune) * 0.018f));
+    osc2WarpModeIndex = oscWarpModeIndex;
+    if (osc2WarpAmount >= 0.08f)
+    {
+        switch (recipe)
+        {
+            case Recipe::acidLine:
+            case Recipe::noiseFx:
+                osc2WarpModeIndex = randomFloat(0.0f, 1.0f) < 0.62f ? 3 : 1;
+                break;
+
+            case Recipe::rollingTechBass:
+            case Recipe::ukgDredBass:
+                osc2WarpModeIndex = randomFloat(0.0f, 1.0f) < 0.52f ? 2 : 0;
+                break;
+
+            case Recipe::minimalBlip:
+                osc2WarpModeIndex = randomFloat(0.0f, 1.0f) < 0.5f ? 1 : 2;
+                break;
+
+            case Recipe::darkStab:
+            case Recipe::ukgOrganStab:
+            case Recipe::ukgChordStab:
+                osc2WarpModeIndex = randomFloat(0.0f, 1.0f) < 0.42f + (chaos * 0.18f) ? 1 : 0;
+                break;
+
+            case Recipe::deepHouseBass:
+            case Recipe::ukgTwoStepBass:
+            case Recipe::ukgBellPluck:
+                osc2WarpModeIndex = randomFloat(0.0f, 1.0f) < 0.22f + (chaos * 0.14f) ? 2 : 0;
+                break;
+        }
+    }
 
     if (subtle)
     {
@@ -1144,6 +1177,8 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
         const auto warpModeChangeChance = juce::jlimit(0.03f, 0.32f, (amount * 0.55f) + (chaos * 0.12f));
         if (randomFloat(0.0f, 1.0f) > warpModeChangeChance)
             oscWarpModeIndex = readChoice(Parameters::ID::oscWarpMode);
+        if (randomFloat(0.0f, 1.0f) > warpModeChangeChance)
+            osc2WarpModeIndex = readChoice(Parameters::ID::osc2WarpMode);
     }
 
     if (recipe == Recipe::ukgTwoStepBass || recipe == Recipe::ukgDredBass)
@@ -1160,6 +1195,10 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
         noiseDecay = juce::jlimit(0.08f, 0.24f, noiseDecay);
         oscWarpAmount = juce::jlimit(0.04f, 0.3f, oscWarpAmount);
         osc2WarpAmount = juce::jlimit(0.02f, 0.28f, osc2WarpAmount);
+        if (oscWarpModeIndex == 3)
+            oscWarpModeIndex = 2;
+        if (osc2WarpModeIndex == 3)
+            osc2WarpModeIndex = 0;
         unisonVoiceCount = juce::jlimit(1, 2, unisonVoiceCount);
         unisonDetune = juce::jlimit(0.0f, 0.06f, unisonDetune);
         unisonSpread = juce::jlimit(0.0f, 0.08f, unisonSpread);
@@ -1220,6 +1259,7 @@ void Randomizer::randomizeForRecipe(const RecipeProfile& profile, float amount, 
     setParameter(Parameters::ID::oscWarp, oscWarpAmount);
     setParameter(Parameters::ID::osc2Warp, osc2WarpAmount);
     setChoice(Parameters::ID::oscWarpMode, juce::jlimit(0, 3, oscWarpModeIndex));
+    setChoice(Parameters::ID::osc2WarpMode, juce::jlimit(0, 3, osc2WarpModeIndex));
     setParameter(Parameters::ID::oscWavetablePosition, oscWavetablePosition);
     setParameter(Parameters::ID::osc2WavetablePosition, osc2WavetablePosition);
     setParameter(Parameters::ID::unisonVoices, static_cast<float>(juce::jlimit(1, 7, unisonVoiceCount)));

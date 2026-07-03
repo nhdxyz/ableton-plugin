@@ -46,6 +46,7 @@ Voice::Voice(Parameters::APVTS& state)
     oscWarp = parameters.getRawParameterValue(Parameters::ID::oscWarp);
     osc2Warp = parameters.getRawParameterValue(Parameters::ID::osc2Warp);
     oscWarpMode = parameters.getRawParameterValue(Parameters::ID::oscWarpMode);
+    osc2WarpMode = parameters.getRawParameterValue(Parameters::ID::osc2WarpMode);
     oscWavetablePosition = parameters.getRawParameterValue(Parameters::ID::oscWavetablePosition);
     osc2WavetablePosition = parameters.getRawParameterValue(Parameters::ID::osc2WavetablePosition);
     for (size_t index = 0; index < Oscillator::customWavePointCount; ++index)
@@ -477,6 +478,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
     const auto oscillatorWarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(oscWarp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f) + (sequenceWarpMod * 0.45f));
     const auto oscillator2WarpAmount = juce::jlimit(0.0f, 1.0f, readParameter(osc2Warp, 0.0f) + (warp * 0.32f) + (oscWarpMod * 0.55f) + (sequenceWarpMod * 0.45f));
     const auto oscillatorWarpMode = juce::jlimit(0, 3, juce::roundToInt(readParameter(oscWarpMode, 0.0f)));
+    const auto oscillator2WarpMode = juce::jlimit(0, 3, juce::roundToInt(readParameter(osc2WarpMode, 0.0f)));
     const auto osc1WavetablePosition = juce::jlimit(0.0f, 1.0f, readParameter(oscWavetablePosition, 0.0f)
         + (motion * 0.16f)
         + (warp * 0.12f)
@@ -525,7 +527,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
         oscillators[static_cast<size_t>(voiceIndex)].setFrequency(currentFrequencyHz * pitchRatio * detuneRatio);
         oscillators2[static_cast<size_t>(voiceIndex)].setWaveform(osc2Waveform);
         oscillators2[static_cast<size_t>(voiceIndex)].setWarp(oscillator2WarpAmount);
-        oscillators2[static_cast<size_t>(voiceIndex)].setWarpMode(oscillatorWarpMode);
+        oscillators2[static_cast<size_t>(voiceIndex)].setWarpMode(oscillator2WarpMode);
         oscillators2[static_cast<size_t>(voiceIndex)].setWavetablePosition(osc2WavetablePositionValue);
         if (shouldApplyOsc2CustomFrames)
             oscillators2[static_cast<size_t>(voiceIndex)].setCustomWavetableFrames(osc2CustomFrameCache);

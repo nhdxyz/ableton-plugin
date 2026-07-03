@@ -2277,10 +2277,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::noiseType, noiseTypeBox));
 
     oscWarpModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
-    oscWarpModeBox.setTextWhenNothingSelected("Warp Mode");
-    oscWarpModeBox.setTooltip("Choose how the Osc Warp amount reshapes both source oscillators: harmonic drive, fold, bend, or sync-style edge");
+    oscWarpModeBox.setTextWhenNothingSelected("O1 Warp");
+    oscWarpModeBox.setTooltip("Choose how Osc 1 Warp reshapes the main source: harmonic drive, fold, bend, or sync-style edge");
     addAndMakeVisible(oscWarpModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWarpMode, oscWarpModeBox));
+
+    osc2WarpModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
+    osc2WarpModeBox.setTextWhenNothingSelected("O2 Warp");
+    osc2WarpModeBox.setTooltip("Choose how Osc 2 Warp reshapes the layered source independently from Osc 1");
+    addAndMakeVisible(osc2WarpModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2WarpMode, osc2WarpModeBox));
 
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     filterModeBox.setTextWhenNothingSelected("Filter Mode");
@@ -4609,6 +4615,7 @@ void NateVSTAudioProcessorEditor::resized()
             highpassFilterButton.setVisible(false);
             noiseTypeBox.setVisible(true);
             oscWarpModeBox.setVisible(true);
+            osc2WarpModeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
@@ -4676,7 +4683,9 @@ void NateVSTAudioProcessorEditor::resized()
             });
             auto sourceTextureRow = sourceArea.withTrimmedTop(2);
             auto textureSelectRow = sourceTextureRow.removeFromTop(30);
-            oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(juce::jlimit(106, 132, textureSelectRow.getWidth() / 2)).reduced(4, 4));
+            const auto warpModeWidth = juce::jlimit(86, 112, textureSelectRow.getWidth() / 3);
+            osc2WarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
+            oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
             noiseTypeBox.setBounds(textureSelectRow.reduced(4, 4));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
@@ -11116,7 +11125,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &osc2WarpModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -12243,6 +12252,8 @@ void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.09f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.12f);
     setPlainParameterValue(Parameters::ID::osc2Warp, 0.18f);
+    setPlainParameterValue(Parameters::ID::oscWarpMode, 0.0f);
+    setPlainParameterValue(Parameters::ID::osc2WarpMode, 1.0f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.32f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.55f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 3.0f);
@@ -12263,6 +12274,8 @@ void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
     setPlainParameterValue(Parameters::ID::outputGain, -9.0f);
 
     noiseTypeBox.setSelectedItemIndex(5, juce::dontSendNotification);
+    oscWarpModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    osc2WarpModeBox.setSelectedItemIndex(1, juce::dontSendNotification);
     filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
     filterCharacterBox.setSelectedItemIndex(1, juce::dontSendNotification);
     filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);
@@ -12307,6 +12320,8 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.07f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.42f);
     setPlainParameterValue(Parameters::ID::osc2Warp, 0.30f);
+    setPlainParameterValue(Parameters::ID::oscWarpMode, 1.0f);
+    setPlainParameterValue(Parameters::ID::osc2WarpMode, 3.0f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.14f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.72f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 5.0f);
@@ -12327,6 +12342,8 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
     setPlainParameterValue(Parameters::ID::outputGain, -10.0f);
 
     noiseTypeBox.setSelectedItemIndex(6, juce::dontSendNotification);
+    oscWarpModeBox.setSelectedItemIndex(1, juce::dontSendNotification);
+    osc2WarpModeBox.setSelectedItemIndex(3, juce::dontSendNotification);
     filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
     filterCharacterBox.setSelectedItemIndex(2, juce::dontSendNotification);
     filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);

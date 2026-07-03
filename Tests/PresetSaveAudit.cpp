@@ -31,7 +31,8 @@ int main()
         || ! setPlainParameter(processor, Parameters::ID::macroBounce, 0.36f)
         || ! setPlainParameter(processor, Parameters::ID::macroWarp, 0.82f)
         || ! setPlainParameter(processor, Parameters::ID::macroThrow, 0.28f)
-        || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.37f))
+        || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.37f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpMode, 3.0f))
     {
         std::cerr << "Could not seed macro preview parameters\n";
         return 1;
@@ -97,6 +98,15 @@ int main()
             || std::abs(static_cast<float>(osc2WarpState.getProperty("value", -1.0f)) - 0.37f) > 0.002f)
         {
             std::cerr << "Saved preset did not preserve Osc 2 Warp\n";
+            cleanup();
+            return 1;
+        }
+
+        const auto osc2WarpModeState = state.getChildWithProperty("id", Parameters::ID::osc2WarpMode);
+        if (! osc2WarpModeState.isValid()
+            || std::abs(static_cast<float>(osc2WarpModeState.getProperty("value", -1.0f)) - 3.0f) > 0.002f)
+        {
+            std::cerr << "Saved preset did not preserve Osc 2 Warp Mode\n";
             cleanup();
             return 1;
         }
@@ -198,6 +208,14 @@ int main()
         osc2Warp == nullptr || std::abs(osc2Warp->load() - 0.37f) > 0.002f)
     {
         std::cerr << "Loaded preset did not restore Osc 2 Warp\n";
+        cleanup();
+        return 1;
+    }
+
+    if (auto* osc2WarpMode = processor.getValueTreeState().getRawParameterValue(Parameters::ID::osc2WarpMode);
+        osc2WarpMode == nullptr || std::abs(osc2WarpMode->load() - 3.0f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 2 Warp Mode\n";
         cleanup();
         return 1;
     }

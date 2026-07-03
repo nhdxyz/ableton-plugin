@@ -78,6 +78,7 @@ private:
     std::array<juce::Rectangle<float>, 2> laneBoundsForArea(juce::Rectangle<float> bounds) const;
     std::array<juce::Rectangle<float>, frameCount> frameBoundsForLane(juce::Rectangle<float> laneBounds) const;
     HitTarget hitTargetAt(juce::Point<float> position) const;
+    void selectFrame(const HitTarget& hit);
     void updatePositionAt(juce::Point<float> position);
     static bool laneEqual(const Lane& first, const Lane& second) noexcept;
     static float frameRange(const CustomPointArray& frame) noexcept;

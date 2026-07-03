@@ -117,6 +117,7 @@ int main()
     const auto lane2Y = 136.0f;
     const auto railStartX = 78.0f;
     const auto railEndX = 624.0f;
+    const auto expectedOsc1Frame = 5.0f / static_cast<float>(UI::WavetableFrameStrip::frameCount - 1);
     const auto osc1X = railStartX + ((railEndX - railStartX) * 0.72f);
     strip.mouseDown(makeMouseEvent(strip, osc1X, lane1Y, osc1X, lane1Y));
     strip.mouseUp(makeMouseEvent(strip, osc1X, lane1Y, osc1X, lane1Y));
@@ -127,9 +128,9 @@ int main()
         return 1;
     }
 
-    if (changes.empty() || changes.back().first || std::abs(changes.back().second - 0.72f) > 0.04f)
+    if (changes.empty() || changes.back().first || std::abs(changes.back().second - expectedOsc1Frame) > 0.005f)
     {
-        std::cerr << "Osc 1 frame-strip scan emitted wrong position";
+        std::cerr << "Osc 1 frame-card click did not snap to the exact frame position";
         if (! changes.empty())
             std::cerr << ": osc2=" << changes.back().first << " position=" << changes.back().second;
         std::cerr << '\n';
@@ -139,8 +140,8 @@ int main()
     const auto osc2StartX = railStartX + ((railEndX - railStartX) * 0.20f);
     const auto osc2EndX = railStartX + ((railEndX - railStartX) * 0.86f);
     strip.mouseDown(makeMouseEvent(strip, osc2StartX, lane2Y, osc2StartX, lane2Y));
-    strip.mouseDrag(makeMouseEvent(strip, osc2EndX, lane2Y, osc2StartX, lane2Y, juce::ModifierKeys::leftButtonModifier, true));
-    strip.mouseUp(makeMouseEvent(strip, osc2EndX, lane2Y, osc2StartX, lane2Y));
+    strip.mouseDrag(makeMouseEvent(strip, osc2EndX, lane2Y - 22.0f, osc2StartX, lane2Y, juce::ModifierKeys::leftButtonModifier, true));
+    strip.mouseUp(makeMouseEvent(strip, osc2EndX, lane2Y - 22.0f, osc2StartX, lane2Y));
 
     if (editStarts.empty() || ! editStarts.back())
     {
@@ -157,6 +158,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame strip audit passed for layout, render coverage, and Osc 1/Osc 2 scan gestures.\n";
+    std::cout << "Wavetable frame strip audit passed for layout, render coverage, exact frame selection, and Osc 1/Osc 2 scan gestures.\n";
     return 0;
 }

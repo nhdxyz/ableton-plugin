@@ -130,6 +130,7 @@ private:
     CustomDrawMode customDrawMode = CustomDrawMode::point;
 
     void beginFrameRailEdit(const juce::MouseEvent& event);
+    void applyFrameRailFrame(int oscillator, size_t frameIndex);
     void applyFrameRailPosition(const juce::MouseEvent& event);
     void beginEdit(const juce::MouseEvent& event);
     void applyMousePosition(const juce::MouseEvent& event);
@@ -145,6 +146,7 @@ private:
     juce::Rectangle<float> partialBarsBounds() const;
     juce::Rectangle<float> spectrumBounds() const;
     int partialForEvent(const juce::MouseEvent& event) const noexcept;
+    int frameForRailEvent(const juce::MouseEvent& event) const noexcept;
     size_t activeCustomFrameIndex(int oscillator) const noexcept;
     void drawMiniWave(juce::Graphics& g,
                       juce::Rectangle<float> bounds,

@@ -234,7 +234,10 @@ void WavetableFrameStrip::mouseDown(const juce::MouseEvent& event)
     if (onPositionEditStart)
         onPositionEditStart(hit.osc2);
 
-    updatePositionAt(event.position);
+    if (hit.frameIndex >= 0)
+        selectFrame(hit);
+    else
+        updatePositionAt(event.position);
 }
 
 void WavetableFrameStrip::mouseDrag(const juce::MouseEvent& event)
@@ -312,23 +315,43 @@ WavetableFrameStrip::HitTarget WavetableFrameStrip::hitTargetAt(juce::Point<floa
     return hit;
 }
 
+void WavetableFrameStrip::selectFrame(const HitTarget& hit)
+{
+    if (! hit.valid || hit.frameIndex < 0)
+        return;
+
+    const auto safeFrame = juce::jlimit(0, static_cast<int>(frameCount - 1), hit.frameIndex);
+    const auto position = static_cast<float>(safeFrame) / static_cast<float>(frameCount - 1);
+    auto& lane = hit.osc2 ? state.osc2 : state.osc1;
+    if (std::abs(lane.position - position) < 0.001f)
+        return;
+
+    lane.position = position;
+
+    if (onPositionChange)
+        onPositionChange(hit.osc2, position);
+
+    repaint();
+}
+
 void WavetableFrameStrip::updatePositionAt(juce::Point<float> position)
 {
     if (editingLane < 0)
         return;
 
-    const auto hit = hitTargetAt(position);
-    if (! hit.valid || (hit.osc2 ? 1 : 0) != editingLane)
+    const auto lanes = laneBoundsForArea(getLocalBounds().toFloat().reduced(1.0f));
+    const auto frames = frameBoundsForLane(lanes[static_cast<size_t> (editingLane)]);
+    const auto railStart = frames.front().getX();
+    const auto railEnd = frames.back().getRight();
+    const auto nextPosition = juce::jlimit(0.0f, 1.0f, (position.x - railStart) / juce::jmax(1.0f, railEnd - railStart));
+    auto& lane = editingLane == 1 ? state.osc2 : state.osc1;
+    if (std::abs(lane.position - nextPosition) < 0.001f)
         return;
 
-    auto& lane = hit.osc2 ? state.osc2 : state.osc1;
-    if (std::abs(lane.position - hit.position) < 0.001f)
-        return;
-
-    lane.position = hit.position;
+    lane.position = nextPosition;
 
     if (onPositionChange)
-        onPositionChange(hit.osc2, hit.position);
+        onPositionChange(editingLane == 1, nextPosition);
 
     repaint();
 }

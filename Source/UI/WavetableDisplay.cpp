@@ -371,6 +371,15 @@ void WavetableDisplay::paint(juce::Graphics& g)
                          railCustomPoints,
                          isNearO2 && ! isNearO1 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff8ee6c9),
                          inactive ? 0.16f : (isNearO1 || isNearO2 ? 0.92f : 0.42f));
+
+            g.setColour((isNearO1 || isNearO2 ? juce::Colour(0xffedf7f4) : juce::Colour(0xff9fb0b6))
+                            .withAlpha(inactive ? 0.20f : 0.72f));
+            g.setFont(juce::FontOptions(6.4f, juce::Font::bold));
+            g.drawFittedText(juce::String(static_cast<int>(frame + 1)),
+                             cell.reduced(2.0f, 1.0f).removeFromLeft(9.0f).toNearestInt(),
+                             juce::Justification::centred,
+                             1,
+                             0.62f);
         }
 
         const auto drawPositionPin = [&] (float position, juce::Colour colour, const char* label, float yOffset)
@@ -817,7 +826,31 @@ void WavetableDisplay::beginFrameRailEdit(const juce::MouseEvent& event)
     if (onEditStart)
         onEditStart();
 
-    applyFrameRailPosition(event);
+    if (const auto frameIndex = frameForRailEvent(event); frameIndex >= 0)
+        applyFrameRailFrame(editingOscillator, static_cast<size_t>(frameIndex));
+    else
+        applyFrameRailPosition(event);
+}
+
+void WavetableDisplay::applyFrameRailFrame(int oscillator, size_t frameIndex)
+{
+    const auto safeFrame = juce::jlimit<size_t>(0, customFrameCount - 1, frameIndex);
+    const auto position = static_cast<float>(safeFrame) / static_cast<float>(customFrameCount - 1);
+
+    if (oscillator == 2)
+    {
+        osc2Position = position;
+        if (onOsc2PositionChange)
+            onOsc2PositionChange(position);
+    }
+    else
+    {
+        osc1Position = position;
+        if (onOsc1PositionChange)
+            onOsc1PositionChange(position);
+    }
+
+    repaint();
 }
 
 void WavetableDisplay::applyFrameRailPosition(const juce::MouseEvent& event)
@@ -1171,6 +1204,19 @@ int WavetableDisplay::partialForEvent(const juce::MouseEvent& event) const noexc
     const auto normalised = juce::jlimit(0.0f, 0.999f,
                                         (event.position.x - bars.getX()) / juce::jmax(1.0f, bars.getWidth()));
     return juce::jlimit(0, 15, static_cast<int>(std::floor(normalised * 16.0f)));
+}
+
+int WavetableDisplay::frameForRailEvent(const juce::MouseEvent& event) const noexcept
+{
+    const auto rail = frameRailBounds();
+    if (rail.isEmpty() || ! rail.contains(event.position))
+        return -1;
+
+    const auto normalised = juce::jlimit(0.0f, 0.999f,
+                                        (event.position.x - rail.getX()) / juce::jmax(1.0f, rail.getWidth()));
+    return juce::jlimit(0,
+                        static_cast<int>(customFrameCount - 1),
+                        static_cast<int>(std::floor(normalised * static_cast<float>(customFrameCount))));
 }
 
 size_t WavetableDisplay::activeCustomFrameIndex(int oscillator) const noexcept

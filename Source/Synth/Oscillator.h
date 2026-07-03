@@ -2,6 +2,8 @@
 
 #include <juce_dsp/juce_dsp.h>
 
+#include "WavetableModel.h"
+
 #include <array>
 
 namespace Synth
@@ -25,6 +27,8 @@ public:
     static constexpr size_t customWaveFrameCount = 8;
     using CustomWavePoints = std::array<float, customWavePointCount>;
     using CustomWaveFrames = std::array<CustomWavePoints, customWaveFrameCount>;
+
+    Oscillator();
 
     void prepare(double newSampleRate);
     void reset();
@@ -66,6 +70,7 @@ private:
         0.308658f
     };
     CustomWaveFrames customWaveFrames {};
+    WavetableModel customWavetable;
     Waveform waveform = Waveform::saw;
 
     void updatePhaseDelta();

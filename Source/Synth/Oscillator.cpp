@@ -162,33 +162,15 @@ float housePianoSample(float phase, float phaseDelta)
     return ((sample * 0.72f) + (tine * 0.28f)) * 0.48f;
 }
 
-float customWavePointSample(float phase, const Oscillator::CustomWavePoints& points)
-{
-    constexpr auto pointCount = static_cast<float>(Oscillator::customWavePointCount);
-    const auto scaledPhase = wrapUnitPhase(phase) * pointCount;
-    const auto leftIndex = static_cast<size_t>(std::floor(scaledPhase)) % Oscillator::customWavePointCount;
-    const auto rightIndex = (leftIndex + 1) % Oscillator::customWavePointCount;
-    const auto mix = scaledPhase - std::floor(scaledPhase);
-    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
-    const auto left = (juce::jlimit(0.0f, 1.0f, points[leftIndex]) * 2.0f) - 1.0f;
-    const auto right = (juce::jlimit(0.0f, 1.0f, points[rightIndex]) * 2.0f) - 1.0f;
-
-    return left + ((right - left) * smoothMix);
 }
 
-float customWaveSample(float phase, const Oscillator::CustomWaveFrames& frames, float position)
+Oscillator::Oscillator()
 {
-    constexpr auto lastFrame = static_cast<float>(Oscillator::customWaveFrameCount - 1);
-    const auto framePosition = juce::jlimit(0.0f, 1.0f, position) * lastFrame;
-    const auto lowerFrame = juce::jlimit(0, static_cast<int>(lastFrame), static_cast<int>(std::floor(framePosition)));
-    const auto upperFrame = juce::jlimit(0, static_cast<int>(lastFrame), lowerFrame + 1);
-    const auto mix = juce::jlimit(0.0f, 1.0f, framePosition - static_cast<float>(lowerFrame));
-    const auto smoothMix = mix * mix * (3.0f - (2.0f * mix));
-    const auto lower = customWavePointSample(phase, frames[static_cast<size_t>(lowerFrame)]);
-    const auto upper = customWavePointSample(phase, frames[static_cast<size_t>(upperFrame)]);
+    for (auto& frame : customWaveFrames)
+        frame = customWavePoints;
 
-    return lower + ((upper - lower) * smoothMix);
-}
+    customWavetable = WavetableModel::fromNormalisedControlFrames(customWaveFrames);
+    customFramesInitialised = true;
 }
 
 void Oscillator::prepare(double newSampleRate)
@@ -243,6 +225,8 @@ void Oscillator::setCustomWaveform(const CustomWavePoints& points)
 
         customFramesInitialised = true;
     }
+
+    customWavetable = WavetableModel::fromNormalisedControlFrames(customWaveFrames);
 }
 
 void Oscillator::setCustomWavetableFrames(const CustomWaveFrames& frames)
@@ -252,6 +236,7 @@ void Oscillator::setCustomWavetableFrames(const CustomWaveFrames& frames)
             customWaveFrames[frameIndex][pointIndex] = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
 
     customWavePoints = customWaveFrames[0];
+    customWavetable = WavetableModel::fromNormalisedControlFrames(customWaveFrames);
     customFramesInitialised = true;
 }
 
@@ -290,7 +275,7 @@ float Oscillator::process()
             break;
 
         case Waveform::custom:
-            sample = customWaveSample(phase, customWaveFrames, wavetablePosition);
+            sample = customWavetable.sample(phase, wavetablePosition);
             break;
     }
 

@@ -49,6 +49,7 @@ target_sources(NateVST
         Source/Synth/Oscillator.cpp
         Source/Synth/SynthEngine.cpp
         Source/Synth/Voice.cpp
+        Source/Synth/WavetableFrameRecipes.cpp
         Source/Synth/WavetableModel.cpp
         Source/Randomization/Randomizer.cpp
         Source/Sampler/SamplePlayer.cpp
@@ -420,6 +421,22 @@ target_link_libraries(NateVSTWavetableModelAudit
 )
 
 add_test(NAME WavetableModelAudit COMMAND NateVSTWavetableModelAudit)
+
+add_executable(NateVSTWavetableFrameRecipeAudit
+    Tests/WavetableFrameRecipeAudit.cpp
+    Source/Synth/WavetableFrameRecipes.cpp
+    Source/Synth/WavetableModel.cpp
+    Source/Synth/Oscillator.cpp
+)
+
+target_link_libraries(NateVSTWavetableFrameRecipeAudit
+    PRIVATE
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME WavetableFrameRecipeAudit COMMAND NateVSTWavetableFrameRecipeAudit)
 
 add_executable(NateVSTModulationSourceParityAudit Tests/ModulationSourceParityAudit.cpp)
 

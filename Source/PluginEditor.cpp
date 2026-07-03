@@ -1,6 +1,7 @@
 #include "PluginEditor.h"
 
 #include "Modulation/ModulationRouting.h"
+#include "Synth/WavetableFrameRecipes.h"
 
 #include <algorithm>
 #include <cmath>
@@ -2144,9 +2145,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     for (auto frame = 1; frame <= 8; ++frame)
         wavetableToolBox.addItem("Load Frame " + juce::String(frame), 39 + frame);
     wavetableToolBox.addItem("Bake WT Position", 48);
+    wavetableToolBox.addItem("Current Sweep", 49);
+    wavetableToolBox.addItem("Classic House Stack", 50);
+    wavetableToolBox.addItem("Rave Sweep", 51);
     wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
     wavetableToolBox.setTextWhenNothingSelected("Wave Tools");
-    wavetableToolBox.setTooltip("Apply custom-wave edits, import/export WAV single cycles, shape additive partials, or store/load eight WT morph frames");
+    wavetableToolBox.setTooltip("Apply custom-wave edits, import/export WAV single cycles, shape additive partials, generate frame stacks, or store/load eight WT morph frames");
     addAndMakeVisible(wavetableToolBox);
 
     noiseTypeBox.addItemList(Parameters::noiseTypeChoices(), 1);
@@ -11499,6 +11503,42 @@ void NateVSTAudioProcessorEditor::writeCustomWaveFrame(bool targetOsc2,
                                    values[0]);
 }
 
+void NateVSTAudioProcessorEditor::writeCustomWaveFrameSet(
+    bool targetOsc2,
+    const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames,
+    const juce::String& editLabel,
+    const juce::String& statusText)
+{
+    const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+    const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
+                                   : juce::String(Parameters::ID::oscWave);
+    auto& waveBox = targetOsc2 ? osc2WaveBox : waveformBox;
+
+    captureGlobalEdit(editLabel);
+    setPlainParameterValue(waveID, 7.0f);
+    waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+        {
+            const auto value = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
+            if (frameIndex == 0)
+                setPlainParameterValue(pointIDs[pointIndex], value);
+            else
+                setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex), value);
+        }
+    }
+
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSelectedControlInspector(targetOsc2 ? "O2 Custom Stack" : "O1 Custom Stack",
+                                   pointIDs[0],
+                                   frames[0][0]);
+    setRandomStatus(statusText);
+    returnKeyboardFocusToPiano();
+}
+
 void NateVSTAudioProcessorEditor::importSingleCycleWave(bool targetOsc2)
 {
     fileChooser = std::make_unique<juce::FileChooser>(
@@ -12033,6 +12073,30 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
         case 48:
             bakeCurrentCustomWaveMorph(targetOsc2);
+            changed = false;
+            break;
+
+        case 49:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::currentSweep(values),
+                                    "Generate current wave sweep",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " current-wave frame sweep");
+            changed = false;
+            break;
+
+        case 50:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::classicHouseStack(),
+                                    "Generate classic house wave stack",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " classic house frame stack");
+            changed = false;
+            break;
+
+        case 51:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::raveSweep(),
+                                    "Generate rave wave sweep",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " rave frame sweep");
             changed = false;
             break;
 

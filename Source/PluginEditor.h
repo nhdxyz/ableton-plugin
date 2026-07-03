@@ -908,6 +908,10 @@ private:
     UI::WavetableDisplay::CustomPointArray readCustomWaveFrame(bool targetOsc2, size_t frameIndex) const;
     UI::WavetableDisplay::CustomPointArray readMorphedCustomWaveFrame(bool targetOsc2) const;
     void writeCustomWaveFrame(bool targetOsc2, size_t frameIndex, const UI::WavetableDisplay::CustomPointArray& values, const juce::String& editLabel);
+    void writeCustomWaveFrameSet(bool targetOsc2,
+                                 const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames,
+                                 const juce::String& editLabel,
+                                 const juce::String& statusText);
     void importSingleCycleWave(bool targetOsc2);
     void exportSingleCycleWave(bool targetOsc2);
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);

@@ -43,8 +43,16 @@ public:
         bool readable = false;
     };
 
+    enum class FrameAction
+    {
+        copy,
+        paste,
+        storeMorph
+    };
+
     std::function<void(bool)> onPositionEditStart;
     std::function<void(bool, float)> onPositionChange;
+    std::function<void(bool, size_t, FrameAction)> onFrameAction;
 
     WavetableFrameStrip();
 
@@ -78,6 +86,7 @@ private:
     std::array<juce::Rectangle<float>, 2> laneBoundsForArea(juce::Rectangle<float> bounds) const;
     std::array<juce::Rectangle<float>, frameCount> frameBoundsForLane(juce::Rectangle<float> laneBounds) const;
     HitTarget hitTargetAt(juce::Point<float> position) const;
+    bool handleFrameActionGesture(const HitTarget& hit, const juce::MouseEvent& event);
     void selectFrame(const HitTarget& hit);
     void updatePositionAt(juce::Point<float> position);
     static bool laneEqual(const Lane& first, const Lane& second) noexcept;

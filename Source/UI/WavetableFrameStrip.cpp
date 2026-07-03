@@ -23,7 +23,7 @@ juce::String positionText(float position)
 WavetableFrameStrip::WavetableFrameStrip()
 {
     setComponentID("WavetableFrameStrip");
-    tooltipText = "Wavetable frame stacks: click or drag a lane to scan Osc 1 or Osc 2 custom frames";
+    tooltipText = "Wavetable frame stacks: click frames to select, drag to scan, Shift-click stores morph, Option-click copies, Command-click pastes";
     setMouseCursor(juce::MouseCursor::PointingHandCursor);
 }
 
@@ -51,6 +51,7 @@ void WavetableFrameStrip::setState(State newState)
     lines.add(state.summary.isNotEmpty() ? state.summary : juce::String("Wavetable frame stacks"));
     lines.add(state.osc1.label + ": " + state.osc1.detail + " at " + positionText(state.osc1.position));
     lines.add(state.osc2.label + ": " + state.osc2.detail + " at " + positionText(state.osc2.position));
+    lines.add("Click selects | Shift stores morph | Option copies | Command pastes");
     tooltipText = lines.joinIntoString("\n");
 
     repaint();
@@ -231,6 +232,12 @@ void WavetableFrameStrip::mouseDown(const juce::MouseEvent& event)
     hoveredLane = editingLane;
     hoveredFrame = hit.frameIndex;
 
+    if (hit.frameIndex >= 0 && handleFrameActionGesture(hit, event))
+    {
+        editingLane = -1;
+        return;
+    }
+
     if (onPositionEditStart)
         onPositionEditStart(hit.osc2);
 
@@ -313,6 +320,28 @@ WavetableFrameStrip::HitTarget WavetableFrameStrip::hitTargetAt(juce::Point<floa
     }
 
     return hit;
+}
+
+bool WavetableFrameStrip::handleFrameActionGesture(const HitTarget& hit, const juce::MouseEvent& event)
+{
+    if (onFrameAction == nullptr || ! hit.valid || hit.frameIndex < 0)
+        return false;
+
+    auto action = FrameAction::copy;
+    if (event.mods.isCommandDown())
+        action = FrameAction::paste;
+    else if (event.mods.isAltDown())
+        action = FrameAction::copy;
+    else if (event.mods.isShiftDown())
+        action = FrameAction::storeMorph;
+    else
+        return false;
+
+    onFrameAction(hit.osc2,
+                  static_cast<size_t>(juce::jlimit(0, static_cast<int>(frameCount - 1), hit.frameIndex)),
+                  action);
+    repaint();
+    return true;
 }
 
 void WavetableFrameStrip::selectFrame(const HitTarget& hit)

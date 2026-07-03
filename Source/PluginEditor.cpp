@@ -1963,6 +1963,61 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSourceLabFrameStrip();
         returnKeyboardFocusToPiano();
     };
+    sourceLabFrameStrip.onFrameAction = [this] (bool targetOsc2, size_t frameIndex, UI::WavetableFrameStrip::FrameAction action)
+    {
+        const auto safeFrame = juce::jlimit<size_t>(0, Parameters::customWaveMorphFrameCount - 1, frameIndex);
+        const auto targetName = juce::String(targetOsc2 ? "O2" : "O1");
+        const auto frameNumber = juce::String(static_cast<int>(safeFrame + 1));
+        const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+        const auto parameterID = safeFrame == 0
+            ? juce::String(pointIDs[0])
+            : Parameters::customWaveMorphFrameParameterID(targetOsc2, safeFrame, 0);
+
+        setSourceFrameActionTarget(targetOsc2);
+
+        switch (action)
+        {
+            case UI::WavetableFrameStrip::FrameAction::copy:
+                wavetableFrameClipboard = readCustomWaveFrame(targetOsc2, safeFrame);
+                wavetableFrameClipboardValid = true;
+                updateSelectedControlInspector(targetName + " Frame Copy", parameterID, wavetableFrameClipboard[0]);
+                setRandomStatus("Copied " + targetName + " frame " + frameNumber + " from card");
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                break;
+
+            case UI::WavetableFrameStrip::FrameAction::paste:
+                if (! wavetableFrameClipboardValid)
+                {
+                    setRandomStatus("Copy a WT frame before card paste");
+                    updateSourceFrameActionButtons();
+                    returnKeyboardFocusToPiano();
+                    break;
+                }
+
+                writeCustomWaveFrame(targetOsc2,
+                                     safeFrame,
+                                     wavetableFrameClipboard,
+                                     "Paste wavetable frame card");
+                setRandomStatus("Pasted copied WT frame to " + targetName + " frame " + frameNumber);
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                break;
+
+            case UI::WavetableFrameStrip::FrameAction::storeMorph:
+            {
+                const auto values = readMorphedCustomWaveFrame(targetOsc2);
+                writeCustomWaveFrame(targetOsc2,
+                                     safeFrame,
+                                     values,
+                                     "Store morph to wavetable frame card");
+                setRandomStatus("Stored current " + targetName + " morph in frame " + frameNumber);
+                updateSourceFrameActionButtons();
+                returnKeyboardFocusToPiano();
+                break;
+            }
+        }
+    };
     addAndMakeVisible(sourceLabFrameStrip);
 
     oscillatorLaneOverview.onLaneSelected = [this] (bool targetOsc2)

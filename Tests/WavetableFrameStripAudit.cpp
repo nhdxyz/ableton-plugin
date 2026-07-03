@@ -8,6 +8,13 @@
 
 namespace
 {
+struct FrameActionEvent
+{
+    bool osc2 = false;
+    size_t frameIndex = 0;
+    UI::WavetableFrameStrip::FrameAction action = UI::WavetableFrameStrip::FrameAction::copy;
+};
+
 juce::MouseEvent makeMouseEvent(UI::WavetableFrameStrip& strip,
                                 float x,
                                 float y,
@@ -110,13 +117,19 @@ int main()
 
     std::vector<bool> editStarts;
     std::vector<std::pair<bool, float>> changes;
+    std::vector<FrameActionEvent> frameActions;
     strip.onPositionEditStart = [&editStarts] (bool osc2) { editStarts.push_back(osc2); };
     strip.onPositionChange = [&changes] (bool osc2, float position) { changes.emplace_back(osc2, position); };
+    strip.onFrameAction = [&frameActions] (bool osc2, size_t frameIndex, UI::WavetableFrameStrip::FrameAction action)
+    {
+        frameActions.push_back({ osc2, frameIndex, action });
+    };
 
     const auto lane1Y = 58.0f;
     const auto lane2Y = 136.0f;
     const auto railStartX = 78.0f;
     const auto railEndX = 624.0f;
+    const auto railWidth = railEndX - railStartX;
     const auto expectedOsc1Frame = 5.0f / static_cast<float>(UI::WavetableFrameStrip::frameCount - 1);
     const auto osc1X = railStartX + ((railEndX - railStartX) * 0.72f);
     strip.mouseDown(makeMouseEvent(strip, osc1X, lane1Y, osc1X, lane1Y));
@@ -134,6 +147,62 @@ int main()
         if (! changes.empty())
             std::cerr << ": osc2=" << changes.back().first << " position=" << changes.back().second;
         std::cerr << '\n';
+        return 1;
+    }
+
+    if (! frameActions.empty())
+    {
+        std::cerr << "Plain frame selection emitted a frame-card edit action\n";
+        return 1;
+    }
+
+    const auto frameActionChangesBefore = changes.size();
+    const auto frameActionEditStartsBefore = editStarts.size();
+    const auto osc1Frame3X = railStartX + (railWidth * (2.5f / static_cast<float>(UI::WavetableFrameStrip::frameCount)));
+    const auto altClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::altModifier);
+    strip.mouseDown(makeMouseEvent(strip, osc1Frame3X, lane1Y, osc1Frame3X, lane1Y, altClick));
+    strip.mouseUp(makeMouseEvent(strip, osc1Frame3X, lane1Y, osc1Frame3X, lane1Y, altClick));
+
+    if (frameActions.empty()
+        || frameActions.back().osc2
+        || frameActions.back().frameIndex != 2
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::copy)
+    {
+        std::cerr << "Option-click on Osc 1 frame 3 did not emit a copy action\n";
+        return 1;
+    }
+
+    const auto osc2Frame7X = railStartX + (railWidth * (6.5f / static_cast<float>(UI::WavetableFrameStrip::frameCount)));
+    const auto commandClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::commandModifier);
+    strip.mouseDown(makeMouseEvent(strip, osc2Frame7X, lane2Y, osc2Frame7X, lane2Y, commandClick));
+    strip.mouseUp(makeMouseEvent(strip, osc2Frame7X, lane2Y, osc2Frame7X, lane2Y, commandClick));
+
+    if (frameActions.empty()
+        || ! frameActions.back().osc2
+        || frameActions.back().frameIndex != 6
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::paste)
+    {
+        std::cerr << "Command-click on Osc 2 frame 7 did not emit a paste action\n";
+        return 1;
+    }
+
+    const auto osc2Frame2X = railStartX + (railWidth * (1.5f / static_cast<float>(UI::WavetableFrameStrip::frameCount)));
+    const auto shiftClick = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::shiftModifier);
+    strip.mouseDown(makeMouseEvent(strip, osc2Frame2X, lane2Y, osc2Frame2X, lane2Y, shiftClick));
+    strip.mouseUp(makeMouseEvent(strip, osc2Frame2X, lane2Y, osc2Frame2X, lane2Y, shiftClick));
+
+    if (frameActions.empty()
+        || ! frameActions.back().osc2
+        || frameActions.back().frameIndex != 1
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::storeMorph)
+    {
+        std::cerr << "Shift-click on Osc 2 frame 2 did not emit a store-morph action\n";
+        return 1;
+    }
+
+    if (changes.size() != frameActionChangesBefore || editStarts.size() != frameActionEditStartsBefore)
+    {
+        std::cerr << "Frame-card edit gestures also emitted position scan events\n";
         return 1;
     }
 
@@ -158,6 +227,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame strip audit passed for layout, render coverage, exact frame selection, and Osc 1/Osc 2 scan gestures.\n";
+    std::cout << "Wavetable frame strip audit passed for layout, render coverage, exact frame selection, direct frame-card actions, and Osc 1/Osc 2 scan gestures.\n";
     return 0;
 }

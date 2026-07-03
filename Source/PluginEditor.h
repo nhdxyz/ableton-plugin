@@ -187,6 +187,15 @@ private:
         storeMorph
     };
 
+    enum class WavetableStackTransform
+    {
+        reverse,
+        rotateLeft,
+        rotateRight,
+        smooth,
+        emphasise
+    };
+
     struct FxMomentarySnapshot
     {
         std::array<float, 34> values {};
@@ -749,6 +758,11 @@ private:
     juce::TextButton sourceFramePasteButton { "Paste" };
     juce::TextButton sourceFrameFillButton { "Fill" };
     juce::TextButton sourceFrameInterpolateButton { "Interp" };
+    juce::TextButton sourceStackReverseButton { "Rev" };
+    juce::TextButton sourceStackRotateLeftButton { "<" };
+    juce::TextButton sourceStackRotateRightButton { ">" };
+    juce::TextButton sourceStackSmoothButton { "Smooth" };
+    juce::TextButton sourceStackEmphasiseButton { "Punch" };
     juce::TextButton lfoCurveInvertButton { "Inv" };
     juce::TextButton lfoCurveReverseButton { "Rev" };
     juce::TextButton lfoCurveSmoothButton { "Smooth" };
@@ -973,6 +987,7 @@ private:
     void duplicateCurrentCustomWaveFrameAcrossStack(bool targetOsc2);
     void interpolateCustomWaveFrameEndpoints(bool targetOsc2);
     void evolveCustomWaveFrameStackFromActiveFrame(bool targetOsc2);
+    void applyCustomWaveFrameStackTransform(bool targetOsc2, WavetableStackTransform transform);
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

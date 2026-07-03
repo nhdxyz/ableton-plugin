@@ -273,7 +273,9 @@ private:
     juce::ComboBox wavetableDrawModeBox;
     juce::ComboBox noiseTypeBox;
     juce::ComboBox oscWarpModeBox;
+    juce::ComboBox oscWarpBModeBox;
     juce::ComboBox osc2WarpModeBox;
+    juce::ComboBox osc2WarpBModeBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox filterCharacterBox;
     juce::ComboBox filterSlopeBox;
@@ -369,7 +371,9 @@ private:
     juce::Slider noiseLevelSlider;
     juce::Slider noiseDecaySlider;
     juce::Slider oscWarpSlider;
+    juce::Slider oscWarpBSlider;
     juce::Slider osc2WarpSlider;
+    juce::Slider osc2WarpBSlider;
     juce::Slider oscWavetablePositionSlider;
     juce::Slider osc2WavetablePositionSlider;
     juce::Slider unisonVoicesSlider;
@@ -495,7 +499,9 @@ private:
     juce::Label noiseLevelLabel;
     juce::Label noiseDecayLabel;
     juce::Label oscWarpLabel;
+    juce::Label oscWarpBLabel;
     juce::Label osc2WarpLabel;
+    juce::Label osc2WarpBLabel;
     juce::Label oscWavetablePositionLabel;
     juce::Label osc2WavetablePositionLabel;
     juce::Label unisonVoicesLabel;

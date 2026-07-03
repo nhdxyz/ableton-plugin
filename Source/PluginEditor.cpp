@@ -2282,11 +2282,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(oscWarpModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWarpMode, oscWarpModeBox));
 
+    oscWarpBModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
+    oscWarpBModeBox.setTextWhenNothingSelected("O1 B");
+    oscWarpBModeBox.setTooltip("Choose the second Osc 1 warp stage for stacked wavetable shaping");
+    addAndMakeVisible(oscWarpBModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscWarpBMode, oscWarpBModeBox));
+
     osc2WarpModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
     osc2WarpModeBox.setTextWhenNothingSelected("O2 Warp");
     osc2WarpModeBox.setTooltip("Choose how Osc 2 Warp reshapes the layered source independently from Osc 1");
     addAndMakeVisible(osc2WarpModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2WarpMode, osc2WarpModeBox));
+
+    osc2WarpBModeBox.addItemList(Parameters::oscWarpModeChoices(), 1);
+    osc2WarpBModeBox.setTextWhenNothingSelected("O2 B");
+    osc2WarpBModeBox.setTooltip("Choose the second Osc 2 warp stage for stacked wavetable shaping");
+    addAndMakeVisible(osc2WarpBModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2WarpBMode, osc2WarpBModeBox));
 
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     filterModeBox.setTextWhenNothingSelected("Filter Mode");
@@ -2875,8 +2887,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(subLevelSlider, subLevelLabel, "Sub", Parameters::ID::subLevel);
     configureSlider(noiseLevelSlider, noiseLevelLabel, "Noise", Parameters::ID::noiseLevel);
     configureSlider(noiseDecaySlider, noiseDecayLabel, "N Decay", Parameters::ID::noiseDecay);
-    configureSlider(oscWarpSlider, oscWarpLabel, "Osc Warp", Parameters::ID::oscWarp);
-    configureSlider(osc2WarpSlider, osc2WarpLabel, "O2 Warp", Parameters::ID::osc2Warp);
+    configureSlider(oscWarpSlider, oscWarpLabel, "O1 A", Parameters::ID::oscWarp);
+    configureSlider(oscWarpBSlider, oscWarpBLabel, "O1 B", Parameters::ID::oscWarpB);
+    configureSlider(osc2WarpSlider, osc2WarpLabel, "O2 A", Parameters::ID::osc2Warp);
+    configureSlider(osc2WarpBSlider, osc2WarpBLabel, "O2 B", Parameters::ID::osc2WarpB);
     configureSlider(oscWavetablePositionSlider, oscWavetablePositionLabel, "WT 1", Parameters::ID::oscWavetablePosition);
     configureSlider(osc2WavetablePositionSlider, osc2WavetablePositionLabel, "WT 2", Parameters::ID::osc2WavetablePosition);
     configureSlider(unisonVoicesSlider, unisonVoicesLabel, "Voices", Parameters::ID::unisonVoices);
@@ -4615,7 +4629,9 @@ void NateVSTAudioProcessorEditor::resized()
             highpassFilterButton.setVisible(false);
             noiseTypeBox.setVisible(true);
             oscWarpModeBox.setVisible(true);
+            oscWarpBModeBox.setVisible(true);
             osc2WarpModeBox.setVisible(true);
+            osc2WarpBModeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
@@ -4628,7 +4644,9 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(noiseLevelSlider, noiseLevelLabel, true);
             setSliderVisible(noiseDecaySlider, noiseDecayLabel, true);
             setSliderVisible(oscWarpSlider, oscWarpLabel, true);
+            setSliderVisible(oscWarpBSlider, oscWarpBLabel, true);
             setSliderVisible(osc2WarpSlider, osc2WarpLabel, true);
+            setSliderVisible(osc2WarpBSlider, osc2WarpBLabel, true);
             setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, true);
             setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, true);
             setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
@@ -4687,9 +4705,13 @@ void NateVSTAudioProcessorEditor::resized()
             osc2WarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
             oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
             noiseTypeBox.setBounds(textureSelectRow.reduced(4, 4));
+            auto warpBModeRow = sourceTextureRow.removeFromTop(30);
+            osc2WarpBModeBox.setBounds(warpBModeRow.removeFromRight(warpModeWidth).reduced(4, 4));
+            oscWarpBModeBox.setBounds(warpBModeRow.removeFromRight(warpModeWidth).reduced(4, 4));
             layoutKnobRow(sourceTextureRow, {
                 &noiseDecaySlider,
                 &oscWarpSlider,
+                &oscWarpBSlider,
                 &oscWavetablePositionSlider,
                 &osc2WavetablePositionSlider
             });
@@ -4733,7 +4755,8 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(inspectorArea.removeFromTop(74).withTrimmedTop(4), {
                 &osc2OctaveSlider,
                 &osc2TuneSlider,
-                &osc2WarpSlider
+                &osc2WarpSlider,
+                &osc2WarpBSlider
             });
             layoutKnobRow(inspectorArea.removeFromTop(78).withTrimmedTop(5), {
                 &unisonVoicesSlider,
@@ -11125,7 +11148,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &osc2WarpModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -11219,7 +11242,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(noiseLevelSlider, noiseLevelLabel, false);
     setSliderVisible(noiseDecaySlider, noiseDecayLabel, false);
     setSliderVisible(oscWarpSlider, oscWarpLabel, false);
+    setSliderVisible(oscWarpBSlider, oscWarpBLabel, false);
     setSliderVisible(osc2WarpSlider, osc2WarpLabel, false);
+    setSliderVisible(osc2WarpBSlider, osc2WarpBLabel, false);
     setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, false);
     setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, false);
     setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, false);
@@ -12251,9 +12276,13 @@ void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseType, 5.0f);
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.09f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.12f);
+    setPlainParameterValue(Parameters::ID::oscWarpB, 0.05f);
     setPlainParameterValue(Parameters::ID::osc2Warp, 0.18f);
+    setPlainParameterValue(Parameters::ID::osc2WarpB, 0.07f);
     setPlainParameterValue(Parameters::ID::oscWarpMode, 0.0f);
+    setPlainParameterValue(Parameters::ID::oscWarpBMode, 2.0f);
     setPlainParameterValue(Parameters::ID::osc2WarpMode, 1.0f);
+    setPlainParameterValue(Parameters::ID::osc2WarpBMode, 0.0f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.32f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.55f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 3.0f);
@@ -12275,7 +12304,9 @@ void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
 
     noiseTypeBox.setSelectedItemIndex(5, juce::dontSendNotification);
     oscWarpModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    oscWarpBModeBox.setSelectedItemIndex(2, juce::dontSendNotification);
     osc2WarpModeBox.setSelectedItemIndex(1, juce::dontSendNotification);
+    osc2WarpBModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
     filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
     filterCharacterBox.setSelectedItemIndex(1, juce::dontSendNotification);
     filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);
@@ -12319,9 +12350,13 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
     setPlainParameterValue(Parameters::ID::noiseType, 6.0f);
     setPlainParameterValue(Parameters::ID::noiseDecay, 0.07f);
     setPlainParameterValue(Parameters::ID::oscWarp, 0.42f);
+    setPlainParameterValue(Parameters::ID::oscWarpB, 0.18f);
     setPlainParameterValue(Parameters::ID::osc2Warp, 0.30f);
+    setPlainParameterValue(Parameters::ID::osc2WarpB, 0.14f);
     setPlainParameterValue(Parameters::ID::oscWarpMode, 1.0f);
+    setPlainParameterValue(Parameters::ID::oscWarpBMode, 2.0f);
     setPlainParameterValue(Parameters::ID::osc2WarpMode, 3.0f);
+    setPlainParameterValue(Parameters::ID::osc2WarpBMode, 1.0f);
     setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.14f);
     setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.72f);
     setPlainParameterValue(Parameters::ID::unisonVoices, 5.0f);
@@ -12343,7 +12378,9 @@ void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
 
     noiseTypeBox.setSelectedItemIndex(6, juce::dontSendNotification);
     oscWarpModeBox.setSelectedItemIndex(1, juce::dontSendNotification);
+    oscWarpBModeBox.setSelectedItemIndex(2, juce::dontSendNotification);
     osc2WarpModeBox.setSelectedItemIndex(3, juce::dontSendNotification);
+    osc2WarpBModeBox.setSelectedItemIndex(1, juce::dontSendNotification);
     filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
     filterCharacterBox.setSelectedItemIndex(2, juce::dontSendNotification);
     filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);

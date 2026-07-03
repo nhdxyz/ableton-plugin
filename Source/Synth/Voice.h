@@ -133,9 +133,13 @@ private:
     std::atomic<float>* noiseType = nullptr;
     std::atomic<float>* noiseDecay = nullptr;
     std::atomic<float>* oscWarp = nullptr;
+    std::atomic<float>* oscWarpB = nullptr;
     std::atomic<float>* osc2Warp = nullptr;
+    std::atomic<float>* osc2WarpB = nullptr;
     std::atomic<float>* oscWarpMode = nullptr;
+    std::atomic<float>* oscWarpBMode = nullptr;
     std::atomic<float>* osc2WarpMode = nullptr;
+    std::atomic<float>* osc2WarpBMode = nullptr;
     std::atomic<float>* oscWavetablePosition = nullptr;
     std::atomic<float>* osc2WavetablePosition = nullptr;
     CustomWaveParameterPoints oscCustomWave {};

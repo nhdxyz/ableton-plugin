@@ -106,8 +106,12 @@ int main()
         || ! setPlainParameter(processor, Parameters::ID::randomSequencerIntensity, 0.0f)
         || ! setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f)
         || ! setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpB, 0.51f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpBMode, 2.0f)
         || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.77f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpB, 0.43f)
         || ! setPlainParameter(processor, Parameters::ID::osc2WarpMode, 3.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpBMode, 1.0f)
         || ! setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
         || ! setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
         || ! setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
@@ -131,8 +135,12 @@ int main()
     const auto validationSummary = processor.getRandomCandidateValidationSummary(0);
     const auto generatedOutput = readPlainParameter(processor, Parameters::ID::outputGain, 6.0f);
     const auto generatedOsc1 = readPlainParameter(processor, Parameters::ID::osc1Level, 0.0f);
+    const auto restoredOscWarpB = readPlainParameter(processor, Parameters::ID::oscWarpB, 0.0f);
+    const auto restoredOscWarpBMode = readPlainParameter(processor, Parameters::ID::oscWarpBMode, 0.0f);
     const auto restoredOsc2Warp = readPlainParameter(processor, Parameters::ID::osc2Warp, 0.0f);
+    const auto restoredOsc2WarpB = readPlainParameter(processor, Parameters::ID::osc2WarpB, 0.0f);
     const auto restoredOsc2WarpMode = readPlainParameter(processor, Parameters::ID::osc2WarpMode, 0.0f);
+    const auto restoredOsc2WarpBMode = readPlainParameter(processor, Parameters::ID::osc2WarpBMode, 0.0f);
     const auto generatedSeqRoot = readPlainParameter(processor, Parameters::ID::sequencerRoot, 84.0f);
     const auto generatedSeqOctave = readPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f);
     const auto generatedEffectiveRoot = generatedSeqRoot + (generatedSeqOctave * 12.0f);
@@ -142,15 +150,23 @@ int main()
         || ! validationSummary.containsIgnoreCase("render")
         || generatedOutput > -6.0f
         || generatedOsc1 < 0.5f
+        || std::abs(restoredOscWarpB - 0.51f) > 0.002f
+        || std::abs(restoredOscWarpBMode - 2.0f) > 0.002f
         || std::abs(restoredOsc2Warp - 0.77f) > 0.002f
+        || std::abs(restoredOsc2WarpB - 0.43f) > 0.002f
         || std::abs(restoredOsc2WarpMode - 3.0f) > 0.002f
+        || std::abs(restoredOsc2WarpBMode - 1.0f) > 0.002f
         || generatedEffectiveRoot > 48.0f)
     {
         std::cerr << "Random validation did not correct unsafe generated state. Summary: "
                   << validationSummary << " output " << generatedOutput
                   << " osc1 " << generatedOsc1
+                  << " oscWarpB " << restoredOscWarpB
+                  << " oscWarpBMode " << restoredOscWarpBMode
                   << " osc2Warp " << restoredOsc2Warp
+                  << " osc2WarpB " << restoredOsc2WarpB
                   << " osc2WarpMode " << restoredOsc2WarpMode
+                  << " osc2WarpBMode " << restoredOsc2WarpBMode
                   << " effective root " << generatedEffectiveRoot << '\n';
         return 1;
     }

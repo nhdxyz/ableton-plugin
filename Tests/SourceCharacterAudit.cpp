@@ -14,7 +14,11 @@ struct RenderStats
     std::vector<float> samples;
 };
 
-RenderStats renderWaveform(Synth::Waveform waveform, int warpMode = 0, float warpAmount = 0.0f)
+RenderStats renderWaveform(Synth::Waveform waveform,
+                           int warpMode = 0,
+                           float warpAmount = 0.0f,
+                           int warpBMode = 0,
+                           float warpBAmount = 0.0f)
 {
     Synth::Oscillator oscillator;
     oscillator.prepare(44100.0);
@@ -23,6 +27,8 @@ RenderStats renderWaveform(Synth::Waveform waveform, int warpMode = 0, float war
     oscillator.setFrequency(110.0f);
     oscillator.setWarp(warpAmount);
     oscillator.setWarpMode(warpMode);
+    oscillator.setWarpB(warpBAmount);
+    oscillator.setWarpBMode(warpBMode);
     oscillator.setWavetablePosition(0.42f);
 
     RenderStats stats;
@@ -118,8 +124,9 @@ int main()
     const auto foldWarp = renderWaveform(Synth::Waveform::saw, 1, 0.68f);
     const auto bendWarp = renderWaveform(Synth::Waveform::saw, 2, 0.68f);
     const auto syncWarp = renderWaveform(Synth::Waveform::saw, 3, 0.68f);
+    const auto dualWarp = renderWaveform(Synth::Waveform::saw, 1, 0.42f, 2, 0.34f);
 
-    for (const auto* stats : { &harmonicWarp, &foldWarp, &bendWarp, &syncWarp })
+    for (const auto* stats : { &harmonicWarp, &foldWarp, &bendWarp, &syncWarp, &dualWarp })
     {
         if (stats->rms <= 0.02f || stats->peak <= 0.05f || stats->peak > 1.05f)
         {
@@ -134,6 +141,12 @@ int main()
         || meanAbsoluteDifference(harmonicWarp.samples, syncWarp.samples) <= 0.025f)
     {
         std::cerr << "Osc warp modes rendered too similarly to harmonic mode\n";
+        return 1;
+    }
+
+    if (meanAbsoluteDifference(foldWarp.samples, dualWarp.samples) <= 0.018f)
+    {
+        std::cerr << "Dual warp stack rendered too similarly to a single warp lane\n";
         return 1;
     }
 

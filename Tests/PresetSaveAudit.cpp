@@ -31,8 +31,12 @@ int main()
         || ! setPlainParameter(processor, Parameters::ID::macroBounce, 0.36f)
         || ! setPlainParameter(processor, Parameters::ID::macroWarp, 0.82f)
         || ! setPlainParameter(processor, Parameters::ID::macroThrow, 0.28f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpB, 0.29f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpBMode, 2.0f)
         || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.37f)
-        || ! setPlainParameter(processor, Parameters::ID::osc2WarpMode, 3.0f))
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpB, 0.21f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpMode, 3.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpBMode, 1.0f))
     {
         std::cerr << "Could not seed macro preview parameters\n";
         return 1;
@@ -98,6 +102,24 @@ int main()
             || std::abs(static_cast<float>(osc2WarpState.getProperty("value", -1.0f)) - 0.37f) > 0.002f)
         {
             std::cerr << "Saved preset did not preserve Osc 2 Warp\n";
+            cleanup();
+            return 1;
+        }
+
+        const auto oscWarpBState = state.getChildWithProperty("id", Parameters::ID::oscWarpB);
+        const auto oscWarpBModeState = state.getChildWithProperty("id", Parameters::ID::oscWarpBMode);
+        const auto osc2WarpBState = state.getChildWithProperty("id", Parameters::ID::osc2WarpB);
+        const auto osc2WarpBModeState = state.getChildWithProperty("id", Parameters::ID::osc2WarpBMode);
+        if (! oscWarpBState.isValid()
+            || ! oscWarpBModeState.isValid()
+            || ! osc2WarpBState.isValid()
+            || ! osc2WarpBModeState.isValid()
+            || std::abs(static_cast<float>(oscWarpBState.getProperty("value", -1.0f)) - 0.29f) > 0.002f
+            || std::abs(static_cast<float>(oscWarpBModeState.getProperty("value", -1.0f)) - 2.0f) > 0.002f
+            || std::abs(static_cast<float>(osc2WarpBState.getProperty("value", -1.0f)) - 0.21f) > 0.002f
+            || std::abs(static_cast<float>(osc2WarpBModeState.getProperty("value", -1.0f)) - 1.0f) > 0.002f)
+        {
+            std::cerr << "Saved preset did not preserve dual warp B lanes\n";
             cleanup();
             return 1;
         }
@@ -212,10 +234,42 @@ int main()
         return 1;
     }
 
+    if (auto* oscWarpB = processor.getValueTreeState().getRawParameterValue(Parameters::ID::oscWarpB);
+        oscWarpB == nullptr || std::abs(oscWarpB->load() - 0.29f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 1 Warp B\n";
+        cleanup();
+        return 1;
+    }
+
+    if (auto* osc2WarpB = processor.getValueTreeState().getRawParameterValue(Parameters::ID::osc2WarpB);
+        osc2WarpB == nullptr || std::abs(osc2WarpB->load() - 0.21f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 2 Warp B\n";
+        cleanup();
+        return 1;
+    }
+
+    if (auto* oscWarpBMode = processor.getValueTreeState().getRawParameterValue(Parameters::ID::oscWarpBMode);
+        oscWarpBMode == nullptr || std::abs(oscWarpBMode->load() - 2.0f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 1 Warp B Mode\n";
+        cleanup();
+        return 1;
+    }
+
     if (auto* osc2WarpMode = processor.getValueTreeState().getRawParameterValue(Parameters::ID::osc2WarpMode);
         osc2WarpMode == nullptr || std::abs(osc2WarpMode->load() - 3.0f) > 0.002f)
     {
         std::cerr << "Loaded preset did not restore Osc 2 Warp Mode\n";
+        cleanup();
+        return 1;
+    }
+
+    if (auto* osc2WarpBMode = processor.getValueTreeState().getRawParameterValue(Parameters::ID::osc2WarpBMode);
+        osc2WarpBMode == nullptr || std::abs(osc2WarpBMode->load() - 1.0f) > 0.002f)
+    {
+        std::cerr << "Loaded preset did not restore Osc 2 Warp B Mode\n";
         cleanup();
         return 1;
     }

@@ -326,8 +326,20 @@ APVTS::ParameterLayout createLayout()
         0.0f));
 
     add(std::make_unique<juce::AudioParameterFloat>(
+        ID::oscWarpB,
+        "Osc Warp B",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
         ID::osc2Warp,
         "Osc 2 Warp",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::osc2WarpB,
+        "Osc 2 Warp B",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 
@@ -338,8 +350,20 @@ APVTS::ParameterLayout createLayout()
         0));
 
     add(std::make_unique<juce::AudioParameterChoice>(
+        ID::oscWarpBMode,
+        "Osc Warp B Mode",
+        oscWarpModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
         ID::osc2WarpMode,
         "Osc 2 Warp Mode",
+        oscWarpModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::osc2WarpBMode,
+        "Osc 2 Warp B Mode",
         oscWarpModeChoices(),
         0));
 

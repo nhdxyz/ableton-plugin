@@ -45,6 +45,8 @@ public:
     void setWaveform(Waveform newWaveform);
     void setWarp(float newWarpAmount);
     void setWarpMode(int newWarpMode);
+    void setWarpB(float newWarpAmount);
+    void setWarpBMode(int newWarpMode);
     void setWavetablePosition(float newPosition);
     void setCustomWaveform(const CustomWavePoints& points);
     void setCustomWavetableFrames(const CustomWaveFrames& frames);
@@ -58,7 +60,9 @@ private:
     float phaseDelta = 0.0f;
     float triangleState = -1.0f;
     float warpAmount = 0.0f;
+    float warpBAmount = 0.0f;
     WarpMode warpMode = WarpMode::harmonic;
+    WarpMode warpBMode = WarpMode::harmonic;
     float wavetablePosition = 0.0f;
     bool customFramesInitialised = false;
     CustomWavePoints customWavePoints {

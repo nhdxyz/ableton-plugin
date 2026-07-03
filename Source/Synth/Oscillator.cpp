@@ -115,6 +115,26 @@ float syncWarp(float sample, float phase, float phaseDelta, float amount)
     return juce::jlimit(-1.0f, 1.0f, sample + ((syncSample - sample) * mix));
 }
 
+WarpMode warpModeFromIndex(int mode)
+{
+    switch (juce::jlimit(0, 3, mode))
+    {
+        case 1:
+            return WarpMode::fold;
+
+        case 2:
+            return WarpMode::bend;
+
+        case 3:
+            return WarpMode::sync;
+
+        default:
+            break;
+    }
+
+    return WarpMode::harmonic;
+}
+
 float applyWarp(float sample, float phase, float phaseDelta, float amount, WarpMode mode)
 {
     switch (mode)
@@ -280,24 +300,17 @@ void Oscillator::setWarp(float newWarpAmount)
 
 void Oscillator::setWarpMode(int newWarpMode)
 {
-    switch (juce::jlimit(0, 3, newWarpMode))
-    {
-        case 1:
-            warpMode = WarpMode::fold;
-            break;
+    warpMode = warpModeFromIndex(newWarpMode);
+}
 
-        case 2:
-            warpMode = WarpMode::bend;
-            break;
+void Oscillator::setWarpB(float newWarpAmount)
+{
+    warpBAmount = juce::jlimit(0.0f, 1.0f, newWarpAmount);
+}
 
-        case 3:
-            warpMode = WarpMode::sync;
-            break;
-
-        default:
-            warpMode = WarpMode::harmonic;
-            break;
-    }
+void Oscillator::setWarpBMode(int newWarpMode)
+{
+    warpBMode = warpModeFromIndex(newWarpMode);
 }
 
 void Oscillator::setWavetablePosition(float newPosition)
@@ -383,7 +396,9 @@ float Oscillator::process()
     if (phase >= 1.0f)
         phase -= std::floor(phase);
 
-    return applyWarp(juce::jlimit(-1.0f, 1.0f, sample), currentPhase, phaseDelta, warpAmount, warpMode);
+    auto warped = applyWarp(juce::jlimit(-1.0f, 1.0f, sample), currentPhase, phaseDelta, warpAmount, warpMode);
+    warped = applyWarp(warped, currentPhase, phaseDelta, warpBAmount, warpBMode);
+    return juce::jlimit(-1.0f, 1.0f, warped);
 }
 
 void Oscillator::updatePhaseDelta()

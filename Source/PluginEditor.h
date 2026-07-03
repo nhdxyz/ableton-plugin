@@ -21,6 +21,7 @@
 #include "UI/OutputMeter.h"
 #include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
+#include "UI/PanelTabBar.h"
 #include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
 #include "UI/PresetSaveSummary.h"
@@ -683,15 +684,7 @@ private:
     std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
     std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
     std::array<juce::TextButton, 13> sequencerStepEditorButtons;
-    juce::TextButton homeTabButton { "HOME" };
-    juce::TextButton synthTabButton { "SYNTH" };
-    juce::TextButton labTabButton { "LAB" };
-    juce::TextButton modTabButton { "MOD" };
-    juce::TextButton sampleTabButton { "SAMPLE" };
-    juce::TextButton sequencerTabButton { "SEQ" };
-    juce::TextButton effectsTabButton { "FX" };
-    juce::TextButton libraryTabButton { "LIBRARY" };
-    juce::TextButton infoTabButton { "INFO" };
+    UI::PanelTabBar panelTabBar;
     juce::TextButton undoEditButton { "Undo Edit" };
     juce::TextButton redoEditButton { "Redo Edit" };
     juce::TextButton selectedControlAddModButton { "MOD+" };
@@ -943,6 +936,8 @@ private:
     void setActiveModWorkflowPage(ModWorkflowPage page);
     void updatePanelVisibility();
     void updateTabButtons();
+    static UI::PanelTabBar::Tab tabForPanel(Panel panel);
+    static Panel panelForTab(UI::PanelTabBar::Tab tab);
     const UI::Theme& uiTheme() const noexcept;
     void applyThemeColours();
     void openMacroFocusOverlay();

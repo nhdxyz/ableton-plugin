@@ -3730,15 +3730,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         };
         addAndMakeVisible(captureButton);
     }
-    homeTabButton.onClick = [this] { setActivePanel(Panel::home); };
-    synthTabButton.onClick = [this] { setActivePanel(Panel::synth); };
-    labTabButton.onClick = [this] { setActivePanel(Panel::lab); };
-    modTabButton.onClick = [this] { setActivePanel(Panel::mod); };
-    sampleTabButton.onClick = [this] { setActivePanel(Panel::sample); };
-    sequencerTabButton.onClick = [this] { setActivePanel(Panel::sequencer); };
-    effectsTabButton.onClick = [this] { setActivePanel(Panel::effects); };
-    libraryTabButton.onClick = [this] { setActivePanel(Panel::library); };
-    infoTabButton.onClick = [this] { setActivePanel(Panel::info); };
+    panelTabBar.onTabSelected = [this] (UI::PanelTabBar::Tab tab) { setActivePanel(panelForTab(tab)); };
     sineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 0); };
     sawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 1); };
     squareWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 2); };
@@ -4107,29 +4099,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(exportSequencerMidiButton);
     addAndMakeVisible(exportSequencerChainButton);
     addAndMakeVisible(applyGrooveTransformButton);
-    addAndMakeVisible(homeTabButton);
-    addAndMakeVisible(synthTabButton);
-    addAndMakeVisible(labTabButton);
-    addAndMakeVisible(modTabButton);
-    addAndMakeVisible(sampleTabButton);
-    addAndMakeVisible(sequencerTabButton);
-    addAndMakeVisible(effectsTabButton);
-    addAndMakeVisible(libraryTabButton);
-    addAndMakeVisible(infoTabButton);
-    for (auto* tabButton : {
-             &homeTabButton,
-             &synthTabButton,
-             &labTabButton,
-             &modTabButton,
-             &sampleTabButton,
-             &sequencerTabButton,
-             &effectsTabButton,
-             &libraryTabButton,
-             &infoTabButton })
-    {
-        tabButton->setWantsKeyboardFocus(false);
-        tabButton->setMouseClickGrabsKeyboardFocus(false);
-    }
+    addAndMakeVisible(panelTabBar);
     addAndMakeVisible(sineWaveButton);
     addAndMakeVisible(sawWaveButton);
     addAndMakeVisible(squareWaveButton);
@@ -4600,20 +4570,7 @@ void NateVSTAudioProcessorEditor::resized()
     outputMeter.setBounds(top.removeFromRight(156).reduced(6, 5));
     titleLabel.setBounds(top.removeFromLeft(132).reduced(8, 0));
 
-    auto placeTab = [&top] (juce::TextButton& button, int width)
-    {
-        button.setBounds(top.removeFromLeft(width).reduced(3, 4));
-    };
-
-    placeTab(homeTabButton, 64);
-    placeTab(synthTabButton, 64);
-    placeTab(labTabButton, 52);
-    placeTab(modTabButton, 52);
-    placeTab(sampleTabButton, 72);
-    placeTab(sequencerTabButton, 54);
-    placeTab(effectsTabButton, 48);
-    placeTab(libraryTabButton, 82);
-    placeTab(infoTabButton, 54);
+    panelTabBar.setBounds(top);
 
     bounds.removeFromTop(14);
     auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
@@ -11279,17 +11236,45 @@ void NateVSTAudioProcessorEditor::updatePanelVisibility()
     updateModWorkflowButtons();
 }
 
+UI::PanelTabBar::Tab NateVSTAudioProcessorEditor::tabForPanel(Panel panel)
+{
+    switch (panel)
+    {
+        case Panel::home: return UI::PanelTabBar::Tab::home;
+        case Panel::synth: return UI::PanelTabBar::Tab::synth;
+        case Panel::lab: return UI::PanelTabBar::Tab::lab;
+        case Panel::mod: return UI::PanelTabBar::Tab::mod;
+        case Panel::sample: return UI::PanelTabBar::Tab::sample;
+        case Panel::sequencer: return UI::PanelTabBar::Tab::sequencer;
+        case Panel::effects: return UI::PanelTabBar::Tab::effects;
+        case Panel::library: return UI::PanelTabBar::Tab::library;
+        case Panel::info: return UI::PanelTabBar::Tab::info;
+    }
+
+    return UI::PanelTabBar::Tab::home;
+}
+
+NateVSTAudioProcessorEditor::Panel NateVSTAudioProcessorEditor::panelForTab(UI::PanelTabBar::Tab tab)
+{
+    switch (tab)
+    {
+        case UI::PanelTabBar::Tab::home: return Panel::home;
+        case UI::PanelTabBar::Tab::synth: return Panel::synth;
+        case UI::PanelTabBar::Tab::lab: return Panel::lab;
+        case UI::PanelTabBar::Tab::mod: return Panel::mod;
+        case UI::PanelTabBar::Tab::sample: return Panel::sample;
+        case UI::PanelTabBar::Tab::sequencer: return Panel::sequencer;
+        case UI::PanelTabBar::Tab::effects: return Panel::effects;
+        case UI::PanelTabBar::Tab::library: return Panel::library;
+        case UI::PanelTabBar::Tab::info: return Panel::info;
+    }
+
+    return Panel::home;
+}
+
 void NateVSTAudioProcessorEditor::updateTabButtons()
 {
-    homeTabButton.setToggleState(activePanel == Panel::home, juce::dontSendNotification);
-    synthTabButton.setToggleState(activePanel == Panel::synth, juce::dontSendNotification);
-    labTabButton.setToggleState(activePanel == Panel::lab, juce::dontSendNotification);
-    modTabButton.setToggleState(activePanel == Panel::mod, juce::dontSendNotification);
-    sampleTabButton.setToggleState(activePanel == Panel::sample, juce::dontSendNotification);
-    sequencerTabButton.setToggleState(activePanel == Panel::sequencer, juce::dontSendNotification);
-    effectsTabButton.setToggleState(activePanel == Panel::effects, juce::dontSendNotification);
-    libraryTabButton.setToggleState(activePanel == Panel::library, juce::dontSendNotification);
-    infoTabButton.setToggleState(activePanel == Panel::info, juce::dontSendNotification);
+    panelTabBar.setActiveTab(tabForPanel(activePanel));
 }
 
 void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()

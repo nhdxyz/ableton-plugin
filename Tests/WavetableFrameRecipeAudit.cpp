@@ -100,10 +100,16 @@ int main()
     const auto sweep = Synth::WavetableFrameRecipes::currentSweep(seed);
     const auto house = Synth::WavetableFrameRecipes::classicHouseStack();
     const auto rave = Synth::WavetableFrameRecipes::raveSweep();
+    const auto acid = Synth::WavetableFrameRecipes::acidStack();
+    const auto rubber = Synth::WavetableFrameRecipes::rubberBassStack();
+    const auto reese = Synth::WavetableFrameRecipes::reeseStack();
 
     if (! validateFrameSet("Current sweep", sweep)
         || ! validateFrameSet("Classic house", house)
-        || ! validateFrameSet("Rave sweep", rave))
+        || ! validateFrameSet("Rave sweep", rave)
+        || ! validateFrameSet("Acid stack", acid)
+        || ! validateFrameSet("Rubber bass stack", rubber)
+        || ! validateFrameSet("Reese stack", reese))
     {
         return 1;
     }
@@ -111,6 +117,14 @@ int main()
     if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(sweep[0], sweep[7]) < 0.08f)
     {
         std::cerr << "Current sweep did not create enough movement from first to last frame\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(acid[4], rubber[4]) < 0.06f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(acid[4], reese[4]) < 0.06f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(rubber[4], reese[4]) < 0.06f)
+    {
+        std::cerr << "Genre wavetable stacks are not distinct enough from each other\n";
         return 1;
     }
 
@@ -179,6 +193,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame recipe audit passed for generated frame sets, stack transforms, and O1/O2 stack-combine tools.\n";
+    std::cout << "Wavetable frame recipe audit passed for generated frame sets, genre stacks, stack transforms, and O1/O2 stack-combine tools.\n";
     return 0;
 }

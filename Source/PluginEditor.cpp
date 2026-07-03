@@ -2262,6 +2262,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Current Sweep", 49);
     wavetableToolBox.addItem("Classic House Stack", 50);
     wavetableToolBox.addItem("Rave Sweep", 51);
+    wavetableToolBox.addItem("Acid Stack", 71);
+    wavetableToolBox.addItem("Rubber Bass Stack", 72);
+    wavetableToolBox.addItem("Reese Stack", 73);
     wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
     wavetableToolBox.setTextWhenNothingSelected("Wave Tools");
     wavetableToolBox.setTooltip("Apply custom-wave edits, copy/paste the active frame, import/export WAV single cycles, shape additive partials, generate frame stacks, or store/load eight WT morph frames");
@@ -12863,6 +12866,30 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                     Synth::WavetableFrameRecipes::raveSweep(),
                                     "Generate rave wave sweep",
                                     "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " rave frame sweep");
+            changed = false;
+            break;
+
+        case 71:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::acidStack(),
+                                    "Generate acid wavetable stack",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " acid frame stack");
+            changed = false;
+            break;
+
+        case 72:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::rubberBassStack(),
+                                    "Generate rubber bass wavetable stack",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " rubber bass frame stack");
+            changed = false;
+            break;
+
+        case 73:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::reeseStack(),
+                                    "Generate Reese wavetable stack",
+                                    "Generated " + juce::String(targetOsc2 ? "O2" : "O1") + " Reese frame stack");
             changed = false;
             break;
 

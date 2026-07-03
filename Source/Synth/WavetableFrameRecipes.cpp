@@ -24,7 +24,8 @@ float bipolarToNormalised(float value) noexcept
     return clampNormalised(0.5f + (value * 0.5f));
 }
 
-ControlPoints makeShape(float (*shapeForPhase)(float)) noexcept
+template <typename ShapeForPhase>
+ControlPoints makeShape(ShapeForPhase shapeForPhase) noexcept
 {
     ControlPoints points {};
     const auto lastIndex = std::max<size_t>(1, points.size() - 1);
@@ -36,6 +37,33 @@ ControlPoints makeShape(float (*shapeForPhase)(float)) noexcept
     }
 
     return points;
+}
+
+ControlPoints makePulse(float width) noexcept
+{
+    width = std::clamp(width, 0.08f, 0.92f);
+    return makeShape([width] (float phase) noexcept
+    {
+        return phase < width ? 1.0f : 0.0f;
+    });
+}
+
+ControlPoints makeDetunedSaw(float spread, float phaseOffset) noexcept
+{
+    spread = std::clamp(spread, 0.0f, 0.08f);
+    return makeShape([spread, phaseOffset] (float phase) noexcept
+    {
+        auto wave = 0.0f;
+        for (auto harmonic = 1; harmonic <= 14; ++harmonic)
+        {
+            const auto h = static_cast<float>(harmonic);
+            const auto tilt = 1.0f / std::pow(h, 0.86f);
+            wave += std::sin(twoPi * ((phase * h) + phaseOffset + (spread * h))) * tilt;
+            wave += std::sin(twoPi * ((phase * h) - phaseOffset - (spread * h * 0.82f))) * tilt * 0.92f;
+        }
+
+        return bipolarToNormalised(wave * 0.24f);
+    });
 }
 
 ControlPoints blend(const ControlPoints& first, const ControlPoints& second, float amount) noexcept
@@ -286,6 +314,83 @@ ControlFrameSet raveSweep() noexcept
         foldShapePoints,
         softClip(normalise(blend(foldShapePoints, bright, 0.48f)), 0.55f),
         windowEnds(fold(bright, 0.72f), 0.25f)
+    };
+}
+
+ControlFrameSet acidStack() noexcept
+{
+    const auto saw = makeShape(sawShape);
+    const auto pulse28 = makePulse(0.28f);
+    const auto pulse42 = makePulse(0.42f);
+    const auto bright = makeShape(brightPartialsShape);
+    const auto resonant = makeShape([] (float phase) noexcept
+    {
+        const auto edge = (phase * 2.0f) - 1.0f;
+        const auto squelch = (std::sin(twoPi * phase * 3.0f + 0.18f) * 0.34f)
+            + (std::sin(twoPi * phase * 7.0f + 0.41f) * 0.15f)
+            + (std::sin(twoPi * phase * 11.0f + 0.24f) * 0.06f);
+        return bipolarToNormalised(std::tanh((edge * 0.86f) + squelch) * 0.98f);
+    });
+
+    return {
+        saw,
+        normalise(blend(saw, pulse42, 0.35f)),
+        pulse42,
+        normalise(blend(pulse42, resonant, 0.52f)),
+        resonant,
+        fold(normalise(blend(resonant, bright, 0.38f)), 0.36f),
+        softClip(normalise(blend(pulse28, resonant, 0.62f)), 0.62f),
+        windowEnds(fold(normalise(blend(pulse28, bright, 0.42f)), 0.58f), 0.22f)
+    };
+}
+
+ControlFrameSet rubberBassStack() noexcept
+{
+    const auto sine = makeShape(sineShape);
+    const auto triangle = makeShape(triangleShape);
+    const auto square = makeShape(squareShape);
+    const auto hollow = makeShape(hollowShape);
+    const auto pulse58 = makePulse(0.58f);
+    const auto rubber = makeShape([] (float phase) noexcept
+    {
+        const auto wave = (std::sin(twoPi * phase) * 0.95f)
+            + (std::sin(twoPi * phase * 2.0f + 0.36f) * 0.34f)
+            - (std::sin(twoPi * phase * 3.0f + 0.08f) * 0.18f)
+            + (std::sin(twoPi * phase * 5.0f + 0.62f) * 0.08f);
+        return bipolarToNormalised(std::tanh(wave * 1.18f) * 0.84f);
+    });
+
+    return {
+        sine,
+        normalise(blend(sine, triangle, 0.52f)),
+        triangle,
+        rubber,
+        normalise(blend(rubber, pulse58, 0.38f)),
+        normalise(blend(square, rubber, 0.48f)),
+        softClip(normalise(blend(hollow, rubber, 0.64f)), 0.52f),
+        windowEnds(fold(normalise(blend(rubber, square, 0.56f)), 0.34f), 0.34f)
+    };
+}
+
+ControlFrameSet reeseStack() noexcept
+{
+    const auto sawA = makeDetunedSaw(0.006f, 0.00f);
+    const auto sawB = makeDetunedSaw(0.014f, 0.04f);
+    const auto sawC = makeDetunedSaw(0.026f, 0.09f);
+    const auto sawD = makeDetunedSaw(0.042f, 0.15f);
+    const auto bright = makeShape(brightPartialsShape);
+    const auto hollow = makeShape(hollowShape);
+    const auto pulse = makePulse(0.46f);
+
+    return {
+        smooth(sawA, 0.18f),
+        sawA,
+        normalise(blend(sawA, sawB, 0.52f)),
+        sawB,
+        normalise(blend(sawB, sawC, 0.58f)),
+        softClip(normalise(blend(sawC, hollow, 0.32f)), 0.42f),
+        fold(normalise(blend(sawD, bright, 0.28f)), 0.28f),
+        windowEnds(normalise(blend(sawD, pulse, 0.30f)), 0.18f)
     };
 }
 

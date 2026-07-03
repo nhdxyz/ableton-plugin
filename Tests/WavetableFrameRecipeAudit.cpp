@@ -119,12 +119,18 @@ int main()
     const auto rotatedRight = Synth::WavetableFrameRecipes::rotateFrameOrder(rave, -1);
     const auto smoothed = Synth::WavetableFrameRecipes::smoothFrameMotion(rave);
     const auto emphasised = Synth::WavetableFrameRecipes::emphasiseFrameMotion(rave);
+    const auto blended = Synth::WavetableFrameRecipes::blendFrameStacks(house, rave, 0.5f);
+    const auto morphed = Synth::WavetableFrameRecipes::morphBetweenFrameStacks(house, rave);
+    const auto spliced = Synth::WavetableFrameRecipes::spliceFrameStacks(house, rave);
 
     if (! framesAreSafe(reversed)
         || ! framesAreSafe(rotatedLeft)
         || ! framesAreSafe(rotatedRight)
         || ! framesAreSafe(smoothed)
-        || ! framesAreSafe(emphasised))
+        || ! framesAreSafe(emphasised)
+        || ! validateFrameSet("Blended stack", blended)
+        || ! validateFrameSet("Morphed stack", morphed)
+        || ! validateFrameSet("Spliced stack", spliced))
     {
         std::cerr << "Frame-stack transform produced unsafe values\n";
         return 1;
@@ -135,6 +141,29 @@ int main()
         || Synth::WavetableFrameRecipes::meanAbsoluteDifference(rotatedRight.front(), rave.back()) > 0.0001f)
     {
         std::cerr << "Frame-stack reverse/rotate transform did not preserve expected frame order\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(morphed.front(), house.front()) > 0.0001f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(morphed.back(), rave.back()) > 0.0001f)
+    {
+        std::cerr << "Frame-stack morph did not preserve first/last source frames\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(blended[3], house[3]) < 0.025f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(blended[3], rave[3]) < 0.025f)
+    {
+        std::cerr << "Frame-stack blend landed too close to only one source stack\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(spliced[0], house[0])
+            >= Synth::WavetableFrameRecipes::meanAbsoluteDifference(spliced[0], rave[0])
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(spliced[1], rave[1])
+            >= Synth::WavetableFrameRecipes::meanAbsoluteDifference(spliced[1], house[1]))
+    {
+        std::cerr << "Frame-stack splice did not alternate source-stack dominance\n";
         return 1;
     }
 
@@ -150,6 +179,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame recipe audit passed for generated frame sets and stack transforms.\n";
+    std::cout << "Wavetable frame recipe audit passed for generated frame sets, stack transforms, and O1/O2 stack-combine tools.\n";
     return 0;
 }

@@ -15,5 +15,8 @@ ControlFrameSet reverseFrameOrder(ControlFrameSet frames) noexcept;
 ControlFrameSet rotateFrameOrder(ControlFrameSet frames, int offset) noexcept;
 ControlFrameSet smoothFrameMotion(const ControlFrameSet& frames) noexcept;
 ControlFrameSet emphasiseFrameMotion(const ControlFrameSet& frames) noexcept;
+ControlFrameSet blendFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second, float amount) noexcept;
+ControlFrameSet morphBetweenFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second) noexcept;
+ControlFrameSet spliceFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second) noexcept;
 float meanAbsoluteDifference(const ControlPoints& first, const ControlPoints& second) noexcept;
 }

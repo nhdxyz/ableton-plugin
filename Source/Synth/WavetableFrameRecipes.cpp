@@ -355,6 +355,46 @@ ControlFrameSet emphasiseFrameMotion(const ControlFrameSet& frames) noexcept
     return result;
 }
 
+ControlFrameSet blendFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second, float amount) noexcept
+{
+    ControlFrameSet result {};
+    const auto mix = std::clamp(amount, 0.0f, 1.0f);
+
+    for (size_t frameIndex = 0; frameIndex < result.size(); ++frameIndex)
+        result[frameIndex] = blend(first[frameIndex], second[frameIndex], mix);
+
+    return result;
+}
+
+ControlFrameSet morphBetweenFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second) noexcept
+{
+    ControlFrameSet result {};
+    const auto lastIndex = std::max<size_t>(1, result.size() - 1);
+
+    for (size_t frameIndex = 0; frameIndex < result.size(); ++frameIndex)
+    {
+        const auto mix = static_cast<float>(frameIndex) / static_cast<float>(lastIndex);
+        result[frameIndex] = blend(first[frameIndex], second[frameIndex], mix);
+    }
+
+    return result;
+}
+
+ControlFrameSet spliceFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second) noexcept
+{
+    ControlFrameSet result {};
+
+    for (size_t frameIndex = 0; frameIndex < result.size(); ++frameIndex)
+    {
+        const auto& primary = (frameIndex % 2 == 0) ? first[frameIndex] : second[frameIndex];
+        const auto& secondary = (frameIndex % 2 == 0) ? second[frameIndex] : first[frameIndex];
+        const auto edgeBlend = frameIndex == 0 || frameIndex + 1 >= result.size() ? 0.18f : 0.30f;
+        result[frameIndex] = blend(primary, secondary, edgeBlend);
+    }
+
+    return result;
+}
+
 float meanAbsoluteDifference(const ControlPoints& first, const ControlPoints& second) noexcept
 {
     auto sum = 0.0f;

@@ -2237,6 +2237,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Rotate Stack Right", 59);
     wavetableToolBox.addItem("Smooth Stack Motion", 60);
     wavetableToolBox.addItem("Emphasize Stack Motion", 61);
+    wavetableToolBox.addItem("Blend O1/O2 -> Target", 68);
+    wavetableToolBox.addItem("Morph Other -> Target", 69);
+    wavetableToolBox.addItem("Splice Other Into Target", 70);
     wavetableToolBox.addItem("Build Classic House Source", 62);
     wavetableToolBox.addItem("Build Rave Techno Source", 63);
     wavetableToolBox.addSectionHeading("Additive Partials");
@@ -12916,6 +12919,34 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                     Synth::WavetableFrameRecipes::emphasiseFrameMotion(readCustomWaveFrameSet(targetOsc2)),
                                     "Emphasize wavetable stack motion",
                                     "Emphasized " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack motion");
+            changed = false;
+            break;
+
+        case 68:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::blendFrameStacks(readCustomWaveFrameSet(false),
+                                                                                  readCustomWaveFrameSet(true),
+                                                                                  0.5f),
+                                    "Blend oscillator wavetable stacks",
+                                    "Blended O1/O2 stacks into " + juce::String(targetOsc2 ? "O2" : "O1"));
+            changed = false;
+            break;
+
+        case 69:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::morphBetweenFrameStacks(readCustomWaveFrameSet(! targetOsc2),
+                                                                                         readCustomWaveFrameSet(targetOsc2)),
+                                    "Morph oscillator wavetable stacks",
+                                    "Morphed " + juce::String(targetOsc2 ? "O1 into O2" : "O2 into O1") + " stack");
+            changed = false;
+            break;
+
+        case 70:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::spliceFrameStacks(readCustomWaveFrameSet(targetOsc2),
+                                                                                   readCustomWaveFrameSet(! targetOsc2)),
+                                    "Splice oscillator wavetable stacks",
+                                    "Spliced " + juce::String(targetOsc2 ? "O1 into O2" : "O2 into O1") + " stack");
             changed = false;
             break;
 

@@ -726,6 +726,7 @@ private:
     juce::TextButton sourceFrameTargetOsc2Button { "O2" };
     juce::TextButton sourceFramePreviousButton { "<" };
     juce::TextButton sourceFrameNextButton { ">" };
+    juce::TextButton sourceFrameEvolveButton { "Evolve" };
     juce::TextButton sourceFrameCopyButton { "Copy" };
     juce::TextButton sourceFramePasteButton { "Paste" };
     juce::TextButton sourceFrameFillButton { "Fill" };
@@ -950,6 +951,7 @@ private:
     void pasteCurrentCustomWaveFrame(bool targetOsc2);
     void duplicateCurrentCustomWaveFrameAcrossStack(bool targetOsc2);
     void interpolateCustomWaveFrameEndpoints(bool targetOsc2);
+    void evolveCustomWaveFrameStackFromActiveFrame(bool targetOsc2);
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

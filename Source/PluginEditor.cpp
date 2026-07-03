@@ -1829,6 +1829,14 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sourceFrameNextButton.onClick = [this] { stepSourceFrameActionTarget(1); };
     addAndMakeVisible(sourceFrameNextButton);
 
+    sourceFrameEvolveButton.setTooltip("Generate an 8-frame wavetable stack from the selected active frame");
+    sourceFrameEvolveButton.onClick = [this]
+    {
+        evolveCustomWaveFrameStackFromActiveFrame(sourceFrameActionTargetIsOsc2());
+        updateSourceFrameActionButtons();
+    };
+    addAndMakeVisible(sourceFrameEvolveButton);
+
     sourceFrameCopyButton.setTooltip("Copy the active frame from the selected oscillator stack");
     sourceFrameCopyButton.onClick = [this]
     {
@@ -6396,6 +6404,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                          static_cast<const juce::Component*>(&sourceFrameTargetOsc2Button),
                          static_cast<const juce::Component*>(&sourceFramePreviousButton),
                          static_cast<const juce::Component*>(&sourceFrameNextButton),
+                         static_cast<const juce::Component*>(&sourceFrameEvolveButton),
                          static_cast<const juce::Component*>(&sourceFrameCopyButton),
                          static_cast<const juce::Component*>(&sourceFramePasteButton),
                          static_cast<const juce::Component*>(&sourceFrameFillButton),
@@ -10866,6 +10875,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceFrameTargetOsc2Button.setVisible(showSourceLayerEditor);
     sourceFramePreviousButton.setVisible(showSourceLayerEditor);
     sourceFrameNextButton.setVisible(showSourceLayerEditor);
+    sourceFrameEvolveButton.setVisible(showSourceLayerEditor);
     sourceFrameCopyButton.setVisible(showSourceLayerEditor);
     sourceFramePasteButton.setVisible(showSourceLayerEditor);
     sourceFrameFillButton.setVisible(showSourceLayerEditor);
@@ -10918,6 +10928,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
         frameActionRow.removeFromLeft(8);
         sourceFramePreviousButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 5));
         sourceFrameNextButton.setBounds(frameActionRow.removeFromLeft(62).reduced(3, 5));
+        sourceFrameEvolveButton.setBounds(frameActionRow.removeFromLeft(92).reduced(3, 5));
         auto editActionRow = frameActionArea.withTrimmedTop(1);
         const auto actionWidth = juce::jmax(1, editActionRow.getWidth() / 4);
         sourceFrameCopyButton.setBounds(editActionRow.removeFromLeft(actionWidth).reduced(3, 5));
@@ -10947,6 +10958,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceFrameTargetOsc2Button.toFront(false);
     sourceFramePreviousButton.toFront(false);
     sourceFrameNextButton.toFront(false);
+    sourceFrameEvolveButton.toFront(false);
     sourceFrameCopyButton.toFront(false);
     sourceFramePasteButton.toFront(false);
     sourceFrameFillButton.toFront(false);
@@ -11096,7 +11108,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
         &homeMacroExpandButton, &modMacroExpandButton, &sampleChopExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
-        &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFramePreviousButton, &sourceFrameNextButton,
+        &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFramePreviousButton, &sourceFrameNextButton, &sourceFrameEvolveButton,
         &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
@@ -11688,6 +11700,7 @@ void NateVSTAudioProcessorEditor::updateSourceFrameActionButtons()
     sourceFrameTargetOsc2Button.setTooltip("Target Osc 2 for direct wavetable frame actions");
     sourceFramePreviousButton.setTooltip("Move " + targetName + " to the previous wavetable frame");
     sourceFrameNextButton.setTooltip("Move " + targetName + " to the next wavetable frame");
+    sourceFrameEvolveButton.setTooltip("Generate a full " + targetName + " stack from active frame " + frameNumber);
     sourceFrameCopyButton.setTooltip("Copy " + targetName + " active frame " + frameNumber);
     sourceFramePasteButton.setTooltip(wavetableFrameClipboardValid
                                           ? "Paste copied WT frame to " + targetName + " active frame " + frameNumber
@@ -12375,6 +12388,18 @@ void NateVSTAudioProcessorEditor::interpolateCustomWaveFrameEndpoints(bool targe
                             "Interpolate wavetable end frames",
                             "Interpolated " + juce::String(targetOsc2 ? "O2" : "O1")
                                 + " frames 1-8 into a smooth stack");
+    updateSourceFrameActionButtons();
+}
+
+void NateVSTAudioProcessorEditor::evolveCustomWaveFrameStackFromActiveFrame(bool targetOsc2)
+{
+    const auto frameIndex = currentCustomWaveFrameIndex(targetOsc2);
+    const auto seed = readCustomWaveFrame(targetOsc2, frameIndex);
+    writeCustomWaveFrameSet(targetOsc2,
+                            Synth::WavetableFrameRecipes::currentSweep(seed),
+                            "Evolve wavetable stack from active frame",
+                            "Evolved " + juce::String(targetOsc2 ? "O2" : "O1")
+                                + " stack from frame " + juce::String(static_cast<int>(frameIndex + 1)));
     updateSourceFrameActionButtons();
 }
 

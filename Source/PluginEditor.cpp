@@ -12396,9 +12396,11 @@ void NateVSTAudioProcessorEditor::loadCustomWaveFrame(bool targetOsc2, size_t fr
 
 void NateVSTAudioProcessorEditor::bakeCurrentCustomWaveMorph(bool targetOsc2)
 {
+    const auto frameIndex = currentCustomWaveFrameIndex(targetOsc2);
     const auto values = readMorphedCustomWaveFrame(targetOsc2);
-    writeCustomWaveFrame(targetOsc2, 0, values, "Bake custom wave morph");
-    setRandomStatus("Baked " + juce::String(targetOsc2 ? "O2" : "O1") + " WT position into frame 1");
+    writeCustomWaveFrame(targetOsc2, frameIndex, values, "Bake custom wave morph");
+    setRandomStatus("Baked " + juce::String(targetOsc2 ? "O2" : "O1")
+                    + " WT position into frame " + juce::String(static_cast<int>(frameIndex + 1)));
 }
 
 void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
@@ -12412,10 +12414,17 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
     const auto waveID = targetOsc2 ? juce::String(Parameters::ID::osc2Wave)
                                    : juce::String(Parameters::ID::oscWave);
     auto& waveBox = targetOsc2 ? osc2WaveBox : waveformBox;
+    const auto activeFrameIndex = currentCustomWaveFrameIndex(targetOsc2);
+    const auto activeFrameLabel = juce::String(targetOsc2 ? "O2 Frame " : "O1 Frame ")
+        + juce::String(static_cast<int>(activeFrameIndex + 1));
+    auto pointParameterID = [targetOsc2, activeFrameIndex, &pointIDs] (size_t pointIndex)
+    {
+        return activeFrameIndex == 0
+            ? juce::String(pointIDs[pointIndex])
+            : Parameters::customWaveMorphFrameParameterID(targetOsc2, activeFrameIndex, pointIndex);
+    };
 
-    std::array<float, Parameters::ID::oscCustomWave.size()> values {};
-    for (size_t index = 0; index < values.size(); ++index)
-        values[index] = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(pointIDs[index], 0.5f));
+    auto values = readCustomWaveFrame(targetOsc2, activeFrameIndex);
 
     auto normalizeValues = [&values]
     {
@@ -12454,14 +12463,15 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
         setPlainParameterValue(waveID, 7.0f);
         waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
         for (size_t index = 0; index < values.size(); ++index)
-            setPlainParameterValue(pointIDs[index], juce::jlimit(0.0f, 1.0f, values[index]));
+            setPlainParameterValue(pointParameterID(index), juce::jlimit(0.0f, 1.0f, values[index]));
 
         updateSegmentedSelectors();
         updateWavetableDisplay();
-        updateSelectedControlInspector(targetOsc2 ? "O2 Custom" : "O1 Custom",
-                                       pointIDs[0],
+        updateSelectedControlInspector(activeFrameLabel,
+                                       pointParameterID(0),
                                        values[0]);
-        setRandomStatus("Wave tool: " + wavetableToolBox.getText());
+        setRandomStatus("Wave tool: " + wavetableToolBox.getText()
+                        + " on " + activeFrameLabel);
         returnKeyboardFocusToPiano();
     };
 
@@ -12550,7 +12560,7 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
             for (const auto value : values)
                 parts.add(juce::String(value, 4));
             juce::SystemClipboard::copyTextToClipboard(parts.joinIntoString(","));
-            setRandomStatus("Copied custom wave points");
+            setRandomStatus("Copied " + activeFrameLabel + " points");
             changed = false;
             break;
         }

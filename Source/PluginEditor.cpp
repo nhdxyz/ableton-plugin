@@ -2170,6 +2170,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Rotate Stack Right", 59);
     wavetableToolBox.addItem("Smooth Stack Motion", 60);
     wavetableToolBox.addItem("Emphasize Stack Motion", 61);
+    wavetableToolBox.addItem("Build Classic House Source", 62);
+    wavetableToolBox.addItem("Build Rave Techno Source", 63);
     wavetableToolBox.addSectionHeading("Additive Partials");
     wavetableToolBox.addItem("Odd Harmonics", 26);
     wavetableToolBox.addItem("Even Harmonics", 27);
@@ -6269,7 +6271,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                                + toolBounds.toString() + " / " + editBounds.toString());
                 }
 
-                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61 })
+                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61, 62, 63 })
                 {
                     if (wavetableToolBox.indexOfItemId(itemId) < 0)
                         issues.add(panelName + ": SYNTH wave tools are missing layer-stack command id "
@@ -11648,6 +11650,25 @@ void NateVSTAudioProcessorEditor::writeCustomWaveFrame(bool targetOsc2,
                                    values[0]);
 }
 
+void NateVSTAudioProcessorEditor::writeCustomWaveFrameSetWithoutCapture(
+    bool targetOsc2,
+    const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames)
+{
+    const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+        {
+            const auto value = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
+            if (frameIndex == 0)
+                setPlainParameterValue(pointIDs[pointIndex], value);
+            else
+                setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex), value);
+        }
+    }
+}
+
 void NateVSTAudioProcessorEditor::writeCustomWaveFrameSet(
     bool targetOsc2,
     const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames,
@@ -11662,18 +11683,7 @@ void NateVSTAudioProcessorEditor::writeCustomWaveFrameSet(
     captureGlobalEdit(editLabel);
     setPlainParameterValue(waveID, 7.0f);
     waveBox.setSelectedItemIndex(7, juce::dontSendNotification);
-
-    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
-    {
-        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
-        {
-            const auto value = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
-            if (frameIndex == 0)
-                setPlainParameterValue(pointIDs[pointIndex], value);
-            else
-                setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex), value);
-        }
-    }
+    writeCustomWaveFrameSetWithoutCapture(targetOsc2, frames);
 
     updateSegmentedSelectors();
     updateWavetableDisplay();
@@ -11943,30 +11953,138 @@ void NateVSTAudioProcessorEditor::swapCustomWaveFrameStacks()
     waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
     osc2WaveBox.setSelectedItemIndex(7, juce::dontSendNotification);
 
-    auto writeFrameSetWithoutCapture = [this] (bool targetOsc2, const auto& frames)
-    {
-        const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
-        for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
-        {
-            for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
-            {
-                const auto value = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
-                if (frameIndex == 0)
-                    setPlainParameterValue(pointIDs[pointIndex], value);
-                else
-                    setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex), value);
-            }
-        }
-    };
-
-    writeFrameSetWithoutCapture(false, osc2Frames);
-    writeFrameSetWithoutCapture(true, osc1Frames);
+    writeCustomWaveFrameSetWithoutCapture(false, osc2Frames);
+    writeCustomWaveFrameSetWithoutCapture(true, osc1Frames);
 
     updateSegmentedSelectors();
     updateWavetableDisplay();
     updateSourceLabFrameStrip();
     updateSelectedControlInspector("O1/O2 Stack Swap", Parameters::ID::oscCustomWave[0], osc2Frames[0][0]);
     setRandomStatus("Swapped O1 and O2 wavetable stacks");
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::buildClassicHouseSourceLayers()
+{
+    const auto osc1Frames = Synth::WavetableFrameRecipes::classicHouseStack();
+    const auto osc2Frames = Synth::WavetableFrameRecipes::smoothFrameMotion(
+        Synth::WavetableFrameRecipes::currentSweep(osc1Frames[3]));
+
+    captureGlobalEdit("Build classic house source layers");
+    setPlainParameterValue(Parameters::ID::oscWave, 7.0f);
+    setPlainParameterValue(Parameters::ID::osc2Wave, 7.0f);
+    waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
+    osc2WaveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+    writeCustomWaveFrameSetWithoutCapture(false, osc1Frames);
+    writeCustomWaveFrameSetWithoutCapture(true, osc2Frames);
+
+    setPlainParameterValue(Parameters::ID::oscOctave, 0.0f);
+    setPlainParameterValue(Parameters::ID::osc2Octave, 0.0f);
+    setPlainParameterValue(Parameters::ID::oscTune, 0.0f);
+    setPlainParameterValue(Parameters::ID::osc2Tune, 0.07f);
+    setPlainParameterValue(Parameters::ID::osc1Level, 0.78f);
+    setPlainParameterValue(Parameters::ID::osc2Level, 0.42f);
+    setPlainParameterValue(Parameters::ID::subLevel, 0.16f);
+    setPlainParameterValue(Parameters::ID::noiseLevel, 0.07f);
+    setPlainParameterValue(Parameters::ID::noiseType, 5.0f);
+    setPlainParameterValue(Parameters::ID::noiseDecay, 0.09f);
+    setPlainParameterValue(Parameters::ID::oscWarp, 0.12f);
+    setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.32f);
+    setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.55f);
+    setPlainParameterValue(Parameters::ID::unisonVoices, 3.0f);
+    setPlainParameterValue(Parameters::ID::unisonDetune, 0.16f);
+    setPlainParameterValue(Parameters::ID::unisonBlend, 0.58f);
+    setPlainParameterValue(Parameters::ID::unisonSpread, 0.42f);
+    setPlainParameterValue(Parameters::ID::ampAttack, 0.004f);
+    setPlainParameterValue(Parameters::ID::ampDecay, 0.38f);
+    setPlainParameterValue(Parameters::ID::ampSustain, 0.56f);
+    setPlainParameterValue(Parameters::ID::ampRelease, 0.24f);
+    setPlainParameterValue(Parameters::ID::filterCutoff, 2600.0f);
+    setPlainParameterValue(Parameters::ID::filterResonance, 0.34f);
+    setPlainParameterValue(Parameters::ID::filterEnvAmount, 0.22f);
+    setPlainParameterValue(Parameters::ID::filterMode, 0.0f);
+    setPlainParameterValue(Parameters::ID::filterCharacter, 1.0f);
+    setPlainParameterValue(Parameters::ID::filterSlope, 1.0f);
+    setPlainParameterValue(Parameters::ID::driveAmount, 0.16f);
+    setPlainParameterValue(Parameters::ID::outputGain, -9.0f);
+
+    noiseTypeBox.setSelectedItemIndex(5, juce::dontSendNotification);
+    filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    filterCharacterBox.setSelectedItemIndex(1, juce::dontSendNotification);
+    filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);
+
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
+    updateHouseLayerRackDisplay();
+    updateFilterResponseDisplay();
+    updateHomeOverviewDisplay();
+    updateHomeSignalFlowDisplay();
+    updateSelectedControlInspector("Classic House Source", Parameters::ID::osc1Level, 0.78f);
+    setRandomStatus("Built classic house dual-wavetable source layers");
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::buildRaveTechnoSourceLayers()
+{
+    const auto osc1Frames = Synth::WavetableFrameRecipes::raveSweep();
+    const auto osc2Frames = Synth::WavetableFrameRecipes::emphasiseFrameMotion(
+        Synth::WavetableFrameRecipes::rotateFrameOrder(
+            Synth::WavetableFrameRecipes::reverseFrameOrder(osc1Frames),
+            1));
+
+    captureGlobalEdit("Build rave techno source layers");
+    setPlainParameterValue(Parameters::ID::oscWave, 7.0f);
+    setPlainParameterValue(Parameters::ID::osc2Wave, 7.0f);
+    waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
+    osc2WaveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+    writeCustomWaveFrameSetWithoutCapture(false, osc1Frames);
+    writeCustomWaveFrameSetWithoutCapture(true, osc2Frames);
+
+    setPlainParameterValue(Parameters::ID::oscOctave, 0.0f);
+    setPlainParameterValue(Parameters::ID::osc2Octave, 1.0f);
+    setPlainParameterValue(Parameters::ID::oscTune, 0.0f);
+    setPlainParameterValue(Parameters::ID::osc2Tune, 0.03f);
+    setPlainParameterValue(Parameters::ID::osc1Level, 0.82f);
+    setPlainParameterValue(Parameters::ID::osc2Level, 0.30f);
+    setPlainParameterValue(Parameters::ID::subLevel, 0.20f);
+    setPlainParameterValue(Parameters::ID::noiseLevel, 0.10f);
+    setPlainParameterValue(Parameters::ID::noiseType, 6.0f);
+    setPlainParameterValue(Parameters::ID::noiseDecay, 0.07f);
+    setPlainParameterValue(Parameters::ID::oscWarp, 0.42f);
+    setPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.14f);
+    setPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.72f);
+    setPlainParameterValue(Parameters::ID::unisonVoices, 5.0f);
+    setPlainParameterValue(Parameters::ID::unisonDetune, 0.24f);
+    setPlainParameterValue(Parameters::ID::unisonBlend, 0.62f);
+    setPlainParameterValue(Parameters::ID::unisonSpread, 0.58f);
+    setPlainParameterValue(Parameters::ID::ampAttack, 0.002f);
+    setPlainParameterValue(Parameters::ID::ampDecay, 0.18f);
+    setPlainParameterValue(Parameters::ID::ampSustain, 0.72f);
+    setPlainParameterValue(Parameters::ID::ampRelease, 0.12f);
+    setPlainParameterValue(Parameters::ID::filterCutoff, 5200.0f);
+    setPlainParameterValue(Parameters::ID::filterResonance, 0.52f);
+    setPlainParameterValue(Parameters::ID::filterEnvAmount, 0.34f);
+    setPlainParameterValue(Parameters::ID::filterMode, 0.0f);
+    setPlainParameterValue(Parameters::ID::filterCharacter, 2.0f);
+    setPlainParameterValue(Parameters::ID::filterSlope, 1.0f);
+    setPlainParameterValue(Parameters::ID::driveAmount, 0.32f);
+    setPlainParameterValue(Parameters::ID::outputGain, -10.0f);
+
+    noiseTypeBox.setSelectedItemIndex(6, juce::dontSendNotification);
+    filterModeBox.setSelectedItemIndex(0, juce::dontSendNotification);
+    filterCharacterBox.setSelectedItemIndex(2, juce::dontSendNotification);
+    filterSlopeBox.setSelectedItemIndex(1, juce::dontSendNotification);
+
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
+    updateHouseLayerRackDisplay();
+    updateFilterResponseDisplay();
+    updateHomeOverviewDisplay();
+    updateHomeSignalFlowDisplay();
+    updateSelectedControlInspector("Rave Techno Source", Parameters::ID::osc1Level, 0.82f);
+    setRandomStatus("Built rave/techno dual-wavetable source layers");
     returnKeyboardFocusToPiano();
 }
 
@@ -12465,6 +12583,16 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                     Synth::WavetableFrameRecipes::emphasiseFrameMotion(readCustomWaveFrameSet(targetOsc2)),
                                     "Emphasize wavetable stack motion",
                                     "Emphasized " + juce::String(targetOsc2 ? "O2" : "O1") + " wavetable stack motion");
+            changed = false;
+            break;
+
+        case 62:
+            buildClassicHouseSourceLayers();
+            changed = false;
+            break;
+
+        case 63:
+            buildRaveTechnoSourceLayers();
             changed = false;
             break;
 

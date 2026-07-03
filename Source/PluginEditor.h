@@ -913,6 +913,9 @@ private:
     std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> readCustomWaveFrameSet(bool targetOsc2) const;
     UI::WavetableDisplay::CustomPointArray readMorphedCustomWaveFrame(bool targetOsc2) const;
     void writeCustomWaveFrame(bool targetOsc2, size_t frameIndex, const UI::WavetableDisplay::CustomPointArray& values, const juce::String& editLabel);
+    void writeCustomWaveFrameSetWithoutCapture(
+        bool targetOsc2,
+        const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames);
     void writeCustomWaveFrameSet(bool targetOsc2,
                                  const std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>& frames,
                                  const juce::String& editLabel,
@@ -923,6 +926,8 @@ private:
     void exportWavetableFrameStack(bool targetOsc2);
     void copyCustomWaveFrameStack(bool sourceOsc2);
     void swapCustomWaveFrameStacks();
+    void buildClassicHouseSourceLayers();
+    void buildRaveTechnoSourceLayers();
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

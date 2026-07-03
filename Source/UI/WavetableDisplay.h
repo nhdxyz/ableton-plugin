@@ -80,6 +80,14 @@ public:
     void mouseWheelMove(const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
 
 private:
+    struct FrameActionHit
+    {
+        bool valid = false;
+        int oscillator = 1;
+        size_t frameIndex = 0;
+        FrameAction action = FrameAction::copy;
+    };
+
     float osc1Position = 0.0f;
     float osc2Position = 0.35f;
     float warp = 0.0f;
@@ -140,6 +148,7 @@ private:
     CustomDrawMode customDrawMode = CustomDrawMode::point;
 
     void beginFrameRailEdit(const juce::MouseEvent& event);
+    FrameActionHit frameActionHitForEvent(const juce::MouseEvent& event) const;
     bool handleFrameActionGesture(size_t frameIndex, const juce::MouseEvent& event);
     void applyFrameRailFrame(int oscillator, size_t frameIndex);
     void applyFrameRailPosition(const juce::MouseEvent& event);
@@ -158,7 +167,9 @@ private:
     juce::Rectangle<float> spectrumBounds() const;
     int partialForEvent(const juce::MouseEvent& event) const noexcept;
     int frameForRailEvent(const juce::MouseEvent& event) const noexcept;
+    std::array<juce::Rectangle<float>, 3> actionBadgeBoundsForRailCell(juce::Rectangle<float> cell) const;
     size_t activeCustomFrameIndex(int oscillator) const noexcept;
+    static FrameAction actionForBadgeIndex(size_t badgeIndex) noexcept;
     void drawMiniWave(juce::Graphics& g,
                       juce::Rectangle<float> bounds,
                       float position,

@@ -76,6 +76,23 @@ UI::WavetableFrameStrip::State makeState()
 
     return state;
 }
+
+juce::Point<float> stripBadgeCenter(size_t frameIndex, size_t badgeIndex, bool osc2)
+{
+    constexpr auto frameWidth = 65.0f;
+    constexpr auto frameGap = 4.0f;
+    const auto frameX = 77.0f + ((frameWidth + frameGap) * static_cast<float>(frameIndex));
+    const auto frameY = osc2 ? 112.5f : 30.0f;
+    auto badgeRow = juce::Rectangle<float>(frameX, frameY, frameWidth, 65.5f)
+                        .reduced(4.0f, 3.0f)
+                        .removeFromBottom(9.0f);
+    badgeRow.removeFromLeft(12.0f);
+    const auto gap = 2.0f;
+    const auto badgeWidth = (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f;
+    const auto safeBadge = juce::jlimit<size_t>(size_t { 0 }, size_t { 2 }, badgeIndex);
+    return { badgeRow.getX() + ((badgeWidth + gap) * static_cast<float>(safeBadge)) + (badgeWidth * 0.5f),
+             badgeRow.getCentreY() };
+}
 }
 
 int main()
@@ -132,6 +149,55 @@ int main()
     const auto railEndX = 624.0f;
     const auto railWidth = railEndX - railStartX;
     const auto expectedOsc1Frame = 5.0f / static_cast<float>(UI::WavetableFrameStrip::frameCount - 1);
+    const auto directBadgeChangesBefore = changes.size();
+    const auto directBadgeEditStartsBefore = editStarts.size();
+
+    const auto osc1CopyBadge = stripBadgeCenter(1, 0, false);
+    strip.mouseDown(makeMouseEvent(strip, osc1CopyBadge.x, osc1CopyBadge.y, osc1CopyBadge.x, osc1CopyBadge.y));
+    strip.mouseUp(makeMouseEvent(strip, osc1CopyBadge.x, osc1CopyBadge.y, osc1CopyBadge.x, osc1CopyBadge.y));
+
+    if (frameActions.empty()
+        || frameActions.back().osc2
+        || frameActions.back().frameIndex != 1
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::copy)
+    {
+        std::cerr << "Frame-strip C badge did not emit an Osc 1 frame copy action\n";
+        return 1;
+    }
+
+    const auto osc1PasteBadge = stripBadgeCenter(1, 1, false);
+    strip.mouseDown(makeMouseEvent(strip, osc1PasteBadge.x, osc1PasteBadge.y, osc1PasteBadge.x, osc1PasteBadge.y));
+    strip.mouseUp(makeMouseEvent(strip, osc1PasteBadge.x, osc1PasteBadge.y, osc1PasteBadge.x, osc1PasteBadge.y));
+
+    if (frameActions.empty()
+        || frameActions.back().osc2
+        || frameActions.back().frameIndex != 1
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::paste)
+    {
+        std::cerr << "Frame-strip P badge did not emit an Osc 1 frame paste action\n";
+        return 1;
+    }
+
+    const auto osc2StoreBadge = stripBadgeCenter(4, 2, true);
+    strip.mouseDown(makeMouseEvent(strip, osc2StoreBadge.x, osc2StoreBadge.y, osc2StoreBadge.x, osc2StoreBadge.y));
+    strip.mouseUp(makeMouseEvent(strip, osc2StoreBadge.x, osc2StoreBadge.y, osc2StoreBadge.x, osc2StoreBadge.y));
+
+    if (frameActions.empty()
+        || ! frameActions.back().osc2
+        || frameActions.back().frameIndex != 4
+        || frameActions.back().action != UI::WavetableFrameStrip::FrameAction::storeMorph)
+    {
+        std::cerr << "Frame-strip S badge did not emit an Osc 2 store-morph action\n";
+        return 1;
+    }
+
+    if (changes.size() != directBadgeChangesBefore || editStarts.size() != directBadgeEditStartsBefore)
+    {
+        std::cerr << "Frame-strip direct badge clicks also emitted position scan events\n";
+        return 1;
+    }
+
+    frameActions.clear();
     const auto osc1X = railStartX + ((railEndX - railStartX) * 0.72f);
     strip.mouseDown(makeMouseEvent(strip, osc1X, lane1Y, osc1X, lane1Y));
     strip.mouseUp(makeMouseEvent(strip, osc1X, lane1Y, osc1X, lane1Y));

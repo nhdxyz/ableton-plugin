@@ -65,6 +65,21 @@ UI::WavetableDisplay::CustomFrameSet makeTestFrames(float phaseOffset)
 
     return frames;
 }
+
+juce::Point<float> compactBadgeCenter(juce::Rectangle<float> rail, size_t frameIndex, size_t badgeIndex)
+{
+    const auto cellWidth = rail.getWidth() / static_cast<float>(UI::WavetableDisplay::customFrameCount);
+    auto cell = juce::Rectangle<float>(rail.getX() + (static_cast<float>(frameIndex) * cellWidth),
+                                       rail.getY(),
+                                       cellWidth,
+                                       rail.getHeight()).reduced(1.3f, 0.8f);
+    auto badgeRow = cell.reduced(2.0f, 2.0f).removeFromBottom(9.0f).withTrimmedLeft(11.0f);
+    const auto gap = 1.0f;
+    const auto badgeWidth = juce::jmax(4.0f, (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f);
+    const auto safeBadge = juce::jlimit<size_t>(size_t { 0 }, size_t { 2 }, badgeIndex);
+    return { badgeRow.getX() + ((badgeWidth + gap) * static_cast<float>(safeBadge)) + (badgeWidth * 0.5f),
+             badgeRow.getCentreY() };
+}
 }
 
 int main()
@@ -164,8 +179,57 @@ int main()
     const auto frameSixX = rail.getX() + (cellWidth * 5.5f);
     const auto exactFramePosition = 5.0f / static_cast<float>(UI::WavetableDisplay::customFrameCount - 1);
     const auto railY = rail.getCentreY();
-    display.mouseDown(makeMouseEvent(display, frameSixX, railY, frameSixX, railY));
-    display.mouseUp(makeMouseEvent(display, frameSixX, railY, frameSixX, railY));
+    const auto railTopClickY = rail.getY() + juce::jmin(5.0f, rail.getHeight() * 0.25f);
+    const auto directActionPositionsBefore = osc1Positions.size();
+    const auto directActionPointChangesBefore = changedPoints.size();
+    const auto osc1CopyBadge = compactBadgeCenter(rail, 2, 0);
+    display.mouseDown(makeMouseEvent(display, osc1CopyBadge.x, osc1CopyBadge.y, osc1CopyBadge.x, osc1CopyBadge.y));
+    display.mouseUp(makeMouseEvent(display, osc1CopyBadge.x, osc1CopyBadge.y, osc1CopyBadge.x, osc1CopyBadge.y));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 1
+        || frameActions.back().frameIndex != 2
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::copy)
+    {
+        std::cerr << "Compact C badge did not emit an Osc 1 frame copy action\n";
+        return 1;
+    }
+
+    const auto osc1PasteBadge = compactBadgeCenter(rail, 2, 1);
+    display.mouseDown(makeMouseEvent(display, osc1PasteBadge.x, osc1PasteBadge.y, osc1PasteBadge.x, osc1PasteBadge.y));
+    display.mouseUp(makeMouseEvent(display, osc1PasteBadge.x, osc1PasteBadge.y, osc1PasteBadge.x, osc1PasteBadge.y));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 1
+        || frameActions.back().frameIndex != 2
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::paste)
+    {
+        std::cerr << "Compact P badge did not emit an Osc 1 frame paste action\n";
+        return 1;
+    }
+
+    const auto osc2StoreBadge = compactBadgeCenter(rail, 5, 2);
+    display.mouseDown(makeMouseEvent(display, osc2StoreBadge.x, osc2StoreBadge.y, osc2StoreBadge.x, osc2StoreBadge.y));
+    display.mouseUp(makeMouseEvent(display, osc2StoreBadge.x, osc2StoreBadge.y, osc2StoreBadge.x, osc2StoreBadge.y));
+
+    if (frameActions.empty()
+        || frameActions.back().oscillator != 2
+        || frameActions.back().frameIndex != 5
+        || frameActions.back().action != UI::WavetableDisplay::FrameAction::storeMorph)
+    {
+        std::cerr << "Compact S badge did not emit an Osc 2 store-morph action\n";
+        return 1;
+    }
+
+    if (osc1Positions.size() != directActionPositionsBefore || changedPoints.size() != directActionPointChangesBefore)
+    {
+        std::cerr << "Compact direct badge clicks also emitted position or point edits\n";
+        return 1;
+    }
+
+    frameActions.clear();
+    display.mouseDown(makeMouseEvent(display, frameSixX, railTopClickY, frameSixX, railTopClickY));
+    display.mouseUp(makeMouseEvent(display, frameSixX, railTopClickY, frameSixX, railTopClickY));
 
     if (! changedPoints.empty())
     {

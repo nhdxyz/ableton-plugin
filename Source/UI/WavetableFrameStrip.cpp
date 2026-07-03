@@ -181,18 +181,12 @@ void WavetableFrameStrip::paint(juce::Graphics& g)
 
             if (activeFrame && frame.getWidth() >= 42.0f && frame.getHeight() >= 28.0f)
             {
-                auto badgeRow = frame.reduced(4.0f, 3.0f).removeFromBottom(9.0f);
-                badgeRow.removeFromLeft(12.0f);
-                const auto gap = 2.0f;
-                const auto badgeWidth = (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f;
+                const auto badges = actionBadgeBoundsForFrame(frame);
                 const std::array<juce::String, 3> labels { "C", "P", "S" };
 
                 for (size_t badgeIndex = 0; badgeIndex < labels.size(); ++badgeIndex)
                 {
-                    auto badge = badgeRow.removeFromLeft(badgeWidth);
-                    if (badgeIndex + 1 < labels.size())
-                        badgeRow.removeFromLeft(gap);
-
+                    const auto badge = badges[badgeIndex];
                     g.setColour(juce::Colour(0xff0d1316).withAlpha(0.72f * cardAlpha));
                     g.fillRoundedRectangle(badge, 2.0f);
                     g.setColour(accent.withAlpha(0.70f * cardAlpha));
@@ -259,6 +253,20 @@ void WavetableFrameStrip::mouseDown(const juce::MouseEvent& event)
     hoveredLane = editingLane;
     hoveredFrame = hit.frameIndex;
 
+    const auto plainBadgeClick = ! event.mods.isAltDown()
+        && ! event.mods.isCommandDown()
+        && ! event.mods.isShiftDown()
+        && ! event.mods.isCtrlDown();
+    if (plainBadgeClick && hit.frameActionValid && onFrameAction != nullptr)
+    {
+        onFrameAction(hit.osc2,
+                      static_cast<size_t>(juce::jlimit(0, static_cast<int>(frameCount - 1), hit.frameIndex)),
+                      hit.frameAction);
+        editingLane = -1;
+        repaint();
+        return;
+    }
+
     if (hit.frameIndex >= 0 && handleFrameActionGesture(hit, event))
     {
         editingLane = -1;
@@ -317,6 +325,28 @@ std::array<juce::Rectangle<float>, WavetableFrameStrip::frameCount> WavetableFra
     return frames;
 }
 
+std::array<juce::Rectangle<float>, 3>
+WavetableFrameStrip::actionBadgeBoundsForFrame(juce::Rectangle<float> frame) const
+{
+    std::array<juce::Rectangle<float>, 3> badges {};
+    if (frame.getWidth() < 42.0f || frame.getHeight() < 28.0f)
+        return badges;
+
+    auto badgeRow = frame.reduced(4.0f, 3.0f).removeFromBottom(9.0f);
+    badgeRow.removeFromLeft(12.0f);
+    const auto gap = 2.0f;
+    const auto badgeWidth = (badgeRow.getWidth() - (gap * 2.0f)) / static_cast<float>(badges.size());
+
+    for (size_t index = 0; index < badges.size(); ++index)
+    {
+        badges[index] = badgeRow.removeFromLeft(badgeWidth);
+        if (index + 1 < badges.size())
+            badgeRow.removeFromLeft(gap);
+    }
+
+    return badges;
+}
+
 WavetableFrameStrip::HitTarget WavetableFrameStrip::hitTargetAt(juce::Point<float> position) const
 {
     HitTarget hit;
@@ -339,6 +369,27 @@ WavetableFrameStrip::HitTarget WavetableFrameStrip::hitTargetAt(juce::Point<floa
             if (frames[frameIndex].contains(position))
             {
                 hit.frameIndex = static_cast<int>(frameIndex);
+                const auto& laneState = laneIndex == 0 ? state.osc1 : state.osc2;
+                const auto selectedFrame = juce::jlimit<int>(
+                    0,
+                    static_cast<int>(frameCount - 1),
+                    juce::roundToInt(clamp01(laneState.position) * static_cast<float>(frameCount - 1)));
+                const auto actionBadgesVisible = static_cast<int>(frameIndex) == selectedFrame
+                    || (hoveredLane == static_cast<int>(laneIndex) && hoveredFrame == static_cast<int>(frameIndex));
+
+                if (actionBadgesVisible)
+                {
+                    const auto badges = actionBadgeBoundsForFrame(frames[frameIndex]);
+                    for (size_t badgeIndex = 0; badgeIndex < badges.size(); ++badgeIndex)
+                    {
+                        if (! badges[badgeIndex].contains(position))
+                            continue;
+
+                        hit.frameActionValid = true;
+                        hit.frameAction = actionForBadgeIndex(badgeIndex);
+                        break;
+                    }
+                }
                 break;
             }
         }
@@ -347,6 +398,17 @@ WavetableFrameStrip::HitTarget WavetableFrameStrip::hitTargetAt(juce::Point<floa
     }
 
     return hit;
+}
+
+WavetableFrameStrip::FrameAction WavetableFrameStrip::actionForBadgeIndex(size_t badgeIndex) noexcept
+{
+    switch (badgeIndex)
+    {
+        case 1: return FrameAction::paste;
+        case 2: return FrameAction::storeMorph;
+        case 0:
+        default: return FrameAction::copy;
+    }
 }
 
 bool WavetableFrameStrip::handleFrameActionGesture(const HitTarget& hit, const juce::MouseEvent& event)

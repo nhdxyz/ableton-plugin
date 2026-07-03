@@ -75,6 +75,8 @@ private:
         bool osc2 = false;
         float position = 0.0f;
         int frameIndex = -1;
+        bool frameActionValid = false;
+        FrameAction frameAction = FrameAction::copy;
     };
 
     Theme theme = themeFor(ThemeId::darkClub);
@@ -86,8 +88,10 @@ private:
 
     std::array<juce::Rectangle<float>, 2> laneBoundsForArea(juce::Rectangle<float> bounds) const;
     std::array<juce::Rectangle<float>, frameCount> frameBoundsForLane(juce::Rectangle<float> laneBounds) const;
+    std::array<juce::Rectangle<float>, 3> actionBadgeBoundsForFrame(juce::Rectangle<float> frame) const;
     HitTarget hitTargetAt(juce::Point<float> position) const;
     bool handleFrameActionGesture(const HitTarget& hit, const juce::MouseEvent& event);
+    static FrameAction actionForBadgeIndex(size_t badgeIndex) noexcept;
     void selectFrame(const HitTarget& hit);
     void updatePositionAt(juce::Point<float> position);
     static bool laneEqual(const Lane& first, const Lane& second) noexcept;

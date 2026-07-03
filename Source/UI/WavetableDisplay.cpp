@@ -388,17 +388,12 @@ void WavetableDisplay::paint(juce::Graphics& g)
 
             if ((isNearO1 || isNearO2) && cell.getWidth() >= 32.0f && cell.getHeight() >= 12.0f)
             {
-                auto badgeRow = cell.reduced(2.0f, 2.0f).withTrimmedLeft(11.0f);
-                const auto gap = 1.0f;
-                const auto badgeWidth = juce::jmax(4.0f, (badgeRow.getWidth() - (gap * 2.0f)) / 3.0f);
+                const auto badges = actionBadgeBoundsForRailCell(cell);
                 const std::array<juce::String, 3> labels { "C", "P", "S" };
 
                 for (size_t badgeIndex = 0; badgeIndex < labels.size(); ++badgeIndex)
                 {
-                    auto badge = badgeRow.removeFromLeft(badgeWidth);
-                    if (badgeIndex + 1 < labels.size())
-                        badgeRow.removeFromLeft(gap);
-
+                    const auto badge = badges[badgeIndex];
                     g.setColour(juce::Colour(0xff0d1316).withAlpha(0.76f));
                     g.fillRoundedRectangle(badge, 1.6f);
                     g.setColour((isNearO2 && ! isNearO1 ? juce::Colour(0xffc4a2ff) : juce::Colour(0xff8ee6c9)).withAlpha(0.70f));
@@ -855,6 +850,22 @@ void WavetableDisplay::beginFrameRailEdit(const juce::MouseEvent& event)
     editGestureActive = true;
     lastDrawCustomPoint = -1;
 
+    const auto plainBadgeClick = ! event.mods.isAltDown()
+        && ! event.mods.isCommandDown()
+        && ! event.mods.isShiftDown()
+        && ! event.mods.isCtrlDown();
+    const auto actionHit = plainBadgeClick ? frameActionHitForEvent(event) : FrameActionHit {};
+    if (actionHit.valid && onFrameAction != nullptr)
+    {
+        editingOscillator = actionHit.oscillator;
+        onFrameAction(actionHit.oscillator, actionHit.frameIndex, actionHit.action);
+        editingFrameRail = false;
+        editGestureActive = false;
+        frameActionGestureActive = true;
+        repaint();
+        return;
+    }
+
     const auto frameIndex = frameForRailEvent(event);
     if (frameIndex >= 0 && handleFrameActionGesture(static_cast<size_t>(frameIndex), event))
     {
@@ -871,6 +882,46 @@ void WavetableDisplay::beginFrameRailEdit(const juce::MouseEvent& event)
         applyFrameRailFrame(editingOscillator, static_cast<size_t>(frameIndex));
     else
         applyFrameRailPosition(event);
+}
+
+WavetableDisplay::FrameActionHit WavetableDisplay::frameActionHitForEvent(const juce::MouseEvent& event) const
+{
+    FrameActionHit hit;
+    const auto rail = frameRailBounds();
+    if (rail.isEmpty() || ! rail.contains(event.position))
+        return hit;
+
+    const auto cellWidth = rail.getWidth() / static_cast<float>(customFrameCount);
+    for (size_t frameIndex = 0; frameIndex < customFrameCount; ++frameIndex)
+    {
+        const auto position = static_cast<float>(frameIndex) / static_cast<float>(customFrameCount - 1);
+        const auto nearO1 = osc1Active && std::abs(position - osc1Position) <= (0.52f / static_cast<float>(customFrameCount));
+        const auto nearO2 = osc2Active && std::abs(position - osc2Position) <= (0.52f / static_cast<float>(customFrameCount));
+        if (! nearO1 && ! nearO2)
+            continue;
+
+        auto cell = juce::Rectangle<float>(rail.getX() + (static_cast<float>(frameIndex) * cellWidth),
+                                           rail.getY(),
+                                           cellWidth,
+                                           rail.getHeight()).reduced(1.3f, 0.8f);
+        if (! cell.contains(event.position))
+            continue;
+
+        const auto badges = actionBadgeBoundsForRailCell(cell);
+        for (size_t badgeIndex = 0; badgeIndex < badges.size(); ++badgeIndex)
+        {
+            if (! badges[badgeIndex].contains(event.position))
+                continue;
+
+            hit.valid = true;
+            hit.oscillator = nearO2 && ! nearO1 ? 2 : 1;
+            hit.frameIndex = frameIndex;
+            hit.action = actionForBadgeIndex(badgeIndex);
+            return hit;
+        }
+    }
+
+    return hit;
 }
 
 bool WavetableDisplay::handleFrameActionGesture(size_t frameIndex, const juce::MouseEvent& event)
@@ -893,6 +944,17 @@ bool WavetableDisplay::handleFrameActionGesture(size_t frameIndex, const juce::M
                   action);
     repaint();
     return true;
+}
+
+WavetableDisplay::FrameAction WavetableDisplay::actionForBadgeIndex(size_t badgeIndex) noexcept
+{
+    switch (badgeIndex)
+    {
+        case 1: return FrameAction::paste;
+        case 2: return FrameAction::storeMorph;
+        case 0:
+        default: return FrameAction::copy;
+    }
 }
 
 void WavetableDisplay::applyFrameRailFrame(int oscillator, size_t frameIndex)
@@ -1280,6 +1342,28 @@ int WavetableDisplay::frameForRailEvent(const juce::MouseEvent& event) const noe
     return juce::jlimit(0,
                         static_cast<int>(customFrameCount - 1),
                         static_cast<int>(std::floor(normalised * static_cast<float>(customFrameCount))));
+}
+
+std::array<juce::Rectangle<float>, 3>
+WavetableDisplay::actionBadgeBoundsForRailCell(juce::Rectangle<float> cell) const
+{
+    std::array<juce::Rectangle<float>, 3> badges {};
+    if (cell.getWidth() < 32.0f || cell.getHeight() < 12.0f)
+        return badges;
+
+    auto badgeRow = cell.reduced(2.0f, 2.0f).removeFromBottom(9.0f).withTrimmedLeft(11.0f);
+    const auto gap = 1.0f;
+    const auto badgeWidth = juce::jmax(4.0f,
+                                       (badgeRow.getWidth() - (gap * 2.0f)) / static_cast<float>(badges.size()));
+
+    for (size_t index = 0; index < badges.size(); ++index)
+    {
+        badges[index] = badgeRow.removeFromLeft(badgeWidth);
+        if (index + 1 < badges.size())
+            badgeRow.removeFromLeft(gap);
+    }
+
+    return badges;
 }
 
 size_t WavetableDisplay::activeCustomFrameIndex(int oscillator) const noexcept

@@ -2161,6 +2161,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Export WAV", 25);
     wavetableToolBox.addItem("Import WT Stack", 52);
     wavetableToolBox.addItem("Export WT Stack", 53);
+    wavetableToolBox.addSectionHeading("Layer Stack");
+    wavetableToolBox.addItem("Copy O1 Stack to O2", 54);
+    wavetableToolBox.addItem("Copy O2 Stack to O1", 55);
+    wavetableToolBox.addItem("Swap O1/O2 Stacks", 56);
     wavetableToolBox.addSectionHeading("Additive Partials");
     wavetableToolBox.addItem("Odd Harmonics", 26);
     wavetableToolBox.addItem("Even Harmonics", 27);
@@ -6258,6 +6262,13 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                 {
                     issues.add(panelName + ": SYNTH wave tools dropdown overlaps Edit Wave action "
                                + toolBounds.toString() + " / " + editBounds.toString());
+                }
+
+                for (const auto itemId : { 54, 55, 56 })
+                {
+                    if (wavetableToolBox.indexOfItemId(itemId) < 0)
+                        issues.add(panelName + ": SYNTH wave tools are missing layer-stack command id "
+                                   + juce::String(itemId));
                 }
             }
 
@@ -11564,6 +11575,16 @@ UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readCustomWa
     return values;
 }
 
+std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount>
+NateVSTAudioProcessorEditor::readCustomWaveFrameSet(bool targetOsc2) const
+{
+    std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> frames {};
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+        frames[frameIndex] = readCustomWaveFrame(targetOsc2, frameIndex);
+
+    return frames;
+}
+
 UI::WavetableDisplay::CustomPointArray NateVSTAudioProcessorEditor::readMorphedCustomWaveFrame(bool targetOsc2) const
 {
     const auto position = juce::jlimit(0.0f,
@@ -11895,6 +11916,53 @@ void NateVSTAudioProcessorEditor::exportWavetableFrameStack(bool targetOsc2)
                                  setRandomStatus(ok ? "Exported 8-frame wavetable stack WAV" : "WT stack export failed");
                                  returnKeyboardFocusToPiano();
                              });
+}
+
+void NateVSTAudioProcessorEditor::copyCustomWaveFrameStack(bool sourceOsc2)
+{
+    const auto frames = readCustomWaveFrameSet(sourceOsc2);
+    writeCustomWaveFrameSet(! sourceOsc2,
+                            frames,
+                            sourceOsc2 ? "Copy Osc 2 wavetable stack" : "Copy Osc 1 wavetable stack",
+                            sourceOsc2 ? "Copied O2 wavetable stack to O1" : "Copied O1 wavetable stack to O2");
+}
+
+void NateVSTAudioProcessorEditor::swapCustomWaveFrameStacks()
+{
+    const auto osc1Frames = readCustomWaveFrameSet(false);
+    const auto osc2Frames = readCustomWaveFrameSet(true);
+
+    captureGlobalEdit("Swap oscillator wavetable stacks");
+    setPlainParameterValue(Parameters::ID::oscWave, 7.0f);
+    setPlainParameterValue(Parameters::ID::osc2Wave, 7.0f);
+    waveformBox.setSelectedItemIndex(7, juce::dontSendNotification);
+    osc2WaveBox.setSelectedItemIndex(7, juce::dontSendNotification);
+
+    auto writeFrameSetWithoutCapture = [this] (bool targetOsc2, const auto& frames)
+    {
+        const auto& pointIDs = targetOsc2 ? Parameters::ID::osc2CustomWave : Parameters::ID::oscCustomWave;
+        for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+        {
+            for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+            {
+                const auto value = juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]);
+                if (frameIndex == 0)
+                    setPlainParameterValue(pointIDs[pointIndex], value);
+                else
+                    setPlainParameterValue(Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex), value);
+            }
+        }
+    };
+
+    writeFrameSetWithoutCapture(false, osc2Frames);
+    writeFrameSetWithoutCapture(true, osc1Frames);
+
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
+    updateSelectedControlInspector("O1/O2 Stack Swap", Parameters::ID::oscCustomWave[0], osc2Frames[0][0]);
+    setRandomStatus("Swapped O1 and O2 wavetable stacks");
+    returnKeyboardFocusToPiano();
 }
 
 void NateVSTAudioProcessorEditor::storeCustomWaveFrame(bool targetOsc2, size_t frameIndex)
@@ -12337,6 +12405,21 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
         case 53:
             exportWavetableFrameStack(targetOsc2);
+            changed = false;
+            break;
+
+        case 54:
+            copyCustomWaveFrameStack(false);
+            changed = false;
+            break;
+
+        case 55:
+            copyCustomWaveFrameStack(true);
+            changed = false;
+            break;
+
+        case 56:
+            swapCustomWaveFrameStacks();
             changed = false;
             break;
 

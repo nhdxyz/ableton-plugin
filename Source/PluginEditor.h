@@ -910,6 +910,7 @@ private:
     void applySelectedWavetableTool();
     bool wavetableTargetIsOsc2() const;
     UI::WavetableDisplay::CustomPointArray readCustomWaveFrame(bool targetOsc2, size_t frameIndex) const;
+    std::array<UI::WavetableDisplay::CustomPointArray, Parameters::customWaveMorphFrameCount> readCustomWaveFrameSet(bool targetOsc2) const;
     UI::WavetableDisplay::CustomPointArray readMorphedCustomWaveFrame(bool targetOsc2) const;
     void writeCustomWaveFrame(bool targetOsc2, size_t frameIndex, const UI::WavetableDisplay::CustomPointArray& values, const juce::String& editLabel);
     void writeCustomWaveFrameSet(bool targetOsc2,
@@ -920,6 +921,8 @@ private:
     void exportSingleCycleWave(bool targetOsc2);
     void importWavetableFrameStack(bool targetOsc2);
     void exportWavetableFrameStack(bool targetOsc2);
+    void copyCustomWaveFrameStack(bool sourceOsc2);
+    void swapCustomWaveFrameStacks();
     void storeCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void loadCustomWaveFrame(bool targetOsc2, size_t frameIndex);
     void bakeCurrentCustomWaveMorph(bool targetOsc2);

@@ -279,6 +279,7 @@ juce::String sourceNameForWave(int wave)
         case 4: return "Wavetable";
         case 5: return "Organ";
         case 6: return "House Piano";
+        case 7: return "Custom";
         default: return "Synth";
     }
 }
@@ -1963,6 +1964,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         returnKeyboardFocusToPiano();
     };
     addAndMakeVisible(sourceLabFrameStrip);
+
+    addAndMakeVisible(oscillatorLaneOverview);
 
     houseLayerRackDisplay.onLayerSelected = [this] (size_t layerIndex) { focusHouseLayer(layerIndex); };
     houseLayerRackDisplay.onLayerEditStarted = [this] (size_t layerIndex) { beginHouseLayerLevelEdit(layerIndex); };
@@ -4068,6 +4071,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     updateSampleRecorderStatus();
     updateSampleSliceButtons();
     updateHouseLayerRackDisplay();
+    updateOscillatorLaneOverview();
     refreshPresetList();
     installGlobalKeyboardListeners();
     setActivePanel(Panel::home);
@@ -4160,6 +4164,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     houseLayerRackDisplay.setTheme(theme);
     expandedHouseLayerRackDisplay.setTheme(theme);
+    oscillatorLaneOverview.setTheme(theme);
     sourceLabFrameStrip.setTheme(theme);
     sampleChopPanel.applyTheme(theme);
     sampleRecorderPanel.applyTheme(theme);
@@ -4635,6 +4640,7 @@ void NateVSTAudioProcessorEditor::resized()
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
+            oscillatorLaneOverview.setVisible(true);
             houseLayerRackDisplay.setVisible(true);
             sourceLayerExpandButton.setVisible(true);
             synthSectionLabel.setBounds(content.removeFromTop(28));
@@ -4691,8 +4697,10 @@ void NateVSTAudioProcessorEditor::resized()
 
             const auto compactSourceCard = sourceArea.getHeight() < 260;
             const auto rackHeight = compactSourceCard ? 58 : 76;
+            const auto laneOverviewHeight = compactSourceCard ? 66 : 88;
             const auto levelRowHeight = compactSourceCard ? 62 : 72;
             houseLayerRackDisplay.setBounds(sourceArea.removeFromTop(rackHeight).reduced(2, 4));
+            oscillatorLaneOverview.setBounds(sourceArea.removeFromTop(laneOverviewHeight).reduced(2, 4));
             layoutKnobRow(sourceArea.removeFromTop(levelRowHeight).withTrimmedTop(3), {
                 &osc1LevelSlider,
                 &osc2LevelSlider,
@@ -6399,6 +6407,29 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                     if (wavetableToolBox.indexOfItemId(itemId) < 0)
                         issues.add(panelName + ": SYNTH wave tools are missing custom-wave command id "
                                    + juce::String(itemId));
+                }
+            }
+
+            if (! oscillatorLaneOverview.isVisible())
+            {
+                issues.add(panelName + ": OscillatorLaneOverview is not visible in the SYNTH source card");
+            }
+            else
+            {
+                const auto laneBounds = getLocalArea(oscillatorLaneOverview.getParentComponent(),
+                                                     oscillatorLaneOverview.getBounds());
+                if (laneBounds.getHeight() < 58 || laneBounds.getWidth() < 240)
+                {
+                    issues.add(panelName + ": OscillatorLaneOverview is too small "
+                               + laneBounds.toString());
+                }
+
+                const auto laneMetrics = oscillatorLaneOverview.getLayoutMetricsForAudit();
+                if (! laneMetrics.readable)
+                {
+                    issues.add(panelName + ": OscillatorLaneOverview lanes are not readable min "
+                               + juce::String(laneMetrics.minLaneWidth, 1) + "x"
+                               + juce::String(laneMetrics.minLaneHeight, 1));
                 }
             }
 
@@ -11184,7 +11215,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -11706,6 +11737,7 @@ void NateVSTAudioProcessorEditor::updateWavetableDisplay()
     if (expandedWavetableDisplay.isVisible())
         applyWavetableState(expandedWavetableDisplay);
 
+    updateOscillatorLaneOverview();
     updateSourceLabFrameStrip();
 }
 
@@ -13086,6 +13118,65 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
 
     wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
     returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
+{
+    const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+    const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    const auto warpChoices = Parameters::oscWarpModeChoices();
+    auto warpModeName = [&warpChoices] (float value)
+    {
+        const auto index = juce::jlimit(0, warpChoices.size() - 1, juce::roundToInt(value));
+        return warpChoices[index];
+    };
+
+    UI::OscillatorLaneOverview::State state;
+    state.lanes = {
+        UI::OscillatorLaneOverview::Lane {
+            "OSC 1",
+            sourceNameForWave(osc1Wave),
+            warpModeName(readPlainParameterValue(Parameters::ID::oscWarpMode, 0.0f)),
+            warpModeName(readPlainParameterValue(Parameters::ID::oscWarpBMode, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::oscWarp, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::oscWarpB, 0.0f)),
+            readPlainParameterValue(Parameters::ID::osc1Level, 1.0f) > 0.01f,
+            osc1Wave == 4 || osc1Wave == 7,
+            osc1Wave == 7
+        },
+        UI::OscillatorLaneOverview::Lane {
+            "OSC 2",
+            sourceNameForWave(osc2Wave),
+            warpModeName(readPlainParameterValue(Parameters::ID::osc2WarpMode, 0.0f)),
+            warpModeName(readPlainParameterValue(Parameters::ID::osc2WarpBMode, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Warp, 0.0f)),
+            juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2WarpB, 0.0f)),
+            readPlainParameterValue(Parameters::ID::osc2Level, 0.0f) > 0.01f,
+            osc2Wave == 4 || osc2Wave == 7,
+            osc2Wave == 7
+        }
+    };
+
+    const auto activeCount = static_cast<int>(std::count_if(state.lanes.begin(),
+                                                            state.lanes.end(),
+                                                            [] (const UI::OscillatorLaneOverview::Lane& lane)
+                                                            {
+                                                                return lane.active && lane.level > 0.025f;
+                                                            }));
+    const auto customCount = static_cast<int>(std::count_if(state.lanes.begin(),
+                                                            state.lanes.end(),
+                                                            [] (const UI::OscillatorLaneOverview::Lane& lane)
+                                                            {
+                                                                return lane.customActive;
+                                                            }));
+    state.summary = juce::String(activeCount) + "/2 active"
+        + (customCount > 0 ? " | " + juce::String(customCount) + " custom" : juce::String());
+
+    oscillatorLaneOverview.setState(std::move(state));
 }
 
 void NateVSTAudioProcessorEditor::updateHouseLayerRackDisplay()
@@ -14987,6 +15078,8 @@ void NateVSTAudioProcessorEditor::timerCallback()
         updateWavetableDisplay();
     if (randomMorphPad.isVisible())
         updateRandomMorphPad();
+    if (oscillatorLaneOverview.isVisible())
+        updateOscillatorLaneOverview();
     if (anyComponentVisible(houseLayerRackDisplay, expandedHouseLayerRackDisplay))
         updateHouseLayerRackDisplay();
     if (filterResponseDisplay.isVisible())

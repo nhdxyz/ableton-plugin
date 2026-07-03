@@ -72,6 +72,7 @@ target_sources(NateVST
         Source/UI/ModMatrixRow.cpp
         Source/UI/ModRouteMapDisplay.cpp
         Source/UI/ModSourceMeter.cpp
+        Source/UI/OscillatorLaneOverview.cpp
         Source/UI/OutputMeter.cpp
         Source/UI/OutputOscilloscopeDisplay.cpp
         Source/UI/OutputSpectrumDisplay.cpp

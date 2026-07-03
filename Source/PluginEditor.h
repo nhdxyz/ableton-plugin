@@ -17,6 +17,7 @@
 #include "UI/ModMatrixRow.h"
 #include "UI/ModRouteMapDisplay.h"
 #include "UI/ModSourceMeter.h"
+#include "UI/OscillatorLaneOverview.h"
 #include "UI/OutputMeter.h"
 #include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
@@ -816,6 +817,7 @@ private:
     UI::WavetableDisplay wavetableDisplay;
     UI::WavetableDisplay expandedWavetableDisplay;
     UI::WavetableFrameStrip sourceLabFrameStrip;
+    UI::OscillatorLaneOverview oscillatorLaneOverview;
     UI::HouseLayerRackDisplay houseLayerRackDisplay;
     UI::HouseLayerRackDisplay expandedHouseLayerRackDisplay;
     UI::FilterResponseDisplay filterResponseDisplay;
@@ -929,6 +931,7 @@ private:
     void updateLfoCurveDisplay();
     void updatePumpCurveDisplay();
     void updateWavetableDisplay();
+    void updateOscillatorLaneOverview();
     void updateSourceLabFrameStrip();
     void setSourceFrameActionTarget(bool targetOsc2);
     bool sourceFrameActionTargetIsOsc2() const;

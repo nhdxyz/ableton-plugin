@@ -71,6 +71,7 @@ target_sources(NateVST
         Source/UI/LfoCurveToolStrip.cpp
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp
+        Source/UI/MacroAssignmentActions.cpp
         Source/UI/MacroAssignmentPad.cpp
         Source/UI/MacroPerformanceMap.cpp
         Source/UI/LibraryPanelLayout.cpp

@@ -112,6 +112,7 @@ void layoutMacrosPage(SourceControls sourceControls, MacroControls macroControls
     macroControls.assignLabel.setVisible(true);
     macroControls.assignStatusLabel.setVisible(true);
     macroControls.assignmentPad.setVisible(true);
+    macroControls.assignmentActions.setVisible(true);
     macroControls.performanceMap.setVisible(true);
     macroControls.expandButton.setVisible(true);
 
@@ -119,6 +120,7 @@ void layoutMacrosPage(SourceControls sourceControls, MacroControls macroControls
     macroControls.macroLabel.setBounds(macroHeader.removeFromLeft(78));
     macroControls.assignLabel.setBounds(macroHeader.removeFromLeft(66));
     macroControls.expandButton.setBounds(macroHeader.removeFromRight(30).reduced(3, 2));
+    macroControls.assignmentActions.setBounds(macroHeader.removeFromRight(MacroAssignmentActions::preferredWidth));
     macroControls.assignStatusLabel.setBounds(macroHeader.reduced(4, 1));
 
     area.removeFromTop(8);

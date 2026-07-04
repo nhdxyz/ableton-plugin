@@ -3881,12 +3881,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     controlStatusStrip.onRedoClicked = [this] { triggerGlobalRedo(); };
     controlStatusStrip.onAddModClicked = [this] { addModRouteForSelectedControl(); };
     controlStatusStrip.onOpenModClicked = [this] { focusSelectedControlModDestination(); };
-    modMacroAssignAddButton.setTooltip("Add or update this macro assignment");
-    modMacroAssignAddButton.onClick = [this] { addMacroAssignment(false); };
-    modMacroAssignReplaceButton.setTooltip("Replace all assignments for the selected macro with this one destination");
-    modMacroAssignReplaceButton.onClick = [this] { addMacroAssignment(true); };
-    modMacroAssignClearButton.setTooltip("Delete all routes owned by the selected macro");
-    modMacroAssignClearButton.onClick = [this] { clearSelectedMacroAssignments(); };
+    macroAssignmentActions.onAddClicked = [this] { addMacroAssignment(false); };
+    macroAssignmentActions.onReplaceClicked = [this] { addMacroAssignment(true); };
+    macroAssignmentActions.onClearClicked = [this] { clearSelectedMacroAssignments(); };
     fxToneSlotButton.onClick = [this] { selectFxModule(FxModule::tone); };
     fxEqSlotButton.onClick = [this] { selectFxModule(FxModule::eq); };
     fxDistortionSlotButton.onClick = [this] { selectFxModule(FxModule::distortion); };
@@ -4055,9 +4052,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(infoOpenFxButton);
     addAndMakeVisible(infoOpenLibraryButton);
     addAndMakeVisible(controlStatusStrip);
-    addAndMakeVisible(modMacroAssignAddButton);
-    addAndMakeVisible(modMacroAssignReplaceButton);
-    addAndMakeVisible(modMacroAssignClearButton);
+    addAndMakeVisible(macroAssignmentActions);
     addAndMakeVisible(fxToneSlotButton);
     addAndMakeVisible(fxEqSlotButton);
     addAndMakeVisible(fxDistortionSlotButton);
@@ -5057,6 +5052,7 @@ void NateVSTAudioProcessorEditor::resized()
                     modMacroAssignLabel,
                     modMacroAssignStatusLabel,
                     modMacroExpandButton,
+                    macroAssignmentActions,
                     macroAssignmentPad,
                     macroPerformanceMap
                 },
@@ -10711,7 +10707,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxRackOrderControls, &fxPerformanceControls,
-        &fxApplyPresetButton, &modInspectorActions, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
+        &fxApplyPresetButton, &modInspectorActions, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &macroAssignmentActions,
         &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
@@ -13504,8 +13500,7 @@ void NateVSTAudioProcessorEditor::updateMacroAssignmentEditorStatus()
 
     modMacroAssignStatusLabel.setText(summary, juce::dontSendNotification);
     modMacroAssignStatusLabel.setTooltip(tooltip + " | Drag the assignment pad to add or update the selected route");
-    modMacroAssignAddButton.setButtonText(selectedRouteExists ? "Update" : "Add");
-    modMacroAssignClearButton.setEnabled(! routes.isEmpty());
+    macroAssignmentActions.setState(selectedRouteExists, ! routes.isEmpty());
     updateMacroAssignmentPad();
 }
 

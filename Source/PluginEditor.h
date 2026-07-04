@@ -15,6 +15,7 @@
 #include "UI/LfoCurveToolStrip.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
+#include "UI/MacroAssignmentActions.h"
 #include "UI/MacroAssignmentPad.h"
 #include "UI/MacroPerformanceMap.h"
 #include "UI/ModInspectorActions.h"
@@ -730,9 +731,7 @@ private:
     UI::FxPerformanceControls fxPerformanceControls;
     juce::TextButton fxApplyPresetButton { "Load" };
     UI::ModInspectorActions modInspectorActions;
-    juce::TextButton modMacroAssignAddButton { "Add" };
-    juce::TextButton modMacroAssignReplaceButton { "Replace" };
-    juce::TextButton modMacroAssignClearButton { "Clear" };
+    UI::MacroAssignmentActions macroAssignmentActions;
     juce::TextButton homeMacroExpandButton { ">" };
     juce::TextButton modMacroExpandButton { ">" };
     juce::TextButton sampleChopExpandButton { ">" };

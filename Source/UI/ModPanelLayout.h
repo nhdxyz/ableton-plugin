@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LfoCurveToolStrip.h"
+#include "MacroAssignmentActions.h"
 #include "MacroAssignmentPad.h"
 #include "MacroPerformanceMap.h"
 #include "ModCurveDisplay.h"
@@ -60,6 +61,7 @@ struct MacroControls
     juce::Label& assignLabel;
     juce::Label& assignStatusLabel;
     juce::TextButton& expandButton;
+    MacroAssignmentActions& assignmentActions;
     MacroAssignmentPad& assignmentPad;
     MacroPerformanceMap& performanceMap;
 };

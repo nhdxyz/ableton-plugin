@@ -36,20 +36,6 @@ void placeSceneSlot(juce::TextButton& recallButton,
     captureButton.setBounds(slotArea.reduced(3, 4));
 }
 
-void placeStepButtons(std::array<juce::TextButton, 13>& buttons, juce::Rectangle<int> area)
-{
-    auto stepPitchRow = area.removeFromTop(26);
-    for (auto index = 0; index < 4; ++index)
-        buttons[static_cast<size_t>(index)].setBounds(stepPitchRow.removeFromLeft(stepPitchRow.getWidth() / (4 - index)).reduced(3, 3));
-
-    auto stepValueRow = area.removeFromTop(26);
-    for (auto index = 4; index < 10; ++index)
-        buttons[static_cast<size_t>(index)].setBounds(stepValueRow.removeFromLeft(stepValueRow.getWidth() / (10 - index)).reduced(3, 3));
-
-    auto stepFlagRow = area.removeFromTop(26);
-    for (auto index = 10; index < 13; ++index)
-        buttons[static_cast<size_t>(index)].setBounds(stepFlagRow.removeFromLeft(stepFlagRow.getWidth() / (13 - index)).reduced(3, 3));
-}
 }
 
 void layout(juce::Rectangle<int> content, Components components)
@@ -72,9 +58,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.rootDownButton.setVisible(true);
     components.rootUpButton.setVisible(true);
     components.rootValueLabel.setVisible(true);
-    components.stepEditorLabel.setVisible(true);
-    for (auto& button : components.stepEditorButtons)
-        button.setVisible(true);
+    components.stepEditor.setVisible(true);
     components.applyPatternButton.setVisible(true);
     components.copyButton.setVisible(true);
     components.rotateLeftButton.setVisible(true);
@@ -140,9 +124,7 @@ void layout(juce::Rectangle<int> content, Components components)
     auto laneViewRow = controlArea.removeFromTop(34).withTrimmedTop(2);
     components.laneViewBox.setBounds(laneViewRow.reduced(4));
 
-    auto stepEditorArea = controlArea.removeFromTop(104).withTrimmedTop(4);
-    components.stepEditorLabel.setBounds(stepEditorArea.removeFromTop(24).reduced(4, 2));
-    placeStepButtons(components.stepEditorButtons, stepEditorArea);
+    components.stepEditor.setBounds(controlArea.removeFromTop(components.stepEditor.preferredHeight() + 4).withTrimmedTop(4));
 
     auto transformRow = controlArea.removeFromTop(34).withTrimmedTop(2);
     components.lockDestinationBox.setBounds(transformRow.removeFromLeft(transformRow.getWidth() / 2).reduced(4));

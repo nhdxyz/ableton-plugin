@@ -1508,47 +1508,26 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sequencerRootValueLabel.setTooltip("Sequencer root note");
     addAndMakeVisible(sequencerRootValueLabel);
 
-    sequencerStepEditorLabel.setText("Select a step", juce::dontSendNotification);
-    sequencerStepEditorLabel.setFont(juce::FontOptions(11.5f, juce::Font::bold));
-    sequencerStepEditorLabel.setJustificationType(juce::Justification::centred);
-    sequencerStepEditorLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
-    sequencerStepEditorLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
-    sequencerStepEditorLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff31434a));
-    sequencerStepEditorLabel.setTooltip("Focused editor for the selected piano-roll step");
-    addAndMakeVisible(sequencerStepEditorLabel);
-
-    const std::array<juce::String, 13> stepButtonLabels {
-        "Note -", "Note +", "Oct -", "Oct +", "Vel -", "Vel +", "Prob -", "Prob +", "Len -", "Len +", "Rat", "Slide", "Lock"
-    };
-    for (size_t index = 0; index < sequencerStepEditorButtons.size(); ++index)
+    sequencerStepEditor.onAction = [this] (UI::SequencerStepEditor::Action action)
     {
-        auto& button = sequencerStepEditorButtons[index];
-        button.setButtonText(stepButtonLabels[index]);
-        button.setWantsKeyboardFocus(false);
-        button.setMouseClickGrabsKeyboardFocus(false);
-        button.setTooltip("Edit the selected sequencer step: " + stepButtonLabels[index]);
-        button.onClick = [this, index]
+        switch (action)
         {
-            switch (index)
-            {
-                case 0: adjustSelectedSequencerStepNote(-1); break;
-                case 1: adjustSelectedSequencerStepNote(1); break;
-                case 2: adjustSelectedSequencerStepNote(-12); break;
-                case 3: adjustSelectedSequencerStepNote(12); break;
-                case 4: adjustSelectedSequencerStepValue(0, -0.05f); break;
-                case 5: adjustSelectedSequencerStepValue(0, 0.05f); break;
-                case 6: adjustSelectedSequencerStepValue(1, -0.05f); break;
-                case 7: adjustSelectedSequencerStepValue(1, 0.05f); break;
-                case 8: adjustSelectedSequencerStepValue(2, -0.05f); break;
-                case 9: adjustSelectedSequencerStepValue(2, 0.05f); break;
-                case 10: toggleSelectedSequencerStepFlag(0); break;
-                case 11: toggleSelectedSequencerStepFlag(1); break;
-                case 12: toggleSelectedSequencerStepFlag(2); break;
-                default: break;
-            }
-        };
-        addAndMakeVisible(button);
-    }
+            case UI::SequencerStepEditor::Action::noteDown: adjustSelectedSequencerStepNote(-1); break;
+            case UI::SequencerStepEditor::Action::noteUp: adjustSelectedSequencerStepNote(1); break;
+            case UI::SequencerStepEditor::Action::octaveDown: adjustSelectedSequencerStepNote(-12); break;
+            case UI::SequencerStepEditor::Action::octaveUp: adjustSelectedSequencerStepNote(12); break;
+            case UI::SequencerStepEditor::Action::velocityDown: adjustSelectedSequencerStepValue(0, -0.05f); break;
+            case UI::SequencerStepEditor::Action::velocityUp: adjustSelectedSequencerStepValue(0, 0.05f); break;
+            case UI::SequencerStepEditor::Action::probabilityDown: adjustSelectedSequencerStepValue(1, -0.05f); break;
+            case UI::SequencerStepEditor::Action::probabilityUp: adjustSelectedSequencerStepValue(1, 0.05f); break;
+            case UI::SequencerStepEditor::Action::lengthDown: adjustSelectedSequencerStepValue(2, -0.05f); break;
+            case UI::SequencerStepEditor::Action::lengthUp: adjustSelectedSequencerStepValue(2, 0.05f); break;
+            case UI::SequencerStepEditor::Action::ratchet: toggleSelectedSequencerStepFlag(0); break;
+            case UI::SequencerStepEditor::Action::slide: toggleSelectedSequencerStepFlag(1); break;
+            case UI::SequencerStepEditor::Action::lock: toggleSelectedSequencerStepFlag(2); break;
+        }
+    };
+    addAndMakeVisible(sequencerStepEditor);
 
     configureSectionLabel(homeSectionLabel, "HOME");
     configureSectionLabel(homeEngineLabel, "PERFORM");
@@ -5228,7 +5207,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerSectionLabel,
                 hostSyncStatusLabel,
                 sequencerRootValueLabel,
-                sequencerStepEditorLabel,
+                sequencerStepEditor,
                 sequencerEnabledButton,
                 sequencerChordMemoryButton,
                 rateEighthButton,
@@ -5259,7 +5238,6 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerLockDestinationBox,
                 sequencerSceneRecallButtons,
                 sequencerSceneCaptureButtons,
-                sequencerStepEditorButtons,
                 sequencerGrid,
                 { sequencerRootSlider, sequencerRootLabel },
                 { sequencerGateSlider, sequencerGateLabel },
@@ -10779,7 +10757,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
+        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -10818,7 +10796,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerStepEditor, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)
@@ -10840,9 +10818,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : sequencerSceneCaptureButtons)
-        button.setVisible(false);
-
-    for (auto& button : sequencerStepEditorButtons)
         button.setVisible(false);
 
     for (auto& label : modSourceRows)
@@ -14745,13 +14720,9 @@ void NateVSTAudioProcessorEditor::updateSequencerStepEditor()
         selectedIndex = expandedSequencerGrid.getSelectedStepIndex();
 
     const auto hasSelection = selectedIndex >= 0;
-    for (auto& button : sequencerStepEditorButtons)
-        button.setEnabled(hasSelection);
-
     if (! hasSelection)
     {
-        sequencerStepEditorLabel.setText("Select a step", juce::dontSendNotification);
-        sequencerStepEditorLabel.setTooltip("Click a piano-roll step or lane cell, then edit it here");
+        sequencerStepEditor.setNoSelection();
         return;
     }
 
@@ -14760,20 +14731,15 @@ void NateVSTAudioProcessorEditor::updateSequencerStepEditor()
     const auto octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerOctave, 0.0f)) * 12;
     const auto midiNote = juce::jlimit(0, 127, root + octave + step.noteOffset);
     const auto noteName = juce::MidiMessage::getMidiNoteName(midiNote, true, true, 3);
-    const auto label = "S" + juce::String(selectedIndex + 1)
-        + (step.enabled ? " " + noteName : " empty")
-        + " | V" + juce::String(juce::roundToInt(step.velocity * 100.0f))
-        + " P" + juce::String(juce::roundToInt(step.probability * 100.0f))
-        + " L" + juce::String(juce::roundToInt(step.length * 100.0f));
-
-    sequencerStepEditorLabel.setText(label, juce::dontSendNotification);
-    sequencerStepEditorLabel.setTooltip("Selected step editor: " + label
-                                        + " | Ratchet " + juce::String(step.ratchet) + "x"
-                                        + (step.slide ? " | Slide" : "")
-                                        + " | Lock " + juce::String(juce::roundToInt(step.lock * 100.0f)) + "%");
-    sequencerStepEditorButtons[10].setButtonText("Rat " + juce::String(step.ratchet) + "x");
-    sequencerStepEditorButtons[11].setButtonText(step.slide ? "Slide On" : "Slide");
-    sequencerStepEditorButtons[12].setButtonText(step.lock > 0.01f ? "Lock " + juce::String(juce::roundToInt(step.lock * 100.0f)) : "Lock");
+    sequencerStepEditor.setSelectedStep(selectedIndex,
+                                        noteName,
+                                        step.enabled,
+                                        juce::roundToInt(step.velocity * 100.0f),
+                                        juce::roundToInt(step.probability * 100.0f),
+                                        juce::roundToInt(step.length * 100.0f),
+                                        step.ratchet,
+                                        step.slide,
+                                        juce::roundToInt(step.lock * 100.0f));
 }
 
 void NateVSTAudioProcessorEditor::setSelectedSequencerStep(Sequencer::Step step)

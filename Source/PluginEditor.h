@@ -32,6 +32,7 @@
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleWaveformDisplay.h"
+#include "UI/SequencerStepEditor.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/WavetableDisplay.h"
@@ -683,7 +684,6 @@ private:
     juce::TextButton applyGrooveTransformButton { "Shape" };
     std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
     std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
-    std::array<juce::TextButton, 13> sequencerStepEditorButtons;
     UI::PanelTabBar panelTabBar;
     UI::ControlStatusStrip controlStatusStrip;
     juce::TextButton sineWaveButton { "Sine" };
@@ -801,7 +801,6 @@ private:
     juce::TextButton sequencerRootUpButton { "+" };
     juce::Label keyboardRangeLabel;
     juce::Label sequencerRootValueLabel;
-    juce::Label sequencerStepEditorLabel;
     juce::Label fxRackStatusLabel;
     std::array<UI::ModSourceMeter, 20> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
@@ -837,6 +836,7 @@ private:
     UI::SampleWaveformDisplay expandedSampleWaveformDisplay;
     UI::StepSequencerGrid sequencerGrid;
     UI::StepSequencerGrid expandedSequencerGrid;
+    UI::SequencerStepEditor sequencerStepEditor;
     UI::WavetableDisplay wavetableDisplay;
     UI::WavetableDisplay expandedWavetableDisplay;
     UI::WavetableFrameStrip sourceLabFrameStrip;

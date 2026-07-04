@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SequencerStepEditor.h"
 #include "StepSequencerGrid.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -19,7 +20,7 @@ struct Components
     juce::Label& sectionLabel;
     juce::Label& hostSyncStatusLabel;
     juce::Label& rootValueLabel;
-    juce::Label& stepEditorLabel;
+    SequencerStepEditor& stepEditor;
 
     juce::ToggleButton& enabledButton;
     juce::ToggleButton& chordMemoryButton;
@@ -54,7 +55,6 @@ struct Components
 
     std::array<juce::TextButton, 4>& sceneRecallButtons;
     std::array<juce::TextButton, 4>& sceneCaptureButtons;
-    std::array<juce::TextButton, 13>& stepEditorButtons;
 
     StepSequencerGrid& grid;
 

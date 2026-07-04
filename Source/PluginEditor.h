@@ -43,6 +43,7 @@
 #include "UI/SamplePlaybackControls.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleRecipeActions.h"
+#include "UI/SampleShapeControls.h"
 #include "UI/SampleSourceControls.h"
 #include "UI/SampleStatusLabel.h"
 #include "UI/SampleWaveformDisplay.h"
@@ -298,6 +299,7 @@ private:
     juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
     UI::SampleSourceControls sampleSourceControls;
+    UI::SampleShapeControls sampleShapeControls;
     UI::SamplePlaybackControls samplePlaybackControls;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
@@ -420,14 +422,6 @@ private:
     std::array<juce::Slider, 7> randomSectionIntensitySliders;
     juce::Slider sampleStartSlider;
     juce::Slider sampleEndSlider;
-    juce::Slider sampleTransposeSlider;
-    juce::Slider samplePitchRampSlider;
-    juce::Slider sampleGainSlider;
-    juce::Slider sampleMixSlider;
-    juce::Slider sampleStutterRepeatsSlider;
-    juce::Slider sampleGrainSizeSlider;
-    juce::Slider sampleGrainSpraySlider;
-    juce::Slider sampleSpectralFreezeSlider;
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
     juce::Slider sequencerSwingSlider;
@@ -546,14 +540,6 @@ private:
     std::array<juce::Label, 7> randomSectionIntensityLabels;
     juce::Label sampleStartLabel;
     juce::Label sampleEndLabel;
-    juce::Label sampleTransposeLabel;
-    juce::Label samplePitchRampLabel;
-    juce::Label sampleGainLabel;
-    juce::Label sampleMixLabel;
-    juce::Label sampleStutterRepeatsLabel;
-    juce::Label sampleGrainSizeLabel;
-    juce::Label sampleGrainSprayLabel;
-    juce::Label sampleSpectralFreezeLabel;
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
     juce::Label sequencerSwingLabel;

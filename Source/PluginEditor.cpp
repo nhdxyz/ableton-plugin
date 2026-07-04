@@ -1405,6 +1405,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse),
       sampleSourceControls(processorToUse.getValueTreeState()),
+      sampleShapeControls(processorToUse.getValueTreeState()),
       samplePlaybackControls(processorToUse.getValueTreeState()),
       sampleRecorderPanel(processorToUse.getValueTreeState()),
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
@@ -3066,10 +3067,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
     oscWarpSlider.onDragStart = [this] { setModInspectorDestination(17); };
     sampleStartSlider.onDragStart = [this] { setModInspectorDestination(12); };
-    sampleMixSlider.onDragStart = [this] { setModInspectorDestination(13); };
-    sampleTransposeSlider.onDragStart = [this] { setModInspectorDestination(14); };
-    samplePitchRampSlider.onDragStart = [this] { setModInspectorDestination(15); };
-    sampleStutterRepeatsSlider.onDragStart = [this] { setModInspectorDestination(16); };
     configureSlider(randomAmountSlider, randomAmountLabel, "Amount", Parameters::ID::randomAmount);
     configureSlider(randomChaosSlider, randomChaosLabel, "Chaos", Parameters::ID::randomChaos);
     configureSlider(brightnessSlider, brightnessLabel, "Bright", Parameters::ID::randomBrightnessBias);
@@ -3100,14 +3097,24 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                                      randomSectionIntensityIDs[index]);
     configureHorizontalSlider(sampleStartSlider, sampleStartLabel, "Start", Parameters::ID::sampleStart);
     configureHorizontalSlider(sampleEndSlider, sampleEndLabel, "End", Parameters::ID::sampleEnd);
-    configureSlider(sampleTransposeSlider, sampleTransposeLabel, "Pitch", Parameters::ID::sampleTranspose);
-    configureSlider(samplePitchRampSlider, samplePitchRampLabel, "Ramp", Parameters::ID::samplePitchRamp);
-    configureSlider(sampleGainSlider, sampleGainLabel, "Gain", Parameters::ID::sampleGain);
-    configureSlider(sampleMixSlider, sampleMixLabel, "Mix", Parameters::ID::sampleMix);
-    configureSlider(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, "Repeat", Parameters::ID::sampleStutterRepeats);
-    configureSlider(sampleGrainSizeSlider, sampleGrainSizeLabel, "Grain", Parameters::ID::sampleGrainSize);
-    configureSlider(sampleGrainSpraySlider, sampleGrainSprayLabel, "Spray", Parameters::ID::sampleGrainSpray);
-    configureSlider(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, "Freeze", Parameters::ID::sampleSpectralFreeze);
+    sampleShapeControls.onEditStarted = [this] (const juce::String& labelText)
+    {
+        captureGlobalEdit("Edit " + labelText);
+    };
+    sampleShapeControls.onControlChanged = [this] (const juce::String& labelText,
+                                                   const juce::String& parameterID,
+                                                   double value)
+    {
+        updateSelectedControlInspector(labelText, parameterID, value);
+    };
+    sampleShapeControls.onEditEnded = [this] { returnKeyboardFocusToPiano(); };
+    sampleShapeControls.onModDestinationFocused = [this] (int destinationIndex)
+    {
+        setModInspectorDestination(destinationIndex);
+    };
+    for (const auto& target : UI::SampleShapeControls::modulationTargets())
+        registerModulationMenuTarget(sampleShapeControls.sliderFor(target.control), target.label, target.parameterID);
+    addAndMakeVisible(sampleShapeControls);
     configureSlider(sequencerRootSlider, sequencerRootLabel, "Root", Parameters::ID::sequencerRoot);
     configureSlider(sequencerGateSlider, sequencerGateLabel, "Gate", Parameters::ID::sequencerGate);
     configureSlider(sequencerSwingSlider, sequencerSwingLabel, "Swing", Parameters::ID::sequencerSwing);
@@ -4156,6 +4163,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     sampleStatusLabel.applyTheme(theme);
     sampleChopHeader.applyTheme(theme);
+    sampleShapeControls.applyTheme(theme);
     controlStatusStrip.applyTheme(theme);
     hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
     hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
@@ -5095,21 +5103,14 @@ void NateVSTAudioProcessorEditor::resized()
                 sampleFileActions,
                 sampleRecipeActions,
                 sampleChopHeader,
+                sampleShapeControls,
                 sampleSourceControls,
                 samplePlaybackControls,
                 sampleRecorderPanel,
                 sampleWaveformDisplay,
                 sampleChopPanel,
                 { sampleStartSlider, sampleStartLabel },
-                { sampleEndSlider, sampleEndLabel },
-                { sampleTransposeSlider, sampleTransposeLabel },
-                { samplePitchRampSlider, samplePitchRampLabel },
-                { sampleGainSlider, sampleGainLabel },
-                { sampleMixSlider, sampleMixLabel },
-                { sampleStutterRepeatsSlider, sampleStutterRepeatsLabel },
-                { sampleGrainSizeSlider, sampleGrainSizeLabel },
-                { sampleGrainSpraySlider, sampleGrainSprayLabel },
-                { sampleSpectralFreezeSlider, sampleSpectralFreezeLabel }
+                { sampleEndSlider, sampleEndLabel }
             });
             break;
         }
@@ -10765,14 +10766,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         setSliderVisible(randomSectionIntensitySliders[index], randomSectionIntensityLabels[index], false);
     setSliderVisible(sampleStartSlider, sampleStartLabel, false);
     setSliderVisible(sampleEndSlider, sampleEndLabel, false);
-    setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, false);
-    setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, false);
-    setSliderVisible(sampleGainSlider, sampleGainLabel, false);
-    setSliderVisible(sampleMixSlider, sampleMixLabel, false);
-    setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);
-    setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, false);
-    setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, false);
-    setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, false);
+    sampleShapeControls.setVisible(false);
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
     setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, false);
@@ -13950,10 +13944,22 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(fxWidthAmountSlider, destinationDepths[10], destinationRouteCounts[10], destinationSources[10]);
     setIndicator(fxDistortionAmountSlider, destinationDepths[11], destinationRouteCounts[11], destinationSources[11]);
     setIndicator(sampleStartSlider, destinationDepths[12], destinationRouteCounts[12], destinationSources[12]);
-    setIndicator(sampleMixSlider, destinationDepths[13], destinationRouteCounts[13], destinationSources[13]);
-    setIndicator(sampleTransposeSlider, destinationDepths[14], destinationRouteCounts[14], destinationSources[14]);
-    setIndicator(samplePitchRampSlider, destinationDepths[15], destinationRouteCounts[15], destinationSources[15]);
-    setIndicator(sampleStutterRepeatsSlider, destinationDepths[16], destinationRouteCounts[16], destinationSources[16]);
+    sampleShapeControls.setModulationIndicator(UI::SampleShapeControls::Control::mix,
+                                               destinationDepths[13],
+                                               destinationRouteCounts[13],
+                                               destinationSources[13]);
+    sampleShapeControls.setModulationIndicator(UI::SampleShapeControls::Control::transpose,
+                                               destinationDepths[14],
+                                               destinationRouteCounts[14],
+                                               destinationSources[14]);
+    sampleShapeControls.setModulationIndicator(UI::SampleShapeControls::Control::pitchRamp,
+                                               destinationDepths[15],
+                                               destinationRouteCounts[15],
+                                               destinationSources[15]);
+    sampleShapeControls.setModulationIndicator(UI::SampleShapeControls::Control::stutterRepeats,
+                                               destinationDepths[16],
+                                               destinationRouteCounts[16],
+                                               destinationSources[16]);
     setIndicator(oscWarpSlider, destinationDepths[17], destinationRouteCounts[17], destinationSources[17]);
     setIndicator(oscWavetablePositionSlider, destinationDepths[18], destinationRouteCounts[18], destinationSources[18]);
     setIndicator(osc2WavetablePositionSlider, destinationDepths[19], destinationRouteCounts[19], destinationSources[19]);

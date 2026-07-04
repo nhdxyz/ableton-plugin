@@ -6,6 +6,7 @@
 #include "SamplePlaybackControls.h"
 #include "SampleRecorderPanel.h"
 #include "SampleRecipeActions.h"
+#include "SampleShapeControls.h"
 #include "SampleSourceControls.h"
 #include "SampleStatusLabel.h"
 #include "SampleWaveformDisplay.h"
@@ -30,6 +31,7 @@ struct Components
     SampleFileActions& fileActions;
     SampleRecipeActions& recipeActions;
     SampleChopHeader& chopHeader;
+    SampleShapeControls& shapeControls;
 
     SampleSourceControls& sourceControls;
     SamplePlaybackControls& playbackControls;
@@ -40,14 +42,6 @@ struct Components
 
     SliderSlot start;
     SliderSlot end;
-    SliderSlot transpose;
-    SliderSlot pitchRamp;
-    SliderSlot gain;
-    SliderSlot mix;
-    SliderSlot stutterRepeats;
-    SliderSlot grainSize;
-    SliderSlot grainSpray;
-    SliderSlot spectralFreeze;
 };
 
 void layout(juce::Rectangle<int> content, Components components);

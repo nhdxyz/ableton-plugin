@@ -53,7 +53,7 @@
 #include "UI/SequencerGrooveControls.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
-#include "UI/SequencerPatternActions.h"
+#include "UI/SequencerPatternControls.h"
 #include "UI/SequencerRateControls.h"
 #include "UI/SequencerRootControls.h"
 #include "UI/SequencerStepEditor.h"
@@ -297,7 +297,6 @@ private:
     juce::ComboBox randomLockActionBox;
     juce::ComboBox sequencerRateBox;
     UI::SequencerGrooveControls sequencerGrooveControls;
-    juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
@@ -337,7 +336,6 @@ private:
     std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
     UI::SequencerEnabledButton sequencerEnabledButton;
-    juce::ToggleButton sequencerChordMemoryButton;
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;
     juce::ToggleButton fxPumpEnabledButton;
@@ -624,7 +622,7 @@ private:
     UI::SampleFileActions sampleFileActions;
     UI::SampleChopHeader sampleChopHeader;
     UI::SampleRecipeActions sampleRecipeActions;
-    UI::SequencerPatternActions sequencerPatternActions;
+    UI::SequencerPatternControls sequencerPatternControls;
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };
     juce::TextButton ukgPatternButton { "UKG" };

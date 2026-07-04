@@ -1410,6 +1410,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
       sampleShapeControls(processorToUse.getValueTreeState()),
       samplePlaybackControls(processorToUse.getValueTreeState()),
       sequencerEnabledButton(processorToUse.getValueTreeState()),
+      sequencerPatternControls(processorToUse.getValueTreeState()),
       sampleRecorderPanel(processorToUse.getValueTreeState()),
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
@@ -2474,23 +2475,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     addAndMakeVisible(sequencerGrooveControls);
 
-    sequencerPatternBox.addItem("Bass", 1);
-    sequencerPatternBox.addItem("Stab", 2);
-    sequencerPatternBox.addItem("UKG 2-Step", 3);
-    sequencerPatternBox.addItem("Shuffle Bass", 4);
-    sequencerPatternBox.addItem("Organ Skank", 5);
-    sequencerPatternBox.addItem("Vocal Chop", 6);
-    sequencerPatternBox.addItem("Late Stab", 7);
-    sequencerPatternBox.addItem("House Chord", 8);
-    sequencerPatternBox.addItem("Tech Bass", 9);
-    sequencerPatternBox.addItem("Minimal Pluck", 10);
-    sequencerPatternBox.addItem("Techno Pulse", 11);
-    sequencerPatternBox.addItem("Deep Chord", 12);
-    sequencerPatternBox.addItem("Dub Chord", 13);
-    sequencerPatternBox.addItem("Off Bass", 14);
-    sequencerPatternBox.addItem("Rolling Bass", 15);
-    sequencerPatternBox.setSelectedId(3, juce::dontSendNotification);
-    addAndMakeVisible(sequencerPatternBox);
+    addAndMakeVisible(sequencerPatternControls);
 
     sequencerGrooveTransformBox.addItem("Tighten", 1);
     sequencerGrooveTransformBox.addItem("Straight Anchors", 2);
@@ -2795,11 +2780,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::monoMode, monoButton));
 
     addAndMakeVisible(sequencerEnabledButton);
-
-    sequencerChordMemoryButton.setButtonText("Memory");
-    sequencerChordMemoryButton.setTooltip("Expand live notes through the selected chord mode and voicing");
-    addAndMakeVisible(sequencerChordMemoryButton);
-    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerChordMemory, sequencerChordMemoryButton));
 
     fxDistortionEnabledButton.setButtonText("Dist");
     addAndMakeVisible(fxDistortionEnabledButton);
@@ -3462,22 +3442,21 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleChopPanel.onGhostClicked = [this] { toggleSelectedSampleSliceGhost(); };
     sampleChopPanel.onNudgeClicked = [this] { cycleSelectedSampleSliceNudge(); };
     sampleChopPanel.onFadeClicked = [this] { cycleSelectedSampleSliceFade(); };
-    sequencerPatternActions.onActionClicked = [this] (UI::SequencerPatternActions::Action action)
+    sequencerPatternControls.onActionClicked = [this] (UI::SequencerPatternControls::Action action)
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
 
         switch (action)
         {
-            case UI::SequencerPatternActions::Action::apply:
+            case UI::SequencerPatternControls::Action::apply:
             {
-                const auto selectedId = sequencerPatternBox.getSelectedId();
-                audioProcessor.applySequencerPatternPreset(juce::jmax(1, selectedId) - 1);
+                audioProcessor.applySequencerPatternPreset(sequencerPatternControls.selectedPatternIndex());
                 repaintSequencerGrids();
                 break;
             }
 
-            case UI::SequencerPatternActions::Action::random:
+            case UI::SequencerPatternControls::Action::random:
             {
                 if (audioProcessor.randomizeSequencerPattern())
                 {
@@ -3491,7 +3470,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                 break;
             }
 
-            case UI::SequencerPatternActions::Action::mutate:
+            case UI::SequencerPatternControls::Action::mutate:
             {
                 if (audioProcessor.mutateSequencerPattern())
                 {
@@ -3505,7 +3484,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                 break;
             }
 
-            case UI::SequencerPatternActions::Action::undo:
+            case UI::SequencerPatternControls::Action::undo:
             {
                 if (audioProcessor.undoSequencerEdit())
                 {
@@ -3520,7 +3499,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                 break;
             }
 
-            case UI::SequencerPatternActions::Action::clear:
+            case UI::SequencerPatternControls::Action::clear:
             {
                 audioProcessor.clearSequencerPattern();
                 repaintSequencerGrids();
@@ -3971,7 +3950,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleChopPanel);
     addAndMakeVisible(sampleRecorderPanel);
     addAndMakeVisible(sampleRecipeActions);
-    addAndMakeVisible(sequencerPatternActions);
     addAndMakeVisible(bassPatternButton);
     addAndMakeVisible(stabPatternButton);
     addAndMakeVisible(ukgPatternButton);
@@ -5090,16 +5068,14 @@ void NateVSTAudioProcessorEditor::resized()
                 hostSyncStatusLabel,
                 sequencerStepEditor,
                 sequencerEnabledButton,
-                sequencerChordMemoryButton,
                 sequencerRateControls,
-                sequencerPatternActions,
+                sequencerPatternControls,
                 sequencerUtilityActions,
                 sequencerSceneChainControls,
                 applyGrooveTransformButton,
                 sequencerExpandButton,
                 sequencerRootControls,
                 sequencerGrooveControls,
-                sequencerPatternBox,
                 sequencerGrooveTransformBox,
                 sequencerLaneViewBox,
                 sequencerLockDestinationBox,
@@ -10598,9 +10574,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
-        &monoButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
+        &monoButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &fxFlangerEnabledButton,
@@ -10617,7 +10593,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopHeader, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
-        &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternActions,
+        &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternControls,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,

@@ -112,6 +112,7 @@ target_sources(NateVST
         Source/UI/SequencerGrooveControls.cpp
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp
+        Source/UI/SequencerPatternControls.cpp
         Source/UI/SequencerRateControls.cpp
         Source/UI/SequencerRootControls.cpp
         Source/UI/SequencerSceneChainControls.cpp

@@ -35,14 +35,12 @@ void layout(juce::Rectangle<int> content, Components components)
     components.hostSyncStatusLabel.setVisible(true);
     components.rateControls.setVisible(true);
     components.grooveControls.setVisible(true);
-    components.chordMemoryButton.setVisible(true);
-    components.patternBox.setVisible(true);
+    components.patternControls.setVisible(true);
     components.grooveTransformBox.setVisible(true);
     components.laneViewBox.setVisible(true);
     components.lockDestinationBox.setVisible(true);
     components.rootControls.setVisible(true);
     components.stepEditor.setVisible(true);
-    components.patternActions.setVisible(true);
     components.utilityActions.setVisible(true);
     components.sceneChainControls.setVisible(true);
     components.applyGrooveTransformButton.setVisible(true);
@@ -68,10 +66,7 @@ void layout(juce::Rectangle<int> content, Components components)
 
     components.grooveControls.setBounds(controlArea.removeFromTop(SequencerGrooveControls::preferredHeight));
 
-    auto patternRow = controlArea.removeFromTop(34);
-    components.chordMemoryButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
-    components.patternBox.setBounds(patternRow.reduced(4));
-    components.patternActions.setBounds(controlArea.removeFromTop(SequencerPatternActions::preferredHeight));
+    components.patternControls.setBounds(controlArea.removeFromTop(SequencerPatternControls::preferredHeight));
 
     components.rootControls.setBounds(controlArea.removeFromTop(34).withTrimmedTop(2));
 

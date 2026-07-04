@@ -2,7 +2,7 @@
 
 #include "SequencerSceneChainControls.h"
 #include "SequencerSceneControls.h"
-#include "SequencerPatternActions.h"
+#include "SequencerPatternControls.h"
 #include "SequencerGrooveControls.h"
 #include "SequencerRateControls.h"
 #include "SequencerRootControls.h"
@@ -27,10 +27,9 @@ struct Components
     SequencerStepEditor& stepEditor;
 
     juce::ToggleButton& enabledButton;
-    juce::ToggleButton& chordMemoryButton;
 
     SequencerRateControls& rateControls;
-    SequencerPatternActions& patternActions;
+    SequencerPatternControls& patternControls;
     SequencerUtilityActions& utilityActions;
     SequencerSceneChainControls& sceneChainControls;
     juce::TextButton& applyGrooveTransformButton;
@@ -38,7 +37,6 @@ struct Components
     SequencerRootControls& rootControls;
 
     SequencerGrooveControls& grooveControls;
-    juce::ComboBox& patternBox;
     juce::ComboBox& grooveTransformBox;
     juce::ComboBox& laneViewBox;
     juce::ComboBox& lockDestinationBox;

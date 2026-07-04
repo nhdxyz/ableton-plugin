@@ -162,6 +162,7 @@ public:
     juce::String getSampleCapturePreRollModeName() const;
     bool commitSampleCaptureToSampler();
     int getSampleCaptureTakeCount() const;
+    juce::StringArray getSampleCaptureTakeNames(int limit) const;
     juce::String getLatestSampleCaptureTakePath() const;
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();

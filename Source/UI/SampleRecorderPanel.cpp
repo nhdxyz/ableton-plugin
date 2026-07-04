@@ -55,6 +55,13 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
     statusLabel.setTooltip("Rolling sampler recorder status and captured duration");
     addAndMakeVisible(statusLabel);
 
+    takeHistoryLabel.setText("Takes: none", juce::dontSendNotification);
+    takeHistoryLabel.setJustificationType(juce::Justification::centredLeft);
+    takeHistoryLabel.setFont(juce::FontOptions(10.0f));
+    takeHistoryLabel.setMinimumHorizontalScale(0.54f);
+    takeHistoryLabel.setTooltip("Recent committed recorder takes");
+    addAndMakeVisible(takeHistoryLabel);
+
     const std::array<juce::String, 4> recorderStepTexts { "REC", "READY", "USE", "PLAY" };
     for (size_t index = 0; index < stepLabels.size(); ++index)
     {
@@ -145,6 +152,9 @@ void SampleRecorderPanel::applyTheme(const Theme& theme)
     routeHintLabel.setColour(juce::Label::backgroundColourId, theme.field.withAlpha(0.78f));
     routeHintLabel.setColour(juce::Label::outlineColourId, theme.outline);
     statusLabel.setColour(juce::Label::textColourId, theme.textMuted);
+    takeHistoryLabel.setColour(juce::Label::textColourId, theme.textDim);
+    takeHistoryLabel.setColour(juce::Label::backgroundColourId, theme.field.withAlpha(0.58f));
+    takeHistoryLabel.setColour(juce::Label::outlineColourId, theme.outline);
     progress.setColour(juce::ProgressBar::backgroundColourId, theme.field);
     progress.setColour(juce::TextButton::textColourOffId, theme.textMuted);
 
@@ -245,6 +255,20 @@ void SampleRecorderPanel::setState(const State& state)
                                             : hasCapture ? juce::Colour(0xff8ee6c9)
                                                          : state.hasLoadedSample ? juce::Colour(0xffa8d8ff)
                                                                                  : juce::Colour(0xffa8b6b8));
+
+    const auto recentTakeText = state.recentTakeNames.isEmpty()
+        ? juce::String("Takes: none")
+        : juce::String("Takes ") + juce::String(state.takeCount) + ": " + state.recentTakeNames.joinIntoString(" | ");
+    takeHistoryLabel.setText(recentTakeText, juce::dontSendNotification);
+    takeHistoryLabel.setTooltip(state.recentTakeNames.isEmpty()
+        ? juce::String("Commit a recorder take to create a draggable WAV")
+        : "Recent committed takes: " + state.recentTakeNames.joinIntoString(", "));
+    takeHistoryLabel.setColour(juce::Label::textColourId,
+                               state.hasExportableTake ? juce::Colour(0xff8ee6c9)
+                                                       : juce::Colour(0xff829398));
+    takeHistoryLabel.setColour(juce::Label::outlineColourId,
+                               state.hasExportableTake ? juce::Colour(0xff2f6859)
+                                                       : juce::Colour(0xff263238));
 
     const std::array<juce::String, 4> stepTexts {
         state.waitingForThreshold ? juce::String("WAIT") : juce::String("REC"),
@@ -352,6 +376,9 @@ void SampleRecorderPanel::resized()
     statusLabel.setBounds(recorderStatusArea.removeFromTop(10));
     progress.setBounds(recorderStatusArea);
 
+    auto recorderTakeArea = area.removeFromTop(18);
+    takeHistoryLabel.setBounds(recorderTakeArea.reduced(5, 2));
+
     auto recordRow = area.removeFromTop(31).withTrimmedTop(1);
     const auto recordButtonWidth = juce::jmax(86, recordRow.getWidth() * 2 / 5);
     const auto commitButtonWidth = juce::jmax(70, recordRow.getWidth() * 3 / 10);
@@ -423,6 +450,18 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
         if (routeHintBounds.getWidth() < 120 || routeHintBounds.getHeight() < 14)
             issues.add(panelName + ": recorder route hint is too compressed "
                        + routeHintBounds.toString());
+    }
+
+    if (! takeHistoryLabel.isVisible())
+    {
+        issues.add(panelName + ": recorder take history is hidden");
+    }
+    else
+    {
+        const auto takeHistoryBounds = takeHistoryLabel.getBounds();
+        if (takeHistoryBounds.getWidth() < 120 || takeHistoryBounds.getHeight() < 14)
+            issues.add(panelName + ": recorder take history is too compressed "
+                       + takeHistoryBounds.toString());
     }
 
     for (const auto* recorderButton : {

@@ -32,6 +32,7 @@ public:
         bool hasExportableTake = false;
         int takeCount = 0;
         juce::String exportTakeName;
+        juce::StringArray recentTakeNames;
     };
 
     explicit SampleRecorderPanel(juce::AudioProcessorValueTreeState& valueTreeState);
@@ -49,7 +50,7 @@ public:
     void setState(const State& state);
     void resized() override;
 
-    int preferredHeight() const noexcept { return 188; }
+    int preferredHeight() const noexcept { return 206; }
     juce::StringArray runLayoutAudit(const juce::String& panelName,
                                      bool hasCapture,
                                      bool hasLoadedSample) const;
@@ -102,6 +103,7 @@ private:
     juce::ComboBox preRollBox;
     juce::Label routeHintLabel;
     juce::Label statusLabel;
+    juce::Label takeHistoryLabel;
     std::array<juce::Label, 4> stepLabels;
     double progressValue = 0.0;
     juce::ProgressBar progress { progressValue };

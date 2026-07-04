@@ -1863,14 +1863,43 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
 int NateVSTAudioProcessor::getSampleCaptureTakeCount() const
 {
     const juce::ScopedLock lock(sampleCaptureTakeLock);
-    return static_cast<int>(sampleCaptureTakeFiles.size());
+    return static_cast<int>(std::count_if(sampleCaptureTakeFiles.begin(),
+                                          sampleCaptureTakeFiles.end(),
+                                          [] (const juce::File& takeFile)
+                                          {
+                                              return takeFile.existsAsFile();
+                                          }));
+}
+
+juce::StringArray NateVSTAudioProcessor::getSampleCaptureTakeNames(int limit) const
+{
+    juce::StringArray takeNames;
+    const auto safeLimit = juce::jlimit(0, sampleCaptureTakeHistoryLimit, limit);
+    if (safeLimit <= 0)
+        return takeNames;
+
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    for (const auto& takeFile : sampleCaptureTakeFiles)
+    {
+        if (! takeFile.existsAsFile())
+            continue;
+
+        takeNames.add(takeFile.getFileNameWithoutExtension());
+        if (takeNames.size() >= safeLimit)
+            break;
+    }
+
+    return takeNames;
 }
 
 juce::String NateVSTAudioProcessor::getLatestSampleCaptureTakePath() const
 {
     const juce::ScopedLock lock(sampleCaptureTakeLock);
-    return sampleCaptureTakeFiles.empty() ? juce::String()
-                                          : sampleCaptureTakeFiles.front().getFullPathName();
+    for (const auto& takeFile : sampleCaptureTakeFiles)
+        if (takeFile.existsAsFile())
+            return takeFile.getFullPathName();
+
+    return {};
 }
 
 void NateVSTAudioProcessor::waitForSampleCaptureWritersToFinish()

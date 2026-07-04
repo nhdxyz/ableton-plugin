@@ -3776,18 +3776,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     revertPresetButton.setTooltip("Restore the sound from before the most recent Library preset load");
     revertPresetButton.onClick = [this] { revertPresetCompare(); };
     updatePresetCompareButtons();
-    const std::array<juce::String, 10> quickFilterLabels { "All", "Fav", "Recent", "Similar", "Bass", "Lead", "Chord", "Pad", "FX", "Seq" };
-    for (size_t index = 0; index < presetQuickFilterButtons.size(); ++index)
-    {
-        auto& button = presetQuickFilterButtons[index];
-        button.setButtonText(quickFilterLabels[index]);
-        button.setTooltip("Quick Library filter: " + quickFilterLabels[index]);
-        button.setClickingTogglesState(false);
-        button.setWantsKeyboardFocus(false);
-        button.setMouseClickGrabsKeyboardFocus(false);
-        button.onClick = [this, index] { applyPresetQuickFilter(index); };
-        addAndMakeVisible(button);
-    }
+    presetQuickFilterBar.onFilterSelected = [this] (size_t index) { applyPresetQuickFilter(index); };
+    addAndMakeVisible(presetQuickFilterBar);
     presetFilterBox.onChange = [this] { refreshPresetList(); };
     presetTagBox.onChange = [this] { refreshPresetList(); };
     presetSortBox.onChange = [this] { refreshPresetList(); };
@@ -5400,7 +5390,7 @@ void NateVSTAudioProcessorEditor::resized()
                 refreshPresetsButton,
                 comparePresetButton,
                 revertPresetButton,
-                presetQuickFilterButtons,
+                presetQuickFilterBar,
                 presetBrowserList,
                 presetCrateMapDisplay,
                 presetLibrarySummary,
@@ -10794,9 +10784,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     for (auto& button : randomCandidateAuditionButtons)
         button.setVisible(false);
 
-    for (auto& button : presetQuickFilterButtons)
-        button.setVisible(false);
-
     for (auto& label : modSourceRows)
         label.setVisible(false);
 
@@ -15060,7 +15047,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     if (sortMode.isEmpty())
         sortMode = "Name";
 
-    for (size_t index = 0; index < presetQuickFilterButtons.size(); ++index)
+    for (size_t index = 0; index < UI::PresetQuickFilterBar::filterCount; ++index)
     {
         auto active = false;
             switch (index)
@@ -15077,7 +15064,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 case 9: active = filter == "Sequence"; break;
                 default: break;
             }
-        presetQuickFilterButtons[index].setToggleState(active, juce::dontSendNotification);
+        presetQuickFilterBar.setFilterActive(index, active);
     }
 
     const auto searchText = presetSearchEditor.getText().trim();

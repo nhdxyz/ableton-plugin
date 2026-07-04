@@ -2,21 +2,6 @@
 
 namespace UI::LibraryPanelLayout
 {
-namespace
-{
-void placeQuickFilterRow(std::array<juce::TextButton, 10>& buttons,
-                         size_t firstIndex,
-                         size_t endIndex,
-                         juce::Rectangle<int> row)
-{
-    for (auto index = firstIndex; index < endIndex; ++index)
-    {
-        const auto remaining = static_cast<int>(endIndex - index);
-        buttons[index].setBounds(row.removeFromLeft(row.getWidth() / remaining).reduced(2, 3));
-    }
-}
-}
-
 void layout(juce::Rectangle<int> content, Components components)
 {
     components.sectionLabel.setVisible(true);
@@ -55,8 +40,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.crateMapDisplay.setVisible(true);
     components.librarySummary.setVisible(true);
     components.saveSummary.setVisible(true);
-    for (auto& button : components.quickFilterButtons)
-        button.setVisible(true);
+    components.quickFilterBar.setVisible(true);
 
     components.sectionLabel.setBounds(content.removeFromTop(28));
     auto libraryArea = content.withTrimmedTop(8);
@@ -68,11 +52,7 @@ void layout(juce::Rectangle<int> content, Components components)
 
     components.findLabel.setBounds(findArea.removeFromTop(24));
     components.searchEditor.setBounds(findArea.removeFromTop(38).reduced(2, 4));
-    placeQuickFilterRow(components.quickFilterButtons, 0, 5, findArea.removeFromTop(30).withTrimmedTop(2));
-    placeQuickFilterRow(components.quickFilterButtons,
-                        5,
-                        components.quickFilterButtons.size(),
-                        findArea.removeFromTop(30).withTrimmedTop(2));
+    components.quickFilterBar.setBounds(findArea.removeFromTop(60));
 
     findArea.removeFromTop(5);
     components.filterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));

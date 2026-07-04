@@ -84,6 +84,7 @@ target_sources(NateVST
         Source/UI/PanelTabBar.cpp
         Source/UI/PresetCrateMapDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp
+        Source/UI/PresetQuickFilterBar.cpp
         Source/UI/PresetSaveSummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/RandomMorphPad.cpp

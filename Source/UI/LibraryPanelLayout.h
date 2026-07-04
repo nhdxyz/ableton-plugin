@@ -1,12 +1,11 @@
 #pragma once
 
+#include "PresetQuickFilterBar.h"
 #include "PresetCrateMapDisplay.h"
 #include "PresetLibrarySummary.h"
 #include "PresetSaveSummary.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
-
-#include <array>
 
 namespace UI::LibraryPanelLayout
 {
@@ -47,7 +46,7 @@ struct Components
     juce::TextButton& refreshButton;
     juce::TextButton& compareButton;
     juce::TextButton& revertButton;
-    std::array<juce::TextButton, 10>& quickFilterButtons;
+    PresetQuickFilterBar& quickFilterBar;
 
     juce::ListBox& browserList;
     PresetCrateMapDisplay& crateMapDisplay;

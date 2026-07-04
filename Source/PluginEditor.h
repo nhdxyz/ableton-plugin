@@ -26,6 +26,7 @@
 #include "UI/PanelTabBar.h"
 #include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
+#include "UI/PresetQuickFilterBar.h"
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
@@ -719,7 +720,7 @@ private:
     juce::TextButton favoritePresetButton { "Fav" };
     juce::TextButton comparePresetButton { "Before" };
     juce::TextButton revertPresetButton { "Revert" };
-    std::array<juce::TextButton, 10> presetQuickFilterButtons;
+    UI::PresetQuickFilterBar presetQuickFilterBar;
     UI::PageButtonStrip modWorkflowStrip;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };

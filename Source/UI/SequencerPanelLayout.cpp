@@ -50,11 +50,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.rootValueLabel.setVisible(true);
     components.stepEditor.setVisible(true);
     components.patternActions.setVisible(true);
-    components.copyButton.setVisible(true);
-    components.rotateLeftButton.setVisible(true);
-    components.rotateRightButton.setVisible(true);
-    components.exportMidiButton.setVisible(true);
-    components.exportChainButton.setVisible(true);
+    components.utilityActions.setVisible(true);
     components.sceneChainControls.setVisible(true);
     components.applyGrooveTransformButton.setVisible(true);
     components.sceneControls.setVisible(true);
@@ -113,22 +109,15 @@ void layout(juce::Rectangle<int> content, Components components)
         auto sceneArea = controlArea.removeFromTop(68).withTrimmedTop(2);
         components.sceneControls.setBounds(sceneArea);
 
-        auto utilityRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-        components.copyButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 3).reduced(4));
-        components.rotateLeftButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 2).reduced(4));
-        components.rotateRightButton.setBounds(utilityRow.reduced(4));
-        auto exportRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-        components.exportMidiButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 3).reduced(4));
-        components.exportChainButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 2).reduced(4));
-        components.sceneChainControls.setBounds(exportRow.reduced(2, 1));
+        auto utilityArea = controlArea.removeFromTop(SequencerUtilityActions::preferredHeight);
+        components.utilityActions.setBounds(utilityArea);
+        auto chainRow = utilityArea.removeFromBottom(utilityArea.getHeight() / 2).withTrimmedTop(2);
+        chainRow.removeFromLeft(chainRow.getWidth() * 2 / 3);
+        components.sceneChainControls.setBounds(chainRow.reduced(2, 1));
     }
     else
     {
-        components.copyButton.setVisible(false);
-        components.rotateLeftButton.setVisible(false);
-        components.rotateRightButton.setVisible(false);
-        components.exportMidiButton.setVisible(false);
-        components.exportChainButton.setVisible(false);
+        components.utilityActions.setVisible(false);
         components.sceneChainControls.setVisible(false);
         components.sceneControls.setVisible(false);
     }

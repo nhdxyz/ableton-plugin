@@ -3606,42 +3606,65 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.applySequencerPatternPreset(2);
         repaintSequencerGrids();
     };
-    copySequencerButton.onClick = [this]
+    sequencerUtilityActions.onActionClicked = [this] (UI::SequencerUtilityActions::Action action)
     {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.copySequencerFirstHalfToSecondHalf();
-        repaintSequencerGrids();
+        switch (action)
+        {
+            case UI::SequencerUtilityActions::Action::copy:
+            {
+                releaseRandomCandidateAudition(false);
+                releasePresetAuditionNote();
+                audioProcessor.copySequencerFirstHalfToSecondHalf();
+                repaintSequencerGrids();
+                break;
+            }
+
+            case UI::SequencerUtilityActions::Action::rotateLeft:
+            {
+                releaseRandomCandidateAudition(false);
+                releasePresetAuditionNote();
+                audioProcessor.rotateSequencerPattern(-1);
+                repaintSequencerGrids();
+                setRandomStatus("Sequence rotated left");
+                break;
+            }
+
+            case UI::SequencerUtilityActions::Action::rotateRight:
+            {
+                releaseRandomCandidateAudition(false);
+                releasePresetAuditionNote();
+                audioProcessor.rotateSequencerPattern(1);
+                repaintSequencerGrids();
+                setRandomStatus("Sequence rotated right");
+                break;
+            }
+
+            case UI::SequencerUtilityActions::Action::exportMidi:
+                exportSequencerMidiClip();
+                break;
+
+            case UI::SequencerUtilityActions::Action::exportChain:
+                exportSequencerSceneChainMidiClip();
+                break;
+        }
     };
-    rotateSequencerLeftButton.setTooltip("Shift the whole sequencer pattern one step earlier");
-    rotateSequencerLeftButton.onClick = [this]
+    sequencerUtilityActions.onExternalDrag = [this] (UI::SequencerUtilityActions::Action action, juce::Component& sourceComponent)
     {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.rotateSequencerPattern(-1);
-        repaintSequencerGrids();
-        setRandomStatus("Sequence rotated left");
-    };
-    rotateSequencerRightButton.setTooltip("Shift the whole sequencer pattern one step later");
-    rotateSequencerRightButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.rotateSequencerPattern(1);
-        repaintSequencerGrids();
-        setRandomStatus("Sequence rotated right");
-    };
-    exportSequencerMidiButton.setTooltip("Click to save the current sequencer pattern as MIDI, or drag into Ableton");
-    exportSequencerMidiButton.onClick = [this] { exportSequencerMidiClip(); };
-    exportSequencerMidiButton.onExternalDrag = [this] (juce::Component& sourceComponent)
-    {
-        return beginSequencerMidiDrag(sourceComponent, false);
-    };
-    exportSequencerChainButton.setTooltip("Click to save captured A/B/Fill/Drop scenes as one chained MIDI clip, or drag into Ableton");
-    exportSequencerChainButton.onClick = [this] { exportSequencerSceneChainMidiClip(); };
-    exportSequencerChainButton.onExternalDrag = [this] (juce::Component& sourceComponent)
-    {
-        return beginSequencerMidiDrag(sourceComponent, true);
+        switch (action)
+        {
+            case UI::SequencerUtilityActions::Action::exportMidi:
+                return beginSequencerMidiDrag(sourceComponent, false);
+
+            case UI::SequencerUtilityActions::Action::exportChain:
+                return beginSequencerMidiDrag(sourceComponent, true);
+
+            case UI::SequencerUtilityActions::Action::copy:
+            case UI::SequencerUtilityActions::Action::rotateLeft:
+            case UI::SequencerUtilityActions::Action::rotateRight:
+                return false;
+        }
+
+        return false;
     };
     sequencerSceneChainControls.onLiveToggled = [this] (bool shouldEnable)
     {
@@ -4008,11 +4031,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(bassPatternButton);
     addAndMakeVisible(stabPatternButton);
     addAndMakeVisible(ukgPatternButton);
-    addAndMakeVisible(copySequencerButton);
-    addAndMakeVisible(rotateSequencerLeftButton);
-    addAndMakeVisible(rotateSequencerRightButton);
-    addAndMakeVisible(exportSequencerMidiButton);
-    addAndMakeVisible(exportSequencerChainButton);
+    addAndMakeVisible(sequencerUtilityActions);
     addAndMakeVisible(applyGrooveTransformButton);
     addAndMakeVisible(panelTabBar);
     addAndMakeVisible(sineWaveButton);
@@ -5149,11 +5168,7 @@ void NateVSTAudioProcessorEditor::resized()
                 rateSixteenthButton,
                 rateThirtySecondButton,
                 sequencerPatternActions,
-                copySequencerButton,
-                rotateSequencerLeftButton,
-                rotateSequencerRightButton,
-                exportSequencerMidiButton,
-                exportSequencerChainButton,
+                sequencerUtilityActions,
                 sequencerSceneChainControls,
                 applyGrooveTransformButton,
                 sequencerExpandButton,
@@ -10694,8 +10709,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopPanel, &sampleRecorderPanel,
         &sampleRecipeActions, &sequencerPatternActions,
-        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
+        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

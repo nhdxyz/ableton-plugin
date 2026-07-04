@@ -106,6 +106,7 @@ target_sources(NateVST
         Source/UI/SequencerSceneChainControls.cpp
         Source/UI/SequencerSceneControls.cpp
         Source/UI/SequencerStepEditor.cpp
+        Source/UI/SequencerUtilityActions.cpp
         Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
         Source/UI/Theme.cpp

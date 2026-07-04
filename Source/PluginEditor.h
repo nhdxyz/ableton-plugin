@@ -46,6 +46,7 @@
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternActions.h"
 #include "UI/SequencerStepEditor.h"
+#include "UI/SequencerUtilityActions.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
 #include "UI/WavetableDisplay.h"
@@ -56,46 +57,7 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 
 #include <array>
-#include <functional>
 #include <vector>
-
-class ExternalFileDragButton final : public juce::TextButton
-{
-public:
-    using juce::TextButton::TextButton;
-
-    std::function<bool(juce::Component&)> onExternalDrag;
-
-    void mouseDown(const juce::MouseEvent& event) override
-    {
-        externalDragStarted = false;
-        juce::TextButton::mouseDown(event);
-    }
-
-    void mouseDrag(const juce::MouseEvent& event) override
-    {
-        if (! externalDragStarted && event.getDistanceFromDragStart() >= 5)
-        {
-            externalDragStarted = true;
-            if (onExternalDrag != nullptr && onExternalDrag(*this))
-                return;
-        }
-
-        if (! externalDragStarted)
-            juce::TextButton::mouseDrag(event);
-    }
-
-    void mouseUp(const juce::MouseEvent& event) override
-    {
-        const auto consumedByExternalDrag = externalDragStarted;
-        externalDragStarted = false;
-        if (! consumedByExternalDrag)
-            juce::TextButton::mouseUp(event);
-    }
-
-private:
-    bool externalDragStarted = false;
-};
 
 class NateVSTAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            public juce::FileDragAndDropTarget,
@@ -681,11 +643,7 @@ private:
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };
     juce::TextButton ukgPatternButton { "UKG" };
-    juce::TextButton copySequencerButton { "Copy" };
-    juce::TextButton rotateSequencerLeftButton { "Rot <" };
-    juce::TextButton rotateSequencerRightButton { "Rot >" };
-    ExternalFileDragButton exportSequencerMidiButton { "MIDI" };
-    ExternalFileDragButton exportSequencerChainButton { "Chain" };
+    UI::SequencerUtilityActions sequencerUtilityActions;
     UI::SequencerSceneChainControls sequencerSceneChainControls;
     juce::TextButton applyGrooveTransformButton { "Shape" };
     UI::SequencerSceneControls sequencerSceneControls;

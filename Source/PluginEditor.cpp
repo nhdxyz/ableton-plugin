@@ -3519,57 +3519,71 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleChopPanel.onGhostClicked = [this] { toggleSelectedSampleSliceGhost(); };
     sampleChopPanel.onNudgeClicked = [this] { cycleSelectedSampleSliceNudge(); };
     sampleChopPanel.onFadeClicked = [this] { cycleSelectedSampleSliceFade(); };
-    randomSequencerButton.onClick = [this]
+    sequencerPatternActions.onActionClicked = [this] (UI::SequencerPatternActions::Action action)
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
-        if (audioProcessor.randomizeSequencerPattern())
+
+        switch (action)
         {
-            repaintSequencerGrids();
-            setRandomStatus("Sequence generated");
+            case UI::SequencerPatternActions::Action::apply:
+            {
+                const auto selectedId = sequencerPatternBox.getSelectedId();
+                audioProcessor.applySequencerPatternPreset(juce::jmax(1, selectedId) - 1);
+                repaintSequencerGrids();
+                break;
+            }
+
+            case UI::SequencerPatternActions::Action::random:
+            {
+                if (audioProcessor.randomizeSequencerPattern())
+                {
+                    repaintSequencerGrids();
+                    setRandomStatus("Sequence generated");
+                }
+                else
+                {
+                    setRandomStatus("Sequence skipped");
+                }
+                break;
+            }
+
+            case UI::SequencerPatternActions::Action::mutate:
+            {
+                if (audioProcessor.mutateSequencerPattern())
+                {
+                    repaintSequencerGrids();
+                    setRandomStatus("Sequence varied");
+                }
+                else
+                {
+                    setRandomStatus("Sequence skipped");
+                }
+                break;
+            }
+
+            case UI::SequencerPatternActions::Action::undo:
+            {
+                if (audioProcessor.undoSequencerEdit())
+                {
+                    repaintSequencerGrids();
+                    updateSegmentedSelectors();
+                    setRandomStatus("Sequence undo");
+                }
+                else
+                {
+                    setRandomStatus("No sequence undo");
+                }
+                break;
+            }
+
+            case UI::SequencerPatternActions::Action::clear:
+            {
+                audioProcessor.clearSequencerPattern();
+                repaintSequencerGrids();
+                break;
+            }
         }
-        else
-        {
-            setRandomStatus("Sequence skipped");
-        }
-    };
-    mutateSequencerButton.setTooltip("Create a small variation of the current sequencer pattern");
-    mutateSequencerButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        if (audioProcessor.mutateSequencerPattern())
-        {
-            repaintSequencerGrids();
-            setRandomStatus("Sequence varied");
-        }
-        else
-        {
-            setRandomStatus("Sequence skipped");
-        }
-    };
-    undoSequencerButton.setTooltip("Undo the last sequencer utility edit");
-    undoSequencerButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        if (audioProcessor.undoSequencerEdit())
-        {
-            repaintSequencerGrids();
-            updateSegmentedSelectors();
-            setRandomStatus("Sequence undo");
-        }
-        else
-        {
-            setRandomStatus("No sequence undo");
-        }
-    };
-    clearSequencerButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.clearSequencerPattern();
-        repaintSequencerGrids();
     };
     bassPatternButton.onClick = [this]
     {
@@ -3590,14 +3604,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
         audioProcessor.applySequencerPatternPreset(2);
-        repaintSequencerGrids();
-    };
-    applyPatternButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        const auto selectedId = sequencerPatternBox.getSelectedId();
-        audioProcessor.applySequencerPatternPreset(juce::jmax(1, selectedId) - 1);
         repaintSequencerGrids();
     };
     copySequencerButton.onClick = [this]
@@ -3998,14 +4004,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleChopPanel);
     addAndMakeVisible(sampleRecorderPanel);
     addAndMakeVisible(sampleRecipeActions);
-    addAndMakeVisible(randomSequencerButton);
-    addAndMakeVisible(mutateSequencerButton);
-    addAndMakeVisible(undoSequencerButton);
-    addAndMakeVisible(clearSequencerButton);
+    addAndMakeVisible(sequencerPatternActions);
     addAndMakeVisible(bassPatternButton);
     addAndMakeVisible(stabPatternButton);
     addAndMakeVisible(ukgPatternButton);
-    addAndMakeVisible(applyPatternButton);
     addAndMakeVisible(copySequencerButton);
     addAndMakeVisible(rotateSequencerLeftButton);
     addAndMakeVisible(rotateSequencerRightButton);
@@ -5146,7 +5148,7 @@ void NateVSTAudioProcessorEditor::resized()
                 rateEighthButton,
                 rateSixteenthButton,
                 rateThirtySecondButton,
-                applyPatternButton,
+                sequencerPatternActions,
                 copySequencerButton,
                 rotateSequencerLeftButton,
                 rotateSequencerRightButton,
@@ -5154,10 +5156,6 @@ void NateVSTAudioProcessorEditor::resized()
                 exportSequencerChainButton,
                 sequencerSceneChainControls,
                 applyGrooveTransformButton,
-                randomSequencerButton,
-                mutateSequencerButton,
-                undoSequencerButton,
-                clearSequencerButton,
                 sequencerExpandButton,
                 sequencerRootDownButton,
                 sequencerRootUpButton,
@@ -10695,8 +10693,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopPanel, &sampleRecorderPanel,
-        &sampleRecipeActions, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
-        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
+        &sampleRecipeActions, &sequencerPatternActions,
+        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,

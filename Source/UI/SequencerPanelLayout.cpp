@@ -49,7 +49,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.rootUpButton.setVisible(true);
     components.rootValueLabel.setVisible(true);
     components.stepEditor.setVisible(true);
-    components.applyPatternButton.setVisible(true);
+    components.patternActions.setVisible(true);
     components.copyButton.setVisible(true);
     components.rotateLeftButton.setVisible(true);
     components.rotateRightButton.setVisible(true);
@@ -57,10 +57,6 @@ void layout(juce::Rectangle<int> content, Components components)
     components.exportChainButton.setVisible(true);
     components.sceneChainControls.setVisible(true);
     components.applyGrooveTransformButton.setVisible(true);
-    components.randomButton.setVisible(true);
-    components.mutateButton.setVisible(true);
-    components.undoButton.setVisible(true);
-    components.clearButton.setVisible(true);
     components.sceneControls.setVisible(true);
     components.grid.setVisible(true);
     components.expandButton.setVisible(true);
@@ -95,13 +91,7 @@ void layout(juce::Rectangle<int> content, Components components)
     auto patternRow = controlArea.removeFromTop(34);
     components.chordMemoryButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
     components.patternBox.setBounds(patternRow.reduced(4));
-    auto generateRow = controlArea.removeFromTop(34);
-    components.applyPatternButton.setBounds(generateRow.removeFromLeft(generateRow.getWidth() / 2).reduced(4));
-    components.randomButton.setBounds(generateRow.reduced(4));
-    auto editRow = controlArea.removeFromTop(34);
-    components.mutateButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 3).reduced(4));
-    components.undoButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 2).reduced(4));
-    components.clearButton.setBounds(editRow.reduced(4));
+    components.patternActions.setBounds(controlArea.removeFromTop(SequencerPatternActions::preferredHeight));
 
     auto rootStepperRow = controlArea.removeFromTop(34).withTrimmedTop(2);
     components.rootDownButton.setBounds(rootStepperRow.removeFromLeft(38).reduced(4));

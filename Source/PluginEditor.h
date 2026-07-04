@@ -44,6 +44,7 @@
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
+#include "UI/SequencerPatternActions.h"
 #include "UI/SequencerStepEditor.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -676,14 +677,10 @@ private:
     juce::TextButton captureSnapshotDButton { "Set D" };
     UI::SampleFileActions sampleFileActions;
     UI::SampleRecipeActions sampleRecipeActions;
-    juce::TextButton randomSequencerButton { "Rand Seq" };
-    juce::TextButton mutateSequencerButton { "Vary" };
-    juce::TextButton undoSequencerButton { "Undo" };
-    juce::TextButton clearSequencerButton { "Clear" };
+    UI::SequencerPatternActions sequencerPatternActions;
     juce::TextButton bassPatternButton { "Bass" };
     juce::TextButton stabPatternButton { "Stab" };
     juce::TextButton ukgPatternButton { "UKG" };
-    juce::TextButton applyPatternButton { "Apply" };
     juce::TextButton copySequencerButton { "Copy" };
     juce::TextButton rotateSequencerLeftButton { "Rot <" };
     juce::TextButton rotateSequencerRightButton { "Rot >" };

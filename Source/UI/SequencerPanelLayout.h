@@ -2,6 +2,7 @@
 
 #include "SequencerSceneChainControls.h"
 #include "SequencerSceneControls.h"
+#include "SequencerPatternActions.h"
 #include "SequencerStepEditor.h"
 #include "StepSequencerGrid.h"
 
@@ -28,7 +29,7 @@ struct Components
     juce::TextButton& rateEighthButton;
     juce::TextButton& rateSixteenthButton;
     juce::TextButton& rateThirtySecondButton;
-    juce::TextButton& applyPatternButton;
+    SequencerPatternActions& patternActions;
     juce::TextButton& copyButton;
     juce::TextButton& rotateLeftButton;
     juce::TextButton& rotateRightButton;
@@ -36,10 +37,6 @@ struct Components
     juce::TextButton& exportChainButton;
     SequencerSceneChainControls& sceneChainControls;
     juce::TextButton& applyGrooveTransformButton;
-    juce::TextButton& randomButton;
-    juce::TextButton& mutateButton;
-    juce::TextButton& undoButton;
-    juce::TextButton& clearButton;
     juce::TextButton& expandButton;
     juce::TextButton& rootDownButton;
     juce::TextButton& rootUpButton;

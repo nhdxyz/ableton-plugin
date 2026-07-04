@@ -1494,26 +1494,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(keyboardRangeLabel);
     updateKeyboardRangeLabel();
 
-    sequencerRootDownButton.setTooltip("Move sequencer root note down one semitone");
-    sequencerRootDownButton.setWantsKeyboardFocus(false);
-    sequencerRootDownButton.setMouseClickGrabsKeyboardFocus(false);
-    sequencerRootDownButton.onClick = [this] { stepSequencerRoot(-1); };
-    addAndMakeVisible(sequencerRootDownButton);
-
-    sequencerRootUpButton.setTooltip("Move sequencer root note up one semitone");
-    sequencerRootUpButton.setWantsKeyboardFocus(false);
-    sequencerRootUpButton.setMouseClickGrabsKeyboardFocus(false);
-    sequencerRootUpButton.onClick = [this] { stepSequencerRoot(1); };
-    addAndMakeVisible(sequencerRootUpButton);
-
-    sequencerRootValueLabel.setText("C1", juce::dontSendNotification);
-    sequencerRootValueLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-    sequencerRootValueLabel.setJustificationType(juce::Justification::centred);
-    sequencerRootValueLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
-    sequencerRootValueLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff101619));
-    sequencerRootValueLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff31434a));
-    sequencerRootValueLabel.setTooltip("Sequencer root note");
-    addAndMakeVisible(sequencerRootValueLabel);
+    sequencerRootControls.onStepRoot = [this] (int semitones) { stepSequencerRoot(semitones); };
+    addAndMakeVisible(sequencerRootControls);
 
     sequencerStepEditor.onAction = [this] (UI::SequencerStepEditor::Action action)
     {
@@ -4138,9 +4120,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     titleLabel.setColour(juce::Label::textColourId, theme.text);
     keyboardRangeLabel.setColour(juce::Label::textColourId, theme.text);
-    sequencerRootValueLabel.setColour(juce::Label::textColourId, theme.text);
-    sequencerRootValueLabel.setColour(juce::Label::backgroundColourId, theme.field);
-    sequencerRootValueLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    sequencerRootControls.applyTheme(theme);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, theme.keyboardWhite);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, theme.keyboardBlack);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, theme.outline);
@@ -5136,7 +5116,6 @@ void NateVSTAudioProcessorEditor::resized()
             UI::SequencerPanelLayout::layout(content, {
                 sequencerSectionLabel,
                 hostSyncStatusLabel,
-                sequencerRootValueLabel,
                 sequencerStepEditor,
                 sequencerEnabledButton,
                 sequencerChordMemoryButton,
@@ -5146,8 +5125,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerSceneChainControls,
                 applyGrooveTransformButton,
                 sequencerExpandButton,
-                sequencerRootDownButton,
-                sequencerRootUpButton,
+                sequencerRootControls,
                 sequencerGrooveBox,
                 sequencerScaleBox,
                 sequencerChordBox,
@@ -8799,7 +8777,9 @@ bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* origina
 void NateVSTAudioProcessorEditor::stepSequencerRoot(int semitones)
 {
     const auto currentRoot = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f));
-    const auto nextRoot = juce::jlimit(24, 84, currentRoot + semitones);
+    const auto nextRoot = juce::jlimit(UI::SequencerRootControls::minRoot,
+                                       UI::SequencerRootControls::maxRoot,
+                                       currentRoot + semitones);
     if (nextRoot == currentRoot)
     {
         updateSequencerRootStepper();
@@ -8818,20 +8798,11 @@ void NateVSTAudioProcessorEditor::stepSequencerRoot(int semitones)
 
 void NateVSTAudioProcessorEditor::updateSequencerRootStepper()
 {
-    const auto root = juce::jlimit(24, 84, juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f)));
+    const auto root = juce::jlimit(UI::SequencerRootControls::minRoot,
+                                   UI::SequencerRootControls::maxRoot,
+                                   juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerRoot, 36.0f)));
     const auto octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::sequencerOctave, 0.0f));
-    const auto displayRoot = juce::jlimit(0, 127, root + (octave * 12));
-    const auto rootName = juce::MidiMessage::getMidiNoteName(root, true, true, 3);
-    const auto displayName = juce::MidiMessage::getMidiNoteName(displayRoot, true, true, 3);
-    const auto labelText = octave == 0 ? "Root " + rootName
-                                       : "Root " + rootName + " -> " + displayName;
-
-    if (sequencerRootValueLabel.getText() != labelText)
-        sequencerRootValueLabel.setText(labelText, juce::dontSendNotification);
-
-    sequencerRootValueLabel.setTooltip("Sequencer root note. The arrow buttons move the root by semitone.");
-    sequencerRootDownButton.setEnabled(root > 24);
-    sequencerRootUpButton.setEnabled(root < 84);
+    sequencerRootControls.setRootState(root, octave);
 }
 
 void NateVSTAudioProcessorEditor::returnKeyboardFocusToPiano()
@@ -10657,7 +10628,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
+        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
@@ -10682,7 +10653,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
-        &sequencerRateControls, &sequencerRootDownButton, &sequencerRootUpButton,
+        &sequencerRateControls, &sequencerRootControls,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &presetPrimaryActions, &presetQuickFilterBar, &refreshPresetsButton, &presetCompareActions, &candidateFavoriteButton,
         &saveCandidateButton,
@@ -14798,7 +14769,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
 
     const auto sequencerVisible = anyComponentVisible(sequencerGrid,
                                                       expandedSequencerGrid,
-                                                      sequencerRootValueLabel,
+                                                      sequencerRootControls,
                                                       sequencerSceneChainControls);
     if (sequencerVisible)
     {

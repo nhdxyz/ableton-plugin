@@ -52,6 +52,7 @@
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternActions.h"
 #include "UI/SequencerRateControls.h"
+#include "UI/SequencerRootControls.h"
 #include "UI/SequencerStepEditor.h"
 #include "UI/SequencerUtilityActions.h"
 #include "UI/StereoFieldDisplay.h"
@@ -631,6 +632,7 @@ private:
     UI::SequencerSceneChainControls sequencerSceneChainControls;
     juce::TextButton applyGrooveTransformButton { "Shape" };
     UI::SequencerSceneControls sequencerSceneControls;
+    UI::SequencerRootControls sequencerRootControls;
     UI::PanelTabBar panelTabBar;
     UI::ControlStatusStrip controlStatusStrip;
     juce::TextButton sineWaveButton { "Sine" };
@@ -719,10 +721,7 @@ private:
     juce::TextButton keyboardOctaveUpButton { "Oct +" };
     juce::TextButton keyboardHomeButton { "Reset" };
     juce::TextButton keyboardPanicButton { "All Off" };
-    juce::TextButton sequencerRootDownButton { "-" };
-    juce::TextButton sequencerRootUpButton { "+" };
     juce::Label keyboardRangeLabel;
-    juce::Label sequencerRootValueLabel;
     juce::Label fxRackStatusLabel;
     std::array<UI::ModSourceMeter, 20> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;

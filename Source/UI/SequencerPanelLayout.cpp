@@ -43,9 +43,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.grooveTransformBox.setVisible(true);
     components.laneViewBox.setVisible(true);
     components.lockDestinationBox.setVisible(true);
-    components.rootDownButton.setVisible(true);
-    components.rootUpButton.setVisible(true);
-    components.rootValueLabel.setVisible(true);
+    components.rootControls.setVisible(true);
     components.stepEditor.setVisible(true);
     components.patternActions.setVisible(true);
     components.utilityActions.setVisible(true);
@@ -83,10 +81,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.patternBox.setBounds(patternRow.reduced(4));
     components.patternActions.setBounds(controlArea.removeFromTop(SequencerPatternActions::preferredHeight));
 
-    auto rootStepperRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-    components.rootDownButton.setBounds(rootStepperRow.removeFromLeft(38).reduced(4));
-    components.rootUpButton.setBounds(rootStepperRow.removeFromRight(38).reduced(4));
-    components.rootValueLabel.setBounds(rootStepperRow.reduced(4));
+    components.rootControls.setBounds(controlArea.removeFromTop(34).withTrimmedTop(2));
 
     auto laneViewRow = controlArea.removeFromTop(34).withTrimmedTop(2);
     components.laneViewBox.setBounds(laneViewRow.reduced(4));

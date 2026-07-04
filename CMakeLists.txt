@@ -110,6 +110,7 @@ target_sources(NateVST
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp
         Source/UI/SequencerRateControls.cpp
+        Source/UI/SequencerRootControls.cpp
         Source/UI/SequencerSceneChainControls.cpp
         Source/UI/SequencerSceneControls.cpp
         Source/UI/SequencerStepEditor.cpp

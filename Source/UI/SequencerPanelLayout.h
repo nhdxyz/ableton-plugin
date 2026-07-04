@@ -4,6 +4,7 @@
 #include "SequencerSceneControls.h"
 #include "SequencerPatternActions.h"
 #include "SequencerRateControls.h"
+#include "SequencerRootControls.h"
 #include "SequencerStepEditor.h"
 #include "SequencerUtilityActions.h"
 #include "StepSequencerGrid.h"
@@ -22,7 +23,6 @@ struct Components
 {
     juce::Label& sectionLabel;
     juce::Label& hostSyncStatusLabel;
-    juce::Label& rootValueLabel;
     SequencerStepEditor& stepEditor;
 
     juce::ToggleButton& enabledButton;
@@ -34,8 +34,7 @@ struct Components
     SequencerSceneChainControls& sceneChainControls;
     juce::TextButton& applyGrooveTransformButton;
     juce::TextButton& expandButton;
-    juce::TextButton& rootDownButton;
-    juce::TextButton& rootUpButton;
+    SequencerRootControls& rootControls;
 
     juce::ComboBox& grooveBox;
     juce::ComboBox& scaleBox;

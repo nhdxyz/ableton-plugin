@@ -79,7 +79,7 @@ Expected tools:
 - CMake.
 - Ninja or Make.
 - Ableton Live for host testing.
-- pluginval for local VST3 validation.
+- pluginval for local VST3 validation, or network access for `tools/fetch_pluginval.sh`.
 
 The initial project scaffold uses CMake FetchContent to download JUCE during configuration.
 
@@ -93,7 +93,19 @@ cmake --build build --config Debug
 ctest --test-dir build --output-on-failure
 ```
 
-GitHub Actions runs the same build and CTest gate on macOS with `SKIP_PLUGINVAL=1`; local release checks should still run pluginval and the Ableton checklist before tagging.
+Run the release gate before packaging or sharing a beta:
+
+```sh
+tools/validate_release.sh
+```
+
+If pluginval is not installed locally, the gate can download the official release binary into `build/pluginval-bin/`:
+
+```sh
+PLUGINVAL_AUTO_DOWNLOAD=1 tools/validate_release.sh
+```
+
+GitHub Actions runs the same build, CTest, and pluginval strictness-5 gate on macOS. CI sets `PLUGINVAL_SKIP_GUI_TESTS=1` for headless stability; local release checks should leave GUI tests enabled unless they are intentionally documented as an exception. The Ableton checklist is still required before tagging.
 
 Local release archives can be assembled with `tools/package_release.sh` after validation; generated package folders and zips are written under `dist/`.
 

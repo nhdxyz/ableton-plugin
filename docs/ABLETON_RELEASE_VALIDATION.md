@@ -6,6 +6,14 @@ Run the automated gate first:
 tools/validate_release.sh
 ```
 
+If pluginval is not installed locally, download the official release binary into `build/pluginval-bin/` and run the same gate:
+
+```sh
+PLUGINVAL_AUTO_DOWNLOAD=1 tools/validate_release.sh
+```
+
+GitHub Actions also runs pluginval at strictness 5. CI sets `PLUGINVAL_SKIP_GUI_TESTS=1` because the hosted runner is headless; local release validation should keep GUI tests enabled unless the exception is documented in the release notes.
+
 Create a local release archive after the gate passes:
 
 ```sh

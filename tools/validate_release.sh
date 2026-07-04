@@ -10,6 +10,8 @@ PLUGINVAL_STRICTNESS="${PLUGINVAL_STRICTNESS:-5}"
 PLUGINVAL_TIMEOUT_MS="${PLUGINVAL_TIMEOUT_MS:-60000}"
 PLUGINVAL_OUTPUT_DIR="${PLUGINVAL_OUTPUT_DIR:-"$BUILD_DIR/pluginval"}"
 PLUGINVAL_OUTPUT_FILE="${PLUGINVAL_OUTPUT_FILE:-nate-vst-pluginval.txt}"
+PLUGINVAL_SKIP_GUI_TESTS="${PLUGINVAL_SKIP_GUI_TESTS:-0}"
+PLUGINVAL_AUTO_DOWNLOAD="${PLUGINVAL_AUTO_DOWNLOAD:-0}"
 RELEASE_VALIDATION_DIR="${RELEASE_VALIDATION_DIR:-"$BUILD_DIR/release-validation"}"
 RELEASE_VALIDATION_REPORT="${RELEASE_VALIDATION_REPORT:-"$RELEASE_VALIDATION_DIR/summary.txt"}"
 BUILD_OUTPUT_FILE="${BUILD_OUTPUT_FILE:-"$RELEASE_VALIDATION_DIR/build-output.txt"}"
@@ -72,6 +74,8 @@ Plugin path: $PLUGIN_PATH
 Pluginval binary: $PLUGINVAL_BIN
 Pluginval strictness: $PLUGINVAL_STRICTNESS
 Pluginval timeout ms: $PLUGINVAL_TIMEOUT_MS
+Pluginval skip GUI tests: $PLUGINVAL_SKIP_GUI_TESTS
+Pluginval auto-download: $PLUGINVAL_AUTO_DOWNLOAD
 SKIP_PLUGINVAL: $SKIP_PLUGINVAL
 
 EOF
@@ -134,23 +138,35 @@ if [[ "$SKIP_PLUGINVAL" == "1" ]]; then
 else
     CURRENT_STAGE="pluginval discovery"
     if ! PLUGINVAL_RESOLVED="$(resolve_pluginval)"; then
-        echo "pluginval is required for release validation but was not found: $PLUGINVAL_BIN" >&2
-        echo "Install pluginval or set PLUGINVAL_BIN=/absolute/path/to/pluginval." >&2
-        echo "For local smoke runs only, set SKIP_PLUGINVAL=1." >&2
-        exit 1
+        if [[ "$PLUGINVAL_AUTO_DOWNLOAD" == "1" ]]; then
+            PLUGINVAL_RESOLVED="$("$ROOT_DIR/tools/fetch_pluginval.sh")"
+        else
+            echo "pluginval is required for release validation but was not found: $PLUGINVAL_BIN" >&2
+            echo "Install pluginval, set PLUGINVAL_BIN=/absolute/path/to/pluginval, or set PLUGINVAL_AUTO_DOWNLOAD=1." >&2
+            echo "For local smoke runs only, set SKIP_PLUGINVAL=1." >&2
+            exit 1
+        fi
     fi
 
     mkdir -p "$PLUGINVAL_OUTPUT_DIR"
+    rm -f "$PLUGINVAL_OUTPUT_DIR/$PLUGINVAL_OUTPUT_FILE"
     echo "== pluginval =="
     CURRENT_STAGE="pluginval"
-    "$PLUGINVAL_RESOLVED" \
-        --strictness-level "$PLUGINVAL_STRICTNESS" \
-        --timeout-ms "$PLUGINVAL_TIMEOUT_MS" \
-        --output-dir "$PLUGINVAL_OUTPUT_DIR" \
-        --output-filename "$PLUGINVAL_OUTPUT_FILE" \
-        --validate "$PLUGIN_PATH"
+    pluginval_args=(
+        --strictness-level "$PLUGINVAL_STRICTNESS"
+        --timeout-ms "$PLUGINVAL_TIMEOUT_MS"
+        --output-dir "$PLUGINVAL_OUTPUT_DIR"
+        --output-filename "$PLUGINVAL_OUTPUT_FILE"
+    )
+
+    if [[ "$PLUGINVAL_SKIP_GUI_TESTS" == "1" ]]; then
+        pluginval_args+=(--skip-gui-tests)
+    fi
+
+    "$PLUGINVAL_RESOLVED" "${pluginval_args[@]}" --validate "$PLUGIN_PATH"
     echo "pluginval: PASS" >> "$RELEASE_VALIDATION_REPORT"
     echo "pluginval binary: $PLUGINVAL_RESOLVED" >> "$RELEASE_VALIDATION_REPORT"
+    echo "pluginval skip GUI tests: $PLUGINVAL_SKIP_GUI_TESTS" >> "$RELEASE_VALIDATION_REPORT"
     echo "pluginval log: $PLUGINVAL_OUTPUT_DIR/$PLUGINVAL_OUTPUT_FILE" >> "$RELEASE_VALIDATION_REPORT"
     echo >> "$RELEASE_VALIDATION_REPORT"
     echo

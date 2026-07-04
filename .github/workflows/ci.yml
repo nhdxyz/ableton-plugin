@@ -22,9 +22,12 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
+      - name: Download pluginval
+        run: echo "PLUGINVAL_BIN=$(tools/fetch_pluginval.sh)" >> "$GITHUB_ENV"
+
       - name: Build and test
         env:
-          SKIP_PLUGINVAL: "1"
+          PLUGINVAL_SKIP_GUI_TESTS: "1"
         run: tools/validate_release.sh
 
       - name: Upload release validation evidence

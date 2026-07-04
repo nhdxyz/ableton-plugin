@@ -3828,10 +3828,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             applyLfoCurvePreset(selectedId);
     };
     lfoCurveActionBox.onChange = [this] { applySelectedLfoCurveAction(); };
-    fxRemoveButton.onClick = [this] { removeSelectedFxModule(); };
-    fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
-    fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
-    fxResetOrderButton.onClick = [this] { resetFxModuleOrder(); };
+    fxRackOrderControls.onMoveRequested = [this] (int direction) { moveSelectedFxModule(direction); };
+    fxRackOrderControls.onResetRequested = [this] { resetFxModuleOrder(); };
+    fxRackOrderControls.onRemoveRequested = [this] { removeSelectedFxModule(); };
     fxPerformanceControls.onActionClicked = [this] (UI::FxPerformanceControls::Action action)
     {
         switch (action)
@@ -4055,10 +4054,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(revertPresetButton);
     addAndMakeVisible(candidateFavoriteButton);
     addAndMakeVisible(saveCandidateButton);
-    addAndMakeVisible(fxMoveUpButton);
-    addAndMakeVisible(fxMoveDownButton);
-    addAndMakeVisible(fxResetOrderButton);
-    addAndMakeVisible(fxRemoveButton);
+    addAndMakeVisible(fxRackOrderControls);
     addAndMakeVisible(fxPerformanceControls);
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
@@ -5226,10 +5222,7 @@ void NateVSTAudioProcessorEditor::resized()
                 fxRackStatusLabel,
                 fxAddBox,
                 fxPresetBox,
-                fxMoveUpButton,
-                fxMoveDownButton,
-                fxResetOrderButton,
-                fxRemoveButton,
+                fxRackOrderControls,
                 fxPerformanceControls,
                 fxApplyPresetButton,
                 rackSlots,
@@ -9761,9 +9754,9 @@ void NateVSTAudioProcessorEditor::updateFxRackControls()
     };
 
     updateFxPresetBox();
-    fxMoveUpButton.setEnabled(hasVisibleMoveTarget(-1));
-    fxMoveDownButton.setEnabled(hasVisibleMoveTarget(1));
-    fxRemoveButton.setEnabled(selectedFxModule != FxModule::guard);
+    fxRackOrderControls.setButtonStates(hasVisibleMoveTarget(-1),
+                                        hasVisibleMoveTarget(1),
+                                        selectedFxModule != FxModule::guard);
 }
 
 std::array<NateVSTAudioProcessorEditor::FxModule, 15> NateVSTAudioProcessorEditor::fxDefaultModuleOrder() const
@@ -10734,10 +10727,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &savePresetButton, &loadPresetButton, &auditionPresetButton, &warmPresetPreviewsButton, &refreshPresetsButton, &favoritePresetButton, &comparePresetButton, &revertPresetButton, &candidateFavoriteButton,
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
-        &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
-        &fxPerformanceControls,
+        &fxRackOrderControls, &fxPerformanceControls,
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
-        &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
+        &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
         &homeOverviewDisplay, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerStepEditor, &sequencerGrid, &expandedSequencerGrid

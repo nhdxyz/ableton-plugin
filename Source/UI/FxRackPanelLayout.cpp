@@ -92,20 +92,14 @@ void layout(juce::Rectangle<int> content, Components components)
 
     auto actionRow = content.removeFromTop(44);
     components.addBox.setVisible(true);
-    components.moveUpButton.setVisible(true);
-    components.moveDownButton.setVisible(true);
-    components.resetOrderButton.setVisible(true);
-    components.removeButton.setVisible(true);
+    components.orderControls.setVisible(true);
     components.performanceControls.setVisible(true);
     components.statusLabel.setVisible(true);
     components.presetBox.setVisible(true);
     components.applyPresetButton.setVisible(true);
     components.hostSyncStatusLabel.setVisible(true);
     components.addBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
-    components.moveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
-    components.moveDownButton.setBounds(actionRow.removeFromLeft(58).reduced(4));
-    components.resetOrderButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
-    components.removeButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
+    components.orderControls.setBounds(actionRow.removeFromLeft(268));
     components.hostSyncStatusLabel.setBounds(actionRow.removeFromRight(126).reduced(4));
     components.statusLabel.setBounds(actionRow.reduced(8, 4));
 

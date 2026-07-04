@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FxPerformanceControls.h"
+#include "FxRackOrderControls.h"
 #include "FxRackRow.h"
 #include "PumpCurveDisplay.h"
 
@@ -165,10 +166,7 @@ struct Components
     juce::ComboBox& addBox;
     juce::ComboBox& presetBox;
 
-    juce::TextButton& moveUpButton;
-    juce::TextButton& moveDownButton;
-    juce::TextButton& resetOrderButton;
-    juce::TextButton& removeButton;
+    FxRackOrderControls& orderControls;
     FxPerformanceControls& performanceControls;
     juce::TextButton& applyPresetButton;
 

@@ -62,6 +62,7 @@ target_sources(NateVST
         Source/UI/FocusOverlayPanel.cpp
         Source/UI/FxPerformanceControls.cpp
         Source/UI/FxRackPanelLayout.cpp
+        Source/UI/FxRackOrderControls.cpp
         Source/UI/FxRackRow.cpp
         Source/UI/HouseLayerRackDisplay.cpp
         Source/UI/HomeOverviewDisplay.cpp

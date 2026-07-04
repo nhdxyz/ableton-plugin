@@ -6,6 +6,7 @@
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FocusOverlayPanel.h"
 #include "UI/FxPerformanceControls.h"
+#include "UI/FxRackOrderControls.h"
 #include "UI/FxRackRow.h"
 #include "UI/HouseLayerRackDisplay.h"
 #include "UI/HomeOverviewDisplay.h"
@@ -726,10 +727,7 @@ private:
     UI::PageButtonStrip modWorkflowStrip;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
-    juce::TextButton fxMoveUpButton { "Up" };
-    juce::TextButton fxMoveDownButton { "Down" };
-    juce::TextButton fxResetOrderButton { "Reset" };
-    juce::TextButton fxRemoveButton { "Remove" };
+    UI::FxRackOrderControls fxRackOrderControls;
     UI::FxPerformanceControls fxPerformanceControls;
     juce::TextButton fxApplyPresetButton { "Load" };
     juce::TextButton modInspectorAddButton { "Add" };

@@ -26,6 +26,8 @@ Create a macOS installer package for beta testers:
 CREATE_PKG=1 tools/package_release.sh
 ```
 
+The package script normalizes the generated `.pkg` payload and fails if AppleDouble `._*` or `.DS_Store` records remain in the installer BOM.
+
 For a public release, sign the VST3 bundle and installer package with Developer ID identities:
 
 ```sh

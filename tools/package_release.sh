@@ -189,6 +189,41 @@ create_zip() {
     fi
 }
 
+normalize_pkg_payload() {
+    local pkg_path="$1"
+
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: normalize pkg payload metadata in $pkg_path"
+        return 0
+    fi
+
+    require_path "$pkg_path"
+
+    local temp_dir
+    temp_dir="$(mktemp -d)"
+    local expanded_full="$temp_dir/full"
+    local expanded_raw="$temp_dir/raw"
+    local normalized_pkg="$temp_dir/normalized.pkg"
+
+    pkgutil --expand-full "$pkg_path" "$expanded_full"
+    pkgutil --expand "$pkg_path" "$expanded_raw"
+
+    clean_macos_metadata "$expanded_full/Payload"
+    mkbom "$expanded_full/Payload" "$expanded_raw/Bom"
+
+    (
+        cd "$expanded_full/Payload"
+        COPYFILE_DISABLE=1 find . -print \
+            | LC_ALL=C sort \
+            | cpio -o --format odc 2>"$temp_dir/cpio.log" \
+            | gzip -c > "$expanded_raw/Payload"
+    )
+
+    pkgutil --flatten "$expanded_raw" "$normalized_pkg"
+    mv "$normalized_pkg" "$pkg_path"
+    rm -rf "$temp_dir"
+}
+
 build_notarytool_args() {
     NOTARYTOOL_ARGS=()
 
@@ -254,6 +289,8 @@ create_pkg_installer() {
         --filter '(^|/)CVS($|/)' \
         "$pkgbuild_output"
 
+    normalize_pkg_payload "$pkgbuild_output"
+
     if [[ -n "$INSTALLER_SIGN_IDENTITY" ]]; then
         run productsign --sign "$INSTALLER_SIGN_IDENTITY" "$PKG_UNSIGNED_PATH" "$PKG_PATH"
         run rm -f "$PKG_UNSIGNED_PATH"
@@ -261,7 +298,8 @@ create_pkg_installer() {
     fi
 
     if [[ "$DRY_RUN" != "1" ]] && pkgutil --payload-files "$PKG_PATH" | grep -E '(^|/)\._|(^|/)\.DS_Store$' >/dev/null; then
-        echo "Warning: $PKG_PATH payload contains macOS metadata sidecar entries from protected file xattrs." >&2
+        echo "Package payload contains macOS metadata sidecar entries after normalization: $PKG_PATH" >&2
+        exit 1
     fi
     echo
 }

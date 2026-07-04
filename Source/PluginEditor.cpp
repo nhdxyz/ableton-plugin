@@ -1405,6 +1405,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse),
       sequencerGrooveControls(processorToUse.getValueTreeState()),
+      sequencerTransformControls(processorToUse.getValueTreeState()),
       sampleSourceControls(processorToUse.getValueTreeState()),
       sampleRangeControls(processorToUse.getValueTreeState()),
       sampleShapeControls(processorToUse.getValueTreeState()),
@@ -2477,49 +2478,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     addAndMakeVisible(sequencerPatternControls);
 
-    sequencerGrooveTransformBox.addItem("Tighten", 1);
-    sequencerGrooveTransformBox.addItem("Straight Anchors", 2);
-    sequencerGrooveTransformBox.addItem("Swung Ghosts", 3);
-    sequencerGrooveTransformBox.addItem("Late Stabs", 4);
-    sequencerGrooveTransformBox.addItem("Vocal Push", 5);
-    sequencerGrooveTransformBox.addItem("Humanize", 6);
-    sequencerGrooveTransformBox.addSectionHeading("House Templates");
-    sequencerGrooveTransformBox.addItem("House Shuffle", 7);
-    sequencerGrooveTransformBox.addItem("UKG 2-Step Push", 8);
-    sequencerGrooveTransformBox.addItem("Tech House Tight", 9);
-    sequencerGrooveTransformBox.addItem("Minimal Skip", 10);
-    sequencerGrooveTransformBox.addItem("Techno Drive", 11);
-    sequencerGrooveTransformBox.addItem("Bass Contour", 12);
-    sequencerGrooveTransformBox.addSectionHeading("Paint Tools");
-    sequencerGrooveTransformBox.addItem("Chord Stab Paint", 14);
-    sequencerGrooveTransformBox.addSectionHeading("Chain Tools");
-    sequencerGrooveTransformBox.addItem("Build 4-Bar Chain", 13);
-    sequencerGrooveTransformBox.setSelectedId(1, juce::dontSendNotification);
-    sequencerGrooveTransformBox.setTooltip("Choose a timing transform or genre groove template for the current sequence");
-    addAndMakeVisible(sequencerGrooveTransformBox);
-
-    sequencerLaneViewBox.addItem("All Lanes", 1);
-    sequencerLaneViewBox.addItem("Groove", 2);
-    sequencerLaneViewBox.addItem("Dynamics", 3);
-    sequencerLaneViewBox.addItem("Ratchets", 4);
-    sequencerLaneViewBox.addItem("Lock/Slide", 5);
-    sequencerLaneViewBox.setSelectedId(1, juce::dontSendNotification);
-    sequencerLaneViewBox.setTextWhenNothingSelected("Lane View");
-    sequencerLaneViewBox.setTooltip("Choose which step lanes are emphasized in the SEQ piano roll");
-    sequencerLaneViewBox.onChange = [this]
-    {
-        const auto laneViewMode = juce::jlimit(0, 4, sequencerLaneViewBox.getSelectedId() - 1);
-        sequencerGrid.setLaneViewMode(laneViewMode);
-        expandedSequencerGrid.setLaneViewMode(laneViewMode);
-        updateSequencerStepEditor();
-    };
-    addAndMakeVisible(sequencerLaneViewBox);
-
-    sequencerLockDestinationBox.addItemList(Parameters::sequencerLockDestinationChoices(), 1);
-    sequencerLockDestinationBox.setTextWhenNothingSelected("Lock");
-    sequencerLockDestinationBox.setTooltip("Choose which safe synth or FX destination the per-step Lock lane moves");
-    addAndMakeVisible(sequencerLockDestinationBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerLockDestination, sequencerLockDestinationBox));
+    addAndMakeVisible(sequencerLaneViewControls);
+    addAndMakeVisible(sequencerTransformControls);
 
     addAndMakeVisible(samplePlaybackControls);
 
@@ -3611,19 +3571,22 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         setRandomStatus("Chain length " + modeText);
     };
     addAndMakeVisible(sequencerSceneChainControls);
-    applyGrooveTransformButton.setTooltip("Apply the selected groove transform to the current sequence");
-    applyGrooveTransformButton.onClick = [this]
+    sequencerLaneViewControls.onLaneViewChanged = [this] (int laneViewMode)
+    {
+        sequencerGrid.setLaneViewMode(laneViewMode);
+        expandedSequencerGrid.setLaneViewMode(laneViewMode);
+        updateSequencerStepEditor();
+    };
+    sequencerTransformControls.onApplyTransform = [this] (int transformIndex, const juce::String& transformName)
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
-        const auto selectedId = sequencerGrooveTransformBox.getSelectedId();
-        const auto transformIndex = juce::jmax(1, selectedId) - 1;
         if (audioProcessor.applySequencerGrooveTransform(transformIndex))
         {
             repaintSequencerGrids();
             updateSegmentedSelectors();
             updateSequencerSceneButtons();
-            setRandomStatus(transformIndex == sequencerFourBarChainTransformIndex ? "4-bar chain ready" : sequencerGrooveTransformBox.getText() + " shaped");
+            setRandomStatus(transformIndex == sequencerFourBarChainTransformIndex ? "4-bar chain ready" : transformName + " shaped");
         }
         else
         {
@@ -3954,7 +3917,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(stabPatternButton);
     addAndMakeVisible(ukgPatternButton);
     addAndMakeVisible(sequencerUtilityActions);
-    addAndMakeVisible(applyGrooveTransformButton);
     addAndMakeVisible(panelTabBar);
     addAndMakeVisible(sineWaveButton);
     addAndMakeVisible(sawWaveButton);
@@ -5072,13 +5034,11 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerPatternControls,
                 sequencerUtilityActions,
                 sequencerSceneChainControls,
-                applyGrooveTransformButton,
                 sequencerExpandButton,
                 sequencerRootControls,
                 sequencerGrooveControls,
-                sequencerGrooveTransformBox,
-                sequencerLaneViewBox,
-                sequencerLockDestinationBox,
+                sequencerLaneViewControls,
+                sequencerTransformControls,
                 sequencerSceneControls,
                 sequencerGrid,
                 { sequencerRootSlider, sequencerRootLabel },
@@ -10574,7 +10534,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -10593,8 +10553,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopHeader, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
-        &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternControls,
-        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
+        &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternControls, &sequencerLaneViewControls, &sequencerTransformControls,
+        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

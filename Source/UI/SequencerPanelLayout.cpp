@@ -36,14 +36,12 @@ void layout(juce::Rectangle<int> content, Components components)
     components.rateControls.setVisible(true);
     components.grooveControls.setVisible(true);
     components.patternControls.setVisible(true);
-    components.grooveTransformBox.setVisible(true);
-    components.laneViewBox.setVisible(true);
-    components.lockDestinationBox.setVisible(true);
+    components.laneViewControls.setVisible(true);
+    components.transformControls.setVisible(true);
     components.rootControls.setVisible(true);
     components.stepEditor.setVisible(true);
     components.utilityActions.setVisible(true);
     components.sceneChainControls.setVisible(true);
-    components.applyGrooveTransformButton.setVisible(true);
     components.sceneControls.setVisible(true);
     components.grid.setVisible(true);
     components.expandButton.setVisible(true);
@@ -70,15 +68,11 @@ void layout(juce::Rectangle<int> content, Components components)
 
     components.rootControls.setBounds(controlArea.removeFromTop(34).withTrimmedTop(2));
 
-    auto laneViewRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-    components.laneViewBox.setBounds(laneViewRow.reduced(4));
+    components.laneViewControls.setBounds(controlArea.removeFromTop(SequencerLaneViewControls::preferredHeight).withTrimmedTop(2));
 
     components.stepEditor.setBounds(controlArea.removeFromTop(components.stepEditor.preferredHeight() + 4).withTrimmedTop(4));
 
-    auto transformRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-    components.lockDestinationBox.setBounds(transformRow.removeFromLeft(transformRow.getWidth() / 2).reduced(4));
-    components.grooveTransformBox.setBounds(transformRow.reduced(4));
-    components.applyGrooveTransformButton.setBounds(controlArea.removeFromTop(32).reduced(4));
+    components.transformControls.setBounds(controlArea.removeFromTop(SequencerTransformControls::preferredHeight));
 
     if (showAdvancedControls)
     {

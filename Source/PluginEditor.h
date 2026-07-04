@@ -51,12 +51,14 @@
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerEnabledButton.h"
 #include "UI/SequencerGrooveControls.h"
+#include "UI/SequencerLaneViewControls.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternControls.h"
 #include "UI/SequencerRateControls.h"
 #include "UI/SequencerRootControls.h"
 #include "UI/SequencerStepEditor.h"
+#include "UI/SequencerTransformControls.h"
 #include "UI/SequencerUtilityActions.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -297,9 +299,8 @@ private:
     juce::ComboBox randomLockActionBox;
     juce::ComboBox sequencerRateBox;
     UI::SequencerGrooveControls sequencerGrooveControls;
-    juce::ComboBox sequencerGrooveTransformBox;
-    juce::ComboBox sequencerLaneViewBox;
-    juce::ComboBox sequencerLockDestinationBox;
+    UI::SequencerLaneViewControls sequencerLaneViewControls;
+    UI::SequencerTransformControls sequencerTransformControls;
     UI::SampleSourceControls sampleSourceControls;
     UI::SampleRangeControls sampleRangeControls;
     UI::SampleShapeControls sampleShapeControls;
@@ -628,7 +629,6 @@ private:
     juce::TextButton ukgPatternButton { "UKG" };
     UI::SequencerUtilityActions sequencerUtilityActions;
     UI::SequencerSceneChainControls sequencerSceneChainControls;
-    juce::TextButton applyGrooveTransformButton { "Shape" };
     UI::SequencerSceneControls sequencerSceneControls;
     UI::SequencerRootControls sequencerRootControls;
     UI::PanelTabBar panelTabBar;

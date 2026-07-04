@@ -4,9 +4,11 @@
 #include "SequencerSceneControls.h"
 #include "SequencerPatternControls.h"
 #include "SequencerGrooveControls.h"
+#include "SequencerLaneViewControls.h"
 #include "SequencerRateControls.h"
 #include "SequencerRootControls.h"
 #include "SequencerStepEditor.h"
+#include "SequencerTransformControls.h"
 #include "SequencerUtilityActions.h"
 #include "StepSequencerGrid.h"
 
@@ -32,14 +34,12 @@ struct Components
     SequencerPatternControls& patternControls;
     SequencerUtilityActions& utilityActions;
     SequencerSceneChainControls& sceneChainControls;
-    juce::TextButton& applyGrooveTransformButton;
     juce::TextButton& expandButton;
     SequencerRootControls& rootControls;
 
     SequencerGrooveControls& grooveControls;
-    juce::ComboBox& grooveTransformBox;
-    juce::ComboBox& laneViewBox;
-    juce::ComboBox& lockDestinationBox;
+    SequencerLaneViewControls& laneViewControls;
+    SequencerTransformControls& transformControls;
 
     SequencerSceneControls& sceneControls;
 

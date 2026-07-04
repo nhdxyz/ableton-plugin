@@ -110,6 +110,7 @@ target_sources(NateVST
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/SequencerEnabledButton.cpp
         Source/UI/SequencerGrooveControls.cpp
+        Source/UI/SequencerLaneViewControls.cpp
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp
         Source/UI/SequencerPatternControls.cpp
@@ -118,6 +119,7 @@ target_sources(NateVST
         Source/UI/SequencerSceneChainControls.cpp
         Source/UI/SequencerSceneControls.cpp
         Source/UI/SequencerStepEditor.cpp
+        Source/UI/SequencerTransformControls.cpp
         Source/UI/SequencerUtilityActions.cpp
         Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp

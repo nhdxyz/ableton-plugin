@@ -69,6 +69,7 @@ target_sources(NateVST
         Source/UI/LowEndAssistant.cpp
         Source/UI/MacroAssignmentPad.cpp
         Source/UI/MacroPerformanceMap.cpp
+        Source/UI/LibraryPanelLayout.cpp
         Source/UI/ModCurveDisplay.cpp
         Source/UI/ModMatrixRow.cpp
         Source/UI/ModRouteMapDisplay.cpp

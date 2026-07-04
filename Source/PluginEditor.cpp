@@ -3,6 +3,7 @@
 #include "Modulation/ModulationRouting.h"
 #include "Synth/WavetableFrameIO.h"
 #include "Synth/WavetableFrameRecipes.h"
+#include "UI/LibraryPanelLayout.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SequencerPanelLayout.h"
 
@@ -5707,119 +5708,53 @@ void NateVSTAudioProcessorEditor::resized()
 
         case Panel::library:
         {
-            librarySectionLabel.setVisible(true);
-            libraryFindLabel.setVisible(true);
-            libraryBrowserLabel.setVisible(true);
-            librarySaveLabel.setVisible(true);
-            libraryInspectorLabel.setVisible(true);
-            presetNameEditor.setVisible(true);
-            presetCategoryBox.setVisible(true);
-            presetFilterBox.setVisible(true);
-            presetTagBox.setVisible(true);
-            presetSortBox.setVisible(true);
-            presetBrowserPackFilterBox.setVisible(true);
-            presetRatingBox.setVisible(true);
-            presetPackBox.setVisible(true);
-            presetKeyBox.setVisible(true);
-            presetBpmBox.setVisible(true);
-            presetSearchEditor.setVisible(true);
-            presetAuthorEditor.setVisible(true);
-            presetNotesEditor.setVisible(true);
-            presetNotesTemplateBox.setVisible(true);
-            savePresetButton.setVisible(true);
-            presetBox.setVisible(true);
-            previousPresetButton.setVisible(true);
-            nextPresetButton.setVisible(true);
-            loadPresetButton.setVisible(true);
-            auditionPresetButton.setVisible(true);
-            warmPresetPreviewsButton.setVisible(true);
-            favoritePresetButton.setVisible(true);
-            refreshPresetsButton.setVisible(true);
-            comparePresetButton.setVisible(true);
-            revertPresetButton.setVisible(true);
-            presetStatusLabel.setVisible(true);
-            presetBrowserHeaderLabel.setVisible(true);
-            presetBrowserList.setVisible(true);
-            presetCrateMapDisplay.setVisible(true);
-            presetLibrarySummary.setVisible(true);
-            presetSaveSummary.setVisible(true);
-            for (auto& button : presetQuickFilterButtons)
-                button.setVisible(true);
-            librarySectionLabel.setBounds(content.removeFromTop(28));
-            auto libraryArea = content.withTrimmedTop(8);
-            const auto leftWidth = juce::jlimit(174, 212, libraryArea.getWidth() / 6);
-            const auto inspectorWidth = juce::jlimit(232, 286, libraryArea.getWidth() / 4);
-            auto findArea = libraryArea.removeFromLeft(leftWidth).reduced(12, 10);
-            auto inspectorArea = libraryArea.removeFromRight(inspectorWidth).reduced(12, 10);
-            auto browserArea = libraryArea.reduced(12, 10);
+            UI::LibraryPanelLayout::layout(content, {
+                librarySectionLabel,
+                libraryFindLabel,
+                libraryBrowserLabel,
+                librarySaveLabel,
+                libraryInspectorLabel,
+                presetStatusLabel,
+                presetBrowserHeaderLabel,
+                presetNameEditor,
+                presetSearchEditor,
+                presetAuthorEditor,
+                presetNotesEditor,
+                presetCategoryBox,
+                presetFilterBox,
+                presetTagBox,
+                presetSortBox,
+                presetBrowserPackFilterBox,
+                presetRatingBox,
+                presetPackBox,
+                presetKeyBox,
+                presetBpmBox,
+                presetNotesTemplateBox,
+                presetBox,
+                savePresetButton,
+                previousPresetButton,
+                nextPresetButton,
+                loadPresetButton,
+                auditionPresetButton,
+                warmPresetPreviewsButton,
+                favoritePresetButton,
+                refreshPresetsButton,
+                comparePresetButton,
+                revertPresetButton,
+                presetQuickFilterButtons,
+                presetBrowserList,
+                presetCrateMapDisplay,
+                presetLibrarySummary,
+                presetSaveSummary
+            });
 
-            libraryFindLabel.setBounds(findArea.removeFromTop(24));
-            presetSearchEditor.setBounds(findArea.removeFromTop(38).reduced(2, 4));
-            auto quickRowA = findArea.removeFromTop(30).withTrimmedTop(2);
-            auto quickRowB = findArea.removeFromTop(30).withTrimmedTop(2);
-            for (size_t index = 0; index < 5; ++index)
-                presetQuickFilterButtons[index].setBounds(quickRowA.removeFromLeft(quickRowA.getWidth() / static_cast<int>(5 - index)).reduced(2, 3));
-            for (size_t index = 5; index < presetQuickFilterButtons.size(); ++index)
-                presetQuickFilterButtons[index].setBounds(quickRowB.removeFromLeft(quickRowB.getWidth() / static_cast<int>(presetQuickFilterButtons.size() - index)).reduced(2, 3));
-
-            findArea.removeFromTop(5);
-            presetFilterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
-            presetTagBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
-            presetBrowserPackFilterBox.setBounds(findArea.removeFromTop(34).reduced(2, 4));
-            auto sortRefreshRow = findArea.removeFromTop(36).withTrimmedTop(2);
-            refreshPresetsButton.setBounds(sortRefreshRow.removeFromRight(76).reduced(2, 4));
-            presetSortBox.setBounds(sortRefreshRow.reduced(2, 4));
-
-            const auto crateMapHeight = juce::jlimit(96, 132, findArea.getHeight() - 36);
-            presetCrateMapDisplay.setBounds(findArea.removeFromTop(crateMapHeight).reduced(2, 5));
-            presetStatusLabel.setBounds(findArea.reduced(2, 4));
-
-            libraryBrowserLabel.setBounds(browserArea.removeFromTop(24));
-            auto selectedRow = browserArea.removeFromTop(38).withTrimmedTop(2);
-            previousPresetButton.setBounds(selectedRow.removeFromLeft(38).reduced(2, 4));
-            nextPresetButton.setBounds(selectedRow.removeFromRight(38).reduced(2, 4));
-            presetBox.setBounds(selectedRow.reduced(2, 4));
-            auto primaryActions = browserArea.removeFromTop(38).withTrimmedTop(3);
-            loadPresetButton.setBounds(primaryActions.removeFromLeft(76).reduced(2, 4));
-            auditionPresetButton.setBounds(primaryActions.removeFromLeft(92).reduced(2, 4));
-            warmPresetPreviewsButton.setBounds(primaryActions.removeFromLeft(72).reduced(2, 4));
-            favoritePresetButton.setBounds(primaryActions.removeFromLeft(70).reduced(2, 4));
-            auto compareActions = browserArea.removeFromTop(34).withTrimmedTop(1);
-            comparePresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
-            revertPresetButton.setBounds(compareActions.removeFromLeft(82).reduced(2, 4));
-            presetRatingBox.setBounds(compareActions.reduced(2, 4));
-            const auto rowLayout = presetBrowserRowLayoutForWidth(browserArea.getWidth(), presetBrowserList.getRowHeight());
+            const auto rowLayout = presetBrowserRowLayoutForWidth(presetBrowserList.getBounds().getWidth(),
+                                                                  presetBrowserList.getRowHeight());
             const auto browserHeaderText = rowLayout.compact
                 ? juce::String("SOUND / PACK     PREVIEW     INFO")
                 : juce::String("SOUND / PACK     PREVIEW     SOURCE / RATING");
             if (presetBrowserHeaderLabel.getText() != browserHeaderText)
                 presetBrowserHeaderLabel.setText(browserHeaderText, juce::dontSendNotification);
-            presetBrowserHeaderLabel.setBounds(browserArea.removeFromTop(24).reduced(6, 3));
-            presetBrowserList.setBounds(browserArea.reduced(2, 5));
-
-            const auto savePanelHeight = juce::jlimit(252, 304, inspectorArea.getHeight() - 96);
-            auto saveArea = inspectorArea.removeFromTop(savePanelHeight).reduced(10, 8);
-            librarySaveLabel.setBounds(saveArea.removeFromTop(24));
-            presetSaveSummary.setBounds(saveArea.removeFromTop(72).reduced(2, 5));
-            auto nameRow = saveArea.removeFromTop(34).withTrimmedTop(1);
-            presetNameEditor.setBounds(nameRow.reduced(2, 4));
-            auto folderRow = saveArea.removeFromTop(32);
-            presetCategoryBox.setBounds(folderRow.reduced(2, 4));
-            auto metadataRow = saveArea.removeFromTop(32);
-            presetAuthorEditor.setBounds(metadataRow.removeFromLeft(metadataRow.getWidth() / 2).reduced(2, 4));
-            presetPackBox.setBounds(metadataRow.reduced(2, 4));
-            auto keyRow = saveArea.removeFromTop(32);
-            const auto keyCellWidth = keyRow.getWidth() / 2;
-            presetKeyBox.setBounds(keyRow.removeFromLeft(keyCellWidth).reduced(2, 4));
-            presetBpmBox.setBounds(keyRow.reduced(2, 4));
-            auto saveActionRow = saveArea.removeFromTop(32).withTrimmedTop(2);
-            presetNotesTemplateBox.setBounds(saveActionRow.removeFromLeft(118).reduced(2, 4));
-            savePresetButton.setBounds(saveActionRow.reduced(2, 4));
-            presetNotesEditor.setBounds(saveArea.reduced(2, 4));
-
-            auto summaryArea = inspectorArea.reduced(10, 6);
-            libraryInspectorLabel.setBounds(summaryArea.removeFromTop(24));
-            presetLibrarySummary.setBounds(summaryArea.reduced(2, 4));
             break;
         }
 

@@ -3476,6 +3476,43 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         return beginRecorderTakeDrag(sourceComponent);
     };
+    sampleRecorderPanel.onTakeSelected = [this] (int takeIndex)
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+
+        if (! audioProcessor.selectSampleCaptureTake(takeIndex))
+        {
+            setRandomStatus("Recorder take unavailable");
+            updateSampleRecorderStatus();
+            return;
+        }
+
+        const auto takeFile = juce::File(audioProcessor.getSelectedSampleCaptureTakePath());
+        if (! takeFile.existsAsFile())
+        {
+            setRandomStatus("Recorder take file missing");
+            updateSampleRecorderStatus();
+            return;
+        }
+
+        captureGlobalEdit("Load recorder take");
+        if (audioProcessor.loadSampleFile(takeFile))
+        {
+            sampleWaveformKey.clear();
+            updateSampleNameLabel();
+            updateSampleWaveformDisplay();
+            updateSampleSliceButtons();
+            setRandomStatus("Loaded recorder take: " + takeFile.getFileNameWithoutExtension());
+        }
+        else
+        {
+            setRandomStatus("Recorder take load failed");
+        }
+
+        updateSampleRecorderStatus();
+        returnKeyboardFocusToPiano();
+    };
     randomCutButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -7049,6 +7086,10 @@ void NateVSTAudioProcessorEditor::pruneSequencerDragMidiFiles()
 
 juce::File NateVSTAudioProcessorEditor::getRecorderExportFile() const
 {
+    const auto selectedTakeFile = juce::File(audioProcessor.getSelectedSampleCaptureTakePath());
+    if (selectedTakeFile.existsAsFile())
+        return selectedTakeFile;
+
     const auto latestTakeFile = juce::File(audioProcessor.getLatestSampleCaptureTakePath());
     if (latestTakeFile.existsAsFile())
         return latestTakeFile;
@@ -7147,6 +7188,7 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.isSampleCaptureWaitingForThreshold(),
         recorderExportFile.existsAsFile(),
         audioProcessor.getSampleCaptureTakeCount(),
+        audioProcessor.getSelectedSampleCaptureTakeIndex(),
         recorderExportFile.getFileName(),
         audioProcessor.getSampleCaptureTakeNames(3)
     });

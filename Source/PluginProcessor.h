@@ -163,6 +163,9 @@ public:
     bool commitSampleCaptureToSampler();
     int getSampleCaptureTakeCount() const;
     juce::StringArray getSampleCaptureTakeNames(int limit) const;
+    int getSelectedSampleCaptureTakeIndex() const;
+    bool selectSampleCaptureTake(int takeIndex);
+    juce::String getSelectedSampleCaptureTakePath() const;
     juce::String getLatestSampleCaptureTakePath() const;
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
@@ -355,6 +358,7 @@ private:
     juce::String loadedSamplePath;
     mutable juce::CriticalSection sampleCaptureTakeLock;
     std::vector<juce::File> sampleCaptureTakeFiles;
+    juce::String selectedSampleCaptureTakePath;
     juce::AudioBuffer<float> sampleCaptureBuffer;
     juce::AudioBuffer<float> sampleCapturePreRollBuffer;
     std::atomic<bool> sampleCaptureEnabled { false };

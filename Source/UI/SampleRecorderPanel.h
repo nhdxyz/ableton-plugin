@@ -31,6 +31,7 @@ public:
         bool waitingForThreshold = false;
         bool hasExportableTake = false;
         int takeCount = 0;
+        int selectedTakeIndex = 0;
         juce::String exportTakeName;
         juce::StringArray recentTakeNames;
     };
@@ -45,12 +46,13 @@ public:
     std::function<void()> onMangleClicked;
     std::function<void()> onExportClicked;
     std::function<bool(juce::Component&)> onExportDragged;
+    std::function<void(int)> onTakeSelected;
 
     void applyTheme(const Theme& theme);
     void setState(const State& state);
     void resized() override;
 
-    int preferredHeight() const noexcept { return 206; }
+    int preferredHeight() const noexcept { return 212; }
     juce::StringArray runLayoutAudit(const juce::String& panelName,
                                      bool hasCapture,
                                      bool hasLoadedSample) const;
@@ -101,6 +103,7 @@ private:
     juce::ComboBox startBox;
     juce::ComboBox lengthBox;
     juce::ComboBox preRollBox;
+    juce::ComboBox takeBox;
     juce::Label routeHintLabel;
     juce::Label statusLabel;
     juce::Label takeHistoryLabel;
@@ -118,6 +121,8 @@ private:
     std::unique_ptr<ComboBoxAttachment> startAttachment;
     std::unique_ptr<ComboBoxAttachment> lengthAttachment;
     std::unique_ptr<ComboBoxAttachment> preRollAttachment;
+    juce::StringArray displayedTakeNames;
+    bool updatingTakeBox = false;
 
     static juce::String componentAuditName(const juce::Component& component,
                                            const juce::String& fallback);

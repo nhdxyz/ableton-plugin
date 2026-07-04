@@ -1892,6 +1892,67 @@ juce::StringArray NateVSTAudioProcessor::getSampleCaptureTakeNames(int limit) co
     return takeNames;
 }
 
+int NateVSTAudioProcessor::getSelectedSampleCaptureTakeIndex() const
+{
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    auto validIndex = 0;
+    for (const auto& takeFile : sampleCaptureTakeFiles)
+    {
+        if (! takeFile.existsAsFile())
+            continue;
+
+        if (selectedSampleCaptureTakePath.isNotEmpty()
+            && takeFile.getFullPathName() == selectedSampleCaptureTakePath)
+        {
+            return validIndex;
+        }
+
+        ++validIndex;
+    }
+
+    return 0;
+}
+
+bool NateVSTAudioProcessor::selectSampleCaptureTake(int takeIndex)
+{
+    const auto safeIndex = juce::jmax(0, takeIndex);
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    auto validIndex = 0;
+    for (const auto& takeFile : sampleCaptureTakeFiles)
+    {
+        if (! takeFile.existsAsFile())
+            continue;
+
+        if (validIndex == safeIndex)
+        {
+            selectedSampleCaptureTakePath = takeFile.getFullPathName();
+            return true;
+        }
+
+        ++validIndex;
+    }
+
+    return false;
+}
+
+juce::String NateVSTAudioProcessor::getSelectedSampleCaptureTakePath() const
+{
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+
+    if (selectedSampleCaptureTakePath.isNotEmpty())
+    {
+        const auto selectedFile = juce::File(selectedSampleCaptureTakePath);
+        if (selectedFile.existsAsFile())
+            return selectedFile.getFullPathName();
+    }
+
+    for (const auto& takeFile : sampleCaptureTakeFiles)
+        if (takeFile.existsAsFile())
+            return takeFile.getFullPathName();
+
+    return {};
+}
+
 juce::String NateVSTAudioProcessor::getLatestSampleCaptureTakePath() const
 {
     const juce::ScopedLock lock(sampleCaptureTakeLock);
@@ -1929,6 +1990,7 @@ void NateVSTAudioProcessor::rememberSampleCaptureTake(const juce::File& file)
                                                 }),
                                  sampleCaptureTakeFiles.end());
     sampleCaptureTakeFiles.insert(sampleCaptureTakeFiles.begin(), file);
+    selectedSampleCaptureTakePath = fullPath;
 
     if (sampleCaptureTakeFiles.size() > sampleCaptureTakeHistoryLimit)
         sampleCaptureTakeFiles.resize(sampleCaptureTakeHistoryLimit);

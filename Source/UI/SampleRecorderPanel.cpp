@@ -55,12 +55,25 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
     statusLabel.setTooltip("Rolling sampler recorder status and captured duration");
     addAndMakeVisible(statusLabel);
 
-    takeHistoryLabel.setText("Takes: none", juce::dontSendNotification);
+    takeHistoryLabel.setText("TAKES", juce::dontSendNotification);
     takeHistoryLabel.setJustificationType(juce::Justification::centredLeft);
-    takeHistoryLabel.setFont(juce::FontOptions(10.0f));
-    takeHistoryLabel.setMinimumHorizontalScale(0.54f);
+    takeHistoryLabel.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+    takeHistoryLabel.setMinimumHorizontalScale(0.72f);
     takeHistoryLabel.setTooltip("Recent committed recorder takes");
     addAndMakeVisible(takeHistoryLabel);
+
+    takeBox.setTextWhenNothingSelected("No takes");
+    takeBox.setTooltip("Choose a committed recorder take to recall into the sampler and use for WAV export/drag");
+    takeBox.onChange = [this]
+    {
+        if (updatingTakeBox)
+            return;
+
+        const auto selectedIndex = takeBox.getSelectedItemIndex();
+        if (selectedIndex >= 0 && onTakeSelected != nullptr)
+            onTakeSelected(selectedIndex);
+    };
+    addAndMakeVisible(takeBox);
 
     const std::array<juce::String, 4> recorderStepTexts { "REC", "READY", "USE", "PLAY" };
     for (size_t index = 0; index < stepLabels.size(); ++index)
@@ -256,10 +269,8 @@ void SampleRecorderPanel::setState(const State& state)
                                                          : state.hasLoadedSample ? juce::Colour(0xffa8d8ff)
                                                                                  : juce::Colour(0xffa8b6b8));
 
-    const auto recentTakeText = state.recentTakeNames.isEmpty()
-        ? juce::String("Takes: none")
-        : juce::String("Takes ") + juce::String(state.takeCount) + ": " + state.recentTakeNames.joinIntoString(" | ");
-    takeHistoryLabel.setText(recentTakeText, juce::dontSendNotification);
+    takeHistoryLabel.setText(state.takeCount > 0 ? juce::String("TAKES ") + juce::String(state.takeCount) : juce::String("TAKES"),
+                             juce::dontSendNotification);
     takeHistoryLabel.setTooltip(state.recentTakeNames.isEmpty()
         ? juce::String("Commit a recorder take to create a draggable WAV")
         : "Recent committed takes: " + state.recentTakeNames.joinIntoString(", "));
@@ -269,6 +280,27 @@ void SampleRecorderPanel::setState(const State& state)
     takeHistoryLabel.setColour(juce::Label::outlineColourId,
                                state.hasExportableTake ? juce::Colour(0xff2f6859)
                                                        : juce::Colour(0xff263238));
+    if (displayedTakeNames != state.recentTakeNames)
+    {
+        updatingTakeBox = true;
+        takeBox.clear(juce::dontSendNotification);
+        for (auto index = 0; index < state.recentTakeNames.size(); ++index)
+            takeBox.addItem(state.recentTakeNames[index], index + 1);
+        displayedTakeNames = state.recentTakeNames;
+        updatingTakeBox = false;
+    }
+
+    updatingTakeBox = true;
+    if (state.recentTakeNames.isEmpty())
+        takeBox.setSelectedId(0, juce::dontSendNotification);
+    else
+        takeBox.setSelectedItemIndex(juce::jlimit(0, state.recentTakeNames.size() - 1, state.selectedTakeIndex),
+                                     juce::dontSendNotification);
+    updatingTakeBox = false;
+    takeBox.setEnabled(! state.recentTakeNames.isEmpty());
+    takeBox.setTooltip(state.recentTakeNames.isEmpty()
+        ? juce::String("Commit a recorder take before choosing a take")
+        : "Selected take recalls into the sampler and becomes the WAV export target");
 
     const std::array<juce::String, 4> stepTexts {
         state.waitingForThreshold ? juce::String("WAIT") : juce::String("REC"),
@@ -376,8 +408,9 @@ void SampleRecorderPanel::resized()
     statusLabel.setBounds(recorderStatusArea.removeFromTop(10));
     progress.setBounds(recorderStatusArea);
 
-    auto recorderTakeArea = area.removeFromTop(18);
-    takeHistoryLabel.setBounds(recorderTakeArea.reduced(5, 2));
+    auto recorderTakeArea = area.removeFromTop(24);
+    takeHistoryLabel.setBounds(recorderTakeArea.removeFromLeft(58).reduced(5, 3));
+    takeBox.setBounds(recorderTakeArea.reduced(3, 2));
 
     auto recordRow = area.removeFromTop(31).withTrimmedTop(1);
     const auto recordButtonWidth = juce::jmax(86, recordRow.getWidth() * 2 / 5);
@@ -459,9 +492,17 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
     else
     {
         const auto takeHistoryBounds = takeHistoryLabel.getBounds();
-        if (takeHistoryBounds.getWidth() < 120 || takeHistoryBounds.getHeight() < 14)
-            issues.add(panelName + ": recorder take history is too compressed "
+        if (takeHistoryBounds.getWidth() < 42 || takeHistoryBounds.getHeight() < 16)
+            issues.add(panelName + ": recorder take history label is too compressed "
                        + takeHistoryBounds.toString());
+    }
+
+    const auto takeBoxBounds = takeBox.getBounds();
+    if (takeBox.isVisible()
+        && (takeBoxBounds.getWidth() < 96 || takeBoxBounds.getHeight() < 20))
+    {
+        issues.add(panelName + ": recorder take selector is too compressed "
+                   + takeBoxBounds.toString());
     }
 
     for (const auto* recorderButton : {

@@ -3957,69 +3957,31 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomLockOutputButton.onClick = updateLockStatus;
     randomLockSequencerButton.onClick = updateLockStatus;
 
-    const std::array<juce::String, 5> randomLabPageLabels {
-        "Generate",
-        "Mutate",
-        "Recipe",
-        "History",
-        "Save"
-    };
-
-    const std::array<juce::String, 5> randomLabPageTooltips {
-        "Generate fresh house and UKG-ready ideas",
-        "Vary or push the current generated sound",
-        "Tune recipe, scope, locks, and generation bias",
-        "Cue, recall, and promote generated candidate slots",
-        "Name, categorize, star, rate, and save generated patches"
-    };
-
-    for (size_t index = 0; index < randomLabPageButtons.size(); ++index)
+    randomLabPageStrip.setOrientation(UI::PageButtonStrip::Orientation::vertical);
+    randomLabPageStrip.setItems({
+        { "Generate", "Generate fresh house and UKG-ready ideas" },
+        { "Mutate", "Vary or push the current generated sound" },
+        { "Recipe", "Tune recipe, scope, locks, and generation bias" },
+        { "History", "Cue, recall, and promote generated candidate slots" },
+        { "Save", "Name, categorize, star, rate, and save generated patches" }
+    });
+    randomLabPageStrip.onItemSelected = [this] (size_t index)
     {
-        auto& button = randomLabPageButtons[index];
-        button.setButtonText(randomLabPageLabels[index]);
-        button.setTooltip(randomLabPageTooltips[index]);
-        button.setWantsKeyboardFocus(false);
-        button.setMouseClickGrabsKeyboardFocus(false);
-        button.onClick = [this, index]
-        {
-            setActiveRandomLabPage(static_cast<RandomLabPage>(index));
-        };
-        addAndMakeVisible(button);
-    }
-
-    const std::array<ModWorkflowPage, 4> modWorkflowPages {
-        ModWorkflowPage::matrix,
-        ModWorkflowPage::sources,
-        ModWorkflowPage::macros,
-        ModWorkflowPage::curves
+        setActiveRandomLabPage(static_cast<RandomLabPage>(index));
     };
-    const std::array<juce::String, 4> modWorkflowLabels {
-        "Matrix",
-        "Sources",
-        "Macros",
-        "Curves"
-    };
+    addAndMakeVisible(randomLabPageStrip);
 
-    const std::array<juce::String, 4> modWorkflowTooltips {
-        "Edit active source-to-destination routes",
-        "Inspect live modulation sources and envelope/LFO activity",
-        "Assign performance macros to destinations",
-        "Edit LFO and MSEG curve shapes"
-    };
-
-    for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
+    modWorkflowStrip.setItems({
+        { "Matrix", "Edit active source-to-destination routes" },
+        { "Sources", "Inspect live modulation sources and envelope/LFO activity" },
+        { "Macros", "Assign performance macros to destinations" },
+        { "Curves", "Edit LFO and MSEG curve shapes" }
+    });
+    modWorkflowStrip.onItemSelected = [this] (size_t index)
     {
-        auto& button = modWorkflowButtons[index];
-        button.setButtonText(modWorkflowLabels[index]);
-        button.setTooltip(modWorkflowTooltips[index]);
-        button.setWantsKeyboardFocus(false);
-        button.setMouseClickGrabsKeyboardFocus(false);
-        button.onClick = [this, page = modWorkflowPages[index]]
-        {
-            setActiveModWorkflowPage(page);
-        };
-        addAndMakeVisible(button);
-    }
+        setActiveModWorkflowPage(modWorkflowPageForButtonIndex(index));
+    };
+    addAndMakeVisible(modWorkflowStrip);
 
     const std::array<juce::String, 7> sectionRollLabels {
         "Source",
@@ -4916,12 +4878,8 @@ void NateVSTAudioProcessorEditor::resized()
             auto labWorkspace = content.withTrimmedTop(8);
             auto pageRail = labWorkspace.removeFromLeft(juce::jlimit(132, 168, labWorkspace.getWidth() / 6)).reduced(12, 8);
             content = labWorkspace.reduced(18, 10);
-            const auto pageButtonHeight = juce::jlimit(32, 42, pageRail.getHeight() / static_cast<int>(randomLabPageButtons.size()));
-            for (auto& button : randomLabPageButtons)
-            {
-                button.setVisible(true);
-                button.setBounds(pageRail.removeFromTop(pageButtonHeight).reduced(4));
-            }
+            randomLabPageStrip.setVisible(true);
+            randomLabPageStrip.setBounds(pageRail);
             updateRandomLabPageButtons();
 
             auto showRecipeControls = [&content, this] (bool includeGenerate)
@@ -5148,13 +5106,8 @@ void NateVSTAudioProcessorEditor::resized()
             modSectionLabel.setBounds(content.removeFromTop(28));
 
             auto workflowRow = content.removeFromTop(38).withTrimmedTop(4);
-            for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
-            {
-                auto& button = modWorkflowButtons[index];
-                button.setVisible(true);
-                const auto remaining = static_cast<int>(modWorkflowButtons.size() - index);
-                button.setBounds(workflowRow.removeFromLeft(workflowRow.getWidth() / juce::jmax(1, remaining)).reduced(4));
-            }
+            modWorkflowStrip.setVisible(true);
+            modWorkflowStrip.setBounds(workflowRow);
             updateModWorkflowButtons();
 
             auto modContent = content.withTrimmedTop(8).reduced(18, 10);
@@ -11272,6 +11225,31 @@ NateVSTAudioProcessorEditor::Panel NateVSTAudioProcessorEditor::panelForTab(UI::
     return Panel::home;
 }
 
+size_t NateVSTAudioProcessorEditor::modWorkflowButtonIndexForPage(ModWorkflowPage page)
+{
+    switch (page)
+    {
+        case ModWorkflowPage::matrix: return 0;
+        case ModWorkflowPage::sources: return 1;
+        case ModWorkflowPage::macros: return 2;
+        case ModWorkflowPage::curves: return 3;
+    }
+
+    return 0;
+}
+
+NateVSTAudioProcessorEditor::ModWorkflowPage NateVSTAudioProcessorEditor::modWorkflowPageForButtonIndex(size_t index)
+{
+    switch (index)
+    {
+        case 0: return ModWorkflowPage::matrix;
+        case 1: return ModWorkflowPage::sources;
+        case 2: return ModWorkflowPage::macros;
+        case 3: return ModWorkflowPage::curves;
+        default: return ModWorkflowPage::matrix;
+    }
+}
+
 void NateVSTAudioProcessorEditor::updateTabButtons()
 {
     panelTabBar.setActiveTab(tabForPanel(activePanel));
@@ -11279,23 +11257,12 @@ void NateVSTAudioProcessorEditor::updateTabButtons()
 
 void NateVSTAudioProcessorEditor::updateRandomLabPageButtons()
 {
-    for (size_t index = 0; index < randomLabPageButtons.size(); ++index)
-        randomLabPageButtons[index].setToggleState(activeRandomLabPage == static_cast<RandomLabPage>(index),
-                                                   juce::dontSendNotification);
+    randomLabPageStrip.setActiveIndex(static_cast<size_t>(activeRandomLabPage));
 }
 
 void NateVSTAudioProcessorEditor::updateModWorkflowButtons()
 {
-    const std::array<ModWorkflowPage, 4> modWorkflowPages {
-        ModWorkflowPage::matrix,
-        ModWorkflowPage::sources,
-        ModWorkflowPage::macros,
-        ModWorkflowPage::curves
-    };
-
-    for (size_t index = 0; index < modWorkflowButtons.size(); ++index)
-        modWorkflowButtons[index].setToggleState(activeModWorkflowPage == modWorkflowPages[index],
-                                                 juce::dontSendNotification);
+    modWorkflowStrip.setActiveIndex(modWorkflowButtonIndexForPage(activeModWorkflowPage));
 }
 
 void NateVSTAudioProcessorEditor::updateRandomRecipeInfo()
@@ -11385,7 +11352,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sourceFrameDuplicateSlotButton, &sourceFrameDeleteSlotButton, &sourceFrameMoveLeftButton, &sourceFrameMoveRightButton,
         &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
         &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
-        &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton,
+        &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton, &randomLabPageStrip,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &loadSampleButton, &clearSampleButton, &sampleChopPanel, &sampleRecorderPanel,
@@ -11403,7 +11370,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
         &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
         &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
-        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
+        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
@@ -11412,9 +11379,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
 
     for (auto& slider : lfoCurveSliders)
         slider.setVisible(false);
-
-    for (auto& button : randomLabPageButtons)
-        button.setVisible(false);
 
     for (auto& button : randomSectionRollButtons)
         button.setVisible(false);
@@ -11426,9 +11390,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : presetQuickFilterButtons)
-        button.setVisible(false);
-
-    for (auto& button : modWorkflowButtons)
         button.setVisible(false);
 
     for (auto& button : sequencerSceneRecallButtons)

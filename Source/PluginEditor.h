@@ -21,6 +21,7 @@
 #include "UI/OutputMeter.h"
 #include "UI/OutputOscilloscopeDisplay.h"
 #include "UI/OutputSpectrumDisplay.h"
+#include "UI/PageButtonStrip.h"
 #include "UI/PanelTabBar.h"
 #include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
@@ -647,7 +648,7 @@ private:
     juce::TextButton wildMutateButton { "Wild" };
     juce::TextButton undoRandomButton { "Undo" };
     juce::TextButton redoRandomButton { "Redo" };
-    std::array<juce::TextButton, 5> randomLabPageButtons;
+    UI::PageButtonStrip randomLabPageStrip;
     std::array<juce::TextButton, 7> randomSectionRollButtons;
     std::array<juce::TextButton, 4> randomCandidateButtons;
     std::array<juce::TextButton, 4> randomCandidateAuditionButtons;
@@ -723,7 +724,7 @@ private:
     juce::TextButton comparePresetButton { "Before" };
     juce::TextButton revertPresetButton { "Revert" };
     std::array<juce::TextButton, 10> presetQuickFilterButtons;
-    std::array<juce::TextButton, 4> modWorkflowButtons;
+    UI::PageButtonStrip modWorkflowStrip;
     juce::TextButton candidateFavoriteButton { "Star" };
     juce::TextButton saveCandidateButton { "Save Slot" };
     juce::TextButton fxMoveUpButton { "Up" };
@@ -938,6 +939,8 @@ private:
     void updateTabButtons();
     static UI::PanelTabBar::Tab tabForPanel(Panel panel);
     static Panel panelForTab(UI::PanelTabBar::Tab tab);
+    static size_t modWorkflowButtonIndexForPage(ModWorkflowPage page);
+    static ModWorkflowPage modWorkflowPageForButtonIndex(size_t index);
     const UI::Theme& uiTheme() const noexcept;
     void applyThemeColours();
     void openMacroFocusOverlay();

@@ -161,6 +161,8 @@ public:
     juce::String getSampleCaptureLengthModeName() const;
     juce::String getSampleCapturePreRollModeName() const;
     bool commitSampleCaptureToSampler();
+    int getSampleCaptureTakeCount() const;
+    juce::String getLatestSampleCaptureTakePath() const;
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
     bool randomizeRecordedSample();
@@ -350,6 +352,8 @@ private:
     double meterSampleRate = 44100.0;
     int preparedSamplesPerBlock = 512;
     juce::String loadedSamplePath;
+    mutable juce::CriticalSection sampleCaptureTakeLock;
+    std::vector<juce::File> sampleCaptureTakeFiles;
     juce::AudioBuffer<float> sampleCaptureBuffer;
     juce::AudioBuffer<float> sampleCapturePreRollBuffer;
     std::atomic<bool> sampleCaptureEnabled { false };
@@ -447,6 +451,7 @@ private:
                                            int requestedSamples) noexcept;
     void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     void waitForSampleCaptureWritersToFinish();
+    void rememberSampleCaptureTake(const juce::File& file);
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;

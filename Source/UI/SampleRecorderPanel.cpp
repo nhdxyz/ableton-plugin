@@ -122,6 +122,19 @@ SampleRecorderPanel::SampleRecorderPanel(juce::AudioProcessorValueTreeState& val
     };
     addAndMakeVisible(mangleButton);
 
+    exportButton.setButtonText("Export");
+    exportButton.setTooltip("Click to reveal the latest committed recorder take, or drag the WAV into Ableton");
+    exportButton.onClick = [this]
+    {
+        if (onExportClicked != nullptr)
+            onExportClicked();
+    };
+    exportButton.onExternalDrag = [this] (juce::Component& sourceComponent)
+    {
+        return onExportDragged != nullptr && onExportDragged(sourceComponent);
+    };
+    addAndMakeVisible(exportButton);
+
     applyTheme(themeFor(ThemeId::darkClub));
 }
 
@@ -157,6 +170,8 @@ void SampleRecorderPanel::setState(const State& state)
     const auto captureLengthShortName = lengthModeShortName(state.captureLengthModeIndex);
     const auto capturePreRollShortName = preRollModeShortName(state.capturePreRollModeIndex);
     const auto sourceLevelText = formatPeakLabel(state.captureSourcePeak);
+    const auto takeSummary = state.takeCount > 0 ? juce::String(" | Take ") + juce::String(state.takeCount)
+                                                 : juce::String();
     const auto fixedTarget = state.targetSeconds > 0.05f;
     const auto hasPreRoll = state.preRollSeconds > 0.001f;
     const auto progressTargetSeconds = fixedTarget ? juce::jmin(capacitySeconds, juce::jmax(0.1f, state.targetSeconds))
@@ -219,7 +234,7 @@ void SampleRecorderPanel::setState(const State& state)
                             : juce::String("Rec ") + captureSourceShortName + " " + sourceLevelText + targetDescription + preRollDescription + " | " + durationText)
         : hasCapture ? (captureIsRolling ? juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | Last " + capacityText
                                          : juce::String("Ready ") + captureSourceShortName + " " + sourceLevelText + " | " + durationText)
-                     : state.hasLoadedSample ? juce::String("Loaded | ") + captureSourceShortName + " " + sourceLevelText
+                     : state.hasLoadedSample ? juce::String("Loaded | ") + captureSourceShortName + " " + sourceLevelText + takeSummary
                                              : captureSourceShortName + " " + sourceLevelText + " | Record or Load";
     statusLabel.setText(statusText, juce::dontSendNotification);
     statusLabel.setTooltip(state.captureSourceIndex == 1
@@ -281,6 +296,7 @@ void SampleRecorderPanel::setState(const State& state)
     autoTrimButton.setEnabled(state.hasLoadedSample);
     spliceButton.setEnabled(state.hasLoadedSample);
     mangleButton.setEnabled(state.hasLoadedSample);
+    exportButton.setEnabled(state.hasExportableTake);
     commitButton.setTooltip(hasCapture ? "Commit the captured " + durationText + " snippet into the sampler and auto-trim silence"
                                        : "Record audio before committing a sampler snippet");
     recordButton.setTooltip(state.waitingForThreshold ? "Cancel threshold-armed recording"
@@ -305,6 +321,9 @@ void SampleRecorderPanel::setState(const State& state)
                                                   : "Load or commit a sample before slicing");
     mangleButton.setTooltip(state.hasLoadedSample ? "Randomize trim, slices, pitch, stutter, pan, probability, and safe FX movement"
                                                   : "Load or commit a sample before mangling");
+    const auto exportName = state.exportTakeName.isNotEmpty() ? state.exportTakeName : juce::String("latest take");
+    exportButton.setTooltip(state.hasExportableTake ? "Click to reveal " + exportName + ", or drag the WAV into Ableton"
+                                                    : "Commit a recorded take before dragging/exporting a WAV");
 }
 
 void SampleRecorderPanel::resized()
@@ -341,10 +360,11 @@ void SampleRecorderPanel::resized()
     auditionButton.setBounds(recordRow.reduced(3, 3));
 
     auto recordToolRow = area.removeFromTop(25);
-    const auto recordToolWidth = recordToolRow.getWidth() / 3;
+    const auto recordToolWidth = recordToolRow.getWidth() / 4;
     autoTrimButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 2));
     spliceButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 2));
-    mangleButton.setBounds(recordToolRow.reduced(3, 2));
+    mangleButton.setBounds(recordToolRow.removeFromLeft(recordToolWidth).reduced(3, 2));
+    exportButton.setBounds(recordToolRow.reduced(3, 2));
 }
 
 juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelName,
@@ -438,6 +458,14 @@ juce::StringArray SampleRecorderPanel::runLayoutAudit(const juce::String& panelN
                            + " is enabled before a sample is loaded");
             }
         }
+    }
+
+    const auto exportButtonBounds = exportButton.getBounds();
+    if (exportButton.isVisible()
+        && (exportButtonBounds.getWidth() < 50 || exportButtonBounds.getHeight() < 21))
+    {
+        issues.add(panelName + ": recorder export button is too compressed "
+                   + exportButtonBounds.toString());
     }
 
     return issues;

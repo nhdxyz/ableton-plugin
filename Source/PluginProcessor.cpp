@@ -26,6 +26,7 @@ constexpr auto presetPreviewChannelCount = 2;
 constexpr auto presetPreviewDurationSeconds = 2.35;
 constexpr auto sampleCaptureMaxSeconds = 16.0;
 constexpr auto sampleCaptureMaxPreRollSeconds = 0.5;
+constexpr auto sampleCaptureTakeHistoryLimit = 12;
 constexpr auto sequencerFourBarChainTransformIndex = 12;
 constexpr auto sequencerChordStabPaintTransformIndex = 13;
 
@@ -1846,6 +1847,7 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
         && samplePlayer.loadFile(captureFile))
     {
         resetSampleParametersForNewSource(captureFile.getFullPathName());
+        rememberSampleCaptureTake(captureFile);
         autoTrimSampleToContent();
         return true;
     }
@@ -1858,6 +1860,19 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
     return true;
 }
 
+int NateVSTAudioProcessor::getSampleCaptureTakeCount() const
+{
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    return static_cast<int>(sampleCaptureTakeFiles.size());
+}
+
+juce::String NateVSTAudioProcessor::getLatestSampleCaptureTakePath() const
+{
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    return sampleCaptureTakeFiles.empty() ? juce::String()
+                                          : sampleCaptureTakeFiles.front().getFullPathName();
+}
+
 void NateVSTAudioProcessor::waitForSampleCaptureWritersToFinish()
 {
     auto spins = 0;
@@ -1868,6 +1883,26 @@ void NateVSTAudioProcessor::waitForSampleCaptureWritersToFinish()
         else
             juce::Thread::sleep(1);
     }
+}
+
+void NateVSTAudioProcessor::rememberSampleCaptureTake(const juce::File& file)
+{
+    if (! file.existsAsFile())
+        return;
+
+    const juce::ScopedLock lock(sampleCaptureTakeLock);
+    const auto fullPath = file.getFullPathName();
+    sampleCaptureTakeFiles.erase(std::remove_if(sampleCaptureTakeFiles.begin(),
+                                                sampleCaptureTakeFiles.end(),
+                                                [&fullPath] (const juce::File& candidate)
+                                                {
+                                                    return candidate.getFullPathName() == fullPath;
+                                                }),
+                                 sampleCaptureTakeFiles.end());
+    sampleCaptureTakeFiles.insert(sampleCaptureTakeFiles.begin(), file);
+
+    if (sampleCaptureTakeFiles.size() > sampleCaptureTakeHistoryLimit)
+        sampleCaptureTakeFiles.resize(sampleCaptureTakeHistoryLimit);
 }
 
 bool NateVSTAudioProcessor::autoTrimSampleToContent()

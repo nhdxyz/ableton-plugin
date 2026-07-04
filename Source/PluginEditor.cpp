@@ -3466,6 +3466,16 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         }
         returnKeyboardFocusToPiano();
     };
+    sampleRecorderPanel.onExportClicked = [this]
+    {
+        revealRecorderExportFile();
+        updateSampleRecorderStatus();
+        returnKeyboardFocusToPiano();
+    };
+    sampleRecorderPanel.onExportDragged = [this] (juce::Component& sourceComponent)
+    {
+        return beginRecorderTakeDrag(sourceComponent);
+    };
     randomCutButton.onClick = [this]
     {
         releaseRandomCandidateAudition(false);
@@ -7037,6 +7047,60 @@ void NateVSTAudioProcessorEditor::pruneSequencerDragMidiFiles()
     sequencerDragMidiFiles.clear();
 }
 
+juce::File NateVSTAudioProcessorEditor::getRecorderExportFile() const
+{
+    const auto latestTakeFile = juce::File(audioProcessor.getLatestSampleCaptureTakePath());
+    if (latestTakeFile.existsAsFile())
+        return latestTakeFile;
+
+    const auto loadedSampleFile = juce::File(audioProcessor.getLoadedSamplePath());
+    if (loadedSampleFile.existsAsFile())
+        return loadedSampleFile;
+
+    return {};
+}
+
+bool NateVSTAudioProcessorEditor::revealRecorderExportFile()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    const auto exportFile = getRecorderExportFile();
+    if (! exportFile.existsAsFile())
+    {
+        setRandomStatus("Commit a recorder take before exporting");
+        return false;
+    }
+
+    exportFile.revealToUser();
+    setRandomStatus("Recorder WAV revealed: " + exportFile.getFileName());
+    return true;
+}
+
+bool NateVSTAudioProcessorEditor::beginRecorderTakeDrag(juce::Component& sourceComponent)
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    const auto exportFile = getRecorderExportFile();
+    if (! exportFile.existsAsFile())
+    {
+        setRandomStatus("Commit a recorder take before dragging");
+        return false;
+    }
+
+    juce::StringArray files;
+    files.add(exportFile.getFullPathName());
+    if (! juce::DragAndDropContainer::performExternalDragDropOfFiles(files, false, &sourceComponent))
+    {
+        setRandomStatus("Recorder WAV drag unavailable");
+        return false;
+    }
+
+    setRandomStatus("Drag recorder WAV into Ableton");
+    return true;
+}
+
 void NateVSTAudioProcessorEditor::loadSampleFile(const juce::File& file)
 {
     releaseRandomCandidateAudition(false);
@@ -7067,6 +7131,7 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
 
 void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
 {
+    const auto recorderExportFile = getRecorderExportFile();
     sampleRecorderPanel.setState({
         audioProcessor.isSampleCaptureEnabled(),
         audioProcessor.getSampleCaptureDurationSeconds(),
@@ -7079,7 +7144,10 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.getSampleCaptureSourcePeak(),
         audioProcessor.getSampleCaptureTargetDurationSeconds(),
         audioProcessor.getSampleCapturePreRollDurationSeconds(),
-        audioProcessor.isSampleCaptureWaitingForThreshold()
+        audioProcessor.isSampleCaptureWaitingForThreshold(),
+        recorderExportFile.existsAsFile(),
+        audioProcessor.getSampleCaptureTakeCount(),
+        recorderExportFile.getFileName()
     });
 }
 

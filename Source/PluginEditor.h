@@ -924,6 +924,9 @@ private:
     void exportSequencerSceneChainMidiClip();
     bool beginSequencerMidiDrag(juce::Component& sourceComponent, bool sceneChain);
     void pruneSequencerDragMidiFiles();
+    juce::File getRecorderExportFile() const;
+    bool revealRecorderExportFile();
+    bool beginRecorderTakeDrag(juce::Component& sourceComponent);
     void loadSampleFile(const juce::File& file);
     void updateSampleNameLabel();
     void updateSampleRecorderStatus();

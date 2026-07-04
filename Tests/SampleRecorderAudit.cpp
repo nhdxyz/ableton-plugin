@@ -325,6 +325,25 @@ int main()
         return 1;
     }
 
+    if (processor.getSampleCaptureTakeCount() != 1)
+    {
+        std::cerr << "Recorder did not register the committed capture as a recent take\n";
+        return 1;
+    }
+
+    const auto latestTakePath = processor.getLatestSampleCaptureTakePath();
+    if (latestTakePath.isEmpty() || latestTakePath != processor.getLoadedSamplePath())
+    {
+        std::cerr << "Recorder latest take path does not match the committed sample\n";
+        return 1;
+    }
+
+    if (! juce::File(latestTakePath).existsAsFile())
+    {
+        std::cerr << "Recorder latest take path does not point to an exportable WAV\n";
+        return 1;
+    }
+
     const auto overview = processor.createSamplePeakOverview(96);
     if (overview.totalSamples < 2048 || overview.maximums.empty())
     {

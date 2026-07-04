@@ -29,6 +29,9 @@ public:
         float targetSeconds = 0.0f;
         float preRollSeconds = 0.0f;
         bool waitingForThreshold = false;
+        bool hasExportableTake = false;
+        int takeCount = 0;
+        juce::String exportTakeName;
     };
 
     explicit SampleRecorderPanel(juce::AudioProcessorValueTreeState& valueTreeState);
@@ -39,6 +42,8 @@ public:
     std::function<void()> onAutoTrimClicked;
     std::function<void()> onSpliceClicked;
     std::function<void()> onMangleClicked;
+    std::function<void()> onExportClicked;
+    std::function<bool(juce::Component&)> onExportDragged;
 
     void applyTheme(const Theme& theme);
     void setState(const State& state);
@@ -51,6 +56,44 @@ public:
 
 private:
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+
+    class TakeExportButton final : public juce::TextButton
+    {
+    public:
+        using juce::TextButton::TextButton;
+
+        std::function<bool(juce::Component&)> onExternalDrag;
+
+        void mouseDown(const juce::MouseEvent& event) override
+        {
+            externalDragStarted = false;
+            juce::TextButton::mouseDown(event);
+        }
+
+        void mouseDrag(const juce::MouseEvent& event) override
+        {
+            if (! externalDragStarted && event.getDistanceFromDragStart() >= 5)
+            {
+                externalDragStarted = true;
+                if (onExternalDrag != nullptr && onExternalDrag(*this))
+                    return;
+            }
+
+            if (! externalDragStarted)
+                juce::TextButton::mouseDrag(event);
+        }
+
+        void mouseUp(const juce::MouseEvent& event) override
+        {
+            const auto consumedByExternalDrag = externalDragStarted;
+            externalDragStarted = false;
+            if (! consumedByExternalDrag)
+                juce::TextButton::mouseUp(event);
+        }
+
+    private:
+        bool externalDragStarted = false;
+    };
 
     juce::Label recordLabel;
     juce::ComboBox sourceBox;
@@ -68,6 +111,7 @@ private:
     juce::TextButton autoTrimButton { "Trim" };
     juce::TextButton spliceButton { "Splice" };
     juce::TextButton mangleButton { "Mangle" };
+    TakeExportButton exportButton { "Export" };
     std::unique_ptr<ComboBoxAttachment> sourceAttachment;
     std::unique_ptr<ComboBoxAttachment> startAttachment;
     std::unique_ptr<ComboBoxAttachment> lengthAttachment;

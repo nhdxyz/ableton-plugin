@@ -41,7 +41,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.chopExpandButton.setVisible(true);
     components.waveformDisplay.setVisible(true);
     components.chopPanel.setVisible(true);
-    components.sampleNameLabel.setVisible(true);
+    components.sampleStatusLabel.setVisible(true);
 
     components.sectionLabel.setBounds(content.removeFromTop(28));
 
@@ -69,7 +69,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.fileActions.setBounds(sourceArea.removeFromTop(30));
     components.sourceControls.setBounds(sourceArea.removeFromTop(SampleSourceControls::preferredHeight));
 
-    components.sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
+    components.sampleStatusLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
     components.recorderPanel.setBounds(sourceArea.removeFromTop(components.recorderPanel.preferredHeight()));
 
     components.playbackControls.setBounds(sourceArea.removeFromTop(SamplePlaybackControls::preferredHeight));

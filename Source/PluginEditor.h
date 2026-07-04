@@ -43,6 +43,7 @@
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleRecipeActions.h"
 #include "UI/SampleSourceControls.h"
+#include "UI/SampleStatusLabel.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
@@ -263,7 +264,7 @@ private:
     juce::Label infoWorkflowLabel;
     juce::Label infoDetailsLabel;
     juce::Label infoFocusLabel;
-    juce::Label sampleNameLabel;
+    UI::SampleStatusLabel sampleStatusLabel;
     juce::Label presetStatusLabel;
     juce::Label presetBrowserHeaderLabel;
     juce::Label randomStatusLabel;

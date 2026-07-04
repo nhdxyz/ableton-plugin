@@ -102,6 +102,7 @@ target_sources(NateVST
         Source/UI/SampleRecipeActions.cpp
         Source/UI/SampleRecorderPanel.cpp
         Source/UI/SampleSourceControls.cpp
+        Source/UI/SampleStatusLabel.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp

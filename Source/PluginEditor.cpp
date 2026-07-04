@@ -1579,10 +1579,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     hostSyncStatusLabel.setTooltip("Host tempo and transport phase status for sequencer and tempo-synced FX");
     addAndMakeVisible(hostSyncStatusLabel);
 
-    sampleNameLabel.setText("No sample", juce::dontSendNotification);
-    sampleNameLabel.setJustificationType(juce::Justification::centredLeft);
-    sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
-    addAndMakeVisible(sampleNameLabel);
+    addAndMakeVisible(sampleStatusLabel);
 
     presetStatusLabel.setJustificationType(juce::Justification::centredLeft);
     presetStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -4144,7 +4141,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     }
 
     for (auto* label : {
-             &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
+             &presetStatusLabel, &randomStatusLabel,
              &modMatrixStatusLabel, &modInspectorStatusLabel, &modMacroAssignStatusLabel,
              &performanceStatusLabel, &fxRackStatusLabel })
     {
@@ -4159,6 +4156,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
         label->setColour(juce::Label::textColourId, theme.textDim);
     }
 
+    sampleStatusLabel.applyTheme(theme);
     controlStatusStrip.applyTheme(theme);
     hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
     hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
@@ -5095,7 +5093,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sampleSourceLabel,
                 sampleChopLabel,
                 sampleShapeLabel,
-                sampleNameLabel,
+                sampleStatusLabel,
                 sampleFileActions,
                 sampleRecipeActions,
                 sampleChopExpandButton,
@@ -7034,12 +7032,7 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
     const auto sampleName = audioProcessor.getLoadedSampleName();
     const auto sampleMissing = audioProcessor.hasMissingSampleReference();
     const auto missingFile = juce::File(audioProcessor.getLoadedSamplePath()).getFileName();
-    sampleNameLabel.setText(sampleName.isNotEmpty() ? sampleName
-                            : sampleMissing && missingFile.isNotEmpty() ? "Missing: " + missingFile
-                                                                         : "No sample",
-                            juce::dontSendNotification);
-    sampleNameLabel.setColour(juce::Label::textColourId,
-                              sampleMissing ? juce::Colour(0xffffc36b) : juce::Colour(0xffa8b6b8));
+    sampleStatusLabel.setSampleState(sampleName, sampleMissing, missingFile);
 }
 
 void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
@@ -10651,7 +10644,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
+        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton, &sequencerChordMemoryButton,

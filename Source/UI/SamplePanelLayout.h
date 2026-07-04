@@ -6,6 +6,7 @@
 #include "SampleRecorderPanel.h"
 #include "SampleRecipeActions.h"
 #include "SampleSourceControls.h"
+#include "SampleStatusLabel.h"
 #include "SampleWaveformDisplay.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -24,7 +25,7 @@ struct Components
     juce::Label& sourceLabel;
     juce::Label& chopLabel;
     juce::Label& shapeLabel;
-    juce::Label& sampleNameLabel;
+    SampleStatusLabel& sampleStatusLabel;
 
     SampleFileActions& fileActions;
     SampleRecipeActions& recipeActions;

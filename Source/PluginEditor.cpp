@@ -2470,10 +2470,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     randomLockActionBox.setTooltip("Toggle one generation lock without exposing the full lock grid");
     addAndMakeVisible(randomLockActionBox);
 
-    sequencerRateBox.addItemList(Parameters::sequencerRateChoices(), 1);
-    addAndMakeVisible(sequencerRateBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
-
     addAndMakeVisible(sequencerGrooveControls);
 
     addAndMakeVisible(sequencerPatternControls);
@@ -10510,7 +10506,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -10716,9 +10712,6 @@ void NateVSTAudioProcessorEditor::setChoiceParameter(const juce::String& paramet
         osc2WaveBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
     else if (parameterID == Parameters::ID::filterMode)
         filterModeBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
-    else if (parameterID == Parameters::ID::sequencerRate)
-        sequencerRateBox.setSelectedItemIndex(choiceIndex, juce::dontSendNotification);
-
     updateSegmentedSelectors();
     if (parameterID == Parameters::ID::oscWave || parameterID == Parameters::ID::osc2Wave)
         updateWavetableDisplay();
@@ -10764,7 +10757,13 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     bandpassFilterButton.setToggleState(filterModeIndex == 1, juce::dontSendNotification);
     highpassFilterButton.setToggleState(filterModeIndex == 2, juce::dontSendNotification);
 
-    const auto rateIndex = getChoiceIndex(sequencerRateBox, Parameters::ID::sequencerRate, 1);
+    const auto rateIndex = [&]
+    {
+        if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(Parameters::ID::sequencerRate))
+            return juce::jlimit(0, 2, juce::roundToInt(value->load()));
+
+        return 1;
+    }();
     sequencerRateControls.setSelectedIndex(rateIndex);
 }
 

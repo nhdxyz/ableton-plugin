@@ -297,7 +297,6 @@ private:
     juce::ComboBox randomScopeBox;
     juce::ComboBox randomSectionActionBox;
     juce::ComboBox randomLockActionBox;
-    juce::ComboBox sequencerRateBox;
     UI::SequencerGrooveControls sequencerGrooveControls;
     UI::SequencerLaneViewControls sequencerLaneViewControls;
     UI::SequencerTransformControls sequencerTransformControls;

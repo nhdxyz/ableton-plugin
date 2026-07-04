@@ -624,9 +624,6 @@ private:
     UI::SampleChopHeader sampleChopHeader;
     UI::SampleRecipeActions sampleRecipeActions;
     UI::SequencerPatternControls sequencerPatternControls;
-    juce::TextButton bassPatternButton { "Bass" };
-    juce::TextButton stabPatternButton { "Stab" };
-    juce::TextButton ukgPatternButton { "UKG" };
     UI::SequencerUtilityActions sequencerUtilityActions;
     UI::SequencerSceneChainControls sequencerSceneChainControls;
     UI::SequencerSceneControls sequencerSceneControls;

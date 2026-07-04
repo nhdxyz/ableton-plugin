@@ -3467,27 +3467,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             }
         }
     };
-    bassPatternButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.applySequencerPatternPreset(0);
-        repaintSequencerGrids();
-    };
-    stabPatternButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.applySequencerPatternPreset(1);
-        repaintSequencerGrids();
-    };
-    ukgPatternButton.onClick = [this]
-    {
-        releaseRandomCandidateAudition(false);
-        releasePresetAuditionNote();
-        audioProcessor.applySequencerPatternPreset(2);
-        repaintSequencerGrids();
-    };
     sequencerUtilityActions.onActionClicked = [this] (UI::SequencerUtilityActions::Action action)
     {
         switch (action)
@@ -3913,9 +3892,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sampleChopPanel);
     addAndMakeVisible(sampleRecorderPanel);
     addAndMakeVisible(sampleRecipeActions);
-    addAndMakeVisible(bassPatternButton);
-    addAndMakeVisible(stabPatternButton);
-    addAndMakeVisible(ukgPatternButton);
     addAndMakeVisible(sequencerUtilityActions);
     addAndMakeVisible(panelTabBar);
     addAndMakeVisible(sineWaveButton);
@@ -10554,7 +10530,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopHeader, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
         &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternControls, &sequencerLaneViewControls, &sequencerTransformControls,
-        &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &sequencerSceneControls,
+        &sequencerUtilityActions, &sequencerSceneChainControls, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,

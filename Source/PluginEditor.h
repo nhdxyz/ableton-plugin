@@ -27,8 +27,10 @@
 #include "UI/OutputSpectrumDisplay.h"
 #include "UI/PageButtonStrip.h"
 #include "UI/PanelTabBar.h"
+#include "UI/PresetCompareActions.h"
 #include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
+#include "UI/PresetPrimaryActions.h"
 #include "UI/PresetQuickFilterBar.h"
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
@@ -716,13 +718,9 @@ private:
     juce::TextButton previousPresetButton { "<" };
     juce::TextButton nextPresetButton { ">" };
     juce::TextButton savePresetButton { "Save" };
-    juce::TextButton loadPresetButton { "Load" };
-    juce::TextButton auditionPresetButton { "Audition" };
-    juce::TextButton warmPresetPreviewsButton { "Warm" };
     juce::TextButton refreshPresetsButton { "Refresh" };
-    juce::TextButton favoritePresetButton { "Fav" };
-    juce::TextButton comparePresetButton { "Before" };
-    juce::TextButton revertPresetButton { "Revert" };
+    UI::PresetPrimaryActions presetPrimaryActions;
+    UI::PresetCompareActions presetCompareActions;
     UI::PresetQuickFilterBar presetQuickFilterBar;
     UI::PageButtonStrip modWorkflowStrip;
     juce::TextButton candidateFavoriteButton { "Star" };

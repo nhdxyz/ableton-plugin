@@ -1,8 +1,10 @@
 #pragma once
 
+#include "PresetCompareActions.h"
 #include "PresetQuickFilterBar.h"
 #include "PresetCrateMapDisplay.h"
 #include "PresetLibrarySummary.h"
+#include "PresetPrimaryActions.h"
 #include "PresetSaveSummary.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -39,13 +41,9 @@ struct Components
     juce::TextButton& saveButton;
     juce::TextButton& previousButton;
     juce::TextButton& nextButton;
-    juce::TextButton& loadButton;
-    juce::TextButton& auditionButton;
-    juce::TextButton& warmPreviewsButton;
-    juce::TextButton& favoriteButton;
+    PresetPrimaryActions& primaryActions;
     juce::TextButton& refreshButton;
-    juce::TextButton& compareButton;
-    juce::TextButton& revertButton;
+    PresetCompareActions& compareActions;
     PresetQuickFilterBar& quickFilterBar;
 
     juce::ListBox& browserList;

@@ -96,14 +96,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.moveDownButton.setVisible(true);
     components.resetOrderButton.setVisible(true);
     components.removeButton.setVisible(true);
-    components.throwDelayButton.setVisible(true);
-    components.throwSpaceButton.setVisible(true);
-    components.throwPumpButton.setVisible(true);
-    components.throwDryButton.setVisible(true);
-    components.holdDelayButton.setVisible(true);
-    components.holdSpaceButton.setVisible(true);
-    components.holdPumpButton.setVisible(true);
-    components.muteDropButton.setVisible(true);
+    components.performanceControls.setVisible(true);
     components.statusLabel.setVisible(true);
     components.presetBox.setVisible(true);
     components.applyPresetButton.setVisible(true);
@@ -117,14 +110,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.statusLabel.setBounds(actionRow.reduced(8, 4));
 
     auto performRow = content.removeFromTop(42).withTrimmedTop(2);
-    components.throwDelayButton.setBounds(performRow.removeFromLeft(102).reduced(4));
-    components.throwSpaceButton.setBounds(performRow.removeFromLeft(106).reduced(4));
-    components.throwPumpButton.setBounds(performRow.removeFromLeft(96).reduced(4));
-    components.throwDryButton.setBounds(performRow.removeFromLeft(88).reduced(4));
-    components.holdDelayButton.setBounds(performRow.removeFromLeft(84).reduced(4));
-    components.holdSpaceButton.setBounds(performRow.removeFromLeft(84).reduced(4));
-    components.holdPumpButton.setBounds(performRow.removeFromLeft(92).reduced(4));
-    components.muteDropButton.setBounds(performRow.removeFromLeft(90).reduced(4));
+    components.performanceControls.setBounds(performRow);
 
     content.removeFromTop(8);
     auto rackArea = content.removeFromLeft(260).reduced(18, 14);

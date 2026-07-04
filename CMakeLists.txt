@@ -60,6 +60,7 @@ target_sources(NateVST
         Source/UI/ControlStatusStrip.cpp
         Source/UI/FilterResponseDisplay.cpp
         Source/UI/FocusOverlayPanel.cpp
+        Source/UI/FxPerformanceControls.cpp
         Source/UI/FxRackPanelLayout.cpp
         Source/UI/FxRackRow.cpp
         Source/UI/HouseLayerRackDisplay.cpp

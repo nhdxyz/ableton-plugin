@@ -5,6 +5,7 @@
 #include "UI/ControlStatusStrip.h"
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FocusOverlayPanel.h"
+#include "UI/FxPerformanceControls.h"
 #include "UI/FxRackRow.h"
 #include "UI/HouseLayerRackDisplay.h"
 #include "UI/HomeOverviewDisplay.h"
@@ -729,14 +730,7 @@ private:
     juce::TextButton fxMoveDownButton { "Down" };
     juce::TextButton fxResetOrderButton { "Reset" };
     juce::TextButton fxRemoveButton { "Remove" };
-    juce::TextButton fxThrowDelayButton { "Delay Throw" };
-    juce::TextButton fxThrowSpaceButton { "Space Throw" };
-    juce::TextButton fxThrowPumpButton { "Pump Drop" };
-    juce::TextButton fxThrowDryButton { "Dry Reset" };
-    juce::TextButton fxHoldDelayButton { "Hold Dly" };
-    juce::TextButton fxHoldSpaceButton { "Hold Spc" };
-    juce::TextButton fxHoldPumpButton { "Hold Pump" };
-    juce::TextButton fxMuteDropButton { "Mute Drop" };
+    UI::FxPerformanceControls fxPerformanceControls;
     juce::TextButton fxApplyPresetButton { "Load" };
     juce::TextButton modInspectorAddButton { "Add" };
     juce::TextButton modInspectorClearButton { "Clear" };

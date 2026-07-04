@@ -3832,41 +3832,41 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxMoveUpButton.onClick = [this] { moveSelectedFxModule(-1); };
     fxMoveDownButton.onClick = [this] { moveSelectedFxModule(1); };
     fxResetOrderButton.onClick = [this] { resetFxModuleOrder(); };
-    fxThrowDelayButton.onClick = [this] { applyDelayThrow(); };
-    fxThrowSpaceButton.onClick = [this] { applySpaceThrow(); };
-    fxThrowPumpButton.onClick = [this] { applyPumpDrop(); };
-    fxThrowDryButton.onClick = [this] { clearFxThrows(); };
-    fxHoldDelayButton.setTooltip("Hold for a temporary delay throw, release to restore");
-    fxHoldDelayButton.onStateChange = [this]
+    fxPerformanceControls.onActionClicked = [this] (UI::FxPerformanceControls::Action action)
     {
-        if (fxHoldDelayButton.isDown())
-            beginMomentaryFxAction(MomentaryFxAction::delay);
-        else
-            endMomentaryFxAction(MomentaryFxAction::delay);
+        switch (action)
+        {
+            case UI::FxPerformanceControls::Action::delayThrow: applyDelayThrow(); break;
+            case UI::FxPerformanceControls::Action::spaceThrow: applySpaceThrow(); break;
+            case UI::FxPerformanceControls::Action::pumpDrop: applyPumpDrop(); break;
+            case UI::FxPerformanceControls::Action::dryReset: clearFxThrows(); break;
+            case UI::FxPerformanceControls::Action::holdDelay:
+            case UI::FxPerformanceControls::Action::holdSpace:
+            case UI::FxPerformanceControls::Action::holdPump:
+            case UI::FxPerformanceControls::Action::muteDrop:
+                break;
+        }
     };
-    fxHoldSpaceButton.setTooltip("Hold for a temporary delay and reverb wash, release to restore");
-    fxHoldSpaceButton.onStateChange = [this]
+    fxPerformanceControls.onMomentaryActionChanged = [this] (UI::FxPerformanceControls::Action action, bool active)
     {
-        if (fxHoldSpaceButton.isDown())
-            beginMomentaryFxAction(MomentaryFxAction::space);
+        auto momentaryAction = MomentaryFxAction::delay;
+        switch (action)
+        {
+            case UI::FxPerformanceControls::Action::holdDelay: momentaryAction = MomentaryFxAction::delay; break;
+            case UI::FxPerformanceControls::Action::holdSpace: momentaryAction = MomentaryFxAction::space; break;
+            case UI::FxPerformanceControls::Action::holdPump: momentaryAction = MomentaryFxAction::pump; break;
+            case UI::FxPerformanceControls::Action::muteDrop: momentaryAction = MomentaryFxAction::mute; break;
+            case UI::FxPerformanceControls::Action::delayThrow:
+            case UI::FxPerformanceControls::Action::spaceThrow:
+            case UI::FxPerformanceControls::Action::pumpDrop:
+            case UI::FxPerformanceControls::Action::dryReset:
+                return;
+        }
+
+        if (active)
+            beginMomentaryFxAction(momentaryAction);
         else
-            endMomentaryFxAction(MomentaryFxAction::space);
-    };
-    fxHoldPumpButton.setTooltip("Hold for a temporary pump/duck move, release to restore");
-    fxHoldPumpButton.onStateChange = [this]
-    {
-        if (fxHoldPumpButton.isDown())
-            beginMomentaryFxAction(MomentaryFxAction::pump);
-        else
-            endMomentaryFxAction(MomentaryFxAction::pump);
-    };
-    fxMuteDropButton.setTooltip("Hold for a temporary mute drop, release to restore");
-    fxMuteDropButton.onStateChange = [this]
-    {
-        if (fxMuteDropButton.isDown())
-            beginMomentaryFxAction(MomentaryFxAction::mute);
-        else
-            endMomentaryFxAction(MomentaryFxAction::mute);
+            endMomentaryFxAction(momentaryAction);
     };
     fxApplyPresetButton.setTooltip("Reload the selected FX module preset");
     fxApplyPresetButton.onClick = [this] { applySelectedFxPreset(); };
@@ -4059,14 +4059,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxMoveDownButton);
     addAndMakeVisible(fxResetOrderButton);
     addAndMakeVisible(fxRemoveButton);
-    addAndMakeVisible(fxThrowDelayButton);
-    addAndMakeVisible(fxThrowSpaceButton);
-    addAndMakeVisible(fxThrowPumpButton);
-    addAndMakeVisible(fxThrowDryButton);
-    addAndMakeVisible(fxHoldDelayButton);
-    addAndMakeVisible(fxHoldSpaceButton);
-    addAndMakeVisible(fxHoldPumpButton);
-    addAndMakeVisible(fxMuteDropButton);
+    addAndMakeVisible(fxPerformanceControls);
     addAndMakeVisible(fxApplyPresetButton);
     addAndMakeVisible(modInspectorAddButton);
     addAndMakeVisible(modInspectorClearButton);
@@ -5237,14 +5230,7 @@ void NateVSTAudioProcessorEditor::resized()
                 fxMoveDownButton,
                 fxResetOrderButton,
                 fxRemoveButton,
-                fxThrowDelayButton,
-                fxThrowSpaceButton,
-                fxThrowPumpButton,
-                fxThrowDryButton,
-                fxHoldDelayButton,
-                fxHoldSpaceButton,
-                fxHoldPumpButton,
-                fxMuteDropButton,
+                fxPerformanceControls,
                 fxApplyPresetButton,
                 rackSlots,
                 static_cast<int>(selectedFxModule),
@@ -10749,8 +10735,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxMoveUpButton, &fxMoveDownButton, &fxResetOrderButton,
-        &fxThrowDelayButton, &fxThrowSpaceButton, &fxThrowPumpButton, &fxThrowDryButton,
-        &fxHoldDelayButton, &fxHoldSpaceButton, &fxHoldPumpButton, &fxMuteDropButton,
+        &fxPerformanceControls,
         &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxRemoveButton, &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,

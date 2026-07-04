@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FxPerformanceControls.h"
 #include "FxRackRow.h"
 #include "PumpCurveDisplay.h"
 
@@ -168,14 +169,7 @@ struct Components
     juce::TextButton& moveDownButton;
     juce::TextButton& resetOrderButton;
     juce::TextButton& removeButton;
-    juce::TextButton& throwDelayButton;
-    juce::TextButton& throwSpaceButton;
-    juce::TextButton& throwPumpButton;
-    juce::TextButton& throwDryButton;
-    juce::TextButton& holdDelayButton;
-    juce::TextButton& holdSpaceButton;
-    juce::TextButton& holdPumpButton;
-    juce::TextButton& muteDropButton;
+    FxPerformanceControls& performanceControls;
     juce::TextButton& applyPresetButton;
 
     std::array<RackSlot, moduleCount> rackSlots;

@@ -15,6 +15,8 @@ assignees: ""
 - Validation summary:
 - CTest log:
 - pluginval report:
+- Signed package path:
+- Notarization report:
 - Result:
 
 ## Automated Gate
@@ -23,6 +25,10 @@ assignees: ""
 - [ ] CTest passed
 - [ ] pluginval passed or exception documented
 - [ ] Release package was created with `tools/package_release.sh`
+- [ ] `.pkg` installer was created with `CREATE_PKG=1`
+- [ ] VST3 bundle was signed or unsigned beta exception documented
+- [ ] Installer package was signed or unsigned beta exception documented
+- [ ] Installer package was notarized/stapled or exception documented
 - [ ] Release validation artifact was attached or linked
 
 ## Ableton Matrix

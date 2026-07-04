@@ -20,6 +20,35 @@ Create a local release archive after the gate passes:
 tools/package_release.sh
 ```
 
+Create a macOS installer package for beta testers:
+
+```sh
+CREATE_PKG=1 tools/package_release.sh
+```
+
+For a public release, sign the VST3 bundle and installer package with Developer ID identities:
+
+```sh
+CREATE_PKG=1 \
+CODE_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+INSTALLER_SIGN_IDENTITY="Developer ID Installer: Your Name (TEAMID)" \
+tools/package_release.sh
+```
+
+To notarize and staple the signed installer package, provide notarytool credentials. A stored keychain profile is preferred for local release machines:
+
+```sh
+xcrun notarytool store-credentials "nate-vst-notary" \
+  --apple-id "you@example.com" \
+  --team-id "TEAMID" \
+  --password "app-specific-password"
+
+CREATE_PKG=1 NOTARIZE=1 NOTARY_PROFILE="nate-vst-notary" \
+CODE_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+INSTALLER_SIGN_IDENTITY="Developer ID Installer: Your Name (TEAMID)" \
+tools/package_release.sh
+```
+
 The automated gate writes a release evidence bundle under:
 
 ```text

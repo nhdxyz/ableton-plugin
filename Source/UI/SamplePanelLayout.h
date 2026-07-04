@@ -1,0 +1,57 @@
+#pragma once
+
+#include "SampleChopPanel.h"
+#include "SampleRecorderPanel.h"
+#include "SampleWaveformDisplay.h"
+
+#include <juce_gui_basics/juce_gui_basics.h>
+
+namespace UI::SamplePanelLayout
+{
+struct SliderSlot
+{
+    juce::Slider& slider;
+    juce::Label& label;
+};
+
+struct Components
+{
+    juce::Label& sectionLabel;
+    juce::Label& sourceLabel;
+    juce::Label& chopLabel;
+    juce::Label& shapeLabel;
+    juce::Label& sampleNameLabel;
+
+    juce::TextButton& loadButton;
+    juce::TextButton& clearButton;
+    juce::TextButton& randomCutButton;
+    juce::TextButton& ukgChopButton;
+    juce::TextButton& chopExpandButton;
+
+    juce::ToggleButton& enabledButton;
+    juce::ToggleButton& reverseButton;
+    juce::ToggleButton& stutterEnabledButton;
+
+    juce::ComboBox& modeBox;
+    juce::ComboBox& engineBox;
+    juce::ComboBox& sliceStyleBox;
+    juce::ComboBox& stutterRateBox;
+
+    SampleRecorderPanel& recorderPanel;
+    SampleWaveformDisplay& waveformDisplay;
+    SampleChopPanel& chopPanel;
+
+    SliderSlot start;
+    SliderSlot end;
+    SliderSlot transpose;
+    SliderSlot pitchRamp;
+    SliderSlot gain;
+    SliderSlot mix;
+    SliderSlot stutterRepeats;
+    SliderSlot grainSize;
+    SliderSlot grainSpray;
+    SliderSlot spectralFreeze;
+};
+
+void layout(juce::Rectangle<int> content, Components components);
+}

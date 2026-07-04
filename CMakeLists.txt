@@ -85,6 +85,7 @@ target_sources(NateVST
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/RandomMorphPad.cpp
         Source/UI/SampleChopPanel.cpp
+        Source/UI/SamplePanelLayout.cpp
         Source/UI/SampleRecorderPanel.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/StereoFieldDisplay.cpp

@@ -3,6 +3,7 @@
 #include "Modulation/ModulationRouting.h"
 #include "Synth/WavetableFrameIO.h"
 #include "Synth/WavetableFrameRecipes.h"
+#include "UI/SamplePanelLayout.h"
 
 #include <algorithm>
 #include <cmath>
@@ -5332,107 +5333,38 @@ void NateVSTAudioProcessorEditor::resized()
 
         case Panel::sample:
         {
-            sampleSectionLabel.setVisible(true);
-            sampleSourceLabel.setVisible(true);
-            sampleChopLabel.setVisible(true);
-            sampleShapeLabel.setVisible(true);
-            loadSampleButton.setVisible(true);
-            clearSampleButton.setVisible(true);
-            sampleRecorderPanel.setVisible(true);
-            randomCutButton.setVisible(true);
-            ukgChopButton.setVisible(true);
-            sampleEnabledButton.setVisible(true);
-            sampleReverseButton.setVisible(true);
-            sampleModeBox.setVisible(true);
-            sampleEngineBox.setVisible(true);
-            sampleSliceStyleBox.setVisible(true);
-            sampleStutterEnabledButton.setVisible(true);
-            sampleStutterRateBox.setVisible(true);
-            sampleChopExpandButton.setVisible(true);
-            sampleWaveformDisplay.setVisible(true);
-            sampleChopPanel.setVisible(true);
-            sampleNameLabel.setVisible(true);
-            sampleSectionLabel.setBounds(content.removeFromTop(28));
-            setSliderVisible(sampleStartSlider, sampleStartLabel, true);
-            setSliderVisible(sampleEndSlider, sampleEndLabel, true);
-            setSliderVisible(sampleTransposeSlider, sampleTransposeLabel, true);
-            setSliderVisible(samplePitchRampSlider, samplePitchRampLabel, true);
-            setSliderVisible(sampleGainSlider, sampleGainLabel, true);
-            setSliderVisible(sampleMixSlider, sampleMixLabel, true);
-            setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, true);
-            setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, true);
-            setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, true);
-            setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, true);
-
-            auto workspace = content.withTrimmedTop(8);
-            auto sourceArea = workspace.removeFromLeft(juce::jlimit(260, 310, workspace.getWidth() / 4)).reduced(18, 12);
-            workspace.removeFromLeft(10);
-            auto chopArea = workspace.reduced(18, 12);
-
-            sampleSourceLabel.setBounds(sourceArea.removeFromTop(22));
-            auto actionTop = sourceArea.removeFromTop(30);
-            loadSampleButton.setBounds(actionTop.removeFromLeft(actionTop.getWidth() / 2).reduced(3, 4));
-            clearSampleButton.setBounds(actionTop.reduced(3, 4));
-            auto actionBottom = sourceArea.removeFromTop(30);
-            sampleEnabledButton.setBounds(actionBottom.removeFromLeft(actionBottom.getWidth() / 2).reduced(3, 4));
-            sampleReverseButton.setBounds(actionBottom.reduced(3, 4));
-
-            sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
-            sampleRecorderPanel.setBounds(sourceArea.removeFromTop(sampleRecorderPanel.preferredHeight()));
-
-            auto sampleModeRow = sourceArea.removeFromTop(30);
-            sampleModeBox.setBounds(sampleModeRow.removeFromLeft(sampleModeRow.getWidth() / 2).reduced(4));
-            sampleEngineBox.setBounds(sampleModeRow.reduced(4));
-            sampleSliceStyleBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
-            auto stutterRow = sourceArea.removeFromTop(30);
-            sampleStutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
-            sampleStutterRateBox.setBounds(stutterRow.reduced(3, 4));
-            auto cutRecipeRow = sourceArea.removeFromTop(32).withTrimmedTop(2);
-            randomCutButton.setBounds(cutRecipeRow.removeFromLeft(cutRecipeRow.getWidth() / 2).reduced(3, 4));
-            ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
-
-            sampleShapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
-            if (sourceArea.getHeight() < 138)
-            {
-                const auto compactShapeHeight = sourceArea.getHeight();
-                const auto showSecondaryShapeRow = compactShapeHeight >= 72;
-                const auto sampleShapeRowHeight = showSecondaryShapeRow ? juce::jmax(36, compactShapeHeight / 2)
-                                                                        : juce::jmax(36, compactShapeHeight);
-                layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(2),
-                              { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider, &samplePitchRampSlider });
-                if (showSecondaryShapeRow)
-                {
-                    layoutKnobRow(sourceArea.withTrimmedTop(2),
-                                  { &sampleStutterRepeatsSlider, &sampleGrainSizeSlider, &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
-                }
-                else
-                {
-                    setSliderVisible(sampleStutterRepeatsSlider, sampleStutterRepeatsLabel, false);
-                    setSliderVisible(sampleGrainSizeSlider, sampleGrainSizeLabel, false);
-                    setSliderVisible(sampleGrainSpraySlider, sampleGrainSprayLabel, false);
-                    setSliderVisible(sampleSpectralFreezeSlider, sampleSpectralFreezeLabel, false);
-                }
-            }
-            else
-            {
-                const auto sampleShapeRowHeight = juce::jlimit(46, 64, sourceArea.getHeight() / 3);
-                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
-                              { &sampleTransposeSlider, &sampleGainSlider, &sampleMixSlider });
-                layoutKnobRow(sourceArea.removeFromTop(sampleShapeRowHeight).withTrimmedTop(3),
-                              { &samplePitchRampSlider, &sampleStutterRepeatsSlider, &sampleGrainSizeSlider });
-                layoutKnobRow(sourceArea.removeFromTop(juce::jmin(sampleShapeRowHeight, sourceArea.getHeight())).withTrimmedTop(3),
-                              { &sampleGrainSpraySlider, &sampleSpectralFreezeSlider });
-            }
-
-            auto chopHeader = chopArea.removeFromTop(24);
-            sampleChopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
-            sampleChopLabel.setBounds(chopHeader.withTrimmedLeft(4));
-            const auto waveformHeight = juce::jlimit(170, 260, chopArea.getHeight() / 2);
-            sampleWaveformDisplay.setBounds(chopArea.removeFromTop(waveformHeight).reduced(4, 6));
-            sampleChopPanel.setBounds(chopArea.removeFromTop(sampleChopPanel.compactHeight()));
-            auto cutRow = chopArea.removeFromTop(54).withTrimmedTop(6);
-            sampleStartSlider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
-            sampleEndSlider.setBounds(cutRow.reduced(48, 6));
+            UI::SamplePanelLayout::layout(content, {
+                sampleSectionLabel,
+                sampleSourceLabel,
+                sampleChopLabel,
+                sampleShapeLabel,
+                sampleNameLabel,
+                loadSampleButton,
+                clearSampleButton,
+                randomCutButton,
+                ukgChopButton,
+                sampleChopExpandButton,
+                sampleEnabledButton,
+                sampleReverseButton,
+                sampleStutterEnabledButton,
+                sampleModeBox,
+                sampleEngineBox,
+                sampleSliceStyleBox,
+                sampleStutterRateBox,
+                sampleRecorderPanel,
+                sampleWaveformDisplay,
+                sampleChopPanel,
+                { sampleStartSlider, sampleStartLabel },
+                { sampleEndSlider, sampleEndLabel },
+                { sampleTransposeSlider, sampleTransposeLabel },
+                { samplePitchRampSlider, samplePitchRampLabel },
+                { sampleGainSlider, sampleGainLabel },
+                { sampleMixSlider, sampleMixLabel },
+                { sampleStutterRepeatsSlider, sampleStutterRepeatsLabel },
+                { sampleGrainSizeSlider, sampleGrainSizeLabel },
+                { sampleGrainSpraySlider, sampleGrainSprayLabel },
+                { sampleSpectralFreezeSlider, sampleSpectralFreezeLabel }
+            });
             break;
         }
 

@@ -365,6 +365,7 @@ private:
     std::atomic<bool> sampleCaptureEnabled { false };
     std::atomic<bool> sampleCaptureWaitingForThreshold { false };
     std::atomic<int> activeSampleCaptureBufferIndex { 0 };
+    std::atomic<uint32_t> sampleCaptureSessionSerial { 1 };
     std::atomic<int> sampleCaptureActiveWriters { 0 };
     std::atomic<int> sampleCaptureWritePosition { 0 };
     std::atomic<int> sampleCaptureSamplesRecorded { 0 };
@@ -449,6 +450,7 @@ private:
     juce::AudioBuffer<float>& getActiveSampleCaptureBuffer() noexcept;
     const juce::AudioBuffer<float>& getActiveSampleCaptureBuffer() const noexcept;
     int getNextSampleCaptureBufferIndex() const noexcept;
+    void invalidateSampleCaptureSession() noexcept;
     void updateSampleCaptureSourcePeak(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     float getSampleCaptureThresholdGain() const noexcept;
     int calculateSampleCaptureTargetSamples() const;

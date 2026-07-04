@@ -236,6 +236,23 @@ void feedHostInputContinuityBlocks(NateVSTAudioProcessor& processor, int blocks)
     }
 }
 
+void feedConstantHostInputBlocks(NateVSTAudioProcessor& processor, float marker, int blocks)
+{
+    juce::AudioBuffer<float> buffer(2, 512);
+    for (auto block = 0; block < blocks; ++block)
+    {
+        buffer.clear();
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            buffer.setSample(0, sample, marker);
+            buffer.setSample(1, sample, marker * 0.5f);
+        }
+
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+}
+
 bool recordConstantHostInputTake(NateVSTAudioProcessor& processor,
                                  float marker,
                                  int blocks,
@@ -668,6 +685,63 @@ int main()
 
     if (continuityCaptureFile.existsAsFile())
         continuityCaptureFile.deleteFile();
+
+    NateVSTAudioProcessor rearmProcessor;
+    rearmProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(rearmProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::sampleRecordStart, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::sampleRecordLength, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(rearmProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure recorder re-arm patch\n";
+        return 1;
+    }
+
+    constexpr auto rearmBlocks = 8;
+    rearmProcessor.beginSampleCapture();
+    feedConstantHostInputBlocks(rearmProcessor, 0.06f, rearmBlocks);
+    rearmProcessor.beginSampleCapture();
+    feedConstantHostInputBlocks(rearmProcessor, 0.21f, rearmBlocks);
+
+    const auto rearmedSeconds = rearmProcessor.getSampleCaptureDurationSeconds();
+    const auto expectedRearmedSeconds = static_cast<float>(rearmBlocks * blockSize) / 44100.0f;
+    if (std::abs(rearmedSeconds - expectedRearmedSeconds) > 0.001f)
+    {
+        std::cerr << "Recorder re-arm did not reset capture duration: got "
+                  << rearmedSeconds << "s expected " << expectedRearmedSeconds << "s\n";
+        return 1;
+    }
+
+    if (! rearmProcessor.commitSampleCaptureToSampler())
+    {
+        std::cerr << "Recorder re-arm capture did not commit\n";
+        return 1;
+    }
+
+    const auto rearmCapturePath = rearmProcessor.getLoadedSamplePath();
+    const juce::File rearmCaptureFile(rearmCapturePath);
+    juce::AudioBuffer<float> rearmCapture;
+    if (! readAudioFile(rearmCaptureFile, rearmCapture))
+    {
+        std::cerr << "Could not read recorder re-arm capture file\n";
+        return 1;
+    }
+
+    const auto rearmMarker = rearmCapture.getSample(0, rearmCapture.getNumSamples() / 2);
+    if (std::abs(rearmMarker - 0.21f) > 0.0025f)
+    {
+        std::cerr << "Recorder re-arm committed stale audio from the previous take: "
+                  << rearmMarker << '\n';
+        return 1;
+    }
+
+    if (rearmCaptureFile.existsAsFile())
+        rearmCaptureFile.deleteFile();
 
     NateVSTAudioProcessor takeHistoryProcessor;
     takeHistoryProcessor.prepareToPlay(44100.0, 512);

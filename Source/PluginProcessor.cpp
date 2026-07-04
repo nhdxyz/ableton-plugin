@@ -844,6 +844,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     patternSequencer.prepare(sampleRate);
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
     sampleCaptureEnabled.store(false, std::memory_order_release);
+    invalidateSampleCaptureSession();
     waitForSampleCaptureWritersToFinish();
     sampleCaptureSampleRate = meterSampleRate;
     const auto captureChannels = juce::jlimit(1,
@@ -859,7 +860,6 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
                                        juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxPreRollSeconds * sampleCaptureSampleRate))));
     sampleCapturePreRollBuffer.clear();
     activeSampleCaptureBufferIndex.store(0, std::memory_order_relaxed);
-    sampleCaptureActiveWriters.store(0, std::memory_order_relaxed);
     sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
     sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
     sampleCaptureTargetSamples.store(0, std::memory_order_relaxed);
@@ -894,6 +894,7 @@ void NateVSTAudioProcessor::releaseResources()
 {
     sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_relaxed);
+    invalidateSampleCaptureSession();
     sampleCaptureTargetSamples.store(0, std::memory_order_relaxed);
     sampleCapturePreRollWritePosition.store(0, std::memory_order_relaxed);
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_relaxed);
@@ -1620,6 +1621,7 @@ bool NateVSTAudioProcessor::loadSampleFile(const juce::File& file)
 {
     sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_relaxed);
+    invalidateSampleCaptureSession();
     sampleCaptureTargetSamples.store(0, std::memory_order_relaxed);
     sampleCapturePreRollWritePosition.store(0, std::memory_order_relaxed);
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_relaxed);
@@ -1634,6 +1636,7 @@ void NateVSTAudioProcessor::clearSample()
 {
     sampleCaptureEnabled.store(false, std::memory_order_relaxed);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_relaxed);
+    invalidateSampleCaptureSession();
     sampleCaptureTargetSamples.store(0, std::memory_order_relaxed);
     sampleCapturePreRollWritePosition.store(0, std::memory_order_relaxed);
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_relaxed);
@@ -1655,6 +1658,7 @@ bool NateVSTAudioProcessor::hasMissingSampleReference() const
 void NateVSTAudioProcessor::beginSampleCapture()
 {
     sampleCaptureEnabled.store(false, std::memory_order_release);
+    invalidateSampleCaptureSession();
     waitForSampleCaptureWritersToFinish();
 
     const auto nextCaptureBufferIndex = getNextSampleCaptureBufferIndex();
@@ -1679,6 +1683,7 @@ void NateVSTAudioProcessor::stopSampleCapture()
 {
     sampleCaptureEnabled.store(false, std::memory_order_release);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_release);
+    invalidateSampleCaptureSession();
     sampleCapturePreRollWritePosition.store(0, std::memory_order_release);
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_release);
 }
@@ -1814,6 +1819,7 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
 {
     sampleCaptureEnabled.store(false, std::memory_order_release);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_release);
+    invalidateSampleCaptureSession();
     sampleCapturePreRollWritePosition.store(0, std::memory_order_release);
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_release);
     waitForSampleCaptureWritersToFinish();
@@ -1994,6 +2000,11 @@ int NateVSTAudioProcessor::getNextSampleCaptureBufferIndex() const noexcept
                                          static_cast<int>(sampleCaptureBufferBankSize) - 1,
                                          activeSampleCaptureBufferIndex.load(std::memory_order_acquire));
     return (activeIndex + 1) % static_cast<int>(sampleCaptureBufferBankSize);
+}
+
+void NateVSTAudioProcessor::invalidateSampleCaptureSession() noexcept
+{
+    sampleCaptureSessionSerial.fetch_add(1, std::memory_order_acq_rel);
 }
 
 void NateVSTAudioProcessor::waitForSampleCaptureWritersToFinish()
@@ -6931,6 +6942,7 @@ void NateVSTAudioProcessor::flushSampleCapturePreRoll() noexcept
 
 void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit) noexcept
 {
+    const auto captureSession = sampleCaptureSessionSerial.load(std::memory_order_acquire);
     if (! sampleCaptureEnabled.load(std::memory_order_acquire))
         return;
 
@@ -6951,8 +6963,11 @@ void NateVSTAudioProcessor::appendToSampleCapture(const juce::AudioBuffer<float>
     };
 
     const ScopedActiveCaptureWriter activeWriter(sampleCaptureActiveWriters);
-    if (! sampleCaptureEnabled.load(std::memory_order_acquire))
+    if (! sampleCaptureEnabled.load(std::memory_order_acquire)
+        || sampleCaptureSessionSerial.load(std::memory_order_acquire) != captureSession)
+    {
         return;
+    }
 
     const auto sourceChannels = sourceChannelLimit >= 0
         ? juce::jmin(buffer.getNumChannels(), sourceChannelLimit)

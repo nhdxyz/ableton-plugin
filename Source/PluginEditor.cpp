@@ -3,6 +3,7 @@
 #include "Modulation/ModulationRouting.h"
 #include "Synth/WavetableFrameIO.h"
 #include "Synth/WavetableFrameRecipes.h"
+#include "UI/FxRackPanelLayout.h"
 #include "UI/LibraryPanelLayout.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SequencerPanelLayout.h"
@@ -5426,283 +5427,129 @@ void NateVSTAudioProcessorEditor::resized()
 
         case Panel::effects:
         {
-            futureSectionLabel.setVisible(true);
-            futureSectionLabel.setBounds(content.removeFromTop(28));
             updateFxRackControls();
 
-            auto actionRow = content.removeFromTop(44);
-            fxAddBox.setVisible(true);
-            fxMoveUpButton.setVisible(true);
-            fxMoveDownButton.setVisible(true);
-            fxResetOrderButton.setVisible(true);
-            fxRemoveButton.setVisible(true);
-            fxThrowDelayButton.setVisible(true);
-            fxThrowSpaceButton.setVisible(true);
-            fxThrowPumpButton.setVisible(true);
-            fxThrowDryButton.setVisible(true);
-            fxHoldDelayButton.setVisible(true);
-            fxHoldSpaceButton.setVisible(true);
-            fxHoldPumpButton.setVisible(true);
-            fxMuteDropButton.setVisible(true);
-            fxRackStatusLabel.setVisible(true);
-            fxPresetBox.setVisible(true);
-            fxApplyPresetButton.setVisible(true);
-            hostSyncStatusLabel.setVisible(true);
-            fxAddBox.setBounds(actionRow.removeFromLeft(160).reduced(4));
-            fxMoveUpButton.setBounds(actionRow.removeFromLeft(52).reduced(4));
-            fxMoveDownButton.setBounds(actionRow.removeFromLeft(58).reduced(4));
-            fxResetOrderButton.setBounds(actionRow.removeFromLeft(72).reduced(4));
-            fxRemoveButton.setBounds(actionRow.removeFromLeft(86).reduced(4));
-            hostSyncStatusLabel.setBounds(actionRow.removeFromRight(126).reduced(4));
-            fxRackStatusLabel.setBounds(actionRow.reduced(8, 4));
-
-            auto performRow = content.removeFromTop(42).withTrimmedTop(2);
-            fxThrowDelayButton.setBounds(performRow.removeFromLeft(102).reduced(4));
-            fxThrowSpaceButton.setBounds(performRow.removeFromLeft(106).reduced(4));
-            fxThrowPumpButton.setBounds(performRow.removeFromLeft(96).reduced(4));
-            fxThrowDryButton.setBounds(performRow.removeFromLeft(88).reduced(4));
-            fxHoldDelayButton.setBounds(performRow.removeFromLeft(84).reduced(4));
-            fxHoldSpaceButton.setBounds(performRow.removeFromLeft(84).reduced(4));
-            fxHoldPumpButton.setBounds(performRow.removeFromLeft(92).reduced(4));
-            fxMuteDropButton.setBounds(performRow.removeFromLeft(90).reduced(4));
-
-            content.removeFromTop(8);
-            auto rackArea = content.removeFromLeft(260).reduced(18, 14);
-            rackArea.removeFromTop(26);
-            auto detailArea = content.reduced(24, 16);
-            detailArea.removeFromTop(30);
-
-            std::array<UI::FxRackRow*, 15> visibleFxSlots {};
-            auto visibleFxSlotCount = 0;
-
+            std::array<UI::FxRackPanelLayout::RackSlot, UI::FxRackPanelLayout::moduleCount> rackSlots {};
             const auto moduleOrder = fxModuleOrder();
-            for (const auto module : moduleOrder)
+            for (size_t index = 0; index < moduleOrder.size(); ++index)
             {
+                const auto module = moduleOrder[index];
                 auto& slotButton = fxSlotButton(module);
-                const auto isVisible = shouldShowFxModule(module);
-                slotButton.setVisible(isVisible);
-
-                if (isVisible)
-                    visibleFxSlots[static_cast<size_t>(visibleFxSlotCount++)] = &slotButton;
+                rackSlots[index] = { &slotButton, shouldShowFxModule(module) };
             }
 
-            const auto useTwoColumnRack = visibleFxSlotCount > 10;
-            const auto slotGap = useTwoColumnRack ? 4 : 6;
-            const auto columnGap = useTwoColumnRack ? 6 : 0;
-            const auto rackColumnCount = useTwoColumnRack ? 2 : 1;
-            const auto rackRowCount = visibleFxSlotCount > 0
-                ? (visibleFxSlotCount + rackColumnCount - 1) / rackColumnCount
-                : 0;
-            const auto slotHeight = rackRowCount > 0
-                ? juce::jlimit(24,
-                               34,
-                               (rackArea.getHeight() - ((rackRowCount - 1) * slotGap)) / rackRowCount)
-                : 34;
-            const auto slotWidth = (rackArea.getWidth() - columnGap) / rackColumnCount;
-
-            for (auto index = 0; index < visibleFxSlotCount; ++index)
-            {
-                const auto column = useTwoColumnRack ? index / rackRowCount : 0;
-                const auto row = useTwoColumnRack ? index % rackRowCount : index;
-                const auto x = rackArea.getX() + (column * (slotWidth + columnGap));
-                const auto y = rackArea.getY() + (row * (slotHeight + slotGap));
-                visibleFxSlots[static_cast<size_t>(index)]->setBounds(x, y, slotWidth, slotHeight);
-            }
-
-            auto detailHeader = detailArea.removeFromTop(38);
-            fxApplyPresetButton.setBounds(detailHeader.removeFromRight(62).reduced(3, 4));
-            fxPresetBox.setBounds(detailHeader.removeFromRight(156).reduced(3, 4));
-            auto controlsArea = detailArea.withTrimmedTop(16);
-
-            switch (selectedFxModule)
-            {
-                case FxModule::tone:
-                    fxToneEnabledButton.setVisible(true);
-                    fxToneEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxToneTiltSlider, fxToneTiltLabel, true);
-                    setSliderVisible(fxToneLowCutSlider, fxToneLowCutLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxToneTiltSlider, &fxToneLowCutSlider });
-                    break;
-
-                case FxModule::eq:
-                    fxEqEnabledButton.setVisible(true);
-                    fxEqEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxEqLowGainSlider, fxEqLowGainLabel, true);
-                    setSliderVisible(fxEqMidGainSlider, fxEqMidGainLabel, true);
-                    setSliderVisible(fxEqHighGainSlider, fxEqHighGainLabel, true);
-                    setSliderVisible(fxEqTrimSlider, fxEqTrimLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxEqLowGainSlider,
-                        &fxEqMidGainSlider,
-                        &fxEqHighGainSlider,
-                        &fxEqTrimSlider
-                    });
-                    break;
-
-                case FxModule::distortion:
-                    fxDistortionEnabledButton.setVisible(true);
-                    fxDistortionEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, true);
-                    setSliderVisible(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxDistortionAmountSlider,
-                        &fxDistortionBassSafeSlider
-                    });
-                    break;
-
-                case FxModule::bitcrush:
-                    fxBitcrushEnabledButton.setVisible(true);
-                    fxBitcrushEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxBitcrushBitsSlider, fxBitcrushBitsLabel, true);
-                    setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, true);
-                    setSliderVisible(fxBitcrushMixSlider, fxBitcrushMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxBitcrushBitsSlider, &fxBitcrushDownsampleSlider, &fxBitcrushMixSlider });
-                    break;
-
-                case FxModule::pump:
-                    fxPumpEnabledButton.setVisible(true);
-                    fxPumpRateBox.setVisible(true);
-                    fxPumpCurveBox.setVisible(true);
-                    pumpCurveDisplay.setVisible(true);
-                    fxPumpEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    fxPumpRateBox.setBounds(detailHeader.removeFromLeft(96).reduced(3, 4));
-                    fxPumpCurveBox.setBounds(detailHeader.removeFromLeft(118).reduced(3, 4));
-                    pumpCurveDisplay.setBounds(controlsArea.removeFromTop(86).reduced(4, 2));
-                    setSliderVisible(fxPumpDepthSlider, fxPumpDepthLabel, true);
-                    setSliderVisible(fxPumpShapeSlider, fxPumpShapeLabel, true);
-                    setSliderVisible(fxPumpPhaseSlider, fxPumpPhaseLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(128).withTrimmedTop(8), { &fxPumpDepthSlider, &fxPumpShapeSlider, &fxPumpPhaseSlider });
-                    break;
-
-                case FxModule::tremolo:
-                    fxTremoloEnabledButton.setVisible(true);
-                    fxTremoloRateBox.setVisible(true);
-                    fxTremoloEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    fxTremoloRateBox.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxTremoloDepthSlider, fxTremoloDepthLabel, true);
-                    setSliderVisible(fxTremoloPanSlider, fxTremoloPanLabel, true);
-                    setSliderVisible(fxTremoloShapeSlider, fxTremoloShapeLabel, true);
-                    setSliderVisible(fxTremoloPhaseSlider, fxTremoloPhaseLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxTremoloDepthSlider,
-                        &fxTremoloPanSlider,
-                        &fxTremoloShapeSlider,
-                        &fxTremoloPhaseSlider
-                    });
-                    break;
-
-                case FxModule::ring:
-                    fxRingEnabledButton.setVisible(true);
-                    fxRingEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxRingFrequencySlider, fxRingFrequencyLabel, true);
-                    setSliderVisible(fxRingDepthSlider, fxRingDepthLabel, true);
-                    setSliderVisible(fxRingMixSlider, fxRingMixLabel, true);
-                    setSliderVisible(fxRingBiasSlider, fxRingBiasLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxRingFrequencySlider,
-                        &fxRingDepthSlider,
-                        &fxRingMixSlider,
-                        &fxRingBiasSlider
-                    });
-                    break;
-
-                case FxModule::comb:
-                    fxCombEnabledButton.setVisible(true);
-                    fxCombEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxCombFrequencySlider, fxCombFrequencyLabel, true);
-                    setSliderVisible(fxCombFeedbackSlider, fxCombFeedbackLabel, true);
-                    setSliderVisible(fxCombDampingSlider, fxCombDampingLabel, true);
-                    setSliderVisible(fxCombMixSlider, fxCombMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxCombFrequencySlider,
-                        &fxCombFeedbackSlider,
-                        &fxCombDampingSlider,
-                        &fxCombMixSlider
-                    });
-                    break;
-
-                case FxModule::phaser:
-                    fxPhaserEnabledButton.setVisible(true);
-                    fxPhaserEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxPhaserRateSlider, fxPhaserRateLabel, true);
-                    setSliderVisible(fxPhaserDepthSlider, fxPhaserDepthLabel, true);
-                    setSliderVisible(fxPhaserMixSlider, fxPhaserMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxPhaserRateSlider, &fxPhaserDepthSlider, &fxPhaserMixSlider });
-                    break;
-
-                case FxModule::flanger:
-                    fxFlangerEnabledButton.setVisible(true);
-                    fxFlangerEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxFlangerRateSlider, fxFlangerRateLabel, true);
-                    setSliderVisible(fxFlangerDepthSlider, fxFlangerDepthLabel, true);
-                    setSliderVisible(fxFlangerFeedbackSlider, fxFlangerFeedbackLabel, true);
-                    setSliderVisible(fxFlangerMixSlider, fxFlangerMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxFlangerRateSlider,
-                        &fxFlangerDepthSlider,
-                        &fxFlangerFeedbackSlider,
-                        &fxFlangerMixSlider
-                    });
-                    break;
-
-                case FxModule::chorus:
-                    fxChorusEnabledButton.setVisible(true);
-                    fxChorusEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxChorusRateSlider, fxChorusRateLabel, true);
-                    setSliderVisible(fxChorusDepthSlider, fxChorusDepthLabel, true);
-                    setSliderVisible(fxChorusMixSlider, fxChorusMixLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxChorusRateSlider, &fxChorusDepthSlider, &fxChorusMixSlider });
-                    break;
-
-                case FxModule::delay:
-                    fxDelayEnabledButton.setVisible(true);
-                    fxDelaySyncButton.setVisible(true);
-                    fxDelayRateBox.setVisible(true);
-                    fxDelayEnabledButton.setBounds(detailHeader.removeFromLeft(96).reduced(3, 4));
-                    fxDelaySyncButton.setBounds(detailHeader.removeFromLeft(72).reduced(3, 4));
-                    fxDelayRateBox.setBounds(detailHeader.removeFromLeft(104).reduced(3, 4));
-                    setSliderVisible(fxDelayTimeSlider, fxDelayTimeLabel, true);
-                    setSliderVisible(fxDelayFeedbackSlider, fxDelayFeedbackLabel, true);
-                    setSliderVisible(fxDelayMixSlider, fxDelayMixLabel, true);
-                    setSliderVisible(fxSendDelaySlider, fxSendDelayLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxDelayTimeSlider, &fxDelayFeedbackSlider, &fxDelayMixSlider, &fxSendDelaySlider });
-                    break;
-
-                case FxModule::reverb:
-                    fxReverbEnabledButton.setVisible(true);
-                    fxReverbEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxReverbSizeSlider, fxReverbSizeLabel, true);
-                    setSliderVisible(fxReverbDampingSlider, fxReverbDampingLabel, true);
-                    setSliderVisible(fxReverbMixSlider, fxReverbMixLabel, true);
-                    setSliderVisible(fxSendReverbSlider, fxSendReverbLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxReverbSizeSlider, &fxReverbDampingSlider, &fxReverbMixSlider, &fxSendReverbSlider });
-                    break;
-
-                case FxModule::width:
-                    fxWidthEnabledButton.setVisible(true);
-                    fxWidthEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxWidthAmountSlider, fxWidthAmountLabel, true);
-                    setSliderVisible(fxWidthMonoCutoffSlider, fxWidthMonoCutoffLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), { &fxWidthAmountSlider, &fxWidthMonoCutoffSlider });
-                    break;
-
-                case FxModule::guard:
-                    fxGuardEnabledButton.setVisible(true);
-                    fxGuardEnabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-                    setSliderVisible(fxGuardPushSlider, fxGuardPushLabel, true);
-                    setSliderVisible(fxGuardGlueSlider, fxGuardGlueLabel, true);
-                    setSliderVisible(fxGuardPunchSlider, fxGuardPunchLabel, true);
-                    setSliderVisible(fxGuardClipMixSlider, fxGuardClipMixLabel, true);
-                    setSliderVisible(fxGuardCeilingSlider, fxGuardCeilingLabel, true);
-                    layoutKnobRow(controlsArea.removeFromTop(150), {
-                        &fxGuardPushSlider,
-                        &fxGuardGlueSlider,
-                        &fxGuardPunchSlider,
-                        &fxGuardClipMixSlider,
-                        &fxGuardCeilingSlider
-                    });
-                    break;
-            }
+            UI::FxRackPanelLayout::layout(content, {
+                futureSectionLabel,
+                hostSyncStatusLabel,
+                fxRackStatusLabel,
+                fxAddBox,
+                fxPresetBox,
+                fxMoveUpButton,
+                fxMoveDownButton,
+                fxResetOrderButton,
+                fxRemoveButton,
+                fxThrowDelayButton,
+                fxThrowSpaceButton,
+                fxThrowPumpButton,
+                fxThrowDryButton,
+                fxHoldDelayButton,
+                fxHoldSpaceButton,
+                fxHoldPumpButton,
+                fxMuteDropButton,
+                fxApplyPresetButton,
+                rackSlots,
+                static_cast<int>(selectedFxModule),
+                { fxToneEnabledButton, { fxToneTiltSlider, fxToneTiltLabel }, { fxToneLowCutSlider, fxToneLowCutLabel } },
+                {
+                    fxEqEnabledButton,
+                    { fxEqLowGainSlider, fxEqLowGainLabel },
+                    { fxEqMidGainSlider, fxEqMidGainLabel },
+                    { fxEqHighGainSlider, fxEqHighGainLabel },
+                    { fxEqTrimSlider, fxEqTrimLabel }
+                },
+                { fxDistortionEnabledButton, { fxDistortionAmountSlider, fxDistortionAmountLabel }, { fxDistortionBassSafeSlider, fxDistortionBassSafeLabel } },
+                {
+                    fxBitcrushEnabledButton,
+                    { fxBitcrushBitsSlider, fxBitcrushBitsLabel },
+                    { fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel },
+                    { fxBitcrushMixSlider, fxBitcrushMixLabel }
+                },
+                {
+                    fxPumpEnabledButton,
+                    fxPumpRateBox,
+                    fxPumpCurveBox,
+                    pumpCurveDisplay,
+                    { fxPumpDepthSlider, fxPumpDepthLabel },
+                    { fxPumpShapeSlider, fxPumpShapeLabel },
+                    { fxPumpPhaseSlider, fxPumpPhaseLabel }
+                },
+                {
+                    fxTremoloEnabledButton,
+                    fxTremoloRateBox,
+                    { fxTremoloDepthSlider, fxTremoloDepthLabel },
+                    { fxTremoloPanSlider, fxTremoloPanLabel },
+                    { fxTremoloShapeSlider, fxTremoloShapeLabel },
+                    { fxTremoloPhaseSlider, fxTremoloPhaseLabel }
+                },
+                {
+                    fxRingEnabledButton,
+                    { fxRingFrequencySlider, fxRingFrequencyLabel },
+                    { fxRingDepthSlider, fxRingDepthLabel },
+                    { fxRingMixSlider, fxRingMixLabel },
+                    { fxRingBiasSlider, fxRingBiasLabel }
+                },
+                {
+                    fxCombEnabledButton,
+                    { fxCombFrequencySlider, fxCombFrequencyLabel },
+                    { fxCombFeedbackSlider, fxCombFeedbackLabel },
+                    { fxCombDampingSlider, fxCombDampingLabel },
+                    { fxCombMixSlider, fxCombMixLabel }
+                },
+                {
+                    fxPhaserEnabledButton,
+                    { fxPhaserRateSlider, fxPhaserRateLabel },
+                    { fxPhaserDepthSlider, fxPhaserDepthLabel },
+                    { fxPhaserMixSlider, fxPhaserMixLabel }
+                },
+                {
+                    fxFlangerEnabledButton,
+                    { fxFlangerRateSlider, fxFlangerRateLabel },
+                    { fxFlangerDepthSlider, fxFlangerDepthLabel },
+                    { fxFlangerFeedbackSlider, fxFlangerFeedbackLabel },
+                    { fxFlangerMixSlider, fxFlangerMixLabel }
+                },
+                {
+                    fxChorusEnabledButton,
+                    { fxChorusRateSlider, fxChorusRateLabel },
+                    { fxChorusDepthSlider, fxChorusDepthLabel },
+                    { fxChorusMixSlider, fxChorusMixLabel }
+                },
+                {
+                    fxDelayEnabledButton,
+                    fxDelaySyncButton,
+                    fxDelayRateBox,
+                    { fxDelayTimeSlider, fxDelayTimeLabel },
+                    { fxDelayFeedbackSlider, fxDelayFeedbackLabel },
+                    { fxDelayMixSlider, fxDelayMixLabel },
+                    { fxSendDelaySlider, fxSendDelayLabel }
+                },
+                {
+                    fxReverbEnabledButton,
+                    { fxReverbSizeSlider, fxReverbSizeLabel },
+                    { fxReverbDampingSlider, fxReverbDampingLabel },
+                    { fxReverbMixSlider, fxReverbMixLabel },
+                    { fxSendReverbSlider, fxSendReverbLabel }
+                },
+                { fxWidthEnabledButton, { fxWidthAmountSlider, fxWidthAmountLabel }, { fxWidthMonoCutoffSlider, fxWidthMonoCutoffLabel } },
+                {
+                    fxGuardEnabledButton,
+                    { fxGuardPushSlider, fxGuardPushLabel },
+                    { fxGuardGlueSlider, fxGuardGlueLabel },
+                    { fxGuardPunchSlider, fxGuardPunchLabel },
+                    { fxGuardClipMixSlider, fxGuardClipMixLabel },
+                    { fxGuardCeilingSlider, fxGuardCeilingLabel }
+                }
+            });
             break;
         }
 

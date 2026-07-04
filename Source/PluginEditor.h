@@ -37,6 +37,7 @@
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
+#include "UI/HostSyncStatusLabel.h"
 #include "UI/SampleChopHeader.h"
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleFileActions.h"
@@ -48,6 +49,7 @@
 #include "UI/SampleSourceControls.h"
 #include "UI/SampleStatusLabel.h"
 #include "UI/SampleWaveformDisplay.h"
+#include "UI/SequencerEnabledButton.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternActions.h"
@@ -256,7 +258,7 @@ private:
     juce::Label sampleSourceLabel;
     juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
-    juce::Label hostSyncStatusLabel;
+    UI::HostSyncStatusLabel hostSyncStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
     juce::Label libraryFindLabel;
@@ -336,7 +338,7 @@ private:
     std::array<juce::ComboBox, 8> modSourceBoxes;
     std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
-    juce::ToggleButton sequencerEnabledButton;
+    UI::SequencerEnabledButton sequencerEnabledButton;
     juce::ToggleButton sequencerChordMemoryButton;
     juce::ToggleButton fxDistortionEnabledButton;
     juce::ToggleButton fxBitcrushEnabledButton;

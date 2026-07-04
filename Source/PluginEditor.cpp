@@ -1408,6 +1408,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
       sampleRangeControls(processorToUse.getValueTreeState()),
       sampleShapeControls(processorToUse.getValueTreeState()),
       samplePlaybackControls(processorToUse.getValueTreeState()),
+      sequencerEnabledButton(processorToUse.getValueTreeState()),
       sampleRecorderPanel(processorToUse.getValueTreeState()),
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
@@ -1552,14 +1553,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(infoDetailsLabel, "DETAILS");
     configureSectionLabel(infoFocusLabel, "OPEN A WORK AREA");
 
-    hostSyncStatusLabel.setText("INT 124 | FREE", juce::dontSendNotification);
-    hostSyncStatusLabel.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-    hostSyncStatusLabel.setJustificationType(juce::Justification::centred);
-    hostSyncStatusLabel.setMinimumHorizontalScale(0.72f);
-    hostSyncStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xff7d8b90));
-    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0x22141a1d));
-    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
-    hostSyncStatusLabel.setTooltip("Host tempo and transport phase status for sequencer and tempo-synced FX");
     addAndMakeVisible(hostSyncStatusLabel);
 
     addAndMakeVisible(sampleStatusLabel);
@@ -2818,9 +2811,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(monoButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::monoMode, monoButton));
 
-    sequencerEnabledButton.setButtonText("On");
     addAndMakeVisible(sequencerEnabledButton);
-    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerEnabled, sequencerEnabledButton));
 
     sequencerChordMemoryButton.setButtonText("Memory");
     sequencerChordMemoryButton.setTooltip("Expand live notes through the selected chord mode and voicing");
@@ -4162,9 +4153,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     sampleRangeControls.applyTheme(theme);
     sampleShapeControls.applyTheme(theme);
     controlStatusStrip.applyTheme(theme);
-    hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
-    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
-    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    hostSyncStatusLabel.applyTheme(theme);
     presetBrowserHeaderLabel.setColour(juce::Label::textColourId, theme.accent);
     presetBrowserHeaderLabel.setColour(juce::Label::backgroundColourId, theme.panelAlt);
     focusOverlayTitleLabel.setColour(juce::Label::textColourId, theme.text);
@@ -13062,42 +13051,26 @@ void NateVSTAudioProcessorEditor::updateHostSyncStatus()
 {
     const auto status = audioProcessor.getHostSyncStatus();
     const auto bpm = juce::roundToInt(juce::jlimit(20.0, 300.0, status.bpm));
-    juce::String text;
-    juce::String tooltip;
-    auto textColour = juce::Colour(0xff7d8b90);
-    auto background = juce::Colour(0x22141a1d);
-    auto outline = juce::Colour(0xff263035);
 
     if (status.positionAvailable && status.ppqAvailable && status.playing)
     {
-        text = "LOCK " + juce::String(bpm) + " | PLAY";
-        tooltip = "Host BPM and PPQ are available. SEQ, Pump, Tremolo, and synced Delay can follow Ableton transport phase. PPQ "
-            + juce::String(status.ppqPosition, 2);
-        textColour = juce::Colour(0xff8ee6c9);
-        background = juce::Colour(0x243bcfa7);
-        outline = juce::Colour(0xff3bcfa7);
+        hostSyncStatusLabel.setHostSyncStatus(UI::HostSyncStatusLabel::State::lockedPlaying,
+                                              bpm,
+                                              status.ppqPosition);
     }
     else if (status.positionAvailable)
     {
-        text = "HOST " + juce::String(bpm) + (status.playing ? " | NO PPQ" : " | STOP");
-        tooltip = status.playing
-            ? "Host tempo is available, but PPQ phase is not. Tempo-synced movement uses internal phase fallback."
-            : "Host tempo is available and transport is stopped. The sequencer waits; tempo-synced FX can audition from internal phase.";
-        textColour = juce::Colour(0xffffc29a);
-        background = juce::Colour(0x22ff8a4d);
-        outline = juce::Colour(0xff705846);
+        hostSyncStatusLabel.setHostSyncStatus(status.playing ? UI::HostSyncStatusLabel::State::hostNoPpq
+                                                             : UI::HostSyncStatusLabel::State::hostStopped,
+                                              bpm,
+                                              status.ppqPosition);
     }
     else
     {
-        text = "INT " + juce::String(bpm) + " | FREE";
-        tooltip = "No host tempo or transport position has reached the audio engine yet. Nate VST is using its internal fallback tempo.";
+        hostSyncStatusLabel.setHostSyncStatus(UI::HostSyncStatusLabel::State::free,
+                                              bpm,
+                                              status.ppqPosition);
     }
-
-    hostSyncStatusLabel.setText(text, juce::dontSendNotification);
-    hostSyncStatusLabel.setTooltip(tooltip);
-    hostSyncStatusLabel.setColour(juce::Label::textColourId, textColour);
-    hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, background);
-    hostSyncStatusLabel.setColour(juce::Label::outlineColourId, outline);
 }
 
 void NateVSTAudioProcessorEditor::updateModMatrixRows()

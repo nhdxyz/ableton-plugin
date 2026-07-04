@@ -64,6 +64,7 @@ target_sources(NateVST
         Source/UI/FxRackPanelLayout.cpp
         Source/UI/FxRackOrderControls.cpp
         Source/UI/FxRackRow.cpp
+        Source/UI/HostSyncStatusLabel.cpp
         Source/UI/HouseLayerRackDisplay.cpp
         Source/UI/HomeOverviewDisplay.cpp
         Source/UI/HomeSignalFlowDisplay.cpp
@@ -107,6 +108,7 @@ target_sources(NateVST
         Source/UI/SampleSourceControls.cpp
         Source/UI/SampleStatusLabel.cpp
         Source/UI/SampleWaveformDisplay.cpp
+        Source/UI/SequencerEnabledButton.cpp
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp
         Source/UI/SequencerRateControls.cpp

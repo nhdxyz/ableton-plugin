@@ -57,6 +57,7 @@ target_sources(NateVST
         Source/Sequencer/PatternSequencer.cpp
         Source/Effects/EffectsRack.cpp
         Source/UI/ClubMonitorDisplay.cpp
+        Source/UI/ControlStatusStrip.cpp
         Source/UI/FilterResponseDisplay.cpp
         Source/UI/FocusOverlayPanel.cpp
         Source/UI/FxRackRow.cpp

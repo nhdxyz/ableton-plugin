@@ -1596,26 +1596,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     hostSyncStatusLabel.setTooltip("Host tempo and transport phase status for sequencer and tempo-synced FX");
     addAndMakeVisible(hostSyncStatusLabel);
 
-    selectedControlHeaderLabel.setText("CONTROL", juce::dontSendNotification);
-    selectedControlHeaderLabel.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-    selectedControlHeaderLabel.setJustificationType(juce::Justification::centred);
-    selectedControlHeaderLabel.setMinimumHorizontalScale(0.72f);
-    selectedControlHeaderLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
-    selectedControlHeaderLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0x33141a1d));
-    selectedControlHeaderLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
-    selectedControlHeaderLabel.setTooltip("Last changed control, automation ID, and modulation route status");
-    addAndMakeVisible(selectedControlHeaderLabel);
-
-    selectedControlStatusLabel.setText("Touch a control for value, automation ID, and modulation routes", juce::dontSendNotification);
-    selectedControlStatusLabel.setFont(juce::FontOptions(11.0f));
-    selectedControlStatusLabel.setJustificationType(juce::Justification::centredLeft);
-    selectedControlStatusLabel.setMinimumHorizontalScale(0.62f);
-    selectedControlStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
-    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xee101619));
-    selectedControlStatusLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff263035));
-    selectedControlStatusLabel.setTooltip("Last changed control, automation ID, value, and active modulation routes");
-    addAndMakeVisible(selectedControlStatusLabel);
-
     sampleNameLabel.setText("No sample", juce::dontSendNotification);
     sampleNameLabel.setJustificationType(juce::Justification::centredLeft);
     sampleNameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -3913,18 +3893,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     infoOpenFxButton.onClick = [this] { setActivePanel(Panel::effects); };
     infoOpenLibraryButton.setTooltip("Open preset save, search, categories, ratings, and browser tools");
     infoOpenLibraryButton.onClick = [this] { setActivePanel(Panel::library); };
-    undoEditButton.setTooltip("Undo the last captured sound-design edit");
-    undoEditButton.onClick = [this] { triggerGlobalUndo(); };
-    undoEditButton.setEnabled(false);
-    redoEditButton.setTooltip("Redo the last undone sound-design edit");
-    redoEditButton.onClick = [this] { triggerGlobalRedo(); };
-    redoEditButton.setEnabled(false);
-    selectedControlAddModButton.setTooltip("Touch a modulatable control, then add the selected MOD source to it");
-    selectedControlAddModButton.onClick = [this] { addModRouteForSelectedControl(); };
-    selectedControlAddModButton.setEnabled(false);
-    selectedControlOpenModButton.setTooltip("Open the MOD panel focused on the selected control");
-    selectedControlOpenModButton.onClick = [this] { focusSelectedControlModDestination(); };
-    selectedControlOpenModButton.setEnabled(false);
+    controlStatusStrip.onUndoClicked = [this] { triggerGlobalUndo(); };
+    controlStatusStrip.onRedoClicked = [this] { triggerGlobalRedo(); };
+    controlStatusStrip.onAddModClicked = [this] { addModRouteForSelectedControl(); };
+    controlStatusStrip.onOpenModClicked = [this] { focusSelectedControlModDestination(); };
     modMacroAssignAddButton.setTooltip("Add or update this macro assignment");
     modMacroAssignAddButton.onClick = [this] { addMacroAssignment(false); };
     modMacroAssignReplaceButton.setTooltip("Replace all assignments for the selected macro with this one destination");
@@ -4115,10 +4087,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(infoOpenModButton);
     addAndMakeVisible(infoOpenFxButton);
     addAndMakeVisible(infoOpenLibraryButton);
-    addAndMakeVisible(undoEditButton);
-    addAndMakeVisible(redoEditButton);
-    addAndMakeVisible(selectedControlAddModButton);
-    addAndMakeVisible(selectedControlOpenModButton);
+    addAndMakeVisible(controlStatusStrip);
     addAndMakeVisible(modMacroAssignAddButton);
     addAndMakeVisible(modMacroAssignReplaceButton);
     addAndMakeVisible(modMacroAssignClearButton);
@@ -4226,7 +4195,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     for (auto* label : {
              &sampleNameLabel, &presetStatusLabel, &randomStatusLabel,
              &modMatrixStatusLabel, &modInspectorStatusLabel, &modMacroAssignStatusLabel,
-             &performanceStatusLabel, &selectedControlStatusLabel, &fxRackStatusLabel })
+             &performanceStatusLabel, &fxRackStatusLabel })
     {
         label->setColour(juce::Label::textColourId, theme.textMuted);
     }
@@ -4239,11 +4208,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
         label->setColour(juce::Label::textColourId, theme.textDim);
     }
 
-    selectedControlHeaderLabel.setColour(juce::Label::textColourId, theme.accent);
-    selectedControlHeaderLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.28f));
-    selectedControlHeaderLabel.setColour(juce::Label::outlineColourId, theme.outline);
-    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId, theme.panelAlt.withAlpha(0.93f));
-    selectedControlStatusLabel.setColour(juce::Label::outlineColourId, theme.outline);
+    controlStatusStrip.applyTheme(theme);
     hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
     hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
     hostSyncStatusLabel.setColour(juce::Label::outlineColourId, theme.outline);
@@ -4554,18 +4519,8 @@ void NateVSTAudioProcessorEditor::resized()
     auto selectedControlRow = content.withHeight(28);
     const auto selectedControlWidth = juce::jlimit(520, content.getWidth(), content.getWidth() - 260);
     auto selectedControlArea = selectedControlRow.removeFromRight(selectedControlWidth).reduced(0, 2);
-    selectedControlHeaderLabel.setVisible(true);
-    selectedControlStatusLabel.setVisible(true);
-    undoEditButton.setVisible(true);
-    redoEditButton.setVisible(true);
-    selectedControlAddModButton.setVisible(true);
-    selectedControlOpenModButton.setVisible(true);
-    selectedControlHeaderLabel.setBounds(selectedControlArea.removeFromLeft(72).reduced(2, 0));
-    undoEditButton.setBounds(selectedControlArea.removeFromRight(78).reduced(2, 0));
-    redoEditButton.setBounds(selectedControlArea.removeFromRight(78).reduced(2, 0));
-    selectedControlAddModButton.setBounds(selectedControlArea.removeFromRight(58).reduced(2, 0));
-    selectedControlOpenModButton.setBounds(selectedControlArea.removeFromRight(50).reduced(2, 0));
-    selectedControlStatusLabel.setBounds(selectedControlArea.reduced(2, 0));
+    controlStatusStrip.setVisible(true);
+    controlStatusStrip.setBounds(selectedControlArea);
     refreshGlobalEditControls();
 
     switch (activePanel)
@@ -6115,12 +6070,7 @@ void NateVSTAudioProcessorEditor::resized()
         }
     }
 
-    selectedControlHeaderLabel.toFront(false);
-    selectedControlStatusLabel.toFront(false);
-    undoEditButton.toFront(false);
-    redoEditButton.toFront(false);
-    selectedControlAddModButton.toFront(false);
-    selectedControlOpenModButton.toFront(false);
+    controlStatusStrip.toFront(false);
     layoutFocusOverlay();
 }
 
@@ -10789,14 +10739,12 @@ void NateVSTAudioProcessorEditor::updateSelectedControlInspector(const juce::Str
     const auto summary = labelText + " " + valueText + " | " + parameterText + " | " + routeText;
     const auto hasActiveRoutes = ! routeText.startsWith("No ");
 
-    selectedControlStatusLabel.setText(summary, juce::dontSendNotification);
-    selectedControlStatusLabel.setTooltip(labelText + "\nValue: " + valueText
-                                          + "\nAutomation ID: " + parameterText
-                                          + "\n" + routeText);
-    selectedControlStatusLabel.setColour(juce::Label::textColourId,
-                                         hasActiveRoutes ? juce::Colour(0xffd9fff1) : juce::Colour(0xffa8b6b8));
-    selectedControlStatusLabel.setColour(juce::Label::backgroundColourId,
-                                         hasActiveRoutes ? juce::Colour(0xee10221e) : juce::Colour(0xee101619));
+    controlStatusStrip.setStatus(summary,
+                                 labelText + "\nValue: " + valueText
+                                     + "\nAutomation ID: " + parameterText
+                                     + "\n" + routeText,
+                                 hasActiveRoutes ? juce::Colour(0xffd9fff1) : juce::Colour(0xffa8b6b8),
+                                 hasActiveRoutes ? juce::Colour(0xee10221e) : juce::Colour(0xee101619));
     updateSelectedControlActionState();
 }
 
@@ -10814,14 +10762,13 @@ void NateVSTAudioProcessorEditor::updateSelectedControlActionState()
         : juce::String("selected source");
     const auto destinationName = canTarget ? destinationChoices[destinationIndex] : juce::String("selected control");
 
-    selectedControlAddModButton.setEnabled(canTarget);
-    selectedControlOpenModButton.setEnabled(canTarget);
-    selectedControlAddModButton.setTooltip(canTarget
-                                               ? "Add " + sourceName + " to " + destinationName + " using the next free MOD slot"
-                                               : "Touch a control that is available in the MOD matrix");
-    selectedControlOpenModButton.setTooltip(canTarget
-                                                ? "Open MOD focused on " + destinationName
-                                                : "Touch a control that is available in the MOD matrix");
+    controlStatusStrip.setModActionState(canTarget,
+                                         canTarget
+                                             ? "Add " + sourceName + " to " + destinationName + " using the next free MOD slot"
+                                             : "Touch a control that is available in the MOD matrix",
+                                         canTarget
+                                             ? "Open MOD focused on " + destinationName
+                                             : "Touch a control that is available in the MOD matrix");
 }
 
 void NateVSTAudioProcessorEditor::captureGlobalEdit(const juce::String& label)
@@ -10868,12 +10815,12 @@ void NateVSTAudioProcessorEditor::refreshGlobalEditControls()
     const auto canRedo = audioProcessor.canRedoGlobalEdit();
     const auto summary = audioProcessor.getGlobalEditHistorySummary();
 
-    undoEditButton.setEnabled(canUndo);
-    redoEditButton.setEnabled(canRedo);
-    undoEditButton.setTooltip(canUndo ? "Undo the last captured sound-design edit\n" + summary
-                                      : "No captured sound-design edit to undo");
-    redoEditButton.setTooltip(canRedo ? "Redo the last undone sound-design edit\n" + summary
-                                      : "No captured sound-design edit to redo");
+    controlStatusStrip.setHistoryActionState(canUndo,
+                                             canRedo,
+                                             canUndo ? "Undo the last captured sound-design edit\n" + summary
+                                                     : "No captured sound-design edit to undo",
+                                             canRedo ? "Redo the last undone sound-design edit\n" + summary
+                                                     : "No captured sound-design edit to redo");
 }
 
 void NateVSTAudioProcessorEditor::refreshAfterGlobalEditRestore(const juce::String& statusText)
@@ -11335,7 +11282,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
-        &hostSyncStatusLabel, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
+        &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel, &sequencerStepEditorLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,

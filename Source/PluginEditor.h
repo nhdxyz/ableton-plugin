@@ -2,6 +2,7 @@
 
 #include "PluginProcessor.h"
 #include "UI/ClubMonitorDisplay.h"
+#include "UI/ControlStatusStrip.h"
 #include "UI/FilterResponseDisplay.h"
 #include "UI/FocusOverlayPanel.h"
 #include "UI/FxRackRow.h"
@@ -273,8 +274,6 @@ private:
     juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
-    juce::Label selectedControlHeaderLabel;
-    juce::Label selectedControlStatusLabel;
     juce::Label futureSectionLabel;
     juce::Label librarySectionLabel;
     juce::Label libraryFindLabel;
@@ -686,10 +685,7 @@ private:
     std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
     std::array<juce::TextButton, 13> sequencerStepEditorButtons;
     UI::PanelTabBar panelTabBar;
-    juce::TextButton undoEditButton { "Undo Edit" };
-    juce::TextButton redoEditButton { "Redo Edit" };
-    juce::TextButton selectedControlAddModButton { "MOD+" };
-    juce::TextButton selectedControlOpenModButton { "MOD" };
+    UI::ControlStatusStrip controlStatusStrip;
     juce::TextButton sineWaveButton { "Sine" };
     juce::TextButton sawWaveButton { "Saw" };
     juce::TextButton squareWaveButton { "Square" };

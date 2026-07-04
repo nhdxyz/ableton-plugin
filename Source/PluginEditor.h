@@ -31,7 +31,9 @@
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
 #include "UI/SampleChopPanel.h"
+#include "UI/SampleFileActions.h"
 #include "UI/SampleRecorderPanel.h"
+#include "UI/SampleRecipeActions.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
@@ -665,10 +667,8 @@ private:
     juce::TextButton captureSnapshotCButton { "Set C" };
     juce::TextButton recallSnapshotDButton { "D" };
     juce::TextButton captureSnapshotDButton { "Set D" };
-    juce::TextButton loadSampleButton { "Load" };
-    juce::TextButton clearSampleButton { "Clear" };
-    juce::TextButton randomCutButton { "Rand Cut" };
-    juce::TextButton ukgChopButton { "UKG Chop" };
+    UI::SampleFileActions sampleFileActions;
+    UI::SampleRecipeActions sampleRecipeActions;
     juce::TextButton randomSequencerButton { "Rand Seq" };
     juce::TextButton mutateSequencerButton { "Vary" };
     juce::TextButton undoSequencerButton { "Undo" };

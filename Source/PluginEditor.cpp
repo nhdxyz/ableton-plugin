@@ -3340,8 +3340,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         audioProcessor.capturePerformanceSnapshot(3);
         updatePerformanceSnapshotButtons();
     };
-    loadSampleButton.onClick = [this] { chooseSampleFile(); };
-    clearSampleButton.onClick = [this]
+    sampleFileActions.onLoadClicked = [this] { chooseSampleFile(); };
+    sampleFileActions.onClearClicked = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
@@ -3492,7 +3492,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleRecorderStatus();
         returnKeyboardFocusToPiano();
     };
-    randomCutButton.onClick = [this]
+    sampleRecipeActions.onRandomCutClicked = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
@@ -3501,7 +3501,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         updateSampleWaveformDisplay();
         returnKeyboardFocusToPiano();
     };
-    ukgChopButton.onClick = [this]
+    sampleRecipeActions.onUkgChopClicked = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
@@ -4012,12 +4012,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(captureSnapshotCButton);
     addAndMakeVisible(recallSnapshotDButton);
     addAndMakeVisible(captureSnapshotDButton);
-    addAndMakeVisible(loadSampleButton);
-    addAndMakeVisible(clearSampleButton);
+    addAndMakeVisible(sampleFileActions);
     addAndMakeVisible(sampleChopPanel);
     addAndMakeVisible(sampleRecorderPanel);
-    addAndMakeVisible(randomCutButton);
-    addAndMakeVisible(ukgChopButton);
+    addAndMakeVisible(sampleRecipeActions);
     addAndMakeVisible(randomSequencerButton);
     addAndMakeVisible(mutateSequencerButton);
     addAndMakeVisible(undoSequencerButton);
@@ -5146,10 +5144,8 @@ void NateVSTAudioProcessorEditor::resized()
                 sampleChopLabel,
                 sampleShapeLabel,
                 sampleNameLabel,
-                loadSampleButton,
-                clearSampleButton,
-                randomCutButton,
-                ukgChopButton,
+                sampleFileActions,
+                sampleRecipeActions,
                 sampleChopExpandButton,
                 sampleEnabledButton,
                 sampleReverseButton,
@@ -10750,8 +10746,8 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton, &randomLabPageStrip,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
-        &loadSampleButton, &clearSampleButton, &sampleChopPanel, &sampleRecorderPanel,
-        &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
+        &sampleFileActions, &sampleChopPanel, &sampleRecorderPanel,
+        &sampleRecipeActions, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
         &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,

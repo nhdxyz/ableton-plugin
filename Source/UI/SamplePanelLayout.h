@@ -1,7 +1,9 @@
 #pragma once
 
 #include "SampleChopPanel.h"
+#include "SampleFileActions.h"
 #include "SampleRecorderPanel.h"
+#include "SampleRecipeActions.h"
 #include "SampleWaveformDisplay.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -22,10 +24,8 @@ struct Components
     juce::Label& shapeLabel;
     juce::Label& sampleNameLabel;
 
-    juce::TextButton& loadButton;
-    juce::TextButton& clearButton;
-    juce::TextButton& randomCutButton;
-    juce::TextButton& ukgChopButton;
+    SampleFileActions& fileActions;
+    SampleRecipeActions& recipeActions;
     juce::TextButton& chopExpandButton;
 
     juce::ToggleButton& enabledButton;

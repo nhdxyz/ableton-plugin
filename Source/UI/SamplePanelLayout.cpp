@@ -33,11 +33,9 @@ void layout(juce::Rectangle<int> content, Components components)
     components.sourceLabel.setVisible(true);
     components.chopLabel.setVisible(true);
     components.shapeLabel.setVisible(true);
-    components.loadButton.setVisible(true);
-    components.clearButton.setVisible(true);
+    components.fileActions.setVisible(true);
     components.recorderPanel.setVisible(true);
-    components.randomCutButton.setVisible(true);
-    components.ukgChopButton.setVisible(true);
+    components.recipeActions.setVisible(true);
     components.enabledButton.setVisible(true);
     components.reverseButton.setVisible(true);
     components.modeBox.setVisible(true);
@@ -73,9 +71,7 @@ void layout(juce::Rectangle<int> content, Components components)
     auto chopArea = workspace.reduced(18, 12);
 
     components.sourceLabel.setBounds(sourceArea.removeFromTop(22));
-    auto actionTop = sourceArea.removeFromTop(30);
-    components.loadButton.setBounds(actionTop.removeFromLeft(actionTop.getWidth() / 2).reduced(3, 4));
-    components.clearButton.setBounds(actionTop.reduced(3, 4));
+    components.fileActions.setBounds(sourceArea.removeFromTop(30));
     auto actionBottom = sourceArea.removeFromTop(30);
     components.enabledButton.setBounds(actionBottom.removeFromLeft(actionBottom.getWidth() / 2).reduced(3, 4));
     components.reverseButton.setBounds(actionBottom.reduced(3, 4));
@@ -91,8 +87,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.stutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
     components.stutterRateBox.setBounds(stutterRow.reduced(3, 4));
     auto cutRecipeRow = sourceArea.removeFromTop(32).withTrimmedTop(2);
-    components.randomCutButton.setBounds(cutRecipeRow.removeFromLeft(cutRecipeRow.getWidth() / 2).reduced(3, 4));
-    components.ukgChopButton.setBounds(cutRecipeRow.reduced(3, 4));
+    components.recipeActions.setBounds(cutRecipeRow);
 
     components.shapeLabel.setBounds(sourceArea.removeFromTop(18).withTrimmedLeft(4));
     if (sourceArea.getHeight() < 138)

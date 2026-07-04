@@ -3647,13 +3647,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     {
         return beginSequencerMidiDrag(sourceComponent, true);
     };
-    sequencerSceneChainLiveButton.setTooltip("Play captured A/B/Fill/Drop scene steps as a live 2/4-bar chain");
-    sequencerSceneChainLiveButton.setClickingTogglesState(true);
-    sequencerSceneChainLiveButton.onClick = [this]
+    sequencerSceneChainControls.onLiveToggled = [this] (bool shouldEnable)
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
-        const auto shouldEnable = sequencerSceneChainLiveButton.getToggleState();
         audioProcessor.setSequencerSceneChainPlaybackEnabled(shouldEnable);
         updateSequencerSceneButtons();
         const auto chainLength = audioProcessor.getSequencerSceneChainPlaybackLength();
@@ -3661,9 +3658,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                             ? ("Live chain " + juce::String(juce::jmax(1, chainLength)) + " bar")
                             : "Live chain off");
     };
-    addAndMakeVisible(sequencerSceneChainLiveButton);
-    sequencerSceneChainLengthButton.setTooltip("Set scene-chain MIDI/live length: Auto, forced 2 bars, or forced 4 bars");
-    sequencerSceneChainLengthButton.onClick = [this]
+    sequencerSceneChainControls.onLengthCycle = [this]
     {
         releaseRandomCandidateAudition(false);
         releasePresetAuditionNote();
@@ -3674,7 +3669,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         const auto modeText = nextBars == 0 ? juce::String("Auto") : juce::String(nextBars) + " Bar";
         setRandomStatus("Chain length " + modeText);
     };
-    addAndMakeVisible(sequencerSceneChainLengthButton);
+    addAndMakeVisible(sequencerSceneChainControls);
     applyGrooveTransformButton.setTooltip("Apply the selected groove transform to the current sequence");
     applyGrooveTransformButton.onClick = [this]
     {
@@ -5208,7 +5203,7 @@ void NateVSTAudioProcessorEditor::resized()
                 rotateSequencerRightButton,
                 exportSequencerMidiButton,
                 exportSequencerChainButton,
-                sequencerSceneChainLiveButton,
+                sequencerSceneChainControls,
                 applyGrooveTransformButton,
                 randomSequencerButton,
                 mutateSequencerButton,
@@ -10464,7 +10459,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceFrameMoveLeftButton.setVisible(showSourceLayerEditor);
     sourceFrameMoveRightButton.setVisible(showSourceLayerEditor);
     expandedSequencerGrid.setVisible(showSequencerEditor);
-    sequencerSceneChainLengthButton.setVisible(showSequencerEditor);
+    sequencerSceneChainControls.setVisible(showSequencerEditor);
 
     if (! showOverlay)
         return;
@@ -10538,7 +10533,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     else if (showSequencerEditor)
     {
         auto chainRow = content.removeFromTop(38).withTrimmedTop(2);
-        sequencerSceneChainLengthButton.setBounds(chainRow.removeFromLeft(104).reduced(4));
+        sequencerSceneChainControls.setBounds(chainRow.removeFromLeft(juce::jlimit(148, 210, content.getWidth() / 4)).reduced(4, 2));
         expandedSequencerGrid.setBounds(content.reduced(8, 8));
     }
 
@@ -10570,7 +10565,7 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     sourceFrameMoveLeftButton.toFront(false);
     sourceFrameMoveRightButton.toFront(false);
     expandedSequencerGrid.toFront(false);
-    sequencerSceneChainLengthButton.toFront(false);
+    sequencerSceneChainControls.toFront(false);
     focusOverlayCloseButton.toFront(false);
 }
 
@@ -10768,7 +10763,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &loadSampleButton, &clearSampleButton, &sampleChopPanel, &sampleRecorderPanel,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton, &sequencerSceneControls,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
@@ -14642,17 +14637,7 @@ void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
     const auto liveChainEnabled = audioProcessor.isSequencerSceneChainPlaybackEnabled();
     const auto liveChainLength = audioProcessor.getSequencerSceneChainPlaybackLength();
     const auto chainBars = audioProcessor.getSequencerSceneChainClipBars();
-    sequencerSceneChainLiveButton.setToggleState(liveChainEnabled, juce::dontSendNotification);
-    sequencerSceneChainLiveButton.setButtonText(liveChainEnabled
-                                                   ? "Live " + juce::String(juce::jmax(1, liveChainLength))
-                                                   : "Live");
-    sequencerSceneChainLiveButton.setTooltip(liveChainEnabled
-                                                 ? "Live scene-chain playback is following captured scene steps"
-                                                 : "Play captured A/B/Fill/Drop scene steps as a live 2/4-bar chain");
-    sequencerSceneChainLengthButton.setButtonText(chainBars == 0 ? "Auto" : juce::String(chainBars) + " Bar");
-    sequencerSceneChainLengthButton.setTooltip(chainBars == 0
-                                                   ? "Auto chain length follows captured scenes; click for forced 2 bars"
-                                                   : "Forced " + juce::String(chainBars) + "-bar scene-chain MIDI/live length; click to cycle");
+    sequencerSceneChainControls.setChainState(liveChainEnabled, liveChainLength, chainBars);
 
     for (size_t index = 0; index < UI::SequencerSceneControls::sceneCount; ++index)
     {
@@ -14902,7 +14887,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
     const auto sequencerVisible = anyComponentVisible(sequencerGrid,
                                                       expandedSequencerGrid,
                                                       sequencerRootValueLabel,
-                                                      sequencerSceneChainLiveButton);
+                                                      sequencerSceneChainControls);
     if (sequencerVisible)
     {
         updateSequencerSceneButtons();

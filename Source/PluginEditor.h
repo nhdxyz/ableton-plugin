@@ -32,6 +32,7 @@
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleWaveformDisplay.h"
+#include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerStepEditor.h"
 #include "UI/StereoFieldDisplay.h"
@@ -680,8 +681,7 @@ private:
     juce::TextButton rotateSequencerRightButton { "Rot >" };
     ExternalFileDragButton exportSequencerMidiButton { "MIDI" };
     ExternalFileDragButton exportSequencerChainButton { "Chain" };
-    juce::TextButton sequencerSceneChainLiveButton { "Live" };
-    juce::TextButton sequencerSceneChainLengthButton { "Auto" };
+    UI::SequencerSceneChainControls sequencerSceneChainControls;
     juce::TextButton applyGrooveTransformButton { "Shape" };
     UI::SequencerSceneControls sequencerSceneControls;
     UI::PanelTabBar panelTabBar;

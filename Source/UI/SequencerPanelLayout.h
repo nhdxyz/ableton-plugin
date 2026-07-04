@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SequencerSceneChainControls.h"
 #include "SequencerSceneControls.h"
 #include "SequencerStepEditor.h"
 #include "StepSequencerGrid.h"
@@ -33,7 +34,7 @@ struct Components
     juce::TextButton& rotateRightButton;
     juce::TextButton& exportMidiButton;
     juce::TextButton& exportChainButton;
-    juce::TextButton& sceneChainLiveButton;
+    SequencerSceneChainControls& sceneChainControls;
     juce::TextButton& applyGrooveTransformButton;
     juce::TextButton& randomButton;
     juce::TextButton& mutateButton;

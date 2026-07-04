@@ -55,7 +55,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.rotateRightButton.setVisible(true);
     components.exportMidiButton.setVisible(true);
     components.exportChainButton.setVisible(true);
-    components.sceneChainLiveButton.setVisible(true);
+    components.sceneChainControls.setVisible(true);
     components.applyGrooveTransformButton.setVisible(true);
     components.randomButton.setVisible(true);
     components.mutateButton.setVisible(true);
@@ -130,7 +130,7 @@ void layout(juce::Rectangle<int> content, Components components)
         auto exportRow = controlArea.removeFromTop(34).withTrimmedTop(2);
         components.exportMidiButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 3).reduced(4));
         components.exportChainButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 2).reduced(4));
-        components.sceneChainLiveButton.setBounds(exportRow.reduced(4));
+        components.sceneChainControls.setBounds(exportRow.reduced(2, 1));
     }
     else
     {
@@ -139,7 +139,7 @@ void layout(juce::Rectangle<int> content, Components components)
         components.rotateRightButton.setVisible(false);
         components.exportMidiButton.setVisible(false);
         components.exportChainButton.setVisible(false);
-        components.sceneChainLiveButton.setVisible(false);
+        components.sceneChainControls.setVisible(false);
         components.sceneControls.setVisible(false);
     }
 

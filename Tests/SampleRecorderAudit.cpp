@@ -747,6 +747,22 @@ int main()
         return 1;
     }
 
+    juce::AudioBuffer<float> newestTake;
+    if (! readAudioFile(juce::File(secondTakePath), newestTake)
+        || newestTake.getNumSamples() < 1024)
+    {
+        std::cerr << "Could not read newest recorder take after double-buffered capture\n";
+        return 1;
+    }
+
+    const auto newestMarker = newestTake.getSample(0, newestTake.getNumSamples() / 2);
+    if (std::abs(newestMarker - 0.19f) > 0.0025f)
+    {
+        std::cerr << "Newest recorder take has stale or wrong audio after buffer swap: "
+                  << newestMarker << '\n';
+        return 1;
+    }
+
     for (const auto& takePath : { firstTakePath, secondTakePath })
     {
         const juce::File takeFile(takePath);

@@ -392,9 +392,12 @@ void appendVisibleLayoutIssues(const juce::Component& root,
                        + boundsInEditor.toString() + " outside " + editorBounds.toString());
         }
 
-        // Viewport contents can be virtual/clipped rows; audit the viewport shell, not its scroll contents.
-        if (dynamic_cast<const juce::Viewport*>(child) == nullptr)
+        // Viewport contents and slider internals are framework-managed; audit their shells only.
+        if (dynamic_cast<const juce::Viewport*>(child) == nullptr
+            && dynamic_cast<const juce::Slider*>(child) == nullptr)
+        {
             appendVisibleLayoutIssues(root, *child, panelName, childPath, issues);
+        }
     }
 }
 
@@ -10715,7 +10718,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
         &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton, &sequencerRootDownButton, &sequencerRootUpButton,
         &previousPresetButton, &nextPresetButton,
-        &savePresetButton, &presetPrimaryActions, &refreshPresetsButton, &presetCompareActions, &candidateFavoriteButton,
+        &savePresetButton, &presetPrimaryActions, &presetQuickFilterBar, &refreshPresetsButton, &presetCompareActions, &candidateFavoriteButton,
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxRackOrderControls, &fxPerformanceControls,

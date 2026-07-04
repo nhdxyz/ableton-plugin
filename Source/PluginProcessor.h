@@ -359,10 +359,12 @@ private:
     mutable juce::CriticalSection sampleCaptureTakeLock;
     std::vector<juce::File> sampleCaptureTakeFiles;
     juce::String selectedSampleCaptureTakePath;
-    juce::AudioBuffer<float> sampleCaptureBuffer;
+    static constexpr size_t sampleCaptureBufferBankSize = 2;
+    std::array<juce::AudioBuffer<float>, sampleCaptureBufferBankSize> sampleCaptureBuffers;
     juce::AudioBuffer<float> sampleCapturePreRollBuffer;
     std::atomic<bool> sampleCaptureEnabled { false };
     std::atomic<bool> sampleCaptureWaitingForThreshold { false };
+    std::atomic<int> activeSampleCaptureBufferIndex { 0 };
     std::atomic<int> sampleCaptureActiveWriters { 0 };
     std::atomic<int> sampleCaptureWritePosition { 0 };
     std::atomic<int> sampleCaptureSamplesRecorded { 0 };
@@ -444,6 +446,9 @@ private:
     void captureSequencerUndoState();
     void setParameterPlainValue(const juce::String& parameterID, float plainValue);
     void resetSampleParametersForNewSource(const juce::String& path);
+    juce::AudioBuffer<float>& getActiveSampleCaptureBuffer() noexcept;
+    const juce::AudioBuffer<float>& getActiveSampleCaptureBuffer() const noexcept;
+    int getNextSampleCaptureBufferIndex() const noexcept;
     void updateSampleCaptureSourcePeak(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     float getSampleCaptureThresholdGain() const noexcept;
     int calculateSampleCaptureTargetSamples() const;

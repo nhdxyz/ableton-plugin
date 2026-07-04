@@ -849,12 +849,16 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     const auto captureChannels = juce::jlimit(1,
                                               2,
                                               juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()));
-    sampleCaptureBuffer.setSize(captureChannels,
-                                juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxSeconds * sampleCaptureSampleRate))));
-    sampleCaptureBuffer.clear();
+    for (auto& captureBuffer : sampleCaptureBuffers)
+    {
+        captureBuffer.setSize(captureChannels,
+                              juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxSeconds * sampleCaptureSampleRate))));
+        captureBuffer.clear();
+    }
     sampleCapturePreRollBuffer.setSize(captureChannels,
                                        juce::jmax(1, static_cast<int>(std::round(sampleCaptureMaxPreRollSeconds * sampleCaptureSampleRate))));
     sampleCapturePreRollBuffer.clear();
+    activeSampleCaptureBufferIndex.store(0, std::memory_order_relaxed);
     sampleCaptureActiveWriters.store(0, std::memory_order_relaxed);
     sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
     sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
@@ -1650,13 +1654,17 @@ bool NateVSTAudioProcessor::hasMissingSampleReference() const
 
 void NateVSTAudioProcessor::beginSampleCapture()
 {
-    if (sampleCaptureBuffer.getNumSamples() <= 0 || sampleCaptureBuffer.getNumChannels() <= 0)
-        return;
-
     sampleCaptureEnabled.store(false, std::memory_order_release);
     waitForSampleCaptureWritersToFinish();
-    sampleCaptureBuffer.clear();
+
+    const auto nextCaptureBufferIndex = getNextSampleCaptureBufferIndex();
+    auto& captureBuffer = sampleCaptureBuffers[static_cast<size_t>(nextCaptureBufferIndex)];
+    if (captureBuffer.getNumSamples() <= 0 || captureBuffer.getNumChannels() <= 0)
+        return;
+
+    captureBuffer.clear();
     sampleCapturePreRollBuffer.clear();
+    activeSampleCaptureBufferIndex.store(nextCaptureBufferIndex, std::memory_order_release);
     sampleCaptureWritePosition.store(0, std::memory_order_relaxed);
     sampleCaptureSamplesRecorded.store(0, std::memory_order_relaxed);
     sampleCaptureSourcePeak.store(0.0f, std::memory_order_relaxed);
@@ -1694,7 +1702,7 @@ float NateVSTAudioProcessor::getSampleCaptureDurationSeconds() const noexcept
 float NateVSTAudioProcessor::getSampleCaptureCapacitySeconds() const noexcept
 {
     const auto sampleRate = sampleCaptureSampleRate > 0.0 ? sampleCaptureSampleRate : 44100.0;
-    return static_cast<float>(sampleCaptureBuffer.getNumSamples()) / static_cast<float>(sampleRate);
+    return static_cast<float>(getActiveSampleCaptureBuffer().getNumSamples()) / static_cast<float>(sampleRate);
 }
 
 int NateVSTAudioProcessor::getSampleCaptureSourceIndex() const noexcept
@@ -1810,14 +1818,15 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_release);
     waitForSampleCaptureWritersToFinish();
 
+    const auto& captureBuffer = getActiveSampleCaptureBuffer();
     const auto availableSamples = juce::jlimit(0,
-                                               sampleCaptureBuffer.getNumSamples(),
+                                               captureBuffer.getNumSamples(),
                                                sampleCaptureSamplesRecorded.load(std::memory_order_acquire));
-    if (availableSamples < 64 || sampleCaptureBuffer.getNumChannels() <= 0)
+    if (availableSamples < 64 || captureBuffer.getNumChannels() <= 0)
         return false;
 
-    const auto captureChannels = juce::jlimit(1, 2, sampleCaptureBuffer.getNumChannels());
-    const auto maxSamples = sampleCaptureBuffer.getNumSamples();
+    const auto captureChannels = juce::jlimit(1, 2, captureBuffer.getNumChannels());
+    const auto maxSamples = captureBuffer.getNumSamples();
     const auto writePosition = juce::jlimit(0,
                                             juce::jmax(0, maxSamples - 1),
                                             sampleCaptureWritePosition.load(std::memory_order_acquire));
@@ -1832,9 +1841,9 @@ bool NateVSTAudioProcessor::commitSampleCaptureToSampler()
     const auto secondSpan = availableSamples - firstSpan;
     for (auto channel = 0; channel < captureChannels; ++channel)
     {
-        captured.copyFrom(channel, 0, sampleCaptureBuffer, channel, sourceStart, firstSpan);
+        captured.copyFrom(channel, 0, captureBuffer, channel, sourceStart, firstSpan);
         if (secondSpan > 0)
-            captured.copyFrom(channel, firstSpan, sampleCaptureBuffer, channel, 0, secondSpan);
+            captured.copyFrom(channel, firstSpan, captureBuffer, channel, 0, secondSpan);
     }
 
     const auto timestamp = juce::Time::getCurrentTime().formatted("%Y%m%d-%H%M%S");
@@ -1961,6 +1970,30 @@ juce::String NateVSTAudioProcessor::getLatestSampleCaptureTakePath() const
             return takeFile.getFullPathName();
 
     return {};
+}
+
+juce::AudioBuffer<float>& NateVSTAudioProcessor::getActiveSampleCaptureBuffer() noexcept
+{
+    const auto activeIndex = juce::jlimit(0,
+                                         static_cast<int>(sampleCaptureBufferBankSize) - 1,
+                                         activeSampleCaptureBufferIndex.load(std::memory_order_acquire));
+    return sampleCaptureBuffers[static_cast<size_t>(activeIndex)];
+}
+
+const juce::AudioBuffer<float>& NateVSTAudioProcessor::getActiveSampleCaptureBuffer() const noexcept
+{
+    const auto activeIndex = juce::jlimit(0,
+                                         static_cast<int>(sampleCaptureBufferBankSize) - 1,
+                                         activeSampleCaptureBufferIndex.load(std::memory_order_acquire));
+    return sampleCaptureBuffers[static_cast<size_t>(activeIndex)];
+}
+
+int NateVSTAudioProcessor::getNextSampleCaptureBufferIndex() const noexcept
+{
+    const auto activeIndex = juce::jlimit(0,
+                                         static_cast<int>(sampleCaptureBufferBankSize) - 1,
+                                         activeSampleCaptureBufferIndex.load(std::memory_order_acquire));
+    return (activeIndex + 1) % static_cast<int>(sampleCaptureBufferBankSize);
 }
 
 void NateVSTAudioProcessor::waitForSampleCaptureWritersToFinish()
@@ -6746,14 +6779,15 @@ int NateVSTAudioProcessor::calculateSampleCaptureTargetSamples() const
         return 0.0;
     }();
 
-    if (bars <= 0.0 || sampleCaptureBuffer.getNumSamples() <= 0)
+    const auto& captureBuffer = getActiveSampleCaptureBuffer();
+    if (bars <= 0.0 || captureBuffer.getNumSamples() <= 0)
         return 0;
 
     const auto bpm = juce::jlimit(30.0, 300.0, getHostBpm());
     const auto sampleRate = sampleCaptureSampleRate > 0.0 ? sampleCaptureSampleRate : 44100.0;
     const auto seconds = (bars * 4.0 * 60.0) / bpm;
     const auto targetSamples = static_cast<int>(std::round(seconds * sampleRate));
-    return juce::jlimit(64, sampleCaptureBuffer.getNumSamples(), targetSamples);
+    return juce::jlimit(64, captureBuffer.getNumSamples(), targetSamples);
 }
 
 int NateVSTAudioProcessor::calculateSampleCapturePreRollSamples() const noexcept
@@ -6775,8 +6809,9 @@ int NateVSTAudioProcessor::appendSamplesToSampleCaptureBuffer(const juce::AudioB
                                                               int sourceOffset,
                                                               int requestedSamples) noexcept
 {
-    const auto maxSamples = sampleCaptureBuffer.getNumSamples();
-    const auto captureChannels = sampleCaptureBuffer.getNumChannels();
+    auto& captureBuffer = getActiveSampleCaptureBuffer();
+    const auto maxSamples = captureBuffer.getNumSamples();
+    const auto captureChannels = captureBuffer.getNumChannels();
     const auto sourceChannels = sourceChannelLimit >= 0
         ? juce::jmin(source.getNumChannels(), sourceChannelLimit)
         : source.getNumChannels();
@@ -6808,7 +6843,7 @@ int NateVSTAudioProcessor::appendSamplesToSampleCaptureBuffer(const juce::AudioB
         for (auto channel = 0; channel < captureChannels; ++channel)
         {
             const auto sourceChannel = juce::jmin(channel, sourceChannels - 1);
-            sampleCaptureBuffer.copyFrom(channel, writePosition, source, sourceChannel, readOffset, span);
+            captureBuffer.copyFrom(channel, writePosition, source, sourceChannel, readOffset, span);
         }
 
         readOffset += span;

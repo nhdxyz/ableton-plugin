@@ -108,7 +108,7 @@ PLUGINVAL_AUTO_DOWNLOAD=1 tools/validate_release.sh
 GitHub Actions runs the same build, CTest, and pluginval strictness-5 gate on macOS. CI sets `PLUGINVAL_SKIP_GUI_TESTS=1` for headless stability; local release checks should leave GUI tests enabled unless they are intentionally documented as an exception. The Ableton checklist is still required before tagging.
 
 Local release archives can be assembled with `tools/package_release.sh` after validation; generated package folders and zips are written under `dist/`.
-The package script normalizes the installer payload before signing so protected macOS provenance xattrs do not ship as AppleDouble `._*` records.
+The package script writes `RELEASE_MANIFEST.txt` into the package folder plus a `*-release-summary.txt` beside the ZIP/pkg, and normalizes the installer payload before signing so protected macOS provenance xattrs do not ship as AppleDouble `._*` records.
 
 Optional installer/signing examples:
 

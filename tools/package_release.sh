@@ -39,6 +39,8 @@ PKG_ROOT="${PKG_ROOT:-"$DIST_DIR/$PACKAGE_NAME-pkgroot"}"
 PKG_UNSIGNED_PATH="${PKG_UNSIGNED_PATH:-"$DIST_DIR/$PACKAGE_NAME-unsigned.pkg"}"
 PKG_PATH="${PKG_PATH:-"$DIST_DIR/$PACKAGE_NAME.pkg"}"
 NOTARY_LOG_PATH="${NOTARY_LOG_PATH:-"$DIST_DIR/$PACKAGE_NAME-notarytool.txt"}"
+PACKAGE_MANIFEST_PATH="${PACKAGE_MANIFEST_PATH:-"$PACKAGE_DIR/RELEASE_MANIFEST.txt"}"
+PACKAGE_SUMMARY_PATH="${PACKAGE_SUMMARY_PATH:-"$DIST_DIR/$PACKAGE_NAME-release-summary.txt"}"
 PLUGIN_SOURCE="${PLUGIN_SOURCE:-"$BUILD_DIR/NateVST_artefacts/VST3/Nate VST.vst3"}"
 PRESETS_SOURCE="${PRESETS_SOURCE:-"$ROOT_DIR/Resources/Factory Presets"}"
 
@@ -154,6 +156,122 @@ write_checksums() {
             | sort -z \
             | xargs -0 shasum -a 256 > SHA256SUMS
     )
+}
+
+file_checksum() {
+    local path="$1"
+    if [[ "$DRY_RUN" == "1" ]]; then
+        printf 'dry-run'
+        return 0
+    fi
+
+    if [[ -e "$path" ]]; then
+        shasum -a 256 "$path" | awk '{ print $1 }'
+    else
+        printf 'missing'
+    fi
+}
+
+write_package_manifest() {
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: write package manifest to $PACKAGE_MANIFEST_PATH"
+        return 0
+    fi
+
+    local git_revision
+    local validation_summary
+    local notary_api_key_note="not set"
+    local notary_apple_id_note="not set"
+    git_revision="$(git -C "$ROOT_DIR" rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
+    validation_summary="$BUILD_DIR/release-validation/summary.txt"
+    if [[ -n "$NOTARY_KEY_ID" ]]; then
+        notary_api_key_note="configured"
+    fi
+    if [[ -n "$NOTARY_APPLE_ID" ]]; then
+        notary_apple_id_note="configured"
+    fi
+
+    cat > "$PACKAGE_MANIFEST_PATH" <<EOF
+Nate VST release manifest
+
+Version: $VERSION
+Git revision: $git_revision
+Created UTC: $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+
+Package folder: $PACKAGE_DIR
+Zip artifact: $ZIP_PATH
+Installer pkg requested: $CREATE_PKG
+Installer pkg path: $PKG_PATH
+
+Validation:
+- RUN_VALIDATE: $RUN_VALIDATE
+- Validation summary: $validation_summary
+- SKIP_PLUGINVAL: $SKIP_PLUGINVAL
+- PLUGINVAL_AUTO_DOWNLOAD: $PLUGINVAL_AUTO_DOWNLOAD
+- PLUGINVAL_SKIP_GUI_TESTS: $PLUGINVAL_SKIP_GUI_TESTS
+
+Signing:
+- VST3 code signing identity: ${CODE_SIGN_IDENTITY:-unsigned}
+- Installer signing identity: ${INSTALLER_SIGN_IDENTITY:-unsigned}
+
+Notarization:
+- NOTARIZE: $NOTARIZE
+- Notary log: $NOTARY_LOG_PATH
+- Notary profile: ${NOTARY_PROFILE:-not set}
+- Notary API key: $notary_api_key_note
+- Notary Apple ID: $notary_apple_id_note
+
+Included payload:
+- Nate VST.vst3
+- Factory Presets
+- README.md
+- ABLETON_RELEASE_VALIDATION.md
+- INSTALL.txt
+- SHA256SUMS
+
+Release checklist:
+- Attach this manifest, SHA256SUMS, build/release-validation/summary.txt, ctest-output.txt, and the pluginval report to the release issue.
+- Complete the Ableton matrix in ABLETON_RELEASE_VALIDATION.md against this exact build before tagging.
+EOF
+}
+
+write_package_summary() {
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: write package summary to $PACKAGE_SUMMARY_PATH"
+        return 0
+    fi
+
+    local pkg_status="not requested"
+    local pkg_checksum="not requested"
+    local notary_status="not requested"
+
+    if [[ "$CREATE_PKG" == "1" ]]; then
+        pkg_status="$PKG_PATH"
+        pkg_checksum="$(file_checksum "$PKG_PATH")"
+    fi
+
+    if [[ "$NOTARIZE" == "1" ]]; then
+        notary_status="submitted and stapled; log: $NOTARY_LOG_PATH"
+    fi
+
+    cat > "$PACKAGE_SUMMARY_PATH" <<EOF
+Nate VST package summary
+
+Version: $VERSION
+Created UTC: $(date -u '+%Y-%m-%dT%H:%M:%SZ')
+Package folder: $PACKAGE_DIR
+Package manifest: $PACKAGE_MANIFEST_PATH
+Zip artifact: $ZIP_PATH
+Zip SHA256: $(file_checksum "$ZIP_PATH")
+Installer pkg: $pkg_status
+Installer pkg SHA256: $pkg_checksum
+VST3 signing identity: ${CODE_SIGN_IDENTITY:-unsigned}
+Installer signing identity: ${INSTALLER_SIGN_IDENTITY:-unsigned}
+Notarization: $notary_status
+Validation summary: $BUILD_DIR/release-validation/summary.txt
+Package checksums: $PACKAGE_DIR/SHA256SUMS
+Ableton checklist: $PACKAGE_DIR/ABLETON_RELEASE_VALIDATION.md
+EOF
 }
 
 clean_macos_metadata() {
@@ -388,6 +506,7 @@ run cp "$ROOT_DIR/README.md" "$PACKAGE_DIR/README.md"
 run cp "$ROOT_DIR/docs/ABLETON_RELEASE_VALIDATION.md" "$PACKAGE_DIR/ABLETON_RELEASE_VALIDATION.md"
 sign_plugin_bundle "$PACKAGE_DIR/Nate VST.vst3"
 write_install_notes "$PACKAGE_DIR/INSTALL.txt"
+write_package_manifest
 
 clean_macos_metadata "$PACKAGE_DIR"
 
@@ -395,11 +514,13 @@ write_checksums "$PACKAGE_DIR"
 create_zip
 create_pkg_installer
 notarize_pkg_installer
+write_package_summary
 echo
 
 echo "Release package completed:"
 echo "$PACKAGE_DIR"
 echo "$ZIP_PATH"
+echo "$PACKAGE_SUMMARY_PATH"
 if [[ "$CREATE_PKG" == "1" ]]; then
     echo "$PKG_PATH"
 fi

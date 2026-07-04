@@ -11,6 +11,8 @@ assignees: ""
 - Version:
 - Commit:
 - Package path:
+- Package manifest:
+- Package summary:
 - VST3 path:
 - Validation summary:
 - CTest log:
@@ -25,6 +27,7 @@ assignees: ""
 - [ ] CTest passed
 - [ ] pluginval passed or exception documented
 - [ ] Release package was created with `tools/package_release.sh`
+- [ ] `RELEASE_MANIFEST.txt` and `*-release-summary.txt` were attached or linked
 - [ ] `.pkg` installer was created with `CREATE_PKG=1`
 - [ ] VST3 bundle was signed or unsigned beta exception documented
 - [ ] Installer package was signed or unsigned beta exception documented

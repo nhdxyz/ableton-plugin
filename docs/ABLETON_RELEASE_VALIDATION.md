@@ -59,6 +59,8 @@ build/release-validation/
 
 Attach `summary.txt`, `ctest-output.txt`, and the pluginval report to release notes or the release issue. Then run this manual Ableton pass against the exact built VST3 named in `summary.txt`.
 
+The package script also writes `RELEASE_MANIFEST.txt` inside the package folder and `dist/NateVST-<version>-macos-release-summary.txt` beside the ZIP/pkg. Attach both files to the release issue so signing, notarization, artifact paths, and checksums are tracked with the Ableton matrix.
+
 ## Test Matrix
 
 Complete at least the required row before sharing a beta. Complete every row before tagging a public release.

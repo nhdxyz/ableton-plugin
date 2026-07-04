@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <limits>
 
 namespace
 {
@@ -215,6 +216,42 @@ void feedHostInputBlocks(NateVSTAudioProcessor& processor, float inputPeak, int 
         juce::MidiBuffer midi;
         processor.processBlock(buffer, midi);
     }
+}
+
+void feedHostInputContinuityBlocks(NateVSTAudioProcessor& processor, int blocks)
+{
+    juce::AudioBuffer<float> buffer(2, 512);
+    for (auto block = 0; block < blocks; ++block)
+    {
+        const auto marker = 0.05f + (static_cast<float>(block) * 0.003f);
+        buffer.clear();
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            buffer.setSample(0, sample, marker);
+            buffer.setSample(1, sample, marker * 0.5f);
+        }
+
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+}
+
+bool readAudioFile(const juce::File& file, juce::AudioBuffer<float>& destination)
+{
+    juce::AudioFormatManager manager;
+    manager.registerBasicFormats();
+    std::unique_ptr<juce::AudioFormatReader> reader(manager.createReaderFor(file));
+    if (reader == nullptr || reader->lengthInSamples <= 0 || reader->numChannels <= 0)
+        return false;
+
+    if (reader->lengthInSamples > std::numeric_limits<int>::max())
+        return false;
+
+    const auto channelCount = juce::jlimit(1, 2, static_cast<int>(reader->numChannels));
+    const auto sampleCount = static_cast<int>(reader->lengthInSamples);
+    destination.setSize(channelCount, sampleCount);
+    destination.clear();
+    return reader->read(&destination, 0, sampleCount, 0, true, true);
 }
 }
 
@@ -510,6 +547,80 @@ int main()
         if (captureFile.existsAsFile())
             captureFile.deleteFile();
     }
+
+    NateVSTAudioProcessor continuityProcessor;
+    continuityProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(continuityProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::sampleRecordStart, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::sampleRecordLength, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(continuityProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure recorder continuity patch\n";
+        return 1;
+    }
+
+    constexpr auto continuityBlocks = 24;
+    constexpr auto blockSize = 512;
+    continuityProcessor.beginSampleCapture();
+    feedHostInputContinuityBlocks(continuityProcessor, continuityBlocks);
+    const auto continuitySeconds = continuityProcessor.getSampleCaptureDurationSeconds();
+    const auto expectedContinuitySeconds = static_cast<float>(continuityBlocks * blockSize) / 44100.0f;
+    if (std::abs(continuitySeconds - expectedContinuitySeconds) > 0.001f)
+    {
+        std::cerr << "Recorder continuity duration mismatch before commit: got "
+                  << continuitySeconds << "s expected " << expectedContinuitySeconds << "s\n";
+        return 1;
+    }
+
+    if (! continuityProcessor.commitSampleCaptureToSampler())
+    {
+        std::cerr << "Recorder continuity capture did not commit\n";
+        return 1;
+    }
+
+    const auto continuityCapturePath = continuityProcessor.getLoadedSamplePath();
+    if (continuityCapturePath.isEmpty())
+    {
+        std::cerr << "Recorder continuity capture did not produce a file-backed take\n";
+        return 1;
+    }
+
+    const juce::File continuityCaptureFile(continuityCapturePath);
+    juce::AudioBuffer<float> continuityCapture;
+    if (! readAudioFile(continuityCaptureFile, continuityCapture))
+    {
+        std::cerr << "Could not read recorder continuity capture file\n";
+        return 1;
+    }
+
+    const auto expectedSamples = continuityBlocks * blockSize;
+    if (continuityCapture.getNumSamples() != expectedSamples)
+    {
+        std::cerr << "Recorder continuity sample count mismatch: got "
+                  << continuityCapture.getNumSamples() << " expected " << expectedSamples << '\n';
+        return 1;
+    }
+
+    for (auto block = 0; block < continuityBlocks; ++block)
+    {
+        const auto expectedMarker = 0.05f + (static_cast<float>(block) * 0.003f);
+        const auto probeSample = (block * blockSize) + (blockSize / 2);
+        const auto actualMarker = continuityCapture.getSample(0, probeSample);
+        if (std::abs(actualMarker - expectedMarker) > 0.0025f)
+        {
+            std::cerr << "Recorder continuity marker mismatch at block " << block
+                      << ": got " << actualMarker << " expected " << expectedMarker << '\n';
+            return 1;
+        }
+    }
+
+    if (continuityCaptureFile.existsAsFile())
+        continuityCaptureFile.deleteFile();
 
     const auto capturePath = processor.getLoadedSamplePath();
     if (capturePath.isNotEmpty())

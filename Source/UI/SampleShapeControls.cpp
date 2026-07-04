@@ -192,15 +192,10 @@ void SampleShapeControls::configureSlider(size_t index,
 
     slider.onDragStart = [this, labelText, destinationIndex = spec.modulationDestinationIndex]
     {
-        if (destinationIndex > 0)
-        {
-            if (onModDestinationFocused != nullptr)
-                onModDestinationFocused(destinationIndex);
-            return;
-        }
-
         if (onEditStarted != nullptr)
             onEditStarted(labelText);
+        if (destinationIndex > 0 && onModDestinationFocused != nullptr)
+            onModDestinationFocused(destinationIndex);
     };
     slider.onValueChange = [this, index, labelText, parameterID]
     {

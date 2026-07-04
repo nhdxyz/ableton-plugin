@@ -4,6 +4,7 @@
 #include "SampleChopPanel.h"
 #include "SampleFileActions.h"
 #include "SamplePlaybackControls.h"
+#include "SampleRangeControls.h"
 #include "SampleRecorderPanel.h"
 #include "SampleRecipeActions.h"
 #include "SampleShapeControls.h"
@@ -15,12 +16,6 @@
 
 namespace UI::SamplePanelLayout
 {
-struct SliderSlot
-{
-    juce::Slider& slider;
-    juce::Label& label;
-};
-
 struct Components
 {
     juce::Label& sectionLabel;
@@ -31,6 +26,7 @@ struct Components
     SampleFileActions& fileActions;
     SampleRecipeActions& recipeActions;
     SampleChopHeader& chopHeader;
+    SampleRangeControls& rangeControls;
     SampleShapeControls& shapeControls;
 
     SampleSourceControls& sourceControls;
@@ -39,9 +35,6 @@ struct Components
     SampleRecorderPanel& recorderPanel;
     SampleWaveformDisplay& waveformDisplay;
     SampleChopPanel& chopPanel;
-
-    SliderSlot start;
-    SliderSlot end;
 };
 
 void layout(juce::Rectangle<int> content, Components components);

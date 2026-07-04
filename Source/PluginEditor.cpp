@@ -1405,6 +1405,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse),
       sampleSourceControls(processorToUse.getValueTreeState()),
+      sampleRangeControls(processorToUse.getValueTreeState()),
       sampleShapeControls(processorToUse.getValueTreeState()),
       samplePlaybackControls(processorToUse.getValueTreeState()),
       sampleRecorderPanel(processorToUse.getValueTreeState()),
@@ -3066,7 +3067,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     osc2TuneSlider.onDragStart = [this] { setModInspectorDestination(5); };
     osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
     oscWarpSlider.onDragStart = [this] { setModInspectorDestination(17); };
-    sampleStartSlider.onDragStart = [this] { setModInspectorDestination(12); };
     configureSlider(randomAmountSlider, randomAmountLabel, "Amount", Parameters::ID::randomAmount);
     configureSlider(randomChaosSlider, randomChaosLabel, "Chaos", Parameters::ID::randomChaos);
     configureSlider(brightnessSlider, brightnessLabel, "Bright", Parameters::ID::randomBrightnessBias);
@@ -3095,8 +3095,25 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
                                      randomSectionIntensityLabels[index],
                                      randomSectionIntensityNames[index],
                                      randomSectionIntensityIDs[index]);
-    configureHorizontalSlider(sampleStartSlider, sampleStartLabel, "Start", Parameters::ID::sampleStart);
-    configureHorizontalSlider(sampleEndSlider, sampleEndLabel, "End", Parameters::ID::sampleEnd);
+    sampleRangeControls.onEditStarted = [this] (const juce::String& labelText)
+    {
+        captureGlobalEdit("Edit " + labelText);
+    };
+    sampleRangeControls.onControlChanged = [this] (const juce::String& labelText,
+                                                   const juce::String& parameterID,
+                                                   double value)
+    {
+        updateSelectedControlInspector(labelText, parameterID, value);
+    };
+    sampleRangeControls.onEditEnded = [this] { returnKeyboardFocusToPiano(); };
+    sampleRangeControls.onModDestinationFocused = [this] (int destinationIndex)
+    {
+        setModInspectorDestination(destinationIndex);
+    };
+    registerModulationMenuTarget(sampleRangeControls.sliderFor(UI::SampleRangeControls::Control::start),
+                                 "Start",
+                                 Parameters::ID::sampleStart);
+    addAndMakeVisible(sampleRangeControls);
     sampleShapeControls.onEditStarted = [this] (const juce::String& labelText)
     {
         captureGlobalEdit("Edit " + labelText);
@@ -4163,6 +4180,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     sampleStatusLabel.applyTheme(theme);
     sampleChopHeader.applyTheme(theme);
+    sampleRangeControls.applyTheme(theme);
     sampleShapeControls.applyTheme(theme);
     controlStatusStrip.applyTheme(theme);
     hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
@@ -5103,14 +5121,13 @@ void NateVSTAudioProcessorEditor::resized()
                 sampleFileActions,
                 sampleRecipeActions,
                 sampleChopHeader,
+                sampleRangeControls,
                 sampleShapeControls,
                 sampleSourceControls,
                 samplePlaybackControls,
                 sampleRecorderPanel,
                 sampleWaveformDisplay,
-                sampleChopPanel,
-                { sampleStartSlider, sampleStartLabel },
-                { sampleEndSlider, sampleEndLabel }
+                sampleChopPanel
             });
             break;
         }
@@ -10764,8 +10781,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(motionBiasSlider, motionBiasLabel, false);
     for (size_t index = 0; index < randomSectionIntensitySliders.size(); ++index)
         setSliderVisible(randomSectionIntensitySliders[index], randomSectionIntensityLabels[index], false);
-    setSliderVisible(sampleStartSlider, sampleStartLabel, false);
-    setSliderVisible(sampleEndSlider, sampleEndLabel, false);
+    sampleRangeControls.setVisible(false);
     sampleShapeControls.setVisible(false);
     setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
     setSliderVisible(sequencerGateSlider, sequencerGateLabel, false);
@@ -13943,7 +13959,10 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(fxReverbMixSlider, destinationDepths[9], destinationRouteCounts[9], destinationSources[9]);
     setIndicator(fxWidthAmountSlider, destinationDepths[10], destinationRouteCounts[10], destinationSources[10]);
     setIndicator(fxDistortionAmountSlider, destinationDepths[11], destinationRouteCounts[11], destinationSources[11]);
-    setIndicator(sampleStartSlider, destinationDepths[12], destinationRouteCounts[12], destinationSources[12]);
+    sampleRangeControls.setModulationIndicator(UI::SampleRangeControls::Control::start,
+                                               destinationDepths[12],
+                                               destinationRouteCounts[12],
+                                               destinationSources[12]);
     sampleShapeControls.setModulationIndicator(UI::SampleShapeControls::Control::mix,
                                                destinationDepths[13],
                                                destinationRouteCounts[13],

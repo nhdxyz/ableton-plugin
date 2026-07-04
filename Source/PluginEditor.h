@@ -41,6 +41,7 @@
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleFileActions.h"
 #include "UI/SamplePlaybackControls.h"
+#include "UI/SampleRangeControls.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleRecipeActions.h"
 #include "UI/SampleShapeControls.h"
@@ -299,6 +300,7 @@ private:
     juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
     UI::SampleSourceControls sampleSourceControls;
+    UI::SampleRangeControls sampleRangeControls;
     UI::SampleShapeControls sampleShapeControls;
     UI::SamplePlaybackControls samplePlaybackControls;
     juce::ComboBox presetBox;
@@ -420,8 +422,6 @@ private:
     juce::Slider driveBiasSlider;
     juce::Slider motionBiasSlider;
     std::array<juce::Slider, 7> randomSectionIntensitySliders;
-    juce::Slider sampleStartSlider;
-    juce::Slider sampleEndSlider;
     juce::Slider sequencerRootSlider;
     juce::Slider sequencerGateSlider;
     juce::Slider sequencerSwingSlider;
@@ -538,8 +538,6 @@ private:
     juce::Label driveBiasLabel;
     juce::Label motionBiasLabel;
     std::array<juce::Label, 7> randomSectionIntensityLabels;
-    juce::Label sampleStartLabel;
-    juce::Label sampleEndLabel;
     juce::Label sequencerRootLabel;
     juce::Label sequencerGateLabel;
     juce::Label sequencerSwingLabel;

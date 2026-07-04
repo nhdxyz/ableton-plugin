@@ -2,16 +2,6 @@
 
 namespace UI::SamplePanelLayout
 {
-namespace
-{
-void setSliderVisible(SliderSlot slot, bool shouldBeVisible)
-{
-    slot.slider.setVisible(shouldBeVisible);
-    slot.label.setVisible(shouldBeVisible);
-}
-
-}
-
 void layout(juce::Rectangle<int> content, Components components)
 {
     components.sectionLabel.setVisible(true);
@@ -20,6 +10,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.fileActions.setVisible(true);
     components.recorderPanel.setVisible(true);
     components.recipeActions.setVisible(true);
+    components.rangeControls.setVisible(true);
     components.shapeControls.setVisible(true);
     components.sourceControls.setVisible(true);
     components.playbackControls.setVisible(true);
@@ -29,13 +20,6 @@ void layout(juce::Rectangle<int> content, Components components)
     components.sampleStatusLabel.setVisible(true);
 
     components.sectionLabel.setBounds(content.removeFromTop(28));
-
-    for (auto slot : {
-             components.start,
-             components.end })
-    {
-        setSliderVisible(slot, true);
-    }
 
     auto workspace = content.withTrimmedTop(8);
     auto sourceArea = workspace.removeFromLeft(juce::jlimit(260, 310, workspace.getWidth() / 4)).reduced(18, 12);
@@ -60,8 +44,6 @@ void layout(juce::Rectangle<int> content, Components components)
     const auto waveformHeight = juce::jlimit(170, 260, chopArea.getHeight() / 2);
     components.waveformDisplay.setBounds(chopArea.removeFromTop(waveformHeight).reduced(4, 6));
     components.chopPanel.setBounds(chopArea.removeFromTop(components.chopPanel.compactHeight()));
-    auto cutRow = chopArea.removeFromTop(54).withTrimmedTop(6);
-    components.start.slider.setBounds(cutRow.removeFromLeft(cutRow.getWidth() / 2).reduced(48, 6));
-    components.end.slider.setBounds(cutRow.reduced(48, 6));
+    components.rangeControls.setBounds(chopArea.removeFromTop(54));
 }
 }

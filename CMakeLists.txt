@@ -88,6 +88,7 @@ target_sources(NateVST
         Source/UI/SamplePanelLayout.cpp
         Source/UI/SampleRecorderPanel.cpp
         Source/UI/SampleWaveformDisplay.cpp
+        Source/UI/SequencerPanelLayout.cpp
         Source/UI/StereoFieldDisplay.cpp
         Source/UI/StepSequencerGrid.cpp
         Source/UI/Theme.cpp

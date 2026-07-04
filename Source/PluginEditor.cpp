@@ -4,6 +4,7 @@
 #include "Synth/WavetableFrameIO.h"
 #include "Synth/WavetableFrameRecipes.h"
 #include "UI/SamplePanelLayout.h"
+#include "UI/SequencerPanelLayout.h"
 
 #include <algorithm>
 #include <cmath>
@@ -5370,188 +5371,55 @@ void NateVSTAudioProcessorEditor::resized()
 
         case Panel::sequencer:
         {
-            sequencerSectionLabel.setVisible(true);
-            sequencerEnabledButton.setVisible(true);
-            hostSyncStatusLabel.setVisible(true);
-            rateEighthButton.setVisible(true);
-            rateSixteenthButton.setVisible(true);
-            rateThirtySecondButton.setVisible(true);
-            sequencerGrooveBox.setVisible(true);
-            sequencerScaleBox.setVisible(true);
-            sequencerChordBox.setVisible(true);
-            sequencerVoicingBox.setVisible(true);
-            sequencerChordMemoryButton.setVisible(true);
-            sequencerPatternBox.setVisible(true);
-            sequencerGrooveTransformBox.setVisible(true);
-            sequencerLaneViewBox.setVisible(true);
-            sequencerLockDestinationBox.setVisible(true);
-            sequencerRootDownButton.setVisible(true);
-            sequencerRootUpButton.setVisible(true);
-            sequencerRootValueLabel.setVisible(true);
-            sequencerStepEditorLabel.setVisible(true);
-            for (auto& button : sequencerStepEditorButtons)
-                button.setVisible(true);
-            applyPatternButton.setVisible(true);
-            copySequencerButton.setVisible(true);
-            rotateSequencerLeftButton.setVisible(true);
-            rotateSequencerRightButton.setVisible(true);
-            exportSequencerMidiButton.setVisible(true);
-            exportSequencerChainButton.setVisible(true);
-            sequencerSceneChainLiveButton.setVisible(true);
-            applyGrooveTransformButton.setVisible(true);
-            randomSequencerButton.setVisible(true);
-            mutateSequencerButton.setVisible(true);
-            undoSequencerButton.setVisible(true);
-            clearSequencerButton.setVisible(true);
-            for (auto& button : sequencerSceneRecallButtons)
-                button.setVisible(true);
-            for (auto& button : sequencerSceneCaptureButtons)
-                button.setVisible(true);
-            sequencerGrid.setVisible(true);
-            sequencerExpandButton.setVisible(true);
-            auto sequencerHeader = content.removeFromTop(28);
-            sequencerExpandButton.setBounds(sequencerHeader.removeFromRight(30).reduced(3, 1));
-            sequencerSectionLabel.setBounds(sequencerHeader);
-            auto workspace = content.withTrimmedTop(8);
-            auto controlArea = workspace.removeFromLeft(juce::jlimit(228, 286, workspace.getWidth() / 5)).reduced(18, 12);
-            workspace.removeFromLeft(10);
-            auto gridArea = workspace.reduced(18, 12);
-            const auto showAdvancedSequencerControls = controlArea.getHeight() >= 570;
-
-            auto timingRow = controlArea.removeFromTop(34);
-            sequencerEnabledButton.setBounds(timingRow.removeFromLeft(62).reduced(4));
-            hostSyncStatusLabel.setBounds(timingRow.reduced(4));
-
-            auto rateRow = controlArea.removeFromTop(34);
-            const auto rateButtonWidth = rateRow.getWidth() / 3;
-            rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
-            rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
-            rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
-
-            auto grooveRow = controlArea.removeFromTop(34);
-            sequencerGrooveBox.setBounds(grooveRow.removeFromLeft(grooveRow.getWidth() / 2).reduced(4));
-            sequencerScaleBox.setBounds(grooveRow.reduced(4));
-            auto harmonyRow = controlArea.removeFromTop(34);
-            sequencerChordBox.setBounds(harmonyRow.removeFromLeft(harmonyRow.getWidth() / 2).reduced(4));
-            sequencerVoicingBox.setBounds(harmonyRow.reduced(4));
-
-            auto patternRow = controlArea.removeFromTop(34);
-            sequencerChordMemoryButton.setBounds(patternRow.removeFromLeft(86).reduced(4));
-            sequencerPatternBox.setBounds(patternRow.reduced(4));
-            auto generateRow = controlArea.removeFromTop(34);
-            applyPatternButton.setBounds(generateRow.removeFromLeft(generateRow.getWidth() / 2).reduced(4));
-            randomSequencerButton.setBounds(generateRow.reduced(4));
-            auto editRow = controlArea.removeFromTop(34);
-            mutateSequencerButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 3).reduced(4));
-            undoSequencerButton.setBounds(editRow.removeFromLeft(editRow.getWidth() / 2).reduced(4));
-            clearSequencerButton.setBounds(editRow.reduced(4));
-
-            auto rootStepperRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-            sequencerRootDownButton.setBounds(rootStepperRow.removeFromLeft(38).reduced(4));
-            sequencerRootUpButton.setBounds(rootStepperRow.removeFromRight(38).reduced(4));
-            sequencerRootValueLabel.setBounds(rootStepperRow.reduced(4));
+            UI::SequencerPanelLayout::layout(content, {
+                sequencerSectionLabel,
+                hostSyncStatusLabel,
+                sequencerRootValueLabel,
+                sequencerStepEditorLabel,
+                sequencerEnabledButton,
+                sequencerChordMemoryButton,
+                rateEighthButton,
+                rateSixteenthButton,
+                rateThirtySecondButton,
+                applyPatternButton,
+                copySequencerButton,
+                rotateSequencerLeftButton,
+                rotateSequencerRightButton,
+                exportSequencerMidiButton,
+                exportSequencerChainButton,
+                sequencerSceneChainLiveButton,
+                applyGrooveTransformButton,
+                randomSequencerButton,
+                mutateSequencerButton,
+                undoSequencerButton,
+                clearSequencerButton,
+                sequencerExpandButton,
+                sequencerRootDownButton,
+                sequencerRootUpButton,
+                sequencerGrooveBox,
+                sequencerScaleBox,
+                sequencerChordBox,
+                sequencerVoicingBox,
+                sequencerPatternBox,
+                sequencerGrooveTransformBox,
+                sequencerLaneViewBox,
+                sequencerLockDestinationBox,
+                sequencerSceneRecallButtons,
+                sequencerSceneCaptureButtons,
+                sequencerStepEditorButtons,
+                sequencerGrid,
+                { sequencerRootSlider, sequencerRootLabel },
+                { sequencerGateSlider, sequencerGateLabel },
+                { sequencerSwingSlider, sequencerSwingLabel },
+                { sequencerChordStrumSlider, sequencerChordStrumLabel },
+                { sequencerAccentSlider, sequencerAccentLabel },
+                { sequencerOctaveSlider, sequencerOctaveLabel },
+                { sequencerProbabilitySlider, sequencerProbabilityLabel },
+                { sequencerRandomSlider, sequencerRandomLabel },
+                { sequencerLockDepthSlider, sequencerLockDepthLabel }
+            });
             updateSequencerRootStepper();
-
-            auto laneViewRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-            sequencerLaneViewBox.setBounds(laneViewRow.reduced(4));
-
-            auto stepEditorArea = controlArea.removeFromTop(104).withTrimmedTop(4);
-            sequencerStepEditorLabel.setBounds(stepEditorArea.removeFromTop(24).reduced(4, 2));
-            auto stepPitchRow = stepEditorArea.removeFromTop(26);
-            for (auto index = 0; index < 4; ++index)
-                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepPitchRow.removeFromLeft(stepPitchRow.getWidth() / (4 - index)).reduced(3, 3));
-            auto stepValueRow = stepEditorArea.removeFromTop(26);
-            for (auto index = 4; index < 10; ++index)
-                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepValueRow.removeFromLeft(stepValueRow.getWidth() / (10 - index)).reduced(3, 3));
-            auto stepFlagRow = stepEditorArea.removeFromTop(26);
-            for (auto index = 10; index < 13; ++index)
-                sequencerStepEditorButtons[static_cast<size_t>(index)].setBounds(stepFlagRow.removeFromLeft(stepFlagRow.getWidth() / (13 - index)).reduced(3, 3));
             updateSequencerStepEditor();
-
-            auto transformRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-            sequencerLockDestinationBox.setBounds(transformRow.removeFromLeft(transformRow.getWidth() / 2).reduced(4));
-            sequencerGrooveTransformBox.setBounds(transformRow.reduced(4));
-            applyGrooveTransformButton.setBounds(controlArea.removeFromTop(32).reduced(4));
-
-            if (showAdvancedSequencerControls)
-            {
-                auto sceneArea = controlArea.removeFromTop(68).withTrimmedTop(2);
-                auto sceneTopRow = sceneArea.removeFromTop(32);
-                auto sceneBottomRow = sceneArea.withTrimmedTop(2);
-                auto placeSceneSlot = [this] (size_t index, juce::Rectangle<int>& row, int slotsRemaining)
-                {
-                    auto slotArea = row.removeFromLeft(row.getWidth() / slotsRemaining);
-                    sequencerSceneRecallButtons[index].setBounds(slotArea.removeFromLeft(slotArea.getWidth() / 2).reduced(3, 4));
-                    sequencerSceneCaptureButtons[index].setBounds(slotArea.reduced(3, 4));
-                };
-                placeSceneSlot(0, sceneTopRow, 2);
-                placeSceneSlot(1, sceneTopRow, 1);
-                placeSceneSlot(2, sceneBottomRow, 2);
-                placeSceneSlot(3, sceneBottomRow, 1);
-
-                auto utilityRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-                copySequencerButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 3).reduced(4));
-                rotateSequencerLeftButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 2).reduced(4));
-                rotateSequencerRightButton.setBounds(utilityRow.reduced(4));
-                auto exportRow = controlArea.removeFromTop(34).withTrimmedTop(2);
-                exportSequencerMidiButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 3).reduced(4));
-                exportSequencerChainButton.setBounds(exportRow.removeFromLeft(exportRow.getWidth() / 2).reduced(4));
-                sequencerSceneChainLiveButton.setBounds(exportRow.reduced(4));
-            }
-            else
-            {
-                copySequencerButton.setVisible(false);
-                rotateSequencerLeftButton.setVisible(false);
-                rotateSequencerRightButton.setVisible(false);
-                exportSequencerMidiButton.setVisible(false);
-                exportSequencerChainButton.setVisible(false);
-                sequencerSceneChainLiveButton.setVisible(false);
-                for (auto& button : sequencerSceneRecallButtons)
-                    button.setVisible(false);
-                for (auto& button : sequencerSceneCaptureButtons)
-                    button.setVisible(false);
-            }
-
-            setSliderVisible(sequencerRootSlider, sequencerRootLabel, false);
-            setSliderVisible(sequencerGateSlider, sequencerGateLabel, true);
-            setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, true);
-            setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, true);
-            setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, true);
-            setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, true);
-            setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, true);
-            setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, true);
-            setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, true);
-            const auto showPrimarySequencerKnobs = controlArea.getHeight() >= 58;
-            setSliderVisible(sequencerGateSlider, sequencerGateLabel, showPrimarySequencerKnobs);
-            setSliderVisible(sequencerSwingSlider, sequencerSwingLabel, showPrimarySequencerKnobs);
-            setSliderVisible(sequencerChordStrumSlider, sequencerChordStrumLabel, showPrimarySequencerKnobs);
-            if (showPrimarySequencerKnobs)
-            {
-                const auto primarySequencerKnobHeight = juce::jlimit(58, 72, controlArea.getHeight());
-                layoutKnobRow(controlArea.removeFromTop(primarySequencerKnobHeight).withTrimmedTop(4), {
-                    &sequencerGateSlider,
-                    &sequencerSwingSlider,
-                    &sequencerChordStrumSlider
-                });
-            }
-
-            const auto showSecondarySequencerKnobs = controlArea.getHeight() >= 58;
-            setSliderVisible(sequencerAccentSlider, sequencerAccentLabel, showSecondarySequencerKnobs);
-            setSliderVisible(sequencerOctaveSlider, sequencerOctaveLabel, showSecondarySequencerKnobs);
-            setSliderVisible(sequencerProbabilitySlider, sequencerProbabilityLabel, showSecondarySequencerKnobs);
-            setSliderVisible(sequencerRandomSlider, sequencerRandomLabel, showSecondarySequencerKnobs);
-            setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, showSecondarySequencerKnobs);
-            if (showSecondarySequencerKnobs)
-            {
-                layoutKnobRow(controlArea.withTrimmedTop(4), {
-                    &sequencerAccentSlider,
-                    &sequencerOctaveSlider,
-                    &sequencerProbabilitySlider,
-                    &sequencerRandomSlider,
-                    &sequencerLockDepthSlider
-                });
-            }
-            sequencerGrid.setBounds(gridArea.reduced(4, 8));
             break;
         }
 

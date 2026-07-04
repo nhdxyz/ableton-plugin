@@ -1,5 +1,6 @@
 #pragma once
 
+#include "SampleChopHeader.h"
 #include "SampleChopPanel.h"
 #include "SampleFileActions.h"
 #include "SamplePlaybackControls.h"
@@ -23,13 +24,12 @@ struct Components
 {
     juce::Label& sectionLabel;
     juce::Label& sourceLabel;
-    juce::Label& chopLabel;
     juce::Label& shapeLabel;
     SampleStatusLabel& sampleStatusLabel;
 
     SampleFileActions& fileActions;
     SampleRecipeActions& recipeActions;
-    juce::TextButton& chopExpandButton;
+    SampleChopHeader& chopHeader;
 
     SampleSourceControls& sourceControls;
     SamplePlaybackControls& playbackControls;

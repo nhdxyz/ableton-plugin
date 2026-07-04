@@ -37,6 +37,7 @@
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
+#include "UI/SampleChopHeader.h"
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleFileActions.h"
 #include "UI/SamplePlaybackControls.h"
@@ -249,7 +250,6 @@ private:
     juce::Label modMacroAssignStatusLabel;
     juce::Label sampleSectionLabel;
     juce::Label sampleSourceLabel;
-    juce::Label sampleChopLabel;
     juce::Label sampleShapeLabel;
     juce::Label sequencerSectionLabel;
     juce::Label hostSyncStatusLabel;
@@ -636,6 +636,7 @@ private:
     juce::TextButton recallSnapshotDButton { "D" };
     juce::TextButton captureSnapshotDButton { "Set D" };
     UI::SampleFileActions sampleFileActions;
+    UI::SampleChopHeader sampleChopHeader;
     UI::SampleRecipeActions sampleRecipeActions;
     UI::SequencerPatternActions sequencerPatternActions;
     juce::TextButton bassPatternButton { "Bass" };
@@ -687,7 +688,6 @@ private:
     UI::MacroAssignmentActions macroAssignmentActions;
     juce::TextButton homeMacroExpandButton { ">" };
     juce::TextButton modMacroExpandButton { ">" };
-    juce::TextButton sampleChopExpandButton { ">" };
     juce::TextButton sourceLayerExpandButton { ">" };
     juce::TextButton sequencerExpandButton { ">" };
     juce::TextButton focusOverlayCloseButton { "Close" };

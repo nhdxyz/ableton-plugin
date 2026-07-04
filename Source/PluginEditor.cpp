@@ -1554,7 +1554,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSectionLabel(modMatrixLabel, "ROUTING");
     configureSectionLabel(sampleSectionLabel, "SAMPLE");
     configureSectionLabel(sampleSourceLabel, "SOURCE");
-    configureSectionLabel(sampleChopLabel, "CHOP");
     configureSectionLabel(sampleShapeLabel, "SHAPE");
     configureSectionLabel(sequencerSectionLabel, "SEQ");
     configureSectionLabel(futureSectionLabel, "FX");
@@ -1750,9 +1749,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     modMacroExpandButton.onClick = [this] { openMacroFocusOverlay(); };
     addAndMakeVisible(modMacroExpandButton);
 
-    sampleChopExpandButton.setTooltip("Open a larger sample chop editor");
-    sampleChopExpandButton.onClick = [this] { openSampleChopFocusOverlay(); };
-    addAndMakeVisible(sampleChopExpandButton);
+    sampleChopHeader.onExpandClicked = [this] { openSampleChopFocusOverlay(); };
+    addAndMakeVisible(sampleChopHeader);
 
     sourceLayerExpandButton.setTooltip("Open a larger house source layer rack");
     sourceLayerExpandButton.onClick = [this] { openSourceLayerFocusOverlay(); };
@@ -4132,7 +4130,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
              &synthSectionLabel, &synthSourceLabel, &synthVoiceLabel, &synthFilterLabel, &synthAmpLabel,
              &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel,
              &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel, &sampleSectionLabel, &sampleSourceLabel,
-             &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel, &futureSectionLabel,
+             &sampleShapeLabel, &sequencerSectionLabel, &futureSectionLabel,
              &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel,
              &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel,
              &infoDetailsLabel, &infoFocusLabel })
@@ -4157,6 +4155,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     }
 
     sampleStatusLabel.applyTheme(theme);
+    sampleChopHeader.applyTheme(theme);
     controlStatusStrip.applyTheme(theme);
     hostSyncStatusLabel.setColour(juce::Label::textColourId, theme.textDim);
     hostSyncStatusLabel.setColour(juce::Label::backgroundColourId, theme.panel.withAlpha(0.13f));
@@ -5091,12 +5090,11 @@ void NateVSTAudioProcessorEditor::resized()
             UI::SamplePanelLayout::layout(content, {
                 sampleSectionLabel,
                 sampleSourceLabel,
-                sampleChopLabel,
                 sampleShapeLabel,
                 sampleStatusLabel,
                 sampleFileActions,
                 sampleRecipeActions,
-                sampleChopExpandButton,
+                sampleChopHeader,
                 sampleSourceControls,
                 samplePlaybackControls,
                 sampleRecorderPanel,
@@ -10643,7 +10641,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomSectionLabel, &modSectionLabel, &modSourceLabel, &modMacroLabel, &modLfoLabel, &modLfo2Label, &modEnvelopeLabel, &modMatrixLabel,
         &modMatrixStatusLabel, &modInspectorLabel, &modInspectorStatusLabel, &modMatrixSourceHeader, &modMatrixDestinationHeader, &modMatrixAmountHeader,
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
-        &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
+        &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
@@ -10654,7 +10652,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
-        &homeMacroExpandButton, &modMacroExpandButton, &sampleChopExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
+        &homeMacroExpandButton, &modMacroExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
         &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFramePreviousButton, &sourceFrameNextButton, &sourceFrameEvolveButton,
         &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &sourceStackReverseButton, &sourceStackRotateLeftButton, &sourceStackRotateRightButton, &sourceStackSmoothButton, &sourceStackEmphasiseButton,
@@ -10663,7 +10661,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton, &randomLabPageStrip,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
-        &sampleFileActions, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
+        &sampleFileActions, &sampleChopHeader, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
         &sampleRecipeActions, &sequencerPatternActions,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,

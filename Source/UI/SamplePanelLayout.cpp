@@ -31,14 +31,13 @@ void layout(juce::Rectangle<int> content, Components components)
 {
     components.sectionLabel.setVisible(true);
     components.sourceLabel.setVisible(true);
-    components.chopLabel.setVisible(true);
     components.shapeLabel.setVisible(true);
     components.fileActions.setVisible(true);
     components.recorderPanel.setVisible(true);
     components.recipeActions.setVisible(true);
     components.sourceControls.setVisible(true);
     components.playbackControls.setVisible(true);
-    components.chopExpandButton.setVisible(true);
+    components.chopHeader.setVisible(true);
     components.waveformDisplay.setVisible(true);
     components.chopPanel.setVisible(true);
     components.sampleStatusLabel.setVisible(true);
@@ -109,9 +108,7 @@ void layout(juce::Rectangle<int> content, Components components)
                       { components.grainSpray, components.spectralFreeze });
     }
 
-    auto chopHeader = chopArea.removeFromTop(24);
-    components.chopExpandButton.setBounds(chopHeader.removeFromRight(30).reduced(3, 1));
-    components.chopLabel.setBounds(chopHeader.withTrimmedLeft(4));
+    components.chopHeader.setBounds(chopArea.removeFromTop(24));
     const auto waveformHeight = juce::jlimit(170, 260, chopArea.getHeight() / 2);
     components.waveformDisplay.setBounds(chopArea.removeFromTop(waveformHeight).reduced(4, 6));
     components.chopPanel.setBounds(chopArea.removeFromTop(components.chopPanel.compactHeight()));

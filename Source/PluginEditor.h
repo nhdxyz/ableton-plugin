@@ -17,6 +17,7 @@
 #include "UI/LowEndAssistant.h"
 #include "UI/MacroAssignmentPad.h"
 #include "UI/MacroPerformanceMap.h"
+#include "UI/ModInspectorActions.h"
 #include "UI/ModCurveDisplay.h"
 #include "UI/ModMatrixRow.h"
 #include "UI/ModRouteMapDisplay.h"
@@ -728,8 +729,7 @@ private:
     UI::FxRackOrderControls fxRackOrderControls;
     UI::FxPerformanceControls fxPerformanceControls;
     juce::TextButton fxApplyPresetButton { "Load" };
-    juce::TextButton modInspectorAddButton { "Add" };
-    juce::TextButton modInspectorClearButton { "Clear" };
+    UI::ModInspectorActions modInspectorActions;
     juce::TextButton modMacroAssignAddButton { "Add" };
     juce::TextButton modMacroAssignReplaceButton { "Replace" };
     juce::TextButton modMacroAssignClearButton { "Clear" };

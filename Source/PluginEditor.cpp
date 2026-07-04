@@ -3867,10 +3867,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     fxApplyPresetButton.setTooltip("Reload the selected FX module preset");
     fxApplyPresetButton.onClick = [this] { applySelectedFxPreset(); };
-    modInspectorAddButton.setTooltip("Add the selected source to the inspected destination");
-    modInspectorAddButton.onClick = [this] { addInspectedModRoute(); };
-    modInspectorClearButton.setTooltip("Delete all active routes targeting the inspected destination");
-    modInspectorClearButton.onClick = [this] { clearInspectedModRoutes(); };
+    modInspectorActions.onAddClicked = [this] { addInspectedModRoute(); };
+    modInspectorActions.onClearClicked = [this] { clearInspectedModRoutes(); };
     infoOpenLabButton.setTooltip("Open the Random Lab generation and mutation panel");
     infoOpenLabButton.onClick = [this] { setActivePanel(Panel::lab); };
     infoOpenModButton.setTooltip("Open modulation sources, MSEG, and routing");
@@ -4051,8 +4049,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(fxRackOrderControls);
     addAndMakeVisible(fxPerformanceControls);
     addAndMakeVisible(fxApplyPresetButton);
-    addAndMakeVisible(modInspectorAddButton);
-    addAndMakeVisible(modInspectorClearButton);
+    addAndMakeVisible(modInspectorActions);
     addAndMakeVisible(infoOpenLabButton);
     addAndMakeVisible(infoOpenModButton);
     addAndMakeVisible(infoOpenFxButton);
@@ -5090,8 +5087,7 @@ void NateVSTAudioProcessorEditor::resized()
                     modMatrixAmountHeaderB,
                     modInspectorDestinationBox,
                     modInspectorSourceBox,
-                    modInspectorAddButton,
-                    modInspectorClearButton,
+                    modInspectorActions,
                     modRouteMapDisplay,
                     modMatrixRows,
                     modSlotRows,
@@ -10715,7 +10711,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &saveCandidateButton,
         &promoteCandidateAButton, &promoteCandidateBButton,
         &fxRackOrderControls, &fxPerformanceControls,
-        &fxApplyPresetButton, &modInspectorAddButton, &modInspectorClearButton, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
+        &fxApplyPresetButton, &modInspectorActions, &infoOpenLabButton, &infoOpenModButton, &infoOpenFxButton, &infoOpenLibraryButton, &modWorkflowStrip, &modMacroAssignAddButton, &modMacroAssignReplaceButton, &modMacroAssignClearButton,
         &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
@@ -13449,7 +13445,7 @@ void NateVSTAudioProcessorEditor::updateModInspectorStatus()
     {
         modInspectorStatusLabel.setText(destinationName + ": no active routes", juce::dontSendNotification);
         modInspectorStatusLabel.setTooltip("No modulation routes currently target " + destinationName);
-        modInspectorClearButton.setEnabled(false);
+        modInspectorActions.setClearEnabled(false);
         return;
     }
 
@@ -13458,7 +13454,7 @@ void NateVSTAudioProcessorEditor::updateModInspectorStatus()
         + " | Sum " + (summedPercent >= 0 ? "+" : "") + juce::String(summedPercent) + "%";
     modInspectorStatusLabel.setText(summary, juce::dontSendNotification);
     modInspectorStatusLabel.setTooltip(summary);
-    modInspectorClearButton.setEnabled(true);
+    modInspectorActions.setClearEnabled(true);
 }
 
 void NateVSTAudioProcessorEditor::updateMacroAssignmentEditorStatus()

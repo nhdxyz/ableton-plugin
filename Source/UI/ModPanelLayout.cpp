@@ -219,8 +219,7 @@ void layoutMatrixPage(MatrixControls controls, juce::Rectangle<int> matrixArea)
     controls.destinationBox.setVisible(true);
     controls.sourceBox.setVisible(true);
     controls.inspectorStatusLabel.setVisible(true);
-    controls.addButton.setVisible(true);
-    controls.clearButton.setVisible(true);
+    controls.inspectorActions.setVisible(true);
     controls.sourceHeader.setVisible(true);
     controls.destinationHeader.setVisible(true);
     controls.amountHeader.setVisible(true);
@@ -242,8 +241,7 @@ void layoutMatrixPage(MatrixControls controls, juce::Rectangle<int> matrixArea)
     controls.inspectorLabel.setBounds(inspectorRow.removeFromLeft(62).withTrimmedTop(6));
     controls.destinationBox.setBounds(inspectorRow.removeFromLeft(150).reduced(3, 4));
     controls.sourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
-    controls.addButton.setBounds(inspectorRow.removeFromLeft(58).reduced(3, 4));
-    controls.clearButton.setBounds(inspectorRow.removeFromLeft(66).reduced(3, 4));
+    controls.inspectorActions.setBounds(inspectorRow.removeFromLeft(ModInspectorActions::preferredWidth));
 
     if (canShowRouteMap)
     {

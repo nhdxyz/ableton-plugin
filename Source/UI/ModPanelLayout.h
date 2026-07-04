@@ -4,6 +4,7 @@
 #include "MacroAssignmentPad.h"
 #include "MacroPerformanceMap.h"
 #include "ModCurveDisplay.h"
+#include "ModInspectorActions.h"
 #include "ModMatrixRow.h"
 #include "ModRouteMapDisplay.h"
 #include "ModSourceMeter.h"
@@ -94,8 +95,7 @@ struct MatrixControls
 
     juce::ComboBox& destinationBox;
     juce::ComboBox& sourceBox;
-    juce::TextButton& addButton;
-    juce::TextButton& clearButton;
+    ModInspectorActions& inspectorActions;
     ModRouteMapDisplay& routeMapDisplay;
 
     std::array<ModMatrixRow, 8>& matrixRows;

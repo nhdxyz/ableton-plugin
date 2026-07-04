@@ -3694,47 +3694,36 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             setRandomStatus("Groove skipped");
         }
     };
-    const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
-    for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+    sequencerSceneControls.onRecallScene = [this] (size_t index)
     {
-        auto& recallButton = sequencerSceneRecallButtons[index];
-        auto& captureButton = sequencerSceneCaptureButtons[index];
-        const auto label = sceneLabels[index];
-        recallButton.setButtonText(label);
-        recallButton.setTooltip("Recall pattern scene " + label);
-        recallButton.onClick = [this, index, label]
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        const auto label = UI::SequencerSceneControls::sceneLabel(index);
+        if (audioProcessor.hasSequencerPatternScene(static_cast<int>(index)))
+            captureGlobalEdit("Recall pattern scene " + label);
+        if (audioProcessor.recallSequencerPatternScene(static_cast<int>(index)))
         {
-            releaseRandomCandidateAudition(false);
-            releasePresetAuditionNote();
-            if (audioProcessor.hasSequencerPatternScene(static_cast<int>(index)))
-                captureGlobalEdit("Recall pattern scene " + label);
-            if (audioProcessor.recallSequencerPatternScene(static_cast<int>(index)))
-            {
-                repaintSequencerGrids();
-                updateSegmentedSelectors();
-                updateSequencerSceneButtons();
-                setRandomStatus("Scene " + label + " recalled");
-            }
-            else
-            {
-                setRandomStatus("Scene " + label + " empty");
-            }
-        };
-        addAndMakeVisible(recallButton);
-
-        captureButton.setButtonText("Set " + label);
-        captureButton.setTooltip("Capture the current sequencer pattern into scene " + label);
-        captureButton.onClick = [this, index, label]
-        {
-            releaseRandomCandidateAudition(false);
-            releasePresetAuditionNote();
-            captureGlobalEdit("Capture pattern scene " + label);
-            audioProcessor.captureSequencerPatternScene(static_cast<int>(index));
+            repaintSequencerGrids();
+            updateSegmentedSelectors();
             updateSequencerSceneButtons();
-            setRandomStatus("Scene " + label + " captured");
-        };
-        addAndMakeVisible(captureButton);
-    }
+            setRandomStatus("Scene " + label + " recalled");
+        }
+        else
+        {
+            setRandomStatus("Scene " + label + " empty");
+        }
+    };
+    sequencerSceneControls.onCaptureScene = [this] (size_t index)
+    {
+        releaseRandomCandidateAudition(false);
+        releasePresetAuditionNote();
+        const auto label = UI::SequencerSceneControls::sceneLabel(index);
+        captureGlobalEdit("Capture pattern scene " + label);
+        audioProcessor.captureSequencerPatternScene(static_cast<int>(index));
+        updateSequencerSceneButtons();
+        setRandomStatus("Scene " + label + " captured");
+    };
+    addAndMakeVisible(sequencerSceneControls);
     panelTabBar.onTabSelected = [this] (UI::PanelTabBar::Tab tab) { setActivePanel(panelForTab(tab)); };
     sineWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 0); };
     sawWaveButton.onClick = [this] { setChoiceParameter(Parameters::ID::oscWave, 1); };
@@ -5236,8 +5225,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerGrooveTransformBox,
                 sequencerLaneViewBox,
                 sequencerLockDestinationBox,
-                sequencerSceneRecallButtons,
-                sequencerSceneCaptureButtons,
+                sequencerSceneControls,
                 sequencerGrid,
                 { sequencerRootSlider, sequencerRootLabel },
                 { sequencerGateSlider, sequencerGateLabel },
@@ -10780,7 +10768,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &loadSampleButton, &clearSampleButton, &sampleChopPanel, &sampleRecorderPanel,
         &randomCutButton, &ukgChopButton, &randomSequencerButton, &mutateSequencerButton, &undoSequencerButton, &clearSequencerButton,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &applyPatternButton, &copySequencerButton,
-        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton,
+        &rotateSequencerLeftButton, &rotateSequencerRightButton, &exportSequencerMidiButton, &exportSequencerChainButton, &sequencerSceneChainLiveButton, &sequencerSceneChainLengthButton, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
@@ -10812,12 +10800,6 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         button.setVisible(false);
 
     for (auto& button : presetQuickFilterButtons)
-        button.setVisible(false);
-
-    for (auto& button : sequencerSceneRecallButtons)
-        button.setVisible(false);
-
-    for (auto& button : sequencerSceneCaptureButtons)
         button.setVisible(false);
 
     for (auto& label : modSourceRows)
@@ -14657,7 +14639,6 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
 
 void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
 {
-    const std::array<juce::String, 4> sceneLabels { "A", "B", "Fill", "Drop" };
     const auto liveChainEnabled = audioProcessor.isSequencerSceneChainPlaybackEnabled();
     const auto liveChainLength = audioProcessor.getSequencerSceneChainPlaybackLength();
     const auto chainBars = audioProcessor.getSequencerSceneChainClipBars();
@@ -14673,15 +14654,12 @@ void NateVSTAudioProcessorEditor::updateSequencerSceneButtons()
                                                    ? "Auto chain length follows captured scenes; click for forced 2 bars"
                                                    : "Forced " + juce::String(chainBars) + "-bar scene-chain MIDI/live length; click to cycle");
 
-    for (size_t index = 0; index < sequencerSceneRecallButtons.size(); ++index)
+    for (size_t index = 0; index < UI::SequencerSceneControls::sceneCount; ++index)
     {
         const auto slot = static_cast<int>(index);
         const auto hasScene = audioProcessor.hasSequencerPatternScene(slot);
         const auto summary = audioProcessor.getSequencerPatternSceneSummary(slot);
-        sequencerSceneRecallButtons[index].setEnabled(hasScene);
-        sequencerSceneRecallButtons[index].setButtonText(sceneLabels[index] + (hasScene ? "*" : ""));
-        sequencerSceneRecallButtons[index].setTooltip(summary);
-        sequencerSceneCaptureButtons[index].setTooltip("Capture current pattern to " + sceneLabels[index] + " | " + summary);
+        sequencerSceneControls.setSceneState(index, hasScene, summary);
     }
 }
 

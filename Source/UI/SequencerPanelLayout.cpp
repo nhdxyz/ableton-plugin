@@ -26,16 +26,6 @@ void layoutKnobRow(juce::Rectangle<int> area, std::initializer_list<SliderSlot> 
     }
 }
 
-void placeSceneSlot(juce::TextButton& recallButton,
-                    juce::TextButton& captureButton,
-                    juce::Rectangle<int>& row,
-                    int slotsRemaining)
-{
-    auto slotArea = row.removeFromLeft(row.getWidth() / slotsRemaining);
-    recallButton.setBounds(slotArea.removeFromLeft(slotArea.getWidth() / 2).reduced(3, 4));
-    captureButton.setBounds(slotArea.reduced(3, 4));
-}
-
 }
 
 void layout(juce::Rectangle<int> content, Components components)
@@ -71,10 +61,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.mutateButton.setVisible(true);
     components.undoButton.setVisible(true);
     components.clearButton.setVisible(true);
-    for (auto& button : components.sceneRecallButtons)
-        button.setVisible(true);
-    for (auto& button : components.sceneCaptureButtons)
-        button.setVisible(true);
+    components.sceneControls.setVisible(true);
     components.grid.setVisible(true);
     components.expandButton.setVisible(true);
 
@@ -134,12 +121,7 @@ void layout(juce::Rectangle<int> content, Components components)
     if (showAdvancedControls)
     {
         auto sceneArea = controlArea.removeFromTop(68).withTrimmedTop(2);
-        auto sceneTopRow = sceneArea.removeFromTop(32);
-        auto sceneBottomRow = sceneArea.withTrimmedTop(2);
-        placeSceneSlot(components.sceneRecallButtons[0], components.sceneCaptureButtons[0], sceneTopRow, 2);
-        placeSceneSlot(components.sceneRecallButtons[1], components.sceneCaptureButtons[1], sceneTopRow, 1);
-        placeSceneSlot(components.sceneRecallButtons[2], components.sceneCaptureButtons[2], sceneBottomRow, 2);
-        placeSceneSlot(components.sceneRecallButtons[3], components.sceneCaptureButtons[3], sceneBottomRow, 1);
+        components.sceneControls.setBounds(sceneArea);
 
         auto utilityRow = controlArea.removeFromTop(34).withTrimmedTop(2);
         components.copyButton.setBounds(utilityRow.removeFromLeft(utilityRow.getWidth() / 3).reduced(4));
@@ -158,10 +140,7 @@ void layout(juce::Rectangle<int> content, Components components)
         components.exportMidiButton.setVisible(false);
         components.exportChainButton.setVisible(false);
         components.sceneChainLiveButton.setVisible(false);
-        for (auto& button : components.sceneRecallButtons)
-            button.setVisible(false);
-        for (auto& button : components.sceneCaptureButtons)
-            button.setVisible(false);
+        components.sceneControls.setVisible(false);
     }
 
     setSliderVisible(components.root, false);

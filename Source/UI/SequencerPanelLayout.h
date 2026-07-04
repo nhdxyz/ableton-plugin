@@ -1,11 +1,10 @@
 #pragma once
 
+#include "SequencerSceneControls.h"
 #include "SequencerStepEditor.h"
 #include "StepSequencerGrid.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
-
-#include <array>
 
 namespace UI::SequencerPanelLayout
 {
@@ -53,8 +52,7 @@ struct Components
     juce::ComboBox& laneViewBox;
     juce::ComboBox& lockDestinationBox;
 
-    std::array<juce::TextButton, 4>& sceneRecallButtons;
-    std::array<juce::TextButton, 4>& sceneCaptureButtons;
+    SequencerSceneControls& sceneControls;
 
     StepSequencerGrid& grid;
 

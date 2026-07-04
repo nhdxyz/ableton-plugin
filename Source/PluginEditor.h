@@ -32,6 +32,7 @@
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleWaveformDisplay.h"
+#include "UI/SequencerSceneControls.h"
 #include "UI/SequencerStepEditor.h"
 #include "UI/StereoFieldDisplay.h"
 #include "UI/StepSequencerGrid.h"
@@ -682,8 +683,7 @@ private:
     juce::TextButton sequencerSceneChainLiveButton { "Live" };
     juce::TextButton sequencerSceneChainLengthButton { "Auto" };
     juce::TextButton applyGrooveTransformButton { "Shape" };
-    std::array<juce::TextButton, 4> sequencerSceneRecallButtons;
-    std::array<juce::TextButton, 4> sequencerSceneCaptureButtons;
+    UI::SequencerSceneControls sequencerSceneControls;
     UI::PanelTabBar panelTabBar;
     UI::ControlStatusStrip controlStatusStrip;
     juce::TextButton sineWaveButton { "Sine" };

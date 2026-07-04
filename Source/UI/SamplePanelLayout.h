@@ -2,6 +2,7 @@
 
 #include "SampleChopPanel.h"
 #include "SampleFileActions.h"
+#include "SamplePlaybackControls.h"
 #include "SampleRecorderPanel.h"
 #include "SampleRecipeActions.h"
 #include "SampleWaveformDisplay.h"
@@ -30,12 +31,7 @@ struct Components
 
     juce::ToggleButton& enabledButton;
     juce::ToggleButton& reverseButton;
-    juce::ToggleButton& stutterEnabledButton;
-
-    juce::ComboBox& modeBox;
-    juce::ComboBox& engineBox;
-    juce::ComboBox& sliceStyleBox;
-    juce::ComboBox& stutterRateBox;
+    SamplePlaybackControls& playbackControls;
 
     SampleRecorderPanel& recorderPanel;
     SampleWaveformDisplay& waveformDisplay;

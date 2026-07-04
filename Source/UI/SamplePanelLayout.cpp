@@ -38,11 +38,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.recipeActions.setVisible(true);
     components.enabledButton.setVisible(true);
     components.reverseButton.setVisible(true);
-    components.modeBox.setVisible(true);
-    components.engineBox.setVisible(true);
-    components.sliceStyleBox.setVisible(true);
-    components.stutterEnabledButton.setVisible(true);
-    components.stutterRateBox.setVisible(true);
+    components.playbackControls.setVisible(true);
     components.chopExpandButton.setVisible(true);
     components.waveformDisplay.setVisible(true);
     components.chopPanel.setVisible(true);
@@ -79,13 +75,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
     components.recorderPanel.setBounds(sourceArea.removeFromTop(components.recorderPanel.preferredHeight()));
 
-    auto sampleModeRow = sourceArea.removeFromTop(30);
-    components.modeBox.setBounds(sampleModeRow.removeFromLeft(sampleModeRow.getWidth() / 2).reduced(4));
-    components.engineBox.setBounds(sampleModeRow.reduced(4));
-    components.sliceStyleBox.setBounds(sourceArea.removeFromTop(30).reduced(4));
-    auto stutterRow = sourceArea.removeFromTop(30);
-    components.stutterEnabledButton.setBounds(stutterRow.removeFromLeft(stutterRow.getWidth() / 2).reduced(3, 4));
-    components.stutterRateBox.setBounds(stutterRow.reduced(3, 4));
+    components.playbackControls.setBounds(sourceArea.removeFromTop(SamplePlaybackControls::preferredHeight));
     auto cutRecipeRow = sourceArea.removeFromTop(32).withTrimmedTop(2);
     components.recipeActions.setBounds(cutRecipeRow);
 

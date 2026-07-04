@@ -39,6 +39,7 @@
 #include "UI/RandomMorphPad.h"
 #include "UI/SampleChopPanel.h"
 #include "UI/SampleFileActions.h"
+#include "UI/SamplePlaybackControls.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleRecipeActions.h"
 #include "UI/SampleWaveformDisplay.h"
@@ -294,10 +295,7 @@ private:
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
-    juce::ComboBox sampleModeBox;
-    juce::ComboBox sampleEngineBox;
-    juce::ComboBox sampleSliceStyleBox;
-    juce::ComboBox sampleStutterRateBox;
+    UI::SamplePlaybackControls samplePlaybackControls;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
     juce::ComboBox presetFilterBox;
@@ -331,7 +329,6 @@ private:
     juce::ToggleButton monoButton;
     juce::ToggleButton sampleEnabledButton;
     juce::ToggleButton sampleReverseButton;
-    juce::ToggleButton sampleStutterEnabledButton;
     juce::ToggleButton sequencerEnabledButton;
     juce::ToggleButton sequencerChordMemoryButton;
     juce::ToggleButton fxDistortionEnabledButton;

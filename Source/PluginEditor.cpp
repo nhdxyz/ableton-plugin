@@ -1404,6 +1404,7 @@ float lfoShapeValueForUi(int shapeIndex, float phase, const std::array<float, 8>
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse),
+      samplePlaybackControls(processorToUse.getValueTreeState()),
       sampleRecorderPanel(processorToUse.getValueTreeState()),
       pianoKeyboard(processorToUse.getMidiKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
 {
@@ -2579,32 +2580,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerLockDestinationBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerLockDestination, sequencerLockDestinationBox));
 
-    sampleModeBox.addItem("Gate", 1);
-    sampleModeBox.addItem("One Shot", 2);
-    sampleModeBox.addItem("Slice Keys", 3);
-    sampleModeBox.setTextWhenNothingSelected("Mode");
-    sampleModeBox.setTooltip("Gate follows note-off, One Shot plays the selected range, Slice Keys maps MIDI notes C3-G3 across the eight stored slice pads and repeats every octave");
-    addAndMakeVisible(sampleModeBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::samplePlaybackMode, sampleModeBox));
-
-    sampleEngineBox.addItemList(Parameters::sampleEngineModeChoices(), 1);
-    sampleEngineBox.setTextWhenNothingSelected("Engine");
-    sampleEngineBox.setTooltip("Classic playback, Granular spray, Spectral freeze/smear, or Cloud grain playback for recorded/imported snippets");
-    addAndMakeVisible(sampleEngineBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleEngineMode, sampleEngineBox));
-
-    sampleSliceStyleBox.addItemList(Parameters::sampleSliceStyleChoices(), 1);
-    sampleSliceStyleBox.setTextWhenNothingSelected("Slice Style");
-    sampleSliceStyleBox.setTooltip("Choose how default slice pads set pitch, reverse, choke, and stutter behavior");
-    addAndMakeVisible(sampleSliceStyleBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleSliceStyle, sampleSliceStyleBox));
-
-    sampleStutterRateBox.addItem("1/8", 1);
-    sampleStutterRateBox.addItem("1/16", 2);
-    sampleStutterRateBox.addItem("1/32", 3);
-    sampleStutterRateBox.setTextWhenNothingSelected("Rate");
-    addAndMakeVisible(sampleStutterRateBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleStutterRate, sampleStutterRateBox));
+    addAndMakeVisible(samplePlaybackControls);
 
     addAndMakeVisible(presetBox);
 
@@ -2869,10 +2845,6 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleReverseButton.setButtonText("Rev");
     addAndMakeVisible(sampleReverseButton);
     buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleReverse, sampleReverseButton));
-
-    sampleStutterEnabledButton.setButtonText("Stutter");
-    addAndMakeVisible(sampleStutterEnabledButton);
-    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sampleStutterEnabled, sampleStutterEnabledButton));
 
     sequencerEnabledButton.setButtonText("On");
     addAndMakeVisible(sequencerEnabledButton);
@@ -5136,11 +5108,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sampleChopExpandButton,
                 sampleEnabledButton,
                 sampleReverseButton,
-                sampleStutterEnabledButton,
-                sampleModeBox,
-                sampleEngineBox,
-                sampleSliceStyleBox,
-                sampleStutterRateBox,
+                samplePlaybackControls,
                 sampleRecorderPanel,
                 sampleWaveformDisplay,
                 sampleChopPanel,
@@ -7141,7 +7109,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
-                    + (sampleSliceHasCustomSettings(safeIndex) ? " custom" : " " + sampleSliceStyleBox.getText())
+                    + (sampleSliceHasCustomSettings(safeIndex) ? " custom" : " " + samplePlaybackControls.getSliceStyleText())
                     + (didAudition ? " auditioned" : " selected"));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -7151,7 +7119,7 @@ void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)
 void NateVSTAudioProcessorEditor::applySampleSliceStyleDefaults(size_t sliceIndex)
 {
     const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, sliceIndex);
-    const auto styleIndex = juce::jlimit(0, 4, sampleSliceStyleBox.getSelectedItemIndex());
+    const auto styleIndex = juce::jlimit(0, 4, samplePlaybackControls.getSliceStyleSelectedItemIndex());
     const auto slicePosition = static_cast<int>(safeIndex);
     const std::array<float, 8> pitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
     const std::array<float, 8> garagePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
@@ -7264,7 +7232,7 @@ void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, 
         if (sampleSliceHasCustomSettings(safeIndex))
             return;
 
-        const auto preview = defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex());
+        const auto preview = defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
         setPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], preview.reverse ? 1.0f : 0.0f);
         setPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], preview.pitch);
         setPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], preview.gain);
@@ -7449,7 +7417,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
     const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentReverse = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f
-        : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).reverse;
+        : defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).reverse;
     const auto nextReverse = ! currentReverse;
     captureGlobalEdit("Toggle sample slice reverse");
     setPlainParameterValue(Parameters::ID::sampleReverse, nextReverse ? 1.0f : 0.0f);
@@ -7471,7 +7439,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
     const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentChoke = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f
-        : defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex()).choke;
+        : defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).choke;
     const auto nextChoke = ! currentChoke;
     captureGlobalEdit("Toggle sample slice choke");
     setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], nextChoke ? 1.0f : 0.0f);
@@ -7604,7 +7572,7 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
                                                : defaultEnd);
     const auto regionLower = juce::jmin(regionStart, regionEnd);
     const auto regionUpper = juce::jmax(regionStart, regionEnd);
-    auto preview = defaultSlicePreviewSettings(safeIndex, sampleSliceStyleBox.getSelectedItemIndex());
+    auto preview = defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
     if (custom)
     {
         preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f);
@@ -7679,7 +7647,7 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
         const auto orderedSliceEnd = juce::jmax(sliceStart, sliceEnd);
         const auto isSelected = std::abs(orderedStart - orderedSliceStart) < 0.005f
             && std::abs(orderedEnd - orderedSliceEnd) < 0.005f;
-        auto preview = defaultSlicePreviewSettings(index, sampleSliceStyleBox.getSelectedItemIndex());
+        auto preview = defaultSlicePreviewSettings(index, samplePlaybackControls.getSliceStyleSelectedItemIndex());
         if (custom)
         {
             preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
@@ -7786,7 +7754,7 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
     const auto orderedCurrentStart = juce::jmin(currentStart, currentEnd);
     const auto orderedCurrentEnd = juce::jmax(currentStart, currentEnd);
     const auto sliceCount = static_cast<float>(sliceMarkers.size());
-    const auto styleIndex = sampleSliceStyleBox.getSelectedItemIndex();
+    const auto styleIndex = samplePlaybackControls.getSliceStyleSelectedItemIndex();
     for (size_t index = 0; index < sliceMarkers.size(); ++index)
     {
         const auto custom = sampleSliceHasCustomSettings(index);
@@ -10692,9 +10660,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleChopLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleNameLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel, &sequencerRootValueLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &sampleModeBox, &sampleEngineBox, &sampleSliceStyleBox, &sampleStutterRateBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
-        &monoButton, &sampleEnabledButton, &sampleReverseButton, &sampleStutterEnabledButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
+        &monoButton, &sampleEnabledButton, &sampleReverseButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
         &fxFlangerEnabledButton,
@@ -10710,7 +10678,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton, &randomLabPageStrip,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
-        &sampleFileActions, &sampleChopPanel, &sampleRecorderPanel,
+        &sampleFileActions, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
         &sampleRecipeActions, &sequencerPatternActions,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,

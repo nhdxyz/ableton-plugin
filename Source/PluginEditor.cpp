@@ -7190,7 +7190,7 @@ void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
         audioProcessor.getSampleCaptureTakeCount(),
         audioProcessor.getSelectedSampleCaptureTakeIndex(),
         recorderExportFile.getFileName(),
-        audioProcessor.getSampleCaptureTakeNames(3)
+        audioProcessor.getSampleCaptureTakeNames(12)
     });
 }
 

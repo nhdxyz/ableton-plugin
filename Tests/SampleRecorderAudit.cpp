@@ -236,6 +236,34 @@ void feedHostInputContinuityBlocks(NateVSTAudioProcessor& processor, int blocks)
     }
 }
 
+bool recordConstantHostInputTake(NateVSTAudioProcessor& processor,
+                                 float marker,
+                                 int blocks,
+                                 juce::String& committedPath)
+{
+    processor.beginSampleCapture();
+
+    juce::AudioBuffer<float> buffer(2, 512);
+    for (auto block = 0; block < blocks; ++block)
+    {
+        buffer.clear();
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            buffer.setSample(0, sample, marker);
+            buffer.setSample(1, sample, marker * 0.5f);
+        }
+
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+
+    if (! processor.commitSampleCaptureToSampler())
+        return false;
+
+    committedPath = processor.getLoadedSamplePath();
+    return committedPath.isNotEmpty() && juce::File(committedPath).existsAsFile();
+}
+
 bool readAudioFile(const juce::File& file, juce::AudioBuffer<float>& destination)
 {
     juce::AudioFormatManager manager;
@@ -640,6 +668,91 @@ int main()
 
     if (continuityCaptureFile.existsAsFile())
         continuityCaptureFile.deleteFile();
+
+    NateVSTAudioProcessor takeHistoryProcessor;
+    takeHistoryProcessor.prepareToPlay(44100.0, 512);
+    if (! setPlainParameter(takeHistoryProcessor, Parameters::ID::sampleRecordSource, 1.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::sampleRecordStart, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::sampleRecordLength, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(takeHistoryProcessor, Parameters::ID::sequencerEnabled, 0.0f))
+    {
+        std::cerr << "Could not configure recorder take-history patch\n";
+        return 1;
+    }
+
+    juce::String firstTakePath;
+    juce::String secondTakePath;
+    if (! recordConstantHostInputTake(takeHistoryProcessor, 0.07f, 8, firstTakePath)
+        || ! recordConstantHostInputTake(takeHistoryProcessor, 0.19f, 8, secondTakePath))
+    {
+        std::cerr << "Recorder take-history capture did not create two file-backed takes\n";
+        return 1;
+    }
+
+    if (takeHistoryProcessor.getSampleCaptureTakeCount() != 2)
+    {
+        std::cerr << "Recorder take history count mismatch after two commits: "
+                  << takeHistoryProcessor.getSampleCaptureTakeCount() << '\n';
+        return 1;
+    }
+
+    const auto takeNames = takeHistoryProcessor.getSampleCaptureTakeNames(12);
+    if (takeNames.size() < 2
+        || takeNames[0] != juce::File(secondTakePath).getFileNameWithoutExtension()
+        || takeNames[1] != juce::File(firstTakePath).getFileNameWithoutExtension())
+    {
+        std::cerr << "Recorder take names are not newest-first after two commits\n";
+        return 1;
+    }
+
+    if (takeHistoryProcessor.getSelectedSampleCaptureTakeIndex() != 0
+        || takeHistoryProcessor.getSelectedSampleCaptureTakePath() != secondTakePath)
+    {
+        std::cerr << "Newest recorder take was not selected after commit\n";
+        return 1;
+    }
+
+    if (! takeHistoryProcessor.selectSampleCaptureTake(1)
+        || takeHistoryProcessor.getSelectedSampleCaptureTakeIndex() != 1
+        || takeHistoryProcessor.getSelectedSampleCaptureTakePath() != firstTakePath)
+    {
+        std::cerr << "Recorder could not select the older committed take\n";
+        return 1;
+    }
+
+    if (takeHistoryProcessor.getLatestSampleCaptureTakePath() != secondTakePath)
+    {
+        std::cerr << "Selecting an older recorder take changed the latest-take pointer\n";
+        return 1;
+    }
+
+    juce::AudioBuffer<float> selectedOlderTake;
+    if (! readAudioFile(juce::File(takeHistoryProcessor.getSelectedSampleCaptureTakePath()), selectedOlderTake)
+        || selectedOlderTake.getNumSamples() < 1024)
+    {
+        std::cerr << "Could not read selected older recorder take\n";
+        return 1;
+    }
+
+    const auto selectedMarker = selectedOlderTake.getSample(0, selectedOlderTake.getNumSamples() / 2);
+    if (std::abs(selectedMarker - 0.07f) > 0.0025f)
+    {
+        std::cerr << "Selected older recorder take has the wrong audio marker: "
+                  << selectedMarker << '\n';
+        return 1;
+    }
+
+    for (const auto& takePath : { firstTakePath, secondTakePath })
+    {
+        const juce::File takeFile(takePath);
+        if (takeFile.existsAsFile())
+            takeFile.deleteFile();
+    }
 
     const auto capturePath = processor.getLoadedSamplePath();
     if (capturePath.isNotEmpty())

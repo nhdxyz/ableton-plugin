@@ -50,6 +50,7 @@
 #include "UI/SampleStatusLabel.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerEnabledButton.h"
+#include "UI/SequencerGrooveControls.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternActions.h"
@@ -295,10 +296,7 @@ private:
     juce::ComboBox randomSectionActionBox;
     juce::ComboBox randomLockActionBox;
     juce::ComboBox sequencerRateBox;
-    juce::ComboBox sequencerGrooveBox;
-    juce::ComboBox sequencerScaleBox;
-    juce::ComboBox sequencerChordBox;
-    juce::ComboBox sequencerVoicingBox;
+    UI::SequencerGrooveControls sequencerGrooveControls;
     juce::ComboBox sequencerPatternBox;
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLaneViewBox;

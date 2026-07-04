@@ -109,6 +109,7 @@ target_sources(NateVST
         Source/UI/SampleStatusLabel.cpp
         Source/UI/SampleWaveformDisplay.cpp
         Source/UI/SequencerEnabledButton.cpp
+        Source/UI/SequencerGrooveControls.cpp
         Source/UI/SequencerPanelLayout.cpp
         Source/UI/SequencerPatternActions.cpp
         Source/UI/SequencerRateControls.cpp

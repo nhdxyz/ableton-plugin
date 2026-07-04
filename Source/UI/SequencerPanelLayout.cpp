@@ -34,10 +34,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.enabledButton.setVisible(true);
     components.hostSyncStatusLabel.setVisible(true);
     components.rateControls.setVisible(true);
-    components.grooveBox.setVisible(true);
-    components.scaleBox.setVisible(true);
-    components.chordBox.setVisible(true);
-    components.voicingBox.setVisible(true);
+    components.grooveControls.setVisible(true);
     components.chordMemoryButton.setVisible(true);
     components.patternBox.setVisible(true);
     components.grooveTransformBox.setVisible(true);
@@ -69,12 +66,7 @@ void layout(juce::Rectangle<int> content, Components components)
 
     components.rateControls.setBounds(controlArea.removeFromTop(34));
 
-    auto grooveRow = controlArea.removeFromTop(34);
-    components.grooveBox.setBounds(grooveRow.removeFromLeft(grooveRow.getWidth() / 2).reduced(4));
-    components.scaleBox.setBounds(grooveRow.reduced(4));
-    auto harmonyRow = controlArea.removeFromTop(34);
-    components.chordBox.setBounds(harmonyRow.removeFromLeft(harmonyRow.getWidth() / 2).reduced(4));
-    components.voicingBox.setBounds(harmonyRow.reduced(4));
+    components.grooveControls.setBounds(controlArea.removeFromTop(SequencerGrooveControls::preferredHeight));
 
     auto patternRow = controlArea.removeFromTop(34);
     components.chordMemoryButton.setBounds(patternRow.removeFromLeft(86).reduced(4));

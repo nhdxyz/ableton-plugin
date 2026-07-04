@@ -1404,6 +1404,7 @@ float lfoShapeValueForUi(int shapeIndex, float phase, const std::array<float, 8>
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
     : AudioProcessorEditor(&processorToUse),
       audioProcessor(processorToUse),
+      sequencerGrooveControls(processorToUse.getValueTreeState()),
       sampleSourceControls(processorToUse.getValueTreeState()),
       sampleRangeControls(processorToUse.getValueTreeState()),
       sampleShapeControls(processorToUse.getValueTreeState()),
@@ -2471,25 +2472,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(sequencerRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerRate, sequencerRateBox));
 
-    sequencerGrooveBox.addItemList(Parameters::sequencerGrooveModeChoices(), 1);
-    sequencerGrooveBox.setTextWhenNothingSelected("Groove");
-    addAndMakeVisible(sequencerGrooveBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerGrooveMode, sequencerGrooveBox));
-
-    sequencerScaleBox.addItemList(Parameters::sequencerScaleChoices(), 1);
-    sequencerScaleBox.setTextWhenNothingSelected("Scale");
-    addAndMakeVisible(sequencerScaleBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerScale, sequencerScaleBox));
-
-    sequencerChordBox.addItemList(Parameters::sequencerChordModeChoices(), 1);
-    sequencerChordBox.setTextWhenNothingSelected("Chord");
-    addAndMakeVisible(sequencerChordBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerChordMode, sequencerChordBox));
-
-    sequencerVoicingBox.addItemList(Parameters::sequencerChordVoicingChoices(), 1);
-    sequencerVoicingBox.setTextWhenNothingSelected("Voice");
-    addAndMakeVisible(sequencerVoicingBox);
-    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::sequencerChordVoicing, sequencerVoicingBox));
+    addAndMakeVisible(sequencerGrooveControls);
 
     sequencerPatternBox.addItem("Bass", 1);
     sequencerPatternBox.addItem("Stab", 2);
@@ -5115,10 +5098,7 @@ void NateVSTAudioProcessorEditor::resized()
                 applyGrooveTransformButton,
                 sequencerExpandButton,
                 sequencerRootControls,
-                sequencerGrooveBox,
-                sequencerScaleBox,
-                sequencerChordBox,
-                sequencerVoicingBox,
+                sequencerGrooveControls,
                 sequencerPatternBox,
                 sequencerGrooveTransformBox,
                 sequencerLaneViewBox,
@@ -10618,7 +10598,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerGrooveBox, &sequencerScaleBox, &sequencerChordBox, &sequencerVoicingBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &sequencerRateBox, &sequencerPatternBox, &sequencerGrooveTransformBox, &sequencerLaneViewBox, &sequencerLockDestinationBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton, &sequencerChordMemoryButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -10637,7 +10617,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,
         &sampleFileActions, &sampleChopHeader, &sampleSourceControls, &samplePlaybackControls, &sampleChopPanel, &sampleRecorderPanel,
-        &sampleRecipeActions, &sequencerPatternActions,
+        &sampleRecipeActions, &sequencerGrooveControls, &sequencerPatternActions,
         &bassPatternButton, &stabPatternButton, &ukgPatternButton, &sequencerUtilityActions, &sequencerSceneChainControls, &applyGrooveTransformButton, &sequencerSceneControls,
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,

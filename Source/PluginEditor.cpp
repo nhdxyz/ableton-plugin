@@ -5,6 +5,7 @@
 #include "Synth/WavetableFrameRecipes.h"
 #include "UI/FxRackPanelLayout.h"
 #include "UI/LibraryPanelLayout.h"
+#include "UI/ModPanelLayout.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SequencerPanelLayout.h"
 
@@ -37,12 +38,6 @@ constexpr auto keyboardMinLowestVisibleNote = 36;
 constexpr auto keyboardMaxLowestVisibleNote = 72;
 constexpr auto keyboardTypingKeySpanSemitones = 16;
 constexpr auto abletonMiddleCOctave = 3;
-constexpr auto modMatrixTitleHeight = 28;
-constexpr auto modMatrixInspectorHeight = 30;
-constexpr auto modMatrixRouteMapHeight = 46;
-constexpr auto modMatrixHeaderHeight = 18;
-constexpr auto modMatrixMinimumRowHeight = 26;
-constexpr auto modMatrixRouteMapMinimumRowHeight = 26;
 constexpr auto firstMacroModSourceIndex = 4;
 constexpr auto presetAuditionVelocity = 0.86f;
 constexpr auto candidateAuditionDurationMs = 680.0;
@@ -5061,276 +5056,85 @@ void NateVSTAudioProcessorEditor::resized()
 
         case Panel::mod:
         {
-            modSectionLabel.setVisible(true);
-            modSectionLabel.setBounds(content.removeFromTop(28));
-
-            auto workflowRow = content.removeFromTop(38).withTrimmedTop(4);
-            modWorkflowStrip.setVisible(true);
-            modWorkflowStrip.setBounds(workflowRow);
-            updateModWorkflowButtons();
-
-            auto modContent = content.withTrimmedTop(8).reduced(18, 10);
-
-            auto layoutCompactSourceRail = [this] (juce::Rectangle<int>& area)
-            {
-                modSourceLabel.setVisible(true);
-
-                auto railArea = area.removeFromTop(94);
-                modSourceLabel.setBounds(railArea.removeFromTop(18).withTrimmedLeft(4));
-                railArea = railArea.withTrimmedTop(4);
-
-                constexpr auto sourceColumnCount = 5;
-                constexpr auto sourceRowCount = 4;
-                const auto sourceCellHeight = juce::jmax(10, railArea.getHeight() / sourceRowCount);
-                for (size_t index = 0; index < modSourceRows.size(); ++index)
-                {
-                    modSourceRows[index].setVisible(true);
-                    const auto row = static_cast<int>(index) / sourceColumnCount;
-                    const auto column = static_cast<int>(index) % sourceColumnCount;
-                    auto rowArea = railArea.withTrimmedTop(row * sourceCellHeight).withHeight(sourceCellHeight);
-                    const auto cellWidth = rowArea.getWidth() / sourceColumnCount;
-                    modSourceRows[index].setBounds(rowArea.withTrimmedLeft(column * cellWidth)
-                                                          .withWidth(cellWidth)
-                                                          .reduced(3, 2));
-                }
-
-                area.removeFromTop(8);
-            };
-
-            auto layoutSources = [this] (juce::Rectangle<int> area)
-            {
-                modSourceLabel.setVisible(true);
-                modLfo2Label.setVisible(true);
-                modEnvelopeLabel.setVisible(true);
-                lfo2ShapeBox.setVisible(true);
-                lfo2SyncRateBox.setVisible(true);
-                lfo2SyncButton.setVisible(true);
-                lfo2RetriggerButton.setVisible(true);
-
-                auto sourceArea = area.removeFromLeft(juce::jlimit(420, 590, area.getWidth() / 2));
-                area.removeFromLeft(12);
-                auto generatorArea = area;
-
-                modSourceLabel.setBounds(sourceArea.removeFromTop(22));
-                auto sourceListArea = sourceArea.withTrimmedTop(6);
-                constexpr auto sourceColumnCount = 5;
-                constexpr auto sourceRowCount = 4;
-                const auto sourceCellHeight = juce::jmax(1, sourceListArea.getHeight() / sourceRowCount);
-                for (size_t index = 0; index < modSourceRows.size(); ++index)
-                {
-                    modSourceRows[index].setVisible(true);
-                    const auto row = static_cast<int>(index) / sourceColumnCount;
-                    const auto column = static_cast<int>(index) % sourceColumnCount;
-                    auto rowArea = sourceListArea.withTrimmedTop(row * sourceCellHeight).withHeight(sourceCellHeight);
-                    const auto cellWidth = rowArea.getWidth() / sourceColumnCount;
-                    modSourceRows[index].setBounds(rowArea.withTrimmedLeft(column * cellWidth)
-                                                           .withWidth(cellWidth)
-                                                           .reduced(4, 3));
-                }
-
-                auto lfo2Area = generatorArea.removeFromTop(juce::jlimit(146, 188, generatorArea.getHeight() / 2));
-                generatorArea.removeFromTop(10);
-                auto envelopeArea = generatorArea;
-
-                modLfo2Label.setBounds(lfo2Area.removeFromTop(22));
-                auto lfo2ModeRow = lfo2Area.removeFromTop(36).withTrimmedTop(3);
-                lfo2ShapeBox.setBounds(lfo2ModeRow.removeFromLeft(lfo2ModeRow.getWidth() / 2).reduced(4));
-                lfo2SyncRateBox.setBounds(lfo2ModeRow.reduced(4));
-                auto lfo2ToggleRow = lfo2Area.removeFromTop(34).withTrimmedTop(3);
-                lfo2SyncButton.setBounds(lfo2ToggleRow.removeFromLeft(lfo2ToggleRow.getWidth() / 2).reduced(4));
-                lfo2RetriggerButton.setBounds(lfo2ToggleRow.reduced(4));
-                setSliderVisible(lfo2RateSlider, lfo2RateLabel, true);
-                setSliderVisible(lfo2DepthSlider, lfo2DepthLabel, true);
-                setSliderVisible(lfo2PhaseSlider, lfo2PhaseLabel, true);
-                layoutKnobRow(lfo2Area.withTrimmedTop(4), { &lfo2RateSlider, &lfo2DepthSlider, &lfo2PhaseSlider });
-
-                modEnvelopeLabel.setBounds(envelopeArea.removeFromTop(22));
-                setSliderVisible(modEnv1AttackSlider, modEnv1AttackLabel, true);
-                setSliderVisible(modEnv1DecaySlider, modEnv1DecayLabel, true);
-                setSliderVisible(modEnv1SustainSlider, modEnv1SustainLabel, true);
-                setSliderVisible(modEnv1ReleaseSlider, modEnv1ReleaseLabel, true);
-                setSliderVisible(modEnv1DepthSlider, modEnv1DepthLabel, true);
-                layoutKnobRow(envelopeArea.removeFromTop(76).withTrimmedTop(4), {
-                    &modEnv1AttackSlider,
-                    &modEnv1DecaySlider,
-                    &modEnv1SustainSlider
-                });
-                layoutKnobRow(envelopeArea.removeFromTop(76).withTrimmedTop(4), {
-                    &modEnv1ReleaseSlider,
-                    &modEnv1DepthSlider
-                });
-            };
-
-            auto layoutMacros = [this, &layoutCompactSourceRail] (juce::Rectangle<int> area)
-            {
-                layoutCompactSourceRail(area);
-                modMacroLabel.setVisible(true);
-                modMacroAssignLabel.setVisible(true);
-                modMacroAssignStatusLabel.setVisible(true);
-                macroAssignmentPad.setVisible(true);
-                macroPerformanceMap.setVisible(true);
-                modMacroExpandButton.setVisible(true);
-
-                auto macroHeader = area.removeFromTop(26);
-                modMacroLabel.setBounds(macroHeader.removeFromLeft(78));
-                modMacroAssignLabel.setBounds(macroHeader.removeFromLeft(66));
-                modMacroExpandButton.setBounds(macroHeader.removeFromRight(30).reduced(3, 2));
-                modMacroAssignStatusLabel.setBounds(macroHeader.reduced(4, 1));
-
-                area.removeFromTop(8);
-                const auto mapWidth = juce::jlimit(250, 360, area.getWidth() / 3);
-                macroPerformanceMap.setBounds(area.removeFromLeft(mapWidth).reduced(4));
-                area.removeFromLeft(10);
-                macroAssignmentPad.setBounds(area.reduced(4));
-            };
-
-            auto layoutCurves = [this, &layoutCompactSourceRail] (juce::Rectangle<int> area)
-            {
-                layoutCompactSourceRail(area);
-                modLfoLabel.setVisible(true);
-                lfo1ShapeBox.setVisible(true);
-                lfo1SyncRateBox.setVisible(true);
-                lfoCurvePresetBox.setVisible(true);
-                lfoCurveActionBox.setVisible(true);
-                lfo1SyncButton.setVisible(true);
-                lfo1RetriggerButton.setVisible(true);
-                lfoCurveDisplay.setVisible(true);
-
-                modLfoLabel.setBounds(area.removeFromTop(22));
-                auto controlRow = area.removeFromTop(38).withTrimmedTop(3);
-                lfo1ShapeBox.setBounds(controlRow.removeFromLeft(juce::jlimit(150, 220, controlRow.getWidth() / 4)).reduced(4));
-                lfo1SyncRateBox.setBounds(controlRow.removeFromLeft(juce::jlimit(110, 160, controlRow.getWidth() / 4)).reduced(4));
-                lfoCurvePresetBox.setBounds(controlRow.removeFromLeft(juce::jlimit(150, 230, controlRow.getWidth() / 3)).reduced(4));
-                lfoCurveActionBox.setBounds(controlRow.removeFromLeft(juce::jlimit(130, 180, controlRow.getWidth() / 2)).reduced(4));
-                lfo1SyncButton.setBounds(controlRow.removeFromLeft(82).reduced(4));
-                lfo1RetriggerButton.setBounds(controlRow.removeFromLeft(88).reduced(4));
-
-                setSliderVisible(lfo1RateSlider, lfo1RateLabel, true);
-                setSliderVisible(lfo1DepthSlider, lfo1DepthLabel, true);
-                setSliderVisible(lfo1PhaseSlider, lfo1PhaseLabel, true);
-                const auto knobHeight = juce::jlimit(62, 84, area.getHeight() / 4);
-                lfoCurveDisplay.setBounds(area.removeFromTop(area.getHeight() - knobHeight).withTrimmedTop(4));
-                layoutKnobRow(area.removeFromTop(knobHeight).withTrimmedTop(6), { &lfo1RateSlider, &lfo1DepthSlider, &lfo1PhaseSlider });
-            };
-
-            auto layoutMatrix = [this] (juce::Rectangle<int> matrixArea)
-            {
-                modMatrixLabel.setVisible(true);
-                modMatrixStatusLabel.setVisible(true);
-                modInspectorLabel.setVisible(true);
-                modInspectorDestinationBox.setVisible(true);
-                modInspectorSourceBox.setVisible(true);
-                modInspectorStatusLabel.setVisible(true);
-                modInspectorAddButton.setVisible(true);
-                modInspectorClearButton.setVisible(true);
-                modMatrixSourceHeader.setVisible(true);
-                modMatrixDestinationHeader.setVisible(true);
-                modMatrixAmountHeader.setVisible(true);
-                modMatrixSourceHeaderB.setVisible(false);
-                modMatrixDestinationHeaderB.setVisible(false);
-                modMatrixAmountHeaderB.setVisible(false);
-
-            const auto canShowRouteMap = matrixArea.getHeight() >= modMatrixTitleHeight
-                                                                + modMatrixInspectorHeight
-                                                                + modMatrixRouteMapHeight
-                                                                + modMatrixHeaderHeight
-                                                                + (modMatrixRouteMapMinimumRowHeight * static_cast<int>(modMatrixRows.size()));
-            auto matrixTitleRow = matrixArea.removeFromTop(modMatrixTitleHeight);
-            modMatrixLabel.setBounds(matrixTitleRow.removeFromLeft(70).withTrimmedTop(5));
-            modMatrixStatusLabel.setBounds(matrixTitleRow.removeFromLeft(150).reduced(3, 5));
-            modInspectorStatusLabel.setBounds(matrixTitleRow.reduced(5, 5));
-
-            auto inspectorRow = matrixArea.removeFromTop(modMatrixInspectorHeight);
-            modInspectorLabel.setBounds(inspectorRow.removeFromLeft(62).withTrimmedTop(6));
-            modInspectorDestinationBox.setBounds(inspectorRow.removeFromLeft(150).reduced(3, 4));
-            modInspectorSourceBox.setBounds(inspectorRow.removeFromLeft(138).reduced(3, 4));
-            modInspectorAddButton.setBounds(inspectorRow.removeFromLeft(58).reduced(3, 4));
-            modInspectorClearButton.setBounds(inspectorRow.removeFromLeft(66).reduced(3, 4));
-
-            if (canShowRouteMap)
-            {
-                auto routeMapRow = matrixArea.removeFromTop(modMatrixRouteMapHeight).withTrimmedTop(4);
-                modRouteMapDisplay.setVisible(true);
-                modRouteMapDisplay.setBounds(routeMapRow.reduced(3, 2));
-            }
-            else
-            {
-                modRouteMapDisplay.setVisible(false);
-            }
-
-            auto matrixHeaderRow = matrixArea.removeFromTop(modMatrixHeaderHeight).reduced(3, 1);
-            auto placeHeader = [] (juce::Rectangle<int> header,
-                                   juce::Label& source,
-                                   juce::Label& destination,
-                                   juce::Label& amount)
-            {
-                constexpr auto slotWidth = 26;
-                const auto actionWidth = juce::jlimit(70, 78, header.getWidth() / 6);
-                const auto fieldAreaWidth = juce::jmax(1, header.getWidth() - slotWidth - actionWidth);
-                const auto sourceWidth = juce::jlimit(140, 190, fieldAreaWidth / 4);
-                const auto destinationWidth = juce::jlimit(170, 240, fieldAreaWidth / 3);
-
-                header.removeFromLeft(slotWidth);
-                header.removeFromRight(actionWidth);
-                source.setBounds(header.removeFromLeft(sourceWidth).reduced(5, 0));
-                destination.setBounds(header.removeFromLeft(destinationWidth).reduced(5, 0));
-                amount.setBounds(header.reduced(5, 0));
-            };
-            placeHeader(matrixHeaderRow, modMatrixSourceHeader, modMatrixDestinationHeader, modMatrixAmountHeader);
-
-            const auto rowsPerBankToShow = juce::jlimit(1,
-                                                        static_cast<int>(modMatrixRows.size()),
-                                                        matrixArea.getHeight() / modMatrixMinimumRowHeight);
-            auto setRouteVisible = [this] (size_t index, bool shouldBeVisible)
-            {
-                modMatrixRows[index].setVisible(shouldBeVisible);
-                modSlotRows[index].setVisible(shouldBeVisible);
-                modSourceBoxes[index].setVisible(shouldBeVisible);
-                modDestinationBoxes[index].setVisible(shouldBeVisible);
-                modAmountSliders[index].setVisible(shouldBeVisible);
-                modSlotEnabledButtons[index].setVisible(shouldBeVisible);
-                modSlotDuplicateButtons[index].setVisible(shouldBeVisible);
-                modSlotDeleteButtons[index].setVisible(shouldBeVisible);
-            };
-            for (size_t index = 0; index < modSlotRows.size(); ++index)
-                setRouteVisible(index, static_cast<int>(index) < rowsPerBankToShow);
-
-            auto placeRouteRow = [this] (size_t index, juce::Rectangle<int>& bank, int rowsRemaining)
-            {
-                const auto rowHeight = juce::jmax(modMatrixMinimumRowHeight, bank.getHeight() / rowsRemaining);
-                auto rowBounds = bank.removeFromTop(rowHeight).reduced(3, 1);
-                modMatrixRows[index].setBounds(rowBounds);
-
-                auto row = rowBounds.reduced(2, 2);
-                constexpr auto slotWidth = 26;
-                const auto actionWidth = juce::jlimit(70, 78, row.getWidth() / 6);
-                const auto fieldAreaWidth = juce::jmax(1, row.getWidth() - slotWidth - actionWidth);
-                const auto sourceWidth = juce::jlimit(140, 190, fieldAreaWidth / 4);
-                const auto destinationWidth = juce::jlimit(170, 240, fieldAreaWidth / 3);
-
-                modSlotRows[index].setBounds(row.removeFromLeft(slotWidth).reduced(2, 0));
-                modSourceBoxes[index].setBounds(row.removeFromLeft(sourceWidth).reduced(3, 0));
-                modDestinationBoxes[index].setBounds(row.removeFromLeft(destinationWidth).reduced(3, 0));
-                auto actionArea = row.removeFromRight(actionWidth);
-                modSlotEnabledButtons[index].setBounds(actionArea.removeFromLeft(30).reduced(1, 0));
-                modSlotDuplicateButtons[index].setBounds(actionArea.removeFromLeft(22).reduced(1, 0));
-                modSlotDeleteButtons[index].setBounds(actionArea.reduced(1, 0));
-                modAmountSliders[index].setBounds(row.reduced(3, 0));
-            };
-
-            for (auto row = 0; row < rowsPerBankToShow; ++row)
-                placeRouteRow(static_cast<size_t>(row), matrixArea, rowsPerBankToShow - row);
-            };
-
+            auto activeModLayoutPage = UI::ModPanelLayout::Page::matrix;
             switch (activeModWorkflowPage)
             {
-                case ModWorkflowPage::sources: layoutSources(modContent); break;
-                case ModWorkflowPage::macros: layoutMacros(modContent); break;
-                case ModWorkflowPage::curves: layoutCurves(modContent); break;
+                case ModWorkflowPage::sources: activeModLayoutPage = UI::ModPanelLayout::Page::sources; break;
+                case ModWorkflowPage::macros: activeModLayoutPage = UI::ModPanelLayout::Page::macros; break;
+                case ModWorkflowPage::curves: activeModLayoutPage = UI::ModPanelLayout::Page::curves; break;
                 case ModWorkflowPage::matrix:
-                default: layoutMatrix(modContent); break;
+                default: activeModLayoutPage = UI::ModPanelLayout::Page::matrix; break;
             }
 
+            UI::ModPanelLayout::layout(content, {
+                modSectionLabel,
+                modWorkflowStrip,
+                activeModLayoutPage,
+                { modSourceLabel, modSourceRows },
+                {
+                    modLfo2Label,
+                    modEnvelopeLabel,
+                    lfo2ShapeBox,
+                    lfo2SyncRateBox,
+                    lfo2SyncButton,
+                    lfo2RetriggerButton,
+                    { lfo2RateSlider, lfo2RateLabel },
+                    { lfo2DepthSlider, lfo2DepthLabel },
+                    { lfo2PhaseSlider, lfo2PhaseLabel },
+                    { modEnv1AttackSlider, modEnv1AttackLabel },
+                    { modEnv1DecaySlider, modEnv1DecayLabel },
+                    { modEnv1SustainSlider, modEnv1SustainLabel },
+                    { modEnv1ReleaseSlider, modEnv1ReleaseLabel },
+                    { modEnv1DepthSlider, modEnv1DepthLabel }
+                },
+                {
+                    modMacroLabel,
+                    modMacroAssignLabel,
+                    modMacroAssignStatusLabel,
+                    modMacroExpandButton,
+                    macroAssignmentPad,
+                    macroPerformanceMap
+                },
+                {
+                    modLfoLabel,
+                    lfo1ShapeBox,
+                    lfo1SyncRateBox,
+                    lfoCurvePresetBox,
+                    lfoCurveActionBox,
+                    lfo1SyncButton,
+                    lfo1RetriggerButton,
+                    lfoCurveDisplay,
+                    { lfo1RateSlider, lfo1RateLabel },
+                    { lfo1DepthSlider, lfo1DepthLabel },
+                    { lfo1PhaseSlider, lfo1PhaseLabel }
+                },
+                {
+                    modMatrixLabel,
+                    modMatrixStatusLabel,
+                    modInspectorLabel,
+                    modInspectorStatusLabel,
+                    modMatrixSourceHeader,
+                    modMatrixDestinationHeader,
+                    modMatrixAmountHeader,
+                    modMatrixSourceHeaderB,
+                    modMatrixDestinationHeaderB,
+                    modMatrixAmountHeaderB,
+                    modInspectorDestinationBox,
+                    modInspectorSourceBox,
+                    modInspectorAddButton,
+                    modInspectorClearButton,
+                    modRouteMapDisplay,
+                    modMatrixRows,
+                    modSlotRows,
+                    modSourceBoxes,
+                    modDestinationBoxes,
+                    modAmountSliders,
+                    modSlotEnabledButtons,
+                    modSlotDuplicateButtons,
+                    modSlotDeleteButtons
+                }
+            });
+            updateModWorkflowButtons();
             break;
         }
 

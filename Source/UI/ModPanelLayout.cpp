@@ -138,6 +138,7 @@ void layoutCurvesPage(SourceControls sourceControls, CurveControls curveControls
     curveControls.actionBox.setVisible(true);
     curveControls.syncButton.setVisible(true);
     curveControls.retriggerButton.setVisible(true);
+    curveControls.toolStrip.setVisible(true);
     curveControls.curveDisplay.setVisible(true);
 
     curveControls.lfoLabel.setBounds(area.removeFromTop(22));
@@ -148,6 +149,8 @@ void layoutCurvesPage(SourceControls sourceControls, CurveControls curveControls
     curveControls.actionBox.setBounds(controlRow.removeFromLeft(juce::jlimit(130, 180, controlRow.getWidth() / 2)).reduced(4));
     curveControls.syncButton.setBounds(controlRow.removeFromLeft(82).reduced(4));
     curveControls.retriggerButton.setBounds(controlRow.removeFromLeft(88).reduced(4));
+
+    curveControls.toolStrip.setBounds(area.removeFromTop(34).withTrimmedTop(2));
 
     const auto knobHeight = juce::jlimit(62, 84, area.getHeight() / 4);
     curveControls.curveDisplay.setBounds(area.removeFromTop(area.getHeight() - knobHeight).withTrimmedTop(4));

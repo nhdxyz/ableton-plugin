@@ -2808,29 +2808,19 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     lfoCurveActionBox.setTooltip("Apply utility edits to the visible LFO/MSEG curve");
     addAndMakeVisible(lfoCurveActionBox);
 
-    lfoCurveInvertButton.setTooltip("Invert the custom LFO curve around the centre line");
-    lfoCurveInvertButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::invert); };
-    addAndMakeVisible(lfoCurveInvertButton);
-
-    lfoCurveReverseButton.setTooltip("Reverse the MSEG point order so the motion plays backward");
-    lfoCurveReverseButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::reverse); };
-    addAndMakeVisible(lfoCurveReverseButton);
-
-    lfoCurveSmoothButton.setTooltip("Smooth neighbouring MSEG points for less stepped movement");
-    lfoCurveSmoothButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::smooth); };
-    addAndMakeVisible(lfoCurveSmoothButton);
-
-    lfoCurveQuantizeButton.setTooltip("Quantize MSEG point values to eighth-depth steps");
-    lfoCurveQuantizeButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::quantize); };
-    addAndMakeVisible(lfoCurveQuantizeButton);
-
-    lfoCurveRandomButton.setTooltip("Generate a controlled random MSEG curve for new movement ideas");
-    lfoCurveRandomButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::randomize); };
-    addAndMakeVisible(lfoCurveRandomButton);
-
-    lfoCurveGarageButton.setTooltip("Apply a UK garage swing MSEG shape for shuffled bass, stabs, and chops");
-    lfoCurveGarageButton.onClick = [this] { applyLfoCurveTool(LfoCurveTool::garage); };
-    addAndMakeVisible(lfoCurveGarageButton);
+    lfoCurveToolStrip.onToolSelected = [this] (UI::LfoCurveToolStrip::Tool tool)
+    {
+        switch (tool)
+        {
+            case UI::LfoCurveToolStrip::Tool::invert: applyLfoCurveTool(LfoCurveTool::invert); break;
+            case UI::LfoCurveToolStrip::Tool::reverse: applyLfoCurveTool(LfoCurveTool::reverse); break;
+            case UI::LfoCurveToolStrip::Tool::smooth: applyLfoCurveTool(LfoCurveTool::smooth); break;
+            case UI::LfoCurveToolStrip::Tool::quantize: applyLfoCurveTool(LfoCurveTool::quantize); break;
+            case UI::LfoCurveToolStrip::Tool::randomize: applyLfoCurveTool(LfoCurveTool::randomize); break;
+            case UI::LfoCurveToolStrip::Tool::garage: applyLfoCurveTool(LfoCurveTool::garage); break;
+        }
+    };
+    addAndMakeVisible(lfoCurveToolStrip);
 
     for (size_t index = 0; index < modSourceBoxes.size(); ++index)
     {
@@ -5102,6 +5092,7 @@ void NateVSTAudioProcessorEditor::resized()
                     lfo1SyncButton,
                     lfo1RetriggerButton,
                     lfoCurveDisplay,
+                    lfoCurveToolStrip,
                     { lfo1RateSlider, lfo1RateLabel },
                     { lfo1DepthSlider, lfo1DepthLabel },
                     { lfo1PhaseSlider, lfo1PhaseLabel }
@@ -10741,8 +10732,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &sourceStackReverseButton, &sourceStackRotateLeftButton, &sourceStackRotateRightButton, &sourceStackSmoothButton, &sourceStackEmphasiseButton,
         &sourceFrameDuplicateSlotButton, &sourceFrameDeleteSlotButton, &sourceFrameMoveLeftButton, &sourceFrameMoveRightButton,
-        &lfoCurveInvertButton, &lfoCurveReverseButton, &lfoCurveSmoothButton,
-        &lfoCurveQuantizeButton, &lfoCurveRandomButton, &lfoCurveGarageButton,
+        &lfoCurveToolStrip,
         &generateButton, &mutateButton, &variationButton, &wildMutateButton, &undoRandomButton, &redoRandomButton, &randomLabPageStrip,
         &recallSnapshotAButton, &captureSnapshotAButton, &recallSnapshotBButton, &captureSnapshotBButton,
         &recallSnapshotCButton, &captureSnapshotCButton, &recallSnapshotDButton, &captureSnapshotDButton,

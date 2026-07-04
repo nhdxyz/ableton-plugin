@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LfoCurveToolStrip.h"
 #include "MacroAssignmentPad.h"
 #include "MacroPerformanceMap.h"
 #include "ModCurveDisplay.h"
@@ -72,6 +73,7 @@ struct CurveControls
     juce::ToggleButton& syncButton;
     juce::ToggleButton& retriggerButton;
     ModCurveDisplay& curveDisplay;
+    LfoCurveToolStrip& toolStrip;
     SliderSlot rate;
     SliderSlot depth;
     SliderSlot phase;

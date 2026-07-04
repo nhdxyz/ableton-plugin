@@ -66,6 +66,7 @@ target_sources(NateVST
         Source/UI/HomeOverviewDisplay.cpp
         Source/UI/HomeSignalFlowDisplay.cpp
         Source/UI/HomeSessionDisplay.cpp
+        Source/UI/LfoCurveToolStrip.cpp
         Source/UI/LookAndFeel.cpp
         Source/UI/LowEndAssistant.cpp
         Source/UI/MacroAssignmentPad.cpp

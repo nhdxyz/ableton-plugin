@@ -10,6 +10,7 @@
 #include "UI/HomeOverviewDisplay.h"
 #include "UI/HomeSignalFlowDisplay.h"
 #include "UI/HomeSessionDisplay.h"
+#include "UI/LfoCurveToolStrip.h"
 #include "UI/LookAndFeel.h"
 #include "UI/LowEndAssistant.h"
 #include "UI/MacroAssignmentPad.h"
@@ -766,12 +767,7 @@ private:
     juce::TextButton sourceFrameDeleteSlotButton { "Del" };
     juce::TextButton sourceFrameMoveLeftButton { "Move <" };
     juce::TextButton sourceFrameMoveRightButton { "Move >" };
-    juce::TextButton lfoCurveInvertButton { "Inv" };
-    juce::TextButton lfoCurveReverseButton { "Rev" };
-    juce::TextButton lfoCurveSmoothButton { "Smooth" };
-    juce::TextButton lfoCurveQuantizeButton { "1/8" };
-    juce::TextButton lfoCurveRandomButton { "Dice" };
-    juce::TextButton lfoCurveGarageButton { "UKG" };
+    UI::LfoCurveToolStrip lfoCurveToolStrip;
     juce::TextButton infoOpenLabButton { "Open Lab" };
     juce::TextButton infoOpenModButton { "Open MOD" };
     juce::TextButton infoOpenFxButton { "Open FX" };

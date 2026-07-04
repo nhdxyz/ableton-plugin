@@ -33,9 +33,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.sectionLabel.setVisible(true);
     components.enabledButton.setVisible(true);
     components.hostSyncStatusLabel.setVisible(true);
-    components.rateEighthButton.setVisible(true);
-    components.rateSixteenthButton.setVisible(true);
-    components.rateThirtySecondButton.setVisible(true);
+    components.rateControls.setVisible(true);
     components.grooveBox.setVisible(true);
     components.scaleBox.setVisible(true);
     components.chordBox.setVisible(true);
@@ -71,11 +69,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.enabledButton.setBounds(timingRow.removeFromLeft(62).reduced(4));
     components.hostSyncStatusLabel.setBounds(timingRow.reduced(4));
 
-    auto rateRow = controlArea.removeFromTop(34);
-    const auto rateButtonWidth = rateRow.getWidth() / 3;
-    components.rateEighthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
-    components.rateSixteenthButton.setBounds(rateRow.removeFromLeft(rateButtonWidth).reduced(3, 4));
-    components.rateThirtySecondButton.setBounds(rateRow.reduced(3, 4));
+    components.rateControls.setBounds(controlArea.removeFromTop(34));
 
     auto grooveRow = controlArea.removeFromTop(34);
     components.grooveBox.setBounds(grooveRow.removeFromLeft(grooveRow.getWidth() / 2).reduced(4));

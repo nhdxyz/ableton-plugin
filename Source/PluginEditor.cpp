@@ -3757,9 +3757,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     lowpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 0); };
     bandpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 1); };
     highpassFilterButton.onClick = [this] { setChoiceParameter(Parameters::ID::filterMode, 2); };
-    rateEighthButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 0); };
-    rateSixteenthButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 1); };
-    rateThirtySecondButton.onClick = [this] { setChoiceParameter(Parameters::ID::sequencerRate, 2); };
+    sequencerRateControls.onRateSelected = [this] (int rateIndex)
+    {
+        setChoiceParameter(Parameters::ID::sequencerRate, rateIndex);
+    };
     previousPresetButton.onClick = [this] { loadPresetByOffset(-1); };
     nextPresetButton.onClick = [this] { loadPresetByOffset(1); };
     savePresetButton.onClick = [this] { saveCurrentPreset(); };
@@ -4040,9 +4041,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(lowpassFilterButton);
     addAndMakeVisible(bandpassFilterButton);
     addAndMakeVisible(highpassFilterButton);
-    addAndMakeVisible(rateEighthButton);
-    addAndMakeVisible(rateSixteenthButton);
-    addAndMakeVisible(rateThirtySecondButton);
+    addAndMakeVisible(sequencerRateControls);
     addAndMakeVisible(previousPresetButton);
     addAndMakeVisible(nextPresetButton);
     addAndMakeVisible(savePresetButton);
@@ -5141,9 +5140,7 @@ void NateVSTAudioProcessorEditor::resized()
                 sequencerStepEditor,
                 sequencerEnabledButton,
                 sequencerChordMemoryButton,
-                rateEighthButton,
-                rateSixteenthButton,
-                rateThirtySecondButton,
+                sequencerRateControls,
                 sequencerPatternActions,
                 sequencerUtilityActions,
                 sequencerSceneChainControls,
@@ -10685,7 +10682,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sineWaveButton, &sawWaveButton, &squareWaveButton, &triangleWaveButton, &wavetableWaveButton, &organWaveButton, &housePianoWaveButton, &customWaveButton, &waveEditorFocusButton,
         &osc2SineWaveButton, &osc2SawWaveButton, &osc2SquareWaveButton, &osc2TriangleWaveButton, &osc2WavetableWaveButton, &osc2OrganWaveButton, &osc2HousePianoWaveButton, &osc2CustomWaveButton,
         &lowpassFilterButton, &bandpassFilterButton, &highpassFilterButton,
-        &rateEighthButton, &rateSixteenthButton, &rateThirtySecondButton, &sequencerRootDownButton, &sequencerRootUpButton,
+        &sequencerRateControls, &sequencerRootDownButton, &sequencerRootUpButton,
         &previousPresetButton, &nextPresetButton,
         &savePresetButton, &presetPrimaryActions, &presetQuickFilterBar, &refreshPresetsButton, &presetCompareActions, &candidateFavoriteButton,
         &saveCandidateButton,
@@ -10916,9 +10913,7 @@ void NateVSTAudioProcessorEditor::updateSegmentedSelectors()
     highpassFilterButton.setToggleState(filterModeIndex == 2, juce::dontSendNotification);
 
     const auto rateIndex = getChoiceIndex(sequencerRateBox, Parameters::ID::sequencerRate, 1);
-    rateEighthButton.setToggleState(rateIndex == 0, juce::dontSendNotification);
-    rateSixteenthButton.setToggleState(rateIndex == 1, juce::dontSendNotification);
-    rateThirtySecondButton.setToggleState(rateIndex == 2, juce::dontSendNotification);
+    sequencerRateControls.setSelectedIndex(rateIndex);
 }
 
 void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
@@ -14737,9 +14732,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
                             organWaveButton,
                             housePianoWaveButton,
                             customWaveButton,
-                            rateEighthButton,
-                            rateSixteenthButton,
-                            rateThirtySecondButton))
+                            sequencerRateControls))
     {
         updateSegmentedSelectors();
     }

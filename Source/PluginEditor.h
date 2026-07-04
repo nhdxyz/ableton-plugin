@@ -51,6 +51,7 @@
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
 #include "UI/SequencerPatternActions.h"
+#include "UI/SequencerRateControls.h"
 #include "UI/SequencerStepEditor.h"
 #include "UI/SequencerUtilityActions.h"
 #include "UI/StereoFieldDisplay.h"
@@ -652,9 +653,7 @@ private:
     juce::TextButton lowpassFilterButton { "LP" };
     juce::TextButton bandpassFilterButton { "BP" };
     juce::TextButton highpassFilterButton { "HP" };
-    juce::TextButton rateEighthButton { "1/8" };
-    juce::TextButton rateSixteenthButton { "1/16" };
-    juce::TextButton rateThirtySecondButton { "1/32" };
+    UI::SequencerRateControls sequencerRateControls;
     juce::TextButton previousPresetButton { "<" };
     juce::TextButton nextPresetButton { ">" };
     juce::TextButton savePresetButton { "Save" };

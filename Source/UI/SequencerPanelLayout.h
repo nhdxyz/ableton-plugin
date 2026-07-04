@@ -3,6 +3,7 @@
 #include "SequencerSceneChainControls.h"
 #include "SequencerSceneControls.h"
 #include "SequencerPatternActions.h"
+#include "SequencerRateControls.h"
 #include "SequencerStepEditor.h"
 #include "SequencerUtilityActions.h"
 #include "StepSequencerGrid.h"
@@ -27,9 +28,7 @@ struct Components
     juce::ToggleButton& enabledButton;
     juce::ToggleButton& chordMemoryButton;
 
-    juce::TextButton& rateEighthButton;
-    juce::TextButton& rateSixteenthButton;
-    juce::TextButton& rateThirtySecondButton;
+    SequencerRateControls& rateControls;
     SequencerPatternActions& patternActions;
     SequencerUtilityActions& utilityActions;
     SequencerSceneChainControls& sceneChainControls;

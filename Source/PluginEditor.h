@@ -42,6 +42,7 @@
 #include "UI/SamplePlaybackControls.h"
 #include "UI/SampleRecorderPanel.h"
 #include "UI/SampleRecipeActions.h"
+#include "UI/SampleSourceControls.h"
 #include "UI/SampleWaveformDisplay.h"
 #include "UI/SequencerSceneChainControls.h"
 #include "UI/SequencerSceneControls.h"
@@ -295,6 +296,7 @@ private:
     juce::ComboBox sequencerGrooveTransformBox;
     juce::ComboBox sequencerLaneViewBox;
     juce::ComboBox sequencerLockDestinationBox;
+    UI::SampleSourceControls sampleSourceControls;
     UI::SamplePlaybackControls samplePlaybackControls;
     juce::ComboBox presetBox;
     juce::ComboBox presetCategoryBox;
@@ -327,8 +329,6 @@ private:
     std::array<juce::ComboBox, 8> modSourceBoxes;
     std::array<juce::ComboBox, 8> modDestinationBoxes;
     juce::ToggleButton monoButton;
-    juce::ToggleButton sampleEnabledButton;
-    juce::ToggleButton sampleReverseButton;
     juce::ToggleButton sequencerEnabledButton;
     juce::ToggleButton sequencerChordMemoryButton;
     juce::ToggleButton fxDistortionEnabledButton;

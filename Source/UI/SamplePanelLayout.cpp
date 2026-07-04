@@ -36,8 +36,7 @@ void layout(juce::Rectangle<int> content, Components components)
     components.fileActions.setVisible(true);
     components.recorderPanel.setVisible(true);
     components.recipeActions.setVisible(true);
-    components.enabledButton.setVisible(true);
-    components.reverseButton.setVisible(true);
+    components.sourceControls.setVisible(true);
     components.playbackControls.setVisible(true);
     components.chopExpandButton.setVisible(true);
     components.waveformDisplay.setVisible(true);
@@ -68,9 +67,7 @@ void layout(juce::Rectangle<int> content, Components components)
 
     components.sourceLabel.setBounds(sourceArea.removeFromTop(22));
     components.fileActions.setBounds(sourceArea.removeFromTop(30));
-    auto actionBottom = sourceArea.removeFromTop(30);
-    components.enabledButton.setBounds(actionBottom.removeFromLeft(actionBottom.getWidth() / 2).reduced(3, 4));
-    components.reverseButton.setBounds(actionBottom.reduced(3, 4));
+    components.sourceControls.setBounds(sourceArea.removeFromTop(SampleSourceControls::preferredHeight));
 
     components.sampleNameLabel.setBounds(sourceArea.removeFromTop(24).reduced(5, 3));
     components.recorderPanel.setBounds(sourceArea.removeFromTop(components.recorderPanel.preferredHeight()));

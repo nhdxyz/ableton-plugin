@@ -5,6 +5,7 @@
 #include "SamplePlaybackControls.h"
 #include "SampleRecorderPanel.h"
 #include "SampleRecipeActions.h"
+#include "SampleSourceControls.h"
 #include "SampleWaveformDisplay.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -29,8 +30,7 @@ struct Components
     SampleRecipeActions& recipeActions;
     juce::TextButton& chopExpandButton;
 
-    juce::ToggleButton& enabledButton;
-    juce::ToggleButton& reverseButton;
+    SampleSourceControls& sourceControls;
     SamplePlaybackControls& playbackControls;
 
     SampleRecorderPanel& recorderPanel;

@@ -14,6 +14,14 @@ PLUGINVAL_AUTO_DOWNLOAD=1 tools/validate_release.sh
 
 GitHub Actions also runs pluginval at strictness 5. CI sets `PLUGINVAL_SKIP_GUI_TESTS=1` because the hosted runner is headless; local release validation should keep GUI tests enabled unless the exception is documented in the release notes.
 
+When Steinberg's VST3 validator is available, pass it through to pluginval so the strictness-5 VST3 subtest runs instead of being reported as skipped:
+
+```sh
+PLUGINVAL_VST3_VALIDATOR=/absolute/path/to/validator tools/validate_release.sh
+```
+
+The validation summary records whether this subtest was enabled or skipped. A public release should include the validator path or a written reason for the skip.
+
 Create a local release archive after the gate passes:
 
 ```sh

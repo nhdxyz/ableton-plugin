@@ -12,6 +12,7 @@ PLUGINVAL_OUTPUT_DIR="${PLUGINVAL_OUTPUT_DIR:-"$BUILD_DIR/pluginval"}"
 PLUGINVAL_OUTPUT_FILE="${PLUGINVAL_OUTPUT_FILE:-nate-vst-pluginval.txt}"
 PLUGINVAL_SKIP_GUI_TESTS="${PLUGINVAL_SKIP_GUI_TESTS:-0}"
 PLUGINVAL_AUTO_DOWNLOAD="${PLUGINVAL_AUTO_DOWNLOAD:-0}"
+PLUGINVAL_VST3_VALIDATOR="${PLUGINVAL_VST3_VALIDATOR:-}"
 RELEASE_VALIDATION_DIR="${RELEASE_VALIDATION_DIR:-"$BUILD_DIR/release-validation"}"
 RELEASE_VALIDATION_REPORT="${RELEASE_VALIDATION_REPORT:-"$RELEASE_VALIDATION_DIR/summary.txt"}"
 BUILD_OUTPUT_FILE="${BUILD_OUTPUT_FILE:-"$RELEASE_VALIDATION_DIR/build-output.txt"}"
@@ -29,6 +30,33 @@ resolve_pluginval() {
         "$HOME/Applications/pluginval.app/Contents/MacOS/pluginval"
     do
         if [[ -x "$candidate" ]]; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+resolve_vst3_validator() {
+    if [[ -n "$PLUGINVAL_VST3_VALIDATOR" ]]; then
+        if [[ -x "$PLUGINVAL_VST3_VALIDATOR" ]]; then
+            printf '%s\n' "$PLUGINVAL_VST3_VALIDATOR"
+            return 0
+        fi
+
+        echo "PLUGINVAL_VST3_VALIDATOR is set but is not executable: $PLUGINVAL_VST3_VALIDATOR" >&2
+        return 2
+    fi
+
+    for candidate in \
+        "$BUILD_DIR/validator" \
+        "$BUILD_DIR/vst3validator" \
+        "${VST3_SDK_DIR:-}/public.sdk/samples/vst-hosting/validator/build/validator" \
+        "${VST3_SDK_DIR:-}/build/public.sdk/samples/vst-hosting/validator/validator" \
+        "${VST3_SDK_DIR:-}/public.sdk/samples/vst-hosting/validator/Builds/MacOSX/build/Release/validator"
+    do
+        if [[ -n "$candidate" && -x "$candidate" ]]; then
             printf '%s\n' "$candidate"
             return 0
         fi
@@ -76,6 +104,7 @@ Pluginval strictness: $PLUGINVAL_STRICTNESS
 Pluginval timeout ms: $PLUGINVAL_TIMEOUT_MS
 Pluginval skip GUI tests: $PLUGINVAL_SKIP_GUI_TESTS
 Pluginval auto-download: $PLUGINVAL_AUTO_DOWNLOAD
+Pluginval VST3 validator: ${PLUGINVAL_VST3_VALIDATOR:-auto-detect}
 SKIP_PLUGINVAL: $SKIP_PLUGINVAL
 
 EOF
@@ -163,10 +192,25 @@ else
         pluginval_args+=(--skip-gui-tests)
     fi
 
+    CURRENT_STAGE="VST3 validator discovery"
+    vst3_validator_status="SKIPPED"
+    if VST3_VALIDATOR_RESOLVED="$(resolve_vst3_validator)"; then
+        pluginval_args+=(--vst3validator "$VST3_VALIDATOR_RESOLVED")
+        vst3_validator_status="ENABLED"
+    elif [[ "$?" -eq 2 ]]; then
+        exit 1
+    fi
+
+    CURRENT_STAGE="pluginval"
     "$PLUGINVAL_RESOLVED" "${pluginval_args[@]}" --validate "$PLUGIN_PATH"
     echo "pluginval: PASS" >> "$RELEASE_VALIDATION_REPORT"
     echo "pluginval binary: $PLUGINVAL_RESOLVED" >> "$RELEASE_VALIDATION_REPORT"
     echo "pluginval skip GUI tests: $PLUGINVAL_SKIP_GUI_TESTS" >> "$RELEASE_VALIDATION_REPORT"
+    if [[ "$vst3_validator_status" == "ENABLED" ]]; then
+        echo "pluginval VST3 validator: $VST3_VALIDATOR_RESOLVED" >> "$RELEASE_VALIDATION_REPORT"
+    else
+        echo "pluginval VST3 validator: SKIPPED (set PLUGINVAL_VST3_VALIDATOR=/path/to/validator to enable Steinberg VST3 validator coverage)" >> "$RELEASE_VALIDATION_REPORT"
+    fi
     echo "pluginval log: $PLUGINVAL_OUTPUT_DIR/$PLUGINVAL_OUTPUT_FILE" >> "$RELEASE_VALIDATION_REPORT"
     echo >> "$RELEASE_VALIDATION_REPORT"
     echo

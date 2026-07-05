@@ -45,6 +45,7 @@ jobs:
           path: |
             build/release-validation/
             build/pluginval/
+            dist/NateVST-ci-package-smoke/ABLETON_VALIDATION_REPORT.md
             dist/NateVST-ci-package-smoke/RELEASE_MANIFEST.txt
             dist/NateVST-ci-package-smoke/SHA256SUMS
             dist/NateVST-ci-package-smoke-release-summary.txt

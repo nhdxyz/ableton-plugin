@@ -115,7 +115,8 @@ PLUGINVAL_VST3_VALIDATOR=/absolute/path/to/validator tools/validate_release.sh
 ```
 
 Local release archives can be assembled with `tools/package_release.sh` after validation; generated package folders and zips are written under `dist/`.
-The package script writes `RELEASE_MANIFEST.txt` into the package folder plus a `*-release-summary.txt` beside the ZIP/pkg, and normalizes the installer payload before signing so protected macOS provenance xattrs do not ship as AppleDouble `._*` records.
+The package script writes `RELEASE_MANIFEST.txt` and `ABLETON_VALIDATION_REPORT.md` into the package folder plus a `*-release-summary.txt` beside the ZIP/pkg, and normalizes the installer payload before signing so protected macOS provenance xattrs do not ship as AppleDouble `._*` records.
+`tools/generate_ableton_validation_report.sh` can also be run directly to create a prefilled manual Ableton matrix for the current build under `build/release-validation/`.
 
 Optional installer/signing examples:
 

@@ -42,6 +42,7 @@ PKG_PATH="${PKG_PATH:-"$DIST_DIR/$PACKAGE_NAME.pkg"}"
 NOTARY_LOG_PATH="${NOTARY_LOG_PATH:-"$DIST_DIR/$PACKAGE_NAME-notarytool.txt"}"
 PACKAGE_MANIFEST_PATH="${PACKAGE_MANIFEST_PATH:-"$PACKAGE_DIR/RELEASE_MANIFEST.txt"}"
 PACKAGE_SUMMARY_PATH="${PACKAGE_SUMMARY_PATH:-"$DIST_DIR/$PACKAGE_NAME-release-summary.txt"}"
+ABLETON_REPORT_PATH="${ABLETON_REPORT_PATH:-"$PACKAGE_DIR/ABLETON_VALIDATION_REPORT.md"}"
 PLUGIN_SOURCE="${PLUGIN_SOURCE:-"$BUILD_DIR/NateVST_artefacts/VST3/Nate VST.vst3"}"
 PRESETS_SOURCE="${PRESETS_SOURCE:-"$ROOT_DIR/Resources/Factory Presets"}"
 
@@ -228,11 +229,12 @@ Included payload:
 - Factory Presets
 - README.md
 - ABLETON_RELEASE_VALIDATION.md
+- ABLETON_VALIDATION_REPORT.md
 - INSTALL.txt
 - SHA256SUMS
 
 Release checklist:
-- Attach this manifest, SHA256SUMS, build/release-validation/summary.txt, ctest-output.txt, and the pluginval report to the release issue.
+- Attach this manifest, SHA256SUMS, ABLETON_VALIDATION_REPORT.md, build/release-validation/summary.txt, ctest-output.txt, and the pluginval report to the release issue.
 - Complete the Ableton matrix in ABLETON_RELEASE_VALIDATION.md against this exact build before tagging.
 EOF
 }
@@ -274,7 +276,31 @@ Validation summary: $BUILD_DIR/release-validation/summary.txt
 Pluginval VST3 validator: ${PLUGINVAL_VST3_VALIDATOR:-auto-detect}
 Package checksums: $PACKAGE_DIR/SHA256SUMS
 Ableton checklist: $PACKAGE_DIR/ABLETON_RELEASE_VALIDATION.md
+Ableton validation report: $ABLETON_REPORT_PATH
 EOF
+}
+
+write_ableton_validation_report() {
+    if [[ "$DRY_RUN" == "1" ]]; then
+        echo "DRY RUN: write Ableton validation report to $ABLETON_REPORT_PATH"
+        return 0
+    fi
+
+    BUILD_DIR="$BUILD_DIR" \
+        VERSION="$VERSION" \
+        PLUGIN_PATH="$PLUGIN_SOURCE" \
+        RELEASE_VALIDATION_DIR="$BUILD_DIR/release-validation" \
+        RELEASE_VALIDATION_REPORT="$BUILD_DIR/release-validation/summary.txt" \
+        CTEST_OUTPUT_FILE="$BUILD_DIR/release-validation/ctest-output.txt" \
+        PLUGINVAL_OUTPUT_DIR="$BUILD_DIR/pluginval" \
+        PLUGINVAL_OUTPUT_FILE="nate-vst-pluginval.txt" \
+        ABLETON_REPORT_PATH="$ABLETON_REPORT_PATH" \
+        PACKAGE_DIR="$PACKAGE_DIR" \
+        PACKAGE_MANIFEST_PATH="$PACKAGE_MANIFEST_PATH" \
+        PACKAGE_SUMMARY_PATH="$PACKAGE_SUMMARY_PATH" \
+        ZIP_PATH="$ZIP_PATH" \
+        PKG_PATH="$PKG_PATH" \
+        "$ROOT_DIR/tools/generate_ableton_validation_report.sh"
 }
 
 clean_macos_metadata() {
@@ -511,6 +537,7 @@ run cp "$ROOT_DIR/docs/ABLETON_RELEASE_VALIDATION.md" "$PACKAGE_DIR/ABLETON_RELE
 sign_plugin_bundle "$PACKAGE_DIR/Nate VST.vst3"
 write_install_notes "$PACKAGE_DIR/INSTALL.txt"
 write_package_manifest
+write_ableton_validation_report
 
 clean_macos_metadata "$PACKAGE_DIR"
 

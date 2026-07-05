@@ -17,6 +17,7 @@ RELEASE_VALIDATION_DIR="${RELEASE_VALIDATION_DIR:-"$BUILD_DIR/release-validation
 RELEASE_VALIDATION_REPORT="${RELEASE_VALIDATION_REPORT:-"$RELEASE_VALIDATION_DIR/summary.txt"}"
 BUILD_OUTPUT_FILE="${BUILD_OUTPUT_FILE:-"$RELEASE_VALIDATION_DIR/build-output.txt"}"
 CTEST_OUTPUT_FILE="${CTEST_OUTPUT_FILE:-"$RELEASE_VALIDATION_DIR/ctest-output.txt"}"
+ABLETON_REPORT_PATH="${ABLETON_REPORT_PATH:-"$RELEASE_VALIDATION_DIR/ableton-validation-report.md"}"
 SKIP_PLUGINVAL="${SKIP_PLUGINVAL:-0}"
 
 resolve_pluginval() {
@@ -218,9 +219,21 @@ fi
 
 echo "== Ableton manual validation =="
 echo "Complete the checklist in docs/ABLETON_RELEASE_VALIDATION.md before tagging a release."
+CURRENT_STAGE="Ableton validation report"
+BUILD_DIR="$BUILD_DIR" \
+    VERSION="$VERSION" \
+    PLUGIN_PATH="$PLUGIN_PATH" \
+    RELEASE_VALIDATION_DIR="$RELEASE_VALIDATION_DIR" \
+    RELEASE_VALIDATION_REPORT="$RELEASE_VALIDATION_REPORT" \
+    CTEST_OUTPUT_FILE="$CTEST_OUTPUT_FILE" \
+    PLUGINVAL_OUTPUT_DIR="$PLUGINVAL_OUTPUT_DIR" \
+    PLUGINVAL_OUTPUT_FILE="$PLUGINVAL_OUTPUT_FILE" \
+    ABLETON_REPORT_PATH="$ABLETON_REPORT_PATH" \
+    "$ROOT_DIR/tools/generate_ableton_validation_report.sh"
 {
     echo "Ableton manual validation: REQUIRED"
     echo "Checklist: docs/ABLETON_RELEASE_VALIDATION.md"
+    echo "Ableton validation report: $ABLETON_REPORT_PATH"
     echo
     echo "Completed UTC: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 } >> "$RELEASE_VALIDATION_REPORT"

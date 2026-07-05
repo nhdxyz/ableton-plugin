@@ -65,9 +65,11 @@ The automated gate writes a release evidence bundle under:
 build/release-validation/
 ```
 
-Attach `summary.txt`, `ctest-output.txt`, and the pluginval report to release notes or the release issue. Then run this manual Ableton pass against the exact built VST3 named in `summary.txt`.
+Attach `summary.txt`, `ctest-output.txt`, `ableton-validation-report.md`, and the pluginval report to release notes or the release issue. Then run this manual Ableton pass against the exact built VST3 named in `summary.txt`.
 
-The package script also writes `RELEASE_MANIFEST.txt` inside the package folder and `dist/NateVST-<version>-macos-release-summary.txt` beside the ZIP/pkg. Attach both files to the release issue so signing, notarization, artifact paths, and checksums are tracked with the Ableton matrix.
+`tools/generate_ableton_validation_report.sh` creates a prefilled Markdown report with commit, artifact paths, matrix rows, and PASS/FAIL/BLOCKED slots. `tools/validate_release.sh` writes it to `build/release-validation/ableton-validation-report.md`, and `tools/package_release.sh` includes `ABLETON_VALIDATION_REPORT.md` in the release package.
+
+The package script also writes `RELEASE_MANIFEST.txt` and `ABLETON_VALIDATION_REPORT.md` inside the package folder and `dist/NateVST-<version>-macos-release-summary.txt` beside the ZIP/pkg. Attach those files to the release issue so signing, notarization, artifact paths, checksums, and the Ableton matrix are tracked together.
 
 ## Test Matrix
 

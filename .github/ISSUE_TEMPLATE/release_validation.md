@@ -15,6 +15,7 @@ assignees: ""
 - Package summary:
 - VST3 path:
 - Validation summary:
+- Ableton validation report:
 - CTest log:
 - pluginval report:
 - Signed package path:
@@ -27,6 +28,7 @@ assignees: ""
 - [ ] CTest passed
 - [ ] pluginval passed or exception documented
 - [ ] Release package was created with `tools/package_release.sh`
+- [ ] `ABLETON_VALIDATION_REPORT.md` was filled out for this exact build
 - [ ] `RELEASE_MANIFEST.txt` and `*-release-summary.txt` were attached or linked
 - [ ] `.pkg` installer was created with `CREATE_PKG=1`
 - [ ] VST3 bundle was signed or unsigned beta exception documented

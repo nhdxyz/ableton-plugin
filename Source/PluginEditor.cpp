@@ -8,6 +8,7 @@
 #include "UI/ModPanelLayout.h"
 #include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
+#include "UI/SampleRecorderState.h"
 #include "UI/SequencerPanelLayout.h"
 
 #include <algorithm>
@@ -3239,16 +3240,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
         else
         {
             audioProcessor.beginSampleCapture();
-            const auto lengthStatus = audioProcessor.getSampleCaptureLengthModeIndex() > 0
-                ? juce::String(" | ") + audioProcessor.getSampleCaptureLengthModeName()
-                : juce::String();
-            const auto preRollStatus = audioProcessor.getSampleCapturePreRollModeIndex() > 0
-                ? juce::String(" | ") + audioProcessor.getSampleCapturePreRollModeName()
-                : juce::String();
-            setRandomStatus(audioProcessor.isSampleCaptureWaitingForThreshold()
-                                ? "Recorder armed " + audioProcessor.getSampleCaptureStartModeName() + lengthStatus + preRollStatus
-                                : "Recording " + audioProcessor.getSampleCaptureSourceName()
-                                      + lengthStatus + preRollStatus);
+            setRandomStatus(UI::SampleRecorderState::recordStartedStatus(audioProcessor));
         }
         updateSampleRecorderStatus();
         returnKeyboardFocusToPiano();
@@ -6828,29 +6820,12 @@ void NateVSTAudioProcessorEditor::pruneSequencerDragMidiFiles()
     sequencerDragMidiFiles.clear();
 }
 
-juce::File NateVSTAudioProcessorEditor::getRecorderExportFile() const
-{
-    const auto selectedTakeFile = juce::File(audioProcessor.getSelectedSampleCaptureTakePath());
-    if (selectedTakeFile.existsAsFile())
-        return selectedTakeFile;
-
-    const auto latestTakeFile = juce::File(audioProcessor.getLatestSampleCaptureTakePath());
-    if (latestTakeFile.existsAsFile())
-        return latestTakeFile;
-
-    const auto loadedSampleFile = juce::File(audioProcessor.getLoadedSamplePath());
-    if (loadedSampleFile.existsAsFile())
-        return loadedSampleFile;
-
-    return {};
-}
-
 bool NateVSTAudioProcessorEditor::revealRecorderExportFile()
 {
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto exportFile = getRecorderExportFile();
+    const auto exportFile = UI::SampleRecorderState::resolveExportFile(audioProcessor);
     if (! exportFile.existsAsFile())
     {
         setRandomStatus("Commit a recorder take before exporting");
@@ -6867,7 +6842,7 @@ bool NateVSTAudioProcessorEditor::beginRecorderTakeDrag(juce::Component& sourceC
     releaseRandomCandidateAudition(false);
     releasePresetAuditionNote();
 
-    const auto exportFile = getRecorderExportFile();
+    const auto exportFile = UI::SampleRecorderState::resolveExportFile(audioProcessor);
     if (! exportFile.existsAsFile())
     {
         setRandomStatus("Commit a recorder take before dragging");
@@ -6911,26 +6886,9 @@ void NateVSTAudioProcessorEditor::updateSampleNameLabel()
 
 void NateVSTAudioProcessorEditor::updateSampleRecorderStatus()
 {
-    const auto recorderExportFile = getRecorderExportFile();
-    sampleRecorderPanel.setState({
-        audioProcessor.isSampleCaptureEnabled(),
-        audioProcessor.getSampleCaptureDurationSeconds(),
-        audioProcessor.getSampleCaptureCapacitySeconds(),
-        audioProcessor.hasLoadedSample(),
-        audioProcessor.getSampleCaptureSourceIndex(),
-        audioProcessor.getSampleCaptureStartModeIndex(),
-        audioProcessor.getSampleCaptureLengthModeIndex(),
-        audioProcessor.getSampleCapturePreRollModeIndex(),
-        audioProcessor.getSampleCaptureSourcePeak(),
-        audioProcessor.getSampleCaptureTargetDurationSeconds(),
-        audioProcessor.getSampleCapturePreRollDurationSeconds(),
-        audioProcessor.isSampleCaptureWaitingForThreshold(),
-        recorderExportFile.existsAsFile(),
-        audioProcessor.getSampleCaptureTakeCount(),
-        audioProcessor.getSelectedSampleCaptureTakeIndex(),
-        recorderExportFile.getFileName(),
-        audioProcessor.getSampleCaptureTakeNames(12)
-    });
+    sampleRecorderPanel.setState(UI::SampleRecorderState::buildPanelState(
+        audioProcessor,
+        UI::SampleRecorderState::resolveExportFile(audioProcessor)));
 }
 
 void NateVSTAudioProcessorEditor::selectSampleSlice(size_t sliceIndex)

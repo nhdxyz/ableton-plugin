@@ -6,6 +6,7 @@
 #include "UI/FxRackPanelLayout.h"
 #include "UI/LibraryPanelLayout.h"
 #include "UI/ModPanelLayout.h"
+#include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SequencerPanelLayout.h"
 
@@ -2157,22 +2158,27 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(presetNotesEditor);
 
-    presetNotesTemplateBox.addItem("Note Template", 1);
-    presetNotesTemplateBox.addItem("Macro Intent", 2);
-    presetNotesTemplateBox.addItem("Ableton Use", 3);
-    presetNotesTemplateBox.addItem("UKG Variation", 4);
-    presetNotesTemplateBox.addItem("Mix Safety", 5);
-    presetNotesTemplateBox.addItem("Pack Notes", 6);
-    presetNotesTemplateBox.setSelectedId(1, juce::dontSendNotification);
-    presetNotesTemplateBox.setTextWhenNothingSelected("Note Template");
-    presetNotesTemplateBox.setTooltip("Insert a reusable notes scaffold into the generated preset notes");
+    UI::PresetNoteTemplates::configureComboBox(presetNotesTemplateBox);
     presetNotesTemplateBox.onChange = [this]
     {
         const auto templateId = presetNotesTemplateBox.getSelectedId();
         if (templateId <= 1)
             return;
 
-        const auto templateText = presetNoteTemplateForId(templateId).trim();
+        const auto category = presetCategoryBox.getText().trim().isNotEmpty()
+            ? presetCategoryBox.getText().trim()
+            : suggestedPresetCategoryForRecipe();
+        const auto recipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
+            ? currentGeneratedPresetRecipe.trim()
+            : (recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab"));
+        const auto bpm = presetBpmBox.getText().trim().isNotEmpty()
+            ? presetBpmBox.getText().trim()
+            : formatPresetBpm(suggestedPresetBpmForCategory(category));
+        const auto templateText = UI::PresetNoteTemplates::textForId(templateId,
+                                                                     { category,
+                                                                       recipe,
+                                                                       bpm,
+                                                                       suggestedPresetUseForCategory(category) }).trim();
         if (templateText.isEmpty())
             return;
 
@@ -8266,68 +8272,6 @@ juce::String NateVSTAudioProcessorEditor::generatedPresetNotes(const juce::Strin
 
     lines.add("Saved: " + juce::Time::getCurrentTime().formatted("%Y-%m-%d %H:%M"));
     return lines.joinIntoString("\n");
-}
-
-juce::String NateVSTAudioProcessorEditor::presetNoteTemplateForId(int templateId) const
-{
-    const auto category = presetCategoryBox.getText().trim().isNotEmpty()
-        ? presetCategoryBox.getText().trim()
-        : suggestedPresetCategoryForRecipe();
-    const auto recipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
-        ? currentGeneratedPresetRecipe.trim()
-        : (recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab"));
-    const auto bpm = presetBpmBox.getText().trim().isNotEmpty()
-        ? presetBpmBox.getText().trim()
-        : formatPresetBpm(suggestedPresetBpmForCategory(category));
-
-    switch (templateId)
-    {
-        case 2:
-            return "Macro Intent:\n"
-                "Tone: brighten/darken core harmonics\n"
-                "Dirt: drive edge without clipping the sub\n"
-                "Motion: filter/warp movement for groove\n"
-                "Space: delay/reverb throw amount\n"
-                "Weight: mono low-end focus\n"
-                "Bounce: pump or swing feel\n"
-                "Warp: source movement amount\n"
-                "Throw: momentary FX send";
-
-        case 3:
-            return "Ableton Use:\n"
-                "Role: " + suggestedPresetUseForCategory(category) + "\n"
-                "Tempo: " + bpm + "\n"
-                "Clip idea: 4-bar loop, automate Motion and Throw\n"
-                "Arrangement: duplicate for breakdown and mute low end before drop";
-
-        case 4:
-            return "UKG Variation:\n"
-                "Groove: 2-step push with swung 16ths\n"
-                "Bass: mono sub, moving upper layer, short glide\n"
-                "Chop: pitched vocal or organ response on offbeats\n"
-                "FX: short delay throw, guarded reverb tail\n"
-                "Recipe source: " + recipe;
-
-        case 5:
-            return "Mix Safety:\n"
-                "Sub: mono below 120 Hz\n"
-                "Peak: leave headroom before Ableton group processing\n"
-                "Drive: check harshness after Dirt/Warp automation\n"
-                "Space: keep reverb low for bass presets\n"
-                "Compare: A/B against saved candidate before overwriting";
-
-        case 6:
-            return "Pack Notes:\n"
-                "Category: " + category + "\n"
-                "Recipe: " + recipe + "\n"
-                "Pack role: starter, variation, or performance macro patch\n"
-                "Tags to add: Generated, Random Lab, house, UKG, tech-house, minimal, techno";
-
-        default:
-            break;
-    }
-
-    return {};
 }
 
 juce::String NateVSTAudioProcessorEditor::suggestedPresetCategoryForRecipe() const

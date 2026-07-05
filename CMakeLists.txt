@@ -91,6 +91,7 @@ target_sources(NateVST
         Source/UI/PresetCompareActions.cpp
         Source/UI/PresetCrateMapDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp
+        Source/UI/PresetNoteTemplates.cpp
         Source/UI/PresetPrimaryActions.cpp
         Source/UI/PresetQuickFilterBar.cpp
         Source/UI/PresetSaveSummary.cpp

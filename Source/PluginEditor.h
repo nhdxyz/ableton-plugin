@@ -1011,7 +1011,6 @@ private:
     void updateRandomCandidateDetail();
     void prepareRandomPresetDraft(const juce::String& actionLabel);
     juce::String generatedPresetNotes(const juce::String& category, const juce::String& recipe, int candidateSlotIndex);
-    juce::String presetNoteTemplateForId(int templateId) const;
     juce::String suggestedPresetCategoryForRecipe() const;
     juce::String suggestedPresetUseForCategory(const juce::String& category) const;
     juce::String suggestedPresetPackForCategory(const juce::String& category) const;

@@ -9,6 +9,7 @@
 #include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SampleRecorderState.h"
+#include "UI/SampleSlicePreview.h"
 #include "UI/SequencerPanelLayout.h"
 
 #include <algorithm>
@@ -118,8 +119,6 @@ constexpr std::array<const char*, 34> momentaryFxParameterIDs {
     Parameters::ID::outputGain
 };
 constexpr auto lastMacroModSourceIndex = 11;
-constexpr std::array<float, 8> defaultSlicePitchLadder { -12.0f, -7.0f, -5.0f, 0.0f, 3.0f, 7.0f, 10.0f, 12.0f };
-constexpr std::array<float, 8> defaultGarageSlicePitch { -12.0f, 0.0f, 7.0f, -5.0f, 0.0f, 12.0f, 3.0f, -7.0f };
 constexpr std::array<int, 17> computerKeyboardKeyCodes {
     'a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j', 'k', 'o', 'l', 'p', ';'
 };
@@ -219,56 +218,6 @@ PresetBrowserRowLayout presetBrowserRowLayoutForWidth(int width, int height)
     return layout;
 }
 
-struct SampleSlicePreviewSettings
-{
-    float pitch = 0.0f;
-    float gain = -6.0f;
-    bool reverse = false;
-    bool stutter = false;
-    bool choke = false;
-    int repeats = 3;
-    float pan = 0.0f;
-    float probability = 1.0f;
-    float nudgePercent = 0.0f;
-    float fade = 0.0f;
-};
-
-juce::String slicePanText(float pan)
-{
-    pan = juce::jlimit(-1.0f, 1.0f, pan);
-    if (pan < -0.05f)
-        return "L" + juce::String(juce::roundToInt(std::abs(pan) * 100.0f));
-    if (pan > 0.05f)
-        return "R" + juce::String(juce::roundToInt(pan * 100.0f));
-
-    return "C";
-}
-
-juce::String sliceChanceText(float probability)
-{
-    return juce::String(juce::roundToInt(juce::jlimit(0.0f, 1.0f, probability) * 100.0f)) + "%";
-}
-
-juce::String sliceNudgeText(float nudgePercent)
-{
-    nudgePercent = juce::jlimit(-5.0f, 5.0f, nudgePercent);
-    if (std::abs(nudgePercent) < 0.01f)
-        return "N0";
-
-    return juce::String(nudgePercent > 0.0f ? "N+" : "N") + juce::String(nudgePercent, 1) + "%";
-}
-
-juce::String sliceFadeText(float fade)
-{
-    fade = juce::jlimit(0.0f, 1.0f, fade);
-    if (fade < 0.12f)
-        return "tight";
-    if (fade < 0.55f)
-        return "soft";
-
-    return "smooth";
-}
-
 juce::String sourceNameForWave(int wave)
 {
     switch (wave)
@@ -305,50 +254,6 @@ juce::String characterRoleForWave(int wave)
         case 6: return "STAB";
         default: return "CHAR";
     }
-}
-
-SampleSlicePreviewSettings defaultSlicePreviewSettings(size_t sliceIndex, int styleIndex)
-{
-    const auto safeIndex = juce::jlimit<size_t>(0, defaultSlicePitchLadder.size() - 1, sliceIndex);
-    const auto slicePosition = static_cast<int>(safeIndex);
-    SampleSlicePreviewSettings settings;
-
-    switch (juce::jlimit(0, 4, styleIndex))
-    {
-        case 1: // Pitch
-            settings.pitch = defaultSlicePitchLadder[safeIndex];
-            settings.gain = -7.0f + static_cast<float>(slicePosition % 3);
-            break;
-
-        case 2: // Reverse
-            settings.reverse = (slicePosition % 2) != 0;
-            settings.pitch = defaultSlicePitchLadder[static_cast<size_t>((slicePosition + 2) % 8)];
-            settings.gain = -7.5f;
-            break;
-
-        case 3: // Stutter
-            settings.pitch = defaultGarageSlicePitch[static_cast<size_t>((slicePosition + 1) % 8)] * 0.5f;
-            settings.gain = -8.0f;
-            settings.stutter = true;
-            settings.choke = true;
-            settings.repeats = 2 + (slicePosition % 4);
-            break;
-
-        case 4: // Garage
-            settings.reverse = slicePosition == 2 || slicePosition == 6;
-            settings.pitch = defaultGarageSlicePitch[safeIndex];
-            settings.gain = -8.5f + static_cast<float>(slicePosition % 4) * 0.8f;
-            settings.stutter = slicePosition == 3 || slicePosition == 7;
-            settings.choke = true;
-            settings.repeats = slicePosition == 7 ? 5 : 3;
-            break;
-
-        case 0: // Clean
-        default:
-            break;
-    }
-
-    return settings;
 }
 
 juce::String layoutAuditComponentName(const juce::Component& component, int siblingIndex)
@@ -7049,7 +6954,7 @@ void NateVSTAudioProcessorEditor::editSampleSliceBoundary(size_t boundaryIndex, 
         if (sampleSliceHasCustomSettings(safeIndex))
             return;
 
-        const auto preview = defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
+        const auto preview = UI::SampleSlicePreview::defaults(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
         setPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], preview.reverse ? 1.0f : 0.0f);
         setPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], preview.pitch);
         setPlainParameterValue(Parameters::ID::sampleSliceGain[safeIndex], preview.gain);
@@ -7234,7 +7139,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceReverse()
     const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentReverse = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f) >= 0.5f
-        : defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).reverse;
+        : UI::SampleSlicePreview::defaults(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).reverse;
     const auto nextReverse = ! currentReverse;
     captureGlobalEdit("Toggle sample slice reverse");
     setPlainParameterValue(Parameters::ID::sampleReverse, nextReverse ? 1.0f : 0.0f);
@@ -7256,7 +7161,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceChoke()
     const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
     const auto currentChoke = sampleSliceHasCustomSettings(safeIndex)
         ? readPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f) >= 0.5f
-        : defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).choke;
+        : UI::SampleSlicePreview::defaults(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex()).choke;
     const auto nextChoke = ! currentChoke;
     captureGlobalEdit("Toggle sample slice choke");
     setPlainParameterValue(Parameters::ID::sampleSliceChoke[safeIndex], nextChoke ? 1.0f : 0.0f);
@@ -7287,7 +7192,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSlicePan()
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Panned slice " + juce::String(static_cast<int>(safeIndex + 1))
-                    + " " + slicePanText(nextPan)
+                    + " " + UI::SampleSlicePreview::panText(nextPan)
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -7311,7 +7216,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSampleSliceGhost()
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
-                    + " chance " + sliceChanceText(nextProbability)
+                    + " chance " + UI::SampleSlicePreview::chanceText(nextProbability)
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -7335,7 +7240,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceNudge()
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
-                    + " " + sliceNudgeText(nextNudge)
+                    + " " + UI::SampleSlicePreview::nudgeText(nextNudge)
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -7359,7 +7264,7 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceFade()
 
     const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
     setRandomStatus("Slice " + juce::String(static_cast<int>(safeIndex + 1))
-                    + " fade " + sliceFadeText(nextFade)
+                    + " fade " + UI::SampleSlicePreview::fadeText(nextFade)
                     + (didAudition ? " auditioned" : ""));
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
@@ -7389,7 +7294,7 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
                                                : defaultEnd);
     const auto regionLower = juce::jmin(regionStart, regionEnd);
     const auto regionUpper = juce::jmax(regionStart, regionEnd);
-    auto preview = defaultSlicePreviewSettings(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
+    auto preview = UI::SampleSlicePreview::defaults(safeIndex, samplePlaybackControls.getSliceStyleSelectedItemIndex());
     if (custom)
     {
         preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f);
@@ -7411,10 +7316,10 @@ void NateVSTAudioProcessorEditor::updateSampleSliceEditorStatus()
         + juce::String(juce::roundToInt(regionUpper * 100.0f)) + "%"
         + " | " + pitchText
         + " | " + juce::String(preview.gain, 1) + "dB"
-        + " | " + sliceNudgeText(preview.nudgePercent)
-        + " F " + sliceFadeText(preview.fade)
-        + " | " + slicePanText(preview.pan)
-        + " " + sliceChanceText(preview.probability)
+        + " | " + UI::SampleSlicePreview::nudgeText(preview.nudgePercent)
+        + " F " + UI::SampleSlicePreview::fadeText(preview.fade)
+        + " | " + UI::SampleSlicePreview::panText(preview.pan)
+        + " " + UI::SampleSlicePreview::chanceText(preview.probability)
         + (preview.reverse ? " | rev" : " | fwd")
         + (preview.choke ? " | choke" : " | open")
         + (preview.stutter ? " | stut x" + juce::String(preview.repeats) : " | no stut")
@@ -7464,7 +7369,7 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
         const auto orderedSliceEnd = juce::jmax(sliceStart, sliceEnd);
         const auto isSelected = std::abs(orderedStart - orderedSliceStart) < 0.005f
             && std::abs(orderedEnd - orderedSliceEnd) < 0.005f;
-        auto preview = defaultSlicePreviewSettings(index, samplePlaybackControls.getSliceStyleSelectedItemIndex());
+        auto preview = UI::SampleSlicePreview::defaults(index, samplePlaybackControls.getSliceStyleSelectedItemIndex());
         if (custom)
         {
             preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);
@@ -7487,10 +7392,10 @@ void NateVSTAudioProcessorEditor::updateSampleSliceButtons()
                 + "-" + juce::String(juce::roundToInt(orderedSliceEnd * 100.0f)) + "%"
                 + " | Pitch " + (preview.pitch >= 0.0f ? "+" : "") + juce::String(preview.pitch, 1)
                 + " st | Gain " + juce::String(preview.gain, 1)
-                + " dB | Pan " + slicePanText(preview.pan)
-                + " | Chance " + sliceChanceText(preview.probability)
-                + " | " + sliceNudgeText(preview.nudgePercent)
-                + " | Fade " + sliceFadeText(preview.fade)
+                + " dB | Pan " + UI::SampleSlicePreview::panText(preview.pan)
+                + " | Chance " + UI::SampleSlicePreview::chanceText(preview.probability)
+                + " | " + UI::SampleSlicePreview::nudgeText(preview.nudgePercent)
+                + " | Fade " + UI::SampleSlicePreview::fadeText(preview.fade)
                 + " | " + (preview.reverse ? "Reverse" : "Forward")
                 + " | " + (preview.choke ? "Choke" : "Open")
                 + " | " + (preview.stutter ? "Stutter" : "No stutter"),
@@ -7587,7 +7492,7 @@ void NateVSTAudioProcessorEditor::updateSampleWaveformDisplay()
                                                    : defaultEnd);
         const auto orderedMarkerStart = juce::jmin(markerStart, markerEnd);
         const auto orderedMarkerEnd = juce::jmax(markerStart, markerEnd);
-        auto preview = defaultSlicePreviewSettings(index, styleIndex);
+        auto preview = UI::SampleSlicePreview::defaults(index, styleIndex);
         if (custom)
         {
             preview.pitch = readPlainParameterValue(Parameters::ID::sampleSliceTranspose[index], 0.0f);

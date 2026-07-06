@@ -12,6 +12,7 @@
 #include "UI/SampleRecorderState.h"
 #include "UI/SampleSlicePreview.h"
 #include "UI/SequencerPanelLayout.h"
+#include "UI/SourceWaveLabels.h"
 
 #include <algorithm>
 #include <cmath>
@@ -173,44 +174,6 @@ template <typename... Components>
 bool anyComponentVisible(const Components&... components) noexcept
 {
     return (... || components.isVisible());
-}
-
-juce::String sourceNameForWave(int wave)
-{
-    switch (wave)
-    {
-        case 0: return "Sine";
-        case 1: return "Saw";
-        case 2: return "Square";
-        case 3: return "Triangle";
-        case 4: return "Wavetable";
-        case 5: return "Organ";
-        case 6: return "House Piano";
-        case 7: return "Custom";
-        default: return "Synth";
-    }
-}
-
-juce::String bodyRoleForWave(int wave)
-{
-    switch (wave)
-    {
-        case 4: return "WT BODY";
-        case 5: return "ORGAN";
-        case 6: return "KEYS";
-        default: return "BODY";
-    }
-}
-
-juce::String characterRoleForWave(int wave)
-{
-    switch (wave)
-    {
-        case 4: return "WT";
-        case 5: return "DRAW";
-        case 6: return "STAB";
-        default: return "CHAR";
-    }
 }
 
 juce::String layoutAuditComponentName(const juce::Component& component, int siblingIndex)
@@ -11005,12 +10968,12 @@ void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
     const auto osc2Level = juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f));
 
     state.osc1.label = "OSC 1";
-    state.osc1.detail = sourceNameForWave(osc1Wave) + " | " + juce::String(juce::roundToInt(osc1Level * 100.0f)) + "%";
+    state.osc1.detail = UI::SourceWaveLabels::nameForWave(osc1Wave) + " | " + juce::String(juce::roundToInt(osc1Level * 100.0f)) + "%";
     state.osc1.position = readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f);
     state.osc1.active = osc1Custom && osc1Level > 0.01f;
 
     state.osc2.label = "OSC 2";
-    state.osc2.detail = sourceNameForWave(osc2Wave) + " | " + juce::String(juce::roundToInt(osc2Level * 100.0f)) + "%";
+    state.osc2.detail = UI::SourceWaveLabels::nameForWave(osc2Wave) + " | " + juce::String(juce::roundToInt(osc2Level * 100.0f)) + "%";
     state.osc2.position = readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f);
     state.osc2.active = osc2Custom && osc2Level > 0.01f;
 
@@ -11020,9 +10983,9 @@ void NateVSTAudioProcessorEditor::updateSourceLabFrameStrip()
         state.osc2.frames[frameIndex] = readCustomWaveFrame(true, frameIndex);
     }
 
-    state.summary = (osc1Custom ? juce::String("O1 custom") : "O1 " + sourceNameForWave(osc1Wave))
+    state.summary = (osc1Custom ? juce::String("O1 custom") : "O1 " + UI::SourceWaveLabels::nameForWave(osc1Wave))
         + " | "
-        + (osc2Custom ? juce::String("O2 custom") : "O2 " + sourceNameForWave(osc2Wave));
+        + (osc2Custom ? juce::String("O2 custom") : "O2 " + UI::SourceWaveLabels::nameForWave(osc2Wave));
     sourceLabFrameStrip.setState(std::move(state));
     updateSourceFrameActionButtons();
 }
@@ -12428,7 +12391,7 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
     state.lanes = {
         UI::OscillatorLaneOverview::Lane {
             "OSC 1",
-            sourceNameForWave(osc1Wave),
+            UI::SourceWaveLabels::nameForWave(osc1Wave),
             warpModeName(readPlainParameterValue(Parameters::ID::oscWarpMode, 0.0f)),
             warpModeName(readPlainParameterValue(Parameters::ID::oscWarpBMode, 0.0f)),
             juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc1Level, 1.0f)),
@@ -12441,7 +12404,7 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
         },
         UI::OscillatorLaneOverview::Lane {
             "OSC 2",
-            sourceNameForWave(osc2Wave),
+            UI::SourceWaveLabels::nameForWave(osc2Wave),
             warpModeName(readPlainParameterValue(Parameters::ID::osc2WarpMode, 0.0f)),
             warpModeName(readPlainParameterValue(Parameters::ID::osc2WarpBMode, 0.0f)),
             juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Level, 0.0f)),
@@ -12512,8 +12475,8 @@ void NateVSTAudioProcessorEditor::updateHouseLayerRackDisplay()
             false
         },
         UI::HouseLayerRackDisplay::Layer {
-            bodyRoleForWave(osc1Wave),
-            sourceNameForWave(osc1Wave),
+            UI::SourceWaveLabels::bodyRoleForWave(osc1Wave),
+            UI::SourceWaveLabels::nameForWave(osc1Wave),
             "Main source body",
             osc1,
             osc1 > activeThreshold,
@@ -12521,8 +12484,8 @@ void NateVSTAudioProcessorEditor::updateHouseLayerRackDisplay()
             osc1Wave == 4
         },
         UI::HouseLayerRackDisplay::Layer {
-            characterRoleForWave(osc2Wave),
-            sourceNameForWave(osc2Wave),
+            UI::SourceWaveLabels::characterRoleForWave(osc2Wave),
+            UI::SourceWaveLabels::nameForWave(osc2Wave),
             "Upper color or stab layer",
             osc2,
             osc2 > activeThreshold,

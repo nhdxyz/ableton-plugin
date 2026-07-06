@@ -94,6 +94,42 @@ inline bool isSampleDestination(int destinationIndex) noexcept
     }
 }
 
+struct RouteRuntimeState
+{
+    float smoothedValue = 0.0f;
+    int sourceIndex = 0;
+    int destinationIndex = 0;
+    bool active = false;
+};
+
+inline void resetRouteState(RouteRuntimeState& state) noexcept
+{
+    state = {};
+}
+
+inline bool prepareRouteState(RouteRuntimeState& state,
+                              int sourceIndex,
+                              int destinationIndex,
+                              bool shouldBeActive) noexcept
+{
+    if (! shouldBeActive)
+    {
+        resetRouteState(state);
+        return false;
+    }
+
+    const auto identityChanged = ! state.active
+        || state.sourceIndex != sourceIndex
+        || state.destinationIndex != destinationIndex;
+    if (identityChanged)
+        state.smoothedValue = 0.0f;
+
+    state.sourceIndex = sourceIndex;
+    state.destinationIndex = destinationIndex;
+    state.active = true;
+    return true;
+}
+
 inline float smoothingAlpha(float amount, int numSamples, double sampleRate, float maximumSeconds) noexcept
 {
     const auto safeAmount = juce::jlimit(0.0f, 1.0f, amount);

@@ -81,7 +81,7 @@ private:
     float fxModLfo2StepValue = 0.0f;
     float fxModStepLfoPhase = 0.0f;
     float fxModStepLfoSmoothedValue = 0.0f;
-    std::array<float, 8> fxModRouteSmoothedValues {};
+    std::array<Modulation::RouteRuntimeState, 8> fxModRouteStates {};
     juce::ADSR fxModEnvelope;
     juce::ADSR::Parameters fxModEnvelopeParameters;
     float fxModEnvelopeValue = 0.0f;

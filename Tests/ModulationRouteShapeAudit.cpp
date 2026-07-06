@@ -123,6 +123,37 @@ int main()
         return 1;
     }
 
+    Modulation::RouteRuntimeState routeState;
+    if (! Modulation::prepareRouteState(routeState, 1, 1, true))
+    {
+        std::cerr << "Route state did not activate\n";
+        return 1;
+    }
+
+    routeState.smoothedValue = 0.66f;
+    if (! Modulation::prepareRouteState(routeState, 1, 1, true)
+        || ! expectNear("Route state preserves active identity", routeState.smoothedValue, 0.66f))
+    {
+        return 1;
+    }
+
+    if (! Modulation::prepareRouteState(routeState, 1, 2, true)
+        || ! expectNear("Route state resets on retarget", routeState.smoothedValue, 0.0f))
+    {
+        return 1;
+    }
+
+    routeState.smoothedValue = 0.5f;
+    if (Modulation::prepareRouteState(routeState, 1, 2, false)
+        || routeState.active
+        || routeState.sourceIndex != 0
+        || routeState.destinationIndex != 0
+        || ! expectNear("Route state resets when inactive", routeState.smoothedValue, 0.0f))
+    {
+        std::cerr << "Route state did not clear when inactive\n";
+        return 1;
+    }
+
     std::atomic<float> stepSync { 0.0f };
     std::atomic<float> stepSyncRate { 3.0f };
     std::atomic<float> stepRate { 2.0f };

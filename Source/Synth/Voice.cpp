@@ -150,7 +150,8 @@ void Voice::prepare(double sampleRate, int maximumBlockSize)
     modEnvelope.setSampleRate(sampleRate);
     leftFilter.prepare(sampleRate, maximumBlockSize);
     rightFilter.prepare(sampleRate, maximumBlockSize);
-    modRouteSmoothedValues.fill(0.0f);
+    for (auto& routeState : modRouteStates)
+        Modulation::resetRouteState(routeState);
     stepLfoPhase = 0.0f;
     stepLfoSmoothedValue = 0.0f;
 }
@@ -237,7 +238,8 @@ void Voice::startNote(int midiNoteNumber, float velocity, juce::SynthesiserSound
 
     stepLfoPhase = 0.0f;
     stepLfoSmoothedValue = 0.0f;
-    modRouteSmoothedValues.fill(0.0f);
+    for (auto& routeState : modRouteStates)
+        Modulation::resetRouteState(routeState);
 }
 
 void Voice::stopNote(float, bool allowTailOff)
@@ -409,7 +411,12 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || ! Modulation::isSynthDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
+        const auto routeActive = enabled
+            && sourceIndex != 0
+            && Modulation::isSynthDestination(destinationIndex)
+            && std::abs(amount) > 0.0001f;
+        auto& routeState = modRouteStates[index];
+        if (! Modulation::prepareRouteState(routeState, sourceIndex, destinationIndex, routeActive))
             continue;
 
         const auto sourceValue = evaluateModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
@@ -419,7 +426,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
                                                                 modMatrixRangeMins[index],
                                                                 modMatrixRangeMaxes[index],
                                                                 modMatrixSlews[index],
-                                                                modRouteSmoothedValues[index],
+                                                                routeState.smoothedValue,
                                                                 samplesToAdvance,
                                                                 currentSampleRate)
             * amount;

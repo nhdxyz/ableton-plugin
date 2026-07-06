@@ -247,7 +247,8 @@ void SamplePlayer::prepare(double sampleRate)
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModStepLfoPhase = 0.0f;
     sampleModStepLfoSmoothedValue = 0.0f;
-    sampleModRouteSmoothedValues.fill(0.0f);
+    for (auto& routeState : sampleModRouteStates)
+        Modulation::resetRouteState(routeState);
 }
 
 void SamplePlayer::clear()
@@ -265,7 +266,8 @@ void SamplePlayer::clear()
     sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
     sampleModStepLfoPhase = 0.0f;
     sampleModStepLfoSmoothedValue = 0.0f;
-    sampleModRouteSmoothedValues.fill(0.0f);
+    for (auto& routeState : sampleModRouteStates)
+        Modulation::resetRouteState(routeState);
     sampleModEnvelope.reset();
     sampleModEnvelopeValue = 0.0f;
     sampleModVelocity = 0.0f;
@@ -822,7 +824,12 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || ! Modulation::isSampleDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
+        const auto routeActive = enabled
+            && sourceIndex != 0
+            && Modulation::isSampleDestination(destinationIndex)
+            && std::abs(amount) > 0.0001f;
+        auto& routeState = sampleModRouteStates[index];
+        if (! Modulation::prepareRouteState(routeState, sourceIndex, destinationIndex, routeActive))
             continue;
 
         const auto sourceValue = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
@@ -832,7 +839,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
                                                                 modMatrixRangeMins[index],
                                                                 modMatrixRangeMaxes[index],
                                                                 modMatrixSlews[index],
-                                                                sampleModRouteSmoothedValues[index],
+                                                                routeState.smoothedValue,
                                                                 numSamples,
                                                                 playbackSampleRate)
             * amount;

@@ -139,7 +139,7 @@ private:
     float sampleModLfo2StepValue = 0.0f;
     float sampleModStepLfoPhase = 0.0f;
     float sampleModStepLfoSmoothedValue = 0.0f;
-    std::array<float, 8> sampleModRouteSmoothedValues {};
+    std::array<Modulation::RouteRuntimeState, 8> sampleModRouteStates {};
     juce::ADSR sampleModEnvelope;
     juce::ADSR::Parameters sampleModEnvelopeParameters;
     float sampleModEnvelopeValue = 0.0f;

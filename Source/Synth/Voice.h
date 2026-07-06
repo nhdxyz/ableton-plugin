@@ -84,7 +84,7 @@ private:
     float lfo2StepValue = 0.0f;
     float stepLfoPhase = 0.0f;
     float stepLfoSmoothedValue = 0.0f;
-    std::array<float, maxModSlots> modRouteSmoothedValues {};
+    std::array<Modulation::RouteRuntimeState, maxModSlots> modRouteStates {};
     float currentOsc2LevelOffset = 0.0f;
     float currentDriveOffset = 0.0f;
     float noiseColourState = 0.0f;

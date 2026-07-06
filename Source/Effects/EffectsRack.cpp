@@ -340,7 +340,8 @@ void EffectsRack::reset()
     delayWritePosition = 0;
     sendDelayWritePosition = 0;
     combWritePosition = 0;
-    fxModRouteSmoothedValues.fill(0.0f);
+    for (auto& routeState : fxModRouteStates)
+        Modulation::resetRouteState(routeState);
     fxModStepLfoPhase = 0.0f;
     fxModStepLfoSmoothedValue = 0.0f;
 }
@@ -482,7 +483,12 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || ! Modulation::isFxDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
+        const auto routeActive = enabled
+            && sourceIndex != 0
+            && Modulation::isFxDestination(destinationIndex)
+            && std::abs(amount) > 0.0001f;
+        auto& routeState = fxModRouteStates[index];
+        if (! Modulation::prepareRouteState(routeState, sourceIndex, destinationIndex, routeActive))
             continue;
 
         const auto sourceValue = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);
@@ -492,7 +498,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
                                                                 modMatrixRangeMins[index],
                                                                 modMatrixRangeMaxes[index],
                                                                 modMatrixSlews[index],
-                                                                fxModRouteSmoothedValues[index],
+                                                                routeState.smoothedValue,
                                                                 numSamples,
                                                                 currentSampleRate)
             * amount;

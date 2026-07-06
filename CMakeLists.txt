@@ -86,6 +86,7 @@ target_sources(NateVST
         Source/UI/OutputMeter.cpp
         Source/UI/OutputOscilloscopeDisplay.cpp
         Source/UI/OutputSpectrumDisplay.cpp
+        Source/UI/OutputTelemetry.cpp
         Source/UI/PageButtonStrip.cpp
         Source/UI/PanelTabBar.cpp
         Source/UI/PianoKeyboardLayout.cpp

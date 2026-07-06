@@ -9594,7 +9594,7 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
     const auto syncRateIndex = juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1SyncRate, 1.0f));
     const auto hostStatus = audioProcessor.getHostSyncStatus();
 
-    if (syncEnabled && hostStatus.ppqAvailable)
+    if (syncEnabled && hostStatus.playing && hostStatus.ppqAvailable)
     {
         phase += static_cast<float>(std::fmod(hostStatus.ppqPosition
                                                   * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex),
@@ -9750,8 +9750,8 @@ void NateVSTAudioProcessorEditor::updatePumpCurveDisplay()
     audioProcessor.getPumpMeterLevels(pumpPhase, pumpGain, pumpReduction, pumpActive);
 
     const auto hostSync = audioProcessor.getHostSyncStatus();
-    const auto sourceText = hostSync.ppqAvailable ? juce::String("HOST")
-                                                  : juce::String("INT");
+    const auto sourceText = hostSync.playing && hostSync.ppqAvailable ? juce::String("HOST")
+                                                                      : juce::String("INT");
     pumpCurveDisplay.setLiveState(pumpPhase,
                                   pumpGain,
                                   pumpReduction,
@@ -11896,7 +11896,7 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
         auto phase = phaseOffset;
         const auto hostStatus = audioProcessor.getHostSyncStatus();
 
-        if (syncEnabled && hostStatus.ppqAvailable)
+        if (syncEnabled && hostStatus.playing && hostStatus.ppqAvailable)
         {
             phase += static_cast<float>(std::fmod(hostStatus.ppqPosition
                                                       * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex),

@@ -103,6 +103,7 @@ target_sources(NateVST
         Source/UI/PresetSaveSummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/RandomMorphPad.cpp
+        Source/UI/RandomRecipeMetadata.cpp
         Source/UI/SampleChopHeader.cpp
         Source/UI/SampleChopPanel.cpp
         Source/UI/SampleFileActions.cpp

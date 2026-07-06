@@ -9,6 +9,7 @@
 #include "UI/PianoKeyboardLayout.h"
 #include "UI/PresetBrowserRowLayout.h"
 #include "UI/PresetLibraryChoices.h"
+#include "UI/PresetLibraryMetadata.h"
 #include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SampleRecorderState.h"
@@ -62,17 +63,8 @@ constexpr std::array<const char*, 8> macroPerformanceNames {
     "Throw"
 };
 
-enum class PresetAuditionRole
-{
-    bass,
-    chord,
-    chop,
-    sequence,
-    fx,
-    lead,
-    pluck,
-    general
-};
+namespace PresetLibraryMetadata = UI::PresetLibraryMetadata;
+using PresetAuditionRole = PresetLibraryMetadata::PresetAuditionRole;
 
 constexpr std::array<const char*, 34> momentaryFxParameterIDs {
     Parameters::ID::fxDelayEnabled,
@@ -183,18 +175,6 @@ juce::Colour panelColour(const UI::Theme& theme)
     return theme.panel;
 }
 
-juce::String presetSearchText(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    const auto sourceText = preset.isFactory ? juce::String("Factory") : juce::String("User");
-    const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + " Star" : juce::String("Unrated");
-
-    return preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
-        + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
-        + preset.pack + " " + preset.key + " " + UI::PresetLibraryChoices::formatBpm(preset.bpm) + " "
-        + preset.macroSummary + " " + preset.notes
-        + (preset.isFavorite ? " Favorite" : "");
-}
-
 bool textContainsAny(const juce::String& text, std::initializer_list<const char*> terms)
 {
     for (const auto* term : terms)
@@ -202,207 +182,6 @@ bool textContainsAny(const juce::String& text, std::initializer_list<const char*
             return true;
 
     return false;
-}
-
-bool presetMatchesSmartCrate(const NateVSTAudioProcessor::PresetInfo& preset, const juce::String& crate)
-{
-    const auto text = presetSearchText(preset);
-    const auto isUkg = textContainsAny(text, { "UKG", "Garage", "2-Step", "Two Step", "Dred", "Reese" });
-    const auto isHouse = textContainsAny(text, { "House", "Deep House", "Detroit House", "Lo-Fi", "Lo-Fi House", "Indie Dance", "Italo Disco", "Balearic House", "Afro", "Afro Melodic", "French House", "Soulful House", "Garage House", "Breaks House", "Nu Disco", "Progressive House", "Acid House", "Hard House" })
-        && ! textContainsAny(text, { "Tech House", "Tech-House" });
-    const auto isTechHouse = textContainsAny(text, { "Tech House", "Tech-House", "Deep Tech", "Tribal Tech House", "Afro Tech" });
-    const auto isMinimal = textContainsAny(text, { "Minimal", "Hypno", "Click", "Microhouse", "Minimal FM", "Deep Minimal", "Bubble" });
-    const auto isTechno = textContainsAny(text, { "Techno", "Warehouse", "Melodic Techno", "Acid Techno", "Raw Techno", "Hypnotic Techno", "Peak Time Techno", "Detroit Techno" });
-    const auto isBass = textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" });
-    const auto isChordOrStab = textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" });
-    const auto isChop = textContainsAny(text, { "Chop", "Vocal", "Sample", "Slice" });
-    const auto isPluck = textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba", "Bubble" });
-    const auto isDirty = textContainsAny(text, { "Dirty", "Dirt", "Drive", "Distortion", "Acid", "Warehouse", "Metallic" })
-        || preset.macroValues[1] >= 0.45f;
-    const auto isMonoSafe = textContainsAny(text, { "Mono Safe", "Mono-Safe", "Sub Safe" })
-        || (isBass && preset.macroValues[4] >= 0.35f && preset.macroValues[3] <= 0.45f);
-    const auto isSequenced = textContainsAny(text, { "Sequence", "Sequenced", "Pattern", "Groove", "Arp", "Pulse", "Roll" });
-
-    if (crate == "Five Star Crate")
-        return preset.rating == 5;
-    if (crate == "Club Bass")
-        return isBass;
-    if (crate == "Chord Stabs")
-        return isChordOrStab;
-    if (crate == "Dub Stabs")
-        return textContainsAny(text, { "Dub", "Chord", "Stab" }) && (isHouse || isTechno || isMinimal || isUkg);
-    if (crate == "Project Pack")
-        return preset.pack.equalsIgnoreCase("Project Pack") || (! preset.isFactory && ! preset.source.equalsIgnoreCase("Generated"));
-    if (crate == "Factory Pack")
-        return preset.isFactory || preset.pack.equalsIgnoreCase("Factory Pack");
-    if (crate == "UKG Essentials")
-        return isUkg;
-    if (crate == "UKG Basslines")
-        return isUkg && isBass;
-    if (crate == "Garage Chops")
-        return isUkg && isChop;
-    if (crate == "House Chords")
-        return isHouse && isChordOrStab;
-    if (crate == "House Tools")
-        return isHouse;
-    if (crate == "Tech House Tools")
-        return isTechHouse;
-    if (crate == "Minimal Plucks")
-        return isMinimal && isPluck;
-    if (crate == "Minimal Tools")
-        return isMinimal;
-    if (crate == "Techno Stabs")
-        return isTechno && isChordOrStab;
-    if (crate == "Techno Tools")
-        return isTechno;
-    if (crate == "Dirty Tools")
-        return isDirty;
-    if (crate == "Mono Safe")
-        return isMonoSafe;
-    if (crate == "Sequenced Grooves")
-        return isSequenced;
-
-    return false;
-}
-
-juce::String presetAuditionRoleName(PresetAuditionRole role)
-{
-    switch (role)
-    {
-        case PresetAuditionRole::bass: return "Bass phrase";
-        case PresetAuditionRole::chord: return "Chord stab phrase";
-        case PresetAuditionRole::chop: return "Garage chop phrase";
-        case PresetAuditionRole::sequence: return "Groove phrase";
-        case PresetAuditionRole::fx: return "FX sweep phrase";
-        case PresetAuditionRole::lead: return "Lead phrase";
-        case PresetAuditionRole::pluck: return "Pluck phrase";
-        case PresetAuditionRole::general:
-        default: return "Patch phrase";
-    }
-}
-
-PresetAuditionRole inferPresetAuditionRole(const NateVSTAudioProcessor::PresetInfo* preset)
-{
-    if (preset == nullptr)
-        return PresetAuditionRole::general;
-
-    const auto text = presetSearchText(*preset);
-    if (textContainsAny(text, { "Chop", "Vocal", "Slice", "Sample" }))
-        return PresetAuditionRole::chop;
-    if (textContainsAny(text, { "Bass", "Sub", "Dred", "Reese", "Rubber", "Low End" }))
-        return PresetAuditionRole::bass;
-    if (textContainsAny(text, { "Chord", "Stab", "Organ", "Keys", "Dub", "Seventh", "Mellow" }))
-        return PresetAuditionRole::chord;
-    if (textContainsAny(text, { "Sequence", "Sequenced", "Pattern", "Groove", "Arp", "Pulse", "Roll" }))
-        return PresetAuditionRole::sequence;
-    if (textContainsAny(text, { "FX", "Noise", "Riser", "Drop", "Throw", "Sweep" }))
-        return PresetAuditionRole::fx;
-    if (textContainsAny(text, { "Lead" }))
-        return PresetAuditionRole::lead;
-    if (textContainsAny(text, { "Pluck", "Bell", "Ping", "Marimba" }))
-        return PresetAuditionRole::pluck;
-
-    return PresetAuditionRole::general;
-}
-
-juce::String presetInspectorRoleName(PresetAuditionRole role)
-{
-    switch (role)
-    {
-        case PresetAuditionRole::bass: return "Bass";
-        case PresetAuditionRole::chord: return "Chord/Stab";
-        case PresetAuditionRole::chop: return "Chop";
-        case PresetAuditionRole::sequence: return "Groove";
-        case PresetAuditionRole::fx: return "FX";
-        case PresetAuditionRole::lead: return "Lead";
-        case PresetAuditionRole::pluck: return "Pluck";
-        case PresetAuditionRole::general:
-        default: return "Patch";
-    }
-}
-
-juce::String presetTempoBand(int bpm)
-{
-    if (bpm < 20)
-        return "Any tempo";
-    if (bpm <= 124)
-        return "Deep / warm";
-    if (bpm <= 128)
-        return "House drive";
-    if (bpm <= 132)
-        return "Tech pressure";
-
-    return "Garage pace";
-}
-
-juce::String presetInspectorTraits(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    const auto text = presetSearchText(preset);
-    juce::StringArray traits;
-
-    if (textContainsAny(text, { "Mono Safe", "Mono-Safe", "Sub Safe" }))
-        traits.add("Mono safe");
-    if (textContainsAny(text, { "Sequence", "Sequenced", "Pattern", "Groove", "Roll", "Pulse" }))
-        traits.add("Sequenced");
-    if (textContainsAny(text, { "Pump", "Sidechain", "Duck" }))
-        traits.add("Pump");
-    if (textContainsAny(text, { "Guard", "Clip", "Limiter" }))
-        traits.add("Guard");
-    if (textContainsAny(text, { "Wide", "Space", "Pad", "Wash" }))
-        traits.add("Wide");
-    if (textContainsAny(text, { "Dirty", "Drive", "Acid", "Raw", "Warehouse", "Metallic" })
-        || preset.macroValues[1] >= 0.48f)
-    {
-        traits.add("Dirt");
-    }
-    if (preset.source.equalsIgnoreCase("Generated") || textContainsAny(text, { "Generated", "Random Lab" }))
-        traits.add("Generated");
-
-    while (traits.size() > 4)
-        traits.remove(traits.size() - 1);
-
-    return traits.isEmpty() ? juce::String("Clean starter") : traits.joinIntoString(" | ");
-}
-
-juce::String presetInspectorCue(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    const auto role = inferPresetAuditionRole(&preset);
-    const auto tempo = presetTempoBand(preset.bpm);
-    const auto key = preset.key.trim().isNotEmpty() ? preset.key : juce::String("Any Key");
-
-    switch (role)
-    {
-        case PresetAuditionRole::bass:
-            return tempo + " bassline | " + key;
-        case PresetAuditionRole::chord:
-            return tempo + " stab layer | " + key;
-        case PresetAuditionRole::chop:
-            return tempo + " chop idea | " + key;
-        case PresetAuditionRole::sequence:
-            return tempo + " pattern | " + key;
-        case PresetAuditionRole::fx:
-            return tempo + " transition | " + key;
-        case PresetAuditionRole::lead:
-            return tempo + " hook | " + key;
-        case PresetAuditionRole::pluck:
-            return tempo + " pluck | " + key;
-        case PresetAuditionRole::general:
-        default:
-            return tempo + " patch | " + key;
-    }
-}
-
-std::array<float, 4> presetInspectorProfile(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    const auto tone = juce::jlimit(0.0f, 1.0f, preset.macroValues[0]);
-    const auto dirt = juce::jlimit(0.0f, 1.0f, preset.macroValues[1]);
-    const auto motion = juce::jlimit(0.0f, 1.0f, (preset.macroValues[2] * 0.58f)
-                                                  + (preset.macroValues[5] * 0.24f)
-                                                  + (preset.macroValues[6] * 0.18f));
-    const auto space = juce::jlimit(0.0f, 1.0f, (preset.macroValues[3] * 0.72f)
-                                                 + (preset.macroValues[7] * 0.28f));
-
-    return { tone, dirt, motion, space };
 }
 
 int foldMidiNoteToRange(int note, int low, int high)
@@ -439,96 +218,6 @@ juce::String guardSafetySummary(float peak, float guardReduction, bool guardActi
         return "guard -" + juce::String(juce::roundToInt(guardReduction * 100.0f)) + "% | " + outputSafetySummary(peak);
 
     return outputSafetySummary(peak);
-}
-
-juce::String presetMacroPreviewText(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    const auto summary = preset.macroSummary.trim();
-    const auto values = [&preset]
-    {
-        static constexpr std::array<const char*, 8> labels { "T", "D", "M", "S", "W", "B", "Wr", "Th" };
-        juce::StringArray valueText;
-
-        for (size_t index = 0; index < labels.size(); ++index)
-            valueText.add(juce::String(labels[index]) + juce::String(juce::roundToInt(preset.macroValues[index] * 100.0f)));
-
-        return valueText.joinIntoString(" ");
-    }();
-
-    return (summary.isNotEmpty() ? "Macros: " + summary : juce::String("Macros: flat"))
-        + " | " + values;
-}
-
-juce::String presetPreviewSummaryText(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    if (! preset.previewAvailable)
-        return "Preview renders on audition";
-
-    if (preset.previewStale)
-        return "Preview stale";
-
-    if (preset.previewPeak > 0.0f && preset.previewRms > 0.0f)
-        return "Preview ready | pk "
-            + juce::String(juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f), 1)
-            + " dB";
-
-    return "Preview ready";
-}
-
-juce::String presetPreviewBadgeText(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    if (! preset.previewAvailable)
-        return "RENDER";
-
-    if (preset.previewStale)
-        return "STALE";
-
-    if (preset.previewPeak > 0.0f && std::isfinite(preset.previewPeak))
-        return "PK " + juce::String(juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f), 0) + " dB";
-
-    return "READY";
-}
-
-float presetPreviewLevelNormalised(const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    if (! preset.previewAvailable || preset.previewStale || preset.previewPeak <= 0.0f || ! std::isfinite(preset.previewPeak))
-        return 0.0f;
-
-    const auto peakDb = juce::Decibels::gainToDecibels(preset.previewPeak, -100.0f);
-    return juce::jlimit(0.0f, 1.0f, juce::jmap(peakDb, -60.0f, -6.0f, 0.0f, 1.0f));
-}
-
-void drawPresetPreviewLevelBadge(juce::Graphics& g,
-                                 juce::Rectangle<int> area,
-                                 const NateVSTAudioProcessor::PresetInfo& preset)
-{
-    if (area.getWidth() <= 0 || area.getHeight() <= 0)
-        return;
-
-    const auto ready = preset.previewAvailable && ! preset.previewStale;
-    const auto stale = preset.previewStale;
-    const auto accent = ready ? juce::Colour(0xff8ee6c9)
-                              : (stale ? juce::Colour(0xffffc36b) : juce::Colour(0xff617078));
-    const auto bounds = area.toFloat().reduced(1.0f, 1.0f);
-    g.setColour(juce::Colour(0xff151e22));
-    g.fillRoundedRectangle(bounds, 4.0f);
-
-    const auto levelWidth = bounds.getWidth() * presetPreviewLevelNormalised(preset);
-    if (levelWidth > 1.0f)
-    {
-        g.setColour(accent.withAlpha(0.28f));
-        g.fillRoundedRectangle(bounds.withWidth(levelWidth), 4.0f);
-    }
-
-    g.setColour(accent.withAlpha(ready ? 0.78f : 0.52f));
-    g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
-    g.setFont(juce::FontOptions(8.0f, juce::Font::bold));
-    g.setColour(ready ? juce::Colour(0xffdff8f0) : accent);
-    g.drawFittedText(presetPreviewBadgeText(preset),
-                     area.reduced(3, 0),
-                     juce::Justification::centred,
-                     1,
-                     0.58f);
 }
 
 float smoothMeterValue(float current, float target)
@@ -13648,7 +13337,7 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
             continue;
 
         const auto category = preset.folder.isNotEmpty() ? preset.folder : preset.category;
-        selectedSearchText = presetSearchText(preset);
+        selectedSearchText = PresetLibraryMetadata::searchText(preset);
         state.selectedMeta = preset.pack + " | " + preset.key + " | " + UI::PresetLibraryChoices::formatBpm(preset.bpm);
         if (textContainsAny(selectedSearchText, { "Bass", "Sub", "Reese", "Dred", "Rubber", "Log Drum" }))
             state.roleName = "Bass";
@@ -14050,7 +13739,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
                      1,
                      0.62f);
 
-    const auto roleText = presetInspectorRoleName(inferPresetAuditionRole(&preset));
+    const auto roleText = PresetLibraryMetadata::inspectorRoleName(PresetLibraryMetadata::inferAuditionRole(&preset));
     const auto metaText = roleText + " | " + categoryText + " | " + preset.pack + " | "
         + preset.key + " " + UI::PresetLibraryChoices::formatBpm(preset.bpm);
     g.setFont(juce::FontOptions(layout.compact ? 8.0f : 8.8f, juce::Font::plain));
@@ -14061,7 +13750,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
                      1,
                      0.48f);
 
-    drawPresetPreviewLevelBadge(g, previewArea.removeFromTop(layout.compact ? 13 : 15), preset);
+    PresetLibraryMetadata::drawPreviewLevelBadge(g, previewArea.removeFromTop(layout.compact ? 13 : 15), preset);
     g.setFont(juce::FontOptions(7.7f, juce::Font::bold));
     g.setColour(juce::Colour(0xffb8c6c5));
     g.drawFittedText(roleText,
@@ -14110,8 +13799,8 @@ void NateVSTAudioProcessorEditor::selectedRowsChanged(int lastRowSelected)
     updateFavoritePresetButton();
     presetStatusLabel.setText("Selected " + preset.name + " | " + preset.pack + " | "
                                   + preset.key + " | " + UI::PresetLibraryChoices::formatBpm(preset.bpm)
-                                  + " | " + presetPreviewSummaryText(preset)
-                                  + " | " + presetMacroPreviewText(preset),
+                                  + " | " + PresetLibraryMetadata::previewSummaryText(preset)
+                                  + " | " + PresetLibraryMetadata::macroPreviewText(preset),
                               juce::dontSendNotification);
     updatePresetLibrarySummary();
 }
@@ -14179,8 +13868,8 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
         if (searchTerms.isEmpty())
             return true;
 
-        const auto searchable = presetSearchText(preset) + " "
-            + presetMacroPreviewText(preset) + " Macro Macros Performance";
+        const auto searchable = PresetLibraryMetadata::searchText(preset) + " "
+            + PresetLibraryMetadata::macroPreviewText(preset) + " Macro Macros Performance";
 
         for (const auto& term : searchTerms)
             if (! searchable.containsIgnoreCase(term))
@@ -14295,7 +13984,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
             return false;
 
         auto score = 0;
-        if (inferPresetAuditionRole(&preset) == inferPresetAuditionRole(&similarReferencePreset))
+        if (PresetLibraryMetadata::inferAuditionRole(&preset) == PresetLibraryMetadata::inferAuditionRole(&similarReferencePreset))
             score += 3;
         if (preset.pack.isNotEmpty() && preset.pack.equalsIgnoreCase(similarReferencePreset.pack))
             score += 2;
@@ -14308,7 +13997,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                                  ",/; ",
                                  "\"'");
         referenceTerms.removeEmptyStrings();
-        const auto searchable = presetSearchText(preset);
+        const auto searchable = PresetLibraryMetadata::searchText(preset);
         for (const auto& term : referenceTerms)
         {
             if (term.length() >= 3 && searchable.containsIgnoreCase(term))
@@ -14350,7 +14039,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
                 || (filter == "125-128 BPM" && preset.bpm >= 125 && preset.bpm <= 128)
                 || (filter == "129-132 BPM" && preset.bpm >= 129 && preset.bpm <= 132)
                 || (filter == "133+ BPM" && preset.bpm >= 133)
-                || presetMatchesSmartCrate(preset, filter)
+                || PresetLibraryMetadata::matchesSmartCrate(preset, filter)
                 || preset.category.equalsIgnoreCase(filter)
                 || leafCategory.equalsIgnoreCase(filter)
                 || preset.pack.equalsIgnoreCase(filter)
@@ -14422,19 +14111,19 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     if (searchText.isNotEmpty())
         statusText += " | Search: " + searchText;
     if (selectedPreset != nullptr)
-        statusText += " | " + presetPreviewSummaryText(*selectedPreset) + " | " + presetMacroPreviewText(*selectedPreset);
+        statusText += " | " + PresetLibraryMetadata::previewSummaryText(*selectedPreset) + " | " + PresetLibraryMetadata::macroPreviewText(*selectedPreset);
     if (previewReadyCount > 0 || previewStaleCount > 0)
         statusText += " | Previews: " + juce::String(previewReadyCount) + " ready"
             + (previewStaleCount > 0 ? " / " + juce::String(previewStaleCount) + " stale" : juce::String());
     statusText += " | User: " + audioProcessor.getPresetDirectory().getFullPathName();
     presetStatusLabel.setText(statusText, juce::dontSendNotification);
     presetStatusLabel.setTooltip(selectedPreset != nullptr
-                                     ? presetPreviewSummaryText(*selectedPreset) + " | "
-                                           + presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + UI::PresetLibraryChoices::formatBpm(selectedPreset->bpm)
+                                     ? PresetLibraryMetadata::previewSummaryText(*selectedPreset) + " | "
+                                           + PresetLibraryMetadata::macroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + UI::PresetLibraryChoices::formatBpm(selectedPreset->bpm)
                                            + (selectedPreset->notes.trim().isNotEmpty() ? " | " + selectedPreset->notes.replaceCharacter('\n', ' ') : juce::String())
                                      : juce::String("Preset browser status"));
     presetBox.setTooltip(selectedPreset != nullptr
-                             ? selectedPreset->name + " | " + presetMacroPreviewText(*selectedPreset)
+                             ? selectedPreset->name + " | " + PresetLibraryMetadata::macroPreviewText(*selectedPreset)
                              : juce::String("Select a preset"));
     updateFavoritePresetButton();
     updatePresetLibrarySummary();
@@ -14473,7 +14162,7 @@ void NateVSTAudioProcessorEditor::updatePresetCrateMapDisplay()
         if (preset.pack.trim().isNotEmpty())
             packs.addIfNotAlreadyThere(preset.pack.trim());
 
-        const auto searchable = presetSearchText(preset);
+        const auto searchable = PresetLibraryMetadata::searchText(preset);
         if (textContainsAny(searchable, { "UKG", "Garage", "House", "Tech House", "Techno", "Minimal", "Bass House", "Amapiano", "Hardgroove", "Future Garage", "Speed Garage", "Deep Tech", "Indie Dance", "Italo Disco", "Balearic House", "Acid House", "Nu Disco", "Afro Tech", "Afro Melodic", "Progressive House", "Hard House", "Peak Time Techno", "Detroit Techno", "Melodic Techno", "Minimal FM", "Deep Minimal", "Lo-Fi House", "French House", "Soulful House", "Garage House", "Microhouse", "Raw Techno", "Tribal Tech House", "Breaks House", "Chicago House", "Classic House", "Funky House", "Melodic House", "Romanian Minimal", "Dub Techno", "Electro Breaks" }))
             ++state.styleCount;
     }
@@ -14519,11 +14208,11 @@ void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
         state.selectedRating = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("Unrated");
         state.selectedSource = preset.source;
         state.selectedNotes = preset.notes;
-        state.selectedRole = presetInspectorRoleName(inferPresetAuditionRole(&preset));
-        state.selectedTraits = presetInspectorTraits(preset);
-        state.selectedCue = presetInspectorCue(preset);
+        state.selectedRole = PresetLibraryMetadata::inspectorRoleName(PresetLibraryMetadata::inferAuditionRole(&preset));
+        state.selectedTraits = PresetLibraryMetadata::inspectorTraits(preset);
+        state.selectedCue = PresetLibraryMetadata::inspectorCue(preset);
         state.macroValues = preset.macroValues;
-        state.profileValues = presetInspectorProfile(preset);
+        state.profileValues = PresetLibraryMetadata::inspectorProfile(preset);
         break;
     }
 
@@ -14898,7 +14587,7 @@ void NateVSTAudioProcessorEditor::auditionSelectedPreset()
     updateFavoritePresetButton();
 
     const auto previewInfo = audioProcessor.getPresetPreviewInfo(presetName);
-    const auto roleText = hasAuditionPresetInfo ? presetInspectorRoleName(inferPresetAuditionRole(&auditionPresetInfo))
+    const auto roleText = hasAuditionPresetInfo ? PresetLibraryMetadata::inspectorRoleName(PresetLibraryMetadata::inferAuditionRole(&auditionPresetInfo))
                                                 : juce::String("Preset");
     presetStatusLabel.setText("Previewing " + presetName + " | " + roleText + " | "
                                   + (previewInfo.status.isNotEmpty() ? previewInfo.status : juce::String("Rendered preview")),
@@ -15009,7 +14698,7 @@ juce::String NateVSTAudioProcessorEditor::startPresetAuditionPhrase(const NateVS
 {
     presetAuditionNotes.clear();
 
-    const auto role = inferPresetAuditionRole(presetInfo);
+    const auto role = PresetLibraryMetadata::inferAuditionRole(presetInfo);
     const auto nowMs = juce::Time::getMillisecondCounterHiRes();
 
     auto addNote = [this, nowMs] (int note, double startOffsetMs, double durationMs, float velocity)
@@ -15103,7 +14792,7 @@ juce::String NateVSTAudioProcessorEditor::startPresetAuditionPhrase(const NateVS
     }
 
     updatePresetAudition();
-    return presetAuditionRoleName(role);
+    return PresetLibraryMetadata::auditionRoleName(role);
 }
 
 bool NateVSTAudioProcessorEditor::hasPresetCompareSnapshots() const
@@ -15304,8 +14993,8 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
         presetPackBox.setText(preset.pack, juce::dontSendNotification);
         presetKeyBox.setText(preset.key, juce::dontSendNotification);
         presetBpmBox.setText(UI::PresetLibraryChoices::formatBpm(preset.bpm), juce::dontSendNotification);
-        const auto preview = presetMacroPreviewText(preset);
-        const auto renderedPreview = presetPreviewSummaryText(preset);
+        const auto preview = PresetLibraryMetadata::macroPreviewText(preset);
+        const auto renderedPreview = PresetLibraryMetadata::previewSummaryText(preset);
         presetBox.setTooltip(preset.name + " | " + renderedPreview + " | " + preview);
         presetPrimaryActions.setAuditionTooltip("Play rendered audio preview for " + preset.name + " without loading the patch");
         presetPrimaryActions.setWarmPreviewsTooltip("Render previews for the selected preset and visible crate rows");

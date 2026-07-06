@@ -4490,6 +4490,33 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("MOD macro assignment summary hides shaped route details: " + macroSummary);
         }
 
+        clearMatrix();
+        setPlainParameterValue(Parameters::ID::modMatrixPolarity[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixCurve[0], 4.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMin[0], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMax[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixSlew[0], 0.25f);
+        modMacroAssignSourceBox.setSelectedId(5, juce::dontSendNotification);
+        modMacroAssignDestinationBox.setSelectedId(14, juce::dontSendNotification);
+        modMacroAssignAmountSlider.setValue(33.0, juce::dontSendNotification);
+        addMacroAssignment(false);
+
+        const auto macroAssignedSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[0], 0.0f));
+        const auto macroAssignedDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[0], 0.0f));
+        const auto macroAssignedAmount = readPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.0f);
+        const auto macroShapeSummary = modRouteShapeSummary(0);
+        if (macroAssignedSource != 4
+            || macroAssignedDestination != 13
+            || std::abs(macroAssignedAmount - 0.33f) > 0.002f
+            || macroShapeSummary.isNotEmpty())
+        {
+            issues.add("MOD macro assignment reused stale route shape: source "
+                       + juce::String(macroAssignedSource)
+                       + " destination " + juce::String(macroAssignedDestination)
+                       + " amount " + juce::String(macroAssignedAmount, 3)
+                       + " shape " + macroShapeSummary);
+        }
+
         for (size_t index = 0; index < snapshots.size(); ++index)
         {
             setPlainParameterValue(Parameters::ID::modMatrixSource[index], snapshots[index].source);
@@ -12489,12 +12516,22 @@ void NateVSTAudioProcessorEditor::addMacroAssignment(bool replaceExisting)
     }
 
     const auto slotIndex = static_cast<size_t>(targetSlot);
+    const auto previousSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], 0.0f));
+    const auto previousDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], 0.0f));
+    const auto previousAmount = readPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], 0.0f);
+    const auto updatingExistingAssignment = ! replaceExisting
+        && previousSource == sourceIndex
+        && previousDestination == destinationIndex
+        && std::abs(previousAmount) > 0.001f;
+
     if (! replaceExisting)
         captureGlobalEdit("Edit macro assignment");
     setPlainParameterValue(Parameters::ID::modMatrixSource[slotIndex], static_cast<float>(sourceIndex));
     setPlainParameterValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
     setPlainParameterValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
     setPlainParameterValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+    if (! updatingExistingAssignment)
+        resetModRouteShape(slotIndex);
 
     modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
     modInspectorDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);

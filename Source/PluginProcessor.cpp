@@ -2272,6 +2272,11 @@ bool NateVSTAudioProcessor::randomizeUkgVocalChop()
             setParameterPlainValue(Parameters::ID::modMatrixDestination[slotIndex], static_cast<float>(destinationIndex));
             setParameterPlainValue(Parameters::ID::modMatrixAmount[slotIndex], amount);
             setParameterPlainValue(Parameters::ID::modMatrixEnabled[slotIndex], 1.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixPolarity[slotIndex], 0.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixCurve[slotIndex], 0.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixRangeMin[slotIndex], -1.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixRangeMax[slotIndex], 1.0f);
+            setParameterPlainValue(Parameters::ID::modMatrixSlew[slotIndex], 0.0f);
             return;
         }
     };

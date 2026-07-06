@@ -31,6 +31,35 @@ bool near(float value, float expected, float tolerance = 0.0005f)
     return std::abs(value - expected) <= tolerance;
 }
 
+bool seedEmptyRoutesWithStaleShape(NateVSTAudioProcessor& processor)
+{
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        if (! setPlainParameter(processor, Parameters::ID::modMatrixSource[index], 0.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixDestination[index], 0.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixAmount[index], 0.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixPolarity[index], 3.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixCurve[index], 4.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixRangeMin[index], 0.25f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixRangeMax[index], 0.55f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixSlew[index], 0.62f))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool routeShapeIsNeutral(NateVSTAudioProcessor& processor, size_t index)
+{
+    return near(readPlainParameter(processor, Parameters::ID::modMatrixPolarity[index]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixCurve[index]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixRangeMin[index]), -1.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixRangeMax[index]), 1.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixSlew[index]), 0.0f);
+}
+
 bool writeTestSample(const juce::File& file)
 {
     juce::AudioBuffer<float> buffer(2, 44100);
@@ -438,16 +467,23 @@ bool verifyUkgChopRandomizer(const juce::File& sampleFile)
     if (! configureSampleOnly(processor, sampleFile))
         return false;
 
+    if (! seedEmptyRoutesWithStaleShape(processor))
+        return false;
+
     if (! processor.randomizeUkgVocalChop())
         return false;
 
     auto sampleRouteCount = 0;
+    auto sampleRoutesHaveNeutralShape = true;
     for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
     {
         const auto enabled = readPlainParameter(processor, Parameters::ID::modMatrixEnabled[index]);
         const auto destination = static_cast<int>(std::round(readPlainParameter(processor, Parameters::ID::modMatrixDestination[index])));
         if (enabled >= 0.5f && (destination == 12 || destination == 14 || destination == 15))
+        {
             ++sampleRouteCount;
+            sampleRoutesHaveNeutralShape = sampleRoutesHaveNeutralShape && routeShapeIsNeutral(processor, index);
+        }
     }
 
     return near(readPlainParameter(processor, Parameters::ID::sampleEnabled), 1.0f)
@@ -455,7 +491,8 @@ bool verifyUkgChopRandomizer(const juce::File& sampleFile)
         && near(readPlainParameter(processor, Parameters::ID::sampleStutterEnabled), 1.0f)
         && std::abs(readPlainParameter(processor, Parameters::ID::samplePitchRamp)) >= 4.5f
         && readPlainParameter(processor, Parameters::ID::sampleMix) >= 0.6f
-        && sampleRouteCount >= 3;
+        && sampleRouteCount >= 3
+        && sampleRoutesHaveNeutralShape;
 }
 
 bool verifyMissingSampleRestoreClearsStaleAudio(const juce::File& savedSampleFile, const juce::File& staleSampleFile)

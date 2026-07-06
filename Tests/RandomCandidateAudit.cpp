@@ -23,6 +23,37 @@ bool setPlainParameter(NateVSTAudioProcessor& processor, const juce::String& par
 
     return false;
 }
+
+bool near(float value, float expected, float tolerance = 0.0005f)
+{
+    return std::abs(value - expected) <= tolerance;
+}
+
+bool seedStaleRouteShape(NateVSTAudioProcessor& processor)
+{
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        if (! setPlainParameter(processor, Parameters::ID::modMatrixPolarity[index], 3.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixCurve[index], 4.0f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixRangeMin[index], 0.25f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixRangeMax[index], 0.55f)
+            || ! setPlainParameter(processor, Parameters::ID::modMatrixSlew[index], 0.62f))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool routeShapeIsNeutral(NateVSTAudioProcessor& processor, size_t index)
+{
+    return near(readPlainParameter(processor, Parameters::ID::modMatrixPolarity[index], -1.0f), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixCurve[index], -1.0f), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixRangeMin[index], 0.0f), -1.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixRangeMax[index], 0.0f), 1.0f)
+        && near(readPlainParameter(processor, Parameters::ID::modMatrixSlew[index], -1.0f), 0.0f);
+}
 }
 
 int main()
@@ -118,7 +149,8 @@ int main()
         || ! setPlainParameter(processor, Parameters::ID::outputGain, 6.0f)
         || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 1.0f)
         || ! setPlainParameter(processor, Parameters::ID::sequencerRoot, 84.0f)
-        || ! setPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f))
+        || ! setPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f)
+        || ! seedStaleRouteShape(processor))
     {
         std::cerr << "Could not seed randomizer parameters\n";
         return 1;
@@ -144,6 +176,21 @@ int main()
     const auto generatedSeqRoot = readPlainParameter(processor, Parameters::ID::sequencerRoot, 84.0f);
     const auto generatedSeqOctave = readPlainParameter(processor, Parameters::ID::sequencerOctave, 2.0f);
     const auto generatedEffectiveRoot = generatedSeqRoot + (generatedSeqOctave * 12.0f);
+    auto generatedRouteCount = 0;
+    auto generatedRouteWithStaleShape = false;
+    for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+    {
+        const auto source = readPlainParameter(processor, Parameters::ID::modMatrixSource[index], 0.0f);
+        const auto destination = readPlainParameter(processor, Parameters::ID::modMatrixDestination[index], 0.0f);
+        const auto amount = readPlainParameter(processor, Parameters::ID::modMatrixAmount[index], 0.0f);
+        if (source > 0.5f && destination > 0.5f && std::abs(amount) > 0.001f)
+        {
+            ++generatedRouteCount;
+            if (! routeShapeIsNeutral(processor, index))
+                generatedRouteWithStaleShape = true;
+        }
+    }
+
     if (! validationSummary.containsIgnoreCase("source restored")
         || ! validationSummary.containsIgnoreCase("output clamped")
         || ! validationSummary.containsIgnoreCase("bass range corrected")
@@ -156,7 +203,9 @@ int main()
         || std::abs(restoredOsc2WarpB - 0.43f) > 0.002f
         || std::abs(restoredOsc2WarpMode - 3.0f) > 0.002f
         || std::abs(restoredOsc2WarpBMode - 1.0f) > 0.002f
-        || generatedEffectiveRoot > 48.0f)
+        || generatedEffectiveRoot > 48.0f
+        || generatedRouteCount < 3
+        || generatedRouteWithStaleShape)
     {
         std::cerr << "Random validation did not correct unsafe generated state. Summary: "
                   << validationSummary << " output " << generatedOutput
@@ -167,7 +216,9 @@ int main()
                   << " osc2WarpB " << restoredOsc2WarpB
                   << " osc2WarpMode " << restoredOsc2WarpMode
                   << " osc2WarpBMode " << restoredOsc2WarpBMode
-                  << " effective root " << generatedEffectiveRoot << '\n';
+                  << " effective root " << generatedEffectiveRoot
+                  << " routeCount " << generatedRouteCount
+                  << " staleRouteShape " << generatedRouteWithStaleShape << '\n';
         return 1;
     }
 

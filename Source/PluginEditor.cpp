@@ -4422,6 +4422,37 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         expectInspectorRoute(2, 7, "Mod Env -> FX Pump");
         expectInspectorRoute(3, 7, "Velocity -> FX Pump");
 
+        clearMatrix();
+        setPlainParameterValue(Parameters::ID::modMatrixSource[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[0], 13.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.42f);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixPolarity[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixCurve[0], 4.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMin[0], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMax[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixSlew[0], 0.25f);
+
+        const auto touchedControlSummary = modulationSummaryForParameter(Parameters::ID::sampleMix);
+        if (! touchedControlSummary.contains("Unipolar +")
+            || ! touchedControlSummary.contains("Gate")
+            || ! touchedControlSummary.contains("Range 0..100%")
+            || ! touchedControlSummary.contains("Slew 25%"))
+        {
+            issues.add("MOD selected-control summary hides shaped route details: " + touchedControlSummary);
+        }
+
+        modInspectorDestinationBox.setSelectedId(14, juce::dontSendNotification);
+        updateModInspectorStatus();
+        const auto inspectorSummary = modInspectorStatusLabel.getText();
+        if (! inspectorSummary.contains("Unipolar +")
+            || ! inspectorSummary.contains("Gate")
+            || ! inspectorSummary.contains("Range 0..100%")
+            || ! inspectorSummary.contains("Slew 25%"))
+        {
+            issues.add("MOD inspector summary hides shaped route details: " + inspectorSummary);
+        }
+
         for (size_t index = 0; index < snapshots.size(); ++index)
         {
             setPlainParameterValue(Parameters::ID::modMatrixSource[index], snapshots[index].source);
@@ -8821,7 +8852,11 @@ juce::String NateVSTAudioProcessorEditor::modulationSummaryForParameter(const ju
 
         summedDepth += amount;
         const auto percent = juce::roundToInt(amount * 100.0f);
-        routes.add(sourceChoices[sourceIndex] + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%");
+        auto routeText = sourceChoices[sourceIndex] + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
+        const auto shapeSummary = modRouteShapeSummary(index);
+        if (shapeSummary.isNotEmpty())
+            routeText += " [" + shapeSummary + "]";
+        routes.add(routeText);
     }
 
     if (routes.isEmpty())
@@ -12132,10 +12167,15 @@ void NateVSTAudioProcessorEditor::updateModInspectorStatus()
             summedDepth += amount;
 
         const auto percent = juce::roundToInt(amount * 100.0f);
-        routes.add("S" + juce::String(static_cast<int>(index + 1)) + " "
-                   + sourceChoices[sourceIndex] + " "
-                   + (percent >= 0 ? "+" : "") + juce::String(percent) + "%"
-                   + (enabled ? "" : " off"));
+        auto routeText = "S" + juce::String(static_cast<int>(index + 1)) + " "
+            + sourceChoices[sourceIndex] + " "
+            + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
+        const auto shapeSummary = modRouteShapeSummary(index);
+        if (shapeSummary.isNotEmpty())
+            routeText += " [" + shapeSummary + "]";
+        if (! enabled)
+            routeText += " off";
+        routes.add(routeText);
     }
 
     if (routes.isEmpty())

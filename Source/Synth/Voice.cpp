@@ -1,22 +1,13 @@
 #include "Voice.h"
 
+#include "../Modulation/LfoShapes.h"
+
 #include <cmath>
 
 namespace Synth
 {
 namespace
 {
-double cyclesPerBeatForLfoSync(int rateIndex)
-{
-    switch (rateIndex)
-    {
-        case 1: return 2.0; // 1/8
-        case 2: return 3.0; // 1/8 triplet
-        case 3: return 4.0; // 1/16
-        default: return 1.0; // 1/4
-    }
-}
-
 float advanceChaosRandomWalk(float currentValue, juce::Random& random, float cyclesThisStep)
 {
     const auto safeCycles = juce::jlimit(0.0f, 1.0f, cyclesThisStep);
@@ -665,7 +656,7 @@ float Voice::processLfo(int samplesToAdvance, std::optional<double> ppqPosition)
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
     const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
     const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)));
-    const auto cyclesPerBeat = cyclesPerBeatForLfoSync(syncRateIndex);
+    const auto cyclesPerBeat = Modulation::cyclesPerBeatForSyncRate(syncRateIndex);
     const auto rateHz = syncEnabled
         ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo1Rate, 1.0f);
@@ -675,37 +666,8 @@ float Voice::processLfo(int samplesToAdvance, std::optional<double> ppqPosition)
     if (syncedPhase.has_value())
         lfoPhase = *syncedPhase;
 
-    const auto phase = std::fmod(lfoPhase + phaseOffset + 1.0f, 1.0f);
-    auto value = 0.0f;
-
-    switch (shapeIndex)
-    {
-        case 1:
-            value = phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-            break;
-
-        case 2:
-            value = (phase * 2.0f) - 1.0f;
-            break;
-
-        case 3:
-            value = phase < 0.5f ? 1.0f : -1.0f;
-            break;
-
-        case 4:
-            value = lfoStepValue;
-            break;
-
-        case 5:
-            value = evaluateLfoCurve(phase);
-            break;
-
-        default:
-            value = std::sin(juce::MathConstants<float>::twoPi * phase);
-            break;
-    }
+    const auto phase = Modulation::LfoShapes::normalisePhase(lfoPhase + phaseOffset);
+    const auto value = Modulation::LfoShapes::shapeValueWithCurve(shapeIndex, phase, lfo1CurvePoints, lfoStepValue);
 
     const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
     lfoSmoothRandomValue = juce::jlimit(-1.0f,
@@ -746,7 +708,7 @@ float Voice::processLfo2(int samplesToAdvance, std::optional<double> ppqPosition
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
     const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
     const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)));
-    const auto cyclesPerBeat = cyclesPerBeatForLfoSync(syncRateIndex);
+    const auto cyclesPerBeat = Modulation::cyclesPerBeatForSyncRate(syncRateIndex);
     const auto rateHz = syncEnabled
         ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo2Rate, 1.5f);
@@ -756,33 +718,8 @@ float Voice::processLfo2(int samplesToAdvance, std::optional<double> ppqPosition
     if (syncedPhase.has_value())
         lfo2Phase = *syncedPhase;
 
-    const auto phase = std::fmod(lfo2Phase + phaseOffset + 1.0f, 1.0f);
-    auto value = 0.0f;
-
-    switch (shapeIndex)
-    {
-        case 1:
-            value = phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-            break;
-
-        case 2:
-            value = (phase * 2.0f) - 1.0f;
-            break;
-
-        case 3:
-            value = phase < 0.5f ? 1.0f : -1.0f;
-            break;
-
-        case 4:
-            value = lfo2StepValue;
-            break;
-
-        default:
-            value = std::sin(juce::MathConstants<float>::twoPi * phase);
-            break;
-    }
+    const auto phase = Modulation::LfoShapes::normalisePhase(lfo2Phase + phaseOffset);
+    const auto value = Modulation::LfoShapes::shapeValue(shapeIndex, phase, lfo2StepValue);
 
     if (! syncedPhase.has_value())
     {
@@ -830,19 +767,6 @@ std::optional<double> Voice::ppqPositionForBlockOffset(int sampleOffset) const n
     const auto offsetBeats = (static_cast<double>(juce::jmax(0, sampleOffset)) / safeSampleRate)
         * (hostBpm / 60.0);
     return *hostPpqPosition + offsetBeats;
-}
-
-float Voice::evaluateLfoCurve(float phase) const
-{
-    constexpr auto pointCount = 8;
-    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
-    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
-    const auto rightIndex = (leftIndex + 1) % pointCount;
-    const auto fraction = scaledPhase - std::floor(scaledPhase);
-    const auto leftValue = readParameter(lfo1CurvePoints[static_cast<size_t>(leftIndex)], 0.0f);
-    const auto rightValue = readParameter(lfo1CurvePoints[static_cast<size_t>(rightIndex)], 0.0f);
-
-    return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
 float Voice::evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const

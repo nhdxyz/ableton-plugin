@@ -257,7 +257,6 @@ private:
     float processSampleModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processSampleStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
-    float evaluateSampleLfoCurve(float phase) const;
     float evaluateSampleModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     int sliceIndexForMidiNote(int midiNoteNumber) const;
     void startVoice(const SampleData& data, int midiNoteNumber, float velocity, double bpm, bool forceOneShot, int forcedSliceIndex = -1, bool ignoreSliceProbability = false);

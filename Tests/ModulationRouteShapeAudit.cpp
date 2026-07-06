@@ -1,3 +1,4 @@
+#include "../Source/Modulation/LfoShapes.h"
 #include "../Source/Modulation/ModulationRouting.h"
 
 #include <cmath>
@@ -38,6 +39,29 @@ int main()
         || ! negativePpqPhase.has_value()
         || ! expectNear("Positive PPQ phase wraps", *positivePpqPhase, 0.5f)
         || ! expectNear("Negative PPQ phase wraps", *negativePpqPhase, 0.5f))
+    {
+        return 1;
+    }
+
+    const std::array<float, 8> curveValues { -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 0.5f, 0.0f, -0.5f };
+    std::array<std::atomic<float>, 8> atomicCurveValues {};
+    std::array<std::atomic<float>*, 8> atomicCurvePointers {};
+    for (size_t index = 0; index < atomicCurvePointers.size(); ++index)
+    {
+        atomicCurveValues[index].store(curveValues[index]);
+        atomicCurvePointers[index] = &atomicCurveValues[index];
+    }
+
+    if (! expectNear("LFO phase wraps positive", Modulation::LfoShapes::normalisePhase(1.25f), 0.25f)
+        || ! expectNear("LFO phase wraps negative", Modulation::LfoShapes::normalisePhase(-0.25f), 0.75f)
+        || ! expectNear("LFO sine shape", Modulation::LfoShapes::shapeValue(0, 0.25f), 1.0f)
+        || ! expectNear("LFO triangle shape", Modulation::LfoShapes::shapeValue(1, 0.25f), 1.0f)
+        || ! expectNear("LFO saw shape", Modulation::LfoShapes::shapeValue(2, 0.75f), 0.5f)
+        || ! expectNear("LFO square shape", Modulation::LfoShapes::shapeValue(3, 0.75f), -1.0f)
+        || ! expectNear("LFO held step shape", Modulation::LfoShapes::shapeValue(4, 0.75f, -0.37f), -0.37f)
+        || ! expectNear("LFO preview step shape", Modulation::LfoShapes::previewStepValue(0.62f), 0.55f)
+        || ! expectNear("LFO curve shape", Modulation::LfoShapes::shapeValueWithCurve(5, 0.125f, curveValues), -0.5f)
+        || ! expectNear("LFO atomic curve shape", Modulation::LfoShapes::shapeValueWithCurve(5, 0.125f, atomicCurvePointers), -0.5f))
     {
         return 1;
     }

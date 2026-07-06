@@ -1,5 +1,8 @@
 #include "LfoCurveLibrary.h"
 
+#include "../Modulation/LfoShapes.h"
+#include "../Modulation/ModulationRouting.h"
+
 #include <cmath>
 
 namespace UI::LfoCurveLibrary
@@ -45,57 +48,19 @@ std::array<float, 8> presetValues(int presetId)
 
 double cyclesPerBeatForRateIndex(int rateIndex)
 {
-    switch (rateIndex)
-    {
-        case 1: return 2.0;
-        case 2: return 3.0;
-        case 3: return 4.0;
-        default: return 1.0;
-    }
+    return Modulation::cyclesPerBeatForSyncRate(rateIndex);
 }
 
 float evaluateCurve(const std::array<float, 8>& values, float phase)
 {
-    constexpr auto pointCount = 8;
-    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
-    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
-    const auto rightIndex = (leftIndex + 1) % pointCount;
-    const auto fraction = scaledPhase - std::floor(scaledPhase);
-
-    return juce::jlimit(-1.0f,
-                        1.0f,
-                        values[static_cast<size_t>(leftIndex)]
-                            + ((values[static_cast<size_t>(rightIndex)] - values[static_cast<size_t>(leftIndex)]) * fraction));
+    return Modulation::LfoShapes::evaluateCurve(values, phase);
 }
 
 float shapeValue(int shapeIndex, float phase, const std::array<float, 8>& curveValues)
 {
-    phase = std::fmod(phase + 1.0f, 1.0f);
-
-    switch (shapeIndex)
-    {
-        case 1:
-            return phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-
-        case 2:
-            return (phase * 2.0f) - 1.0f;
-
-        case 3:
-            return phase < 0.5f ? 1.0f : -1.0f;
-
-        case 4:
-            return phase < 0.25f ? 1.0f
-                : phase < 0.5f ? -0.35f
-                : phase < 0.75f ? 0.55f
-                : -1.0f;
-
-        case 5:
-            return evaluateCurve(curveValues, phase);
-
-        default:
-            return std::sin(juce::MathConstants<float>::twoPi * phase);
-    }
+    return Modulation::LfoShapes::shapeValueWithCurve(shapeIndex,
+                                                      phase,
+                                                      curveValues,
+                                                      Modulation::LfoShapes::previewStepValue(phase));
 }
 }

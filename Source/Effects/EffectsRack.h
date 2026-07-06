@@ -237,7 +237,6 @@ private:
     float processFxModulationLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxModulationLfo2(int numSamples, double bpm, std::optional<double> ppqPosition);
     float processFxStepLfo(int numSamples, double bpm, std::optional<double> ppqPosition);
-    float evaluateFxLfoCurve(float phase) const;
     float evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     void processModule(int moduleIndex,
                        juce::AudioBuffer<float>& buffer,

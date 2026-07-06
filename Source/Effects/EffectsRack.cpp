@@ -1,5 +1,7 @@
 #include "EffectsRack.h"
 
+#include "../Modulation/LfoShapes.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -14,17 +16,6 @@ float onePoleAlpha(float frequency, double sampleRate)
 }
 
 double pumpCyclesPerBeat(int rateIndex)
-{
-    switch (rateIndex)
-    {
-        case 1: return 2.0; // 1/8
-        case 2: return 3.0; // 1/8 triplet
-        case 3: return 4.0; // 1/16
-        default: return 1.0; // 1/4
-    }
-}
-
-double lfoCyclesPerBeat(int rateIndex)
 {
     switch (rateIndex)
     {
@@ -541,49 +532,22 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
 {
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
     const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)));
+    const auto cyclesPerBeat = Modulation::cyclesPerBeatForSyncRate(syncRateIndex);
     const auto rateHz = syncEnabled
-        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))))
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
         : readParameter(lfo1Rate, 1.0f);
     const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
 
-    if (syncEnabled && ppqPosition.has_value())
-    {
-        fxModLfoPhase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))), 1.0));
-        if (fxModLfoPhase < 0.0f)
-            fxModLfoPhase += 1.0f;
-    }
+    if (syncEnabled)
+        if (const auto syncedPhase = Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat))
+            fxModLfoPhase = *syncedPhase;
 
-    auto phase = std::fmod(fxModLfoPhase + phaseOffset + 1.0f, 1.0f);
-    auto value = 0.0f;
-
-    switch (shapeIndex)
-    {
-        case 1:
-            value = phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-            break;
-
-        case 2:
-            value = (phase * 2.0f) - 1.0f;
-            break;
-
-        case 3:
-            value = phase < 0.5f ? 1.0f : -1.0f;
-            break;
-
-        case 4:
-            value = fxModLfoStepValue;
-            break;
-
-        case 5:
-            value = evaluateFxLfoCurve(phase);
-            break;
-
-        default:
-            value = std::sin(juce::MathConstants<float>::twoPi * phase);
-            break;
-    }
+    const auto phase = Modulation::LfoShapes::normalisePhase(fxModLfoPhase + phaseOffset);
+    const auto value = Modulation::LfoShapes::shapeValueWithCurve(shapeIndex,
+                                                                  phase,
+                                                                  lfo1CurvePoints,
+                                                                  fxModLfoStepValue);
 
     const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
     fxModSmoothRandomValue = juce::jlimit(-1.0f,
@@ -617,45 +581,18 @@ float EffectsRack::processFxModulationLfo2(int numSamples, double bpm, std::opti
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
     const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
     const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)));
+    const auto cyclesPerBeat = Modulation::cyclesPerBeatForSyncRate(syncRateIndex);
     const auto rateHz = syncEnabled
-        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * lfoCyclesPerBeat(syncRateIndex))
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
         : readParameter(lfo2Rate, 1.5f);
     const auto phaseOffset = readParameter(lfo2Phase, 0.25f);
 
-    if (syncEnabled && ppqPosition.has_value())
-    {
-        fxModLfo2Phase = static_cast<float>(std::fmod(*ppqPosition * lfoCyclesPerBeat(syncRateIndex), 1.0));
-        if (fxModLfo2Phase < 0.0f)
-            fxModLfo2Phase += 1.0f;
-    }
+    if (syncEnabled)
+        if (const auto syncedPhase = Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat))
+            fxModLfo2Phase = *syncedPhase;
 
-    const auto phase = std::fmod(fxModLfo2Phase + phaseOffset + 1.0f, 1.0f);
-    auto value = 0.0f;
-
-    switch (shapeIndex)
-    {
-        case 1:
-            value = phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-            break;
-
-        case 2:
-            value = (phase * 2.0f) - 1.0f;
-            break;
-
-        case 3:
-            value = phase < 0.5f ? 1.0f : -1.0f;
-            break;
-
-        case 4:
-            value = fxModLfo2StepValue;
-            break;
-
-        default:
-            value = std::sin(juce::MathConstants<float>::twoPi * phase);
-            break;
-    }
+    const auto phase = Modulation::LfoShapes::normalisePhase(fxModLfo2Phase + phaseOffset);
+    const auto value = Modulation::LfoShapes::shapeValue(shapeIndex, phase, fxModLfo2StepValue);
 
     const auto previousPhase = fxModLfo2Phase;
     fxModLfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
@@ -684,19 +621,6 @@ float EffectsRack::processFxStepLfo(int numSamples, double bpm, std::optional<do
                                       currentSampleRate,
                                       bpm,
                                       ppqPosition);
-}
-
-float EffectsRack::evaluateFxLfoCurve(float phase) const
-{
-    constexpr auto pointCount = 8;
-    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
-    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
-    const auto rightIndex = (leftIndex + 1) % pointCount;
-    const auto fraction = scaledPhase - std::floor(scaledPhase);
-    const auto leftValue = readParameter(lfo1CurvePoints[static_cast<size_t>(leftIndex)], 0.0f);
-    const auto rightValue = readParameter(lfo1CurvePoints[static_cast<size_t>(rightIndex)], 0.0f);
-
-    return juce::jlimit(-1.0f, 1.0f, leftValue + ((rightValue - leftValue) * fraction));
 }
 
 float EffectsRack::evaluateFxModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const

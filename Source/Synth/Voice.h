@@ -219,7 +219,6 @@ private:
     float processLfo2(int samplesToAdvance, std::optional<double> ppqPosition);
     float processStepLfo(int samplesToAdvance, std::optional<double> ppqPosition);
     std::optional<double> ppqPositionForBlockOffset(int sampleOffset) const noexcept;
-    float evaluateLfoCurve(float phase) const;
     float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     StereoSample renderUnisonStack();
     float processNoiseSample(int noiseTypeIndex);

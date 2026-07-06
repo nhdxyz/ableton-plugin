@@ -225,12 +225,14 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
     lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
     lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
+    lfo1Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo1Retrigger);
     lfo2Rate = parameters.getRawParameterValue(Parameters::ID::lfo2Rate);
     lfo2Sync = parameters.getRawParameterValue(Parameters::ID::lfo2Sync);
     lfo2SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo2SyncRate);
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    lfo2Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo2Retrigger);
     stepLfoSync = parameters.getRawParameterValue(Parameters::ID::stepLfoSync);
     stepLfoSyncRate = parameters.getRawParameterValue(Parameters::ID::stepLfoSyncRate);
     stepLfoRate = parameters.getRawParameterValue(Parameters::ID::stepLfoRate);
@@ -441,6 +443,21 @@ void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
 
 void EffectsRack::triggerFxModulationNoteOn(float velocity)
 {
+    if (readParameter(lfo1Retrigger, 1.0f) >= 0.5f)
+    {
+        fxModLfoPhase = 0.0f;
+        fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+        fxModSmoothRandomStartValue = fxModLfoStepValue;
+        fxModSmoothRandomValue = fxModLfoStepValue;
+        fxModChaosValue = ((fxModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    }
+
+    if (readParameter(lfo2Retrigger, 1.0f) >= 0.5f)
+    {
+        fxModLfo2Phase = 0.0f;
+        fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
     fxModVelocity = juce::jlimit(0.0f, 1.0f, velocity);
     fxModActiveNotes = juce::jmin(128, fxModActiveNotes + 1);
     fxModEnvelope.noteOn();

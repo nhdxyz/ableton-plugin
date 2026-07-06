@@ -208,12 +208,14 @@ SamplePlayer::SamplePlayer(Parameters::APVTS& state)
     lfo1Shape = parameters.getRawParameterValue(Parameters::ID::lfo1Shape);
     lfo1Depth = parameters.getRawParameterValue(Parameters::ID::lfo1Depth);
     lfo1Phase = parameters.getRawParameterValue(Parameters::ID::lfo1Phase);
+    lfo1Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo1Retrigger);
     lfo2Rate = parameters.getRawParameterValue(Parameters::ID::lfo2Rate);
     lfo2Sync = parameters.getRawParameterValue(Parameters::ID::lfo2Sync);
     lfo2SyncRate = parameters.getRawParameterValue(Parameters::ID::lfo2SyncRate);
     lfo2Shape = parameters.getRawParameterValue(Parameters::ID::lfo2Shape);
     lfo2Depth = parameters.getRawParameterValue(Parameters::ID::lfo2Depth);
     lfo2Phase = parameters.getRawParameterValue(Parameters::ID::lfo2Phase);
+    lfo2Retrigger = parameters.getRawParameterValue(Parameters::ID::lfo2Retrigger);
     stepLfoSync = parameters.getRawParameterValue(Parameters::ID::stepLfoSync);
     stepLfoSyncRate = parameters.getRawParameterValue(Parameters::ID::stepLfoSyncRate);
     stepLfoRate = parameters.getRawParameterValue(Parameters::ID::stepLfoRate);
@@ -782,6 +784,21 @@ void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
 
 void SamplePlayer::triggerSampleModulationNoteOn(float velocity)
 {
+    if (readParameter(lfo1Retrigger, 1.0f) >= 0.5f)
+    {
+        sampleModLfoPhase = 0.0f;
+        sampleModLfoStepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+        sampleModSmoothRandomStartValue = sampleModLfoStepValue;
+        sampleModSmoothRandomValue = sampleModLfoStepValue;
+        sampleModChaosValue = ((sampleModulationRandom.nextFloat() * 2.0f) - 1.0f) * 0.25f;
+    }
+
+    if (readParameter(lfo2Retrigger, 1.0f) >= 0.5f)
+    {
+        sampleModLfo2Phase = 0.0f;
+        sampleModLfo2StepValue = (sampleModulationRandom.nextFloat() * 2.0f) - 1.0f;
+    }
+
     sampleModVelocity = juce::jlimit(0.0f, 1.0f, velocity);
     sampleModActiveNotes = juce::jmin(128, sampleModActiveNotes + 1);
     sampleModEnvelope.noteOn();

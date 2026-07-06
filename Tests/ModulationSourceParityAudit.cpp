@@ -173,6 +173,39 @@ bool configureSourceForAudit(NateVSTAudioProcessor& processor, int sourceIndex)
     }
 }
 
+void configureLfoRetriggerAuditSource(NateVSTAudioProcessor& processor, int sourceIndex, bool retriggerEnabled)
+{
+    const auto retrigger = retriggerEnabled ? 1.0f : 0.0f;
+
+    if (sourceIndex == 15)
+    {
+        setPlainParameter(processor, Parameters::ID::lfo2Sync, 0.0f);
+        setPlainParameter(processor, Parameters::ID::lfo2Rate, 1.0f);
+        setPlainParameter(processor, Parameters::ID::lfo2Shape, 0.0f);
+        setPlainParameter(processor, Parameters::ID::lfo2Depth, 1.0f);
+        setPlainParameter(processor, Parameters::ID::lfo2Phase, 0.25f);
+        setPlainParameter(processor, Parameters::ID::lfo2Retrigger, retrigger);
+        return;
+    }
+
+    setPlainParameter(processor, Parameters::ID::lfo1Sync, 0.0f);
+    setPlainParameter(processor, Parameters::ID::lfo1Rate, 1.0f);
+    setPlainParameter(processor, Parameters::ID::lfo1Shape, 0.0f);
+    setPlainParameter(processor, Parameters::ID::lfo1Depth, 1.0f);
+    setPlainParameter(processor, Parameters::ID::lfo1Phase, 0.25f);
+    setPlainParameter(processor, Parameters::ID::lfo1Retrigger, retrigger);
+}
+
+void advanceProcessorBlocks(NateVSTAudioProcessor& processor, int blockCount)
+{
+    juce::AudioBuffer<float> buffer(2, 512);
+    for (auto block = 0; block < blockCount; ++block)
+    {
+        juce::MidiBuffer midi;
+        processor.processBlock(buffer, midi);
+    }
+}
+
 bool auditPerformanceModulationStatus()
 {
     NateVSTAudioProcessor processor;
@@ -496,6 +529,57 @@ float renderSampleMixRoute(const juce::File& sampleFile, int sourceIndex)
     return stats.finite ? stats.rms : -1.0f;
 }
 
+float renderSampleLfoRetriggerMix(const juce::File& sampleFile, int sourceIndex, bool retriggerEnabled)
+{
+    NateVSTAudioProcessor processor;
+    if (! configureSampleOnly(processor, sampleFile))
+        return -1.0f;
+
+    configureLfoRetriggerAuditSource(processor, sourceIndex, retriggerEnabled);
+    setFirstRoute(processor, sourceIndex, 13, 1.0f, routePolarityForSource(sourceIndex));
+
+    advanceProcessorBlocks(processor, 43);
+
+    juce::AudioBuffer<float> buffer(2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent(juce::MidiMessage::noteOn(1, 60, 1.0f), 0);
+    processor.processBlock(buffer, midi);
+
+    double sumSquares = 0.0;
+    auto sampleCount = 0;
+    auto finite = true;
+    for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        const auto* samples = buffer.getReadPointer(channel);
+        for (auto sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            const auto value = samples[sample];
+            if (! std::isfinite(value))
+                finite = false;
+
+            sumSquares += static_cast<double>(value) * static_cast<double>(value);
+            ++sampleCount;
+        }
+    }
+
+    return finite && sampleCount > 0 ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(sampleCount))) : -1.0f;
+}
+
+bool auditSampleLfoRetrigger(const juce::File& sampleFile, int sourceIndex)
+{
+    const auto retriggered = renderSampleLfoRetriggerMix(sampleFile, sourceIndex, true);
+    const auto freeRunning = renderSampleLfoRetriggerMix(sampleFile, sourceIndex, false);
+    if (retriggered <= 0.01f || freeRunning >= retriggered * 0.25f)
+    {
+        std::cerr << "Sample " << modulationSourceName(sourceIndex)
+                  << " retrigger mismatch: retriggered " << retriggered
+                  << " free-running " << freeRunning << '\n';
+        return false;
+    }
+
+    return true;
+}
+
 float renderFxPumpReduction(int sourceIndex)
 {
     NateVSTAudioProcessor processor;
@@ -597,6 +681,56 @@ bool auditFxPerformanceRouteRelease(int sourceIndex, bool releaseWithAllNotesOff
         std::cerr << "FX " << modulationSourceName(sourceIndex)
                   << " route stayed active after "
                   << (releaseWithAllNotesOff ? "all notes off" : "note off") << '\n';
+        return false;
+    }
+
+    return true;
+}
+
+float renderFxLfoRetriggerPumpActivity(int sourceIndex, bool retriggerEnabled)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::subLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::macroBounce, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 1.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpDepth, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpRate, 0.0f);
+    setPlainParameter(processor, Parameters::ID::outputGain, 0.0f);
+    configureLfoRetriggerAuditSource(processor, sourceIndex, retriggerEnabled);
+    setFirstRoute(processor, sourceIndex, 7, 1.0f, routePolarityForSource(sourceIndex));
+
+    advanceProcessorBlocks(processor, 43);
+
+    juce::AudioBuffer<float> buffer(2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent(juce::MidiMessage::noteOn(1, 60, 1.0f), 0);
+    processor.processBlock(buffer, midi);
+
+    float phase = 0.0f;
+    float gain = 1.0f;
+    float reduction = 0.0f;
+    bool active = false;
+    processor.getPumpMeterLevels(phase, gain, reduction, active);
+    return active ? 1.0f : 0.0f;
+}
+
+bool auditFxLfoRetrigger(int sourceIndex)
+{
+    const auto retriggered = renderFxLfoRetriggerPumpActivity(sourceIndex, true);
+    const auto freeRunning = renderFxLfoRetriggerPumpActivity(sourceIndex, false);
+    if (retriggered <= 0.5f || freeRunning >= 0.5f)
+    {
+        std::cerr << "FX " << modulationSourceName(sourceIndex)
+                  << " retrigger mismatch: retriggered " << retriggered
+                  << " free-running " << freeRunning << '\n';
         return false;
     }
 
@@ -843,11 +977,24 @@ int main()
         return 1;
     }
 
+    if (! auditFxLfoRetrigger(1)
+        || ! auditFxLfoRetrigger(15))
+    {
+        return 1;
+    }
+
     const auto sampleFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
         .getChildFile("NateVST_ModulationParityAudit.wav");
     if (! writeTestSample(sampleFile))
     {
         std::cerr << "Could not write temporary modulation parity sample\n";
+        return 1;
+    }
+
+    if (! auditSampleLfoRetrigger(sampleFile, 1)
+        || ! auditSampleLfoRetrigger(sampleFile, 15))
+    {
+        sampleFile.deleteFile();
         return 1;
     }
 

@@ -230,6 +230,7 @@ private:
     std::atomic<float>* lfo1Shape = nullptr;
     std::atomic<float>* lfo1Depth = nullptr;
     std::atomic<float>* lfo1Phase = nullptr;
+    std::atomic<float>* lfo1Retrigger = nullptr;
     std::array<std::atomic<float>*, 8> lfo1CurvePoints {};
     std::atomic<float>* lfo2Rate = nullptr;
     std::atomic<float>* lfo2Sync = nullptr;
@@ -237,6 +238,7 @@ private:
     std::atomic<float>* lfo2Shape = nullptr;
     std::atomic<float>* lfo2Depth = nullptr;
     std::atomic<float>* lfo2Phase = nullptr;
+    std::atomic<float>* lfo2Retrigger = nullptr;
     std::atomic<float>* stepLfoSync = nullptr;
     std::atomic<float>* stepLfoSyncRate = nullptr;
     std::atomic<float>* stepLfoRate = nullptr;

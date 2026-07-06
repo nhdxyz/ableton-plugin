@@ -82,7 +82,45 @@ struct RenderStats
     bool finite = true;
 };
 
-RenderStats renderNote(NateVSTAudioProcessor& processor, int note, float velocity, int blocks = 8)
+const char* modulationSourceName(int sourceIndex)
+{
+    switch (sourceIndex)
+    {
+        case 16: return "Mod Wheel";
+        case 17: return "Aftertouch";
+        case 18: return "Pitch Bend";
+        case 19: return "Note";
+        default: return "Source";
+    }
+}
+
+void addMidiSourceStimulus(juce::MidiBuffer& midi, int sourceIndex, int note)
+{
+    switch (sourceIndex)
+    {
+        case 16:
+            midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 127), 0);
+            break;
+
+        case 17:
+            midi.addEvent(juce::MidiMessage::channelPressureChange(1, 127), 0);
+            break;
+
+        case 18:
+            midi.addEvent(juce::MidiMessage::pitchWheel(1, 16383), 0);
+            break;
+
+        case 19:
+            juce::ignoreUnused(note);
+            break;
+
+        default:
+            juce::ignoreUnused(note);
+            break;
+    }
+}
+
+RenderStats renderNote(NateVSTAudioProcessor& processor, int note, float velocity, int blocks = 8, int stimulusSourceIndex = 0)
 {
     juce::AudioBuffer<float> buffer(2, 512);
     RenderStats stats;
@@ -93,7 +131,10 @@ RenderStats renderNote(NateVSTAudioProcessor& processor, int note, float velocit
     {
         juce::MidiBuffer midi;
         if (block == 0)
+        {
+            addMidiSourceStimulus(midi, stimulusSourceIndex, note);
             midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);
+        }
         if (block == 3)
             midi.addEvent(juce::MidiMessage::noteOff(1, note), 0);
 
@@ -153,7 +194,8 @@ float renderSampleMixRoute(const juce::File& sampleFile, int sourceIndex)
     setPlainParameter(processor, Parameters::ID::modEnv1Depth, 1.0f);
     setFirstRoute(processor, sourceIndex, 13, 1.0f);
 
-    const auto stats = renderNote(processor, 60, 1.0f);
+    const auto note = sourceIndex == 19 ? 84 : 60;
+    const auto stats = renderNote(processor, note, 1.0f, 8, sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
 
@@ -182,11 +224,15 @@ float renderFxPumpReduction(int sourceIndex)
 
     juce::AudioBuffer<float> buffer(2, 512);
     auto maxReduction = 0.0f;
+    const auto note = sourceIndex == 19 ? 84 : 60;
     for (auto block = 0; block < 4; ++block)
     {
         juce::MidiBuffer midi;
         if (block == 0)
-            midi.addEvent(juce::MidiMessage::noteOn(1, 60, 1.0f), 0);
+        {
+            addMidiSourceStimulus(midi, sourceIndex, note);
+            midi.addEvent(juce::MidiMessage::noteOn(1, note, 1.0f), 0);
+        }
 
         processor.processBlock(buffer, midi);
         float phase = 0.0f;
@@ -269,6 +315,26 @@ int main()
         std::cerr << "FX Mod Env/Velocity sources did not drive pump depth: env "
                   << fxEnvReduction << " velocity " << fxVelocityReduction << '\n';
         return 1;
+    }
+
+    const int midiSources[] { 16, 17, 18, 19 };
+    for (const auto sourceIndex : midiSources)
+    {
+        const auto sampleMidiRms = renderSampleMixRoute(sampleFile, sourceIndex);
+        if (sampleMidiRms <= 0.01f)
+        {
+            std::cerr << "Sample " << modulationSourceName(sourceIndex)
+                      << " source did not open sample mix: " << sampleMidiRms << '\n';
+            return 1;
+        }
+
+        const auto fxMidiReduction = renderFxPumpReduction(sourceIndex);
+        if (fxMidiReduction <= 0.02f)
+        {
+            std::cerr << "FX " << modulationSourceName(sourceIndex)
+                      << " source did not drive pump depth: " << fxMidiReduction << '\n';
+            return 1;
+        }
     }
 
     const auto noSynthLevelRouteRms = renderSynthLevelRoute(0);

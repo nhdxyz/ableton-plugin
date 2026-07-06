@@ -4360,6 +4360,57 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         updateKeyboardRangeLabel();
     };
 
+    auto auditModulationDestinationMappings = [this, &issues]
+    {
+        struct DestinationExpectation
+        {
+            const char* parameterID = "";
+            int destinationIndex = 0;
+            const char* label = "";
+        };
+
+        const std::array<DestinationExpectation, 27> expectations {
+            DestinationExpectation { Parameters::ID::filterCutoff, 1, "Filter Cutoff" },
+            DestinationExpectation { Parameters::ID::filterResonance, 2, "Filter Res" },
+            DestinationExpectation { Parameters::ID::filterEnvAmount, 3, "Filter Env" },
+            DestinationExpectation { Parameters::ID::driveAmount, 4, "Drive" },
+            DestinationExpectation { Parameters::ID::osc2Tune, 5, "Osc 2 Tune" },
+            DestinationExpectation { Parameters::ID::osc2Level, 6, "Osc 2 Level" },
+            DestinationExpectation { Parameters::ID::fxPumpDepth, 7, "FX Pump" },
+            DestinationExpectation { Parameters::ID::fxDelayMix, 8, "Delay Mix" },
+            DestinationExpectation { Parameters::ID::fxReverbMix, 9, "Reverb Mix" },
+            DestinationExpectation { Parameters::ID::fxWidthAmount, 10, "Width" },
+            DestinationExpectation { Parameters::ID::fxDistortionAmount, 11, "FX Drive" },
+            DestinationExpectation { Parameters::ID::sampleStart, 12, "Sample Start" },
+            DestinationExpectation { Parameters::ID::sampleMix, 13, "Sample Mix" },
+            DestinationExpectation { Parameters::ID::sampleTranspose, 14, "Sample Pitch" },
+            DestinationExpectation { Parameters::ID::samplePitchRamp, 15, "Sample Ramp" },
+            DestinationExpectation { Parameters::ID::sampleStutterRepeats, 16, "Sample Stutter" },
+            DestinationExpectation { Parameters::ID::oscWarp, 17, "Osc Warp A" },
+            DestinationExpectation { Parameters::ID::oscWarpB, 17, "Osc Warp B" },
+            DestinationExpectation { Parameters::ID::osc2Warp, 17, "Osc 2 Warp A" },
+            DestinationExpectation { Parameters::ID::osc2WarpB, 17, "Osc 2 Warp B" },
+            DestinationExpectation { Parameters::ID::oscWavetablePosition, 18, "WT 1" },
+            DestinationExpectation { Parameters::ID::osc2WavetablePosition, 19, "WT 2" },
+            DestinationExpectation { Parameters::ID::fxSendDelay, 20, "Send Delay" },
+            DestinationExpectation { Parameters::ID::fxSendReverb, 21, "Send Reverb" },
+            DestinationExpectation { Parameters::ID::osc1Level, 22, "Osc 1 Level" },
+            DestinationExpectation { Parameters::ID::subLevel, 23, "Sub Level" },
+            DestinationExpectation { Parameters::ID::noiseLevel, 24, "Noise Level" }
+        };
+
+        for (const auto& expectation : expectations)
+        {
+            const auto actual = modulationDestinationIndexForParameter(expectation.parameterID);
+            if (actual != expectation.destinationIndex)
+            {
+                issues.add("MOD target " + juce::String(expectation.label)
+                           + " maps to destination " + juce::String(actual)
+                           + " instead of " + juce::String(expectation.destinationIndex));
+            }
+        }
+    };
+
     auto auditModInspectorRouteSources = [this, &issues]
     {
         struct SlotSnapshot
@@ -4538,6 +4589,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     setSize(editorDefaultWidth, editorDefaultHeight);
     resized();
     auditComputerKeyboardRange();
+    auditModulationDestinationMappings();
     auditModInspectorRouteSources();
 
     auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
@@ -8877,7 +8929,11 @@ int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const ju
     if (parameterID == Parameters::ID::sampleTranspose) return 14;
     if (parameterID == Parameters::ID::samplePitchRamp) return 15;
     if (parameterID == Parameters::ID::sampleStutterRepeats) return 16;
-    if (parameterID == Parameters::ID::oscWarp) return 17;
+    if (parameterID == Parameters::ID::oscWarp
+        || parameterID == Parameters::ID::oscWarpB
+        || parameterID == Parameters::ID::osc2Warp
+        || parameterID == Parameters::ID::osc2WarpB)
+        return 17;
     if (parameterID == Parameters::ID::oscWavetablePosition) return 18;
     if (parameterID == Parameters::ID::osc2WavetablePosition) return 19;
     if (parameterID == Parameters::ID::fxSendDelay) return 20;

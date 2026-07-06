@@ -668,12 +668,14 @@ float Voice::processLfo(int samplesToAdvance, std::optional<double> ppqPosition)
         ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo1Rate, 1.0f);
     const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
-    const auto previousPhase = lfoPhase;
-    const auto syncedPhase = syncEnabled ? Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat) : std::nullopt;
-    if (syncedPhase.has_value())
-        lfoPhase = *syncedPhase;
-
-    const auto phase = Modulation::LfoShapes::normalisePhase(lfoPhase + phaseOffset);
+    const auto phaseUpdate = Modulation::updateLfoPhase(lfoPhase,
+                                                        syncEnabled,
+                                                        ppqPosition,
+                                                        cyclesPerBeat,
+                                                        rateHz,
+                                                        samplesToAdvance,
+                                                        currentSampleRate);
+    const auto phase = Modulation::LfoShapes::normalisePhase(phaseUpdate.phaseForShape + phaseOffset);
     const auto value = Modulation::LfoShapes::shapeValueWithCurve(shapeIndex, phase, lfo1CurvePoints, lfoStepValue);
 
     const auto smoothProgress = phase * phase * (3.0f - (2.0f * phase));
@@ -686,25 +688,10 @@ float Voice::processLfo(int samplesToAdvance, std::optional<double> ppqPosition)
                                            (rateHz * static_cast<float>(juce::jmax(1, samplesToAdvance)))
                                                / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
-    if (! syncedPhase.has_value())
+    if (phaseUpdate.wrappedCycle)
     {
-        lfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
-            / static_cast<float>(currentSampleRate);
-    }
-
-    const auto wrappedCycle = syncedPhase.has_value()
-        ? lfoPhase < previousPhase
-        : lfoPhase >= 1.0f;
-    if (wrappedCycle)
-    {
-        if (! syncedPhase.has_value())
-            lfoPhase -= std::floor(lfoPhase);
-
-        if (previousPhase < 1.0f)
-        {
-            lfoSmoothRandomStartValue = lfoStepValue;
-            lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
-        }
+        lfoSmoothRandomStartValue = lfoStepValue;
+        lfoStepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
     }
 
     return juce::jlimit(-1.0f, 1.0f, value);
@@ -720,31 +707,18 @@ float Voice::processLfo2(int samplesToAdvance, std::optional<double> ppqPosition
         ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo2Rate, 1.5f);
     const auto phaseOffset = readParameter(lfo2PhaseParam, 0.25f);
-    const auto previousPhase = lfo2Phase;
-    const auto syncedPhase = syncEnabled ? Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat) : std::nullopt;
-    if (syncedPhase.has_value())
-        lfo2Phase = *syncedPhase;
-
-    const auto phase = Modulation::LfoShapes::normalisePhase(lfo2Phase + phaseOffset);
+    const auto phaseUpdate = Modulation::updateLfoPhase(lfo2Phase,
+                                                        syncEnabled,
+                                                        ppqPosition,
+                                                        cyclesPerBeat,
+                                                        rateHz,
+                                                        samplesToAdvance,
+                                                        currentSampleRate);
+    const auto phase = Modulation::LfoShapes::normalisePhase(phaseUpdate.phaseForShape + phaseOffset);
     const auto value = Modulation::LfoShapes::shapeValue(shapeIndex, phase, lfo2StepValue);
 
-    if (! syncedPhase.has_value())
-    {
-        lfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
-            / static_cast<float>(currentSampleRate);
-    }
-
-    const auto wrappedCycle = syncedPhase.has_value()
-        ? lfo2Phase < previousPhase
-        : lfo2Phase >= 1.0f;
-    if (wrappedCycle)
-    {
-        if (! syncedPhase.has_value())
-            lfo2Phase -= std::floor(lfo2Phase);
-
-        if (previousPhase < 1.0f)
-            lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
-    }
+    if (phaseUpdate.wrappedCycle)
+        lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
 
     return juce::jlimit(-1.0f, 1.0f, value);
 }

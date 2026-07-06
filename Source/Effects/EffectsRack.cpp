@@ -544,12 +544,14 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
         ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
         : readParameter(lfo1Rate, 1.0f);
     const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
-
-    if (syncEnabled)
-        if (const auto syncedPhase = Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat))
-            fxModLfoPhase = *syncedPhase;
-
-    const auto phase = Modulation::LfoShapes::normalisePhase(fxModLfoPhase + phaseOffset);
+    const auto phaseUpdate = Modulation::updateLfoPhase(fxModLfoPhase,
+                                                        syncEnabled,
+                                                        ppqPosition,
+                                                        cyclesPerBeat,
+                                                        rateHz,
+                                                        numSamples,
+                                                        currentSampleRate);
+    const auto phase = Modulation::LfoShapes::normalisePhase(phaseUpdate.phaseForShape + phaseOffset);
     const auto value = Modulation::LfoShapes::shapeValueWithCurve(shapeIndex,
                                                                   phase,
                                                                   lfo1CurvePoints,
@@ -566,17 +568,10 @@ float EffectsRack::processFxModulationLfo(int numSamples, double bpm, std::optio
                                                 * static_cast<float>(juce::jmax(1, numSamples)))
                                                 / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
-    const auto previousPhase = fxModLfoPhase;
-    fxModLfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
-
-    if (fxModLfoPhase >= 1.0f)
+    if (phaseUpdate.wrappedCycle)
     {
-        fxModLfoPhase -= std::floor(fxModLfoPhase);
-        if (previousPhase < 1.0f)
-        {
-            fxModSmoothRandomStartValue = fxModLfoStepValue;
-            fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
-        }
+        fxModSmoothRandomStartValue = fxModLfoStepValue;
+        fxModLfoStepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
     }
 
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo1Depth, 0.45f);
@@ -592,23 +587,18 @@ float EffectsRack::processFxModulationLfo2(int numSamples, double bpm, std::opti
         ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
         : readParameter(lfo2Rate, 1.5f);
     const auto phaseOffset = readParameter(lfo2Phase, 0.25f);
-
-    if (syncEnabled)
-        if (const auto syncedPhase = Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat))
-            fxModLfo2Phase = *syncedPhase;
-
-    const auto phase = Modulation::LfoShapes::normalisePhase(fxModLfo2Phase + phaseOffset);
+    const auto phaseUpdate = Modulation::updateLfoPhase(fxModLfo2Phase,
+                                                        syncEnabled,
+                                                        ppqPosition,
+                                                        cyclesPerBeat,
+                                                        rateHz,
+                                                        numSamples,
+                                                        currentSampleRate);
+    const auto phase = Modulation::LfoShapes::normalisePhase(phaseUpdate.phaseForShape + phaseOffset);
     const auto value = Modulation::LfoShapes::shapeValue(shapeIndex, phase, fxModLfo2StepValue);
 
-    const auto previousPhase = fxModLfo2Phase;
-    fxModLfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples))) / static_cast<float>(currentSampleRate);
-
-    if (fxModLfo2Phase >= 1.0f)
-    {
-        fxModLfo2Phase -= std::floor(fxModLfo2Phase);
-        if (previousPhase < 1.0f)
-            fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
-    }
+    if (phaseUpdate.wrappedCycle)
+        fxModLfo2StepValue = (fxModulationRandom.nextFloat() * 2.0f) - 1.0f;
 
     return juce::jlimit(-1.0f, 1.0f, value) * readParameter(lfo2Depth, 0.25f);
 }

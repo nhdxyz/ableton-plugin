@@ -43,6 +43,53 @@ int main()
         return 1;
     }
 
+    auto freeLfoPhase = 0.9f;
+    const auto freePhaseUpdate = Modulation::updateLfoPhase(freeLfoPhase,
+                                                            false,
+                                                            std::nullopt,
+                                                            1.0,
+                                                            2.0f,
+                                                            4410,
+                                                            44100.0);
+    if (freePhaseUpdate.syncedToHost
+        || ! freePhaseUpdate.wrappedCycle
+        || ! expectNear("Free LFO phase before advance", freePhaseUpdate.phaseForShape, 0.9f)
+        || ! expectNear("Free LFO phase advances and wraps", freeLfoPhase, 0.1f))
+    {
+        return 1;
+    }
+
+    auto syncedLfoPhase = 0.2f;
+    const auto syncedPhaseUpdate = Modulation::updateLfoPhase(syncedLfoPhase,
+                                                              true,
+                                                              0.125,
+                                                              4.0,
+                                                              8.0f,
+                                                              512,
+                                                              44100.0);
+    if (! syncedPhaseUpdate.syncedToHost
+        || syncedPhaseUpdate.wrappedCycle
+        || ! expectNear("Synced LFO phase follows PPQ", syncedPhaseUpdate.phaseForShape, 0.5f)
+        || ! expectNear("Synced LFO phase does not free-advance", syncedLfoPhase, 0.5f))
+    {
+        return 1;
+    }
+
+    syncedLfoPhase = 0.9f;
+    const auto wrappedSyncedPhaseUpdate = Modulation::updateLfoPhase(syncedLfoPhase,
+                                                                     true,
+                                                                     0.125,
+                                                                     4.0,
+                                                                     8.0f,
+                                                                     512,
+                                                                     44100.0);
+    if (! wrappedSyncedPhaseUpdate.syncedToHost
+        || ! wrappedSyncedPhaseUpdate.wrappedCycle
+        || ! expectNear("Synced LFO detects host wrap", syncedLfoPhase, 0.5f))
+    {
+        return 1;
+    }
+
     const std::array<float, 8> curveValues { -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 0.5f, 0.0f, -0.5f };
     std::array<std::atomic<float>, 8> atomicCurveValues {};
     std::array<std::atomic<float>*, 8> atomicCurvePointers {};
@@ -200,6 +247,8 @@ int main()
                                                              124.0,
                                                              0.125);
     if (! expectNear("Step LFO follows PPQ phase", syncedStepOutput, 0.125f))
+        return 1;
+    if (! expectNear("Step LFO synced phase does not free-advance", stepPhase, 0.5f))
         return 1;
 
     std::cout << "Modulation route shape audit passed.\n";

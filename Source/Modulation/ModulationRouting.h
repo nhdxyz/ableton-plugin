@@ -40,6 +40,46 @@ inline std::optional<float> phaseFromPpq(std::optional<double> ppqPosition, doub
     return static_cast<float>(phase);
 }
 
+struct LfoPhaseUpdate
+{
+    float phaseForShape = 0.0f;
+    bool syncedToHost = false;
+    bool wrappedCycle = false;
+};
+
+inline LfoPhaseUpdate updateLfoPhase(float& phase,
+                                     bool syncEnabled,
+                                     std::optional<double> ppqPosition,
+                                     double cyclesPerBeat,
+                                     float rateHz,
+                                     int numSamples,
+                                     double sampleRate) noexcept
+{
+    const auto previousPhase = phase;
+    const auto syncedPhase = syncEnabled ? phaseFromPpq(ppqPosition, cyclesPerBeat) : std::nullopt;
+    if (syncedPhase.has_value())
+        phase = *syncedPhase;
+
+    LfoPhaseUpdate update;
+    update.phaseForShape = phase;
+    update.syncedToHost = syncedPhase.has_value();
+
+    if (! update.syncedToHost)
+    {
+        phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, numSamples)))
+            / static_cast<float>(juce::jmax(1.0, sampleRate));
+    }
+
+    update.wrappedCycle = update.syncedToHost
+        ? phase < previousPhase
+        : phase >= 1.0f;
+
+    if (update.wrappedCycle && ! update.syncedToHost)
+        phase -= std::floor(phase);
+
+    return update;
+}
+
 inline bool isSynthDestination(int destinationIndex) noexcept
 {
     switch (destinationIndex)
@@ -240,14 +280,18 @@ inline float processStepLfo(std::atomic<float>* sync,
     const auto syncEnabled = readParameter(sync, 1.0f) >= 0.5f;
     const auto syncRateIndex = juce::roundToInt(readParameter(syncRate, 3.0f));
     const auto cyclesPerBeat = cyclesPerBeatForSyncRate(syncRateIndex);
+    const auto rateHz = syncEnabled
+        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
+        : juce::jlimit(0.05f, 40.0f, readParameter(rate, 2.0f));
+    const auto phaseUpdate = updateLfoPhase(phase,
+                                            syncEnabled,
+                                            ppqPosition,
+                                            cyclesPerBeat,
+                                            rateHz,
+                                            numSamples,
+                                            sampleRate);
 
-    if (syncEnabled)
-    {
-        if (const auto syncedPhase = phaseFromPpq(ppqPosition, cyclesPerBeat))
-            phase = *syncedPhase;
-    }
-
-    const auto stepPhase = juce::jlimit(0.0f, 0.999999f, phase);
+    const auto stepPhase = juce::jlimit(0.0f, 0.999999f, phaseUpdate.phaseForShape);
     const auto stepIndex = static_cast<size_t>(juce::jlimit(0,
                                                             static_cast<int>(values.size() - 1),
                                                             static_cast<int>(std::floor(stepPhase * static_cast<float>(values.size())))));
@@ -264,14 +308,6 @@ inline float processStepLfo(std::atomic<float>* sync,
         const auto alpha = smoothingAlpha(slewAmount, numSamples, sampleRate, 0.28f);
         smoothedValue += (target - smoothedValue) * alpha;
     }
-
-    const auto rateHz = syncEnabled
-        ? static_cast<float>((juce::jlimit(20.0, 300.0, bpm) / 60.0) * cyclesPerBeat)
-        : juce::jlimit(0.05f, 40.0f, readParameter(rate, 2.0f));
-    phase += (rateHz * static_cast<float>(juce::jmax(1, numSamples)))
-        / static_cast<float>(juce::jmax(1.0, sampleRate));
-    if (phase >= 1.0f)
-        phase -= std::floor(phase);
 
     return juce::jlimit(-1.0f, 1.0f, smoothedValue);
 }

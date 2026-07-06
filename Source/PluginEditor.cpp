@@ -4357,9 +4357,93 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         updateKeyboardRangeLabel();
     };
 
+    auto auditModInspectorRouteSources = [this, &issues]
+    {
+        struct SlotSnapshot
+        {
+            float source = 0.0f;
+            float destination = 0.0f;
+            float amount = 0.0f;
+            float enabled = 1.0f;
+            float polarity = 0.0f;
+            float curve = 0.0f;
+            float rangeMin = -1.0f;
+            float rangeMax = 1.0f;
+            float slew = 0.0f;
+        };
+
+        std::array<SlotSnapshot, Parameters::ID::modMatrixSource.size()> snapshots {};
+        for (size_t index = 0; index < snapshots.size(); ++index)
+        {
+            snapshots[index].source = readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
+            snapshots[index].destination = readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
+            snapshots[index].amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+            snapshots[index].enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+            snapshots[index].polarity = readPlainParameterValue(Parameters::ID::modMatrixPolarity[index], 0.0f);
+            snapshots[index].curve = readPlainParameterValue(Parameters::ID::modMatrixCurve[index], 0.0f);
+            snapshots[index].rangeMin = readPlainParameterValue(Parameters::ID::modMatrixRangeMin[index], -1.0f);
+            snapshots[index].rangeMax = readPlainParameterValue(Parameters::ID::modMatrixRangeMax[index], 1.0f);
+            snapshots[index].slew = readPlainParameterValue(Parameters::ID::modMatrixSlew[index], 0.0f);
+        }
+
+        auto clearMatrix = [this]
+        {
+            for (size_t index = 0; index < Parameters::ID::modMatrixSource.size(); ++index)
+            {
+                setPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f);
+                setPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f);
+                setPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+                setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f);
+                resetModRouteShape(index);
+            }
+        };
+
+        auto expectInspectorRoute = [this, &issues, &clearMatrix] (int sourceIndex, int destinationIndex, const char* label)
+        {
+            clearMatrix();
+            modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
+            modInspectorDestinationBox.setSelectedId(destinationIndex + 1, juce::dontSendNotification);
+            addInspectedModRoute();
+
+            const auto routedSource = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[0], 0.0f));
+            const auto routedDestination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[0], 0.0f));
+            const auto routedAmount = readPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.0f);
+            if (routedSource != sourceIndex || routedDestination != destinationIndex || std::abs(routedAmount) <= 0.001f)
+            {
+                issues.add("MOD inspector blocked " + juce::String(label)
+                           + ": got source " + juce::String(routedSource)
+                           + " destination " + juce::String(routedDestination)
+                           + " amount " + juce::String(routedAmount, 3));
+            }
+        };
+
+        expectInspectorRoute(2, 13, "Mod Env -> Sample Mix");
+        expectInspectorRoute(3, 13, "Velocity -> Sample Mix");
+        expectInspectorRoute(2, 7, "Mod Env -> FX Pump");
+        expectInspectorRoute(3, 7, "Velocity -> FX Pump");
+
+        for (size_t index = 0; index < snapshots.size(); ++index)
+        {
+            setPlainParameterValue(Parameters::ID::modMatrixSource[index], snapshots[index].source);
+            setPlainParameterValue(Parameters::ID::modMatrixDestination[index], snapshots[index].destination);
+            setPlainParameterValue(Parameters::ID::modMatrixAmount[index], snapshots[index].amount);
+            setPlainParameterValue(Parameters::ID::modMatrixEnabled[index], snapshots[index].enabled);
+            setPlainParameterValue(Parameters::ID::modMatrixPolarity[index], snapshots[index].polarity);
+            setPlainParameterValue(Parameters::ID::modMatrixCurve[index], snapshots[index].curve);
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMin[index], snapshots[index].rangeMin);
+            setPlainParameterValue(Parameters::ID::modMatrixRangeMax[index], snapshots[index].rangeMax);
+            setPlainParameterValue(Parameters::ID::modMatrixSlew[index], snapshots[index].slew);
+        }
+
+        updateModMatrixRows();
+        updateModDestinationIndicators();
+        updateModInspectorStatus();
+    };
+
     setSize(editorDefaultWidth, editorDefaultHeight);
     resized();
     auditComputerKeyboardRange();
+    auditModInspectorRouteSources();
 
     auto auditCurrentLayout = [this, &issues] (const juce::String& panelName)
     {
@@ -5284,14 +5368,10 @@ void NateVSTAudioProcessorEditor::showModulationMenuForControl(const ModulationM
                                                   sourceChoices.size() - 1,
                                                   modInspectorSourceBox.getSelectedId() - 1);
     for (auto sourceIndex = 1; sourceIndex < sourceChoices.size(); ++sourceIndex)
-    {
-        const auto canUseSource = ! (destinationUsesGlobalModulationSources(destinationIndex)
-                                     && (sourceIndex == 2 || sourceIndex == 3));
         menu.addItem(1000 + sourceIndex,
                      sourceChoices[sourceIndex],
-                     canUseSource,
+                     true,
                      sourceIndex == selectedSourceIndex);
-    }
 
     menu.addSeparator();
     menu.addItem(1, "Open MOD focused here");
@@ -12209,12 +12289,6 @@ void NateVSTAudioProcessorEditor::addInspectedModRoute()
     const auto destinationIndex = juce::jlimit(1,
                                               destinationChoices.size() - 1,
                                               modInspectorDestinationBox.getSelectedId() - 1);
-    if (destinationUsesGlobalModulationSources(destinationIndex) && (sourceIndex == 2 || sourceIndex == 3))
-    {
-        sourceIndex = 1;
-        modInspectorSourceBox.setSelectedId(sourceIndex + 1, juce::dontSendNotification);
-    }
-
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
     {
         if (auto* value = audioProcessor.getValueTreeState().getRawParameterValue(parameterID))

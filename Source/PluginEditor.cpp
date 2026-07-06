@@ -12190,7 +12190,10 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
                                     * juce::jmax(0.25f, readPlainParameterValue(Parameters::ID::modEnv1Sustain, 0.55f)));
 
         case 3:
-            return 0.72f;
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, status.velocity);
+        }
 
         case 4: return macroActivity(Parameters::ID::macroTone);
         case 5: return macroActivity(Parameters::ID::macroDirt);

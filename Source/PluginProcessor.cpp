@@ -997,6 +997,8 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
         if (message.isNoteOn())
         {
             activeNotes = juce::jmin(128, activeNotes + 1);
+            performanceModVelocity.store(juce::jlimit(0.0f, 1.0f, message.getFloatVelocity()),
+                                         std::memory_order_relaxed);
             performanceModNote.store(juce::jlimit(-1.0f,
                                                   1.0f,
                                                   (static_cast<float>(message.getNoteNumber()) - 60.0f) / 36.0f),
@@ -1006,7 +1008,16 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
         {
             activeNotes = juce::jmax(0, activeNotes - 1);
             if (activeNotes == 0)
+            {
+                performanceModVelocity.store(0.0f, std::memory_order_relaxed);
                 performanceModNote.store(0.0f, std::memory_order_relaxed);
+            }
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            activeNotes = 0;
+            performanceModVelocity.store(0.0f, std::memory_order_relaxed);
+            performanceModNote.store(0.0f, std::memory_order_relaxed);
         }
         else if (message.isController())
         {
@@ -1039,11 +1050,6 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
             performanceModAftertouch.store(static_cast<float>(message.getChannelPressureValue()) / 127.0f,
                                            std::memory_order_relaxed);
         }
-        else if (message.isAllNotesOff() || message.isAllSoundOff())
-        {
-            activeNotes = 0;
-            performanceModNote.store(0.0f, std::memory_order_relaxed);
-        }
     }
 
     performanceModActiveNotes.store(activeNotes, std::memory_order_relaxed);
@@ -1051,6 +1057,7 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
 
 void NateVSTAudioProcessor::resetPerformanceModulationStatus() noexcept
 {
+    performanceModVelocity.store(0.0f, std::memory_order_relaxed);
     performanceModWheel.store(0.0f, std::memory_order_relaxed);
     performanceModAftertouch.store(0.0f, std::memory_order_relaxed);
     performanceModPitchBend.store(0.0f, std::memory_order_relaxed);
@@ -4702,6 +4709,7 @@ void NateVSTAudioProcessor::panicAllNotesOff()
 NateVSTAudioProcessor::PerformanceModulationStatus NateVSTAudioProcessor::getPerformanceModulationStatus() const noexcept
 {
     PerformanceModulationStatus status;
+    status.velocity = performanceModVelocity.load(std::memory_order_relaxed);
     status.modWheel = performanceModWheel.load(std::memory_order_relaxed);
     status.aftertouch = performanceModAftertouch.load(std::memory_order_relaxed);
     status.pitchBend = performanceModPitchBend.load(std::memory_order_relaxed);

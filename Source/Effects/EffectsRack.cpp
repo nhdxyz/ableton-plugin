@@ -405,7 +405,11 @@ void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
         {
             fxModActiveNotes = juce::jmax(0, fxModActiveNotes - 1);
             if (fxModActiveNotes == 0)
-                fxModEnvelope.noteOff();
+                releaseFxModulationNote();
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            releaseFxModulationNote();
         }
         else if (message.isController())
         {
@@ -432,10 +436,6 @@ void EffectsRack::handleFxModulationMidi(const juce::MidiBuffer& midi)
         {
             fxModAftertouch = static_cast<float>(message.getChannelPressureValue()) / 127.0f;
         }
-        else if (message.isAllNotesOff() || message.isAllSoundOff())
-        {
-            releaseFxModulationNote();
-        }
     }
 }
 
@@ -449,6 +449,8 @@ void EffectsRack::triggerFxModulationNoteOn(float velocity)
 void EffectsRack::releaseFxModulationNote()
 {
     fxModActiveNotes = 0;
+    fxModVelocity = 0.0f;
+    fxModNote = 0.0f;
     fxModEnvelope.noteOff();
 }
 

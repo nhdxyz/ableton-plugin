@@ -746,7 +746,11 @@ void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
         {
             sampleModActiveNotes = juce::jmax(0, sampleModActiveNotes - 1);
             if (sampleModActiveNotes == 0)
-                sampleModEnvelope.noteOff();
+                releaseSampleModulationNote();
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            releaseSampleModulationNote();
         }
         else if (message.isController())
         {
@@ -773,10 +777,6 @@ void SamplePlayer::handleSampleModulationMidi(const juce::MidiBuffer& midi)
         {
             sampleModAftertouch = static_cast<float>(message.getChannelPressureValue()) / 127.0f;
         }
-        else if (message.isAllNotesOff() || message.isAllSoundOff())
-        {
-            releaseSampleModulationNote();
-        }
     }
 }
 
@@ -790,6 +790,8 @@ void SamplePlayer::triggerSampleModulationNoteOn(float velocity)
 void SamplePlayer::releaseSampleModulationNote()
 {
     sampleModActiveNotes = 0;
+    sampleModVelocity = 0.0f;
+    sampleModNote = 0.0f;
     sampleModEnvelope.noteOff();
 }
 

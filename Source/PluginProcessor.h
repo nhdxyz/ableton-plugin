@@ -240,6 +240,7 @@ public:
     void panicAllNotesOff();
     struct PerformanceModulationStatus
     {
+        float velocity = 0.0f;
         float modWheel = 0.0f;
         float aftertouch = 0.0f;
         float pitchBend = 0.0f;
@@ -357,6 +358,7 @@ private:
     std::atomic<bool> hostSyncPositionAvailable { false };
     std::atomic<bool> hostSyncPlaying { false };
     std::atomic<bool> hostSyncPpqAvailable { false };
+    std::atomic<float> performanceModVelocity { 0.0f };
     std::atomic<float> performanceModWheel { 0.0f };
     std::atomic<float> performanceModAftertouch { 0.0f };
     std::atomic<float> performanceModPitchBend { 0.0f };

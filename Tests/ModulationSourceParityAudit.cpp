@@ -140,9 +140,16 @@ int routePolarityForSource(int sourceIndex)
     }
 }
 
+bool sourceCanStartNearZero(int sourceIndex)
+{
+    return sourceIndex == 12 || sourceIndex == 13 || sourceIndex == 14;
+}
+
 bool configureSourceForAudit(NateVSTAudioProcessor& processor, int sourceIndex)
 {
     if (! setPlainParameter(processor, Parameters::ID::lfo1Depth, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::lfo1Sync, sourceCanStartNearZero(sourceIndex) ? 0.0f : 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::lfo1Rate, sourceCanStartNearZero(sourceIndex) ? 20.0f : 1.0f)
         || ! setPlainParameter(processor, Parameters::ID::lfo1Shape, 0.0f)
         || ! setPlainParameter(processor, Parameters::ID::lfo2Depth, 1.0f)
         || ! setPlainParameter(processor, Parameters::ID::lfo2Shape, 0.0f)
@@ -177,10 +184,16 @@ bool auditPerformanceModulationStatus()
     midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 127), 0);
     midi.addEvent(juce::MidiMessage::channelPressureChange(1, 96), 1);
     midi.addEvent(juce::MidiMessage::pitchWheel(1, 16383), 2);
-    midi.addEvent(juce::MidiMessage::noteOn(1, 84, 1.0f), 3);
+    midi.addEvent(juce::MidiMessage::noteOn(1, 84, 0.64f), 3);
     processor.processBlock(buffer, midi);
 
     auto status = processor.getPerformanceModulationStatus();
+    if (std::abs(status.velocity - 0.64f) > 0.01f)
+    {
+        std::cerr << "Performance status did not report velocity: " << status.velocity << '\n';
+        return false;
+    }
+
     if (status.modWheel < 0.99f)
     {
         std::cerr << "Performance status did not report mod wheel: " << status.modWheel << '\n';
@@ -209,9 +222,25 @@ bool auditPerformanceModulationStatus()
     midi.addEvent(juce::MidiMessage::noteOff(1, 84), 0);
     processor.processBlock(buffer, midi);
     status = processor.getPerformanceModulationStatus();
-    if (std::abs(status.note) > 0.001f)
+    if (std::abs(status.velocity) > 0.001f || std::abs(status.note) > 0.001f)
     {
-        std::cerr << "Performance status note stayed active after note off: " << status.note << '\n';
+        std::cerr << "Performance status stayed active after note off: velocity "
+                  << status.velocity << " note " << status.note << '\n';
+        return false;
+    }
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::noteOn(1, 72, 0.5f), 0);
+    processor.processBlock(buffer, midi);
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::allNotesOff(1), 0);
+    processor.processBlock(buffer, midi);
+    status = processor.getPerformanceModulationStatus();
+    if (std::abs(status.velocity) > 0.001f || std::abs(status.note) > 0.001f)
+    {
+        std::cerr << "Performance status stayed active after all notes off: velocity "
+                  << status.velocity << " note " << status.note << '\n';
         return false;
     }
 
@@ -240,9 +269,10 @@ bool auditPerformanceModulationStatus()
     processor.processBlock(buffer, midi);
     processor.panicAllNotesOff();
     status = processor.getPerformanceModulationStatus();
-    if (std::abs(status.note) > 0.001f)
+    if (std::abs(status.velocity) > 0.001f || std::abs(status.note) > 0.001f)
     {
-        std::cerr << "Performance status note stayed active after panic: " << status.note << '\n';
+        std::cerr << "Performance status stayed active after panic: velocity "
+                  << status.velocity << " note " << status.note << '\n';
         return false;
     }
 
@@ -413,7 +443,7 @@ float renderSampleMixRoute(const juce::File& sampleFile, int sourceIndex)
     setFirstRoute(processor, sourceIndex, 13, 1.0f, routePolarityForSource(sourceIndex));
 
     const auto note = noteForSource(sourceIndex);
-    const auto stats = renderNote(processor, note, 1.0f, 8, sourceIndex);
+    const auto stats = renderNote(processor, note, 1.0f, sourceCanStartNearZero(sourceIndex) ? 64 : 8, sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
 
@@ -446,7 +476,8 @@ float renderFxPumpReduction(int sourceIndex)
     juce::AudioBuffer<float> buffer(2, 512);
     auto maxReduction = 0.0f;
     const auto note = noteForSource(sourceIndex);
-    for (auto block = 0; block < 4; ++block)
+    const auto blocks = sourceCanStartNearZero(sourceIndex) ? 64 : 4;
+    for (auto block = 0; block < blocks; ++block)
     {
         juce::MidiBuffer midi;
         if (block == 0)
@@ -465,6 +496,62 @@ float renderFxPumpReduction(int sourceIndex)
     }
 
     return maxReduction;
+}
+
+bool auditFxPerformanceRouteRelease(int sourceIndex, bool releaseWithAllNotesOff)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::subLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::macroBounce, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 1.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpDepth, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpRate, 0.0f);
+    setPlainParameter(processor, Parameters::ID::outputGain, 0.0f);
+
+    setFirstRoute(processor, sourceIndex, 7, 1.0f, routePolarityForSource(sourceIndex));
+
+    juce::AudioBuffer<float> buffer(2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent(juce::MidiMessage::noteOn(1, 84, 1.0f), 0);
+    processor.processBlock(buffer, midi);
+
+    float phase = 0.0f;
+    float gain = 1.0f;
+    float reduction = 0.0f;
+    bool active = false;
+    processor.getPumpMeterLevels(phase, gain, reduction, active);
+    if (! active)
+    {
+        std::cerr << "FX " << modulationSourceName(sourceIndex)
+                  << " route did not activate pump before release\n";
+        return false;
+    }
+
+    midi.clear();
+    if (releaseWithAllNotesOff)
+        midi.addEvent(juce::MidiMessage::allNotesOff(1), 0);
+    else
+        midi.addEvent(juce::MidiMessage::noteOff(1, 84), 0);
+
+    processor.processBlock(buffer, midi);
+    processor.getPumpMeterLevels(phase, gain, reduction, active);
+    if (active)
+    {
+        std::cerr << "FX " << modulationSourceName(sourceIndex)
+                  << " route stayed active after "
+                  << (releaseWithAllNotesOff ? "all notes off" : "note off") << '\n';
+        return false;
+    }
+
+    return true;
 }
 
 float renderSynthLevelRoute(int destinationIndex)
@@ -516,7 +603,11 @@ float renderSynthOsc1Route(int sourceIndex)
 
     setFirstRoute(processor, sourceIndex, 22, 1.0f, routePolarityForSource(sourceIndex));
 
-    const auto stats = renderNote(processor, noteForSource(sourceIndex), 1.0f, 8, sourceIndex);
+    const auto stats = renderNote(processor,
+                                  noteForSource(sourceIndex),
+                                  1.0f,
+                                  sourceCanStartNearZero(sourceIndex) ? 64 : 8,
+                                  sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
 
@@ -636,7 +727,7 @@ bool configureFxDestinationAudit(NateVSTAudioProcessor& processor, int destinati
         && setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
         && setPlainParameter(processor, Parameters::ID::ampAttack, 0.001f)
         && setPlainParameter(processor, Parameters::ID::ampDecay, 0.05f)
-        && setPlainParameter(processor, Parameters::ID::ampSustain, destinationIndex == 8 || destinationIndex == 20 ? 0.0f : 0.72f)
+        && setPlainParameter(processor, Parameters::ID::ampSustain, 0.72f)
         && setPlainParameter(processor, Parameters::ID::ampRelease, 0.01f)
         && setPlainParameter(processor, Parameters::ID::filterCutoff, 16000.0f)
         && setPlainParameter(processor, Parameters::ID::filterResonance, 0.12f)
@@ -678,7 +769,7 @@ RenderComparison compareFxDestination(int destinationIndex)
 
     setFirstRoute(routed, 3, destinationIndex, 1.0f);
     const auto blocks = destinationIndex == 8 || destinationIndex == 20 || destinationIndex == 21 ? 38 : 12;
-    const auto noteOffBlock = destinationIndex == 8 || destinationIndex == 20 || destinationIndex == 21 ? 1 : 3;
+    const auto noteOffBlock = destinationIndex == 8 || destinationIndex == 20 || destinationIndex == 21 ? 24 : 3;
     return compareRenderedNotes(baseline, routed, 60, 1.0f, blocks, 3, noteOffBlock);
 }
 
@@ -694,6 +785,14 @@ int main()
 {
     if (! auditPerformanceModulationStatus())
         return 1;
+
+    if (! auditFxPerformanceRouteRelease(3, false)
+        || ! auditFxPerformanceRouteRelease(19, false)
+        || ! auditFxPerformanceRouteRelease(3, true)
+        || ! auditFxPerformanceRouteRelease(19, true))
+    {
+        return 1;
+    }
 
     const auto sampleFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
         .getChildFile("NateVST_ModulationParityAudit.wav");

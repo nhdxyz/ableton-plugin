@@ -219,7 +219,10 @@ juce::StringArray modulationDestinationChoices()
         "Osc 1 WT Pos",
         "Osc 2 WT Pos",
         "FX Send Delay",
-        "FX Send Reverb"
+        "FX Send Reverb",
+        "Osc 1 Level",
+        "Sub Level",
+        "Noise Level"
     };
 }
 

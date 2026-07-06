@@ -93,6 +93,9 @@ inline bool isSynthDestination(int destinationIndex) noexcept
         case 17:
         case 18:
         case 19:
+        case 22:
+        case 23:
+        case 24:
             return true;
 
         default:

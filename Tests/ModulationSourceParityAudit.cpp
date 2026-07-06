@@ -199,6 +199,31 @@ float renderFxPumpReduction(int sourceIndex)
 
     return maxReduction;
 }
+
+float renderSynthLevelRoute(int destinationIndex)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f);
+    setPlainParameter(processor, Parameters::ID::subLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxDelayEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxReverbEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::fxGuardEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::outputGain, 0.0f);
+
+    if (destinationIndex > 0)
+        setFirstRoute(processor, 3, destinationIndex, 1.0f);
+
+    const auto stats = renderNote(processor, 60, 1.0f);
+    return stats.finite ? stats.rms : -1.0f;
+}
 }
 
 int main()
@@ -246,7 +271,28 @@ int main()
         return 1;
     }
 
+    const auto noSynthLevelRouteRms = renderSynthLevelRoute(0);
+    const auto osc1LevelRouteRms = renderSynthLevelRoute(22);
+    const auto subLevelRouteRms = renderSynthLevelRoute(23);
+    const auto noiseLevelRouteRms = renderSynthLevelRoute(24);
+
+    if (noSynthLevelRouteRms < 0.0f || noSynthLevelRouteRms > 0.0001f)
+    {
+        std::cerr << "Synth level baseline was not silent with all source levels at zero: "
+                  << noSynthLevelRouteRms << '\n';
+        return 1;
+    }
+
+    if (osc1LevelRouteRms <= 0.005f || subLevelRouteRms <= 0.005f || noiseLevelRouteRms <= 0.001f)
+    {
+        std::cerr << "Velocity routes did not open synth source levels: osc1 "
+                  << osc1LevelRouteRms
+                  << " sub " << subLevelRouteRms
+                  << " noise " << noiseLevelRouteRms << '\n';
+        return 1;
+    }
+
     sampleFile.deleteFile();
-    std::cout << "Modulation source parity audit passed for sample and FX Mod Env/Velocity routes.\n";
+    std::cout << "Modulation source parity audit passed for sample, FX, and synth level routes.\n";
     return 0;
 }

@@ -113,10 +113,11 @@ int main()
         return 1;
     }
 
-    for (auto destination = 0; destination <= 21; ++destination)
+    for (auto destination = 0; destination <= 24; ++destination)
     {
         const auto shouldBeSynth = (destination >= 1 && destination <= 6)
-            || (destination >= 17 && destination <= 19);
+            || (destination >= 17 && destination <= 19)
+            || (destination >= 22 && destination <= 24);
         const auto shouldBeFx = (destination >= 7 && destination <= 11)
             || (destination >= 20 && destination <= 21);
         const auto shouldBeSample = destination >= 12 && destination <= 16;

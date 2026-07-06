@@ -1874,8 +1874,11 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     resonanceSlider.onDragStart = [this] { setModInspectorDestination(2); };
     filterEnvSlider.onDragStart = [this] { setModInspectorDestination(3); };
     driveSlider.onDragStart = [this] { setModInspectorDestination(4); };
+    osc1LevelSlider.onDragStart = [this] { setModInspectorDestination(22); };
     osc2TuneSlider.onDragStart = [this] { setModInspectorDestination(5); };
     osc2LevelSlider.onDragStart = [this] { setModInspectorDestination(6); };
+    subLevelSlider.onDragStart = [this] { setModInspectorDestination(23); };
+    noiseLevelSlider.onDragStart = [this] { setModInspectorDestination(24); };
     oscWarpSlider.onDragStart = [this] { setModInspectorDestination(17); };
     configureSlider(randomAmountSlider, randomAmountLabel, "Amount", Parameters::ID::randomAmount);
     configureSlider(randomChaosSlider, randomChaosLabel, "Chaos", Parameters::ID::randomChaos);
@@ -8852,6 +8855,9 @@ int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const ju
     if (parameterID == Parameters::ID::osc2WavetablePosition) return 19;
     if (parameterID == Parameters::ID::fxSendDelay) return 20;
     if (parameterID == Parameters::ID::fxSendReverb) return 21;
+    if (parameterID == Parameters::ID::osc1Level) return 22;
+    if (parameterID == Parameters::ID::subLevel) return 23;
+    if (parameterID == Parameters::ID::noiseLevel) return 24;
 
     return 0;
 }
@@ -12691,9 +12697,9 @@ void NateVSTAudioProcessorEditor::clearInspectedModRoutes()
 
 void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
 {
-    std::array<float, 22> destinationDepths {};
-    std::array<int, 22> destinationRouteCounts {};
-    std::array<juce::StringArray, 22> destinationSources {};
+    std::array<float, 25> destinationDepths {};
+    std::array<int, 25> destinationRouteCounts {};
+    std::array<juce::StringArray, 25> destinationSources {};
     const auto sourceChoices = Parameters::modulationSourceChoices();
 
     auto readParameter = [this] (const juce::String& parameterID, float fallback)
@@ -12784,6 +12790,9 @@ void NateVSTAudioProcessorEditor::updateModDestinationIndicators()
     setIndicator(osc2WavetablePositionSlider, destinationDepths[19], destinationRouteCounts[19], destinationSources[19]);
     setIndicator(fxSendDelaySlider, destinationDepths[20], destinationRouteCounts[20], destinationSources[20]);
     setIndicator(fxSendReverbSlider, destinationDepths[21], destinationRouteCounts[21], destinationSources[21]);
+    setIndicator(osc1LevelSlider, destinationDepths[22], destinationRouteCounts[22], destinationSources[22]);
+    setIndicator(subLevelSlider, destinationDepths[23], destinationRouteCounts[23], destinationSources[23]);
+    setIndicator(noiseLevelSlider, destinationDepths[24], destinationRouteCounts[24], destinationSources[24]);
 
     if (selectedControlParameterID.isNotEmpty())
         updateSelectedControlInspector(selectedControlName, selectedControlParameterID, selectedControlPlainValue);

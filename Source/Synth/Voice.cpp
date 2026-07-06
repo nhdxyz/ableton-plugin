@@ -398,8 +398,11 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     auto resonanceMod = 0.0f;
     auto filterEnvMod = 0.0f;
     auto driveMod = 0.0f;
+    auto osc1LevelMod = 0.0f;
     auto osc2TuneMod = 0.0f;
     auto osc2LevelMod = 0.0f;
+    auto subLevelMod = 0.0f;
+    auto noiseLevelMod = 0.0f;
     auto oscWarpMod = 0.0f;
     auto oscWavetablePositionMod = 0.0f;
     auto osc2WavetablePositionMod = 0.0f;
@@ -444,6 +447,9 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
             case 17: oscWarpMod += contribution; break;
             case 18: oscWavetablePositionMod += contribution; break;
             case 19: osc2WavetablePositionMod += contribution; break;
+            case 22: osc1LevelMod += contribution; break;
+            case 23: subLevelMod += contribution; break;
+            case 24: noiseLevelMod += contribution; break;
             default: break;
         }
     }
@@ -452,8 +458,11 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     resonanceMod = juce::jlimit(-1.0f, 1.0f, resonanceMod);
     filterEnvMod = juce::jlimit(-1.0f, 1.0f, filterEnvMod);
     driveMod = juce::jlimit(-1.0f, 1.0f, driveMod);
+    osc1LevelMod = juce::jlimit(-1.0f, 1.0f, osc1LevelMod);
     osc2TuneMod = juce::jlimit(-1.0f, 1.0f, osc2TuneMod);
     osc2LevelMod = juce::jlimit(-1.0f, 1.0f, osc2LevelMod);
+    subLevelMod = juce::jlimit(-1.0f, 1.0f, subLevelMod);
+    noiseLevelMod = juce::jlimit(-1.0f, 1.0f, noiseLevelMod);
     oscWarpMod = juce::jlimit(-1.0f, 1.0f, oscWarpMod);
     oscWavetablePositionMod = juce::jlimit(-1.0f, 1.0f, oscWavetablePositionMod);
     osc2WavetablePositionMod = juce::jlimit(-1.0f, 1.0f, osc2WavetablePositionMod);
@@ -463,8 +472,11 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     const auto sequenceWavetable1Mod = sequencerLockDestination == 7 ? sequencerLockAmount : 0.0f;
     const auto sequenceWavetable2Mod = sequencerLockDestination == 8 ? sequencerLockAmount : 0.0f;
     currentDriveOffset = (driveMod * 0.45f) + (sequenceDriveMod * 0.38f);
+    const auto currentOsc1LevelOffset = osc1LevelMod * 0.75f;
     currentOsc2LevelOffset = osc2LevelMod * 0.75f;
-    currentOsc1Gain = readParameter(osc1Level, 1.0f);
+    const auto currentSubLevelOffset = subLevelMod * 0.75f;
+    const auto currentNoiseLevelOffset = noiseLevelMod * 0.65f;
+    currentOsc1Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc1Level, 1.0f) + currentOsc1LevelOffset);
     currentOsc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
@@ -589,8 +601,8 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     const auto tone = readParameter(macroTone, 0.0f);
     const auto dirt = readParameter(macroDirt, 0.0f);
     const auto weight = readParameter(macroWeight, 0.0f);
-    currentSubGain = juce::jlimit(0.0f, 1.15f, readParameter(subLevel, 0.0f) + (weight * 0.32f));
-    currentNoiseGain = readParameter(noiseLevel, 0.0f);
+    currentSubGain = juce::jlimit(0.0f, 1.15f, readParameter(subLevel, 0.0f) + (weight * 0.32f) + currentSubLevelOffset);
+    currentNoiseGain = juce::jlimit(0.0f, 1.0f, readParameter(noiseLevel, 0.0f) + currentNoiseLevelOffset);
     currentNoiseTypeIndex = juce::jlimit(0, 6, static_cast<int>(std::round(readParameter(noiseType, 0.0f))));
     currentMacroDrive = juce::jlimit(0.0f, 0.95f, readParameter(driveAmount, 0.18f) + (dirt * 0.55f) + currentDriveOffset);
     const auto sourceWeight = currentOsc1Gain + currentOsc2Gain + (currentSubGain * 0.75f) + (currentNoiseGain * 0.45f);

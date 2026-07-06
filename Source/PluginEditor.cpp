@@ -12230,12 +12230,28 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
         }
 
         case 16:
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, status.modWheel);
+        }
+
         case 17:
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, status.aftertouch);
+        }
+
         case 18:
-            return 0.0f;
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, std::abs(status.pitchBend));
+        }
 
         case 19:
-            return 0.5f;
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, std::abs(status.note));
+        }
 
         case 20:
         {

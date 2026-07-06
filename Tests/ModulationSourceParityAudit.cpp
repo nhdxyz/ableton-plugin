@@ -166,6 +166,89 @@ bool configureSourceForAudit(NateVSTAudioProcessor& processor, int sourceIndex)
     }
 }
 
+bool auditPerformanceModulationStatus()
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f);
+
+    juce::AudioBuffer<float> buffer(2, 512);
+    juce::MidiBuffer midi;
+    midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 127), 0);
+    midi.addEvent(juce::MidiMessage::channelPressureChange(1, 96), 1);
+    midi.addEvent(juce::MidiMessage::pitchWheel(1, 16383), 2);
+    midi.addEvent(juce::MidiMessage::noteOn(1, 84, 1.0f), 3);
+    processor.processBlock(buffer, midi);
+
+    auto status = processor.getPerformanceModulationStatus();
+    if (status.modWheel < 0.99f)
+    {
+        std::cerr << "Performance status did not report mod wheel: " << status.modWheel << '\n';
+        return false;
+    }
+
+    if (std::abs(status.aftertouch - (96.0f / 127.0f)) > 0.01f)
+    {
+        std::cerr << "Performance status did not report aftertouch: " << status.aftertouch << '\n';
+        return false;
+    }
+
+    if (status.pitchBend < 0.99f)
+    {
+        std::cerr << "Performance status did not report pitch bend: " << status.pitchBend << '\n';
+        return false;
+    }
+
+    if (std::abs(status.note - ((84.0f - 60.0f) / 36.0f)) > 0.01f)
+    {
+        std::cerr << "Performance status did not report note position: " << status.note << '\n';
+        return false;
+    }
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::noteOff(1, 84), 0);
+    processor.processBlock(buffer, midi);
+    status = processor.getPerformanceModulationStatus();
+    if (std::abs(status.note) > 0.001f)
+    {
+        std::cerr << "Performance status note stayed active after note off: " << status.note << '\n';
+        return false;
+    }
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 100), 0);
+    midi.addEvent(juce::MidiMessage::channelPressureChange(1, 100), 1);
+    midi.addEvent(juce::MidiMessage::pitchWheel(1, 12000), 2);
+    processor.processBlock(buffer, midi);
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::controllerEvent(1, 121, 0), 0);
+    processor.processBlock(buffer, midi);
+    status = processor.getPerformanceModulationStatus();
+    if (std::abs(status.modWheel) > 0.001f
+        || std::abs(status.aftertouch) > 0.001f
+        || std::abs(status.pitchBend) > 0.001f)
+    {
+        std::cerr << "Performance status did not reset controllers: mod wheel "
+                  << status.modWheel << " aftertouch " << status.aftertouch
+                  << " pitch bend " << status.pitchBend << '\n';
+        return false;
+    }
+
+    midi.clear();
+    midi.addEvent(juce::MidiMessage::noteOn(1, 48, 1.0f), 0);
+    processor.processBlock(buffer, midi);
+    processor.panicAllNotesOff();
+    status = processor.getPerformanceModulationStatus();
+    if (std::abs(status.note) > 0.001f)
+    {
+        std::cerr << "Performance status note stayed active after panic: " << status.note << '\n';
+        return false;
+    }
+
+    return true;
+}
+
 void addMidiSourceStimulus(juce::MidiBuffer& midi, int sourceIndex, int note, int samplePosition)
 {
     switch (sourceIndex)
@@ -609,6 +692,9 @@ bool destinationChangedEnough(const RenderComparison& comparison, float minimumD
 
 int main()
 {
+    if (! auditPerformanceModulationStatus())
+        return 1;
+
     const auto sampleFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
         .getChildFile("NateVST_ModulationParityAudit.wav");
     if (! writeTestSample(sampleFile))

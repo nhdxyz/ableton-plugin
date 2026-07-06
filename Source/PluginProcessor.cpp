@@ -867,6 +867,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     sampleCapturePreRollSamplesReady.store(0, std::memory_order_relaxed);
     sampleCaptureSourcePeak.store(0.0f, std::memory_order_relaxed);
     sampleCaptureWaitingForThreshold.store(false, std::memory_order_relaxed);
+    resetPerformanceModulationStatus();
     outputMeterPeakLeft.store(0.0f, std::memory_order_relaxed);
     outputMeterPeakRight.store(0.0f, std::memory_order_relaxed);
     outputMeterRmsLeft.store(0.0f, std::memory_order_relaxed);
@@ -901,6 +902,7 @@ void NateVSTAudioProcessor::releaseResources()
     effectsRack.reset();
     patternSequencer.reset();
     clearChordMemoryActiveNotes();
+    resetPerformanceModulationStatus();
     hostSyncPlaying.store(false, std::memory_order_relaxed);
     hostSyncPpqAvailable.store(false, std::memory_order_relaxed);
 }
@@ -952,6 +954,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     hostSyncPpqPosition.store(hostPosition.ppqPosition.has_value() ? static_cast<float>(*hostPosition.ppqPosition) : 0.0f,
                               std::memory_order_relaxed);
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
+    updatePerformanceModulationStatus(midiMessages);
     const auto lockDestination = sequencerLockDestination != nullptr
         ? juce::jlimit(0, 8, static_cast<int>(std::round(sequencerLockDestination->load(std::memory_order_relaxed))))
         : 0;
@@ -981,6 +984,78 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     }
     mixPresetPreviewPlayback(buffer);
     updateOutputMeters(buffer);
+}
+
+void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBuffer& midiMessages) noexcept
+{
+    auto activeNotes = performanceModActiveNotes.load(std::memory_order_relaxed);
+
+    for (const auto metadata : midiMessages)
+    {
+        const auto message = metadata.getMessage();
+
+        if (message.isNoteOn())
+        {
+            activeNotes = juce::jmin(128, activeNotes + 1);
+            performanceModNote.store(juce::jlimit(-1.0f,
+                                                  1.0f,
+                                                  (static_cast<float>(message.getNoteNumber()) - 60.0f) / 36.0f),
+                                     std::memory_order_relaxed);
+        }
+        else if (message.isNoteOff())
+        {
+            activeNotes = juce::jmax(0, activeNotes - 1);
+            if (activeNotes == 0)
+                performanceModNote.store(0.0f, std::memory_order_relaxed);
+        }
+        else if (message.isController())
+        {
+            if (message.getControllerNumber() == 1)
+            {
+                performanceModWheel.store(static_cast<float>(message.getControllerValue()) / 127.0f,
+                                          std::memory_order_relaxed);
+            }
+            else if (message.isResetAllControllers())
+            {
+                performanceModWheel.store(0.0f, std::memory_order_relaxed);
+                performanceModAftertouch.store(0.0f, std::memory_order_relaxed);
+                performanceModPitchBend.store(0.0f, std::memory_order_relaxed);
+            }
+        }
+        else if (message.isPitchWheel())
+        {
+            performanceModPitchBend.store(juce::jlimit(-1.0f,
+                                                       1.0f,
+                                                       (static_cast<float>(message.getPitchWheelValue()) - 8192.0f) / 8192.0f),
+                                          std::memory_order_relaxed);
+        }
+        else if (message.isAftertouch())
+        {
+            performanceModAftertouch.store(static_cast<float>(message.getAfterTouchValue()) / 127.0f,
+                                           std::memory_order_relaxed);
+        }
+        else if (message.isChannelPressure())
+        {
+            performanceModAftertouch.store(static_cast<float>(message.getChannelPressureValue()) / 127.0f,
+                                           std::memory_order_relaxed);
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            activeNotes = 0;
+            performanceModNote.store(0.0f, std::memory_order_relaxed);
+        }
+    }
+
+    performanceModActiveNotes.store(activeNotes, std::memory_order_relaxed);
+}
+
+void NateVSTAudioProcessor::resetPerformanceModulationStatus() noexcept
+{
+    performanceModWheel.store(0.0f, std::memory_order_relaxed);
+    performanceModAftertouch.store(0.0f, std::memory_order_relaxed);
+    performanceModPitchBend.store(0.0f, std::memory_order_relaxed);
+    performanceModNote.store(0.0f, std::memory_order_relaxed);
+    performanceModActiveNotes.store(0, std::memory_order_relaxed);
 }
 
 void NateVSTAudioProcessor::applyChordMemoryToMidi(juce::MidiBuffer& midiMessages)
@@ -4620,7 +4695,18 @@ juce::MidiKeyboardState& NateVSTAudioProcessor::getMidiKeyboardState() noexcept
 void NateVSTAudioProcessor::panicAllNotesOff()
 {
     midiKeyboardState.allNotesOff(0);
+    resetPerformanceModulationStatus();
     panicRequested.store(true, std::memory_order_release);
+}
+
+NateVSTAudioProcessor::PerformanceModulationStatus NateVSTAudioProcessor::getPerformanceModulationStatus() const noexcept
+{
+    PerformanceModulationStatus status;
+    status.modWheel = performanceModWheel.load(std::memory_order_relaxed);
+    status.aftertouch = performanceModAftertouch.load(std::memory_order_relaxed);
+    status.pitchBend = performanceModPitchBend.load(std::memory_order_relaxed);
+    status.note = performanceModNote.load(std::memory_order_relaxed);
+    return status;
 }
 
 void NateVSTAudioProcessor::getOutputMeterLevels(float& peakLeft,
@@ -5565,6 +5651,7 @@ void NateVSTAudioProcessor::resetRandomValidationRenderState()
     effectsRack.reset();
     patternSequencer.reset();
     clearChordMemoryActiveNotes();
+    resetPerformanceModulationStatus();
     panicRequested.store(false, std::memory_order_release);
 }
 

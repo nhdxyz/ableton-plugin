@@ -238,6 +238,14 @@ public:
     juce::String getGlobalEditHistorySummary() const;
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void panicAllNotesOff();
+    struct PerformanceModulationStatus
+    {
+        float modWheel = 0.0f;
+        float aftertouch = 0.0f;
+        float pitchBend = 0.0f;
+        float note = 0.0f;
+    };
+    PerformanceModulationStatus getPerformanceModulationStatus() const noexcept;
     void getOutputMeterLevels(float& peakLeft, float& peakRight, float& rmsLeft, float& rmsRight) const noexcept;
     void getOutputSpectrumSnapshot(std::array<float, outputSpectrumSnapshotSize>& destination) const noexcept;
     void getStereoFieldLevels(float& correlation, float& width, float& balance, float& lowStereoRisk) const noexcept;
@@ -349,6 +357,11 @@ private:
     std::atomic<bool> hostSyncPositionAvailable { false };
     std::atomic<bool> hostSyncPlaying { false };
     std::atomic<bool> hostSyncPpqAvailable { false };
+    std::atomic<float> performanceModWheel { 0.0f };
+    std::atomic<float> performanceModAftertouch { 0.0f };
+    std::atomic<float> performanceModPitchBend { 0.0f };
+    std::atomic<float> performanceModNote { 0.0f };
+    std::atomic<int> performanceModActiveNotes { 0 };
     std::atomic<bool> panicRequested { false };
     float lowEndStateLeft = 0.0f;
     float lowEndStateRight = 0.0f;
@@ -464,6 +477,8 @@ private:
     void appendToSampleCapture(const juce::AudioBuffer<float>& buffer, int sourceChannelLimit = -1) noexcept;
     void waitForSampleCaptureWritersToFinish();
     void rememberSampleCaptureTake(const juce::File& file);
+    void updatePerformanceModulationStatus(const juce::MidiBuffer& midiMessages) noexcept;
+    void resetPerformanceModulationStatus() noexcept;
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
     double getHostBpm() const;

@@ -491,7 +491,7 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || destinationIndex < 7 || std::abs(amount) <= 0.0001f)
+        if (! enabled || sourceIndex == 0 || ! Modulation::isFxDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
             continue;
 
         const auto sourceValue = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);

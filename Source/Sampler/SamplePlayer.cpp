@@ -831,7 +831,7 @@ void SamplePlayer::updateSampleModulation(int numSamples, double bpm, std::optio
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || destinationIndex < 12 || std::abs(amount) <= 0.0001f)
+        if (! enabled || sourceIndex == 0 || ! Modulation::isSampleDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
             continue;
 
         const auto sourceValue = evaluateSampleModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);

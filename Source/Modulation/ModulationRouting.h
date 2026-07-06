@@ -40,6 +40,60 @@ inline std::optional<float> phaseFromPpq(std::optional<double> ppqPosition, doub
     return static_cast<float>(phase);
 }
 
+inline bool isSynthDestination(int destinationIndex) noexcept
+{
+    switch (destinationIndex)
+    {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+        case 17:
+        case 18:
+        case 19:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+inline bool isFxDestination(int destinationIndex) noexcept
+{
+    switch (destinationIndex)
+    {
+        case 7:
+        case 8:
+        case 9:
+        case 10:
+        case 11:
+        case 20:
+        case 21:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+inline bool isSampleDestination(int destinationIndex) noexcept
+{
+    switch (destinationIndex)
+    {
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+        case 16:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 inline float smoothingAlpha(float amount, int numSamples, double sampleRate, float maximumSeconds) noexcept
 {
     const auto safeAmount = juce::jlimit(0.0f, 1.0f, amount);

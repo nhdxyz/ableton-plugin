@@ -42,6 +42,23 @@ int main()
         return 1;
     }
 
+    for (auto destination = 0; destination <= 21; ++destination)
+    {
+        const auto shouldBeSynth = (destination >= 1 && destination <= 6)
+            || (destination >= 17 && destination <= 19);
+        const auto shouldBeFx = (destination >= 7 && destination <= 11)
+            || (destination >= 20 && destination <= 21);
+        const auto shouldBeSample = destination >= 12 && destination <= 16;
+
+        if (Modulation::isSynthDestination(destination) != shouldBeSynth
+            || Modulation::isFxDestination(destination) != shouldBeFx
+            || Modulation::isSampleDestination(destination) != shouldBeSample)
+        {
+            std::cerr << "Destination domain mapping failed for destination " << destination << '\n';
+            return 1;
+        }
+    }
+
     polarity.store(1.0f);
     if (! expectNear("Unipolar low", Modulation::processRouteValue(-1.0f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0), 0.0f)
         || ! expectNear("Unipolar high", Modulation::processRouteValue(1.0f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0), 1.0f))

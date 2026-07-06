@@ -418,7 +418,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
 
-        if (! enabled || sourceIndex == 0 || destinationIndex == 0 || std::abs(amount) <= 0.0001f)
+        if (! enabled || sourceIndex == 0 || ! Modulation::isSynthDestination(destinationIndex) || std::abs(amount) <= 0.0001f)
             continue;
 
         const auto sourceValue = evaluateModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);

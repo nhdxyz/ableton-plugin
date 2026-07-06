@@ -4453,6 +4453,29 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("MOD inspector summary hides shaped route details: " + inspectorSummary);
         }
 
+        clearMatrix();
+        setPlainParameterValue(Parameters::ID::modMatrixSource[0], 4.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[0], 13.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.42f);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixPolarity[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixCurve[0], 4.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMin[0], 0.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixRangeMax[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixSlew[0], 0.25f);
+        modMacroAssignSourceBox.setSelectedId(5, juce::dontSendNotification);
+        modMacroAssignDestinationBox.setSelectedId(14, juce::dontSendNotification);
+        updateMacroAssignmentEditorStatus();
+        const auto macroSummary = modMacroAssignStatusLabel.getTooltip();
+        if (! macroSummary.contains("Sample Mix +42%")
+            || ! macroSummary.contains("Unipolar +")
+            || ! macroSummary.contains("Gate")
+            || ! macroSummary.contains("Range 0..100%")
+            || ! macroSummary.contains("Slew 25%"))
+        {
+            issues.add("MOD macro assignment summary hides shaped route details: " + macroSummary);
+        }
+
         for (size_t index = 0; index < snapshots.size(); ++index)
         {
             setPlainParameterValue(Parameters::ID::modMatrixSource[index], snapshots[index].source);
@@ -12223,9 +12246,14 @@ void NateVSTAudioProcessorEditor::updateMacroAssignmentEditorStatus()
             selectedRouteExists = true;
 
         const auto percent = juce::roundToInt(amount * 100.0f);
-        routes.add(destinationChoices[currentDestination]
-                   + " " + (percent >= 0 ? "+" : "") + juce::String(percent)
-                   + (enabled ? "" : " off"));
+        auto routeText = destinationChoices[currentDestination]
+            + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
+        const auto shapeSummary = modRouteShapeSummary(index);
+        if (shapeSummary.isNotEmpty())
+            routeText += " [" + shapeSummary + "]";
+        if (! enabled)
+            routeText += " off";
+        routes.add(routeText);
     }
 
     const auto targetAmount = juce::roundToInt(modMacroAssignAmountSlider.getValue());

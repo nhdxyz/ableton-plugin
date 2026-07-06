@@ -88,6 +88,7 @@ target_sources(NateVST
         Source/UI/OutputSpectrumDisplay.cpp
         Source/UI/PageButtonStrip.cpp
         Source/UI/PanelTabBar.cpp
+        Source/UI/PresetBrowserRowLayout.cpp
         Source/UI/PresetCompareActions.cpp
         Source/UI/PresetCrateMapDisplay.cpp
         Source/UI/PresetLibrarySummary.cpp

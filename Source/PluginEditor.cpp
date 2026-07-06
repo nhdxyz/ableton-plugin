@@ -6,6 +6,7 @@
 #include "UI/FxRackPanelLayout.h"
 #include "UI/LibraryPanelLayout.h"
 #include "UI/ModPanelLayout.h"
+#include "UI/PresetBrowserRowLayout.h"
 #include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SampleRecorderState.h"
@@ -47,7 +48,6 @@ constexpr auto candidateAuditionDurationMs = 680.0;
 constexpr auto candidateAuditionVelocity = 0.88f;
 constexpr auto fxRackStatusOverrideMs = 2200.0;
 constexpr auto presetOverwriteConfirmMs = 6500.0;
-constexpr auto presetBrowserCompactRowBreakpoint = 420;
 constexpr auto sequencerFourBarChainTransformIndex = 12;
 constexpr std::array<const char*, 8> macroPerformanceParameterIDs {
     Parameters::ID::macroTone,
@@ -173,49 +173,6 @@ template <typename... Components>
 bool anyComponentVisible(const Components&... components) noexcept
 {
     return (... || components.isVisible());
-}
-
-struct PresetBrowserRowLayout
-{
-    int paddedWidth = 0;
-    int nameWidth = 0;
-    int infoWidth = 0;
-    int previewWidth = 0;
-    int macroWidth = 0;
-    bool compact = false;
-    bool showsMacroStrip = true;
-};
-
-PresetBrowserRowLayout presetBrowserRowLayoutForWidth(int width, int height)
-{
-    auto row = juce::Rectangle<int>(0, 0, juce::jmax(0, width), juce::jmax(0, height)).reduced(9, 4);
-    PresetBrowserRowLayout layout;
-    layout.paddedWidth = juce::jmax(0, row.getWidth());
-    if (layout.paddedWidth <= 0)
-        return layout;
-
-    layout.compact = layout.paddedWidth < presetBrowserCompactRowBreakpoint;
-    layout.compact = layout.compact || height <= 34;
-    if (layout.compact)
-    {
-        constexpr auto gap = 4;
-        layout.previewWidth = juce::jlimit(60, 92, layout.paddedWidth / 5);
-        layout.infoWidth = juce::jlimit(52, 78, layout.paddedWidth / 6);
-        layout.macroWidth = 0;
-        layout.showsMacroStrip = false;
-        layout.nameWidth = juce::jmax(0, layout.paddedWidth - layout.previewWidth - layout.infoWidth - (gap * 2));
-        return layout;
-    }
-
-    auto remainingWidth = layout.paddedWidth;
-    layout.infoWidth = juce::jlimit(78, 118, remainingWidth / 5);
-    remainingWidth -= layout.infoWidth + 6;
-    layout.previewWidth = juce::jlimit(78, 118, remainingWidth / 5);
-    remainingWidth -= layout.previewWidth + 6;
-    layout.macroWidth = 0;
-    layout.showsMacroStrip = false;
-    layout.nameWidth = juce::jmax(0, remainingWidth);
-    return layout;
 }
 
 juce::String sourceNameForWave(int wave)
@@ -5087,7 +5044,7 @@ void NateVSTAudioProcessorEditor::resized()
                 presetSaveSummary
             });
 
-            const auto rowLayout = presetBrowserRowLayoutForWidth(presetBrowserList.getBounds().getWidth(),
+            const auto rowLayout = UI::PresetBrowserRowLayout::forSize(presetBrowserList.getBounds().getWidth(),
                                                                   presetBrowserList.getRowHeight());
             const auto browserHeaderText = rowLayout.compact
                 ? juce::String("SOUND / PACK     PREVIEW     INFO")
@@ -5829,7 +5786,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         {
             const auto browserBounds = getLocalArea(presetBrowserList.getParentComponent(),
                                                     presetBrowserList.getBounds());
-            const auto rowLayout = presetBrowserRowLayoutForWidth(browserBounds.getWidth(),
+            const auto rowLayout = UI::PresetBrowserRowLayout::forSize(browserBounds.getWidth(),
                                                                   presetBrowserList.getRowHeight());
             if (rowLayout.compact)
             {
@@ -14493,7 +14450,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
     const auto ratingText = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("-");
     const auto sourcePrefix = preset.isFavorite ? juce::String("F ") : juce::String();
     const auto nameColour = preset.isFavorite ? juce::Colour(0xffffd27a) : juce::Colour(0xffedf7f4);
-    const auto layout = presetBrowserRowLayoutForWidth(width, height);
+    const auto layout = UI::PresetBrowserRowLayout::forSize(width, height);
 
     auto infoArea = row.removeFromRight(layout.infoWidth);
     row.removeFromRight(layout.compact ? 4 : 6);

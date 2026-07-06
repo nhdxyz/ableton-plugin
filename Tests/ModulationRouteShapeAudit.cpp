@@ -170,31 +170,60 @@ int main()
         return 1;
     }
 
+    rangeMin.store(0.35f);
+    rangeMax.store(0.75f);
+    smoothed = -0.8f;
+    const auto rangeClampedSlewed = Modulation::processRouteValue(1.0f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0);
+    if (rangeClampedSlewed < 0.35f || rangeClampedSlewed > 0.75f)
+    {
+        std::cerr << "Slewed route escaped current range: " << rangeClampedSlewed << '\n';
+        return 1;
+    }
+
+    rangeMin.store(-1.0f);
+    rangeMax.store(1.0f);
+
     Modulation::RouteRuntimeState routeState;
-    if (! Modulation::prepareRouteState(routeState, 1, 1, true))
+    if (! Modulation::prepareRouteState(routeState, 1, 1, 0, 0, true))
     {
         std::cerr << "Route state did not activate\n";
         return 1;
     }
 
     routeState.smoothedValue = 0.66f;
-    if (! Modulation::prepareRouteState(routeState, 1, 1, true)
+    if (! Modulation::prepareRouteState(routeState, 1, 1, 0, 0, true)
         || ! expectNear("Route state preserves active identity", routeState.smoothedValue, 0.66f))
     {
         return 1;
     }
 
-    if (! Modulation::prepareRouteState(routeState, 1, 2, true)
+    if (! Modulation::prepareRouteState(routeState, 1, 2, 0, 0, true)
         || ! expectNear("Route state resets on retarget", routeState.smoothedValue, 0.0f))
     {
         return 1;
     }
 
+    routeState.smoothedValue = 0.74f;
+    if (! Modulation::prepareRouteState(routeState, 1, 2, 1, 0, true)
+        || ! expectNear("Route state resets on polarity change", routeState.smoothedValue, 0.0f))
+    {
+        return 1;
+    }
+
+    routeState.smoothedValue = 0.42f;
+    if (! Modulation::prepareRouteState(routeState, 1, 2, 1, 2, true)
+        || ! expectNear("Route state resets on curve change", routeState.smoothedValue, 0.0f))
+    {
+        return 1;
+    }
+
     routeState.smoothedValue = 0.5f;
-    if (Modulation::prepareRouteState(routeState, 1, 2, false)
+    if (Modulation::prepareRouteState(routeState, 1, 2, 1, 2, false)
         || routeState.active
         || routeState.sourceIndex != 0
         || routeState.destinationIndex != 0
+        || routeState.polarityIndex != 0
+        || routeState.curveIndex != 0
         || ! expectNear("Route state resets when inactive", routeState.smoothedValue, 0.0f))
     {
         std::cerr << "Route state did not clear when inactive\n";

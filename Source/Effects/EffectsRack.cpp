@@ -482,13 +482,15 @@ void EffectsRack::updateFxModulation(int numSamples, double bpm, std::optional<d
         const auto destinationIndex = static_cast<int>(std::round(readParameter(modMatrixDestinations[index], 0.0f)));
         const auto amount = readParameter(modMatrixAmounts[index], 0.0f);
         const auto enabled = readParameter(modMatrixEnabled[index], 1.0f) >= 0.5f;
+        const auto polarityIndex = juce::roundToInt(readParameter(modMatrixPolarities[index], 0.0f));
+        const auto curveIndex = juce::roundToInt(readParameter(modMatrixCurves[index], 0.0f));
 
         const auto routeActive = enabled
             && sourceIndex != 0
             && Modulation::isFxDestination(destinationIndex)
             && std::abs(amount) > 0.0001f;
         auto& routeState = fxModRouteStates[index];
-        if (! Modulation::prepareRouteState(routeState, sourceIndex, destinationIndex, routeActive))
+        if (! Modulation::prepareRouteState(routeState, sourceIndex, destinationIndex, polarityIndex, curveIndex, routeActive))
             continue;
 
         const auto sourceValue = evaluateFxModulationSource(sourceIndex, lfoValue, lfo2Value, stepLfoValue, modEnvelopeValue);

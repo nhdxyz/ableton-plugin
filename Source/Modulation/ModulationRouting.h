@@ -139,6 +139,8 @@ struct RouteRuntimeState
     float smoothedValue = 0.0f;
     int sourceIndex = 0;
     int destinationIndex = 0;
+    int polarityIndex = 0;
+    int curveIndex = 0;
     bool active = false;
 };
 
@@ -150,6 +152,8 @@ inline void resetRouteState(RouteRuntimeState& state) noexcept
 inline bool prepareRouteState(RouteRuntimeState& state,
                               int sourceIndex,
                               int destinationIndex,
+                              int polarityIndex,
+                              int curveIndex,
                               bool shouldBeActive) noexcept
 {
     if (! shouldBeActive)
@@ -160,12 +164,16 @@ inline bool prepareRouteState(RouteRuntimeState& state,
 
     const auto identityChanged = ! state.active
         || state.sourceIndex != sourceIndex
-        || state.destinationIndex != destinationIndex;
+        || state.destinationIndex != destinationIndex
+        || state.polarityIndex != polarityIndex
+        || state.curveIndex != curveIndex;
     if (identityChanged)
         state.smoothedValue = 0.0f;
 
     state.sourceIndex = sourceIndex;
     state.destinationIndex = destinationIndex;
+    state.polarityIndex = polarityIndex;
+    state.curveIndex = curveIndex;
     state.active = true;
     return true;
 }
@@ -248,9 +256,12 @@ inline float processRouteValue(float rawValue,
         shapedValue = applyPolarity(shapedValue, polarityIndex);
     if (curveIndex != 0)
         shapedValue = applyCurve(shapedValue, curveIndex);
-    shapedValue = juce::jlimit(juce::jlimit(-1.0f, 1.0f, minimum),
-                               juce::jlimit(-1.0f, 1.0f, maximum),
+    const auto clampedMinimum = juce::jlimit(-1.0f, 1.0f, minimum);
+    const auto clampedMaximum = juce::jlimit(-1.0f, 1.0f, maximum);
+    shapedValue = juce::jlimit(clampedMinimum,
+                               clampedMaximum,
                                juce::jlimit(-1.0f, 1.0f, shapedValue));
+    smoothedValue = juce::jlimit(clampedMinimum, clampedMaximum, smoothedValue);
 
     const auto slewAmount = readParameter(slew, 0.0f);
     if (slewAmount <= 0.001f)

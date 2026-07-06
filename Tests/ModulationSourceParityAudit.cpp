@@ -66,13 +66,14 @@ void clearModMatrix(NateVSTAudioProcessor& processor)
     }
 }
 
-void setFirstRoute(NateVSTAudioProcessor& processor, int sourceIndex, int destinationIndex, float amount)
+void setFirstRoute(NateVSTAudioProcessor& processor, int sourceIndex, int destinationIndex, float amount, int polarityIndex = 0)
 {
     clearModMatrix(processor);
     setPlainParameter(processor, Parameters::ID::modMatrixSource[0], static_cast<float>(sourceIndex));
     setPlainParameter(processor, Parameters::ID::modMatrixDestination[0], static_cast<float>(destinationIndex));
     setPlainParameter(processor, Parameters::ID::modMatrixAmount[0], amount);
     setPlainParameter(processor, Parameters::ID::modMatrixEnabled[0], 1.0f);
+    setPlainParameter(processor, Parameters::ID::modMatrixPolarity[0], static_cast<float>(polarityIndex));
 }
 
 struct RenderStats
@@ -86,28 +87,91 @@ const char* modulationSourceName(int sourceIndex)
 {
     switch (sourceIndex)
     {
+        case 1: return "LFO 1";
+        case 2: return "Mod Env 1";
+        case 3: return "Velocity";
+        case 4: return "Tone";
+        case 5: return "Dirt";
+        case 6: return "Motion";
+        case 7: return "Space";
+        case 8: return "Weight";
+        case 9: return "Bounce";
+        case 10: return "Warp";
+        case 11: return "Throw";
+        case 12: return "S&H";
+        case 13: return "Smooth";
+        case 14: return "Chaos";
+        case 15: return "LFO 2";
         case 16: return "Mod Wheel";
         case 17: return "Aftertouch";
         case 18: return "Pitch Bend";
         case 19: return "Note";
+        case 20: return "Step LFO";
         default: return "Source";
     }
 }
 
-void addMidiSourceStimulus(juce::MidiBuffer& midi, int sourceIndex, int note)
+int noteForSource(int sourceIndex)
+{
+    return sourceIndex == 19 ? 84 : 60;
+}
+
+int routePolarityForSource(int sourceIndex)
+{
+    switch (sourceIndex)
+    {
+        case 1:
+        case 12:
+        case 13:
+        case 14:
+        case 15:
+            return 1;
+
+        default:
+            return 0;
+    }
+}
+
+bool configureSourceForAudit(NateVSTAudioProcessor& processor, int sourceIndex)
+{
+    if (! setPlainParameter(processor, Parameters::ID::lfo1Depth, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::lfo1Shape, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::lfo2Depth, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::lfo2Shape, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::stepLfoDepth, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::stepLfoValue[0], 1.0f))
+    {
+        return false;
+    }
+
+    switch (sourceIndex)
+    {
+        case 4: return setPlainParameter(processor, Parameters::ID::macroTone, 1.0f);
+        case 5: return setPlainParameter(processor, Parameters::ID::macroDirt, 1.0f);
+        case 6: return setPlainParameter(processor, Parameters::ID::macroMotion, 1.0f);
+        case 7: return setPlainParameter(processor, Parameters::ID::macroSpace, 1.0f);
+        case 8: return setPlainParameter(processor, Parameters::ID::macroWeight, 1.0f);
+        case 9: return setPlainParameter(processor, Parameters::ID::macroBounce, 1.0f);
+        case 10: return setPlainParameter(processor, Parameters::ID::macroWarp, 1.0f);
+        case 11: return setPlainParameter(processor, Parameters::ID::macroThrow, 1.0f);
+        default: return true;
+    }
+}
+
+void addMidiSourceStimulus(juce::MidiBuffer& midi, int sourceIndex, int note, int samplePosition)
 {
     switch (sourceIndex)
     {
         case 16:
-            midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 127), 0);
+            midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 127), samplePosition);
             break;
 
         case 17:
-            midi.addEvent(juce::MidiMessage::channelPressureChange(1, 127), 0);
+            midi.addEvent(juce::MidiMessage::channelPressureChange(1, 127), samplePosition);
             break;
 
         case 18:
-            midi.addEvent(juce::MidiMessage::pitchWheel(1, 16383), 0);
+            midi.addEvent(juce::MidiMessage::pitchWheel(1, 16383), samplePosition);
             break;
 
         case 19:
@@ -132,8 +196,8 @@ RenderStats renderNote(NateVSTAudioProcessor& processor, int note, float velocit
         juce::MidiBuffer midi;
         if (block == 0)
         {
-            addMidiSourceStimulus(midi, stimulusSourceIndex, note);
             midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);
+            addMidiSourceStimulus(midi, stimulusSourceIndex, note, 1);
         }
         if (block == 3)
             midi.addEvent(juce::MidiMessage::noteOff(1, note), 0);
@@ -192,9 +256,12 @@ float renderSampleMixRoute(const juce::File& sampleFile, int sourceIndex)
     setPlainParameter(processor, Parameters::ID::modEnv1Sustain, 1.0f);
     setPlainParameter(processor, Parameters::ID::modEnv1Release, 0.02f);
     setPlainParameter(processor, Parameters::ID::modEnv1Depth, 1.0f);
-    setFirstRoute(processor, sourceIndex, 13, 1.0f);
+    if (! configureSourceForAudit(processor, sourceIndex))
+        return -1.0f;
 
-    const auto note = sourceIndex == 19 ? 84 : 60;
+    setFirstRoute(processor, sourceIndex, 13, 1.0f, routePolarityForSource(sourceIndex));
+
+    const auto note = noteForSource(sourceIndex);
     const auto stats = renderNote(processor, note, 1.0f, 8, sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
@@ -220,18 +287,21 @@ float renderFxPumpReduction(int sourceIndex)
     setPlainParameter(processor, Parameters::ID::modEnv1Sustain, 1.0f);
     setPlainParameter(processor, Parameters::ID::modEnv1Release, 0.02f);
     setPlainParameter(processor, Parameters::ID::modEnv1Depth, 1.0f);
-    setFirstRoute(processor, sourceIndex, 7, 1.0f);
+    if (! configureSourceForAudit(processor, sourceIndex))
+        return -1.0f;
+
+    setFirstRoute(processor, sourceIndex, 7, 1.0f, routePolarityForSource(sourceIndex));
 
     juce::AudioBuffer<float> buffer(2, 512);
     auto maxReduction = 0.0f;
-    const auto note = sourceIndex == 19 ? 84 : 60;
+    const auto note = noteForSource(sourceIndex);
     for (auto block = 0; block < 4; ++block)
     {
         juce::MidiBuffer midi;
         if (block == 0)
         {
-            addMidiSourceStimulus(midi, sourceIndex, note);
             midi.addEvent(juce::MidiMessage::noteOn(1, note, 1.0f), 0);
+            addMidiSourceStimulus(midi, sourceIndex, note, 1);
         }
 
         processor.processBlock(buffer, midi);
@@ -268,6 +338,34 @@ float renderSynthLevelRoute(int destinationIndex)
         setFirstRoute(processor, 3, destinationIndex, 1.0f);
 
     const auto stats = renderNote(processor, 60, 1.0f);
+    return stats.finite ? stats.rms : -1.0f;
+}
+
+float renderSynthOsc1Route(int sourceIndex)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    if (! setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxDelayEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxReverbEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxGuardEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::outputGain, 0.0f)
+        || ! configureSourceForAudit(processor, sourceIndex))
+    {
+        return -1.0f;
+    }
+
+    setFirstRoute(processor, sourceIndex, 22, 1.0f, routePolarityForSource(sourceIndex));
+
+    const auto stats = renderNote(processor, noteForSource(sourceIndex), 1.0f, 8, sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
 }
@@ -317,8 +415,8 @@ int main()
         return 1;
     }
 
-    const int midiSources[] { 16, 17, 18, 19 };
-    for (const auto sourceIndex : midiSources)
+    const int routedSources[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+    for (const auto sourceIndex : routedSources)
     {
         const auto sampleMidiRms = renderSampleMixRoute(sampleFile, sourceIndex);
         if (sampleMidiRms <= 0.01f)
@@ -333,6 +431,14 @@ int main()
         {
             std::cerr << "FX " << modulationSourceName(sourceIndex)
                       << " source did not drive pump depth: " << fxMidiReduction << '\n';
+            return 1;
+        }
+
+        const auto synthSourceRms = renderSynthOsc1Route(sourceIndex);
+        if (synthSourceRms <= 0.005f)
+        {
+            std::cerr << "Synth " << modulationSourceName(sourceIndex)
+                      << " source did not open Osc 1 Level: " << synthSourceRms << '\n';
             return 1;
         }
     }

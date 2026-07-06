@@ -28,6 +28,18 @@ inline double cyclesPerBeatForSyncRate(int rateIndex) noexcept
     }
 }
 
+inline std::optional<float> phaseFromPpq(std::optional<double> ppqPosition, double cyclesPerBeat) noexcept
+{
+    if (! ppqPosition.has_value())
+        return std::nullopt;
+
+    auto phase = std::fmod(*ppqPosition * cyclesPerBeat, 1.0);
+    if (phase < 0.0)
+        phase += 1.0;
+
+    return static_cast<float>(phase);
+}
+
 inline float smoothingAlpha(float amount, int numSamples, double sampleRate, float maximumSeconds) noexcept
 {
     const auto safeAmount = juce::jlimit(0.0f, 1.0f, amount);
@@ -139,11 +151,10 @@ inline float processStepLfo(std::atomic<float>* sync,
     const auto syncRateIndex = juce::roundToInt(readParameter(syncRate, 3.0f));
     const auto cyclesPerBeat = cyclesPerBeatForSyncRate(syncRateIndex);
 
-    if (syncEnabled && ppqPosition.has_value())
+    if (syncEnabled)
     {
-        phase = static_cast<float>(std::fmod(*ppqPosition * cyclesPerBeat, 1.0));
-        if (phase < 0.0f)
-            phase += 1.0f;
+        if (const auto syncedPhase = phaseFromPpq(ppqPosition, cyclesPerBeat))
+            phase = *syncedPhase;
     }
 
     const auto stepPhase = juce::jlimit(0.0f, 0.999999f, phase);

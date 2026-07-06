@@ -32,6 +32,16 @@ int main()
     if (! expectNear("Neutral route", Modulation::processRouteValue(0.42f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0), 0.42f))
         return 1;
 
+    const auto positivePpqPhase = Modulation::phaseFromPpq(1.125, 4.0);
+    const auto negativePpqPhase = Modulation::phaseFromPpq(-0.125, 4.0);
+    if (! positivePpqPhase.has_value()
+        || ! negativePpqPhase.has_value()
+        || ! expectNear("Positive PPQ phase wraps", *positivePpqPhase, 0.5f)
+        || ! expectNear("Negative PPQ phase wraps", *negativePpqPhase, 0.5f))
+    {
+        return 1;
+    }
+
     polarity.store(1.0f);
     if (! expectNear("Unipolar low", Modulation::processRouteValue(-1.0f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0), 0.0f)
         || ! expectNear("Unipolar high", Modulation::processRouteValue(1.0f, &polarity, &curve, &rangeMin, &rangeMax, &slew, smoothed, 16, 44100.0), 1.0f))
@@ -100,6 +110,24 @@ int main()
                                                        44100.0,
                                                        124.0);
     if (! expectNear("Step LFO first step", stepOutput, 0.5f))
+        return 1;
+
+    stepSync.store(1.0f);
+    stepPhase = 0.0f;
+    stepSmoothed = 0.0f;
+    const auto syncedStepOutput = Modulation::processStepLfo(&stepSync,
+                                                             &stepSyncRate,
+                                                             &stepRate,
+                                                             &stepDepth,
+                                                             &stepSlew,
+                                                             stepValuePointers,
+                                                             stepPhase,
+                                                             stepSmoothed,
+                                                             16,
+                                                             44100.0,
+                                                             124.0,
+                                                             0.125);
+    if (! expectNear("Step LFO follows PPQ phase", syncedStepOutput, 0.125f))
         return 1;
 
     std::cout << "Modulation route shape audit passed.\n";

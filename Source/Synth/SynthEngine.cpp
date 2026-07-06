@@ -30,7 +30,10 @@ void SynthEngine::setSequencerLock(int destinationIndex, float amount)
             voice->setSequencerLock(destinationIndex, amount);
 }
 
-void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi, double bpm)
+void SynthEngine::render(juce::AudioBuffer<float>& buffer,
+                         juce::MidiBuffer& midi,
+                         double bpm,
+                         std::optional<double> ppqPosition)
 {
     auto estimatedActiveVoiceCount = 0;
     for (auto voiceIndex = 0; voiceIndex < synthesiser.getNumVoices(); ++voiceIndex)
@@ -40,7 +43,7 @@ void SynthEngine::render(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& mid
             if (voice->isVoiceActive())
                 ++estimatedActiveVoiceCount;
 
-            voice->setHostBpm(bpm);
+            voice->setHostTiming(bpm, ppqPosition);
         }
     }
 

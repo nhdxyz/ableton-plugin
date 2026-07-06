@@ -963,16 +963,17 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         : 0.0f;
     synthEngine.setSequencerLock(lockDestination, lockAmount);
     effectsRack.setSequencerLock(lockDestination, lockAmount);
-    synthEngine.render(buffer, midiMessages, hostBpm);
+    const auto syncedPpqPosition = hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt;
+    synthEngine.render(buffer, midiMessages, hostBpm, syncedPpqPosition);
     samplePlayer.render(buffer,
                         midiMessages,
                         hostBpm,
-                        hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
+                        syncedPpqPosition);
     effectsRack.process(buffer,
                         midiMessages,
                         outputGain != nullptr ? outputGain->load() : -8.0f,
                         hostBpm,
-                        hostPosition.isPlaying ? hostPosition.ppqPosition : std::nullopt);
+                        syncedPpqPosition);
     if (captureSource == 0)
     {
         updateSampleCaptureSourcePeak(buffer);

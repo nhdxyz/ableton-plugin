@@ -10,6 +10,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <array>
+#include <optional>
 
 namespace Synth
 {
@@ -35,7 +36,7 @@ public:
     void renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     void prepare(double sampleRate, int maximumBlockSize);
-    void setHostBpm(double bpm) noexcept;
+    void setHostTiming(double bpm, std::optional<double> ppqPosition) noexcept;
     void setActiveVoiceLoad(int activeVoiceCount) noexcept;
     void setSequencerLock(int destinationIndex, float amount) noexcept;
 
@@ -100,6 +101,7 @@ private:
     float currentMacroDrive = 0.18f;
     double currentSampleRate = 44100.0;
     double hostBpm = 124.0;
+    std::optional<double> hostPpqPosition;
     int noiseDigitalHoldSamples = 1;
     int voiceAgeSamples = 0;
     int controlSamplesUntilUpdate = 0;
@@ -207,15 +209,16 @@ private:
     std::array<std::atomic<float>*, maxModSlots> modMatrixRangeMaxes {};
     std::array<std::atomic<float>*, maxModSlots> modMatrixSlews {};
 
-    void updateVoiceParameters(float envelopeValue, int samplesToAdvance);
+    void updateVoiceParameters(float envelopeValue, int samplesToAdvance, std::optional<double> ppqPosition);
     bool refreshCustomWavetableFrames(const CustomWaveParameterPoints& baseFrameParameters,
                                       const CustomWaveMorphParameterFrames& morphFrameParameters,
                                       Oscillator::CustomWaveFrames& frameCache,
                                       bool& cacheInitialised);
     void updateGlide(int samplesToAdvance);
-    float processLfo(int samplesToAdvance);
-    float processLfo2(int samplesToAdvance);
-    float processStepLfo(int samplesToAdvance);
+    float processLfo(int samplesToAdvance, std::optional<double> ppqPosition);
+    float processLfo2(int samplesToAdvance, std::optional<double> ppqPosition);
+    float processStepLfo(int samplesToAdvance, std::optional<double> ppqPosition);
+    std::optional<double> ppqPositionForBlockOffset(int sampleOffset) const noexcept;
     float evaluateLfoCurve(float phase) const;
     float evaluateModulationSource(int sourceIndex, float lfoValue, float lfo2Value, float stepLfoValue, float modEnvelopeValue) const;
     StereoSample renderUnisonStack();

@@ -164,9 +164,10 @@ void Voice::prepare(double sampleRate, int maximumBlockSize)
     stepLfoSmoothedValue = 0.0f;
 }
 
-void Voice::setHostBpm(double bpm) noexcept
+void Voice::setHostTiming(double bpm, std::optional<double> ppqPosition) noexcept
 {
     hostBpm = juce::jlimit(20.0, 300.0, bpm);
+    hostPpqPosition = ppqPosition;
 }
 
 void Voice::setActiveVoiceLoad(int activeVoiceCount) noexcept
@@ -304,7 +305,9 @@ void Voice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer, int startSam
             const auto samplesToAdvance = juce::jlimit(1,
                                                        controlUpdateIntervalSamples,
                                                        numSamples - sampleIndex);
-            updateVoiceParameters(envelopeValue, samplesToAdvance);
+            updateVoiceParameters(envelopeValue,
+                                  samplesToAdvance,
+                                  ppqPositionForBlockOffset(startSample + sampleIndex));
             controlSamplesUntilUpdate = samplesToAdvance;
         }
 
@@ -381,7 +384,7 @@ bool Voice::refreshCustomWavetableFrames(const CustomWaveParameterPoints& baseFr
     return changed;
 }
 
-void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
+void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std::optional<double> ppqPosition)
 {
     samplesToAdvance = juce::jmax(1, samplesToAdvance);
     updateGlide(samplesToAdvance);
@@ -391,9 +394,9 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance)
         readParameter(modEnv1Sustain, 0.0f),
         readParameter(modEnv1Release, 0.12f));
 
-    const auto lfoValue = processLfo(samplesToAdvance) * readParameter(lfo1Depth, 0.45f);
-    const auto lfo2Value = processLfo2(samplesToAdvance) * readParameter(lfo2Depth, 0.25f);
-    const auto stepLfoValue = processStepLfo(samplesToAdvance);
+    const auto lfoValue = processLfo(samplesToAdvance, ppqPosition) * readParameter(lfo1Depth, 0.45f);
+    const auto lfo2Value = processLfo2(samplesToAdvance, ppqPosition) * readParameter(lfo2Depth, 0.25f);
+    const auto stepLfoValue = processStepLfo(samplesToAdvance, ppqPosition);
     auto modEnvelopeRaw = 0.0f;
     for (auto sample = 0; sample < samplesToAdvance; ++sample)
         modEnvelopeRaw = modEnvelope.process();
@@ -657,14 +660,21 @@ void Voice::updateGlide(int samplesToAdvance)
     glideSamplesRemaining = juce::jmax(0, glideSamplesRemaining - juce::jmax(1, samplesToAdvance));
 }
 
-float Voice::processLfo(int samplesToAdvance)
+float Voice::processLfo(int samplesToAdvance, std::optional<double> ppqPosition)
 {
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo1Shape, 0.0f)));
     const auto syncEnabled = readParameter(lfo1Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)));
+    const auto cyclesPerBeat = cyclesPerBeatForLfoSync(syncRateIndex);
     const auto rateHz = syncEnabled
-        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeatForLfoSync(static_cast<int>(std::round(readParameter(lfo1SyncRate, 1.0f)))))
+        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo1Rate, 1.0f);
     const auto phaseOffset = readParameter(lfo1Phase, 0.0f);
+    const auto previousPhase = lfoPhase;
+    const auto syncedPhase = syncEnabled ? Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat) : std::nullopt;
+    if (syncedPhase.has_value())
+        lfoPhase = *syncedPhase;
+
     const auto phase = std::fmod(lfoPhase + phaseOffset + 1.0f, 1.0f);
     auto value = 0.0f;
 
@@ -707,13 +717,20 @@ float Voice::processLfo(int samplesToAdvance)
                                            (rateHz * static_cast<float>(juce::jmax(1, samplesToAdvance)))
                                                / static_cast<float>(juce::jmax(1.0, currentSampleRate)));
 
-    const auto previousPhase = lfoPhase;
-    lfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
-        / static_cast<float>(currentSampleRate);
-
-    if (lfoPhase >= 1.0f)
+    if (! syncedPhase.has_value())
     {
-        lfoPhase -= std::floor(lfoPhase);
+        lfoPhase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
+            / static_cast<float>(currentSampleRate);
+    }
+
+    const auto wrappedCycle = syncedPhase.has_value()
+        ? lfoPhase < previousPhase
+        : lfoPhase >= 1.0f;
+    if (wrappedCycle)
+    {
+        if (! syncedPhase.has_value())
+            lfoPhase -= std::floor(lfoPhase);
+
         if (previousPhase < 1.0f)
         {
             lfoSmoothRandomStartValue = lfoStepValue;
@@ -724,14 +741,21 @@ float Voice::processLfo(int samplesToAdvance)
     return juce::jlimit(-1.0f, 1.0f, value);
 }
 
-float Voice::processLfo2(int samplesToAdvance)
+float Voice::processLfo2(int samplesToAdvance, std::optional<double> ppqPosition)
 {
     const auto shapeIndex = static_cast<int>(std::round(readParameter(lfo2Shape, 1.0f)));
     const auto syncEnabled = readParameter(lfo2Sync, 1.0f) >= 0.5f;
+    const auto syncRateIndex = static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)));
+    const auto cyclesPerBeat = cyclesPerBeatForLfoSync(syncRateIndex);
     const auto rateHz = syncEnabled
-        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeatForLfoSync(static_cast<int>(std::round(readParameter(lfo2SyncRate, 3.0f)))))
+        ? static_cast<float>((hostBpm / 60.0) * cyclesPerBeat)
         : readParameter(lfo2Rate, 1.5f);
     const auto phaseOffset = readParameter(lfo2PhaseParam, 0.25f);
+    const auto previousPhase = lfo2Phase;
+    const auto syncedPhase = syncEnabled ? Modulation::phaseFromPpq(ppqPosition, cyclesPerBeat) : std::nullopt;
+    if (syncedPhase.has_value())
+        lfo2Phase = *syncedPhase;
+
     const auto phase = std::fmod(lfo2Phase + phaseOffset + 1.0f, 1.0f);
     auto value = 0.0f;
 
@@ -760,13 +784,20 @@ float Voice::processLfo2(int samplesToAdvance)
             break;
     }
 
-    const auto previousPhase = lfo2Phase;
-    lfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
-        / static_cast<float>(currentSampleRate);
-
-    if (lfo2Phase >= 1.0f)
+    if (! syncedPhase.has_value())
     {
-        lfo2Phase -= std::floor(lfo2Phase);
+        lfo2Phase += (juce::jlimit(0.01f, 80.0f, rateHz) * static_cast<float>(juce::jmax(1, samplesToAdvance)))
+            / static_cast<float>(currentSampleRate);
+    }
+
+    const auto wrappedCycle = syncedPhase.has_value()
+        ? lfo2Phase < previousPhase
+        : lfo2Phase >= 1.0f;
+    if (wrappedCycle)
+    {
+        if (! syncedPhase.has_value())
+            lfo2Phase -= std::floor(lfo2Phase);
+
         if (previousPhase < 1.0f)
             lfo2StepValue = (modulationRandom.nextFloat() * 2.0f) - 1.0f;
     }
@@ -774,7 +805,7 @@ float Voice::processLfo2(int samplesToAdvance)
     return juce::jlimit(-1.0f, 1.0f, value);
 }
 
-float Voice::processStepLfo(int samplesToAdvance)
+float Voice::processStepLfo(int samplesToAdvance, std::optional<double> ppqPosition)
 {
     return Modulation::processStepLfo(stepLfoSync,
                                       stepLfoSyncRate,
@@ -786,7 +817,19 @@ float Voice::processStepLfo(int samplesToAdvance)
                                       stepLfoSmoothedValue,
                                       samplesToAdvance,
                                       currentSampleRate,
-                                      hostBpm);
+                                      hostBpm,
+                                      ppqPosition);
+}
+
+std::optional<double> Voice::ppqPositionForBlockOffset(int sampleOffset) const noexcept
+{
+    if (! hostPpqPosition.has_value())
+        return std::nullopt;
+
+    const auto safeSampleRate = juce::jmax(1.0, currentSampleRate);
+    const auto offsetBeats = (static_cast<double>(juce::jmax(0, sampleOffset)) / safeSampleRate)
+        * (hostBpm / 60.0);
+    return *hostPpqPosition + offsetBeats;
 }
 
 float Voice::evaluateLfoCurve(float phase) const

@@ -83,6 +83,14 @@ struct RenderStats
     bool finite = true;
 };
 
+struct RenderComparison
+{
+    float baselineRms = 0.0f;
+    float routedRms = 0.0f;
+    float diffRms = 0.0f;
+    bool finite = true;
+};
+
 const char* modulationSourceName(int sourceIndex)
 {
     switch (sourceIndex)
@@ -221,6 +229,66 @@ RenderStats renderNote(NateVSTAudioProcessor& processor, int note, float velocit
 
     stats.rms = sampleCount > 0 ? static_cast<float>(std::sqrt(sumSquares / static_cast<double>(sampleCount))) : 0.0f;
     return stats;
+}
+
+RenderComparison compareRenderedNotes(NateVSTAudioProcessor& baseline,
+                                      NateVSTAudioProcessor& routed,
+                                      int note,
+                                      float velocity,
+                                      int blocks,
+                                      int stimulusSourceIndex = 3,
+                                      int noteOffBlock = 3)
+{
+    juce::AudioBuffer<float> baselineBuffer(2, 512);
+    juce::AudioBuffer<float> routedBuffer(2, 512);
+    RenderComparison comparison;
+    double baselineSquares = 0.0;
+    double routedSquares = 0.0;
+    double diffSquares = 0.0;
+    auto sampleCount = 0;
+
+    for (auto block = 0; block < blocks; ++block)
+    {
+        juce::MidiBuffer midi;
+        if (block == 0)
+        {
+            midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);
+            addMidiSourceStimulus(midi, stimulusSourceIndex, note, 1);
+        }
+        if (block == noteOffBlock)
+            midi.addEvent(juce::MidiMessage::noteOff(1, note), 0);
+
+        baseline.processBlock(baselineBuffer, midi);
+        routed.processBlock(routedBuffer, midi);
+
+        for (auto channel = 0; channel < baselineBuffer.getNumChannels(); ++channel)
+        {
+            const auto* baselineSamples = baselineBuffer.getReadPointer(channel);
+            const auto* routedSamples = routedBuffer.getReadPointer(channel);
+            for (auto sample = 0; sample < baselineBuffer.getNumSamples(); ++sample)
+            {
+                const auto baselineValue = baselineSamples[sample];
+                const auto routedValue = routedSamples[sample];
+                if (! std::isfinite(baselineValue) || ! std::isfinite(routedValue))
+                    comparison.finite = false;
+
+                baselineSquares += static_cast<double>(baselineValue) * static_cast<double>(baselineValue);
+                routedSquares += static_cast<double>(routedValue) * static_cast<double>(routedValue);
+                const auto diff = routedValue - baselineValue;
+                diffSquares += static_cast<double>(diff) * static_cast<double>(diff);
+                ++sampleCount;
+            }
+        }
+    }
+
+    if (sampleCount > 0)
+    {
+        comparison.baselineRms = static_cast<float>(std::sqrt(baselineSquares / static_cast<double>(sampleCount)));
+        comparison.routedRms = static_cast<float>(std::sqrt(routedSquares / static_cast<double>(sampleCount)));
+        comparison.diffRms = static_cast<float>(std::sqrt(diffSquares / static_cast<double>(sampleCount)));
+    }
+
+    return comparison;
 }
 
 bool configureSampleOnly(NateVSTAudioProcessor& processor, const juce::File& file)
@@ -368,6 +436,175 @@ float renderSynthOsc1Route(int sourceIndex)
     const auto stats = renderNote(processor, noteForSource(sourceIndex), 1.0f, 8, sourceIndex);
     return stats.finite ? stats.rms : -1.0f;
 }
+
+bool configureSynthDestinationAudit(NateVSTAudioProcessor& processor, int destinationIndex)
+{
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    if (! setPlainParameter(processor, Parameters::ID::oscWave, destinationIndex == 18 ? 4.0f : 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Wave, destinationIndex == 19 ? 4.0f : 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc1Level, destinationIndex == 5 || destinationIndex == 6 || destinationIndex == 19 ? 0.0f : 0.75f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Level, destinationIndex == 5 || destinationIndex == 19 ? 0.85f : 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::ampAttack, 0.001f)
+        || ! setPlainParameter(processor, Parameters::ID::ampDecay, 0.08f)
+        || ! setPlainParameter(processor, Parameters::ID::ampSustain, 0.78f)
+        || ! setPlainParameter(processor, Parameters::ID::ampRelease, 0.02f)
+        || ! setPlainParameter(processor, Parameters::ID::filterCutoff, destinationIndex == 1 ? 260.0f : 1200.0f)
+        || ! setPlainParameter(processor, Parameters::ID::filterResonance, 0.18f)
+        || ! setPlainParameter(processor, Parameters::ID::filterEnvAmount, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::driveAmount, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarp, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpB, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2Warp, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpB, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWarpMode, 2.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WarpMode, 2.0f)
+        || ! setPlainParameter(processor, Parameters::ID::oscWavetablePosition, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::osc2WavetablePosition, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxDelayEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxReverbEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxGuardEnabled, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::outputGain, 0.0f))
+    {
+        return false;
+    }
+
+    if (destinationIndex == 3)
+    {
+        setPlainParameter(processor, Parameters::ID::ampDecay, 0.2f);
+        setPlainParameter(processor, Parameters::ID::filterCutoff, 420.0f);
+    }
+
+    return true;
+}
+
+RenderComparison compareSynthDestination(int destinationIndex)
+{
+    NateVSTAudioProcessor baseline;
+    NateVSTAudioProcessor routed;
+    if (! configureSynthDestinationAudit(baseline, destinationIndex)
+        || ! configureSynthDestinationAudit(routed, destinationIndex))
+    {
+        return { 0.0f, 0.0f, -1.0f, false };
+    }
+
+    setFirstRoute(routed, 3, destinationIndex, 1.0f);
+    return compareRenderedNotes(baseline, routed, 60, 1.0f, 10);
+}
+
+bool configureSampleDestinationAudit(NateVSTAudioProcessor& processor, const juce::File& sampleFile)
+{
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+    if (! processor.loadSampleFile(sampleFile))
+        return false;
+
+    return setPlainParameter(processor, Parameters::ID::osc1Level, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleEnabled, 1.0f)
+        && setPlainParameter(processor, Parameters::ID::samplePlaybackMode, 1.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleStart, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleEnd, 1.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleGain, -1.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleMix, 0.78f)
+        && setPlainParameter(processor, Parameters::ID::sampleTranspose, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::samplePitchRamp, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleStutterEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleStutterRepeats, 2.0f)
+        && setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDelayEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxReverbEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxPumpEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxGuardEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::outputGain, 0.0f);
+}
+
+RenderComparison compareSampleDestination(const juce::File& sampleFile, int destinationIndex)
+{
+    NateVSTAudioProcessor baseline;
+    NateVSTAudioProcessor routed;
+    if (! configureSampleDestinationAudit(baseline, sampleFile)
+        || ! configureSampleDestinationAudit(routed, sampleFile))
+    {
+        return { 0.0f, 0.0f, -1.0f, false };
+    }
+
+    setFirstRoute(routed, 3, destinationIndex, 1.0f);
+    return compareRenderedNotes(baseline, routed, 60, 1.0f, 12);
+}
+
+bool configureFxDestinationAudit(NateVSTAudioProcessor& processor, int destinationIndex)
+{
+    processor.prepareToPlay(44100.0, 512);
+    clearModMatrix(processor);
+
+    return setPlainParameter(processor, Parameters::ID::oscWave, 1.0f)
+        && setPlainParameter(processor, Parameters::ID::osc1Level, 0.78f)
+        && setPlainParameter(processor, Parameters::ID::osc2Level, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::subLevel, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::noiseLevel, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::ampAttack, 0.001f)
+        && setPlainParameter(processor, Parameters::ID::ampDecay, 0.05f)
+        && setPlainParameter(processor, Parameters::ID::ampSustain, destinationIndex == 8 || destinationIndex == 20 ? 0.0f : 0.72f)
+        && setPlainParameter(processor, Parameters::ID::ampRelease, 0.01f)
+        && setPlainParameter(processor, Parameters::ID::filterCutoff, 16000.0f)
+        && setPlainParameter(processor, Parameters::ID::filterResonance, 0.12f)
+        && setPlainParameter(processor, Parameters::ID::driveAmount, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sampleEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::unisonVoices, destinationIndex == 10 ? 4.0f : 1.0f)
+        && setPlainParameter(processor, Parameters::ID::unisonDetune, destinationIndex == 10 ? 0.38f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::unisonSpread, destinationIndex == 10 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxPumpEnabled, destinationIndex == 7 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxPumpDepth, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDistortionEnabled, destinationIndex == 11 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDistortionAmount, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDelayEnabled, destinationIndex == 8 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDelaySync, 1.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDelayRate, 4.0f)
+        && setPlainParameter(processor, Parameters::ID::fxDelayFeedback, 0.54f)
+        && setPlainParameter(processor, Parameters::ID::fxDelayMix, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxSendDelay, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxReverbEnabled, destinationIndex == 9 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxReverbSize, 0.72f)
+        && setPlainParameter(processor, Parameters::ID::fxReverbMix, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxSendReverb, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxWidthEnabled, destinationIndex == 10 ? 1.0f : 0.0f)
+        && setPlainParameter(processor, Parameters::ID::fxWidthAmount, 0.55f)
+        && setPlainParameter(processor, Parameters::ID::fxGuardEnabled, 0.0f)
+        && setPlainParameter(processor, Parameters::ID::outputGain, 0.0f);
+}
+
+RenderComparison compareFxDestination(int destinationIndex)
+{
+    NateVSTAudioProcessor baseline;
+    NateVSTAudioProcessor routed;
+    if (! configureFxDestinationAudit(baseline, destinationIndex)
+        || ! configureFxDestinationAudit(routed, destinationIndex))
+    {
+        return { 0.0f, 0.0f, -1.0f, false };
+    }
+
+    setFirstRoute(routed, 3, destinationIndex, 1.0f);
+    const auto blocks = destinationIndex == 8 || destinationIndex == 20 || destinationIndex == 21 ? 38 : 12;
+    const auto noteOffBlock = destinationIndex == 8 || destinationIndex == 20 || destinationIndex == 21 ? 1 : 3;
+    return compareRenderedNotes(baseline, routed, 60, 1.0f, blocks, 3, noteOffBlock);
+}
+
+bool destinationChangedEnough(const RenderComparison& comparison, float minimumDiff)
+{
+    return comparison.finite
+        && comparison.diffRms >= minimumDiff
+        && comparison.routedRms >= 0.0001f;
+}
 }
 
 int main()
@@ -439,6 +676,54 @@ int main()
         {
             std::cerr << "Synth " << modulationSourceName(sourceIndex)
                       << " source did not open Osc 1 Level: " << synthSourceRms << '\n';
+            return 1;
+        }
+    }
+
+    const int synthDestinations[] { 1, 2, 3, 4, 5, 6, 17, 18, 19 };
+    for (const auto destinationIndex : synthDestinations)
+    {
+        const auto comparison = compareSynthDestination(destinationIndex);
+        if (! destinationChangedEnough(comparison, 0.00045f))
+        {
+            std::cerr << "Synth destination " << destinationIndex
+                      << " did not produce a meaningful routed change: baseline "
+                      << comparison.baselineRms
+                      << " routed " << comparison.routedRms
+                      << " diff " << comparison.diffRms
+                      << " finite " << comparison.finite << '\n';
+            return 1;
+        }
+    }
+
+    const int sampleDestinations[] { 12, 14, 15, 16 };
+    for (const auto destinationIndex : sampleDestinations)
+    {
+        const auto comparison = compareSampleDestination(sampleFile, destinationIndex);
+        if (! destinationChangedEnough(comparison, 0.0008f))
+        {
+            std::cerr << "Sample destination " << destinationIndex
+                      << " did not produce a meaningful routed change: baseline "
+                      << comparison.baselineRms
+                      << " routed " << comparison.routedRms
+                      << " diff " << comparison.diffRms
+                      << " finite " << comparison.finite << '\n';
+            return 1;
+        }
+    }
+
+    const int fxDestinations[] { 8, 9, 10, 11, 20, 21 };
+    for (const auto destinationIndex : fxDestinations)
+    {
+        const auto comparison = compareFxDestination(destinationIndex);
+        if (! destinationChangedEnough(comparison, 0.00045f))
+        {
+            std::cerr << "FX destination " << destinationIndex
+                      << " did not produce a meaningful routed change: baseline "
+                      << comparison.baselineRms
+                      << " routed " << comparison.routedRms
+                      << " diff " << comparison.diffRms
+                      << " finite " << comparison.finite << '\n';
             return 1;
         }
     }

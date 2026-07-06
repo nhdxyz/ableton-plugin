@@ -8,6 +8,7 @@
 #include "UI/ModPanelLayout.h"
 #include "UI/PianoKeyboardLayout.h"
 #include "UI/PresetBrowserRowLayout.h"
+#include "UI/PresetLibraryChoices.h"
 #include "UI/PresetNoteTemplates.h"
 #include "UI/SamplePanelLayout.h"
 #include "UI/SampleRecorderState.h"
@@ -182,270 +183,6 @@ juce::Colour panelColour(const UI::Theme& theme)
     return theme.panel;
 }
 
-juce::StringArray presetCategoryChoices()
-{
-    return {
-        "User",
-        "Bass",
-        "Stab",
-        "Lead",
-        "House",
-        "House/Acid",
-        "House/Bass",
-        "House/Chords",
-        "House/Keys",
-        "House/Plucks",
-        "House/Indie Dance",
-        "House/Italo Disco",
-        "House/Nu Disco",
-        "House/Balearic",
-        "House/Afro Melodic",
-        "House/Progressive",
-        "House/Hard House",
-        "House/Lo-Fi",
-        "Afro House",
-        "Amapiano",
-        "Organic House",
-        "Melodic Techno",
-        "Drum & Bass",
-        "Bass House",
-        "Hard Techno",
-        "Indie Dance",
-        "Trance",
-        "Ambient",
-        "Future Garage",
-        "Latin Tech",
-        "Tech House",
-        "Tech House/Bass",
-        "Tech House/Deep Tech",
-        "Tech House/Afro Tech",
-        "Techno",
-        "Techno/Dub",
-        "Techno/Hardgroove",
-        "Techno/Peak Time",
-        "Techno/Detroit",
-        "Techno/Melodic",
-        "Techno/Stabs",
-        "Minimal",
-        "Minimal/FM",
-        "Minimal/Deep",
-        "Minimal/Plucks",
-        "Romanian Minimal",
-        "UKG",
-        "UKG/Bass",
-        "UKG/Chops",
-        "UKG/Organ",
-        "UKG/Stabs",
-        "UKG/Bells",
-        "Electro Breaks",
-        "FX",
-        "Sequence",
-        "Sample"
-    };
-}
-
-juce::StringArray presetFilterChoices()
-{
-    return {
-        "All",
-        "Favorites",
-        "Recent",
-        "Rated",
-        "5 Stars",
-        "4+ Stars",
-        "Macro Rich",
-        "Generated",
-        "User",
-        "Factory",
-        "Similar",
-        "Five Star Crate",
-        "Club Bass",
-        "Chord Stabs",
-        "Dub Stabs",
-        "Bass",
-        "Chord",
-        "Pad",
-        "Stab",
-        "Lead",
-        "House",
-        "Tech House",
-        "Techno",
-        "Minimal",
-        "UKG",
-        "Afro House",
-        "Organic House",
-        "Drum & Bass",
-        "Hard Techno",
-        "Trance",
-        "Ambient",
-        "Latin Tech",
-        "Bass House",
-        "Amapiano",
-        "Hardgroove",
-        "Future Garage",
-        "Speed Garage",
-        "Deep Tech",
-        "Indie Dance",
-        "Italo Disco",
-        "Balearic House",
-        "Acid House",
-        "Nu Disco",
-        "Afro Tech",
-        "Afro Melodic",
-        "Progressive House",
-        "Hard House",
-        "Peak Time Techno",
-        "Detroit Techno",
-        "Melodic Techno",
-        "Minimal FM",
-        "Deep Minimal",
-        "Lo-Fi House",
-        "French House",
-        "Soulful House",
-        "Garage House",
-        "Microhouse",
-        "Raw Techno",
-        "Tribal Tech House",
-        "Breaks House",
-        "Chicago House",
-        "Classic House",
-        "Funky House",
-        "Melodic House",
-        "Romanian Minimal",
-        "Dub Techno",
-        "Electro Breaks",
-        "FX",
-        "Sequence",
-        "Sample",
-        "Project Pack",
-        "Factory Pack",
-        "UKG Essentials",
-        "UKG Basslines",
-        "Garage Chops",
-        "House Chords",
-        "House Tools",
-        "House Expansion",
-        "Afro House Rituals",
-        "Amapiano Log Lab",
-        "Melodic Techno Motion",
-        "Organic Progressive",
-        "Drum & Bass Tools",
-        "Bass House Weapons",
-        "Hard Techno Rave",
-        "Indie Dance Dark Disco",
-        "Trance Progressive",
-        "Ambient Electronica",
-        "Future Garage Dub",
-        "Latin Tech Tribal",
-        "Tech House Tools",
-        "Tech House Expansion",
-        "Minimal Plucks",
-        "Minimal Tools",
-        "Minimal Expansion",
-        "Techno Stabs",
-        "Techno Tools",
-        "Techno Expansion",
-        "UKG Expansion",
-        "Dirty Tools",
-        "Mono Safe",
-        "Sequenced Grooves",
-        "120-124 BPM",
-        "125-128 BPM",
-        "129-132 BPM",
-        "133+ BPM"
-    };
-}
-
-juce::StringArray presetSortChoices()
-{
-    return { "Name", "Rating", "Newest", "Category", "Pack", "BPM", "Key", "Author", "Source", "Macros" };
-}
-
-juce::StringArray presetPackChoices()
-{
-    return {
-        "User Pack",
-        "Project Pack",
-        "UKG Essentials",
-        "UKG Basslines",
-        "Garage Chops",
-        "House Chords",
-        "House Tools",
-        "House Expansion",
-        "Afro House Rituals",
-        "Amapiano Log Lab",
-        "Dub Stabs",
-        "Tech House Tools",
-        "Tech House Expansion",
-        "Minimal Plucks",
-        "Minimal Tools",
-        "Minimal Expansion",
-        "Dub Techno Tools",
-        "Techno Tools",
-        "Techno Expansion",
-        "Melodic Techno Motion",
-        "Organic Progressive",
-        "Drum & Bass Tools",
-        "Bass House Weapons",
-        "Hard Techno Rave",
-        "Indie Dance Dark Disco",
-        "Trance Progressive",
-        "Ambient Electronica",
-        "Future Garage Dub",
-        "Latin Tech Tribal",
-        "UKG Expansion",
-        "Electro Breaks Tools",
-        "Factory Pack"
-    };
-}
-
-juce::StringArray presetKeyChoices()
-{
-    return {
-        "Any Key",
-        "C Min",
-        "C# Min",
-        "D Min",
-        "D# Min",
-        "E Min",
-        "F Min",
-        "F# Min",
-        "G Min",
-        "G# Min",
-        "A Min",
-        "A# Min",
-        "B Min",
-        "C Maj",
-        "C# Maj",
-        "D Maj",
-        "D# Maj",
-        "E Maj",
-        "F Maj",
-        "F# Maj",
-        "G Maj",
-        "G# Maj",
-        "A Maj",
-        "A# Maj",
-        "B Maj"
-    };
-}
-
-juce::StringArray presetBpmChoices()
-{
-    return { "Any Tempo", "120 BPM", "122 BPM", "124 BPM", "125 BPM", "126 BPM", "128 BPM", "130 BPM", "132 BPM", "134 BPM", "136 BPM", "138 BPM" };
-}
-
-int parsePresetBpm(const juce::String& text)
-{
-    const auto bpm = text.retainCharacters("0123456789").getIntValue();
-    return bpm >= 20 && bpm <= 300 ? bpm : 0;
-}
-
-juce::String formatPresetBpm(int bpm)
-{
-    return bpm >= 20 && bpm <= 300 ? juce::String(bpm) + " BPM" : juce::String("Any Tempo");
-}
-
 juce::String presetSearchText(const NateVSTAudioProcessor::PresetInfo& preset)
 {
     const auto sourceText = preset.isFactory ? juce::String("Factory") : juce::String("User");
@@ -453,7 +190,7 @@ juce::String presetSearchText(const NateVSTAudioProcessor::PresetInfo& preset)
 
     return preset.name + " " + preset.category + " " + preset.source + " " + preset.tags + " "
         + preset.folder + " " + sourceText + " " + ratingText + " " + preset.author + " "
-        + preset.pack + " " + preset.key + " " + formatPresetBpm(preset.bpm) + " "
+        + preset.pack + " " + preset.key + " " + UI::PresetLibraryChoices::formatBpm(preset.bpm) + " "
         + preset.macroSummary + " " + preset.notes
         + (preset.isFavorite ? " Favorite" : "");
 }
@@ -792,68 +529,6 @@ void drawPresetPreviewLevelBadge(juce::Graphics& g,
                      juce::Justification::centred,
                      1,
                      0.58f);
-}
-
-juce::StringArray presetTagChoices()
-{
-    return {
-        "All Tags",
-        "Bass",
-        "Chord",
-        "Pluck",
-        "Stab",
-        "Sequenced",
-        "Mono Safe",
-        "Pump",
-        "Wide",
-        "FX",
-        "Generated",
-        "Random Lab",
-        "Vocal Chop",
-        "Sample",
-        "Lead",
-        "Organ",
-        "House",
-        "Tech House",
-        "Techno",
-        "Minimal",
-        "UKG",
-        "Bass House",
-        "Amapiano",
-        "Hardgroove",
-        "Future Garage",
-        "Speed Garage",
-        "Deep Tech",
-        "Indie Dance",
-        "Italo Disco",
-        "Balearic House",
-        "Acid House",
-        "Nu Disco",
-        "Afro Tech",
-        "Afro Melodic",
-        "Progressive House",
-        "Hard House",
-        "Peak Time Techno",
-        "Detroit Techno",
-        "Melodic Techno",
-        "Minimal FM",
-        "Deep Minimal",
-        "Lo-Fi House",
-        "French House",
-        "Soulful House",
-        "Garage House",
-        "Microhouse",
-        "Raw Techno",
-        "Tribal Tech House",
-        "Breaks House",
-        "Chicago House",
-        "Classic House",
-        "Funky House",
-        "Melodic House",
-        "Romanian Minimal",
-        "Dub Techno",
-        "Electro Breaks"
-    };
 }
 
 float smoothMeterValue(float current, float target)
@@ -1943,7 +1618,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
             : (recipeBox.getText().trim().isNotEmpty() ? recipeBox.getText().trim() : juce::String("Random Lab"));
         const auto bpm = presetBpmBox.getText().trim().isNotEmpty()
             ? presetBpmBox.getText().trim()
-            : formatPresetBpm(suggestedPresetBpmForCategory(category));
+            : UI::PresetLibraryChoices::formatBpm(suggestedPresetBpmForCategory(category));
         const auto templateText = UI::PresetNoteTemplates::textForId(templateId,
                                                                      { category,
                                                                        recipe,
@@ -2257,7 +1932,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 
     addAndMakeVisible(presetBox);
 
-    presetCategoryBox.addItemList(presetCategoryChoices(), 1);
+    presetCategoryBox.addItemList(UI::PresetLibraryChoices::categoryChoices(), 1);
     presetCategoryBox.setSelectedItemIndex(0, juce::dontSendNotification);
     presetCategoryBox.setEditableText(true);
     presetCategoryBox.setTextWhenNothingSelected("Category / Folder");
@@ -2269,23 +1944,23 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(presetCategoryBox);
 
-    presetFilterBox.addItemList(presetFilterChoices(), 1);
+    presetFilterBox.addItemList(UI::PresetLibraryChoices::filterChoices(), 1);
     presetFilterBox.setSelectedItemIndex(0, juce::dontSendNotification);
     presetFilterBox.setTooltip("Choose basic filters or smart production crates built from tags, notes, pack, BPM, rating, source, and macro values");
     addAndMakeVisible(presetFilterBox);
 
-    presetTagBox.addItemList(presetTagChoices(), 1);
+    presetTagBox.addItemList(UI::PresetLibraryChoices::tagChoices(), 1);
     presetTagBox.setSelectedItemIndex(0, juce::dontSendNotification);
     addAndMakeVisible(presetTagBox);
 
-    presetSortBox.addItemList(presetSortChoices(), 1);
+    presetSortBox.addItemList(UI::PresetLibraryChoices::sortChoices(), 1);
     presetSortBox.setSelectedItemIndex(0, juce::dontSendNotification);
     presetSortBox.setTextWhenNothingSelected("Sort");
     presetSortBox.setTooltip("Sort the visible library by name, rating, newest save, category, or source");
     addAndMakeVisible(presetSortBox);
 
     presetBrowserPackFilterBox.addItem("All Packs", 1);
-    presetBrowserPackFilterBox.addItemList(presetPackChoices(), 2);
+    presetBrowserPackFilterBox.addItemList(UI::PresetLibraryChoices::packChoices(), 2);
     presetBrowserPackFilterBox.setSelectedId(1, juce::dontSendNotification);
     presetBrowserPackFilterBox.setTextWhenNothingSelected("All Packs");
     presetBrowserPackFilterBox.setTooltip("Filter the browser by pack without changing preset save metadata");
@@ -2313,7 +1988,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     candidateRatingBox.setTooltip("Rating to apply when saving the active random candidate");
     addAndMakeVisible(candidateRatingBox);
 
-    presetPackBox.addItemList(presetPackChoices(), 1);
+    presetPackBox.addItemList(UI::PresetLibraryChoices::packChoices(), 1);
     presetPackBox.setSelectedId(1, juce::dontSendNotification);
     presetPackBox.setEditableText(true);
     presetPackBox.setTextWhenNothingSelected("Pack");
@@ -2321,7 +1996,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetPackBox.onChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetPackBox);
 
-    presetKeyBox.addItemList(presetKeyChoices(), 1);
+    presetKeyBox.addItemList(UI::PresetLibraryChoices::keyChoices(), 1);
     presetKeyBox.setSelectedId(1, juce::dontSendNotification);
     presetKeyBox.setEditableText(true);
     presetKeyBox.setTextWhenNothingSelected("Key");
@@ -2329,7 +2004,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     presetKeyBox.onChange = [this] { updatePresetSaveSummary(); };
     addAndMakeVisible(presetKeyBox);
 
-    presetBpmBox.addItemList(presetBpmChoices(), 1);
+    presetBpmBox.addItemList(UI::PresetLibraryChoices::bpmChoices(), 1);
     presetBpmBox.setSelectedId(7, juce::dontSendNotification);
     presetBpmBox.setEditableText(true);
     presetBpmBox.setTextWhenNothingSelected("BPM");
@@ -7946,7 +7621,7 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
 
     const auto currentBpm = presetBpmBox.getText().trim();
     if (currentBpm.isEmpty() || currentBpm == "Any Tempo" || presetNameIsRandomDraft)
-        presetBpmBox.setText(formatPresetBpm(bpm), juce::dontSendNotification);
+        presetBpmBox.setText(UI::PresetLibraryChoices::formatBpm(bpm), juce::dontSendNotification);
 
     const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
     const auto shouldWriteDraftNotes = presetNotesEditor.getText().trim().isEmpty()
@@ -7961,7 +7636,7 @@ void NateVSTAudioProcessorEditor::prepareRandomPresetDraft(const juce::String& a
         presetNotesIsRandomDraft = true;
     }
 
-    presetStatusLabel.setText("Draft -> " + category + " / " + pack + " / " + formatPresetBpm(bpm),
+    presetStatusLabel.setText("Draft -> " + category + " / " + pack + " / " + UI::PresetLibraryChoices::formatBpm(bpm),
                               juce::dontSendNotification);
     updatePresetSaveSummary();
 }
@@ -13974,7 +13649,7 @@ void NateVSTAudioProcessorEditor::updateHomeSessionDisplay()
 
         const auto category = preset.folder.isNotEmpty() ? preset.folder : preset.category;
         selectedSearchText = presetSearchText(preset);
-        state.selectedMeta = preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm);
+        state.selectedMeta = preset.pack + " | " + preset.key + " | " + UI::PresetLibraryChoices::formatBpm(preset.bpm);
         if (textContainsAny(selectedSearchText, { "Bass", "Sub", "Reese", "Dred", "Rubber", "Log Drum" }))
             state.roleName = "Bass";
         else if (textContainsAny(selectedSearchText, { "Chord", "Stab", "Organ", "Keys", "Dub" }))
@@ -14377,7 +14052,7 @@ void NateVSTAudioProcessorEditor::paintListBoxItem(int rowNumber,
 
     const auto roleText = presetInspectorRoleName(inferPresetAuditionRole(&preset));
     const auto metaText = roleText + " | " + categoryText + " | " + preset.pack + " | "
-        + preset.key + " " + formatPresetBpm(preset.bpm);
+        + preset.key + " " + UI::PresetLibraryChoices::formatBpm(preset.bpm);
     g.setFont(juce::FontOptions(layout.compact ? 8.0f : 8.8f, juce::Font::plain));
     g.setColour(juce::Colour(0xff9dafb2));
     g.drawFittedText(metaText,
@@ -14434,7 +14109,7 @@ void NateVSTAudioProcessorEditor::selectedRowsChanged(int lastRowSelected)
     presetNameEditor.setText(preset.name, juce::dontSendNotification);
     updateFavoritePresetButton();
     presetStatusLabel.setText("Selected " + preset.name + " | " + preset.pack + " | "
-                                  + preset.key + " | " + formatPresetBpm(preset.bpm)
+                                  + preset.key + " | " + UI::PresetLibraryChoices::formatBpm(preset.bpm)
                                   + " | " + presetPreviewSummaryText(preset)
                                   + " | " + presetMacroPreviewText(preset),
                               juce::dontSendNotification);
@@ -14755,7 +14430,7 @@ void NateVSTAudioProcessorEditor::refreshPresetList()
     presetStatusLabel.setText(statusText, juce::dontSendNotification);
     presetStatusLabel.setTooltip(selectedPreset != nullptr
                                      ? presetPreviewSummaryText(*selectedPreset) + " | "
-                                           + presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + formatPresetBpm(selectedPreset->bpm)
+                                           + presetMacroPreviewText(*selectedPreset) + " | " + selectedPreset->pack + " | " + selectedPreset->key + " | " + UI::PresetLibraryChoices::formatBpm(selectedPreset->bpm)
                                            + (selectedPreset->notes.trim().isNotEmpty() ? " | " + selectedPreset->notes.replaceCharacter('\n', ' ') : juce::String())
                                      : juce::String("Preset browser status"));
     presetBox.setTooltip(selectedPreset != nullptr
@@ -14840,7 +14515,7 @@ void NateVSTAudioProcessorEditor::updatePresetLibrarySummary()
         state.selectedCategory = preset.folder.isNotEmpty() ? preset.folder : preset.category;
         state.selectedPack = preset.pack;
         state.selectedKey = preset.key;
-        state.selectedBpm = formatPresetBpm(preset.bpm);
+        state.selectedBpm = UI::PresetLibraryChoices::formatBpm(preset.bpm);
         state.selectedRating = preset.rating > 0 ? juce::String(preset.rating) + "/5" : juce::String("Unrated");
         state.selectedSource = preset.source;
         state.selectedNotes = preset.notes;
@@ -14999,7 +14674,7 @@ void NateVSTAudioProcessorEditor::saveCurrentPreset()
     options.author = presetAuthorEditor.getText().trim();
     options.pack = presetPackBox.getText().trim();
     options.key = presetKeyBox.getText().trim();
-    options.bpm = parsePresetBpm(presetBpmBox.getText());
+    options.bpm = UI::PresetLibraryChoices::parseBpm(presetBpmBox.getText());
     options.generated = currentPresetDraftIsGenerated;
     options.generatedRecipe = currentGeneratedPresetRecipe;
     if (options.generated)
@@ -15082,7 +14757,7 @@ void NateVSTAudioProcessorEditor::saveActiveRandomCandidatePreset()
     options.author = presetAuthorEditor.getText().trim();
     options.pack = presetPackBox.getText().trim();
     options.key = presetKeyBox.getText().trim();
-    options.bpm = parsePresetBpm(presetBpmBox.getText());
+    options.bpm = UI::PresetLibraryChoices::parseBpm(presetBpmBox.getText());
     options.generated = true;
     options.generatedRecipe = currentGeneratedPresetRecipe.trim().isNotEmpty()
         ? currentGeneratedPresetRecipe
@@ -15628,13 +15303,13 @@ void NateVSTAudioProcessorEditor::updateFavoritePresetButton()
         presetAuthorEditor.setText(preset.author, juce::dontSendNotification);
         presetPackBox.setText(preset.pack, juce::dontSendNotification);
         presetKeyBox.setText(preset.key, juce::dontSendNotification);
-        presetBpmBox.setText(formatPresetBpm(preset.bpm), juce::dontSendNotification);
+        presetBpmBox.setText(UI::PresetLibraryChoices::formatBpm(preset.bpm), juce::dontSendNotification);
         const auto preview = presetMacroPreviewText(preset);
         const auto renderedPreview = presetPreviewSummaryText(preset);
         presetBox.setTooltip(preset.name + " | " + renderedPreview + " | " + preview);
         presetPrimaryActions.setAuditionTooltip("Play rendered audio preview for " + preset.name + " without loading the patch");
         presetPrimaryActions.setWarmPreviewsTooltip("Render previews for the selected preset and visible crate rows");
-        presetStatusLabel.setTooltip(renderedPreview + " | " + preview + " | " + preset.pack + " | " + preset.key + " | " + formatPresetBpm(preset.bpm));
+        presetStatusLabel.setTooltip(renderedPreview + " | " + preview + " | " + preset.pack + " | " + preset.key + " | " + UI::PresetLibraryChoices::formatBpm(preset.bpm));
         break;
     }
 

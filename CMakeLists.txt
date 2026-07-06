@@ -92,6 +92,7 @@ target_sources(NateVST
         Source/UI/PresetBrowserRowLayout.cpp
         Source/UI/PresetCompareActions.cpp
         Source/UI/PresetCrateMapDisplay.cpp
+        Source/UI/PresetLibraryChoices.cpp
         Source/UI/PresetLibrarySummary.cpp
         Source/UI/PresetNoteTemplates.cpp
         Source/UI/PresetPrimaryActions.cpp

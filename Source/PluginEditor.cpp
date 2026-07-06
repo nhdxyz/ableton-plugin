@@ -5,6 +5,7 @@
 #include "Synth/WavetableFrameRecipes.h"
 #include "UI/FxRackPanelLayout.h"
 #include "UI/LibraryPanelLayout.h"
+#include "UI/LfoCurveLibrary.h"
 #include "UI/ModPanelLayout.h"
 #include "UI/OutputTelemetry.h"
 #include "UI/PianoKeyboardLayout.h"
@@ -365,100 +366,6 @@ juce::String randomRecipeInfoText(const juce::String& recipeName)
         + " | Bias: " + info.bias;
 }
 
-juce::StringArray lfoCurvePresetChoices()
-{
-    return {
-        "Manual",
-        "Garage Push",
-        "Tight Duck",
-        "Offbeat Skank",
-        "Riser",
-        "Fall",
-        "Gate Steps",
-        "Wobble",
-        "UKG Swing",
-        "Minimal Pulse",
-        "Techno Ramp",
-        "House Chug",
-        "Flat"
-    };
-}
-
-std::array<float, 8> lfoCurvePresetValues(int presetId)
-{
-    switch (presetId)
-    {
-        case 2: return { -0.10f, 0.38f, 0.98f, 0.54f, 0.08f, -0.30f, -0.78f, -0.22f };
-        case 3: return { -1.00f, -0.65f, -0.22f, 0.34f, 0.76f, 1.00f, 0.42f, -0.12f };
-        case 4: return { -0.36f, 0.14f, 0.82f, 0.26f, -0.22f, 0.58f, 1.00f, -0.48f };
-        case 5: return { -1.00f, -0.72f, -0.45f, -0.12f, 0.18f, 0.48f, 0.76f, 1.00f };
-        case 6: return { 1.00f, 0.72f, 0.45f, 0.12f, -0.18f, -0.48f, -0.76f, -1.00f };
-        case 7: return { 1.00f, 1.00f, -0.65f, -0.65f, 0.80f, 0.80f, -1.00f, -1.00f };
-        case 8: return { 0.00f, 1.00f, 0.00f, -1.00f, 0.00f, 0.72f, 0.00f, -0.72f };
-        case 9: return { -0.54f, 0.82f, -0.18f, 0.58f, -0.70f, 1.00f, -0.30f, 0.34f };
-        case 10: return { -1.00f, -1.00f, 0.85f, -1.00f, -1.00f, -1.00f, 0.42f, -1.00f };
-        case 11: return { -0.80f, -0.58f, -0.24f, 0.18f, 0.56f, 0.88f, 1.00f, -0.20f };
-        case 12: return { -0.25f, 0.48f, 0.28f, -0.18f, 0.42f, 0.10f, -0.36f, 0.18f };
-        case 13: return { 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f, 0.00f };
-        default: return { 0.00f, 0.58f, 1.00f, 0.42f, -0.18f, -0.72f, -1.00f, -0.36f };
-    }
-}
-
-double lfoCyclesPerBeatForUi(int rateIndex)
-{
-    switch (rateIndex)
-    {
-        case 1: return 2.0;
-        case 2: return 3.0;
-        case 3: return 4.0;
-        default: return 1.0;
-    }
-}
-
-float evaluateLfoCurveForUi(const std::array<float, 8>& values, float phase)
-{
-    constexpr auto pointCount = 8;
-    const auto scaledPhase = juce::jlimit(0.0f, 0.999999f, phase) * static_cast<float>(pointCount);
-    const auto leftIndex = static_cast<int>(std::floor(scaledPhase)) % pointCount;
-    const auto rightIndex = (leftIndex + 1) % pointCount;
-    const auto fraction = scaledPhase - std::floor(scaledPhase);
-
-    return juce::jlimit(-1.0f,
-                        1.0f,
-                        values[static_cast<size_t>(leftIndex)]
-                            + ((values[static_cast<size_t>(rightIndex)] - values[static_cast<size_t>(leftIndex)]) * fraction));
-}
-
-float lfoShapeValueForUi(int shapeIndex, float phase, const std::array<float, 8>& curveValues)
-{
-    phase = std::fmod(phase + 1.0f, 1.0f);
-
-    switch (shapeIndex)
-    {
-        case 1:
-            return phase < 0.25f ? phase * 4.0f
-                : phase < 0.75f ? 2.0f - (phase * 4.0f)
-                : (phase * 4.0f) - 4.0f;
-
-        case 2:
-            return (phase * 2.0f) - 1.0f;
-
-        case 3:
-            return phase < 0.5f ? 1.0f : -1.0f;
-
-        case 4:
-            return phase < 0.25f ? 1.0f
-                : phase < 0.5f ? -0.35f
-                : phase < 0.75f ? 0.55f
-                : -1.0f;
-
-        case 5:
-            return evaluateLfoCurveForUi(curveValues, phase);
-
-        default:
-            return std::sin(juce::MathConstants<float>::twoPi * phase);
-    }
-}
 }
 
 NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& processorToUse)
@@ -1731,7 +1638,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(lfo2SyncRateBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::lfo2SyncRate, lfo2SyncRateBox));
 
-    lfoCurvePresetBox.addItemList(lfoCurvePresetChoices(), 1);
+    lfoCurvePresetBox.addItemList(UI::LfoCurveLibrary::presetChoices(), 1);
     lfoCurvePresetBox.setSelectedId(1, juce::dontSendNotification);
     lfoCurvePresetBox.setTextWhenNothingSelected("Curve Preset");
     lfoCurvePresetBox.setTooltip("Load an LFO curve shape for house, UKG, techno, and minimal movement");
@@ -9743,13 +9650,16 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
 
     if (syncEnabled && hostStatus.ppqAvailable)
     {
-        phase += static_cast<float>(std::fmod(hostStatus.ppqPosition * lfoCyclesPerBeatForUi(syncRateIndex), 1.0));
+        phase += static_cast<float>(std::fmod(hostStatus.ppqPosition
+                                                  * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex),
+                                              1.0));
     }
     else
     {
         const auto bpm = juce::jlimit(20.0, 300.0, hostStatus.bpm);
         const auto rateHz = syncEnabled
-            ? static_cast<float>((bpm / 60.0) * lfoCyclesPerBeatForUi(syncRateIndex))
+            ? static_cast<float>((bpm / 60.0)
+                * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex))
             : readPlainParameterValue(Parameters::ID::lfo1Rate, 1.0f);
         phase += static_cast<float>(std::fmod((juce::Time::getMillisecondCounterHiRes() * 0.001) * rateHz, 1.0));
     }
@@ -9760,7 +9670,7 @@ void NateVSTAudioProcessorEditor::updateLfoCurveDisplay()
 
 void NateVSTAudioProcessorEditor::applyLfoCurvePreset(int presetId)
 {
-    const auto values = lfoCurvePresetValues(presetId);
+    const auto values = UI::LfoCurveLibrary::presetValues(presetId);
     captureGlobalEdit("Load LFO curve");
     setPlainParameterValue(Parameters::ID::lfo1Shape, 5.0f);
 
@@ -9831,7 +9741,7 @@ void NateVSTAudioProcessorEditor::applyLfoCurveTool(LfoCurveTool tool)
         }
 
         case LfoCurveTool::garage:
-            values = lfoCurvePresetValues(9);
+            values = UI::LfoCurveLibrary::presetValues(9);
             presetId = 9;
             statusText = "Loaded UKG swing MSEG";
             break;
@@ -12042,13 +11952,16 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
 
         if (syncEnabled && hostStatus.ppqAvailable)
         {
-            phase += static_cast<float>(std::fmod(hostStatus.ppqPosition * lfoCyclesPerBeatForUi(syncRateIndex), 1.0));
+            phase += static_cast<float>(std::fmod(hostStatus.ppqPosition
+                                                      * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex),
+                                                  1.0));
         }
         else
         {
             const auto bpm = juce::jlimit(20.0, 300.0, hostStatus.bpm);
             const auto rateHz = syncEnabled
-                ? static_cast<float>((bpm / 60.0) * lfoCyclesPerBeatForUi(syncRateIndex))
+                ? static_cast<float>((bpm / 60.0)
+                    * UI::LfoCurveLibrary::cyclesPerBeatForRateIndex(syncRateIndex))
                 : freeRateHz;
             phase += static_cast<float>(std::fmod((juce::Time::getMillisecondCounterHiRes() * 0.001) * rateHz, 1.0));
         }
@@ -12078,9 +11991,9 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
                                         juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1SyncRate, 1.0f)),
                                         readPlainParameterValue(Parameters::ID::lfo1Rate, 1.0f),
                                         readPlainParameterValue(Parameters::ID::lfo1Phase, 0.0f));
-            const auto value = lfoShapeValueForUi(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1Shape, 0.0f)),
-                                                  phase,
-                                                  curveValues);
+            const auto value = UI::LfoCurveLibrary::shapeValue(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo1Shape, 0.0f)),
+                                                               phase,
+                                                               curveValues);
             return bipolarActivity(value, readPlainParameterValue(Parameters::ID::lfo1Depth, 0.45f));
         }
 
@@ -12124,9 +12037,9 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
                                         juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo2SyncRate, 3.0f)),
                                         readPlainParameterValue(Parameters::ID::lfo2Rate, 1.5f),
                                         readPlainParameterValue(Parameters::ID::lfo2Phase, 0.25f));
-            const auto value = lfoShapeValueForUi(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo2Shape, 1.0f)),
-                                                  phase,
-                                                  curveValues);
+            const auto value = UI::LfoCurveLibrary::shapeValue(juce::roundToInt(readPlainParameterValue(Parameters::ID::lfo2Shape, 1.0f)),
+                                                               phase,
+                                                               curveValues);
             return bipolarActivity(value, readPlainParameterValue(Parameters::ID::lfo2Depth, 0.25f));
         }
 

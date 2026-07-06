@@ -178,6 +178,11 @@ bool auditPerformanceModulationStatus()
     NateVSTAudioProcessor processor;
     processor.prepareToPlay(44100.0, 512);
     setPlainParameter(processor, Parameters::ID::sequencerEnabled, 0.0f);
+    setPlainParameter(processor, Parameters::ID::modEnv1Attack, 0.001f);
+    setPlainParameter(processor, Parameters::ID::modEnv1Decay, 0.02f);
+    setPlainParameter(processor, Parameters::ID::modEnv1Sustain, 1.0f);
+    setPlainParameter(processor, Parameters::ID::modEnv1Release, 0.03f);
+    setPlainParameter(processor, Parameters::ID::modEnv1Depth, 1.0f);
 
     juce::AudioBuffer<float> buffer(2, 512);
     juce::MidiBuffer midi;
@@ -191,6 +196,12 @@ bool auditPerformanceModulationStatus()
     if (std::abs(status.velocity - 0.64f) > 0.01f)
     {
         std::cerr << "Performance status did not report velocity: " << status.velocity << '\n';
+        return false;
+    }
+
+    if (status.modEnvelope < 0.75f)
+    {
+        std::cerr << "Performance status did not report live mod envelope: " << status.modEnvelope << '\n';
         return false;
     }
 
@@ -229,6 +240,28 @@ bool auditPerformanceModulationStatus()
         return false;
     }
 
+    auto releasePeak = status.modEnvelope;
+    for (auto block = 0; block < 8; ++block)
+    {
+        midi.clear();
+        processor.processBlock(buffer, midi);
+        status = processor.getPerformanceModulationStatus();
+        releasePeak = juce::jmax(releasePeak, status.modEnvelope);
+    }
+
+    if (releasePeak <= 0.001f)
+    {
+        std::cerr << "Performance mod envelope did not enter release after note off\n";
+        return false;
+    }
+
+    if (status.modEnvelope > 0.001f)
+    {
+        std::cerr << "Performance mod envelope stayed active after release: "
+                  << status.modEnvelope << '\n';
+        return false;
+    }
+
     midi.clear();
     midi.addEvent(juce::MidiMessage::noteOn(1, 72, 0.5f), 0);
     processor.processBlock(buffer, midi);
@@ -241,6 +274,19 @@ bool auditPerformanceModulationStatus()
     {
         std::cerr << "Performance status stayed active after all notes off: velocity "
                   << status.velocity << " note " << status.note << '\n';
+        return false;
+    }
+
+    for (auto block = 0; block < 8; ++block)
+    {
+        midi.clear();
+        processor.processBlock(buffer, midi);
+    }
+    status = processor.getPerformanceModulationStatus();
+    if (status.modEnvelope > 0.001f)
+    {
+        std::cerr << "Performance mod envelope stayed active after all notes off release: "
+                  << status.modEnvelope << '\n';
         return false;
     }
 
@@ -269,10 +315,13 @@ bool auditPerformanceModulationStatus()
     processor.processBlock(buffer, midi);
     processor.panicAllNotesOff();
     status = processor.getPerformanceModulationStatus();
-    if (std::abs(status.velocity) > 0.001f || std::abs(status.note) > 0.001f)
+    if (std::abs(status.velocity) > 0.001f
+        || std::abs(status.note) > 0.001f
+        || status.modEnvelope > 0.001f)
     {
         std::cerr << "Performance status stayed active after panic: velocity "
-                  << status.velocity << " note " << status.note << '\n';
+                  << status.velocity << " note " << status.note
+                  << " env " << status.modEnvelope << '\n';
         return false;
     }
 

@@ -241,6 +241,7 @@ public:
     struct PerformanceModulationStatus
     {
         float velocity = 0.0f;
+        float modEnvelope = 0.0f;
         float modWheel = 0.0f;
         float aftertouch = 0.0f;
         float pitchBend = 0.0f;
@@ -341,6 +342,11 @@ private:
     std::atomic<float>* sequencerChordMemory = nullptr;
     std::atomic<float>* sequencerLockDestination = nullptr;
     std::atomic<float>* sequencerLockDepth = nullptr;
+    std::atomic<float>* performanceModEnvAttack = nullptr;
+    std::atomic<float>* performanceModEnvDecay = nullptr;
+    std::atomic<float>* performanceModEnvSustain = nullptr;
+    std::atomic<float>* performanceModEnvRelease = nullptr;
+    std::atomic<float>* performanceModEnvDepth = nullptr;
     std::atomic<float> outputMeterPeakLeft { 0.0f };
     std::atomic<float> outputMeterPeakRight { 0.0f };
     std::atomic<float> outputMeterRmsLeft { 0.0f };
@@ -359,6 +365,7 @@ private:
     std::atomic<bool> hostSyncPlaying { false };
     std::atomic<bool> hostSyncPpqAvailable { false };
     std::atomic<float> performanceModVelocity { 0.0f };
+    std::atomic<float> performanceModEnvelopeLevel { 0.0f };
     std::atomic<float> performanceModWheel { 0.0f };
     std::atomic<float> performanceModAftertouch { 0.0f };
     std::atomic<float> performanceModPitchBend { 0.0f };
@@ -370,6 +377,8 @@ private:
     uint32_t outputSpectrumWriteCursor = 0;
     double meterSampleRate = 44100.0;
     int preparedSamplesPerBlock = 512;
+    juce::ADSR performanceModEnvelopeFollower;
+    juce::ADSR::Parameters performanceModEnvelopeParameters;
     juce::String loadedSamplePath;
     mutable juce::CriticalSection sampleCaptureTakeLock;
     std::vector<juce::File> sampleCaptureTakeFiles;
@@ -480,6 +489,7 @@ private:
     void waitForSampleCaptureWritersToFinish();
     void rememberSampleCaptureTake(const juce::File& file);
     void updatePerformanceModulationStatus(const juce::MidiBuffer& midiMessages) noexcept;
+    void advancePerformanceModulationEnvelope(int numSamples) noexcept;
     void resetPerformanceModulationStatus() noexcept;
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();

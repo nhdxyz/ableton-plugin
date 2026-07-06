@@ -830,6 +830,11 @@ NateVSTAudioProcessor::NateVSTAudioProcessor()
     sequencerChordMemory = parameters.getRawParameterValue(Parameters::ID::sequencerChordMemory);
     sequencerLockDestination = parameters.getRawParameterValue(Parameters::ID::sequencerLockDestination);
     sequencerLockDepth = parameters.getRawParameterValue(Parameters::ID::sequencerLockDepth);
+    performanceModEnvAttack = parameters.getRawParameterValue(Parameters::ID::modEnv1Attack);
+    performanceModEnvDecay = parameters.getRawParameterValue(Parameters::ID::modEnv1Decay);
+    performanceModEnvSustain = parameters.getRawParameterValue(Parameters::ID::modEnv1Sustain);
+    performanceModEnvRelease = parameters.getRawParameterValue(Parameters::ID::modEnv1Release);
+    performanceModEnvDepth = parameters.getRawParameterValue(Parameters::ID::modEnv1Depth);
     clearChordMemoryActiveNotes();
 }
 
@@ -837,6 +842,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
 {
     meterSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
     preparedSamplesPerBlock = samplesPerBlock > 0 ? samplesPerBlock : 512;
+    performanceModEnvelopeFollower.setSampleRate(meterSampleRate);
     chordMemoryScratchMidi.clear();
     chordMemoryScratchMidi.ensureSize(static_cast<size_t>(juce::jmax(8192, preparedSamplesPerBlock * 8)));
     synthEngine.prepare(sampleRate, samplesPerBlock);
@@ -955,6 +961,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
                               std::memory_order_relaxed);
     patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     updatePerformanceModulationStatus(midiMessages);
+    advancePerformanceModulationEnvelope(buffer.getNumSamples());
     const auto lockDestination = sequencerLockDestination != nullptr
         ? juce::jlimit(0, 8, static_cast<int>(std::round(sequencerLockDestination->load(std::memory_order_relaxed))))
         : 0;
@@ -997,6 +1004,7 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
         if (message.isNoteOn())
         {
             activeNotes = juce::jmin(128, activeNotes + 1);
+            performanceModEnvelopeFollower.noteOn();
             performanceModVelocity.store(juce::jlimit(0.0f, 1.0f, message.getFloatVelocity()),
                                          std::memory_order_relaxed);
             performanceModNote.store(juce::jlimit(-1.0f,
@@ -1009,6 +1017,7 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
             activeNotes = juce::jmax(0, activeNotes - 1);
             if (activeNotes == 0)
             {
+                performanceModEnvelopeFollower.noteOff();
                 performanceModVelocity.store(0.0f, std::memory_order_relaxed);
                 performanceModNote.store(0.0f, std::memory_order_relaxed);
             }
@@ -1016,6 +1025,7 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
         else if (message.isAllNotesOff() || message.isAllSoundOff())
         {
             activeNotes = 0;
+            performanceModEnvelopeFollower.noteOff();
             performanceModVelocity.store(0.0f, std::memory_order_relaxed);
             performanceModNote.store(0.0f, std::memory_order_relaxed);
         }
@@ -1055,9 +1065,37 @@ void NateVSTAudioProcessor::updatePerformanceModulationStatus(const juce::MidiBu
     performanceModActiveNotes.store(activeNotes, std::memory_order_relaxed);
 }
 
+void NateVSTAudioProcessor::advancePerformanceModulationEnvelope(int numSamples) noexcept
+{
+    auto readParameter = [] (std::atomic<float>* parameter, float fallback) noexcept
+    {
+        return parameter != nullptr ? parameter->load(std::memory_order_relaxed) : fallback;
+    };
+
+    performanceModEnvelopeParameters.attack = juce::jmax(0.001f, readParameter(performanceModEnvAttack, 0.01f));
+    performanceModEnvelopeParameters.decay = juce::jmax(0.001f, readParameter(performanceModEnvDecay, 0.2f));
+    performanceModEnvelopeParameters.sustain = juce::jlimit(0.0f, 1.0f, readParameter(performanceModEnvSustain, 0.5f));
+    performanceModEnvelopeParameters.release = juce::jmax(0.001f, readParameter(performanceModEnvRelease, 0.2f));
+    performanceModEnvelopeFollower.setParameters(performanceModEnvelopeParameters);
+
+    auto value = 0.0f;
+    const auto samplesToProcess = juce::jmax(1, numSamples);
+    for (auto sample = 0; sample < samplesToProcess; ++sample)
+        value = performanceModEnvelopeFollower.getNextSample();
+
+    performanceModEnvelopeLevel.store(juce::jlimit(0.0f,
+                                                   1.0f,
+                                                   value * juce::jlimit(0.0f,
+                                                                        1.0f,
+                                                                        readParameter(performanceModEnvDepth, 0.5f))),
+                                      std::memory_order_relaxed);
+}
+
 void NateVSTAudioProcessor::resetPerformanceModulationStatus() noexcept
 {
     performanceModVelocity.store(0.0f, std::memory_order_relaxed);
+    performanceModEnvelopeFollower.reset();
+    performanceModEnvelopeLevel.store(0.0f, std::memory_order_relaxed);
     performanceModWheel.store(0.0f, std::memory_order_relaxed);
     performanceModAftertouch.store(0.0f, std::memory_order_relaxed);
     performanceModPitchBend.store(0.0f, std::memory_order_relaxed);
@@ -4710,6 +4748,7 @@ NateVSTAudioProcessor::PerformanceModulationStatus NateVSTAudioProcessor::getPer
 {
     PerformanceModulationStatus status;
     status.velocity = performanceModVelocity.load(std::memory_order_relaxed);
+    status.modEnvelope = performanceModEnvelopeLevel.load(std::memory_order_relaxed);
     status.modWheel = performanceModWheel.load(std::memory_order_relaxed);
     status.aftertouch = performanceModAftertouch.load(std::memory_order_relaxed);
     status.pitchBend = performanceModPitchBend.load(std::memory_order_relaxed);

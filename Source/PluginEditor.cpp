@@ -12184,10 +12184,10 @@ float NateVSTAudioProcessorEditor::modulationSourceActivityForUi(int sourceIndex
         }
 
         case 2:
-            return juce::jlimit(0.0f,
-                                1.0f,
-                                readPlainParameterValue(Parameters::ID::modEnv1Depth, 0.4f)
-                                    * juce::jmax(0.25f, readPlainParameterValue(Parameters::ID::modEnv1Sustain, 0.55f)));
+        {
+            const auto status = audioProcessor.getPerformanceModulationStatus();
+            return juce::jlimit(0.0f, 1.0f, status.modEnvelope);
+        }
 
         case 3:
         {

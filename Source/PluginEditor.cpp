@@ -4453,6 +4453,17 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             issues.add("MOD inspector summary hides shaped route details: " + inspectorSummary);
         }
 
+        updateModMatrixRows();
+        const auto matrixStatus = modMatrixStatusLabel.getText();
+        if (! matrixStatus.contains("+42%")
+            || ! matrixStatus.contains("Unipolar +")
+            || ! matrixStatus.contains("Gate")
+            || ! matrixStatus.contains("Range 0..100%")
+            || ! matrixStatus.contains("Slew 25%"))
+        {
+            issues.add("MOD routing status hides shaped route details: " + matrixStatus);
+        }
+
         clearMatrix();
         setPlainParameterValue(Parameters::ID::modMatrixSource[0], 4.0f);
         setPlainParameterValue(Parameters::ID::modMatrixDestination[0], 13.0f);
@@ -11979,7 +11990,9 @@ void NateVSTAudioProcessorEditor::updateModMatrixRows()
             {
                 const auto percent = juce::roundToInt(amount * 100.0f);
                 firstActiveRoute = sourceText + " -> " + destinationText
-                    + " " + (percent >= 0 ? "+" : "") + juce::String(percent);
+                    + " " + (percent >= 0 ? "+" : "") + juce::String(percent) + "%";
+                if (shapeSummary.isNotEmpty())
+                    firstActiveRoute += " [" + shapeSummary + "]";
             }
         }
     }

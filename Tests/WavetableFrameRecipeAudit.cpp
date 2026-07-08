@@ -136,6 +136,8 @@ int main()
     const auto blended = Synth::WavetableFrameRecipes::blendFrameStacks(house, rave, 0.5f);
     const auto morphed = Synth::WavetableFrameRecipes::morphBetweenFrameStacks(house, rave);
     const auto spliced = Synth::WavetableFrameRecipes::spliceFrameStacks(house, rave);
+    const auto spectral = Synth::WavetableFrameRecipes::spectralBlendFrameStacks(house, rave, 0.5f);
+    const auto interleaved = Synth::WavetableFrameRecipes::interleaveHarmonicsFrameStacks(house, rave);
     const auto duplicated = Synth::WavetableFrameRecipes::duplicateFrameSlot(rave, 2);
     const auto duplicateAtEnd = Synth::WavetableFrameRecipes::duplicateFrameSlot(rave, 7);
     const auto deleted = Synth::WavetableFrameRecipes::deleteFrameSlot(rave, 2);
@@ -156,7 +158,9 @@ int main()
         || ! framesAreSafe(movedRight)
         || ! validateFrameSet("Blended stack", blended)
         || ! validateFrameSet("Morphed stack", morphed)
-        || ! validateFrameSet("Spliced stack", spliced))
+        || ! validateFrameSet("Spliced stack", spliced)
+        || ! validateFrameSet("Spectral blend stack", spectral)
+        || ! validateFrameSet("Interleaved harmonics stack", interleaved))
     {
         std::cerr << "Frame-stack transform produced unsafe values\n";
         return 1;
@@ -224,6 +228,21 @@ int main()
         return 1;
     }
 
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(spectral[3], house[3]) < 0.02f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(spectral[3], rave[3]) < 0.02f)
+    {
+        std::cerr << "Spectral frame-stack blend landed too close to only one source stack\n";
+        return 1;
+    }
+
+    if (Synth::WavetableFrameRecipes::meanAbsoluteDifference(interleaved[4], house[4]) < 0.02f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(interleaved[4], rave[4]) < 0.02f
+        || Synth::WavetableFrameRecipes::meanAbsoluteDifference(interleaved[4], spectral[4]) < 0.01f)
+    {
+        std::cerr << "Interleaved harmonic stack did not create a distinct hybrid frame\n";
+        return 1;
+    }
+
     if (adjacentDifference(smoothed) >= adjacentDifference(rave))
     {
         std::cerr << "Frame-stack smooth transform did not reduce adjacent frame motion\n";
@@ -236,6 +255,6 @@ int main()
         return 1;
     }
 
-    std::cout << "Wavetable frame recipe audit passed for generated frame sets, genre stacks, stack transforms, frame-slot edits, and O1/O2 stack-combine tools.\n";
+    std::cout << "Wavetable frame recipe audit passed for generated frame sets, genre stacks, stack transforms, spectral O1/O2 stack composition, and frame-slot edits.\n";
     return 0;
 }

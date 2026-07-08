@@ -11,6 +11,12 @@ namespace
 constexpr auto pi = 3.14159265358979323846f;
 constexpr auto twoPi = pi * 2.0f;
 
+struct Spectrum
+{
+    ControlPoints real {};
+    ControlPoints imaginary {};
+};
+
 float clampNormalised(float value) noexcept
 {
     if (! std::isfinite(value))
@@ -22,6 +28,11 @@ float clampNormalised(float value) noexcept
 float bipolarToNormalised(float value) noexcept
 {
     return clampNormalised(0.5f + (value * 0.5f));
+}
+
+float normalisedToBipolar(float value) noexcept
+{
+    return (clampNormalised(value) * 2.0f) - 1.0f;
 }
 
 template <typename ShapeForPhase>
@@ -75,6 +86,92 @@ ControlPoints blend(const ControlPoints& first, const ControlPoints& second, flo
         result[index] = clampNormalised(first[index] + ((second[index] - first[index]) * mix));
 
     return result;
+}
+
+Spectrum analyseSpectrum(const ControlPoints& source) noexcept
+{
+    Spectrum spectrum {};
+    const auto count = static_cast<float>(source.size());
+
+    for (size_t bin = 0; bin < source.size(); ++bin)
+    {
+        const auto harmonic = static_cast<float>(bin);
+        auto real = 0.0f;
+        auto imaginary = 0.0f;
+
+        for (size_t sampleIndex = 0; sampleIndex < source.size(); ++sampleIndex)
+        {
+            const auto sample = normalisedToBipolar(source[sampleIndex]);
+            const auto phase = twoPi * harmonic * static_cast<float>(sampleIndex) / count;
+            real += sample * std::cos(phase);
+            imaginary -= sample * std::sin(phase);
+        }
+
+        spectrum.real[bin] = real / count;
+        spectrum.imaginary[bin] = imaginary / count;
+    }
+
+    return spectrum;
+}
+
+Spectrum blendSpectra(const Spectrum& first, const Spectrum& second, float amount) noexcept
+{
+    Spectrum result {};
+    const auto mix = std::clamp(amount, 0.0f, 1.0f);
+
+    for (size_t bin = 0; bin < result.real.size(); ++bin)
+    {
+        const auto firstMagnitude = std::sqrt((first.real[bin] * first.real[bin])
+                                              + (first.imaginary[bin] * first.imaginary[bin]));
+        const auto secondMagnitude = std::sqrt((second.real[bin] * second.real[bin])
+                                               + (second.imaginary[bin] * second.imaginary[bin]));
+        const auto magnitude = firstMagnitude + ((secondMagnitude - firstMagnitude) * mix);
+
+        const auto firstPhase = std::atan2(first.imaginary[bin], first.real[bin]);
+        const auto secondPhase = std::atan2(second.imaginary[bin], second.real[bin]);
+        auto phaseX = (std::cos(firstPhase) * (1.0f - mix)) + (std::cos(secondPhase) * mix);
+        auto phaseY = (std::sin(firstPhase) * (1.0f - mix)) + (std::sin(secondPhase) * mix);
+        const auto phaseLength = std::sqrt((phaseX * phaseX) + (phaseY * phaseY));
+
+        if (phaseLength <= 0.000001f)
+        {
+            result.real[bin] = first.real[bin] + ((second.real[bin] - first.real[bin]) * mix);
+            result.imaginary[bin] = first.imaginary[bin] + ((second.imaginary[bin] - first.imaginary[bin]) * mix);
+            continue;
+        }
+
+        phaseX /= phaseLength;
+        phaseY /= phaseLength;
+        result.real[bin] = magnitude * phaseX;
+        result.imaginary[bin] = magnitude * phaseY;
+    }
+
+    return result;
+}
+
+ControlPoints renderSpectrum(const Spectrum& spectrum) noexcept
+{
+    ControlPoints points {};
+    const auto count = static_cast<float>(points.size());
+
+    for (size_t sampleIndex = 0; sampleIndex < points.size(); ++sampleIndex)
+    {
+        auto sample = 0.0f;
+        for (size_t bin = 0; bin < points.size(); ++bin)
+        {
+            const auto phase = twoPi * static_cast<float>(bin) * static_cast<float>(sampleIndex) / count;
+            sample += (spectrum.real[bin] * std::cos(phase)) - (spectrum.imaginary[bin] * std::sin(phase));
+        }
+
+        points[sampleIndex] = bipolarToNormalised(sample);
+    }
+
+    return normalise(points);
+}
+
+size_t foldedHarmonicIndex(size_t bin, size_t count) noexcept
+{
+    return bin == 0 ? size_t { 0 } : std::min(bin, count - bin);
 }
 
 ControlPoints smooth(const ControlPoints& source, float amount) noexcept
@@ -554,6 +651,49 @@ ControlFrameSet spliceFrameStacks(const ControlFrameSet& first, const ControlFra
         const auto& secondary = (frameIndex % 2 == 0) ? second[frameIndex] : first[frameIndex];
         const auto edgeBlend = frameIndex == 0 || frameIndex + 1 >= result.size() ? 0.18f : 0.30f;
         result[frameIndex] = blend(primary, secondary, edgeBlend);
+    }
+
+    return result;
+}
+
+ControlFrameSet spectralBlendFrameStacks(const ControlFrameSet& first, const ControlFrameSet& second, float amount) noexcept
+{
+    ControlFrameSet result {};
+    const auto mix = std::clamp(amount, 0.0f, 1.0f);
+
+    for (size_t frameIndex = 0; frameIndex < result.size(); ++frameIndex)
+    {
+        const auto firstSpectrum = analyseSpectrum(first[frameIndex]);
+        const auto secondSpectrum = analyseSpectrum(second[frameIndex]);
+        result[frameIndex] = renderSpectrum(blendSpectra(firstSpectrum, secondSpectrum, mix));
+    }
+
+    return result;
+}
+
+ControlFrameSet interleaveHarmonicsFrameStacks(const ControlFrameSet& primary, const ControlFrameSet& secondary) noexcept
+{
+    ControlFrameSet result {};
+
+    for (size_t frameIndex = 0; frameIndex < result.size(); ++frameIndex)
+    {
+        const auto primarySpectrum = analyseSpectrum(primary[frameIndex]);
+        const auto secondarySpectrum = analyseSpectrum(secondary[frameIndex]);
+        const auto hybridSpectrum = blendSpectra(primarySpectrum, secondarySpectrum, 0.42f);
+        Spectrum interleaved {};
+
+        for (size_t bin = 0; bin < interleaved.real.size(); ++bin)
+        {
+            const auto harmonic = foldedHarmonicIndex(bin, interleaved.real.size());
+            const auto usePrimary = harmonic <= 2;
+            const auto useSecondary = harmonic > 2 && harmonic % 2 == 0;
+
+            const auto& sourceSpectrum = usePrimary ? primarySpectrum : (useSecondary ? secondarySpectrum : hybridSpectrum);
+            interleaved.real[bin] = sourceSpectrum.real[bin];
+            interleaved.imaginary[bin] = sourceSpectrum.imaginary[bin];
+        }
+
+        result[frameIndex] = renderSpectrum(interleaved);
     }
 
     return result;

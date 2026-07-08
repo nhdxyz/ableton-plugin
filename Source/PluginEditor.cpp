@@ -1259,6 +1259,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Blend O1/O2 -> Target", 68);
     wavetableToolBox.addItem("Morph Other -> Target", 69);
     wavetableToolBox.addItem("Splice Other Into Target", 70);
+    wavetableToolBox.addItem("Spectral Blend -> Target", 78);
+    wavetableToolBox.addItem("Interleave Harmonics -> Target", 79);
     wavetableToolBox.addItem("Build Classic House Source", 62);
     wavetableToolBox.addItem("Build Rave Techno Source", 63);
     wavetableToolBox.addSectionHeading("Additive Partials");
@@ -1290,7 +1292,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     wavetableToolBox.addItem("Reese Stack", 73);
     wavetableToolBox.setSelectedId(1, juce::dontSendNotification);
     wavetableToolBox.setTextWhenNothingSelected("Wave Tools");
-    wavetableToolBox.setTooltip("Apply custom-wave edits, copy/paste the active frame, import/export WAV single cycles, shape additive partials, generate frame stacks, or store/load eight WT morph frames");
+    wavetableToolBox.setTooltip("Apply custom-wave edits, import/export WAV cycles, shape additive partials, generate frame stacks, or combine O1/O2 stacks with blend, morph, splice, and spectral tools");
     addAndMakeVisible(wavetableToolBox);
 
     noiseTypeBox.addItemList(Parameters::noiseTypeChoices(), 1);
@@ -4736,7 +4738,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
                                + toolBounds.toString() + " / " + editBounds.toString());
                 }
 
-                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67 })
+                for (const auto itemId : { 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 78, 79 })
                 {
                     if (wavetableToolBox.indexOfItemId(itemId) < 0)
                         issues.add(panelName + ": SYNTH wave tools are missing custom-wave command id "
@@ -11633,6 +11635,25 @@ void NateVSTAudioProcessorEditor::applySelectedWavetableTool()
                                                                                    readCustomWaveFrameSet(! targetOsc2)),
                                     "Splice oscillator wavetable stacks",
                                     "Spliced " + juce::String(targetOsc2 ? "O1 into O2" : "O2 into O1") + " stack");
+            changed = false;
+            break;
+
+        case 78:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::spectralBlendFrameStacks(readCustomWaveFrameSet(false),
+                                                                                          readCustomWaveFrameSet(true),
+                                                                                          0.5f),
+                                    "Spectral-blend oscillator wavetable stacks",
+                                    "Spectral-blended O1/O2 harmonics into " + juce::String(targetOsc2 ? "O2" : "O1"));
+            changed = false;
+            break;
+
+        case 79:
+            writeCustomWaveFrameSet(targetOsc2,
+                                    Synth::WavetableFrameRecipes::interleaveHarmonicsFrameStacks(readCustomWaveFrameSet(targetOsc2),
+                                                                                                readCustomWaveFrameSet(! targetOsc2)),
+                                    "Interleave oscillator wavetable harmonics",
+                                    "Interleaved low/high O1/O2 harmonics into " + juce::String(targetOsc2 ? "O2" : "O1"));
             changed = false;
             break;
 

@@ -94,6 +94,20 @@ SampleChopPanel::SampleChopPanel()
             onFadeClicked();
     };
 
+    seqButton.setTooltip("Write stored sample slices into the 16-step sequencer as slice-key notes");
+    seqButton.onClick = [this]
+    {
+        if (onSeqClicked != nullptr)
+            onSeqClicked();
+    };
+
+    wtButton.setTooltip("Convert the active sample region into the selected oscillator custom wavetable stack");
+    wtButton.onClick = [this]
+    {
+        if (onWtClicked != nullptr)
+            onWtClicked();
+    };
+
     for (auto* button : actionButtons())
         addAndMakeVisible(*button);
 
@@ -164,12 +178,12 @@ void SampleChopPanel::resized()
     const auto statusWidth = juce::jlimit(230, 330, editRow.getWidth() / 3);
     statusLabel.setBounds(editRow.removeFromLeft(statusWidth).reduced(8, 4));
 
-    const auto width = juce::jmax(44, editRow.getWidth() / static_cast<int>(actionButtons().size()));
+    const auto width = juce::jmax(38, editRow.getWidth() / static_cast<int>(actionButtons().size()));
     for (auto* button : actionButtons())
         button->setBounds(editRow.removeFromLeft(width).reduced(3));
 }
 
-std::array<juce::TextButton*, 10> SampleChopPanel::actionButtons() noexcept
+std::array<juce::TextButton*, 12> SampleChopPanel::actionButtons() noexcept
 {
     return {
         &storeButton,
@@ -181,11 +195,13 @@ std::array<juce::TextButton*, 10> SampleChopPanel::actionButtons() noexcept
         &panButton,
         &ghostButton,
         &nudgeButton,
-        &fadeButton
+        &fadeButton,
+        &seqButton,
+        &wtButton
     };
 }
 
-std::array<const juce::TextButton*, 10> SampleChopPanel::actionButtons() const noexcept
+std::array<const juce::TextButton*, 12> SampleChopPanel::actionButtons() const noexcept
 {
     return {
         &storeButton,
@@ -197,7 +213,9 @@ std::array<const juce::TextButton*, 10> SampleChopPanel::actionButtons() const n
         &panButton,
         &ghostButton,
         &nudgeButton,
-        &fadeButton
+        &fadeButton,
+        &seqButton,
+        &wtButton
     };
 }
 }

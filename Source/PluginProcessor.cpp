@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Synth/WavetableFrameIO.h"
 
 #include <algorithm>
 #include <array>
@@ -2451,6 +2452,101 @@ juce::String NateVSTAudioProcessor::getLoadedSamplePath() const
 Sampler::SamplePeakOverview NateVSTAudioProcessor::createSamplePeakOverview(int pointCount) const
 {
     return samplePlayer.createPeakOverview(pointCount);
+}
+
+bool NateVSTAudioProcessor::sendSampleSlicesToSequencer()
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    if (detectSampleTransientSlices() < 0 && ! spliceSampleToSlices())
+        return false;
+
+    static constexpr std::array<int, Sequencer::PatternSequencer::numSteps> slicePattern {
+        0, 1, 2, 3,
+        4, 5, 6, 7,
+        0, 2, 4, 6,
+        7, 5, 3, 1
+    };
+
+    captureSequencerUndoState();
+    patternSequencer.clear();
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    if (getParameterPlainValue(Parameters::ID::sampleMix, 0.0f) < 0.35f)
+        setParameterPlainValue(Parameters::ID::sampleMix, 0.86f);
+
+    setParameterPlainValue(Parameters::ID::sequencerEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::sequencerRoot, 60.0f);
+    setParameterPlainValue(Parameters::ID::sequencerOctave, 0.0f);
+    setParameterPlainValue(Parameters::ID::sequencerScale, 0.0f);
+    setParameterPlainValue(Parameters::ID::sequencerChordMode, 0.0f);
+    setParameterPlainValue(Parameters::ID::sequencerGate, 0.58f);
+    setParameterPlainValue(Parameters::ID::sequencerAccent, 0.42f);
+
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+    {
+        const auto sliceIndex = static_cast<size_t>(slicePattern[static_cast<size_t>(stepIndex)]);
+        const auto gainDb = getParameterPlainValue(Parameters::ID::sampleSliceGain[sliceIndex], -6.0f);
+        const auto probability = getParameterPlainValue(Parameters::ID::sampleSliceProbability[sliceIndex], 1.0f);
+        const auto stutter = getParameterPlainValue(Parameters::ID::sampleSliceStutter[sliceIndex], 0.0f) >= 0.5f;
+        const auto repeats = juce::roundToInt(getParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[sliceIndex], 3.0f));
+        const auto nudge = getParameterPlainValue(Parameters::ID::sampleSliceNudge[sliceIndex], 0.0f);
+        const auto fade = getParameterPlainValue(Parameters::ID::sampleSliceFade[sliceIndex], 0.0f);
+
+        Sequencer::Step step;
+        step.enabled = true;
+        step.noteOffset = static_cast<int>(sliceIndex);
+        step.velocity = juce::jlimit(0.34f, 1.0f, 0.52f + ((gainDb + 12.0f) / 14.0f));
+        step.probability = juce::jlimit(0.0f, 1.0f, probability);
+        step.timing = juce::jlimit(-0.18f, 0.18f, nudge / 18.0f);
+        step.length = juce::jlimit(0.28f, 1.0f, 0.52f + (fade * 0.35f));
+        step.ratchet = stutter ? juce::jlimit(2, Sequencer::PatternSequencer::maxRatchet, repeats) : 1;
+        step.condition = step.probability < 0.995f ? 1 : 0;
+        step.slide = false;
+        patternSequencer.setStep(stepIndex, step);
+    }
+
+    if (isSequencerSceneChainPlaybackEnabled() && getSequencerSceneChainPlaybackLength() <= 0)
+        refreshSequencerSceneChainPlayback();
+
+    return true;
+}
+
+bool NateVSTAudioProcessor::sendSampleRegionToWavetable(bool targetOsc2)
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    const auto start = getParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
+    const auto end = getParameterPlainValue(Parameters::ID::sampleEnd, 1.0f);
+    const auto snapshot = samplePlayer.createMonoSnapshot(start, end, 4096);
+    if (snapshot.size() < 64)
+        return false;
+
+    const auto frames = Synth::WavetableFrameIO::importContiguousSamples(snapshot.data(), snapshot.size());
+    if (Synth::WavetableFrameIO::maxFrameRange(frames) < 0.02f)
+        return false;
+
+    const auto& baseFrameIDs = targetOsc2 ? Parameters::ID::osc2CustomWave
+                                          : Parameters::ID::oscCustomWave;
+
+    for (size_t frameIndex = 0; frameIndex < frames.size(); ++frameIndex)
+    {
+        for (size_t pointIndex = 0; pointIndex < frames[frameIndex].size(); ++pointIndex)
+        {
+            const auto parameterID = frameIndex == 0
+                ? juce::String(baseFrameIDs[pointIndex])
+                : Parameters::customWaveMorphFrameParameterID(targetOsc2, frameIndex, pointIndex);
+            setParameterPlainValue(parameterID, juce::jlimit(0.0f, 1.0f, frames[frameIndex][pointIndex]));
+        }
+    }
+
+    setParameterPlainValue(targetOsc2 ? Parameters::ID::osc2Wave : Parameters::ID::oscWave, 7.0f);
+    setParameterPlainValue(targetOsc2 ? Parameters::ID::osc2WavetablePosition : Parameters::ID::oscWavetablePosition, 0.0f);
+    setParameterPlainValue(targetOsc2 ? Parameters::ID::osc2Level : Parameters::ID::osc1Level, 0.82f);
+    return true;
 }
 
 Sequencer::Step NateVSTAudioProcessor::getSequencerStep(int index) const

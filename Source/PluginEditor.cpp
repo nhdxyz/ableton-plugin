@@ -2312,6 +2312,8 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleChopPanel.onGhostClicked = [this] { toggleSelectedSampleSliceGhost(); };
     sampleChopPanel.onNudgeClicked = [this] { cycleSelectedSampleSliceNudge(); };
     sampleChopPanel.onFadeClicked = [this] { cycleSelectedSampleSliceFade(); };
+    sampleChopPanel.onSeqClicked = [this] { sendSampleSlicesToSequencer(); };
+    sampleChopPanel.onWtClicked = [this] { bakeSampleRegionToWavetable(); };
     sequencerPatternControls.onActionClicked = [this] (UI::SequencerPatternControls::Action action)
     {
         releaseRandomCandidateAudition(false);
@@ -6501,6 +6503,71 @@ void NateVSTAudioProcessorEditor::cycleSelectedSampleSliceFade()
     updateSampleSliceButtons();
     updateSampleSliceEditorStatus();
     updateSampleWaveformDisplay();
+}
+
+void NateVSTAudioProcessorEditor::sendSampleSlicesToSequencer()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    if (! audioProcessor.hasLoadedSample())
+    {
+        setRandomStatus("Slice-to-seq skipped: load a sample first");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    captureGlobalEdit("Send sample slices to sequencer");
+    if (! audioProcessor.sendSampleSlicesToSequencer())
+    {
+        setRandomStatus("Slice-to-seq skipped");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+    updateSegmentedSelectors();
+    updateSequencerGridContext();
+    repaintSequencerGrids();
+    updateSequencerSceneButtons();
+    setRandomStatus("Sample slices written to SEQ as C3-G3 slice keys");
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::bakeSampleRegionToWavetable()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    if (! audioProcessor.hasLoadedSample())
+    {
+        setRandomStatus("Sample-to-WT skipped: load a sample first");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    const auto targetOsc2 = sourceFrameActionTargetIsOsc2();
+    captureGlobalEdit("Convert sample region to wavetable");
+    if (! audioProcessor.sendSampleRegionToWavetable(targetOsc2))
+    {
+        setRandomStatus("Sample-to-WT skipped: active region is too quiet");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    setSourceFrameActionTarget(targetOsc2);
+    updateSegmentedSelectors();
+    updateWavetableDisplay();
+    updateSourceLabFrameStrip();
+    updateOscillatorLaneOverview();
+    updateSelectedControlInspector(targetOsc2 ? "O2 Sample WT" : "O1 Sample WT",
+                                   targetOsc2 ? Parameters::ID::osc2WavetablePosition
+                                              : Parameters::ID::oscWavetablePosition,
+                                   0.0);
+    setRandomStatus("Converted active sample region to " + juce::String(targetOsc2 ? "O2" : "O1") + " WT stack");
+    returnKeyboardFocusToPiano();
 }
 
 bool NateVSTAudioProcessorEditor::sampleSliceHasCustomSettings(size_t sliceIndex) const

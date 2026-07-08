@@ -447,6 +447,86 @@ bool verifyTransientDetectionWritesCustomSlices(const juce::File& sampleFile)
         && fifth.peak < 1.4f;
 }
 
+bool verifySampleLabProActions(const juce::File& sampleFile)
+{
+    NateVSTAudioProcessor processor;
+    if (! configureSampleOnly(processor, sampleFile))
+        return false;
+
+    setPlainParameter(processor, Parameters::ID::sampleSliceProbability[7], 0.72f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceStutter[7], 1.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceStutterRepeats[7], 4.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceNudge[7], -1.8f);
+
+    if (! processor.sendSampleSlicesToSequencer())
+    {
+        std::cerr << "Slice-to-sequencer action returned false\n";
+        return false;
+    }
+
+    const auto firstStep = processor.getSequencerStep(0);
+    const auto variationStep = processor.getSequencerStep(12);
+    if (! firstStep.enabled
+        || firstStep.noteOffset != 0
+        || ! variationStep.enabled
+        || variationStep.noteOffset != 7
+        || variationStep.ratchet != 4
+        || variationStep.condition != 1
+        || std::abs(variationStep.probability - 0.72f) > 0.01f
+        || std::abs(readPlainParameter(processor, Parameters::ID::sequencerRoot) - 60.0f) > 0.01f
+        || readPlainParameter(processor, Parameters::ID::sequencerEnabled) < 0.5f
+        || std::abs(readPlainParameter(processor, Parameters::ID::samplePlaybackMode) - 2.0f) > 0.01f)
+    {
+        std::cerr << "Slice-to-sequencer action did not build expected slice-key pattern: first note "
+                  << firstStep.noteOffset
+                  << " variation note " << variationStep.noteOffset
+                  << " ratchet " << variationStep.ratchet
+                  << " condition " << variationStep.condition
+                  << " probability " << variationStep.probability << '\n';
+        return false;
+    }
+
+    setPlainParameter(processor, Parameters::ID::sampleStart, 0.08f);
+    setPlainParameter(processor, Parameters::ID::sampleEnd, 0.92f);
+    if (! processor.sendSampleRegionToWavetable(true))
+    {
+        std::cerr << "Sample-to-wavetable action returned false\n";
+        return false;
+    }
+
+    auto frameRange = [&processor] (size_t frameIndex)
+    {
+        auto minimum = 1.0f;
+        auto maximum = 0.0f;
+        for (size_t pointIndex = 0; pointIndex < Parameters::ID::osc2CustomWave.size(); ++pointIndex)
+        {
+            const auto parameterID = frameIndex == 0
+                ? juce::String(Parameters::ID::osc2CustomWave[pointIndex])
+                : Parameters::customWaveMorphFrameParameterID(true, frameIndex, pointIndex);
+            const auto value = readPlainParameter(processor, parameterID, 0.5f);
+            minimum = juce::jmin(minimum, value);
+            maximum = juce::jmax(maximum, value);
+        }
+
+        return maximum - minimum;
+    };
+
+    if (std::abs(readPlainParameter(processor, Parameters::ID::osc2Wave) - 7.0f) > 0.01f
+        || readPlainParameter(processor, Parameters::ID::osc2Level) < 0.80f
+        || frameRange(0) < 0.35f
+        || frameRange(4) < 0.35f)
+    {
+        std::cerr << "Sample-to-wavetable action did not populate Osc 2 custom frames: wave "
+                  << readPlainParameter(processor, Parameters::ID::osc2Wave)
+                  << " level " << readPlainParameter(processor, Parameters::ID::osc2Level)
+                  << " range0 " << frameRange(0)
+                  << " range4 " << frameRange(4) << '\n';
+        return false;
+    }
+
+    return true;
+}
+
 bool verifySliceProbabilitySuppresses(const juce::File& sampleFile)
 {
     NateVSTAudioProcessor processor;
@@ -574,6 +654,12 @@ int main()
         return 1;
     }
 
+    if (! verifySampleLabProActions(transientSampleFile))
+    {
+        std::cerr << "Sample Lab Pro actions did not create sequencer and wavetable material\n";
+        return 1;
+    }
+
     if (! writeTestSample(staleSampleFile))
     {
         std::cerr << "Could not write temporary stale sampler audit sample\n";
@@ -604,6 +690,6 @@ int main()
     staleSampleFile.deleteFile();
     transientSampleFile.deleteFile();
     nudgeFadeSampleFile.deleteFile();
-    std::cout << "Sampler chop audit passed for load defaults, transient detection, Slice Keys, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
+    std::cout << "Sampler chop audit passed for load defaults, transient detection, Slice Keys, Sample Lab Pro actions, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
     return 0;
 }

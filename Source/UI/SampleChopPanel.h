@@ -35,6 +35,8 @@ public:
     std::function<void()> onGhostClicked;
     std::function<void()> onNudgeClicked;
     std::function<void()> onFadeClicked;
+    std::function<void()> onSeqClicked;
+    std::function<void()> onWtClicked;
 
     void applyTheme(const Theme& theme);
     void setSliceButtonState(size_t sliceIndex,
@@ -62,8 +64,10 @@ private:
     juce::TextButton ghostButton { "Ghost" };
     juce::TextButton nudgeButton { "Nudge" };
     juce::TextButton fadeButton { "Fade" };
+    juce::TextButton seqButton { "Seq" };
+    juce::TextButton wtButton { "WT" };
 
-    std::array<juce::TextButton*, 10> actionButtons() noexcept;
-    std::array<const juce::TextButton*, 10> actionButtons() const noexcept;
+    std::array<juce::TextButton*, 12> actionButtons() noexcept;
+    std::array<const juce::TextButton*, 12> actionButtons() const noexcept;
 };
 }

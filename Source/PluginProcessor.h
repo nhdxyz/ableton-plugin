@@ -178,6 +178,8 @@ public:
     juce::String getLoadedSampleName() const;
     juce::String getLoadedSamplePath() const;
     Sampler::SamplePeakOverview createSamplePeakOverview(int pointCount) const;
+    bool sendSampleSlicesToSequencer();
+    bool sendSampleRegionToWavetable(bool targetOsc2);
     Sequencer::Step getSequencerStep(int index) const;
     void setSequencerStep(int index, Sequencer::Step step);
     bool randomizeSequencerPattern();

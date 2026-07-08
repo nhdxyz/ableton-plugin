@@ -80,6 +80,7 @@ public:
     SamplePeakOverview createPeakOverview(int pointCount) const;
     std::optional<SampleContentRange> findContentRange(float threshold, double paddingMs) const;
     SliceDetectionResult detectTransientSliceRegions() const;
+    std::vector<float> createMonoSnapshot(float normalisedStart, float normalisedEnd, size_t maxSamples) const;
     SampleRegion getRegion() const;
     void setRegion(SampleRegion newRegion);
     bool triggerAudition(int midiNoteNumber, float velocity, double bpm);

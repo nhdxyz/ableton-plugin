@@ -980,6 +980,8 @@ private:
     void toggleSelectedSampleSliceGhost();
     void cycleSelectedSampleSliceNudge();
     void cycleSelectedSampleSliceFade();
+    void sendSampleSlicesToSequencer();
+    void bakeSampleRegionToWavetable();
     bool sampleSliceHasCustomSettings(size_t sliceIndex) const;
     void updateSampleWaveformDisplay();
     void timerCallback() override;

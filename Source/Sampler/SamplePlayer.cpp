@@ -643,6 +643,62 @@ SliceDetectionResult SamplePlayer::detectTransientSliceRegions() const
     return result;
 }
 
+std::vector<float> SamplePlayer::createMonoSnapshot(float normalisedStart, float normalisedEnd, size_t maxSamples) const
+{
+    std::shared_ptr<SampleData> data;
+    {
+        const juce::SpinLock::ScopedLockType lock(sampleLock);
+        data = sampleData;
+    }
+
+    if (data == nullptr || data->buffer.getNumSamples() <= 1 || data->buffer.getNumChannels() <= 0)
+        return {};
+
+    const auto totalSamples = data->buffer.getNumSamples();
+    const auto start = juce::jlimit(0.0f, 1.0f, juce::jmin(normalisedStart, normalisedEnd));
+    const auto end = juce::jlimit(0.0f, 1.0f, juce::jmax(normalisedStart, normalisedEnd));
+    const auto startSample = juce::jlimit(0, totalSamples - 2, juce::roundToInt(start * static_cast<float>(totalSamples - 1)));
+    const auto endSample = juce::jlimit(startSample + 1,
+                                        totalSamples - 1,
+                                        juce::roundToInt(end * static_cast<float>(totalSamples - 1)));
+    const auto sourceSpan = endSample - startSample + 1;
+    const auto outputSamples = juce::jlimit<size_t>(64, juce::jmax<size_t>(64, maxSamples), static_cast<size_t>(sourceSpan));
+
+    std::vector<float> snapshot(outputSamples, 0.0f);
+    const auto denominator = static_cast<float>(juce::jmax<size_t>(1, outputSamples - 1));
+    auto peak = 0.0f;
+
+    for (size_t index = 0; index < snapshot.size(); ++index)
+    {
+        const auto readPosition = static_cast<float>(startSample)
+            + ((static_cast<float>(index) / denominator) * static_cast<float>(sourceSpan - 1));
+        const auto lowerIndex = juce::jlimit(0, totalSamples - 1, static_cast<int>(readPosition));
+        const auto upperIndex = juce::jlimit(0, totalSamples - 1, lowerIndex + 1);
+        const auto mix = readPosition - static_cast<float>(lowerIndex);
+        auto lower = 0.0f;
+        auto upper = 0.0f;
+
+        for (auto channel = 0; channel < data->buffer.getNumChannels(); ++channel)
+        {
+            lower += data->buffer.getSample(channel, lowerIndex);
+            upper += data->buffer.getSample(channel, upperIndex);
+        }
+
+        lower /= static_cast<float>(data->buffer.getNumChannels());
+        upper /= static_cast<float>(data->buffer.getNumChannels());
+
+        const auto value = juce::jlimit(-1.0f, 1.0f, lower + ((upper - lower) * mix));
+        snapshot[index] = value;
+        peak = juce::jmax(peak, std::abs(value));
+    }
+
+    if (peak > 1.0f)
+        for (auto& value : snapshot)
+            value = juce::jlimit(-1.0f, 1.0f, value / peak);
+
+    return snapshot;
+}
+
 SampleRegion SamplePlayer::getRegion() const
 {
     const juce::SpinLock::ScopedLockType lock(sampleLock);

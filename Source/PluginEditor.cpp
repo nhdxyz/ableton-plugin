@@ -2304,7 +2304,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     sampleChopPanel.onSliceSelected = [this] (size_t index) { selectSampleSlice(index); };
     sampleChopPanel.onStoreClicked = [this] { storeSelectedSampleSliceSettings(); };
     sampleChopPanel.onRecallClicked = [this] { recallSelectedSampleSliceSettings(); };
+    sampleChopPanel.onGridClicked = [this] { sliceSampleToBeatGrid(); };
     sampleChopPanel.onDetectClicked = [this] { detectSampleSliceMarkers(); };
+    sampleChopPanel.onClearClicked = [this] { clearSelectedSampleSliceMarker(); };
     sampleChopPanel.onDiceClicked = [this] { randomizeSelectedSampleSliceSettings(); };
     sampleChopPanel.onReverseClicked = [this] { toggleSelectedSampleSliceReverse(); };
     sampleChopPanel.onChokeClicked = [this] { toggleSelectedSampleSliceChoke(); };
@@ -6293,6 +6295,68 @@ void NateVSTAudioProcessorEditor::recallSelectedSampleSliceSettings()
     updateSampleWaveformDisplay();
 }
 
+void NateVSTAudioProcessorEditor::sliceSampleToBeatGrid()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    if (! audioProcessor.hasLoadedSample())
+    {
+        setRandomStatus("Grid skipped: load a sample first");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    captureGlobalEdit("Grid sample slices");
+    if (! audioProcessor.sliceSampleToBeatGrid())
+    {
+        setRandomStatus("Grid skipped");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    selectedSampleSliceIndex = 0;
+    recallSampleSliceSettings(selectedSampleSliceIndex);
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(selectedSampleSliceIndex));
+    setRandomStatus("Beat grid wrote 8 equal Slice Keys" + juce::String(didAudition ? " | S1 auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+    returnKeyboardFocusToPiano();
+}
+
+void NateVSTAudioProcessorEditor::clearSelectedSampleSliceMarker()
+{
+    releaseRandomCandidateAudition(false);
+    releasePresetAuditionNote();
+
+    if (! audioProcessor.hasLoadedSample())
+    {
+        setRandomStatus("Clear skipped: load a sample first");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    const auto safeIndex = juce::jlimit<size_t>(0, sampleChopPanel.getSliceCount() - 1, selectedSampleSliceIndex);
+    captureGlobalEdit("Clear sample slice marker");
+    if (! audioProcessor.clearSampleSliceMarker(safeIndex))
+    {
+        setRandomStatus("Clear skipped");
+        returnKeyboardFocusToPiano();
+        return;
+    }
+
+    selectedSampleSliceIndex = safeIndex;
+    const auto didAudition = audioProcessor.triggerSampleSliceAudition(static_cast<int>(safeIndex));
+    setRandomStatus("Cleared slice " + juce::String(static_cast<int>(safeIndex + 1))
+                    + " to default grid"
+                    + (didAudition ? " | auditioned" : ""));
+    updateSampleSliceButtons();
+    updateSampleSliceEditorStatus();
+    updateSampleWaveformDisplay();
+    returnKeyboardFocusToPiano();
+}
+
 void NateVSTAudioProcessorEditor::detectSampleSliceMarkers()
 {
     releaseRandomCandidateAudition(false);
@@ -9598,7 +9662,7 @@ juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) co
             return "Undo Edit and Redo Edit sit in the CONTROL strip. They restore full sound-design snapshots across synth parameters, modulation routes, sequencer steps, FX rack edits, sample edits, preset loads, and performance snapshots.\n\nKnobs support normal drag, fine drag with Shift or Cmd, double-click reset, text entry, and disabled scroll-wheel movement to avoid accidental jumps.\n\nThe CONTROL strip also shows the touched parameter, value, automation ID, and modulation summary.";
 
         case 8:
-            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, per-step modulation lanes, transient sample slicing, time-stretch/warp, formant-safe vocal chops, multiband distortion, compressor/clipper metering, preset audio previews, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
+            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, variable-count sample markers, tempo-aware time-stretch/warp, formant-safe vocal chops, multiband distortion, compressor/clipper metering, audio drag-out, content packs, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
 
         case 1:
         default:

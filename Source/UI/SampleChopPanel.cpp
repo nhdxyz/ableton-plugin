@@ -38,11 +38,25 @@ SampleChopPanel::SampleChopPanel()
             onRecallClicked();
     };
 
+    gridButton.setTooltip("Force the loaded sample into eight equal beat-grid Slice Keys regions");
+    gridButton.onClick = [this]
+    {
+        if (onGridClicked != nullptr)
+            onGridClicked();
+    };
+
     detectButton.setTooltip("Detect transient starts in the loaded sample and write eight custom slice regions");
     detectButton.onClick = [this]
     {
         if (onDetectClicked != nullptr)
             onDetectClicked();
+    };
+
+    clearButton.setTooltip("Clear this slice's custom marker and reset it to the default beat-grid region");
+    clearButton.onClick = [this]
+    {
+        if (onClearClicked != nullptr)
+            onClearClicked();
     };
 
     diceButton.setTooltip("Create a UKG-style random edit for this slice and store it");
@@ -151,6 +165,7 @@ void SampleChopPanel::setActionState(const ActionState& state)
     fadeButton.setButtonText("Fade");
     fadeButton.setToggleState(state.faded, juce::dontSendNotification);
     recallButton.setEnabled(state.recallEnabled);
+    clearButton.setEnabled(state.recallEnabled);
 }
 
 void SampleChopPanel::resized()
@@ -183,12 +198,14 @@ void SampleChopPanel::resized()
         button->setBounds(editRow.removeFromLeft(width).reduced(3));
 }
 
-std::array<juce::TextButton*, 12> SampleChopPanel::actionButtons() noexcept
+std::array<juce::TextButton*, 14> SampleChopPanel::actionButtons() noexcept
 {
     return {
         &storeButton,
         &recallButton,
+        &gridButton,
         &detectButton,
+        &clearButton,
         &diceButton,
         &reverseButton,
         &chokeButton,
@@ -201,12 +218,14 @@ std::array<juce::TextButton*, 12> SampleChopPanel::actionButtons() noexcept
     };
 }
 
-std::array<const juce::TextButton*, 12> SampleChopPanel::actionButtons() const noexcept
+std::array<const juce::TextButton*, 14> SampleChopPanel::actionButtons() const noexcept
 {
     return {
         &storeButton,
         &recallButton,
+        &gridButton,
         &detectButton,
+        &clearButton,
         &diceButton,
         &reverseButton,
         &chokeButton,

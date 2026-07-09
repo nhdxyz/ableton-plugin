@@ -972,6 +972,8 @@ private:
     void editSampleSliceBoundary(size_t boundaryIndex, float position);
     void storeSelectedSampleSliceSettings();
     void recallSelectedSampleSliceSettings();
+    void sliceSampleToBeatGrid();
+    void clearSelectedSampleSliceMarker();
     void detectSampleSliceMarkers();
     void randomizeSelectedSampleSliceSettings();
     void toggleSelectedSampleSliceReverse();

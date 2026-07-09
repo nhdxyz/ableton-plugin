@@ -2206,6 +2206,57 @@ bool NateVSTAudioProcessor::spliceSampleToSlices()
     return true;
 }
 
+bool NateVSTAudioProcessor::sliceSampleToBeatGrid()
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleEnd, 1.0f / static_cast<float>(Parameters::ID::sampleSliceCustom.size()));
+
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto equalStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        const auto equalEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        setParameterPlainValue(Parameters::ID::sampleSliceCustom[index], 1.0f);
+        setParameterPlainValue(Parameters::ID::sampleSliceStart[index], equalStart);
+        setParameterPlainValue(Parameters::ID::sampleSliceEnd[index], equalEnd);
+    }
+
+    return true;
+}
+
+bool NateVSTAudioProcessor::clearSampleSliceMarker(size_t sliceIndex)
+{
+    if (! samplePlayer.hasSample())
+        return false;
+
+    const auto safeIndex = juce::jlimit<size_t>(0, Parameters::ID::sampleSliceCustom.size() - 1, sliceIndex);
+    const auto equalStart = static_cast<float>(safeIndex) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+    const auto equalEnd = static_cast<float>(safeIndex + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+
+    setParameterPlainValue(Parameters::ID::sampleEnabled, 1.0f);
+    setParameterPlainValue(Parameters::ID::samplePlaybackMode, 2.0f);
+    setParameterPlainValue(Parameters::ID::sampleStart, equalStart);
+    setParameterPlainValue(Parameters::ID::sampleEnd, equalEnd);
+    setParameterPlainValue(Parameters::ID::sampleSliceCustom[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceStart[safeIndex], equalStart);
+    setParameterPlainValue(Parameters::ID::sampleSliceEnd[safeIndex], equalEnd);
+    setParameterPlainValue(Parameters::ID::sampleSliceReverse[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceTranspose[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceGain[safeIndex], -6.0f);
+    setParameterPlainValue(Parameters::ID::sampleSlicePan[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceProbability[safeIndex], 1.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceStutter[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceChoke[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceStutterRepeats[safeIndex], 3.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceNudge[safeIndex], 0.0f);
+    setParameterPlainValue(Parameters::ID::sampleSliceFade[safeIndex], 0.0f);
+    return true;
+}
+
 bool NateVSTAudioProcessor::randomizeRecordedSample()
 {
     if (isRandomLockEnabled(Parameters::ID::randomLockSample) || ! samplePlayer.hasSample())

@@ -169,6 +169,8 @@ public:
     juce::String getLatestSampleCaptureTakePath() const;
     bool autoTrimSampleToContent();
     bool spliceSampleToSlices();
+    bool sliceSampleToBeatGrid();
+    bool clearSampleSliceMarker(size_t sliceIndex);
     bool randomizeRecordedSample();
     bool randomizeSampleCut();
     int detectSampleTransientSlices();

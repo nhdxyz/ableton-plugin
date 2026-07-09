@@ -447,6 +447,83 @@ bool verifyTransientDetectionWritesCustomSlices(const juce::File& sampleFile)
         && fifth.peak < 1.4f;
 }
 
+bool verifyBeatGridSlicingAndClear(const juce::File& sampleFile)
+{
+    NateVSTAudioProcessor processor;
+    if (! configureSampleOnly(processor, sampleFile))
+        return false;
+
+    if (processor.detectSampleTransientSlices() < 0)
+        return false;
+
+    if (! processor.sliceSampleToBeatGrid())
+    {
+        std::cerr << "Beat-grid slicing action returned false\n";
+        return false;
+    }
+
+    for (size_t index = 0; index < Parameters::ID::sampleSliceCustom.size(); ++index)
+    {
+        const auto expectedStart = static_cast<float>(index) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        const auto expectedEnd = static_cast<float>(index + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+        if (! near(readPlainParameter(processor, Parameters::ID::sampleSliceCustom[index]), 1.0f)
+            || ! near(readPlainParameter(processor, Parameters::ID::sampleSliceStart[index]), expectedStart)
+            || ! near(readPlainParameter(processor, Parameters::ID::sampleSliceEnd[index]), expectedEnd))
+        {
+            std::cerr << "Beat-grid slice " << index
+                      << " was not reset to equal divisions: custom="
+                      << readPlainParameter(processor, Parameters::ID::sampleSliceCustom[index])
+                      << " start=" << readPlainParameter(processor, Parameters::ID::sampleSliceStart[index])
+                      << " end=" << readPlainParameter(processor, Parameters::ID::sampleSliceEnd[index]) << '\n';
+            return false;
+        }
+    }
+
+    if (! near(readPlainParameter(processor, Parameters::ID::samplePlaybackMode), 2.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sampleStart), 0.0f)
+        || ! near(readPlainParameter(processor, Parameters::ID::sampleEnd), 0.125f))
+    {
+        std::cerr << "Beat-grid slicing did not focus the first slice in Slice Keys mode\n";
+        return false;
+    }
+
+    constexpr auto sliceIndex = 3;
+    setPlainParameter(processor, Parameters::ID::sampleSliceReverse[sliceIndex], 1.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceTranspose[sliceIndex], 7.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceGain[sliceIndex], -2.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSlicePan[sliceIndex], -0.45f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceProbability[sliceIndex], 0.62f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceStutter[sliceIndex], 1.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceChoke[sliceIndex], 1.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceStutterRepeats[sliceIndex], 5.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceNudge[sliceIndex], -2.0f);
+    setPlainParameter(processor, Parameters::ID::sampleSliceFade[sliceIndex], 0.7f);
+
+    if (! processor.clearSampleSliceMarker(sliceIndex))
+    {
+        std::cerr << "Clear-slice action returned false\n";
+        return false;
+    }
+
+    const auto expectedStart = static_cast<float>(sliceIndex) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+    const auto expectedEnd = static_cast<float>(sliceIndex + 1) / static_cast<float>(Parameters::ID::sampleSliceCustom.size());
+    return near(readPlainParameter(processor, Parameters::ID::sampleSliceCustom[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceStart[sliceIndex]), expectedStart)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceEnd[sliceIndex]), expectedEnd)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceReverse[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceTranspose[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceGain[sliceIndex]), -6.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSlicePan[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceProbability[sliceIndex]), 1.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceStutter[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceChoke[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceStutterRepeats[sliceIndex]), 3.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceNudge[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleSliceFade[sliceIndex]), 0.0f)
+        && near(readPlainParameter(processor, Parameters::ID::sampleStart), expectedStart)
+        && near(readPlainParameter(processor, Parameters::ID::sampleEnd), expectedEnd);
+}
+
 bool verifySampleLabProActions(const juce::File& sampleFile)
 {
     NateVSTAudioProcessor processor;
@@ -654,6 +731,12 @@ int main()
         return 1;
     }
 
+    if (! verifyBeatGridSlicingAndClear(transientSampleFile))
+    {
+        std::cerr << "Beat-grid slicing and clear marker actions did not reset Slice Keys safely\n";
+        return 1;
+    }
+
     if (! verifySampleLabProActions(transientSampleFile))
     {
         std::cerr << "Sample Lab Pro actions did not create sequencer and wavetable material\n";
@@ -690,6 +773,6 @@ int main()
     staleSampleFile.deleteFile();
     transientSampleFile.deleteFile();
     nudgeFadeSampleFile.deleteFile();
-    std::cout << "Sampler chop audit passed for load defaults, transient detection, Slice Keys, Sample Lab Pro actions, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
+    std::cout << "Sampler chop audit passed for load defaults, transient detection, beat-grid slicing, marker clear, Slice Keys, Sample Lab Pro actions, probability, nudge/fade, missing-file restore, and UKG chop setup.\n";
     return 0;
 }

@@ -27,7 +27,9 @@ public:
     std::function<void(size_t)> onSliceSelected;
     std::function<void()> onStoreClicked;
     std::function<void()> onRecallClicked;
+    std::function<void()> onGridClicked;
     std::function<void()> onDetectClicked;
+    std::function<void()> onClearClicked;
     std::function<void()> onDiceClicked;
     std::function<void()> onReverseClicked;
     std::function<void()> onChokeClicked;
@@ -56,7 +58,9 @@ private:
     std::array<juce::TextButton, 8> sliceButtons;
     juce::TextButton storeButton { "Store" };
     juce::TextButton recallButton { "Recall" };
+    juce::TextButton gridButton { "Grid" };
     juce::TextButton detectButton { "Detect" };
+    juce::TextButton clearButton { "Clr" };
     juce::TextButton diceButton { "Dice" };
     juce::TextButton reverseButton { "Rev" };
     juce::TextButton chokeButton { "Choke" };
@@ -67,7 +71,7 @@ private:
     juce::TextButton seqButton { "Seq" };
     juce::TextButton wtButton { "WT" };
 
-    std::array<juce::TextButton*, 12> actionButtons() noexcept;
-    std::array<const juce::TextButton*, 12> actionButtons() const noexcept;
+    std::array<juce::TextButton*, 14> actionButtons() noexcept;
+    std::array<const juce::TextButton*, 14> actionButtons() const noexcept;
 };
 }

@@ -101,6 +101,7 @@ void OscillatorLaneOverview::setState(State newState)
     for (const auto& lane : state.lanes)
     {
         tooltipLines.add(lane.label + ": " + lane.waveName
+                         + (lane.modulator ? " | cross-mod source" : juce::String())
                          + " | level " + percentText(lane.level)
                          + " | WT " + percentText(lane.wavetablePosition)
                          + " | A " + lane.warpAMode + " " + percentText(lane.warpA)
@@ -172,7 +173,7 @@ void OscillatorLaneOverview::paint(juce::Graphics& g)
         auto laneBounds = lanes[index];
         const auto& lane = state.lanes[index];
         const auto level = juce::jlimit(0.0f, 1.0f, lane.level);
-        const auto active = lane.active && level > activeThreshold;
+        const auto active = lane.active && (level > activeThreshold || lane.modulator);
         const auto hovered = hoveredLane == static_cast<int>(index);
         const auto selected = state.osc2Selected == (index == 1);
         const auto accent = laneColour(theme, index, active);
@@ -190,7 +191,11 @@ void OscillatorLaneOverview::paint(juce::Graphics& g)
         g.drawFittedText(lane.label, top.removeFromLeft(38.0f).toNearestInt(), juce::Justification::centredLeft, 1, 0.62f);
 
         g.setColour(active ? accent : theme.textDim);
-        g.drawFittedText(lane.waveName, top.toNearestInt(), juce::Justification::centredRight, 1, 0.58f);
+        g.drawFittedText(lane.waveName + (lane.modulator ? " / MOD" : juce::String()),
+                         top.toNearestInt(),
+                         juce::Justification::centredRight,
+                         1,
+                         0.58f);
 
         auto waveArea = textArea.removeFromTop(compact ? 15.0f : 18.0f).reduced(0.0f, compact ? 1.0f : 0.0f);
         g.setColour(theme.outline.withAlpha(0.45f));
@@ -432,7 +437,8 @@ bool OscillatorLaneOverview::lanesEqual(const Lane& left, const Lane& right) noe
         && std::abs(left.warpB - right.warpB) < 0.001f
         && left.active == right.active
         && left.wavetableActive == right.wavetableActive
-        && left.customActive == right.customActive;
+        && left.customActive == right.customActive
+        && left.modulator == right.modulator;
 }
 
 juce::String OscillatorLaneOverview::percentText(float value)

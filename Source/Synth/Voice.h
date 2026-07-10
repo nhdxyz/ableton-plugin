@@ -95,6 +95,7 @@ private:
     float noiseTickDecayMultiplier = 0.999f;
     float currentOsc1Gain = 1.0f;
     float currentOsc2Gain = 0.0f;
+    float currentCrossModAmount = 0.0f;
     float currentSubGain = 0.0f;
     float currentNoiseGain = 0.0f;
     float currentSourceCompensation = 1.0f;
@@ -111,6 +112,7 @@ private:
     int activeVoiceLoad = 1;
     int currentNoiseTypeIndex = 0;
     int currentActiveUnisonVoices = 1;
+    int currentCrossModMode = 0;
     float sequencerLockAmount = 0.0f;
     bool hasPreviousNoteFrequency = false;
     bool osc1CustomFramesInitialised = false;
@@ -130,6 +132,8 @@ private:
     std::atomic<float>* osc2Octave = nullptr;
     std::atomic<float>* osc2Tune = nullptr;
     std::atomic<float>* osc2Level = nullptr;
+    std::atomic<float>* oscCrossModMode = nullptr;
+    std::atomic<float>* oscCrossModAmount = nullptr;
     std::atomic<float>* subLevel = nullptr;
     std::atomic<float>* noiseLevel = nullptr;
     std::atomic<float>* noiseType = nullptr;

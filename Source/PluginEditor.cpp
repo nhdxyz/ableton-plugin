@@ -1481,6 +1481,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     addAndMakeVisible(osc2WarpBModeBox);
     comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::osc2WarpBMode, osc2WarpBModeBox));
 
+    oscCrossModModeBox.addItemList(Parameters::oscCrossModModeChoices(), 1);
+    oscCrossModModeBox.setTextWhenNothingSelected("Cross Mod");
+    oscCrossModModeBox.setTooltip("Use Osc 2 as an audio-rate FM, phase, amplitude, or ring modulator for Osc 1");
+    addAndMakeVisible(oscCrossModModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::oscCrossModMode, oscCrossModModeBox));
+
     filterModeBox.addItemList(Parameters::filterModeChoices(), 1);
     filterModeBox.setTextWhenNothingSelected("Filter Mode");
     filterModeBox.setTooltip("Choose low-pass, band-pass, or high-pass filter mode");
@@ -1939,6 +1945,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(oscWarpBSlider, oscWarpBLabel, "O1 B", Parameters::ID::oscWarpB);
     configureSlider(osc2WarpSlider, osc2WarpLabel, "O2 A", Parameters::ID::osc2Warp);
     configureSlider(osc2WarpBSlider, osc2WarpBLabel, "O2 B", Parameters::ID::osc2WarpB);
+    configureSlider(oscCrossModAmountSlider, oscCrossModAmountLabel, "X Mod", Parameters::ID::oscCrossModAmount);
     configureSlider(oscWavetablePositionSlider, oscWavetablePositionLabel, "WT 1", Parameters::ID::oscWavetablePosition);
     configureSlider(osc2WavetablePositionSlider, osc2WavetablePositionLabel, "WT 2", Parameters::ID::osc2WavetablePosition);
     configureSlider(unisonVoicesSlider, unisonVoicesLabel, "Voices", Parameters::ID::unisonVoices);
@@ -3743,6 +3750,7 @@ void NateVSTAudioProcessorEditor::resized()
             oscWarpBModeBox.setVisible(true);
             osc2WarpModeBox.setVisible(true);
             osc2WarpBModeBox.setVisible(true);
+            oscCrossModModeBox.setVisible(true);
             filterCharacterBox.setVisible(true);
             filterSlopeBox.setVisible(true);
             monoButton.setVisible(true);
@@ -3763,6 +3771,7 @@ void NateVSTAudioProcessorEditor::resized()
             setSliderVisible(oscWarpBSlider, oscWarpBLabel, true);
             setSliderVisible(osc2WarpSlider, osc2WarpLabel, true);
             setSliderVisible(osc2WarpBSlider, osc2WarpBLabel, true);
+            setSliderVisible(oscCrossModAmountSlider, oscCrossModAmountLabel, true);
             setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, true);
             setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, true);
             setSliderVisible(osc2OctaveSlider, osc2OctaveLabel, true);
@@ -3822,9 +3831,10 @@ void NateVSTAudioProcessorEditor::resized()
             });
             auto sourceTextureRow = sourceArea.withTrimmedTop(2);
             auto textureSelectRow = sourceTextureRow.removeFromTop(30);
-            const auto warpModeWidth = juce::jlimit(86, 112, textureSelectRow.getWidth() / 3);
-            osc2WarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
-            oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(4, 4));
+            const auto warpModeWidth = juce::jmax(60, textureSelectRow.getWidth() / 4);
+            osc2WarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(3, 4));
+            oscWarpModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(3, 4));
+            oscCrossModModeBox.setBounds(textureSelectRow.removeFromRight(warpModeWidth).reduced(3, 4));
             noiseTypeBox.setBounds(textureSelectRow.reduced(4, 4));
             auto warpBModeRow = sourceTextureRow.removeFromTop(30);
             osc2WarpBModeBox.setBounds(warpBModeRow.removeFromRight(warpModeWidth).reduced(4, 4));
@@ -3877,6 +3887,9 @@ void NateVSTAudioProcessorEditor::resized()
             layoutKnobRow(inspectorArea.removeFromTop(74).withTrimmedTop(4), {
                 &osc2OctaveSlider,
                 &osc2TuneSlider,
+                &oscCrossModAmountSlider
+            });
+            layoutKnobRow(inspectorArea.removeFromTop(70).withTrimmedTop(3), {
                 &osc2WarpSlider,
                 &osc2WarpBSlider
             });
@@ -4734,7 +4747,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             const char* label = "";
         };
 
-        const std::array<DestinationExpectation, 27> expectations {
+        const std::array<DestinationExpectation, 28> expectations {
             DestinationExpectation { Parameters::ID::filterCutoff, 1, "Filter Cutoff" },
             DestinationExpectation { Parameters::ID::filterResonance, 2, "Filter Res" },
             DestinationExpectation { Parameters::ID::filterEnvAmount, 3, "Filter Env" },
@@ -4761,7 +4774,8 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
             DestinationExpectation { Parameters::ID::fxSendReverb, 21, "Send Reverb" },
             DestinationExpectation { Parameters::ID::osc1Level, 22, "Osc 1 Level" },
             DestinationExpectation { Parameters::ID::subLevel, 23, "Sub Level" },
-            DestinationExpectation { Parameters::ID::noiseLevel, 24, "Noise Level" }
+            DestinationExpectation { Parameters::ID::noiseLevel, 24, "Noise Level" },
+            DestinationExpectation { Parameters::ID::oscCrossModAmount, 25, "Osc Cross Mod" }
         };
 
         for (const auto& expectation : expectations)
@@ -9585,6 +9599,7 @@ int NateVSTAudioProcessorEditor::modulationDestinationIndexForParameter(const ju
     if (parameterID == Parameters::ID::osc1Level) return 22;
     if (parameterID == Parameters::ID::subLevel) return 23;
     if (parameterID == Parameters::ID::noiseLevel) return 24;
+    if (parameterID == Parameters::ID::oscCrossModAmount) return 25;
 
     return 0;
 }
@@ -10197,7 +10212,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &modMatrixSourceHeaderB, &modMatrixDestinationHeaderB, &modMatrixAmountHeaderB, &modMacroAssignLabel, &modMacroAssignStatusLabel, &macroAssignmentPad, &modRouteMapDisplay,
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
-        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &presetBox, &presetCategoryBox,
+        &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &oscCrossModModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &presetBox, &presetCategoryBox,
         &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
@@ -10276,6 +10291,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(oscWarpBSlider, oscWarpBLabel, false);
     setSliderVisible(osc2WarpSlider, osc2WarpLabel, false);
     setSliderVisible(osc2WarpBSlider, osc2WarpBLabel, false);
+    setSliderVisible(oscCrossModAmountSlider, oscCrossModAmountLabel, false);
     setSliderVisible(oscWavetablePositionSlider, oscWavetablePositionLabel, false);
     setSliderVisible(osc2WavetablePositionSlider, osc2WavetablePositionLabel, false);
     setSliderVisible(unisonVoicesSlider, unisonVoicesLabel, false);
@@ -12367,6 +12383,11 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
 {
     const auto osc1Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
     const auto osc2Wave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Wave, 1.0f));
+    const auto crossModModeValue = juce::roundToInt(readPlainParameterValue(Parameters::ID::oscCrossModMode, 0.0f));
+    const auto crossModAmountValue = juce::jlimit(0.0f,
+                                                  1.0f,
+                                                  readPlainParameterValue(Parameters::ID::oscCrossModAmount, 0.0f));
+    const auto crossModActive = crossModModeValue > 0 && crossModAmountValue > 0.001f;
     const auto warpChoices = Parameters::oscWarpModeChoices();
     auto warpModeName = [&warpChoices] (float value)
     {
@@ -12399,9 +12420,10 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
             juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2WavetablePosition, 0.35f)),
             juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2Warp, 0.0f)),
             juce::jlimit(0.0f, 1.0f, readPlainParameterValue(Parameters::ID::osc2WarpB, 0.0f)),
-            readPlainParameterValue(Parameters::ID::osc2Level, 0.0f) > 0.01f,
+            readPlainParameterValue(Parameters::ID::osc2Level, 0.0f) > 0.01f || crossModActive,
             osc2Wave == 4 || osc2Wave == 7,
-            osc2Wave == 7
+            osc2Wave == 7,
+            crossModActive
         }
     };
 
@@ -12417,8 +12439,14 @@ void NateVSTAudioProcessorEditor::updateOscillatorLaneOverview()
                                                             {
                                                                 return lane.customActive;
                                                             }));
+    const auto crossModChoices = Parameters::oscCrossModModeChoices();
+    const auto crossModMode = juce::jlimit(0, crossModChoices.size() - 1, crossModModeValue);
+    const auto crossModSummary = crossModActive
+        ? " | " + crossModChoices[crossModMode] + " " + juce::String(juce::roundToInt(crossModAmountValue * 100.0f)) + "%"
+        : juce::String();
     state.summary = juce::String(activeCount) + "/2 active"
-        + (customCount > 0 ? " | " + juce::String(customCount) + " custom" : juce::String());
+        + (customCount > 0 ? " | " + juce::String(customCount) + " custom" : juce::String())
+        + crossModSummary;
 
     oscillatorLaneOverview.setState(std::move(state));
 }

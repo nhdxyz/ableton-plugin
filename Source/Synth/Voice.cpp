@@ -30,6 +30,8 @@ Voice::Voice(Parameters::APVTS& state)
     osc2Octave = parameters.getRawParameterValue(Parameters::ID::osc2Octave);
     osc2Tune = parameters.getRawParameterValue(Parameters::ID::osc2Tune);
     osc2Level = parameters.getRawParameterValue(Parameters::ID::osc2Level);
+    oscCrossModMode = parameters.getRawParameterValue(Parameters::ID::oscCrossModMode);
+    oscCrossModAmount = parameters.getRawParameterValue(Parameters::ID::oscCrossModAmount);
     subLevel = parameters.getRawParameterValue(Parameters::ID::subLevel);
     noiseLevel = parameters.getRawParameterValue(Parameters::ID::noiseLevel);
     noiseType = parameters.getRawParameterValue(Parameters::ID::noiseType);
@@ -401,6 +403,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     auto osc1LevelMod = 0.0f;
     auto osc2TuneMod = 0.0f;
     auto osc2LevelMod = 0.0f;
+    auto crossModAmountMod = 0.0f;
     auto subLevelMod = 0.0f;
     auto noiseLevelMod = 0.0f;
     auto oscWarpMod = 0.0f;
@@ -450,6 +453,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
             case 22: osc1LevelMod += contribution; break;
             case 23: subLevelMod += contribution; break;
             case 24: noiseLevelMod += contribution; break;
+            case 25: crossModAmountMod += contribution; break;
             default: break;
         }
     }
@@ -466,6 +470,7 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     oscWarpMod = juce::jlimit(-1.0f, 1.0f, oscWarpMod);
     oscWavetablePositionMod = juce::jlimit(-1.0f, 1.0f, oscWavetablePositionMod);
     osc2WavetablePositionMod = juce::jlimit(-1.0f, 1.0f, osc2WavetablePositionMod);
+    crossModAmountMod = juce::jlimit(-1.0f, 1.0f, crossModAmountMod);
     const auto sequenceCutoffMod = sequencerLockDestination == 1 ? sequencerLockAmount : 0.0f;
     const auto sequenceDriveMod = sequencerLockDestination == 2 ? sequencerLockAmount : 0.0f;
     const auto sequenceWarpMod = sequencerLockDestination == 3 ? sequencerLockAmount : 0.0f;
@@ -478,6 +483,10 @@ void Voice::updateVoiceParameters(float envelopeValue, int samplesToAdvance, std
     const auto currentNoiseLevelOffset = noiseLevelMod * 0.65f;
     currentOsc1Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc1Level, 1.0f) + currentOsc1LevelOffset);
     currentOsc2Gain = juce::jlimit(0.0f, 1.0f, readParameter(osc2Level, 0.0f) + currentOsc2LevelOffset);
+    currentCrossModMode = juce::jlimit(0, 4, juce::roundToInt(readParameter(oscCrossModMode, 0.0f)));
+    currentCrossModAmount = juce::jlimit(0.0f, 1.0f,
+                                         readParameter(oscCrossModAmount, 0.0f)
+                                             + (crossModAmountMod * 0.75f));
 
     const auto waveIndex = static_cast<int>(readParameter(oscWave, 1.0f));
     const auto waveform = static_cast<Waveform>(juce::jlimit(0, 7, waveIndex));
@@ -797,17 +806,33 @@ Voice::StereoSample Voice::renderUnisonStack()
     StereoSample sample;
     const auto useOsc1 = currentOsc1Gain > 0.0001f;
     const auto useOsc2 = currentOsc2Gain > 0.0001f;
+    const auto crossModActive = useOsc1 && currentCrossModMode > 0 && currentCrossModAmount > 0.0001f;
 
-    if (! useOsc1 && ! useOsc2)
+    if (! useOsc1 && ! useOsc2 && ! crossModActive)
         return sample;
 
     for (auto voiceIndex = 0; voiceIndex < currentActiveUnisonVoices; ++voiceIndex)
     {
-        auto voiceSample = 0.0f;
-        if (useOsc1)
-            voiceSample += oscillators[static_cast<size_t>(voiceIndex)].process() * currentOsc1Gain;
+        auto& oscillator1 = oscillators[static_cast<size_t>(voiceIndex)];
+        auto& oscillator2 = oscillators2[static_cast<size_t>(voiceIndex)];
+        const auto osc2Sample = (useOsc2 || crossModActive) ? oscillator2.process() : 0.0f;
+        auto phaseOffset = 0.0f;
+        if (crossModActive && currentCrossModMode == 1)
+            phaseOffset = osc2Sample * currentCrossModAmount * 0.16f;
+        else if (crossModActive && currentCrossModMode == 2)
+            phaseOffset = osc2Sample * currentCrossModAmount * 0.42f;
+
+        auto osc1Sample = useOsc1 ? oscillator1.process(phaseOffset) : 0.0f;
+        if (crossModActive && currentCrossModMode == 3)
+            osc1Sample *= 1.0f + (osc2Sample * currentCrossModAmount * 0.78f);
+        else if (crossModActive && currentCrossModMode == 4)
+            osc1Sample = (osc1Sample * (1.0f - currentCrossModAmount))
+                + (osc1Sample * osc2Sample * currentCrossModAmount);
+
+        auto voiceSample = osc1Sample * currentOsc1Gain;
         if (useOsc2)
-            voiceSample += oscillators2[static_cast<size_t>(voiceIndex)].process() * currentOsc2Gain;
+            voiceSample += osc2Sample * currentOsc2Gain;
+        voiceSample = juce::jlimit(-1.6f, 1.6f, voiceSample);
 
         sample.left += voiceSample * currentUnisonLeftGains[static_cast<size_t>(voiceIndex)];
         sample.right += voiceSample * currentUnisonRightGains[static_cast<size_t>(voiceIndex)];

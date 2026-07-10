@@ -71,7 +71,8 @@ UI::OscillatorLaneOverview::State makeState()
             0.18f,
             true,
             true,
-            false
+            false,
+            true
         }
     };
     return state;
@@ -99,7 +100,8 @@ int main()
 
     if (! overview.getTooltip().contains("OSC 1")
         || ! overview.getTooltip().contains("OSC 2")
-        || ! overview.getTooltip().contains("Fold"))
+        || ! overview.getTooltip().contains("Fold")
+        || ! overview.getTooltip().contains("cross-mod source"))
     {
         std::cerr << "Oscillator lane overview tooltip did not summarise both lanes\n";
         return 1;

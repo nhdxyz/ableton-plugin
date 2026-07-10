@@ -346,10 +346,11 @@ void Oscillator::setCustomWavetableFrames(const CustomWaveFrames& frames)
     customFramesInitialised = true;
 }
 
-float Oscillator::process()
+float Oscillator::process(float phaseOffset)
 {
     float sample = 0.0f;
-    const auto currentPhase = phase;
+    auto currentPhase = phase + juce::jlimit(-0.49f, 0.49f, phaseOffset);
+    currentPhase -= std::floor(currentPhase);
 
     switch (waveform)
     {
@@ -366,7 +367,7 @@ float Oscillator::process()
             break;
 
         case Waveform::triangle:
-            sample = triangleState;
+            sample = std::abs(phaseOffset) > 0.000001f ? triangleFromPhase(currentPhase) : triangleState;
             break;
 
         case Waveform::wavetable:

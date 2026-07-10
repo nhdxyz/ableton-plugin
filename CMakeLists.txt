@@ -530,6 +530,19 @@ target_link_libraries(NateVSTSourceCharacterAudit
 
 add_test(NAME SourceCharacterAudit COMMAND NateVSTSourceCharacterAudit)
 
+add_executable(NateVSTOscillatorCrossModAudit Tests/OscillatorCrossModAudit.cpp)
+
+target_link_libraries(NateVSTOscillatorCrossModAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME OscillatorCrossModAudit COMMAND NateVSTOscillatorCrossModAudit)
+
 add_executable(NateVSTWavetableModelAudit
     Tests/WavetableModelAudit.cpp
     Source/Synth/WavetableModel.cpp

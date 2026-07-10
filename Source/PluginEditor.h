@@ -293,6 +293,7 @@ private:
     juce::ComboBox oscWarpBModeBox;
     juce::ComboBox osc2WarpModeBox;
     juce::ComboBox osc2WarpBModeBox;
+    juce::ComboBox oscCrossModModeBox;
     juce::ComboBox filterModeBox;
     juce::ComboBox filterCharacterBox;
     juce::ComboBox filterSlopeBox;
@@ -381,6 +382,7 @@ private:
     juce::Slider oscWarpBSlider;
     juce::Slider osc2WarpSlider;
     juce::Slider osc2WarpBSlider;
+    juce::Slider oscCrossModAmountSlider;
     juce::Slider oscWavetablePositionSlider;
     juce::Slider osc2WavetablePositionSlider;
     juce::Slider unisonVoicesSlider;
@@ -499,6 +501,7 @@ private:
     juce::Label oscWarpBLabel;
     juce::Label osc2WarpLabel;
     juce::Label osc2WarpBLabel;
+    juce::Label oscCrossModAmountLabel;
     juce::Label oscWavetablePositionLabel;
     juce::Label osc2WavetablePositionLabel;
     juce::Label unisonVoicesLabel;

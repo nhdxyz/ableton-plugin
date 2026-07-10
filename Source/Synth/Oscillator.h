@@ -51,7 +51,7 @@ public:
     void setCustomWaveform(const CustomWavePoints& points);
     void setCustomWavetableFrames(const CustomWaveFrames& frames);
 
-    float process();
+    float process(float phaseOffset = 0.0f);
 
 private:
     double sampleRate = 44100.0;

@@ -52,6 +52,11 @@ juce::StringArray oscWarpModeChoices()
     return { "Harmonic", "Fold", "Bend", "Sync" };
 }
 
+juce::StringArray oscCrossModModeChoices()
+{
+    return { "Off", "FM", "Phase", "AM", "Ring" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -222,7 +227,8 @@ juce::StringArray modulationDestinationChoices()
         "FX Send Reverb",
         "Osc 1 Level",
         "Sub Level",
-        "Noise Level"
+        "Noise Level",
+        "Osc Cross Mod"
     };
 }
 
@@ -294,6 +300,18 @@ APVTS::ParameterLayout createLayout()
     add(std::make_unique<juce::AudioParameterFloat>(
         ID::osc2Level,
         "Osc 2 Level",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::oscCrossModMode,
+        "Osc Cross Mod Mode",
+        oscCrossModModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::oscCrossModAmount,
+        "Osc Cross Mod Amount",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
 

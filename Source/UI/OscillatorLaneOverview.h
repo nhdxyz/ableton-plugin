@@ -28,6 +28,7 @@ public:
         bool active = false;
         bool wavetableActive = false;
         bool customActive = false;
+        bool modulator = false;
     };
 
     struct State

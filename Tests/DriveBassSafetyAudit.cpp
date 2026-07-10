@@ -1,4 +1,5 @@
 #include "../Source/PluginProcessor.h"
+#include "../Source/Effects/EffectsRack.h"
 
 #include <array>
 #include <cmath>
@@ -135,6 +136,42 @@ BandEnergy renderMultibandFixture(float lowBand, float midBand, float highBand, 
     processor.processBlock(buffer, midi);
     return measureBandEnergy(buffer);
 }
+
+bool verifyReportedOversamplingLatency()
+{
+    constexpr auto blockSize = 512;
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, blockSize);
+    if (! configureProcessor(processor, 0.0f, 0.0f))
+        return false;
+
+    Effects::EffectsRack rack(processor.getValueTreeState());
+    rack.prepare(44100.0, blockSize, 2);
+    const auto latency = rack.getLatencySamples();
+    if (latency <= 0 || latency > 64 || processor.getLatencySamples() != latency)
+        return false;
+
+    juce::AudioBuffer<float> impulse(2, blockSize);
+    impulse.clear();
+    impulse.setSample(0, 0, 0.5f);
+    impulse.setSample(1, 0, 0.5f);
+    juce::MidiBuffer midi;
+    rack.process(impulse, midi, 0.0f, 120.0, std::nullopt);
+
+    auto peakIndex = 0;
+    auto peak = 0.0f;
+    for (auto sampleIndex = 0; sampleIndex < blockSize; ++sampleIndex)
+    {
+        const auto value = std::abs(impulse.getSample(0, sampleIndex));
+        if (value > peak)
+        {
+            peak = value;
+            peakIndex = sampleIndex;
+        }
+    }
+
+    return peak > 0.01f && std::abs(peakIndex - latency) <= 1;
+}
 }
 
 int main()
@@ -214,6 +251,12 @@ int main()
         }
     }
 
-    std::cout << "Drive audit passed for bass safety, independent three-band saturation, parallel mix, and output safety.\n";
+    if (! verifyReportedOversamplingLatency())
+    {
+        std::cerr << "Drive oversampling did not keep bypass timing aligned with reported host latency\n";
+        return 1;
+    }
+
+    std::cout << "Drive audit passed for bass safety, independent three-band saturation, parallel mix, 2x latency reporting, and output safety.\n";
     return 0;
 }

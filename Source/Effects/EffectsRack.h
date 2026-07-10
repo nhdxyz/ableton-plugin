@@ -8,6 +8,7 @@
 
 #include <array>
 #include <atomic>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -28,6 +29,7 @@ public:
                  std::optional<double> ppqPosition);
     void getPumpMeterLevels(float& phase, float& gain, float& reduction, bool& active) const noexcept;
     void getGuardMeterLevels(float& drive, float& reduction, bool& active) const noexcept;
+    int getLatencySamples() const noexcept;
     void requestSendTailKill() noexcept;
 
 private:
@@ -38,6 +40,7 @@ private:
     juce::dsp::Phaser<float> phaser;
     juce::dsp::Chorus<float> flanger;
     juce::dsp::Chorus<float> chorus;
+    std::unique_ptr<juce::dsp::Oversampling<float>> distortionOversampling;
     juce::Reverb reverb;
     juce::Reverb sendReverb;
     juce::AudioBuffer<float> delayBuffer;
@@ -253,6 +256,7 @@ private:
     void processTone(juce::AudioBuffer<float>& buffer);
     void processEq(juce::AudioBuffer<float>& buffer);
     void processDistortion(juce::AudioBuffer<float>& buffer);
+    void processDistortionBlock(juce::dsp::AudioBlock<float>& block, double processingSampleRate);
     void processBitcrush(juce::AudioBuffer<float>& buffer);
     void processPump(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);
     void processTremolo(juce::AudioBuffer<float>& buffer, double bpm, std::optional<double> ppqPosition);

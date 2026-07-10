@@ -266,6 +266,13 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     phaser.prepare(spec);
     flanger.prepare(spec);
     chorus.prepare(spec);
+    distortionOversampling = std::make_unique<juce::dsp::Oversampling<float>>(
+        static_cast<size_t>(preparedChannels),
+        1,
+        juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR,
+        true,
+        true);
+    distortionOversampling->initProcessing(static_cast<size_t>(juce::jmax(1, maximumBlockSize)));
     reverb.setSampleRate(currentSampleRate);
     sendReverb.setSampleRate(currentSampleRate);
     delayBuffer.setSize(preparedChannels, static_cast<int>(std::ceil(currentSampleRate * 2.0)));
@@ -296,6 +303,8 @@ void EffectsRack::reset()
     phaser.reset();
     flanger.reset();
     chorus.reset();
+    if (distortionOversampling != nullptr)
+        distortionOversampling->reset();
     reverb.reset();
     sendReverb.reset();
     delayBuffer.clear();
@@ -392,6 +401,13 @@ void EffectsRack::getGuardMeterLevels(float& drive, float& reduction, bool& acti
     drive = guardMeterDrive.load(std::memory_order_relaxed);
     reduction = guardMeterReduction.load(std::memory_order_relaxed);
     active = guardMeterActive.load(std::memory_order_relaxed);
+}
+
+int EffectsRack::getLatencySamples() const noexcept
+{
+    return distortionOversampling != nullptr
+        ? juce::roundToInt(distortionOversampling->getLatencyInSamples())
+        : 0;
 }
 
 void EffectsRack::requestSendTailKill() noexcept
@@ -804,8 +820,23 @@ void EffectsRack::processEq(juce::AudioBuffer<float>& buffer)
 
 void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
 {
-    if (readParameter(fxDistortionEnabled, 0.0f) < 0.5f)
+    juce::dsp::AudioBlock<float> outputBlock(buffer);
+    if (distortionOversampling == nullptr)
+    {
+        if (readParameter(fxDistortionEnabled, 0.0f) >= 0.5f)
+            processDistortionBlock(outputBlock, currentSampleRate);
         return;
+    }
+
+    auto oversampledBlock = distortionOversampling->processSamplesUp(outputBlock);
+    if (readParameter(fxDistortionEnabled, 0.0f) >= 0.5f)
+        processDistortionBlock(oversampledBlock,
+                               currentSampleRate * static_cast<double>(distortionOversampling->getOversamplingFactor()));
+    distortionOversampling->processSamplesDown(outputBlock);
+}
+
+void EffectsRack::processDistortionBlock(juce::dsp::AudioBlock<float>& buffer, double processingSampleRate)
+{
 
     const auto amount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionAmount, 0.2f) + (fxModulation.drive * 0.45f));
     const auto drive = juce::jmap(juce::jlimit(0.0f, 1.0f, amount), 1.0f, 24.0f);
@@ -828,17 +859,17 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
         const auto lowMakeup = 1.0f / std::sqrt(lowDrive);
         const auto midMakeup = 1.0f / std::sqrt(midDrive);
         const auto highMakeup = 1.0f / std::sqrt(highDrive);
-        const auto lowAlpha = onePoleAlpha(180.0f, currentSampleRate);
-        const auto highAlpha = onePoleAlpha(2800.0f, currentSampleRate);
-        const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(distortionLowState.size()));
+        const auto lowAlpha = onePoleAlpha(180.0f, processingSampleRate);
+        const auto highAlpha = onePoleAlpha(2800.0f, processingSampleRate);
+        const auto channels = juce::jmin(static_cast<int>(buffer.getNumChannels()), static_cast<int>(distortionLowState.size()));
 
         for (auto channel = 0; channel < channels; ++channel)
         {
-            auto* samples = buffer.getWritePointer(channel);
+            auto* samples = buffer.getChannelPointer(static_cast<size_t>(channel));
             auto& lowState = distortionLowState[static_cast<size_t>(channel)];
             auto& highState = distortionHighState[static_cast<size_t>(channel)];
 
-            for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+            for (size_t sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
             {
                 const auto input = samples[sampleIndex];
                 lowState += lowAlpha * (input - lowState);
@@ -859,11 +890,11 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
 
     if (bassSafe <= 0.0001f || distortionLowState.empty())
     {
-        for (auto channel = 0; channel < buffer.getNumChannels(); ++channel)
+        for (size_t channel = 0; channel < buffer.getNumChannels(); ++channel)
         {
-            auto* samples = buffer.getWritePointer(channel);
+            auto* samples = buffer.getChannelPointer(channel);
 
-            for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+            for (size_t sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
             {
                 const auto input = samples[sampleIndex];
                 const auto wet = std::tanh(input * drive) * makeup;
@@ -874,18 +905,18 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
         return;
     }
 
-    const auto lowAlpha = onePoleAlpha(165.0f, currentSampleRate);
+    const auto lowAlpha = onePoleAlpha(165.0f, processingSampleRate);
     const auto cleanLowGain = 1.0f - (amount * bassSafe * 0.04f);
     const auto drivenLowBleed = 1.0f - (bassSafe * 0.98f);
     const auto drivenHighMakeup = juce::jmap(bassSafe, 0.0f, 1.0f, makeup, juce::jmin(1.0f, makeup * 1.18f));
-    const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(distortionLowState.size()));
+    const auto channels = juce::jmin(static_cast<int>(buffer.getNumChannels()), static_cast<int>(distortionLowState.size()));
 
     for (auto channel = 0; channel < channels; ++channel)
     {
-        auto* samples = buffer.getWritePointer(channel);
+        auto* samples = buffer.getChannelPointer(static_cast<size_t>(channel));
         auto& lowState = distortionLowState[static_cast<size_t>(channel)];
 
-        for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+        for (size_t sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
         {
             const auto input = samples[sampleIndex];
             lowState += lowAlpha * (input - lowState);
@@ -901,11 +932,11 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
         }
     }
 
-    for (auto channel = channels; channel < buffer.getNumChannels(); ++channel)
+    for (auto channel = static_cast<size_t>(channels); channel < buffer.getNumChannels(); ++channel)
     {
-        auto* samples = buffer.getWritePointer(channel);
+        auto* samples = buffer.getChannelPointer(channel);
 
-        for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+        for (size_t sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
         {
             const auto input = samples[sampleIndex];
             const auto wet = std::tanh(input * drive) * makeup;

@@ -10214,7 +10214,7 @@ juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) co
             return "Undo Edit and Redo Edit sit in the CONTROL strip. They restore full sound-design snapshots across synth parameters, modulation routes, sequencer steps, FX rack edits, sample edits, preset loads, and performance snapshots.\n\nKnobs support normal drag, fine drag with Shift or Cmd, double-click reset, text entry, and disabled scroll-wheel movement to avoid accidental jumps.\n\nThe CONTROL strip also shows the touched parameter, value, automation ID, and modulation summary.";
 
         case 8:
-            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, variable-count sample markers, tempo-aware time-stretch/warp, formant-safe vocal chops, latency-aware drive oversampling, compressor/clipper metering, content packs, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
+            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, variable-count sample markers, tempo-aware time-stretch/warp, formant-safe vocal chops, compressor/clipper history metering, content packs, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
 
         case 1:
         default:

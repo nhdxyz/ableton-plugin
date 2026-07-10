@@ -850,6 +850,7 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     samplePlayer.prepare(sampleRate);
     patternSequencer.prepare(sampleRate);
     effectsRack.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    setLatencySamples(effectsRack.getLatencySamples());
     sampleCaptureEnabled.store(false, std::memory_order_release);
     invalidateSampleCaptureSession();
     waitForSampleCaptureWritersToFinish();

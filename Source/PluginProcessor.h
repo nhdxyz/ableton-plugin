@@ -241,6 +241,8 @@ public:
     bool canRedoGlobalEdit() const;
     juce::String getGlobalEditHistorySummary() const;
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
+    void setManualKeyboardAuditionActive(bool shouldBeActive) noexcept;
+    bool isManualKeyboardAuditionActive() const noexcept;
     void panicAllNotesOff();
     struct PerformanceModulationStatus
     {
@@ -332,6 +334,8 @@ private:
     Sequencer::PatternSequencer patternSequencer;
     Effects::EffectsRack effectsRack;
     juce::MidiKeyboardState midiKeyboardState;
+    std::atomic<bool> manualKeyboardAuditionActive { false };
+    bool manualKeyboardAuditionWasActive = false;
 
     using ChordMemoryNoteArray = Sequencer::PatternSequencer::ChordNoteArray;
     std::array<std::array<ChordMemoryNoteArray, 128>, 16> chordMemoryActiveNotes {};

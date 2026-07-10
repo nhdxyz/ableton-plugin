@@ -365,7 +365,17 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colour(0x338ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
-    pianoKeyboard.onManualNoteStart = [this] (int midiNote) { prepareForManualKeyboardInput(midiNote); };
+    pianoKeyboard.onManualNoteStart = [this] (int midiNote)
+    {
+        pianoMouseAuditionActive = true;
+        prepareForManualKeyboardInput(midiNote);
+        updateManualKeyboardAuditionState();
+    };
+    pianoKeyboard.onManualNoteEnd = [this]
+    {
+        pianoMouseAuditionActive = false;
+        updateManualKeyboardAuditionState();
+    };
     addAndMakeVisible(pianoKeyboard);
 
     keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the piano strip stays fixed from C1 to C5");
@@ -399,7 +409,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardPanicButton.setMouseClickGrabsKeyboardFocus(false);
     keyboardPanicButton.onClick = [this]
     {
+        pianoMouseAuditionActive = false;
         releaseComputerKeyboardNotes();
+        updateManualKeyboardAuditionState();
         releasePresetAuditionNote();
         audioProcessor.panicAllNotesOff();
         setRandomStatus("All Off: stopped held notes");
@@ -2912,7 +2924,9 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
 NateVSTAudioProcessorEditor::~NateVSTAudioProcessorEditor()
 {
     restoreFxMomentarySnapshot(fxMomentarySnapshot);
+    pianoMouseAuditionActive = false;
     releaseComputerKeyboardNotes();
+    updateManualKeyboardAuditionState();
     removeGlobalKeyboardListeners();
     removeMouseListener(this);
     releaseRandomCandidateAudition(false);
@@ -7765,6 +7779,14 @@ void NateVSTAudioProcessorEditor::prepareForManualKeyboardInput(int midiNote)
     updateKeyboardPerformanceStatus();
 }
 
+void NateVSTAudioProcessorEditor::updateManualKeyboardAuditionState()
+{
+    const auto computerKeyActive = std::any_of(computerKeyboardNotesDown.begin(),
+                                               computerKeyboardNotesDown.end(),
+                                               [] (bool isDown) { return isDown; });
+    audioProcessor.setManualKeyboardAuditionActive(pianoMouseAuditionActive || computerKeyActive);
+}
+
 void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
 {
     auto& keyboardState = audioProcessor.getMidiKeyboardState();
@@ -7784,6 +7806,7 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
         && audioProcessor.hasLoadedSample();
     const auto chordMemoryEnabled = readPlainParameterValue(Parameters::ID::sequencerChordMemory, 0.0f) >= 0.5f
         && readPlainParameterValue(Parameters::ID::sequencerChordMode, 0.0f) >= 0.5f;
+    const auto manualAuditionActive = audioProcessor.isManualKeyboardAuditionActive();
 
     auto subModulated = false;
     auto osc2LevelModulated = false;
@@ -7811,7 +7834,7 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     if (sampleEnabled)
         sources.add(samplePitchMoves ? "SAMPLE RAMP" : "SAMPLE");
     if (sequencerEnabled)
-        sources.add("SEQ");
+        sources.add(manualAuditionActive ? "SEQ PAUSED" : "SEQ");
     if (chordMemoryEnabled)
         sources.add("CHORD");
     if (subModulated)
@@ -7830,7 +7853,9 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     details.add(heldNotes.isEmpty() ? "No held MIDI notes" : heldText);
     details.add("Active keyboard sound paths: " + sourceText);
     if (sequencerEnabled)
-        details.add("SEQ generates pattern notes independently, so held keyboard notes layer over it");
+        details.add(manualAuditionActive
+                        ? "SEQ is paused while the plugin piano is held, then resumes on release"
+                        : "SEQ generates pattern notes independently when manual piano audition is idle");
     if (sampleEnabled)
         details.add("The loaded sampler also responds to keyboard MIDI");
     if (chordMemoryEnabled)
@@ -7892,6 +7917,8 @@ void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
                               juce::jlimit(0, 127, baseNote + static_cast<int>(index)),
                               0.0f);
     }
+
+    updateManualKeyboardAuditionState();
 }
 
 bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent)
@@ -7932,6 +7959,7 @@ bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* origina
         {
             prepareForManualKeyboardInput(note);
             computerKeyboardNotesDown[index] = true;
+            updateManualKeyboardAuditionState();
             keyboardState.noteOn(1, note, 0.86f);
             used = true;
         }
@@ -7939,6 +7967,7 @@ bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* origina
         {
             computerKeyboardNotesDown[index] = false;
             keyboardState.noteOff(1, note, 0.0f);
+            updateManualKeyboardAuditionState();
             used = true;
         }
     }

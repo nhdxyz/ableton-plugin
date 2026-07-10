@@ -894,6 +894,8 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     hostSyncPositionAvailable.store(false, std::memory_order_relaxed);
     hostSyncPlaying.store(false, std::memory_order_relaxed);
     hostSyncPpqAvailable.store(false, std::memory_order_relaxed);
+    manualKeyboardAuditionActive.store(false, std::memory_order_relaxed);
+    manualKeyboardAuditionWasActive = false;
     lowEndStateLeft = 0.0f;
     lowEndStateRight = 0.0f;
 }
@@ -951,7 +953,18 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         }
     }
 
-    applyChordMemoryToMidi(midiMessages);
+    const auto manualKeyboardAudition = manualKeyboardAuditionActive.load(std::memory_order_acquire);
+    if (manualKeyboardAudition && ! manualKeyboardAuditionWasActive)
+    {
+        patternSequencer.reset();
+        clearChordMemoryActiveNotes();
+        synthEngine.allNotesOff();
+        samplePlayer.stopAllVoices();
+    }
+    manualKeyboardAuditionWasActive = manualKeyboardAudition;
+
+    if (! manualKeyboardAudition)
+        applyChordMemoryToMidi(midiMessages);
     const auto hostBpm = getHostBpm();
     const auto hostPosition = getHostPosition();
     hostSyncBpm.store(static_cast<float>(hostBpm), std::memory_order_relaxed);
@@ -960,7 +973,8 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     hostSyncPpqAvailable.store(hostPosition.ppqPosition.has_value(), std::memory_order_relaxed);
     hostSyncPpqPosition.store(hostPosition.ppqPosition.has_value() ? static_cast<float>(*hostPosition.ppqPosition) : 0.0f,
                               std::memory_order_relaxed);
-    patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
+    if (! manualKeyboardAudition)
+        patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     updatePerformanceModulationStatus(midiMessages);
     advancePerformanceModulationEnvelope(buffer.getNumSamples());
     const auto lockDestination = sequencerLockDestination != nullptr
@@ -4882,6 +4896,16 @@ void NateVSTAudioProcessor::notePresetLoaded(const juce::String& presetName)
 juce::MidiKeyboardState& NateVSTAudioProcessor::getMidiKeyboardState() noexcept
 {
     return midiKeyboardState;
+}
+
+void NateVSTAudioProcessor::setManualKeyboardAuditionActive(bool shouldBeActive) noexcept
+{
+    manualKeyboardAuditionActive.store(shouldBeActive, std::memory_order_release);
+}
+
+bool NateVSTAudioProcessor::isManualKeyboardAuditionActive() const noexcept
+{
+    return manualKeyboardAuditionActive.load(std::memory_order_acquire);
 }
 
 void NateVSTAudioProcessor::panicAllNotesOff()

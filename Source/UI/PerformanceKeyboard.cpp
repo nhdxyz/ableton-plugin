@@ -22,4 +22,18 @@ bool PerformanceKeyboard::mouseDraggedToKey(int midiNoteNumber, const juce::Mous
 
     return true;
 }
+
+void PerformanceKeyboard::mouseUp(const juce::MouseEvent& event)
+{
+    juce::MidiKeyboardComponent::mouseUp(event);
+    if (onManualNoteEnd != nullptr)
+        onManualNoteEnd();
+}
+
+void PerformanceKeyboard::focusLost(juce::Component::FocusChangeType cause)
+{
+    juce::MidiKeyboardComponent::focusLost(cause);
+    if (onManualNoteEnd != nullptr)
+        onManualNoteEnd();
+}
 }

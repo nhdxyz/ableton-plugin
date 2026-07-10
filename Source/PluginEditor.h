@@ -791,6 +791,7 @@ private:
     int keyboardTypingBaseNote = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
     std::array<bool, 17> computerKeyboardNotesDown {};
+    bool pianoMouseAuditionActive = false;
     bool globalKeyboardListenersInstalled = false;
     MomentaryFxAction activeMomentaryFxAction = MomentaryFxAction::none;
     FxMomentarySnapshot fxMomentarySnapshot;
@@ -1052,6 +1053,7 @@ private:
     void updateKeyboardRangeLabel();
     void updateKeyboardPerformanceStatus();
     void prepareForManualKeyboardInput(int midiNote);
+    void updateManualKeyboardAuditionState();
     void stepSequencerRoot(int semitones);
     void updateSequencerRootStepper();
     void addFxModule(FxModule module);

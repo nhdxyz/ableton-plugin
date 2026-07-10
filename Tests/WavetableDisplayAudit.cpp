@@ -158,6 +158,29 @@ int main()
         return 1;
     }
 
+    display.setViewMode(UI::WavetableDisplay::ViewMode::precision);
+    if (! display.getTooltip().containsIgnoreCase("2D precision"))
+    {
+        std::cerr << "Wavetable precision mode is not reflected in the editor tooltip\n";
+        return 1;
+    }
+
+    juce::Image precisionImage(juce::Image::ARGB, display.getWidth(), display.getHeight(), true);
+    juce::Graphics precisionGraphics(precisionImage);
+    display.paint(precisionGraphics);
+    auto precisionPixels = 0;
+    for (auto y = 0; y < precisionImage.getHeight(); y += 6)
+        for (auto x = 0; x < precisionImage.getWidth(); x += 6)
+            if (precisionImage.getPixelAt(x, y).getAlpha() > 0)
+                ++precisionPixels;
+
+    if (precisionPixels < 220)
+    {
+        std::cerr << "Wavetable precision render appears too sparse: " << precisionPixels << " sampled pixels\n";
+        return 1;
+    }
+    display.setViewMode(UI::WavetableDisplay::ViewMode::perspective);
+
     std::vector<std::pair<int, size_t>> changedPoints;
     display.onCustomPointChange = [&changedPoints] (int oscillator, size_t point, float)
     {

@@ -45,6 +45,12 @@ public:
         storeMorph
     };
 
+    enum class ViewMode
+    {
+        perspective,
+        precision
+    };
+
     std::function<void()> onEditStart;
     std::function<void(float)> onOsc1PositionChange;
     std::function<void(float)> onOsc2PositionChange;
@@ -70,6 +76,8 @@ public:
                   CustomFrameSet newOsc1CustomFrames = {},
                   CustomFrameSet newOsc2CustomFrames = {});
     void setCustomDrawMode(CustomDrawMode newMode);
+    void setViewMode(ViewMode newMode);
+    ViewMode getViewMode() const noexcept { return viewMode; }
     juce::String getTooltip() override;
     LayoutMetrics getLayoutMetricsForAudit() const;
     void paint(juce::Graphics& g) override;
@@ -146,6 +154,7 @@ private:
     bool editingFrameRail = false;
     bool frameActionGestureActive = false;
     CustomDrawMode customDrawMode = CustomDrawMode::point;
+    ViewMode viewMode = ViewMode::perspective;
 
     void beginFrameRailEdit(const juce::MouseEvent& event);
     FrameActionHit frameActionHitForEvent(const juce::MouseEvent& event) const;

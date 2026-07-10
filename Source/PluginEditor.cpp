@@ -986,7 +986,59 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     expandedWavetableDisplay.onWarpChange = wavetableDisplay.onWarpChange;
     expandedWavetableDisplay.onCustomPointChange = wavetableDisplay.onCustomPointChange;
     expandedWavetableDisplay.onFrameAction = wavetableDisplay.onFrameAction;
+    wavetableDisplay.setViewMode(wavetablePerspective ? UI::WavetableDisplay::ViewMode::perspective
+                                                      : UI::WavetableDisplay::ViewMode::precision);
+    expandedWavetableDisplay.setViewMode(wavetableDisplay.getViewMode());
     addAndMakeVisible(expandedWavetableDisplay);
+
+    waveViewModeButton.setClickingTogglesState(true);
+    waveViewModeButton.setToggleState(wavetablePerspective, juce::dontSendNotification);
+    waveViewModeButton.setButtonText(wavetablePerspective ? "3D" : "2D");
+    waveViewModeButton.setTooltip("Switch the wavetable editor between perspective overview and precise 2D editing");
+    waveViewModeButton.onClick = [this]
+    {
+        wavetablePerspective = waveViewModeButton.getToggleState();
+        const auto mode = wavetablePerspective ? UI::WavetableDisplay::ViewMode::perspective
+                                               : UI::WavetableDisplay::ViewMode::precision;
+        wavetableDisplay.setViewMode(mode);
+        expandedWavetableDisplay.setViewMode(mode);
+        waveViewModeButton.setButtonText(wavetablePerspective ? "3D" : "2D");
+        saveEditorPreferences();
+    };
+    addAndMakeVisible(waveViewModeButton);
+
+    sourceRandomizeButton.setTooltip("Generate a new Source section while preserving locked patch sections");
+    sourceRandomizeButton.onClick = [this] { triggerRandomSectionRoll(0); };
+    addAndMakeVisible(sourceRandomizeButton);
+
+    sourceCopyButton.setTooltip("Copy Osc 1 waveform, frame stack, position, and warp settings to Osc 2");
+    sourceCopyButton.onClick = [this]
+    {
+        captureGlobalEdit("Copy Osc 1 to Osc 2");
+        writeCustomWaveFrameSetWithoutCapture(true, readCustomWaveFrameSet(false));
+        setPlainParameterValue(Parameters::ID::osc2Wave, readPlainParameterValue(Parameters::ID::oscWave, 1.0f));
+        setPlainParameterValue(Parameters::ID::osc2WavetablePosition,
+                               readPlainParameterValue(Parameters::ID::oscWavetablePosition, 0.0f));
+        setPlainParameterValue(Parameters::ID::osc2Warp,
+                               readPlainParameterValue(Parameters::ID::oscWarp, 0.0f));
+        setPlainParameterValue(Parameters::ID::osc2WarpB,
+                               readPlainParameterValue(Parameters::ID::oscWarpB, 0.0f));
+        setPlainParameterValue(Parameters::ID::osc2WarpMode,
+                               readPlainParameterValue(Parameters::ID::oscWarpMode, 0.0f));
+        setPlainParameterValue(Parameters::ID::osc2WarpBMode,
+                               readPlainParameterValue(Parameters::ID::oscWarpBMode, 0.0f));
+        updateSegmentedSelectors();
+        updateWavetableDisplay();
+        updateOscillatorLaneOverview();
+        setRandomStatus("Copied Osc 1 source into Osc 2");
+    };
+    addAndMakeVisible(sourceCopyButton);
+
+    sourceLockButton.setTooltip("Keep the Source section unchanged during generation and mutation");
+    addAndMakeVisible(sourceLockButton);
+    buttonAttachments.push_back(std::make_unique<ButtonAttachment>(audioProcessor.getValueTreeState(),
+                                                                    Parameters::ID::randomLockSource,
+                                                                    sourceLockButton));
 
     sourceLabFrameStrip.onPositionEditStart = [this] (bool targetOsc2)
     {
@@ -3029,6 +3081,7 @@ void NateVSTAudioProcessorEditor::loadEditorPreferences()
     selectedTheme = static_cast<UI::ThemeId>(juce::jlimit(0, 2, editorPreferences->getIntValue("theme", 0)));
     homeAnalyzerExpanded = editorPreferences->getBoolValue("homeAnalyzerExpanded", true);
     homeStagePerspective = editorPreferences->getBoolValue("homeStagePerspective", true);
+    wavetablePerspective = editorPreferences->getBoolValue("wavetablePerspective", true);
     keyboardCollapsed = editorPreferences->getBoolValue("keyboardCollapsed", false);
     animationsEnabled = editorPreferences->getBoolValue("animationsEnabled", true);
     const auto storedScale = editorPreferences->getIntValue("uiScalePercent", 100);
@@ -3043,6 +3096,7 @@ void NateVSTAudioProcessorEditor::saveEditorPreferences()
     editorPreferences->setValue("theme", static_cast<int>(selectedTheme));
     editorPreferences->setValue("homeAnalyzerExpanded", homeAnalyzerExpanded);
     editorPreferences->setValue("homeStagePerspective", homeStagePerspective);
+    editorPreferences->setValue("wavetablePerspective", wavetablePerspective);
     editorPreferences->setValue("keyboardCollapsed", keyboardCollapsed);
     editorPreferences->setValue("animationsEnabled", animationsEnabled);
     editorPreferences->setValue("uiScalePercent", uiScalePercent);
@@ -3121,12 +3175,17 @@ void NateVSTAudioProcessorEditor::showViewMenu()
             editor.selectedTheme = UI::ThemeId::darkClub;
             editor.homeAnalyzerExpanded = true;
             editor.homeStagePerspective = true;
+            editor.wavetablePerspective = true;
             editor.keyboardCollapsed = false;
             editor.animationsEnabled = true;
             editor.uiScalePercent = 100;
             editor.homeAnalyzerButton.setToggleState(true, juce::dontSendNotification);
             editor.homeStageModeButton.setToggleState(true, juce::dontSendNotification);
             editor.homeStageModeButton.setButtonText("3D");
+            editor.waveViewModeButton.setToggleState(true, juce::dontSendNotification);
+            editor.waveViewModeButton.setButtonText("3D");
+            editor.wavetableDisplay.setViewMode(UI::WavetableDisplay::ViewMode::perspective);
+            editor.expandedWavetableDisplay.setViewMode(UI::WavetableDisplay::ViewMode::perspective);
             editor.applySelectedTheme();
             editor.setSize(editorDefaultWidth, editorDefaultHeight);
         }
@@ -3694,6 +3753,10 @@ void NateVSTAudioProcessorEditor::resized()
             oscillatorLaneOverview.setVisible(true);
             houseLayerRackDisplay.setVisible(true);
             sourceLayerExpandButton.setVisible(true);
+            sourceRandomizeButton.setVisible(true);
+            sourceCopyButton.setVisible(true);
+            sourceLockButton.setVisible(true);
+            waveViewModeButton.setVisible(true);
             synthSectionLabel.setBounds(content.removeFromTop(28));
             setSliderVisible(osc1LevelSlider, osc1LevelLabel, true);
             setSliderVisible(osc2LevelSlider, osc2LevelLabel, true);
@@ -3732,6 +3795,9 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto sourceHeader = sourceArea.removeFromTop(22);
             sourceLayerExpandButton.setBounds(sourceHeader.removeFromRight(28).reduced(3, 1));
+            sourceLockButton.setBounds(sourceHeader.removeFromRight(48).reduced(3, 1));
+            sourceRandomizeButton.setBounds(sourceHeader.removeFromRight(48).reduced(3, 1));
+            sourceCopyButton.setBounds(sourceHeader.removeFromRight(68).reduced(3, 1));
             synthSourceLabel.setBounds(sourceHeader);
 
             auto osc1Row = sourceArea.removeFromTop(34).withTrimmedTop(2);
@@ -3776,6 +3842,7 @@ void NateVSTAudioProcessorEditor::resized()
             });
 
             auto canvasHeader = canvasArea.removeFromTop(22);
+            waveViewModeButton.setBounds(canvasHeader.removeFromRight(48).reduced(3, 1));
             synthFilterLabel.setBounds(canvasHeader);
             auto waveToolRow = canvasArea.removeFromTop(36).withTrimmedTop(2);
             const auto waveEditWidth = juce::jlimit(86, 112, waveToolRow.getWidth() / 3);
@@ -10129,7 +10196,9 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &randomLockPitchButton, &randomLockEnvelopeButton, &randomLockFilterButton, &randomLockSourceButton,
         &randomLockSampleButton, &randomLockFxButton, &randomLockOutputButton, &randomLockSequencerButton,
         &lfo1SyncButton, &lfo1RetriggerButton, &lfo2SyncButton, &lfo2RetriggerButton,
-        &homeMacroExpandButton, &homeAnalyzerButton, &homeStageModeButton, &modMacroExpandButton, &sourceLayerExpandButton, &sequencerExpandButton, &focusOverlayCloseButton,
+        &homeMacroExpandButton, &homeAnalyzerButton, &homeStageModeButton, &modMacroExpandButton, &sourceLayerExpandButton,
+        &sourceRandomizeButton, &sourceCopyButton, &sourceLockButton, &waveViewModeButton,
+        &sequencerExpandButton, &focusOverlayCloseButton,
         &sourceFrameTargetOsc1Button, &sourceFrameTargetOsc2Button, &sourceFramePreviousButton, &sourceFrameNextButton, &sourceFrameEvolveButton,
         &sourceFrameCopyButton, &sourceFramePasteButton, &sourceFrameFillButton, &sourceFrameInterpolateButton,
         &sourceStackReverseButton, &sourceStackRotateLeftButton, &sourceStackRotateRightButton, &sourceStackSmoothButton, &sourceStackEmphasiseButton,

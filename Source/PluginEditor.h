@@ -640,6 +640,10 @@ private:
     juce::TextButton housePianoWaveButton { "Pno" };
     juce::TextButton customWaveButton { "Edit" };
     juce::TextButton waveEditorFocusButton { "Edit Wave" };
+    juce::TextButton waveViewModeButton { "3D" };
+    juce::TextButton sourceRandomizeButton { "Dice" };
+    juce::TextButton sourceCopyButton { "O1 > O2" };
+    juce::ToggleButton sourceLockButton { "Lock" };
     juce::TextButton osc2SineWaveButton { "Sine" };
     juce::TextButton osc2SawWaveButton { "Saw" };
     juce::TextButton osc2SquareWaveButton { "Square" };
@@ -796,6 +800,7 @@ private:
     UI::ThemeId selectedTheme = UI::ThemeId::darkClub;
     bool homeAnalyzerExpanded = true;
     bool homeStagePerspective = true;
+    bool wavetablePerspective = true;
     bool keyboardCollapsed = false;
     bool animationsEnabled = true;
     int uiScalePercent = 100;

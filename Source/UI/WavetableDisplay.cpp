@@ -231,7 +231,8 @@ void WavetableDisplay::setState(float newOsc1Position,
 
 juce::String WavetableDisplay::getTooltip()
 {
-    return "3D wavetable editor: top rail selects/scans morph frames; Option-click copies, Command-click pastes, Shift-click stores morph. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
+    return juce::String(viewMode == ViewMode::perspective ? "3D wavetable editor" : "2D precision wavetable editor")
+        + ": top rail selects/scans morph frames; Option-click copies, Command-click pastes, Shift-click stores morph. Shift/right-drag targets Osc 2, Option-drag adjusts warp.";
 }
 
 WavetableDisplay::LayoutMetrics WavetableDisplay::getLayoutMetricsForAudit() const
@@ -288,6 +289,15 @@ void WavetableDisplay::setCustomDrawMode(CustomDrawMode newMode)
     repaint();
 }
 
+void WavetableDisplay::setViewMode(ViewMode newMode)
+{
+    if (viewMode == newMode)
+        return;
+
+    viewMode = newMode;
+    repaint();
+}
+
 void WavetableDisplay::paint(juce::Graphics& g)
 {
     const auto bounds = getLocalBounds().toFloat().reduced(1.0f);
@@ -317,7 +327,7 @@ void WavetableDisplay::paint(juce::Graphics& g)
 
     g.setFont(juce::FontOptions(8.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff8ee6c9).withAlpha(inactive ? 0.35f : 0.86f));
-    g.drawFittedText("3D WT SURFACE",
+    g.drawFittedText(viewMode == ViewMode::perspective ? "3D WT SURFACE" : "2D WT PRECISION",
                      bounds.withTrimmedLeft(8.0f).withTrimmedTop(5.0f).withHeight(12.0f).toNearestInt(),
                      juce::Justification::centredLeft,
                      1,
@@ -445,13 +455,15 @@ void WavetableDisplay::paint(juce::Graphics& g)
             return;
 
         const auto surfaceBounds = plot.reduced(12.0f, 13.0f);
-        constexpr auto sliceCount = 9;
+        const auto sliceCount = viewMode == ViewMode::perspective ? 9 : 1;
         for (auto slice = 0; slice < sliceCount; ++slice)
         {
-            const auto depth = static_cast<float>(slice) / static_cast<float>(sliceCount - 1);
-            const auto xSkew = juce::jmap(depth, -12.0f, 14.0f);
-            const auto ySkew = juce::jmap(depth, 17.0f, -15.0f);
-            const auto alpha = juce::jmap(depth, 0.06f, 0.30f);
+            const auto depth = viewMode == ViewMode::perspective
+                ? static_cast<float>(slice) / static_cast<float>(sliceCount - 1)
+                : (editingOscillator == 2 ? osc2Position : osc1Position);
+            const auto xSkew = viewMode == ViewMode::perspective ? juce::jmap(depth, -12.0f, 14.0f) : 0.0f;
+            const auto ySkew = viewMode == ViewMode::perspective ? juce::jmap(depth, 17.0f, -15.0f) : 0.0f;
+            const auto alpha = viewMode == ViewMode::perspective ? juce::jmap(depth, 0.06f, 0.30f) : 0.34f;
             juce::Path path;
             constexpr auto surfacePoints = 72;
 
@@ -486,7 +498,7 @@ void WavetableDisplay::paint(juce::Graphics& g)
         }
 
         g.setColour(colour.withAlpha(0.10f));
-        for (auto rib = 0; rib < 5; ++rib)
+        for (auto rib = 0; rib < (viewMode == ViewMode::perspective ? 5 : 0); ++rib)
         {
             const auto phase = static_cast<float>(rib) / 4.0f;
             const auto x = surfaceBounds.getX() + (surfaceBounds.getWidth() * phase);

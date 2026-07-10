@@ -67,6 +67,7 @@ target_sources(NateVST
         Source/UI/HostSyncStatusLabel.cpp
         Source/UI/HouseLayerRackDisplay.cpp
         Source/UI/HomeOverviewDisplay.cpp
+        Source/UI/HomeSoundStage.cpp
         Source/UI/HomeSignalFlowDisplay.cpp
         Source/UI/HomeSessionDisplay.cpp
         Source/UI/LfoCurveLibrary.cpp
@@ -212,6 +213,18 @@ target_link_libraries(NateVSTWavetableDisplayAudit
 )
 
 add_test(NAME WavetableDisplayAudit COMMAND NateVSTWavetableDisplayAudit)
+
+add_executable(NateVSTHomeSoundStageAudit Tests/HomeSoundStageAudit.cpp)
+
+target_link_libraries(NateVSTHomeSoundStageAudit
+    PRIVATE
+        NateVST
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME HomeSoundStageAudit COMMAND NateVSTHomeSoundStageAudit)
 
 add_executable(NateVSTWavetableFrameStripAudit
     Tests/WavetableFrameStripAudit.cpp

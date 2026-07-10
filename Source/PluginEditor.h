@@ -10,6 +10,7 @@
 #include "UI/FxRackRow.h"
 #include "UI/HouseLayerRackDisplay.h"
 #include "UI/HomeOverviewDisplay.h"
+#include "UI/HomeSoundStage.h"
 #include "UI/HomeSignalFlowDisplay.h"
 #include "UI/HomeSessionDisplay.h"
 #include "UI/LfoCurveToolStrip.h"
@@ -667,6 +668,10 @@ private:
     UI::ModInspectorActions modInspectorActions;
     UI::MacroAssignmentActions macroAssignmentActions;
     juce::TextButton homeMacroExpandButton { ">" };
+    juce::TextButton headerViewButton { "View" };
+    juce::TextButton headerFavoriteButton { "Fav" };
+    juce::TextButton homeAnalyzerButton { "Analysis" };
+    juce::TextButton homeStageModeButton { "3D" };
     juce::TextButton modMacroExpandButton { ">" };
     juce::TextButton sourceLayerExpandButton { ">" };
     juce::TextButton sequencerExpandButton { ">" };
@@ -737,6 +742,7 @@ private:
     UI::StereoFieldDisplay stereoFieldDisplay;
     UI::ClubMonitorDisplay clubMonitorDisplay;
     UI::HomeOverviewDisplay homeOverviewDisplay;
+    UI::HomeSoundStage homeSoundStage;
     UI::HomeSignalFlowDisplay homeSignalFlowDisplay;
     UI::HomeSessionDisplay homeSessionDisplay;
     UI::PresetCrateMapDisplay presetCrateMapDisplay;
@@ -787,6 +793,13 @@ private:
     bool wavetableFrameClipboardValid = false;
     bool sourceFrameActionTargetOsc2 = false;
     bool sourceFrameActionTargetExplicit = false;
+    UI::ThemeId selectedTheme = UI::ThemeId::darkClub;
+    bool homeAnalyzerExpanded = true;
+    bool homeStagePerspective = true;
+    bool keyboardCollapsed = false;
+    bool animationsEnabled = true;
+    int uiScalePercent = 100;
+    std::unique_ptr<juce::PropertiesFile> editorPreferences;
     std::vector<juce::File> sequencerDragMidiFiles;
     int keyboardTypingBaseNote = -1;
     int syncedPianoKeyboardMappingBaseNote = -1;
@@ -859,6 +872,11 @@ private:
     static ModWorkflowPage modWorkflowPageForButtonIndex(size_t index);
     const UI::Theme& uiTheme() const noexcept;
     void applyThemeColours();
+    void loadEditorPreferences();
+    void saveEditorPreferences();
+    void showViewMenu();
+    void applySelectedTheme();
+    int currentKeyboardHeight() const noexcept;
     void openMacroFocusOverlay();
     void openSampleChopFocusOverlay();
     void openSourceLayerFocusOverlay();
@@ -956,6 +974,7 @@ private:
     void updatePerformanceSnapshotButtons();
     void updatePerformanceXYPad();
     void updateHomeOverviewDisplay();
+    void updateHomeSoundStage();
     void updateHomeSignalFlowDisplay();
     void updateHomeSessionDisplay();
     void updateSequencerSceneButtons();

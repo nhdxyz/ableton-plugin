@@ -44,8 +44,13 @@ struct EqControls
 struct DistortionControls
 {
     juce::ToggleButton& enabledButton;
+    juce::ComboBox& modeBox;
     SliderSlot amount;
     SliderSlot bassSafe;
+    SliderSlot lowBand;
+    SliderSlot midBand;
+    SliderSlot highBand;
+    SliderSlot mix;
 };
 
 struct BitcrushControls

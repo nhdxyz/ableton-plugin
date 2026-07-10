@@ -50,6 +50,7 @@ private:
     std::vector<float> eqLowState;
     std::vector<float> eqHighState;
     std::vector<float> distortionLowState;
+    std::vector<float> distortionHighState;
     std::vector<float> combDampingState;
     std::vector<float> bitcrushHeldSample;
     std::vector<int> bitcrushHoldCounter;
@@ -115,6 +116,11 @@ private:
     std::atomic<float>* fxDistortionEnabled = nullptr;
     std::atomic<float>* fxDistortionAmount = nullptr;
     std::atomic<float>* fxDistortionBassSafe = nullptr;
+    std::atomic<float>* fxDistortionMode = nullptr;
+    std::atomic<float>* fxDistortionLowBand = nullptr;
+    std::atomic<float>* fxDistortionMidBand = nullptr;
+    std::atomic<float>* fxDistortionHighBand = nullptr;
+    std::atomic<float>* fxDistortionMix = nullptr;
     std::atomic<float>* fxBitcrushEnabled = nullptr;
     std::atomic<float>* fxBitcrushBits = nullptr;
     std::atomic<float>* fxBitcrushDownsample = nullptr;

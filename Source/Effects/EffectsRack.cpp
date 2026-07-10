@@ -123,6 +123,11 @@ EffectsRack::EffectsRack(Parameters::APVTS& state)
     fxDistortionEnabled = parameters.getRawParameterValue(Parameters::ID::fxDistortionEnabled);
     fxDistortionAmount = parameters.getRawParameterValue(Parameters::ID::fxDistortionAmount);
     fxDistortionBassSafe = parameters.getRawParameterValue(Parameters::ID::fxDistortionBassSafe);
+    fxDistortionMode = parameters.getRawParameterValue(Parameters::ID::fxDistortionMode);
+    fxDistortionLowBand = parameters.getRawParameterValue(Parameters::ID::fxDistortionLowBand);
+    fxDistortionMidBand = parameters.getRawParameterValue(Parameters::ID::fxDistortionMidBand);
+    fxDistortionHighBand = parameters.getRawParameterValue(Parameters::ID::fxDistortionHighBand);
+    fxDistortionMix = parameters.getRawParameterValue(Parameters::ID::fxDistortionMix);
     fxBitcrushEnabled = parameters.getRawParameterValue(Parameters::ID::fxBitcrushEnabled);
     fxBitcrushBits = parameters.getRawParameterValue(Parameters::ID::fxBitcrushBits);
     fxBitcrushDownsample = parameters.getRawParameterValue(Parameters::ID::fxBitcrushDownsample);
@@ -274,6 +279,7 @@ void EffectsRack::prepare(double sampleRate, int maximumBlockSize, int numChanne
     eqLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     eqHighState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     distortionLowState.assign(static_cast<size_t>(preparedChannels), 0.0f);
+    distortionHighState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     combDampingState.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHeldSample.assign(static_cast<size_t>(preparedChannels), 0.0f);
     bitcrushHoldCounter.assign(static_cast<size_t>(preparedChannels), 0);
@@ -302,6 +308,7 @@ void EffectsRack::reset()
     std::fill(eqLowState.begin(), eqLowState.end(), 0.0f);
     std::fill(eqHighState.begin(), eqHighState.end(), 0.0f);
     std::fill(distortionLowState.begin(), distortionLowState.end(), 0.0f);
+    std::fill(distortionHighState.begin(), distortionHighState.end(), 0.0f);
     std::fill(combDampingState.begin(), combDampingState.end(), 0.0f);
     std::fill(bitcrushHeldSample.begin(), bitcrushHeldSample.end(), 0.0f);
     std::fill(bitcrushHoldCounter.begin(), bitcrushHoldCounter.end(), 0);
@@ -804,6 +811,51 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
     const auto drive = juce::jmap(juce::jlimit(0.0f, 1.0f, amount), 1.0f, 24.0f);
     const auto makeup = 1.0f / std::sqrt(drive);
     const auto bassSafe = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionBassSafe, 0.0f));
+    const auto mix = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionMix, 1.0f));
+    const auto mode = juce::jlimit(0, 1, juce::roundToInt(readParameter(fxDistortionMode, 0.0f)));
+
+    if (mode == 1
+        && ! distortionLowState.empty()
+        && distortionHighState.size() == distortionLowState.size())
+    {
+        const auto lowAmount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionLowBand, 0.35f))
+            * (1.0f - (bassSafe * 0.94f));
+        const auto midAmount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionMidBand, 0.7f));
+        const auto highAmount = juce::jlimit(0.0f, 1.0f, readParameter(fxDistortionHighBand, 0.85f));
+        const auto lowDrive = juce::jmap(amount * lowAmount, 1.0f, 18.0f);
+        const auto midDrive = juce::jmap(amount * midAmount, 1.0f, 24.0f);
+        const auto highDrive = juce::jmap(amount * highAmount, 1.0f, 30.0f);
+        const auto lowMakeup = 1.0f / std::sqrt(lowDrive);
+        const auto midMakeup = 1.0f / std::sqrt(midDrive);
+        const auto highMakeup = 1.0f / std::sqrt(highDrive);
+        const auto lowAlpha = onePoleAlpha(180.0f, currentSampleRate);
+        const auto highAlpha = onePoleAlpha(2800.0f, currentSampleRate);
+        const auto channels = juce::jmin(buffer.getNumChannels(), static_cast<int>(distortionLowState.size()));
+
+        for (auto channel = 0; channel < channels; ++channel)
+        {
+            auto* samples = buffer.getWritePointer(channel);
+            auto& lowState = distortionLowState[static_cast<size_t>(channel)];
+            auto& highState = distortionHighState[static_cast<size_t>(channel)];
+
+            for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
+            {
+                const auto input = samples[sampleIndex];
+                lowState += lowAlpha * (input - lowState);
+                highState += highAlpha * (input - highState);
+                const auto low = lowState;
+                const auto high = input - highState;
+                const auto mid = highState - low;
+                const auto drivenLow = std::tanh(low * lowDrive) * lowMakeup;
+                const auto drivenMid = std::tanh(mid * midDrive) * midMakeup;
+                const auto drivenHigh = std::tanh(high * highDrive) * highMakeup;
+                const auto wet = drivenLow + drivenMid + drivenHigh;
+                samples[sampleIndex] = input + ((wet - input) * mix);
+            }
+        }
+
+        return;
+    }
 
     if (bassSafe <= 0.0001f || distortionLowState.empty())
     {
@@ -812,7 +864,11 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
             auto* samples = buffer.getWritePointer(channel);
 
             for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
-                samples[sampleIndex] = std::tanh(samples[sampleIndex] * drive) * makeup;
+            {
+                const auto input = samples[sampleIndex];
+                const auto wet = std::tanh(input * drive) * makeup;
+                samples[sampleIndex] = input + ((wet - input) * mix);
+            }
         }
 
         return;
@@ -840,7 +896,8 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
             const auto protectedDriveInput = high + (low * drivenLowBleed);
             const auto protectedBand = std::tanh(protectedDriveInput * drive) * drivenHighMakeup;
             const auto protectedOutput = (low * cleanLowGain) + protectedBand - (std::tanh(low * drivenLowBleed * drive) * drivenHighMakeup);
-            samples[sampleIndex] = (fullBand * (1.0f - bassSafe)) + (protectedOutput * bassSafe);
+            const auto wet = (fullBand * (1.0f - bassSafe)) + (protectedOutput * bassSafe);
+            samples[sampleIndex] = input + ((wet - input) * mix);
         }
     }
 
@@ -849,7 +906,11 @@ void EffectsRack::processDistortion(juce::AudioBuffer<float>& buffer)
         auto* samples = buffer.getWritePointer(channel);
 
         for (auto sampleIndex = 0; sampleIndex < buffer.getNumSamples(); ++sampleIndex)
-            samples[sampleIndex] = std::tanh(samples[sampleIndex] * drive) * makeup;
+        {
+            const auto input = samples[sampleIndex];
+            const auto wet = std::tanh(input * drive) * makeup;
+            samples[sampleIndex] = input + ((wet - input) * mix);
+        }
     }
 }
 

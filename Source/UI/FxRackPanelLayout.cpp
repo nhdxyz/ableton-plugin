@@ -140,10 +140,18 @@ void layout(juce::Rectangle<int> content, Components components)
 
         case distortion:
             components.distortion.enabledButton.setVisible(true);
+            components.distortion.modeBox.setVisible(true);
             components.distortion.enabledButton.setBounds(detailHeader.removeFromLeft(112).reduced(3, 4));
-            layoutKnobRow(controlsArea.removeFromTop(150), {
+            components.distortion.modeBox.setBounds(detailHeader.removeFromLeft(132).reduced(3, 4));
+            layoutKnobRow(controlsArea.removeFromTop(74), {
                 components.distortion.amount,
-                components.distortion.bassSafe
+                components.distortion.bassSafe,
+                components.distortion.mix
+            });
+            layoutKnobRow(controlsArea.removeFromTop(74), {
+                components.distortion.lowBand,
+                components.distortion.midBand,
+                components.distortion.highBand
             });
             break;
 

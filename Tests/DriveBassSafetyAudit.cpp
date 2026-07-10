@@ -115,6 +115,26 @@ BandEnergy renderFixture(float driveAmount, float bassSafe)
     processor.processBlock(buffer, midi);
     return measureBandEnergy(buffer);
 }
+
+BandEnergy renderMultibandFixture(float lowBand, float midBand, float highBand, float mix)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(44100.0, 4096);
+
+    if (! configureProcessor(processor, 0.72f, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxDistortionMode, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::fxDistortionLowBand, lowBand)
+        || ! setPlainParameter(processor, Parameters::ID::fxDistortionMidBand, midBand)
+        || ! setPlainParameter(processor, Parameters::ID::fxDistortionHighBand, highBand)
+        || ! setPlainParameter(processor, Parameters::ID::fxDistortionMix, mix))
+        return {};
+
+    juce::AudioBuffer<float> buffer(2, 4096);
+    juce::MidiBuffer midi;
+    midi.addEvent(juce::MidiMessage::noteOn(1, 36, static_cast<juce::uint8>(120)), 0);
+    processor.processBlock(buffer, midi);
+    return measureBandEnergy(buffer);
+}
 }
 
 int main()
@@ -160,6 +180,40 @@ int main()
         return 1;
     }
 
-    std::cout << "Drive bass safety audit passed: low energy is protected while high-band saturation remains audible.\n";
+    const auto lowBand = renderMultibandFixture(1.0f, 0.0f, 0.0f, 1.0f);
+    const auto midBand = renderMultibandFixture(0.0f, 1.0f, 0.0f, 1.0f);
+    const auto highBand = renderMultibandFixture(0.0f, 0.0f, 1.0f, 1.0f);
+    const auto parallelDry = renderMultibandFixture(1.0f, 1.0f, 1.0f, 0.0f);
+
+    const auto lowMidContrast = std::abs(lowBand.lowRms - midBand.lowRms)
+        + std::abs(lowBand.highRms - midBand.highRms);
+    const auto midHighContrast = std::abs(midBand.lowRms - highBand.lowRms)
+        + std::abs(midBand.highRms - highBand.highRms);
+    if (lowMidContrast <= 0.004f || midHighContrast <= 0.004f)
+    {
+        std::cerr << "Multiband drive controls did not produce distinct band balances: low/mid "
+                  << lowMidContrast << " mid/high " << midHighContrast << '\n';
+        return 1;
+    }
+
+    if (std::abs(parallelDry.lowRms - clean.lowRms) > clean.lowRms * 0.015f
+        || std::abs(parallelDry.highRms - clean.highRms) > clean.highRms * 0.015f)
+    {
+        std::cerr << "Multiband drive at zero mix did not preserve the dry signal: clean "
+                  << clean.lowRms << '/' << clean.highRms << " dry "
+                  << parallelDry.lowRms << '/' << parallelDry.highRms << '\n';
+        return 1;
+    }
+
+    for (const auto* stats : { &lowBand, &midBand, &highBand, &parallelDry })
+    {
+        if (stats->peak > 1.0f || stats->lowRms <= 0.0001f || stats->highRms <= 0.0001f)
+        {
+            std::cerr << "Multiband drive rendered outside the audible/safe range\n";
+            return 1;
+        }
+    }
+
+    std::cout << "Drive audit passed for bass safety, independent three-band saturation, parallel mix, and output safety.\n";
     return 0;
 }

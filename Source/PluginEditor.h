@@ -322,6 +322,7 @@ private:
     juce::ComboBox infoTopicBox;
     juce::ComboBox fxAddBox;
     juce::ComboBox fxPresetBox;
+    juce::ComboBox fxDistortionModeBox;
     juce::ComboBox fxDelayRateBox;
     juce::ComboBox fxPumpRateBox;
     juce::ComboBox fxPumpCurveBox;
@@ -438,6 +439,10 @@ private:
     juce::Slider sequencerLockDepthSlider;
     juce::Slider fxDistortionAmountSlider;
     juce::Slider fxDistortionBassSafeSlider;
+    juce::Slider fxDistortionLowBandSlider;
+    juce::Slider fxDistortionMidBandSlider;
+    juce::Slider fxDistortionHighBandSlider;
+    juce::Slider fxDistortionMixSlider;
     juce::Slider fxBitcrushBitsSlider;
     juce::Slider fxBitcrushDownsampleSlider;
     juce::Slider fxBitcrushMixSlider;
@@ -555,6 +560,10 @@ private:
     juce::Label sequencerLockDepthLabel;
     juce::Label fxDistortionAmountLabel;
     juce::Label fxDistortionBassSafeLabel;
+    juce::Label fxDistortionLowBandLabel;
+    juce::Label fxDistortionMidBandLabel;
+    juce::Label fxDistortionHighBandLabel;
+    juce::Label fxDistortionMixLabel;
     juce::Label fxBitcrushBitsLabel;
     juce::Label fxBitcrushDownsampleLabel;
     juce::Label fxBitcrushMixLabel;

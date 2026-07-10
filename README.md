@@ -45,6 +45,8 @@ At default and larger editor sizes, the MOD routing section also shows a compact
 
 The SYNTH source header now keeps focused Source randomization, Source locking, and an `O1 > O2` waveform/frame/warp transfer beside the editable layer rack. Its wavetable canvas switches between the depth-oriented `3D` stack and a `2D` precision view without changing the saved sound, automation, or eight-frame wavetable data. A dedicated cross-mod selector and depth control route Oscillator 2 into Oscillator 1 as FM, phase, amplitude, or ring modulation; Oscillator 2 remains visibly marked as the `MOD` source when its audible level is zero.
 
+The Drive rack module now preserves its original full-band path for existing presets and adds a dedicated `3-Band` mode with independent low, mid, and high saturation, parallel Mix, and the existing Bass Safe protection. Controlled Grit remains full-band, while Rubber Bass and Warehouse Clip configure focused multiband balances from the module-preset menu.
+
 Random candidates now appear as visual branches from the current sound on HOME and throughout the LAB candidate workflows. Each branch has a stable waveform fingerprint derived from its candidate summary/diffs, changed-section count, active/cue state, click-to-recall behavior, and a dedicated non-destructive `CUE` target; the existing validated candidate snapshots and save/promotion behavior remain unchanged underneath.
 
 The SAMPLE recorder shows a compact `REC -> READY -> USE -> PLAY` state rail plus a progress meter and selected-source dB readout for the real rolling capture buffer, so recording, source signal, ready-to-commit, loaded-sample, and full/rolling states are visible without opening another page.

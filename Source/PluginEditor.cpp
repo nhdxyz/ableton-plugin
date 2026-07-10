@@ -1669,6 +1669,12 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     fxPresetBox.setTooltip("Load a focused preset for the selected FX module");
     addAndMakeVisible(fxPresetBox);
 
+    fxDistortionModeBox.addItemList(Parameters::distortionModeChoices(), 1);
+    fxDistortionModeBox.setTextWhenNothingSelected("Drive Mode");
+    fxDistortionModeBox.setTooltip("Choose backward-compatible full-band saturation or independent low/mid/high drive bands");
+    addAndMakeVisible(fxDistortionModeBox);
+    comboAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.getValueTreeState(), Parameters::ID::fxDistortionMode, fxDistortionModeBox));
+
     fxDelayRateBox.addItemList(Parameters::delayRateChoices(), 1);
     fxDelayRateBox.setTextWhenNothingSelected("Rate");
     fxDelayRateBox.setTooltip("Choose the tempo-synced delay division");
@@ -2121,6 +2127,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     configureSlider(sequencerLockDepthSlider, sequencerLockDepthLabel, "Lock Amt", Parameters::ID::sequencerLockDepth);
     configureSlider(fxDistortionAmountSlider, fxDistortionAmountLabel, "Drive", Parameters::ID::fxDistortionAmount);
     configureSlider(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, "Bass Safe", Parameters::ID::fxDistortionBassSafe);
+    configureSlider(fxDistortionLowBandSlider, fxDistortionLowBandLabel, "Low", Parameters::ID::fxDistortionLowBand);
+    configureSlider(fxDistortionMidBandSlider, fxDistortionMidBandLabel, "Mid", Parameters::ID::fxDistortionMidBand);
+    configureSlider(fxDistortionHighBandSlider, fxDistortionHighBandLabel, "High", Parameters::ID::fxDistortionHighBand);
+    configureSlider(fxDistortionMixSlider, fxDistortionMixLabel, "Mix", Parameters::ID::fxDistortionMix);
     configureSlider(fxBitcrushBitsSlider, fxBitcrushBitsLabel, "Bits", Parameters::ID::fxBitcrushBits);
     configureSlider(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, "Down", Parameters::ID::fxBitcrushDownsample);
     configureSlider(fxBitcrushMixSlider, fxBitcrushMixLabel, "Mix", Parameters::ID::fxBitcrushMix);
@@ -4304,7 +4314,16 @@ void NateVSTAudioProcessorEditor::resized()
                     { fxEqHighGainSlider, fxEqHighGainLabel },
                     { fxEqTrimSlider, fxEqTrimLabel }
                 },
-                { fxDistortionEnabledButton, { fxDistortionAmountSlider, fxDistortionAmountLabel }, { fxDistortionBassSafeSlider, fxDistortionBassSafeLabel } },
+                {
+                    fxDistortionEnabledButton,
+                    fxDistortionModeBox,
+                    { fxDistortionAmountSlider, fxDistortionAmountLabel },
+                    { fxDistortionBassSafeSlider, fxDistortionBassSafeLabel },
+                    { fxDistortionLowBandSlider, fxDistortionLowBandLabel },
+                    { fxDistortionMidBandSlider, fxDistortionMidBandLabel },
+                    { fxDistortionHighBandSlider, fxDistortionHighBandLabel },
+                    { fxDistortionMixSlider, fxDistortionMixLabel }
+                },
                 {
                     fxBitcrushEnabledButton,
                     { fxBitcrushBitsSlider, fxBitcrushBitsLabel },
@@ -8878,6 +8897,11 @@ void NateVSTAudioProcessorEditor::applyFxModulePreset(FxModule module, int prese
         case FxModule::distortion:
             set(Parameters::ID::fxDistortionAmount, presetId == 1 ? 0.22f : (presetId == 2 ? 0.38f : 0.56f));
             set(Parameters::ID::fxDistortionBassSafe, presetId == 1 ? 0.20f : (presetId == 2 ? 0.48f : 0.72f));
+            set(Parameters::ID::fxDistortionMode, presetId == 1 ? 0.0f : 1.0f);
+            set(Parameters::ID::fxDistortionLowBand, presetId == 1 ? 0.35f : (presetId == 2 ? 0.42f : 0.18f));
+            set(Parameters::ID::fxDistortionMidBand, presetId == 1 ? 0.68f : (presetId == 2 ? 0.82f : 0.94f));
+            set(Parameters::ID::fxDistortionHighBand, presetId == 1 ? 0.72f : (presetId == 2 ? 0.58f : 1.0f));
+            set(Parameters::ID::fxDistortionMix, presetId == 1 ? 0.72f : (presetId == 2 ? 0.84f : 0.92f));
             break;
 
         case FxModule::bitcrush:
@@ -9441,9 +9465,11 @@ juce::String NateVSTAudioProcessorEditor::fxModuleSummary(FxModule module) const
         case FxModule::distortion:
         {
             const auto bassSafe = readPlainParameterValue(Parameters::ID::fxDistortionBassSafe, 0.0f);
+            const auto mode = juce::roundToInt(readPlainParameterValue(Parameters::ID::fxDistortionMode, 0.0f));
+            const auto modeText = mode == 1 ? juce::String("3-band") : juce::String("full-band");
             return bassSafe > 0.05f
-                ? "saturation | bass safe " + juce::String(static_cast<int>(std::round(bassSafe * 100.0f))) + "%"
-                : "saturation amount";
+                ? modeText + " | bass safe " + juce::String(static_cast<int>(std::round(bassSafe * 100.0f))) + "%"
+                : modeText + " saturation";
         }
         case FxModule::bitcrush: return "bits downsample mix";
         case FxModule::pump:
@@ -10188,7 +10214,7 @@ juce::String NateVSTAudioProcessorEditor::infoDetailTextForTopic(int topicId) co
             return "Undo Edit and Redo Edit sit in the CONTROL strip. They restore full sound-design snapshots across synth parameters, modulation routes, sequencer steps, FX rack edits, sample edits, preset loads, and performance snapshots.\n\nKnobs support normal drag, fine drag with Shift or Cmd, double-click reset, text entry, and disabled scroll-wheel movement to avoid accidental jumps.\n\nThe CONTROL strip also shows the touched parameter, value, automation ID, and modulation summary.";
 
         case 8:
-            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, variable-count sample markers, tempo-aware time-stretch/warp, formant-safe vocal chops, multiband distortion, compressor/clipper metering, audio drag-out, content packs, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
+            return "Planned high-value additions: deeper wavetable import/editing, more MSEG/function generators, variable-count sample markers, tempo-aware time-stretch/warp, formant-safe vocal chops, latency-aware drive oversampling, compressor/clipper metering, content packs, and per-section preset save/load.\n\nThe current UI direction is to keep each major work area focused and move deeper explanations or secondary tools behind panels, dropdowns, and inspectors.";
 
         case 1:
         default:
@@ -10213,7 +10239,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &sampleSectionLabel, &sampleSourceLabel, &sampleShapeLabel, &sequencerSectionLabel,
         &hostSyncStatusLabel, &controlStatusStrip, &futureSectionLabel, &librarySectionLabel, &libraryFindLabel, &libraryBrowserLabel, &librarySaveLabel, &libraryInspectorLabel, &infoSectionLabel, &infoAboutLabel, &infoWorkflowLabel, &infoDetailsLabel, &infoFocusLabel, &sampleStatusLabel, &presetStatusLabel, &presetBrowserHeaderLabel, &randomStatusLabel, &randomRecipeInfoLabel, &performanceStatusLabel, &focusOverlayTitleLabel,
         &waveformBox, &osc2WaveBox, &wavetableToolBox, &wavetableDrawModeBox, &noiseTypeBox, &oscWarpModeBox, &oscWarpBModeBox, &osc2WarpModeBox, &osc2WarpBModeBox, &oscCrossModModeBox, &filterModeBox, &filterCharacterBox, &filterSlopeBox, &recipeBox, &randomScopeBox, &randomSectionActionBox, &randomLockActionBox, &presetBox, &presetCategoryBox,
-        &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
+        &presetFilterBox, &presetTagBox, &presetSortBox, &presetBrowserPackFilterBox, &presetRatingBox, &candidateRatingBox, &presetPackBox, &presetKeyBox, &presetBpmBox, &infoTopicBox, &fxAddBox, &fxPresetBox, &fxDistortionModeBox, &fxDelayRateBox, &fxPumpRateBox, &fxPumpCurveBox, &fxTremoloRateBox, &modInspectorDestinationBox, &modInspectorSourceBox, &modMacroAssignSourceBox, &modMacroAssignDestinationBox, &lfo1ShapeBox, &lfo1SyncRateBox, &lfo2ShapeBox, &lfo2SyncRateBox, &lfoCurvePresetBox, &lfoCurveActionBox,
         &monoButton, &sequencerEnabledButton,
         &fxDistortionEnabledButton, &fxBitcrushEnabledButton, &fxPumpEnabledButton, &fxTremoloEnabledButton, &fxRingEnabledButton, &fxCombEnabledButton, &fxChorusEnabledButton, &fxDelayEnabledButton, &fxDelaySyncButton, &fxReverbEnabledButton, &fxWidthEnabledButton,
         &fxToneEnabledButton, &fxEqEnabledButton, &fxPhaserEnabledButton, &fxGuardEnabledButton,
@@ -10348,6 +10374,10 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
     setSliderVisible(sequencerLockDepthSlider, sequencerLockDepthLabel, false);
     setSliderVisible(fxDistortionAmountSlider, fxDistortionAmountLabel, false);
     setSliderVisible(fxDistortionBassSafeSlider, fxDistortionBassSafeLabel, false);
+    setSliderVisible(fxDistortionLowBandSlider, fxDistortionLowBandLabel, false);
+    setSliderVisible(fxDistortionMidBandSlider, fxDistortionMidBandLabel, false);
+    setSliderVisible(fxDistortionHighBandSlider, fxDistortionHighBandLabel, false);
+    setSliderVisible(fxDistortionMixSlider, fxDistortionMixLabel, false);
     setSliderVisible(fxBitcrushBitsSlider, fxBitcrushBitsLabel, false);
     setSliderVisible(fxBitcrushDownsampleSlider, fxBitcrushDownsampleLabel, false);
     setSliderVisible(fxBitcrushMixSlider, fxBitcrushMixLabel, false);

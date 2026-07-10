@@ -57,6 +57,11 @@ juce::StringArray oscCrossModModeChoices()
     return { "Off", "FM", "Phase", "AM", "Ring" };
 }
 
+juce::StringArray distortionModeChoices()
+{
+    return { "Full Band", "3-Band" };
+}
+
 juce::StringArray randomRecipeChoices()
 {
     return {
@@ -1213,6 +1218,36 @@ APVTS::ParameterLayout createLayout()
         "FX Distortion Bass Safe",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
         0.0f));
+
+    add(std::make_unique<juce::AudioParameterChoice>(
+        ID::fxDistortionMode,
+        "FX Distortion Mode",
+        distortionModeChoices(),
+        0));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxDistortionLowBand,
+        "FX Distortion Low Band",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.35f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxDistortionMidBand,
+        "FX Distortion Mid Band",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.7f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxDistortionHighBand,
+        "FX Distortion High Band",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        0.85f));
+
+    add(std::make_unique<juce::AudioParameterFloat>(
+        ID::fxDistortionMix,
+        "FX Distortion Mix",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.001f },
+        1.0f));
 
     add(std::make_unique<juce::AudioParameterBool>(
         ID::fxBitcrushEnabled,

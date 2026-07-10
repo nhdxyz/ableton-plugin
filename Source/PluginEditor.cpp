@@ -365,6 +365,7 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colour(0x338ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colour(0xaa8ee6c9));
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::textLabelColourId, juce::Colour(0xff253037));
+    pianoKeyboard.onManualNoteStart = [this] (int midiNote) { prepareForManualKeyboardInput(midiNote); };
     addAndMakeVisible(pianoKeyboard);
 
     keyboardOctaveDownButton.setTooltip("Shift laptop keys down one octave; the piano strip stays fixed from C1 to C5");
@@ -410,6 +411,15 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     keyboardRangeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffdce7e4));
     addAndMakeVisible(keyboardRangeLabel);
     updateKeyboardRangeLabel();
+
+    keyboardPerformanceLabel.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    keyboardPerformanceLabel.setJustificationType(juce::Justification::centredLeft);
+    keyboardPerformanceLabel.setMinimumHorizontalScale(0.62f);
+    keyboardPerformanceLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8ee6c9));
+    keyboardPerformanceLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff11191c));
+    keyboardPerformanceLabel.setColour(juce::Label::outlineColourId, juce::Colour(0xff304047));
+    addAndMakeVisible(keyboardPerformanceLabel);
+    updateKeyboardPerformanceStatus();
 
     sequencerRootControls.onStepRoot = [this] (int semitones) { stepSequencerRoot(semitones); };
     addAndMakeVisible(sequencerRootControls);
@@ -2924,6 +2934,9 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
 
     titleLabel.setColour(juce::Label::textColourId, theme.text);
     keyboardRangeLabel.setColour(juce::Label::textColourId, theme.text);
+    keyboardPerformanceLabel.setColour(juce::Label::textColourId, theme.accent);
+    keyboardPerformanceLabel.setColour(juce::Label::backgroundColourId, theme.field.withAlpha(0.82f));
+    keyboardPerformanceLabel.setColour(juce::Label::outlineColourId, theme.outlineStrong);
     sequencerRootControls.applyTheme(theme);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, theme.keyboardWhite);
     pianoKeyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, theme.keyboardBlack);
@@ -3257,11 +3270,15 @@ void NateVSTAudioProcessorEditor::resized()
     bounds.removeFromTop(14);
     auto keyboardArea = bounds.removeFromBottom(pianoKeyboardHeight);
     auto keyboardControlArea = keyboardArea.removeFromLeft(keyboardControlsWidth).reduced(8, 6);
-    keyboardOctaveDownButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
-    keyboardRangeLabel.setBounds(keyboardControlArea.removeFromLeft(92).reduced(3, 4));
-    keyboardHomeButton.setBounds(keyboardControlArea.removeFromLeft(58).reduced(2, 4));
-    keyboardOctaveUpButton.setBounds(keyboardControlArea.removeFromLeft(54).reduced(2, 4));
-    keyboardPanicButton.setBounds(keyboardControlArea.removeFromLeft(74).reduced(2, 4));
+    auto keyboardControlTop = keyboardControlArea.removeFromTop(keyboardControlArea.getHeight() / 2);
+    keyboardOctaveDownButton.setBounds(keyboardControlTop.removeFromLeft(72).reduced(2, 3));
+    keyboardRangeLabel.setBounds(keyboardControlTop.removeFromLeft(118).reduced(3, 2));
+    keyboardOctaveUpButton.setBounds(keyboardControlTop.removeFromLeft(72).reduced(2, 3));
+    keyboardHomeButton.setBounds(keyboardControlTop.reduced(2, 3));
+
+    auto keyboardControlBottom = keyboardControlArea;
+    keyboardPerformanceLabel.setBounds(keyboardControlBottom.removeFromLeft(240).reduced(5, 2));
+    keyboardPanicButton.setBounds(keyboardControlBottom.reduced(2, 3));
     auto pianoKeyboardBounds = keyboardArea.reduced(8, 6);
     pianoKeyboard.setBounds(pianoKeyboardBounds);
     pinPianoKeyboardVisualRange();
@@ -4364,6 +4381,27 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         keyboardTypingBaseNote = UI::PianoKeyboardLayout::typingBaseNoteForLowestNote(UI::PianoKeyboardLayout::initialLowestNote);
         pinPianoKeyboardVisualRange();
         updateKeyboardRangeLabel();
+
+        const auto source = readPlainParameterValue(Parameters::ID::modMatrixSource[0], 0.0f);
+        const auto destination = readPlainParameterValue(Parameters::ID::modMatrixDestination[0], 0.0f);
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.0f);
+        const auto enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixSource[0], 1.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[0], 23.0f);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[0], 0.75f);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[0], 1.0f);
+        updateKeyboardPerformanceStatus();
+        if (! keyboardPerformanceLabel.getText().contains("SUB MOD")
+            || ! keyboardPerformanceLabel.getTooltip().containsIgnoreCase("one octave below"))
+        {
+            issues.add("Keyboard activity strip does not explain delayed octave-down Sub modulation");
+        }
+
+        setPlainParameterValue(Parameters::ID::modMatrixSource[0], source);
+        setPlainParameterValue(Parameters::ID::modMatrixDestination[0], destination);
+        setPlainParameterValue(Parameters::ID::modMatrixAmount[0], amount);
+        setPlainParameterValue(Parameters::ID::modMatrixEnabled[0], enabled);
+        updateKeyboardPerformanceStatus();
     };
 
     auto auditModulationDestinationMappings = [this, &issues]
@@ -4986,6 +5024,7 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
         for (const auto* keyboardControl : {
                  static_cast<const juce::Component*>(&keyboardOctaveDownButton),
                  static_cast<const juce::Component*>(&keyboardRangeLabel),
+                 static_cast<const juce::Component*>(&keyboardPerformanceLabel),
                  static_cast<const juce::Component*>(&keyboardHomeButton),
                  static_cast<const juce::Component*>(&keyboardOctaveUpButton),
                  static_cast<const juce::Component*>(&keyboardPanicButton) })
@@ -7718,6 +7757,95 @@ void NateVSTAudioProcessorEditor::updateKeyboardRangeLabel()
     keyboardOctaveUpButton.setEnabled(mappedBaseNote < UI::PianoKeyboardLayout::maxLowestVisibleNote);
 }
 
+void NateVSTAudioProcessorEditor::prepareForManualKeyboardInput(int midiNote)
+{
+    releasePresetAuditionNote();
+    releaseRandomCandidateAudition(false);
+    juce::ignoreUnused(midiNote);
+    updateKeyboardPerformanceStatus();
+}
+
+void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
+{
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+    juce::Array<int> heldNotes;
+    for (auto note = 0; note < 128; ++note)
+        if (keyboardState.isNoteOnForChannels(0xffff, note))
+            heldNotes.add(note);
+
+    juce::String heldText = "READY";
+    if (heldNotes.size() == 1)
+        heldText = "HELD " + UI::PianoKeyboardLayout::noteName(heldNotes.getFirst());
+    else if (heldNotes.size() > 1)
+        heldText = "HELD " + juce::String(heldNotes.size()) + " NOTES";
+
+    const auto sequencerEnabled = readPlainParameterValue(Parameters::ID::sequencerEnabled, 0.0f) >= 0.5f;
+    const auto sampleEnabled = readPlainParameterValue(Parameters::ID::sampleEnabled, 0.0f) >= 0.5f
+        && audioProcessor.hasLoadedSample();
+    const auto chordMemoryEnabled = readPlainParameterValue(Parameters::ID::sequencerChordMemory, 0.0f) >= 0.5f
+        && readPlainParameterValue(Parameters::ID::sequencerChordMode, 0.0f) >= 0.5f;
+
+    auto subModulated = false;
+    auto osc2LevelModulated = false;
+    for (size_t index = 0; index < Parameters::ID::modMatrixDestination.size(); ++index)
+    {
+        const auto destination = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixDestination[index], 0.0f));
+        const auto source = juce::roundToInt(readPlainParameterValue(Parameters::ID::modMatrixSource[index], 0.0f));
+        const auto amount = readPlainParameterValue(Parameters::ID::modMatrixAmount[index], 0.0f);
+        const auto enabled = readPlainParameterValue(Parameters::ID::modMatrixEnabled[index], 1.0f) >= 0.5f;
+        if (! enabled || source <= 0 || std::abs(amount) <= 0.0001f)
+            continue;
+
+        subModulated = subModulated || destination == 23;
+        osc2LevelModulated = osc2LevelModulated || destination == 6;
+    }
+
+    const auto osc2Octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Octave, 0.0f));
+    const auto movingOctaveLayer = osc2LevelModulated && osc2Octave != 0;
+    const auto samplePitchRamp = sampleEnabled
+        ? readPlainParameterValue(Parameters::ID::samplePitchRamp, 0.0f)
+        : 0.0f;
+    const auto samplePitchMoves = std::abs(samplePitchRamp) >= 0.5f;
+
+    juce::StringArray sources { "SYNTH" };
+    if (sampleEnabled)
+        sources.add(samplePitchMoves ? "SAMPLE RAMP" : "SAMPLE");
+    if (sequencerEnabled)
+        sources.add("SEQ");
+    if (chordMemoryEnabled)
+        sources.add("CHORD");
+    if (subModulated)
+        sources.add("SUB MOD");
+    if (movingOctaveLayer)
+        sources.add("O2 MOD " + juce::String(osc2Octave >= 0 ? "+" : "") + juce::String(osc2Octave));
+
+    const auto sourceText = sources.joinIntoString(" + ");
+    keyboardPerformanceLabel.setText(heldText + "\n" + sourceText, juce::dontSendNotification);
+    keyboardPerformanceLabel.setColour(juce::Label::textColourId,
+                                       (subModulated || movingOctaveLayer || samplePitchMoves) ? juce::Colour(0xffffd27a)
+                                                    : sequencerEnabled ? juce::Colour(0xff7fb7ff)
+                                                                       : uiTheme().accent);
+
+    juce::StringArray details;
+    details.add(heldNotes.isEmpty() ? "No held MIDI notes" : heldText);
+    details.add("Active keyboard sound paths: " + sourceText);
+    if (sequencerEnabled)
+        details.add("SEQ generates pattern notes independently, so held keyboard notes layer over it");
+    if (sampleEnabled)
+        details.add("The loaded sampler also responds to keyboard MIDI");
+    if (chordMemoryEnabled)
+        details.add("Chord Memory expands each keyboard note using the selected chord and voicing");
+    if (subModulated)
+        details.add("Sub Level is modulated; it can become audible later as a tone one octave below the held note");
+    if (movingOctaveLayer)
+        details.add("Osc 2 level is modulated at octave " + juce::String(osc2Octave >= 0 ? "+" : "")
+                    + juce::String(osc2Octave) + "; it can fade in after the initial note");
+    if (samplePitchMoves)
+        details.add("Sampler Pitch Ramp moves " + juce::String(samplePitchRamp >= 0.0f ? "+" : "")
+                    + juce::String(samplePitchRamp, 1) + " semitones across playback");
+    keyboardPerformanceLabel.setTooltip(details.joinIntoString("\n"));
+}
+
 int NateVSTAudioProcessorEditor::computerKeyboardBaseNote() const noexcept
 {
     return juce::jlimit(UI::PianoKeyboardLayout::minLowestVisibleNote,
@@ -7802,6 +7930,7 @@ bool NateVSTAudioProcessorEditor::keyStateChanged(bool, juce::Component* origina
         const auto isDown = juce::KeyPress::isKeyCurrentlyDown(computerKeyboardKeyCodes[index]);
         if (isDown && ! computerKeyboardNotesDown[index])
         {
+            prepareForManualKeyboardInput(note);
             computerKeyboardNotesDown[index] = true;
             keyboardState.noteOn(1, note, 0.86f);
             used = true;
@@ -9431,7 +9560,8 @@ void NateVSTAudioProcessorEditor::layoutFocusOverlay()
     }
     else if (showSampleChopEditor)
     {
-        auto waveformArea = content.removeFromTop(juce::jmax(190, content.getHeight() - 116));
+        auto waveformArea = content.removeFromTop(juce::jmax(190,
+                                                            content.getHeight() - sampleChopPanel.focusHeight() - 4));
         expandedSampleWaveformDisplay.setBounds(waveformArea.reduced(6, 4));
         sampleChopPanel.setBounds(content.removeFromTop(sampleChopPanel.focusHeight()));
     }
@@ -13847,6 +13977,7 @@ void NateVSTAudioProcessorEditor::timerCallback()
         updateMacroAssignmentEditorStatus();
     }
     updateModDestinationIndicators();
+    updateKeyboardPerformanceStatus();
 
     updateOutputMeter();
     if (outputSpectrumDisplay.isVisible())

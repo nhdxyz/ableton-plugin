@@ -50,7 +50,7 @@ public:
     void resized() override;
 
     size_t getSliceCount() const noexcept { return sliceButtons.size(); }
-    int compactHeight() const noexcept { return 76; }
+    int compactHeight() const noexcept { return 140; }
     int focusHeight() const noexcept { return 112; }
 
 private:
@@ -60,18 +60,20 @@ private:
     juce::TextButton recallButton { "Recall" };
     juce::TextButton gridButton { "Grid" };
     juce::TextButton detectButton { "Detect" };
-    juce::TextButton clearButton { "Clr" };
+    juce::TextButton clearButton { "Clear" };
     juce::TextButton diceButton { "Dice" };
-    juce::TextButton reverseButton { "Rev" };
+    juce::TextButton reverseButton { "Reverse" };
     juce::TextButton chokeButton { "Choke" };
     juce::TextButton panButton { "Pan" };
     juce::TextButton ghostButton { "Ghost" };
     juce::TextButton nudgeButton { "Nudge" };
     juce::TextButton fadeButton { "Fade" };
-    juce::TextButton seqButton { "Seq" };
-    juce::TextButton wtButton { "WT" };
+    juce::TextButton seqButton { "To Seq" };
+    juce::TextButton wtButton { "To WT" };
 
     std::array<juce::TextButton*, 14> actionButtons() noexcept;
     std::array<const juce::TextButton*, 14> actionButtons() const noexcept;
+    std::array<juce::TextButton*, 7> setupButtons() noexcept;
+    std::array<juce::TextButton*, 7> performanceButtons() noexcept;
 };
 }

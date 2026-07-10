@@ -171,31 +171,34 @@ void SampleChopPanel::setActionState(const ActionState& state)
 void SampleChopPanel::resized()
 {
     auto area = getLocalBounds();
-    const auto focusLayout = area.getHeight() >= 100;
+    const auto focusLayout = area.getHeight() <= 120 && area.getWidth() >= 780;
 
     auto sliceRow = area.removeFromTop(focusLayout ? 38 : 36).withTrimmedTop(2);
     const auto sliceWidth = sliceRow.getWidth() / static_cast<int>(sliceButtons.size());
     for (auto& button : sliceButtons)
         button.setBounds(sliceRow.removeFromLeft(sliceWidth).reduced(4));
 
+    statusLabel.setBounds(area.removeFromTop(focusLayout ? 30 : 28).reduced(8, 3));
+
     if (focusLayout)
     {
-        statusLabel.setBounds(area.removeFromTop(30).reduced(8, 3));
-
-        auto actionRow = area.removeFromTop(42).withTrimmedTop(4);
-        const auto width = actionRow.getWidth() / static_cast<int>(actionButtons().size());
+        auto actionRow = area.removeFromTop(42).withTrimmedTop(2);
+        const auto width = juce::jmax(1, actionRow.getWidth() / static_cast<int>(actionButtons().size()));
         for (auto* button : actionButtons())
-            button->setBounds(actionRow.removeFromLeft(width).reduced(4));
+            button->setBounds(actionRow.removeFromLeft(width).reduced(4, 3));
         return;
     }
 
-    auto editRow = area.removeFromTop(38).withTrimmedTop(2);
-    const auto statusWidth = juce::jlimit(230, 330, editRow.getWidth() / 3);
-    statusLabel.setBounds(editRow.removeFromLeft(statusWidth).reduced(8, 4));
+    auto layoutActionRow = [] (juce::Rectangle<int> row, const auto& buttons)
+    {
+        const auto width = juce::jmax(1, row.getWidth() / static_cast<int>(buttons.size()));
+        for (auto* button : buttons)
+            button->setBounds(row.removeFromLeft(width).reduced(4, 3));
+    };
 
-    const auto width = juce::jmax(38, editRow.getWidth() / static_cast<int>(actionButtons().size()));
-    for (auto* button : actionButtons())
-        button->setBounds(editRow.removeFromLeft(width).reduced(3));
+    constexpr auto actionRowHeight = 38;
+    layoutActionRow(area.removeFromTop(actionRowHeight).withTrimmedTop(2), setupButtons());
+    layoutActionRow(area.removeFromTop(actionRowHeight).withTrimmedTop(1), performanceButtons());
 }
 
 std::array<juce::TextButton*, 14> SampleChopPanel::actionButtons() noexcept
@@ -206,15 +209,15 @@ std::array<juce::TextButton*, 14> SampleChopPanel::actionButtons() noexcept
         &gridButton,
         &detectButton,
         &clearButton,
+        &seqButton,
+        &wtButton,
         &diceButton,
         &reverseButton,
         &chokeButton,
         &panButton,
         &ghostButton,
         &nudgeButton,
-        &fadeButton,
-        &seqButton,
-        &wtButton
+        &fadeButton
     };
 }
 
@@ -226,15 +229,41 @@ std::array<const juce::TextButton*, 14> SampleChopPanel::actionButtons() const n
         &gridButton,
         &detectButton,
         &clearButton,
+        &seqButton,
+        &wtButton,
         &diceButton,
         &reverseButton,
         &chokeButton,
         &panButton,
         &ghostButton,
         &nudgeButton,
-        &fadeButton,
+        &fadeButton
+    };
+}
+
+std::array<juce::TextButton*, 7> SampleChopPanel::setupButtons() noexcept
+{
+    return {
+        &storeButton,
+        &recallButton,
+        &gridButton,
+        &detectButton,
+        &clearButton,
         &seqButton,
         &wtButton
+    };
+}
+
+std::array<juce::TextButton*, 7> SampleChopPanel::performanceButtons() noexcept
+{
+    return {
+        &diceButton,
+        &reverseButton,
+        &chokeButton,
+        &panButton,
+        &ghostButton,
+        &nudgeButton,
+        &fadeButton
     };
 }
 }

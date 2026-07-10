@@ -29,6 +29,7 @@
 #include "UI/OutputSpectrumDisplay.h"
 #include "UI/PageButtonStrip.h"
 #include "UI/PanelTabBar.h"
+#include "UI/PerformanceKeyboard.h"
 #include "UI/PresetCompareActions.h"
 #include "UI/PresetCrateMapDisplay.h"
 #include "UI/PresetLibrarySummary.h"
@@ -716,6 +717,7 @@ private:
     juce::TextButton keyboardHomeButton { "Reset" };
     juce::TextButton keyboardPanicButton { "All Off" };
     juce::Label keyboardRangeLabel;
+    juce::Label keyboardPerformanceLabel;
     juce::Label fxRackStatusLabel;
     std::array<UI::ModSourceMeter, 20> modSourceRows;
     std::array<juce::Label, 8> modSlotRows;
@@ -744,7 +746,7 @@ private:
     UI::LowEndAssistant lowEndAssistant;
     UI::SampleChopPanel sampleChopPanel;
     UI::SampleRecorderPanel sampleRecorderPanel;
-    juce::MidiKeyboardComponent pianoKeyboard;
+    UI::PerformanceKeyboard pianoKeyboard;
     UI::ModCurveDisplay lfoCurveDisplay;
     UI::PumpCurveDisplay pumpCurveDisplay;
     UI::SampleWaveformDisplay sampleWaveformDisplay;
@@ -1048,6 +1050,8 @@ private:
     void updateFavoritePresetButton();
     void shiftKeyboardOctave(int semitones);
     void updateKeyboardRangeLabel();
+    void updateKeyboardPerformanceStatus();
+    void prepareForManualKeyboardInput(int midiNote);
     void stepSequencerRoot(int semitones);
     void updateSequencerRootStepper();
     void addFxModule(FxModule module);

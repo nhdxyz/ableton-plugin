@@ -10,6 +10,7 @@ PanelTabBar::PanelTabBar()
         const auto& spec = tabSpecs[index];
 
         button.setButtonText(spec.label);
+        button.setTooltip(spec.tooltip);
         button.setWantsKeyboardFocus(false);
         button.setMouseClickGrabsKeyboardFocus(false);
         button.onClick = [this, tab = spec.tab]

@@ -90,6 +90,7 @@ target_sources(NateVST
         Source/UI/OutputTelemetry.cpp
         Source/UI/PageButtonStrip.cpp
         Source/UI/PanelTabBar.cpp
+        Source/UI/PerformanceKeyboard.cpp
         Source/UI/PianoKeyboardLayout.cpp
         Source/UI/PresetBrowserRowLayout.cpp
         Source/UI/PresetCompareActions.cpp
@@ -314,6 +315,19 @@ target_link_libraries(NateVSTKeyboardSpamCpuAudit
 )
 
 add_test(NAME KeyboardSpamCpuAudit COMMAND NateVSTKeyboardSpamCpuAudit)
+
+add_executable(NateVSTHeldNoteStabilityAudit Tests/HeldNoteStabilityAudit.cpp)
+
+target_link_libraries(NateVSTHeldNoteStabilityAudit
+    PRIVATE
+        NateVST
+        juce::juce_audio_utils
+        juce::juce_dsp
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME HeldNoteStabilityAudit COMMAND NateVSTHeldNoteStabilityAudit)
 
 add_executable(NateVSTProcessorPerformanceAudit Tests/ProcessorPerformanceAudit.cpp)
 

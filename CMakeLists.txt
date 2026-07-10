@@ -105,6 +105,7 @@ target_sources(NateVST
         Source/UI/PresetSaveSummary.cpp
         Source/UI/PumpCurveDisplay.cpp
         Source/UI/RandomMorphPad.cpp
+        Source/UI/RandomCandidateExplorer.cpp
         Source/UI/RandomRecipeMetadata.cpp
         Source/UI/SampleChopHeader.cpp
         Source/UI/SampleChopPanel.cpp
@@ -225,6 +226,18 @@ target_link_libraries(NateVSTHomeSoundStageAudit
 )
 
 add_test(NAME HomeSoundStageAudit COMMAND NateVSTHomeSoundStageAudit)
+
+add_executable(NateVSTRandomCandidateExplorerAudit Tests/RandomCandidateExplorerAudit.cpp)
+
+target_link_libraries(NateVSTRandomCandidateExplorerAudit
+    PRIVATE
+        NateVST
+        juce::juce_gui_basics
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+
+add_test(NAME RandomCandidateExplorerAudit COMMAND NateVSTRandomCandidateExplorerAudit)
 
 add_executable(NateVSTWavetableFrameStripAudit
     Tests/WavetableFrameStripAudit.cpp

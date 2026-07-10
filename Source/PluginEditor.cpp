@@ -624,6 +624,10 @@ NateVSTAudioProcessorEditor::NateVSTAudioProcessorEditor(NateVSTAudioProcessor& 
     };
     addAndMakeVisible(randomMorphPad);
 
+    randomCandidateExplorer.onRecall = [this] (size_t index) { recallRandomCandidate(index); };
+    randomCandidateExplorer.onCue = [this] (size_t index) { auditionRandomCandidate(index); };
+    addAndMakeVisible(randomCandidateExplorer);
+
     modMatrixStatusLabel.setJustificationType(juce::Justification::centredRight);
     modMatrixStatusLabel.setFont(juce::FontOptions(11.0f));
     modMatrixStatusLabel.setColour(juce::Label::textColourId, juce::Colour(0xffa8b6b8));
@@ -3261,6 +3265,7 @@ void NateVSTAudioProcessorEditor::applyThemeColours()
     expandedHouseLayerRackDisplay.setTheme(theme);
     oscillatorLaneOverview.setTheme(theme);
     homeSoundStage.setTheme(theme);
+    randomCandidateExplorer.setTheme(theme);
     sourceLabFrameStrip.setTheme(theme);
     sampleChopPanel.applyTheme(theme);
     sampleRecorderPanel.applyTheme(theme);
@@ -3620,6 +3625,7 @@ void NateVSTAudioProcessorEditor::resized()
             homeMacroExpandButton.setVisible(true);
             homeAnalyzerButton.setVisible(true);
             homeStageModeButton.setVisible(true);
+            randomCandidateExplorer.setVisible(true);
             performanceXYPad.setVisible(true);
             performanceStatusLabel.setVisible(true);
             recallSnapshotAButton.setVisible(true);
@@ -3630,10 +3636,6 @@ void NateVSTAudioProcessorEditor::resized()
             captureSnapshotCButton.setVisible(true);
             recallSnapshotDButton.setVisible(true);
             captureSnapshotDButton.setVisible(true);
-            for (auto& button : randomCandidateButtons)
-                button.setVisible(true);
-            for (auto& button : randomCandidateAuditionButtons)
-                button.setVisible(true);
 
             homeSectionLabel.setBounds(content.removeFromTop(28));
             auto dashboard = content.withTrimmedTop(8);
@@ -3689,23 +3691,17 @@ void NateVSTAudioProcessorEditor::resized()
             captureSnapshotCButton.setBounds(storeRow.removeFromLeft(storeButtonWidth).reduced(3, 4));
             captureSnapshotDButton.setBounds(storeRow.reduced(3, 4));
 
-            homeLabLabel.setBounds(labArea.removeFromTop(24));
-            auto randomSelectRow = labArea.removeFromTop(32);
-            recipeBox.setBounds(randomSelectRow.removeFromLeft(juce::jlimit(142, 210, randomSelectRow.getWidth() / 2)).reduced(3, 2));
-            randomScopeBox.setBounds(randomSelectRow.reduced(3, 4));
-            auto labButtonRow = labArea.removeFromTop(30).withTrimmedTop(2);
-            const auto labButtonWidth = juce::jmax(1, labButtonRow.getWidth() / 3);
-            generateButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 2));
-            variationButton.setBounds(labButtonRow.removeFromLeft(labButtonWidth).reduced(3, 2));
-            mutateButton.setBounds(labButtonRow.reduced(3, 2));
-            auto candidateRow = labArea.removeFromTop(34).withTrimmedTop(3);
-            const auto candidateWidth = juce::jmax(1, candidateRow.getWidth() / 4);
-            for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
-            {
-                auto cell = candidateRow.removeFromLeft(candidateWidth).reduced(2, 1);
-                randomCandidateAuditionButtons[index].setBounds(cell.removeFromRight(34).withTrimmedLeft(2));
-                randomCandidateButtons[index].setBounds(cell);
-            }
+            homeLabLabel.setBounds(labArea.removeFromTop(20));
+            auto randomSelectRow = labArea.removeFromTop(30);
+            const auto recipeWidth = juce::jlimit(92, 136, randomSelectRow.getWidth() / 3);
+            const auto randomScopeWidth = juce::jlimit(62, 92, randomSelectRow.getWidth() / 5);
+            recipeBox.setBounds(randomSelectRow.removeFromLeft(recipeWidth).reduced(2, 2));
+            randomScopeBox.setBounds(randomSelectRow.removeFromLeft(randomScopeWidth).reduced(2, 2));
+            const auto actionWidth = juce::jmax(1, randomSelectRow.getWidth() / 3);
+            generateButton.setBounds(randomSelectRow.removeFromLeft(actionWidth).reduced(2, 2));
+            variationButton.setBounds(randomSelectRow.removeFromLeft(actionWidth).reduced(2, 2));
+            mutateButton.setBounds(randomSelectRow.reduced(2, 2));
+            randomCandidateExplorer.setBounds(labArea.reduced(2, 1));
 
             if (homeAnalyzerExpanded)
             {
@@ -3972,10 +3968,7 @@ void NateVSTAudioProcessorEditor::resized()
 
             auto showCandidateRow = [&content, this] (bool includePromote)
             {
-                for (auto& button : randomCandidateButtons)
-                    button.setVisible(true);
-                for (auto& button : randomCandidateAuditionButtons)
-                    button.setVisible(true);
+                randomCandidateExplorer.setVisible(true);
 
                 if (includePromote)
                 {
@@ -3985,21 +3978,13 @@ void NateVSTAudioProcessorEditor::resized()
 
                 updateRandomCandidateButtons();
 
-                auto row = content.removeFromTop(54).withTrimmedTop(8);
                 if (includePromote)
                 {
-                    auto promoteArea = row.removeFromRight(112);
+                    auto promoteArea = content.removeFromTop(30).removeFromRight(112);
                     promoteCandidateAButton.setBounds(promoteArea.removeFromLeft(56).reduced(4));
                     promoteCandidateBButton.setBounds(promoteArea.removeFromLeft(56).reduced(4));
                 }
-
-                const auto buttonWidth = row.getWidth() / static_cast<int>(randomCandidateButtons.size());
-                for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
-                {
-                    auto candidateCell = row.removeFromLeft(buttonWidth).reduced(4);
-                    randomCandidateAuditionButtons[index].setBounds(candidateCell.removeFromRight(44).withTrimmedLeft(3));
-                    randomCandidateButtons[index].setBounds(candidateCell);
-                }
+                randomCandidateExplorer.setBounds(content.removeFromTop(includePromote ? 68 : 74).reduced(4, 3));
             };
 
             auto showStatus = [&content, this]
@@ -4027,7 +4012,7 @@ void NateVSTAudioProcessorEditor::resized()
                     randomScopeBox.setBounds(topRow.removeFromRight(juce::jlimit(118, 160, topRow.getWidth() / 4)).reduced(4));
                     recipeBox.setBounds(topRow.reduced(4));
 
-                    const auto morphHeight = juce::jlimit(190, 278, juce::jmax(190, content.getHeight() - 178));
+                    const auto morphHeight = juce::jlimit(176, 264, juce::jmax(176, content.getHeight() - 220));
                     updateRandomMorphPad();
                     randomMorphPad.setBounds(content.removeFromTop(morphHeight).withTrimmedTop(6).reduced(4));
                     showSectionIntensityControls();
@@ -4976,6 +4961,17 @@ juce::StringArray NateVSTAudioProcessorEditor::runLayoutAudit()
     {
         resized();
         appendVisibleLayoutIssues(*this, *this, panelName, {}, issues);
+
+        if (randomCandidateExplorer.isVisible())
+        {
+            const auto metrics = randomCandidateExplorer.getLayoutMetricsForAudit();
+            if (! metrics.readable)
+            {
+                issues.add(panelName + ": random candidate explorer is too small "
+                           + juce::String(metrics.minCardWidth, 1) + "x"
+                           + juce::String(metrics.minCardHeight, 1));
+            }
+        }
 
         if (panelName.contains("HOME"))
         {
@@ -7706,6 +7702,9 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
 {
     const auto activeSlot = audioProcessor.getActiveRandomCandidateIndex();
     const auto activeCandidateReady = audioProcessor.hasRandomCandidate(activeSlot);
+    UI::RandomCandidateExplorer::State explorerState;
+    explorerState.rootName = presetBox.getText().trim().isNotEmpty() ? presetBox.getText().trim()
+                                                                  : juce::String("Current sound");
 
     for (size_t index = 0; index < randomCandidateButtons.size(); ++index)
     {
@@ -7741,7 +7740,18 @@ void NateVSTAudioProcessorEditor::updateRandomCandidateButtons()
                                             + " without committing the current patch | Sections: " + sectionSummary
                                             + " | Diff: " + diffSummary
                                       : "Generate or mutate a patch before cueing this slot");
+
+        auto& visualCandidate = explorerState.candidates[index];
+        visualCandidate.title = hasCandidate ? summary : juce::String("Empty");
+        visualCandidate.traits = hasCandidate ? sectionSummary + " | " + diffSummary : juce::String();
+        visualCandidate.changedSections = sectionCount;
+        visualCandidate.fingerprint = (summary + "|" + compare + "|" + sectionSummary + "|" + diffSummary).hashCode64();
+        visualCandidate.ready = hasCandidate;
+        visualCandidate.active = hasCandidate && activeSlot == slotIndex;
+        visualCandidate.cueing = hasCandidate && activeRandomCandidateAuditionSlot == slotIndex;
     }
+
+    randomCandidateExplorer.setState(std::move(explorerState));
 
     promoteCandidateAButton.setEnabled(activeCandidateReady);
     promoteCandidateBButton.setEnabled(activeCandidateReady);
@@ -10223,7 +10233,7 @@ void NateVSTAudioProcessorEditor::hidePanelComponents()
         &fxToneSlotButton, &fxEqSlotButton, &fxDistortionSlotButton, &fxBitcrushSlotButton, &fxPumpSlotButton, &fxTremoloSlotButton, &fxRingSlotButton, &fxCombSlotButton, &fxPhaserSlotButton, &fxFlangerSlotButton, &fxChorusSlotButton,
         &fxDelaySlotButton, &fxReverbSlotButton, &fxWidthSlotButton, &fxGuardSlotButton,
         &presetNameEditor, &presetSearchEditor, &presetAuthorEditor, &presetNotesEditor, &presetNotesTemplateBox, &randomCandidateDetailEditor, &infoAboutEditor, &infoWorkflowEditor, &infoDetailEditor, &presetBrowserList, &fxRackStatusLabel,
-        &homeOverviewDisplay, &homeSoundStage, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerStepEditor, &sequencerGrid, &expandedSequencerGrid
+        &homeOverviewDisplay, &homeSoundStage, &homeSignalFlowDisplay, &homeSessionDisplay, &outputOscilloscopeDisplay, &outputSpectrumDisplay, &stereoFieldDisplay, &clubMonitorDisplay, &presetCrateMapDisplay, &presetLibrarySummary, &presetSaveSummary, &randomMorphPad, &randomCandidateExplorer, &lowEndAssistant, &focusOverlayPanel, &macroPerformanceMap, &expandedMacroPerformanceMap, &macroAssignmentPad, &expandedMacroAssignmentPad, &performanceXYPad, &sampleWaveformDisplay, &expandedSampleWaveformDisplay, &wavetableDisplay, &expandedWavetableDisplay, &sourceLabFrameStrip, &oscillatorLaneOverview, &houseLayerRackDisplay, &expandedHouseLayerRackDisplay, &filterResponseDisplay, &lfoCurveDisplay, &pumpCurveDisplay, &sequencerStepEditor, &sequencerGrid, &expandedSequencerGrid
     });
 
     for (auto& slider : lfoCurveSliders)

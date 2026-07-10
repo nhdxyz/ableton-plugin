@@ -39,6 +39,7 @@
 #include "UI/PresetSaveSummary.h"
 #include "UI/PumpCurveDisplay.h"
 #include "UI/RandomMorphPad.h"
+#include "UI/RandomCandidateExplorer.h"
 #include "UI/HostSyncStatusLabel.h"
 #include "UI/SampleChopHeader.h"
 #include "UI/SampleChopPanel.h"
@@ -753,6 +754,7 @@ private:
     UI::PresetLibrarySummary presetLibrarySummary;
     UI::PresetSaveSummary presetSaveSummary;
     UI::RandomMorphPad randomMorphPad;
+    UI::RandomCandidateExplorer randomCandidateExplorer;
     UI::LowEndAssistant lowEndAssistant;
     UI::SampleChopPanel sampleChopPanel;
     UI::SampleRecorderPanel sampleRecorderPanel;

@@ -1072,6 +1072,7 @@ private:
     bool keyStateChanged(bool isKeyDown, juce::Component* originatingComponent) override;
     bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
     void releaseComputerKeyboardNotes();
+    void reconcileComputerKeyboardNotes();
     int computerKeyboardBaseNote() const noexcept;
     void syncPianoKeyboardComputerMapping();
     void pinPianoKeyboardVisualRange();

@@ -185,6 +185,8 @@ bool verifyHostMidiSuspendsSequencer(double sampleRate, int blockSize, int heldN
     }
 
     const auto holdWasReported = processor.isHostMidiAuditionActive();
+    const auto heldCountWasReported = processor.getHostMidiHeldNoteCount();
+    const auto lastHostNoteWasReported = processor.getHostMidiLastNote();
     juce::AudioBuffer<float> releaseBuffer(2, blockSize);
     releaseBuffer.clear();
     juce::MidiBuffer releaseMidi;
@@ -202,12 +204,17 @@ bool verifyHostMidiSuspendsSequencer(double sampleRate, int blockSize, int heldN
     if (noteOnCount != 1
         || unexpectedNoteOn
         || ! holdWasReported
+        || heldCountWasReported != 1
+        || lastHostNoteWasReported != heldNote
         || processor.isHostMidiAuditionActive()
+        || processor.getHostMidiHeldNoteCount() != 0
         || ! sequencerResumed)
     {
         std::cerr << "Host MIDI audition isolation failed: note-ons " << noteOnCount
                   << ", unexpected pitch " << unexpectedNoteOn
                   << ", hold reported " << holdWasReported
+                  << ", held count " << heldCountWasReported
+                  << ", last note " << lastHostNoteWasReported
                   << ", sequencer resumed " << sequencerResumed << '\n';
         return false;
     }

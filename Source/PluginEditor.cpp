@@ -8195,6 +8195,10 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     const auto manualAuditionActive = audioProcessor.isManualKeyboardAuditionActive();
     const auto hostMidiAuditionActive = audioProcessor.isHostMidiAuditionActive();
     const auto performanceAuditionActive = manualAuditionActive || hostMidiAuditionActive;
+    const auto hostMidiLastNote = audioProcessor.getHostMidiLastNote();
+    const auto hostMidiNoteText = hostMidiLastNote >= 0
+        ? UI::PianoKeyboardLayout::noteName(hostMidiLastNote)
+        : juce::String("MIDI");
 
     auto subModulated = false;
     auto osc2LevelModulated = false;
@@ -8212,6 +8216,10 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     }
 
     const auto osc2Octave = juce::roundToInt(readPlainParameterValue(Parameters::ID::osc2Octave, 0.0f));
+    const auto osc2Level = readPlainParameterValue(Parameters::ID::osc2Level, 0.0f);
+    const auto subLevel = readPlainParameterValue(Parameters::ID::subLevel, 0.0f);
+    const auto audibleSubLayer = subLevel > 0.02f;
+    const auto audibleOsc2OctaveLayer = osc2Level > 0.02f && osc2Octave != 0;
     const auto movingOctaveLayer = osc2LevelModulated && osc2Octave != 0;
     const auto samplePitchRamp = sampleEnabled
         ? readPlainParameterValue(Parameters::ID::samplePitchRamp, 0.0f)
@@ -8224,18 +8232,22 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     if (sequencerEnabled)
         sources.add(performanceAuditionActive ? "SEQ PAUSED" : "SEQ");
     if (hostMidiAuditionActive)
-        sources.add("MIDI HOLD");
+        sources.add("HOST " + hostMidiNoteText);
     if (chordMemoryEnabled)
         sources.add("CHORD");
+    if (audibleSubLayer)
+        sources.add("SUB -1");
+    if (audibleOsc2OctaveLayer)
+        sources.add("O2 " + juce::String(osc2Octave >= 0 ? "+" : "") + juce::String(osc2Octave));
     if (subModulated)
         sources.add("SUB MOD");
-    if (movingOctaveLayer)
+    if (movingOctaveLayer && ! audibleOsc2OctaveLayer)
         sources.add("O2 MOD " + juce::String(osc2Octave >= 0 ? "+" : "") + juce::String(osc2Octave));
 
     const auto sourceText = sources.joinIntoString(" + ");
     keyboardPerformanceLabel.setText(heldText + "\n" + sourceText, juce::dontSendNotification);
     keyboardPerformanceLabel.setColour(juce::Label::textColourId,
-                                       (subModulated || movingOctaveLayer || samplePitchMoves) ? juce::Colour(0xffffd27a)
+                                       (audibleSubLayer || audibleOsc2OctaveLayer || subModulated || movingOctaveLayer || samplePitchMoves) ? juce::Colour(0xffffd27a)
                                                     : sequencerEnabled ? juce::Colour(0xff7fb7ff)
                                                                        : uiTheme().accent);
 
@@ -8250,6 +8262,12 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
         details.add("The loaded sampler also responds to keyboard MIDI");
     if (chordMemoryEnabled)
         details.add("Chord Memory expands each keyboard note using the selected chord and voicing");
+    if (audibleSubLayer)
+        details.add("Sub is audible at " + juce::String(juce::roundToInt(subLevel * 100.0f))
+                    + "% and plays one octave below each synth note");
+    if (audibleOsc2OctaveLayer)
+        details.add("Osc 2 is audible at octave " + juce::String(osc2Octave >= 0 ? "+" : "")
+                    + juce::String(osc2Octave));
     if (subModulated)
         details.add("Sub Level is modulated; it can become audible later as a tone one octave below the held note");
     if (movingOctaveLayer)
@@ -8309,6 +8327,29 @@ void NateVSTAudioProcessorEditor::releaseComputerKeyboardNotes()
     }
 
     updateManualKeyboardAuditionState();
+}
+
+void NateVSTAudioProcessorEditor::reconcileComputerKeyboardNotes()
+{
+    auto changed = false;
+    auto& keyboardState = audioProcessor.getMidiKeyboardState();
+    const auto baseNote = computerKeyboardBaseNote();
+
+    for (size_t index = 0; index < computerKeyboardNotesDown.size(); ++index)
+    {
+        if (! computerKeyboardNotesDown[index]
+            || juce::KeyPress::isKeyCurrentlyDown(computerKeyboardKeyCodes[index]))
+            continue;
+
+        computerKeyboardNotesDown[index] = false;
+        keyboardState.noteOff(1,
+                              juce::jlimit(0, 127, baseNote + static_cast<int>(index)),
+                              0.0f);
+        changed = true;
+    }
+
+    if (changed)
+        updateManualKeyboardAuditionState();
 }
 
 bool NateVSTAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent)
@@ -14421,6 +14462,7 @@ void NateVSTAudioProcessorEditor::toggleSelectedSequencerStepFlag(int flagIndex)
 
 void NateVSTAudioProcessorEditor::timerCallback()
 {
+    reconcileComputerKeyboardNotes();
     updatePresetAudition();
     if (pendingOverwritePresetName.isNotEmpty()
         && juce::Time::getMillisecondCounterHiRes() > pendingOverwriteUntilMs)

@@ -898,6 +898,8 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     manualKeyboardAuditionActive.store(false, std::memory_order_relaxed);
     manualKeyboardAuditionWasActive = false;
     hostMidiAuditionActive.store(false, std::memory_order_relaxed);
+    hostMidiHeldNoteCountForUi.store(0, std::memory_order_relaxed);
+    hostMidiLastNote.store(-1, std::memory_order_relaxed);
     for (auto& channel : hostMidiNotesHeld)
         channel.fill(false);
     hostMidiHeldNoteCount = 0;
@@ -956,6 +958,8 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
             channel.fill(false);
         hostMidiHeldNoteCount = 0;
         hostMidiAuditionActive.store(false, std::memory_order_release);
+        hostMidiHeldNoteCountForUi.store(0, std::memory_order_release);
+        hostMidiLastNote.store(-1, std::memory_order_release);
         hostMidiAuditionWasActive = false;
 
         for (auto channel = 1; channel <= 16; ++channel)
@@ -1278,6 +1282,7 @@ bool NateVSTAudioProcessor::updateHostMidiAuditionState(const juce::MidiBuffer& 
                 ++hostMidiHeldNoteCount;
             }
             noteOnSeen = true;
+            hostMidiLastNote.store(note, std::memory_order_relaxed);
         }
         else if (message.isNoteOff())
         {
@@ -1302,6 +1307,7 @@ bool NateVSTAudioProcessor::updateHostMidiAuditionState(const juce::MidiBuffer& 
     }
 
     const auto active = hostMidiHeldNoteCount > 0 || noteOnSeen;
+    hostMidiHeldNoteCountForUi.store(hostMidiHeldNoteCount, std::memory_order_release);
     hostMidiAuditionActive.store(active, std::memory_order_release);
     return active;
 }
@@ -4973,6 +4979,16 @@ bool NateVSTAudioProcessor::isManualKeyboardAuditionActive() const noexcept
 bool NateVSTAudioProcessor::isHostMidiAuditionActive() const noexcept
 {
     return hostMidiAuditionActive.load(std::memory_order_acquire);
+}
+
+int NateVSTAudioProcessor::getHostMidiHeldNoteCount() const noexcept
+{
+    return hostMidiHeldNoteCountForUi.load(std::memory_order_acquire);
+}
+
+int NateVSTAudioProcessor::getHostMidiLastNote() const noexcept
+{
+    return hostMidiLastNote.load(std::memory_order_acquire);
 }
 
 void NateVSTAudioProcessor::panicAllNotesOff()

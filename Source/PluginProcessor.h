@@ -244,6 +244,8 @@ public:
     void setManualKeyboardAuditionActive(bool shouldBeActive) noexcept;
     bool isManualKeyboardAuditionActive() const noexcept;
     bool isHostMidiAuditionActive() const noexcept;
+    int getHostMidiHeldNoteCount() const noexcept;
+    int getHostMidiLastNote() const noexcept;
     void panicAllNotesOff();
     struct PerformanceModulationStatus
     {
@@ -338,6 +340,8 @@ private:
     std::atomic<bool> manualKeyboardAuditionActive { false };
     bool manualKeyboardAuditionWasActive = false;
     std::atomic<bool> hostMidiAuditionActive { false };
+    std::atomic<int> hostMidiHeldNoteCountForUi { 0 };
+    std::atomic<int> hostMidiLastNote { -1 };
     std::array<std::array<bool, 128>, 16> hostMidiNotesHeld {};
     int hostMidiHeldNoteCount = 0;
     bool hostMidiAuditionWasActive = false;

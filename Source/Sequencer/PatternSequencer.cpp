@@ -66,6 +66,14 @@ void PatternSequencer::reset()
     wasHostPlaying = false;
 }
 
+void PatternSequencer::suspend(juce::MidiBuffer& midi, int samplePosition)
+{
+    if (activeNoteCount > 0)
+        addNoteOffsForActiveNotes(midi, juce::jmax(0, samplePosition));
+
+    reset();
+}
+
 bool PatternSequencer::isEnabled() const
 {
     return readParameter(sequencerEnabled, 0.0f) > 0.5f;

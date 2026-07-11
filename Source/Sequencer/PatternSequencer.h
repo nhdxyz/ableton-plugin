@@ -66,6 +66,7 @@ public:
 
     void prepare(double sampleRate);
     void reset();
+    void suspend(juce::MidiBuffer& midi, int samplePosition = 0);
     bool isEnabled() const;
     Step getStep(int index) const;
     void setStep(int index, Step step);

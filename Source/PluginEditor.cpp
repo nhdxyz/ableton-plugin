@@ -8193,6 +8193,8 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     const auto chordMemoryEnabled = readPlainParameterValue(Parameters::ID::sequencerChordMemory, 0.0f) >= 0.5f
         && readPlainParameterValue(Parameters::ID::sequencerChordMode, 0.0f) >= 0.5f;
     const auto manualAuditionActive = audioProcessor.isManualKeyboardAuditionActive();
+    const auto hostMidiAuditionActive = audioProcessor.isHostMidiAuditionActive();
+    const auto performanceAuditionActive = manualAuditionActive || hostMidiAuditionActive;
 
     auto subModulated = false;
     auto osc2LevelModulated = false;
@@ -8220,7 +8222,9 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     if (sampleEnabled)
         sources.add(samplePitchMoves ? "SAMPLE RAMP" : "SAMPLE");
     if (sequencerEnabled)
-        sources.add(manualAuditionActive ? "SEQ PAUSED" : "SEQ");
+        sources.add(performanceAuditionActive ? "SEQ PAUSED" : "SEQ");
+    if (hostMidiAuditionActive)
+        sources.add("MIDI HOLD");
     if (chordMemoryEnabled)
         sources.add("CHORD");
     if (subModulated)
@@ -8239,9 +8243,9 @@ void NateVSTAudioProcessorEditor::updateKeyboardPerformanceStatus()
     details.add(heldNotes.isEmpty() ? "No held MIDI notes" : heldText);
     details.add("Active keyboard sound paths: " + sourceText);
     if (sequencerEnabled)
-        details.add(manualAuditionActive
-                        ? "SEQ is paused while the plugin piano is held, then resumes on release"
-                        : "SEQ generates pattern notes independently when manual piano audition is idle");
+        details.add(performanceAuditionActive
+                        ? "SEQ is paused while a plugin or host MIDI key is held, then resumes on release"
+                        : "SEQ generates pattern notes independently when keyboard audition is idle");
     if (sampleEnabled)
         details.add("The loaded sampler also responds to keyboard MIDI");
     if (chordMemoryEnabled)

@@ -134,6 +134,86 @@ bool verifyManualAuditionSuspendsSequencer(NateVSTAudioProcessor& processor, dou
 
     return true;
 }
+
+bool verifyHostMidiSuspendsSequencer(double sampleRate, int blockSize, int heldNote)
+{
+    NateVSTAudioProcessor processor;
+    processor.prepareToPlay(sampleRate, blockSize);
+    if (! configureStableSine(processor)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerEnabled, 1.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerRoot, 48.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerOctave, 0.0f)
+        || ! setPlainParameter(processor, Parameters::ID::sequencerChordMode, 0.0f))
+        return false;
+
+    for (auto stepIndex = 0; stepIndex < Sequencer::PatternSequencer::numSteps; ++stepIndex)
+    {
+        auto step = processor.getSequencerStep(stepIndex);
+        step.enabled = false;
+        processor.setSequencerStep(stepIndex, step);
+    }
+
+    auto firstStep = processor.getSequencerStep(0);
+    firstStep.enabled = true;
+    firstStep.noteOffset = -12;
+    firstStep.probability = 1.0f;
+    firstStep.length = 0.5f;
+    processor.setSequencerStep(0, firstStep);
+
+    auto noteOnCount = 0;
+    auto unexpectedNoteOn = false;
+    const auto auditionSamples = static_cast<int>(sampleRate * 3.0);
+    for (auto rendered = 0; rendered < auditionSamples; rendered += blockSize)
+    {
+        const auto currentBlockSize = juce::jmin(blockSize, auditionSamples - rendered);
+        juce::AudioBuffer<float> buffer(2, currentBlockSize);
+        buffer.clear();
+        juce::MidiBuffer midi;
+        if (rendered == 0)
+            midi.addEvent(juce::MidiMessage::noteOn(1, heldNote, 0.86f), 0);
+        processor.processBlock(buffer, midi);
+
+        for (const auto metadata : midi)
+        {
+            const auto message = metadata.getMessage();
+            if (! message.isNoteOn())
+                continue;
+
+            ++noteOnCount;
+            unexpectedNoteOn = unexpectedNoteOn || message.getNoteNumber() != heldNote;
+        }
+    }
+
+    const auto holdWasReported = processor.isHostMidiAuditionActive();
+    juce::AudioBuffer<float> releaseBuffer(2, blockSize);
+    releaseBuffer.clear();
+    juce::MidiBuffer releaseMidi;
+    releaseMidi.addEvent(juce::MidiMessage::noteOff(1, heldNote), 0);
+    processor.processBlock(releaseBuffer, releaseMidi);
+
+    auto sequencerResumed = false;
+    for (const auto metadata : releaseMidi)
+    {
+        const auto message = metadata.getMessage();
+        sequencerResumed = sequencerResumed
+            || (message.isNoteOn() && message.getNoteNumber() != heldNote);
+    }
+
+    if (noteOnCount != 1
+        || unexpectedNoteOn
+        || ! holdWasReported
+        || processor.isHostMidiAuditionActive()
+        || ! sequencerResumed)
+    {
+        std::cerr << "Host MIDI audition isolation failed: note-ons " << noteOnCount
+                  << ", unexpected pitch " << unexpectedNoteOn
+                  << ", hold reported " << holdWasReported
+                  << ", sequencer resumed " << sequencerResumed << '\n';
+        return false;
+    }
+
+    return true;
+}
 }
 
 int main()
@@ -224,7 +304,10 @@ int main()
     if (! verifyManualAuditionSuspendsSequencer(processor, sampleRate, blockSize, heldNote))
         return 1;
 
+    if (! verifyHostMidiSuspendsSequencer(sampleRate, blockSize, heldNote))
+        return 1;
+
     std::cout << "Held note stability audit passed: one note-on, early " << earlyFrequency
-              << " Hz, late " << lateFrequency << " Hz, manual audition isolated from sequencer.\n";
+              << " Hz, late " << lateFrequency << " Hz, plugin and host MIDI audition isolated from sequencer.\n";
     return 0;
 }

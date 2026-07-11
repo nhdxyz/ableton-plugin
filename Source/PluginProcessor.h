@@ -243,6 +243,7 @@ public:
     juce::MidiKeyboardState& getMidiKeyboardState() noexcept;
     void setManualKeyboardAuditionActive(bool shouldBeActive) noexcept;
     bool isManualKeyboardAuditionActive() const noexcept;
+    bool isHostMidiAuditionActive() const noexcept;
     void panicAllNotesOff();
     struct PerformanceModulationStatus
     {
@@ -336,6 +337,10 @@ private:
     juce::MidiKeyboardState midiKeyboardState;
     std::atomic<bool> manualKeyboardAuditionActive { false };
     bool manualKeyboardAuditionWasActive = false;
+    std::atomic<bool> hostMidiAuditionActive { false };
+    std::array<std::array<bool, 128>, 16> hostMidiNotesHeld {};
+    int hostMidiHeldNoteCount = 0;
+    bool hostMidiAuditionWasActive = false;
 
     using ChordMemoryNoteArray = Sequencer::PatternSequencer::ChordNoteArray;
     std::array<std::array<ChordMemoryNoteArray, 128>, 16> chordMemoryActiveNotes {};
@@ -501,6 +506,7 @@ private:
     void resetPerformanceModulationStatus() noexcept;
     void applyChordMemoryToMidi(juce::MidiBuffer& midiMessages);
     void clearChordMemoryActiveNotes();
+    bool updateHostMidiAuditionState(const juce::MidiBuffer& midiMessages) noexcept;
     double getHostBpm() const;
     Sequencer::HostPosition getHostPosition() const;
     void updateOutputMeters(const juce::AudioBuffer<float>& buffer) noexcept;

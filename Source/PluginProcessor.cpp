@@ -897,6 +897,11 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     hostSyncPpqAvailable.store(false, std::memory_order_relaxed);
     manualKeyboardAuditionActive.store(false, std::memory_order_relaxed);
     manualKeyboardAuditionWasActive = false;
+    hostMidiAuditionActive.store(false, std::memory_order_relaxed);
+    for (auto& channel : hostMidiNotesHeld)
+        channel.fill(false);
+    hostMidiHeldNoteCount = 0;
+    hostMidiAuditionWasActive = false;
     lowEndStateLeft = 0.0f;
     lowEndStateRight = 0.0f;
 }
@@ -932,6 +937,7 @@ bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    const auto hostMidiAudition = updateHostMidiAuditionState(midiMessages);
     const auto captureSource = getSampleCaptureSourceIndex();
     if (captureSource == 1)
     {
@@ -946,6 +952,11 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     {
         clearChordMemoryActiveNotes();
         samplePlayer.stopAllVoices();
+        for (auto& channel : hostMidiNotesHeld)
+            channel.fill(false);
+        hostMidiHeldNoteCount = 0;
+        hostMidiAuditionActive.store(false, std::memory_order_release);
+        hostMidiAuditionWasActive = false;
 
         for (auto channel = 1; channel <= 16; ++channel)
         {
@@ -963,6 +974,9 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         samplePlayer.stopAllVoices();
     }
     manualKeyboardAuditionWasActive = manualKeyboardAudition;
+    if (hostMidiAudition && ! hostMidiAuditionWasActive)
+        patternSequencer.suspend(midiMessages);
+    hostMidiAuditionWasActive = hostMidiAudition;
 
     if (! manualKeyboardAudition)
         applyChordMemoryToMidi(midiMessages);
@@ -974,7 +988,7 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     hostSyncPpqAvailable.store(hostPosition.ppqPosition.has_value(), std::memory_order_relaxed);
     hostSyncPpqPosition.store(hostPosition.ppqPosition.has_value() ? static_cast<float>(*hostPosition.ppqPosition) : 0.0f,
                               std::memory_order_relaxed);
-    if (! manualKeyboardAudition)
+    if (! manualKeyboardAudition && ! hostMidiAudition)
         patternSequencer.process(midiMessages, buffer.getNumSamples(), hostBpm, hostPosition);
     updatePerformanceModulationStatus(midiMessages);
     advancePerformanceModulationEnvelope(buffer.getNumSamples());
@@ -1243,6 +1257,53 @@ void NateVSTAudioProcessor::clearChordMemoryActiveNotes()
             chordMemoryActiveNoteCounts[static_cast<size_t>(channel)][static_cast<size_t>(note)] = 0;
         }
     }
+}
+
+bool NateVSTAudioProcessor::updateHostMidiAuditionState(const juce::MidiBuffer& midiMessages) noexcept
+{
+    auto noteOnSeen = false;
+
+    for (const auto metadata : midiMessages)
+    {
+        const auto message = metadata.getMessage();
+        const auto channelIndex = juce::jlimit(0, 15, message.getChannel() - 1);
+
+        if (message.isNoteOn())
+        {
+            const auto note = juce::jlimit(0, 127, message.getNoteNumber());
+            auto& held = hostMidiNotesHeld[static_cast<size_t>(channelIndex)][static_cast<size_t>(note)];
+            if (! held)
+            {
+                held = true;
+                ++hostMidiHeldNoteCount;
+            }
+            noteOnSeen = true;
+        }
+        else if (message.isNoteOff())
+        {
+            const auto note = juce::jlimit(0, 127, message.getNoteNumber());
+            auto& held = hostMidiNotesHeld[static_cast<size_t>(channelIndex)][static_cast<size_t>(note)];
+            if (held)
+            {
+                held = false;
+                hostMidiHeldNoteCount = juce::jmax(0, hostMidiHeldNoteCount - 1);
+            }
+        }
+        else if (message.isAllNotesOff() || message.isAllSoundOff())
+        {
+            auto& heldNotes = hostMidiNotesHeld[static_cast<size_t>(channelIndex)];
+            for (auto& held : heldNotes)
+            {
+                if (held)
+                    hostMidiHeldNoteCount = juce::jmax(0, hostMidiHeldNoteCount - 1);
+                held = false;
+            }
+        }
+    }
+
+    const auto active = hostMidiHeldNoteCount > 0 || noteOnSeen;
+    hostMidiAuditionActive.store(active, std::memory_order_release);
+    return active;
 }
 
 juce::AudioProcessorEditor* NateVSTAudioProcessor::createEditor()
@@ -4907,6 +4968,11 @@ void NateVSTAudioProcessor::setManualKeyboardAuditionActive(bool shouldBeActive)
 bool NateVSTAudioProcessor::isManualKeyboardAuditionActive() const noexcept
 {
     return manualKeyboardAuditionActive.load(std::memory_order_acquire);
+}
+
+bool NateVSTAudioProcessor::isHostMidiAuditionActive() const noexcept
+{
+    return hostMidiAuditionActive.load(std::memory_order_acquire);
 }
 
 void NateVSTAudioProcessor::panicAllNotesOff()

@@ -337,6 +337,7 @@ private:
     Sequencer::PatternSequencer patternSequencer;
     Effects::EffectsRack effectsRack;
     juce::MidiKeyboardState midiKeyboardState;
+    juce::MidiBuffer manualKeyboardMidiScratch;
     std::atomic<bool> manualKeyboardAuditionActive { false };
     bool manualKeyboardAuditionWasActive = false;
     std::atomic<bool> hostMidiAuditionActive { false };

@@ -93,6 +93,7 @@ bool verifyManualAuditionSuspendsSequencer(NateVSTAudioProcessor& processor, dou
 
     auto noteOnCount = 0;
     auto unexpectedNoteOn = false;
+    auto injectedHostOctaveEcho = false;
     const auto auditionSamples = static_cast<int>(sampleRate * 3.0);
     for (auto rendered = 0; rendered < auditionSamples; rendered += blockSize)
     {
@@ -100,6 +101,11 @@ bool verifyManualAuditionSuspendsSequencer(NateVSTAudioProcessor& processor, dou
         juce::AudioBuffer<float> buffer(2, currentBlockSize);
         buffer.clear();
         juce::MidiBuffer midi;
+        if (! injectedHostOctaveEcho && rendered >= static_cast<int>(sampleRate * 0.65))
+        {
+            midi.addEvent(juce::MidiMessage::noteOn(1, heldNote - 12, 0.86f), 0);
+            injectedHostOctaveEcho = true;
+        }
         processor.processBlock(buffer, midi);
 
         for (const auto metadata : midi)
@@ -124,10 +130,12 @@ bool verifyManualAuditionSuspendsSequencer(NateVSTAudioProcessor& processor, dou
     for (const auto metadata : resumeMidi)
         sequencerResumed = sequencerResumed || metadata.getMessage().isNoteOn();
 
-    if (noteOnCount != 1 || unexpectedNoteOn || ! sequencerResumed)
+    const auto lowerKeyWasSuppressed = ! processor.getMidiKeyboardState().isNoteOnForChannels(0xffff, heldNote - 12);
+    if (noteOnCount != 1 || unexpectedNoteOn || ! lowerKeyWasSuppressed || ! sequencerResumed)
     {
         std::cerr << "Manual audition isolation failed: note-ons " << noteOnCount
                   << ", unexpected pitch " << unexpectedNoteOn
+                  << ", lower key suppressed " << lowerKeyWasSuppressed
                   << ", sequencer resumed " << sequencerResumed << '\n';
         return false;
     }
@@ -315,6 +323,7 @@ int main()
         return 1;
 
     std::cout << "Held note stability audit passed: one note-on, early " << earlyFrequency
-              << " Hz, late " << lateFrequency << " Hz, plugin and host MIDI audition isolated from sequencer.\n";
+              << " Hz, late " << lateFrequency
+              << " Hz, delayed host octave echo suppressed, plugin and host MIDI audition isolated from sequencer.\n";
     return 0;
 }

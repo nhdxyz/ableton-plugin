@@ -844,6 +844,8 @@ void NateVSTAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock
     meterSampleRate = sampleRate > 0.0 ? sampleRate : 44100.0;
     preparedSamplesPerBlock = samplesPerBlock > 0 ? samplesPerBlock : 512;
     performanceModEnvelopeFollower.setSampleRate(meterSampleRate);
+    manualKeyboardMidiScratch.clear();
+    manualKeyboardMidiScratch.ensureSize(static_cast<size_t>(juce::jmax(4096, preparedSamplesPerBlock * 4)));
     chordMemoryScratchMidi.clear();
     chordMemoryScratchMidi.ensureSize(static_cast<size_t>(juce::jmax(8192, preparedSamplesPerBlock * 8)));
     synthEngine.prepare(sampleRate, samplesPerBlock);
@@ -939,6 +941,41 @@ bool NateVSTAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    const auto manualKeyboardAudition = manualKeyboardAuditionActive.load(std::memory_order_acquire);
+
+    if (manualKeyboardAudition)
+    {
+        manualKeyboardMidiScratch.clear();
+
+        // Ableton's Computer MIDI Keyboard can receive the same QWERTY key as
+        // the focused plugin editor. Its key-repeat event may arrive later with
+        // Ableton's octave mapping, so the plugin keyboard owns note input for
+        // the duration of a local hold. Keep controllers and expression data.
+        for (const auto metadata : midiMessages)
+        {
+            const auto message = metadata.getMessage();
+            if (! message.isNoteOn() && ! message.isNoteOff())
+                manualKeyboardMidiScratch.addEvent(message, metadata.samplePosition);
+        }
+
+        if (! manualKeyboardAuditionWasActive)
+        {
+            patternSequencer.reset();
+            clearChordMemoryActiveNotes();
+            synthEngine.allNotesOff();
+            samplePlayer.stopAllVoices();
+
+            // Release any host notes that were already held before the local
+            // keyboard took ownership, including their visible key state.
+            for (auto channelIndex = 0; channelIndex < 16; ++channelIndex)
+                for (auto note = 0; note < 128; ++note)
+                    if (hostMidiNotesHeld[static_cast<size_t>(channelIndex)][static_cast<size_t>(note)])
+                        manualKeyboardMidiScratch.addEvent(juce::MidiMessage::noteOff(channelIndex + 1, note), 0);
+        }
+
+        midiMessages.swapWith(manualKeyboardMidiScratch);
+    }
+
     const auto hostMidiAudition = updateHostMidiAuditionState(midiMessages);
     const auto captureSource = getSampleCaptureSourceIndex();
     if (captureSource == 1)
@@ -969,14 +1006,6 @@ void NateVSTAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
         }
     }
 
-    const auto manualKeyboardAudition = manualKeyboardAuditionActive.load(std::memory_order_acquire);
-    if (manualKeyboardAudition && ! manualKeyboardAuditionWasActive)
-    {
-        patternSequencer.reset();
-        clearChordMemoryActiveNotes();
-        synthEngine.allNotesOff();
-        samplePlayer.stopAllVoices();
-    }
     manualKeyboardAuditionWasActive = manualKeyboardAudition;
     if (hostMidiAudition && ! hostMidiAuditionWasActive)
         patternSequencer.suspend(midiMessages);
